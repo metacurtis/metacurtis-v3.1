@@ -1,4 +1,4 @@
-// eslint.config.js
+// eslint.config.js (Revised Structure)
 import js from '@eslint/js';
 import globals from 'globals';
 import reactPlugin from 'eslint-plugin-react';
@@ -10,22 +10,20 @@ export default [
   // 1. Base ESLint recommended rules
   js.configs.recommended,
 
-  // 2. Configuration for React/JS/JSX files
+  // 2. Main configuration for React/JS/JSX files
   {
-    files: ['**/*.{js,jsx}'], // Target JS and JSX files
+    files: ['**/*.{js,jsx}'],
     ignores: [
       'dist/**',
       'node_modules/**',
       'build/**',
       'coverage/**',
       '.*.cjs',
-      '*.config.js', // Ignore self, vite, postcss, tailwind configs
-      '*.config.cjs',
+      '*.config.js', // Ignore self and other JS configs
     ],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      // Ensure JSX is enabled *within* the languageOptions for targeted files
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
@@ -36,40 +34,37 @@ export default [
         ...globals.node,
       },
     },
-    // Apply plugins
     plugins: {
       react: reactPlugin,
       'react-hooks': hooksPlugin,
       'react-refresh': refreshPlugin,
     },
-    // Apply settings needed by plugins
     settings: {
       react: {
         version: 'detect',
       },
     },
-    // Define rules, including those from plugins
     rules: {
-      // --- Base Rule Adjustments ---
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-undef': 'error', // Keep this active to catch things like the __dirname error
+      // Start with recommended React rules (use optional chaining '?' and nullish coalescing '??' for safety)
+      ...(reactPlugin.configs.flat?.recommended?.rules ?? {}),
 
-      // --- React Rules (Manually specify key ones + potentially extend recommended) ---
-      ...reactPlugin.configs.recommended.rules, // Apply recommended rules
-      ...reactPlugin.configs['jsx-runtime'].rules, // Apply rules for new JSX transform
-      'react/prop-types': 'off', // Disable prop-types if not used
+      // Apply overrides and additions
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'off',
+      'react/prop-types': 'off',
 
-      // --- React Hooks Rules ---
+      // React Hooks rules
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
-      // --- React Refresh Rules ---
+      // React Refresh rule
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
-      // Add any other specific rule overrides here
+      // General rules
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
 
-  // 3. Prettier Configuration - MUST BE LAST in the array
+  // 3. Prettier Configuration - MUST BE LAST
   prettierConfig,
 ];
