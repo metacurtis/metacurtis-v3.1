@@ -30,9 +30,10 @@ jobs:
       - name: Check Formatting (Prettier)
         run: npm run format:check # Run prettier check script
 
+      # ---vvv THE FIX IS HERE vvv---
       - name: Run Linter (ESLint)
-        # Use stricter command for CI
-        run: eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0
+        run: npm run lint # Changed from direct eslint call to use npm script
+      # ---^^^ THE FIX IS HERE ^^^---
 
       - name: Run Tests (Vitest)
         run: npm run test # Run vitest script
@@ -70,21 +71,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build # Depends on build succeeding
     steps:
-      # No checkout needed if only using artifact
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x' # LHCI might need Node
-          cache: 'npm' # Cache npm if installing deps needed by preview/lhci script
+          cache: 'npm'
 
-      # Install necessary dependencies IF preview or lhci script requires them
-      # If `npm run preview` and `npm run lighthouse` only rely on deps from `npm ci` run during build,
-      # you might skip this install step if node_modules aren't needed runtime for preview/lhci.
-      # However, it's safer to include it unless certain it's unnecessary.
-      - name: Install dependencies
+      - name: Install dependencies # Safer to keep for preview/lhci scripts
         run: npm ci
 
       - name: Download Build Artifact
@@ -93,15 +86,12 @@ jobs:
           name: build-artifact # Match artifact name from build job
           path: dist/ # Download to dist directory
 
-      # Start preview server in background & wait for it
       - name: Start Preview Server & Wait
-        # Using run instead of backgrounding often simpler if wait-on handles it
         run: |
           npm run preview & # Run in background
           npx wait-on http://localhost:4173 -t 60000 # Wait for server (e.g., 60s timeout)
 
       - name: Run Lighthouse CI
-        # Use the script from package.json which should use the dev dependency
-        run: npm run lighthouse
+        run: npm run lighthouse # Use the script from package.json
         env:
-           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }} # Optional: Add if using LHCI GitHub App for status checks
+           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }} # Optional: Add if using LHCI GitHub App
