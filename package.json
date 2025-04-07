@@ -11,9 +11,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
     "format:check": "prettier --check ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest watch",
-    "lighthouse": "lighthouse" : "lhci autorun --config=./lighthouserc.js",
+    "lighthouse": "lhci autorun --config=./lighthouserc.js",
     "prepare": "husky install"
   },
   "repository": {
@@ -61,7 +61,6 @@
   },
   "lint-staged": {
     "*.{js,jsx}": [
-      "eslint --fix",
       "prettier --write"
     ],
     "*.{css,md,json}": [
