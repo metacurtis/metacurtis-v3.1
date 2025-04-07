@@ -1,46 +1,50 @@
 # .github/workflows/ci.yml
 
-name: MetaCurtis CI/CD Checks # Workflow name
+# Workflow name displayed on GitHub Actions tab
+name: MetaCurtis CI/CD Checks
 
+# Controls when the workflow will run
 on:
   push:
     branches: [ main, development ] # Trigger on pushes to main & development
   pull_request:
     branches: [ main, development ] # Trigger on PRs targeting main & development
-  workflow_dispatch: {} # Allow manual trigger
+  workflow_dispatch: {} # Allows manual triggering from the GitHub Actions tab
 
+# Defines the jobs that will run as part of the workflow
 jobs:
   # Job 1: Linting, Formatting Checks, and Testing
   lint-and-test:
     name: Lint, Format & Test
-    runs-on: ubuntu-latest
-    steps:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+    steps: # List of steps for this job
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Use v4 of the checkout action
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4 # Use v4 of the setup-node action
         with:
-          node-version: '20.x'
-          cache: 'npm'
+          node-version: '20.x' # Specify desired Node.js version
+          cache: 'npm' # Enable caching for npm dependencies
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci # Use 'ci' for clean, faster installs based on package-lock.json
 
       - name: Check Formatting (Prettier)
-        run: npm run format:check
+        run: npm run format:check # Run your Prettier check script
 
       - name: Run Linter (ESLint)
-        run: npm run lint # Uses script from package.json - This is fine!
+        run: npm run lint # Run your ESLint check script (uses eslint.config.js)
 
-     /* - name: Run Tests (Vitest)
-     //   run: npm run test # Includes passWithNoTests via vite.config.js */ 
+      # Restore the test step - should pass due to passWithNoTests in vite.config.js
+      - name: Run Tests (Vitest)
+        run: npm run test
 
   # Job 2: Build the Project
   build:
     name: Build Project
     runs-on: ubuntu-latest
-    needs: lint-and-test # Depends on the first job succeeding
+    needs: lint-and-test # This job depends on the 'lint-and-test' job succeeding
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,25 +59,25 @@ jobs:
         run: npm ci
 
       - name: Run Build
-        run: npm run build
+        run: npm run build # Run your Vite build script
 
       - name: Upload Production Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4 # Use v4 of the upload-artifact action
         with:
-          name: build-artifact
-          path: dist/
+          name: build-artifact # Name for the artifact
+          path: dist/ # Path of the directory to upload (Vite's default output)
 
   # Job 3: Run Lighthouse Checks
   lighthouse:
     name: Lighthouse Checks
     runs-on: ubuntu-latest
-    needs: build # Depends on build succeeding
+    needs: build # This job depends on the 'build' job succeeding
     steps:
-      # ---vvv THIS STEP WAS MISSING vvv---
+      # ---vvv THIS STEP IS NOW ADDED vvv---
       - name: Checkout code
         uses: actions/checkout@v4 # Checkout needed for npm ci below
 
-      # ---^^^ THIS STEP WAS MISSING ^^^---
+      # ---^^^ THIS STEP IS NOW ADDED ^^^---
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -81,21 +85,22 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: Install dependencies # Now npm ci can find package-lock.json
+      - name: Install dependencies # Now npm ci can find package.json/package-lock.json
         run: npm ci
 
       - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4 # Use v4 of the download action
         with:
-          name: build-artifact
-          path: dist/
+          name: build-artifact # Name must match the upload step
+          path: dist/ # Download artifact content into the 'dist' directory
 
       - name: Start Preview Server & Wait
-        run: |
-          npm run preview &
-          npx wait-on http://localhost:4173 -t 60000
+        run: | # Use multi-line run command
+          npm run preview & # Start Vite preview server in the background
+          npx wait-on http://localhost:4173 -t 60000 # Wait for the server to be ready (60s timeout)
 
       - name: Run Lighthouse CI
-        run: npm run lighthouse
+        run: npm run lighthouse # Run your Lighthouse script (uses lighthouserc.js)
         env:
-           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }} # Optional
+           # Optional: If using the LHCI GitHub App, provide the token as a secret
+           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
