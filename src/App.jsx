@@ -1,4 +1,4 @@
-import React from 'react';
+// No 'import React from 'react';' needed here anymore
 
 function App() {
   return (
