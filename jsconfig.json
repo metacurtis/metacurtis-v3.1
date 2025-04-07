@@ -1,70 +1,65 @@
 {
-    "name": "metacurtis-v3.1",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-      "dev": "vite",
-      "build": "vite build",
-      "preview": "vite preview",
-      "lint": "eslint . --max-warnings 0",
-      "lint:fix": "eslint . --fix",
-      "format": "prettier --write ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
-      "format:check": "prettier --check ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
-      "test": "vitest run",
-      "test:watch": "vitest watch",
-      "lighthouse": "lhci autorun --collect.url=http://localhost:4173",
-      "prepare": "husky install"
-    },
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/metacurtis/metacurtis-v3.1.git"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "bugs": {
-      "url": "https://github.com/metacurtis/metacurtis-v3.1/issues"
-    },
-    "homepage": "https://github.com/metacurtis/metacurtis-v3.1#readme",
-    "type": "module",
-    "dependencies": {
-      "@react-three/drei": "^10.0.6",
-      "@react-three/fiber": "^9.1.2",
-      "gsap": "^3.12.7",
-      "react": "^19.1.0",
-      "react-dom": "^19.1.0",
-      "three": "^0.175.0",
-      "zustand": "^5.0.3"
-    },
-    "devDependencies": {
-      "@eslint/js": "^9.24.0",
-      "@lhci/cli": "^0.12.0",
-      "@tailwindcss/vite": "^4.1.3",
-      "@vitejs/plugin-react": "^4.3.4",
-      "autoprefixer": "^10.4.21",
-      "eslint": "^9.24.0",
-      "eslint-config-prettier": "^10.1.1",
-      "eslint-plugin-react": "^7.37.5",
-      "eslint-plugin-react-hooks": "^5.2.0",
-      "eslint-plugin-react-refresh": "^0.4.19",
-      "globals": "^16.0.0",
-      "husky": "^8.0.3",
-      "lint-staged": "^15.2.7",
-      "postcss": "^8.5.3",
-      "prettier": "^3.5.3",
-      "tailwindcss": "^4.1.3",
-      "terser": "^5.39.0",
-      "vite": "^6.2.5",
-      "vitest": "^1.4.0"
-    },
-    "lint-staged": {
-      "*.{js,jsx}": [
-        "eslint --fix",
-        "prettier --write"
-      ],
-      "*.{css,md,json}": [
-        "prettier --write"
-      ]
-    }
+  "name": "metacurtis-v3.1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
+    "format:check": "prettier --check ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "lighthouse": "lhci autorun --collect.url=http://localhost:4173",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metacurtis/metacurtis-v3.1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/metacurtis/metacurtis-v3.1/issues"
+  },
+  "homepage": "https://github.com/metacurtis/metacurtis-v3.1#readme",
+  "type": "module",
+  "dependencies": {
+    "@react-three/drei": "^10.0.6",
+    "@react-three/fiber": "^9.1.2",
+    "gsap": "^3.12.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.175.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@lhci/cli": "^0.12.0",
+    "@tailwindcss/vite": "^4.1.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.7",
+    "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.3",
+    "terser": "^5.39.0",
+    "vite": "^6.2.5",
+    "vitest": "^1.4.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{css,md,json}": ["prettier --write"]
   }
+}

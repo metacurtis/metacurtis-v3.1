@@ -1,16 +1,18 @@
 // vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite'; // Added from your version
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import { fileURLToPath } from 'url'; // Import necessary function
+
+// ES Module equivalent for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(), // Integrate Tailwind plugin
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
-    // Aliases from the initial proposal (matches your version too)
+    // Update aliases to use the ES Module __dirname equivalent
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
@@ -19,43 +21,47 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
       '@hooks': path.resolve(__dirname, './src/hooks'),
       '@assets': path.resolve(__dirname, './src/assets'),
-    }
+    },
   },
-  // Adding your build optimizations - good for production
   build: {
-    target: 'esnext', // Target modern browsers
-    minify: 'terser', // Using Terser as you specified
+    target: 'esnext',
+    minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: false, // Keep console logs in build (can change later if needed)
-        drop_debugger: true // Remove debugger statements
-      }
+        drop_console: false,
+        drop_debugger: true,
+      },
     },
     rollupOptions: {
       output: {
-        // Manual chunking for better caching
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
           'gsap-vendor': ['gsap'],
-          'zustand-vendor': ['zustand'], // Added zustand chunk
-        }
-      }
+          'zustand-vendor': ['zustand'],
+        },
+      },
     },
-    sourcemap: true, // Enable sourcemaps for easier debugging of builds
-    cssCodeSplit: true, // Default, good practice
-    assetsInlineLimit: 4096, // Default limit for inlining assets
+    sourcemap: true,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
   },
-  // Adding your server options for convenience
   server: {
-    host: true, // Allow access from network
-    open: true, // Open browser on start
+    host: true,
+    open: true,
     hmr: {
-      overlay: true // Show errors clearly
-    }
+      overlay: true,
+    },
   },
-  // Adding your optimizeDeps includes
   optimizeDeps: {
-    include: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei', 'gsap', 'zustand']
-  }
+    include: [
+      'react',
+      'react-dom',
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      'gsap',
+      'zustand',
+    ],
+  },
 });

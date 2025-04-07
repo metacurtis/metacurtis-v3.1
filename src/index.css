@@ -9,12 +9,12 @@
   --color-background: #0f172a;
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'Fira Code', monospace;
-  
+
   /* Animation timing */
   --transition-slow: 0.5s;
   --transition-medium: 0.3s;
   --transition-fast: 0.15s;
-  
+
   /* Z-index layers */
   --z-background: -10;
   --z-default: 1;
@@ -24,7 +24,8 @@
 }
 
 /* Global styles */
-html, body {
+html,
+body {
   background-color: var(--color-background);
   color: white;
   margin: 0;
@@ -54,13 +55,13 @@ canvas {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  
+
   .flex-center {
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  
+
   .absolute-center {
     position: absolute;
     top: 50%;
