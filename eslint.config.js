@@ -20,6 +20,7 @@ export default [
       'coverage/**',
       '.*.cjs',
       '*.config.js', // Ignore self and other JS configs
+      'lighthouserc.js', // Add this specific file to the ignore list
     ],
     languageOptions: {
       ecmaVersion: 'latest',
