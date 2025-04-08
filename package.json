@@ -13,7 +13,7 @@
     "format:check": "prettier --check ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest watch",
-    "lighthouse": "lhci autorun --config=./lighthouserc.js",
+    "lighthouse": "lhci autorun --config=./lighthouserc.json",
     "prepare": "husky install"
   },
   "repository": {
