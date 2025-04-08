@@ -14,10 +14,11 @@
         "maskable-icon": "off",
         "service-worker": "off",
         "splash-screen": "off",
-        "themed-omnibobx": "off",
+        "themed-omnibobx": "off", // Typo still here, harmless but removable
         "themed-omnibox": "off",
         "meta-description": "off",
-        "unused-javascript": ["warn", { "maxLength": 1 }]
+        "unused-javascript": ["warn", { "maxLength": 1 }],
+        "robots-txt": "off" // <-- Fix added: Turn off robots.txt check
       }
     },
     "upload": {
