@@ -1,26 +1,35 @@
-// tailwind.config.js
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    './index.html', // Scan the main HTML file
-    './src/**/*.{js,jsx,ts,tsx}', // Scan all JavaScript/JSX files in the src directory
-    // Add other file types or directories if needed (e.g., './public/**/*.html')
-  ],
-  // --- Tailwind v4 CSS-based Config ---
-  // Theme extensions and plugins are primarily managed in your main CSS file for v4.
-  // This JS config focuses on defining where Tailwind classes are used (the 'content' paths).
-  // You can still use 'theme.extend' or 'plugins' here if absolutely necessary,
-  // but the recommended v4 approach is within CSS.
+import { defineConfig } from 'tailwindcss';
+
+export default defineConfig({
+  content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
-      // Example: If you had a very specific JS-driven theme extension
-      // colors: {
-      //   'brand-js': '#ff0000',
-      // }
+      colors: {
+        primary: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
+        secondary: 'rgb(var(--color-secondary-rgb) / <alpha-value>)',
+        background: 'var(--color-background)',
+        'text-base': 'rgb(var(--color-text-base-rgb) / <alpha-value>)',
+        'bg-base': 'rgb(var(--color-bg-base-rgb) / <alpha-value>)',
+      },
+      fontFamily: {
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
+      },
+      borderRadius: {
+        DEFAULT: 'var(--border-radius)',
+        md: 'var(--border-radius-md)',
+        lg: 'var(--border-radius-lg)',
+        xl: 'var(--border-radius-xl)',
+        full: 'var(--border-radius-full)',
+      },
+      zIndex: {
+        background: 'var(--z-background)',
+        default: 'var(--z-default)',
+        overlay: 'var(--z-overlay)',
+        modal: 'var(--z-modal)',
+        tooltip: 'var(--z-tooltip)',
+      },
     },
   },
-  plugins: [
-    // Example: If you needed a JS-based plugin
-    // require('@tailwindcss/forms'),
-  ],
-};
+  plugins: [],
+});

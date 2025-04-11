@@ -1,10 +1,20 @@
+// src/main.jsx (Reverted)
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+import './index.css';
+import App from './App'; // Keep importing App
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Failed to find the root element with ID 'root'");
+}
+const root = createRoot(rootElement);
+
+root.render(
+  <StrictMode>
+    {/* No BrowserRouter needed */}
     <App />
-  </React.StrictMode>
+  </StrictMode>
 );
