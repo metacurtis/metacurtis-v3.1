@@ -1,5 +1,4 @@
 // src/components/layout/Navbar.jsx
-import React from 'react';
 
 /**
  * Application Navigation Bar component.

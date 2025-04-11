@@ -1,5 +1,5 @@
 // src/components/webgl/WebGLBackground.jsx
-import React from 'react';
+
 // Import R3F/Drei components here when building the actual scene
 // import { useFrame } from '@react-three/fiber';
 

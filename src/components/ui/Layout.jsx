@@ -1,5 +1,4 @@
 // src/components/ui/Layout.jsx (Definitive)
-import React from 'react';
 import PropTypes from 'prop-types';
 import Navbar from './Navbar'; // Assumes Navbar.jsx is here
 import Footer from './Footer'; // Assumes Footer.jsx is here
