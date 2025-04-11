@@ -1,4 +1,4 @@
-// eslint.config.js (Revised Structure)
+// eslint.config.js (R3F Unknown Property Fix)
 import js from '@eslint/js';
 import globals from 'globals';
 import reactPlugin from 'eslint-plugin-react';
@@ -20,7 +20,8 @@ export default [
       'coverage/**',
       '.*.cjs',
       '*.config.js', // Ignore self and other JS configs
-      'lighthouserc.js', // Add this specific file to the ignore list
+      'lighthouserc.js', // Explicitly ignore lighthouserc if it exists
+      // Add other specific files/dirs to ignore here if needed
     ],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -66,6 +67,17 @@ export default [
     },
   },
 
-  // 3. Prettier Configuration - MUST BE LAST
+  // ---vvv ADD THIS BLOCK vvv---
+  // 3. Configuration override specifically for R3F/WebGL components
+  {
+    files: ['src/components/webgl/**/*.{js,jsx}'], // Target files in the webgl directory
+    rules: {
+      // Disable the rule complaining about R3F props like 'args', 'attach', 'position' etc.
+      'react/no-unknown-property': 'off',
+    },
+  },
+  // ---^^^ ADD THIS BLOCK ^^^---
+
+  // 4. Prettier Configuration - MUST BE LAST
   prettierConfig,
 ];
