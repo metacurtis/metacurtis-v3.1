@@ -1,5 +1,6 @@
-// src/App.jsx (Using style prop for Canvas positioning)
-import React from 'react';
+// src/App.jsx (Unused React import removed)
+// No 'import React from 'react';' needed here for basic JSX
+
 import { Canvas } from '@react-three/fiber';
 
 // Core Layout and Scene Components
@@ -30,21 +31,17 @@ function App() {
           zIndex: -1, // Ensure it's behind HTML content
           // pointerEvents: 'none', // Add if clicks need to pass through canvas
         }}
-        // REMOVED className="fixed inset-0..." prop from here!
         camera={{ position: [0, 0, 5], fov: 50 }} // Camera settings
         dpr={[1, 1.5]} // Performance: Clamp device pixel ratio
         flat // Performance: Use linear tone mapping
       >
         {/* Render your WebGL scene component */}
-        {/* Ensure WebGLBackground component exists and is imported correctly */}
         <WebGLBackground />
       </Canvas>
 
       {/* Layout component renders Navbar/Footer and scrolls over the canvas */}
-      {/* Ensure Layout component exists and is imported correctly */}
       <Layout>
         {/* Page sections are rendered as children of Layout */}
-        {/* Ensure Hero component exists and is imported correctly */}
         <Hero />
         {/* Add other sections here as they are created */}
         {/* <About /> */}
