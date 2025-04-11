@@ -1,16 +1,15 @@
-// src/App.jsx (Unused React import removed)
-// No 'import React from 'react';' needed here for basic JSX
+// src/App.jsx (Corrected Import Paths based on 'tree' output & user confirmation)
 
 import { Canvas } from '@react-three/fiber';
 
 // Core Layout and Scene Components
-// IMPORTANT: Ensure these paths and component names match your actual file structure!
-import Layout from './components/ui/Layout'; // Or './components/layout/Layout'
-import WebGLBackground from './components/webgl/WebGLBackground'; // Or './components/webgl/BackgroundScene'
+// Corrected import paths based on your 'tree' output
+import Layout from './components/ui/Layout'; // Corrected path to 'ui' directory
+import WebGLBackground from './components/webgl/WebGLBackground'; // <-- Using WebGLBackground as confirmed
 
 // Import Section Components
-// IMPORTANT: Ensure these paths and component names match your actual file structure!
-import Hero from './sections/Hero'; // Or './components/sections/HeroSection'
+// Corrected import path and component name based on your 'tree' output
+import Hero from './sections/Hero'; // Corrected path and name
 // Import other sections as they are created
 // import About from './sections/About';
 // import Features from './sections/Features';
@@ -21,27 +20,28 @@ function App() {
     <>
       {/* Fixed canvas using the 'style' prop */}
       <Canvas
-        // Apply positioning styles DIRECTLY via the style prop
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           width: '100vw',
           height: '100vh',
-          zIndex: -1, // Ensure it's behind HTML content
-          // pointerEvents: 'none', // Add if clicks need to pass through canvas
+          zIndex: -1,
         }}
-        camera={{ position: [0, 0, 5], fov: 50 }} // Camera settings
-        dpr={[1, 1.5]} // Performance: Clamp device pixel ratio
-        flat // Performance: Use linear tone mapping
+        camera={{ position: [0, 0, 5], fov: 50 }}
+        dpr={[1, 1.5]}
+        flat
       >
         {/* Render your WebGL scene component */}
-        <WebGLBackground />
+        {/* Ensure WebGLBackground component exists and filename matches import */}
+        <WebGLBackground /> {/* <-- Using WebGLBackground as confirmed */}
       </Canvas>
 
       {/* Layout component renders Navbar/Footer and scrolls over the canvas */}
+      {/* Ensure Layout component exists and is imported correctly */}
       <Layout>
         {/* Page sections are rendered as children of Layout */}
+        {/* Ensure Hero component exists and is imported correctly */}
         <Hero />
         {/* Add other sections here as they are created */}
         {/* <About /> */}
