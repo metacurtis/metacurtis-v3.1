@@ -1,52 +1,121 @@
+/* src/index.css */
+
+/* ==========================================================================
+   Tailwind Directives - Must come first
+   ========================================================================== */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom CSS Variables */
+/* ==========================================================================
+      Custom CSS Variables
+      ========================================================================== */
 :root {
+  /* Colors */
   --color-primary: #10b981;
   --color-secondary: #64748b;
-  --color-background: #0f172a;
+  --color-background: #0f172a; /* Matches dark WebGL bg */
+  /* Define as RGB for opacity support in theme */
+  --color-primary-rgb: 16 185 129;
+  --color-secondary-rgb: 100 116 139;
+  --color-text-base-rgb: 203 213 225; /* Example: slate-300 */
+  --color-bg-base-rgb: 255 255 255; /* Example: white (mostly unused if body transparent) */
+
+  /* Fonts */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'Fira Code', monospace;
 
-  /* Animation timing */
+  /* Animation Timing */
   --transition-slow: 0.5s;
   --transition-medium: 0.3s;
   --transition-fast: 0.15s;
 
-  /* Z-index layers */
+  /* Z-index Layers */
   --z-background: -10;
   --z-default: 1;
   --z-overlay: 10;
   --z-modal: 100;
   --z-tooltip: 1000;
+
+  /* Base Border Radius (Example) */
+  --border-radius-base: 0.5rem;
 }
 
-/* Global styles */
+/* ==========================================================================
+      Global Base Styles
+      ========================================================================== */
+
 html,
-body {
-  background-color: var(--color-background);
-  color: white;
+body,
+#root {
+  height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  font-family: var(--font-sans);
+  background-color: transparent; /* Allow fixed background canvas */
+  position: relative;
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* WebGL canvas */
+/* Apply base styles to Body */
+body {
+  /* Apply base font directly using the CSS variable */
+  font-family: var(--font-sans);
+  /* Apply base text color directly using the CSS variable */
+  color: rgb(var(--color-text-base-rgb));
+  /* Apply other utilities using @apply */
+  @apply antialiased;
+  min-height: 100vh; /* Ensure body takes at least viewport height */
+}
+
+/* ==========================================================================
+      Tailwind v4 CSS-based Theme Configuration - CORRECT SYNTAX
+      ========================================================================== */
+@theme {
+  /* Define theme values using CSS Custom Properties */
+  /* Tailwind maps these to its theme structure */
+
+  /* Colors: --color-<key>: <value> */
+  --color-primary: rgb(var(--color-primary-rgb));
+  --color-secondary: rgb(var(--color-secondary-rgb));
+  --color-text-base: rgb(var(--color-text-base-rgb));
+  --color-bg-base: rgb(var(--color-bg-base-rgb));
+
+  /* Font Family: --font-family-<key>: <value> */
+  --font-family-sans: var(--font-sans);
+  --font-family-mono: var(--font-mono);
+
+  /* Border Radius: --border-radius for default, --border-radius-<key> for others */
+  --border-radius: var(--border-radius-base);
+  --border-radius-md: calc(var(--border-radius-base));
+  --border-radius-lg: calc(var(--border-radius-base) * 1.5);
+  --border-radius-xl: calc(var(--border-radius-base) * 2);
+  --border-radius-full: 9999px;
+
+  /* Add other theme extensions using CSS custom properties */
+  /* Example: --spacing-128: 32rem; */
+}
+
+/* ==========================================================================
+      Element Specific Styles
+      ========================================================================== */
+
 canvas {
+  display: block;
   touch-action: none;
   outline: none;
 }
 
-/* Custom utility classes */
-@layer components {
+/* ==========================================================================
+      Custom Utility Classes
+      ========================================================================== */
+@layer utilities {
   .container-fluid {
     width: 100%;
     max-width: 1920px;
@@ -68,4 +137,11 @@ canvas {
     left: 50%;
     transform: translate(-50%, -50%);
   }
+}
+
+/* ==========================================================================
+      Custom Component Classes (Example)
+      ========================================================================== */
+@layer components {
+  /* .btn { ... } */
 }
