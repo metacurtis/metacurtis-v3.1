@@ -1,5 +1,5 @@
 // src/main.jsx (Reverted)
-import React from 'react';
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
