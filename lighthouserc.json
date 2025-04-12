@@ -18,7 +18,7 @@
         "meta-description": "off",
         "unused-javascript": ["warn", { "maxLength": 1 }],
         "robots-txt": "off",
-        "color-contrast": ["warn", {}] // <-- ADDED THIS LINE (Set to warn)
+        "color-contrast": ["warn", {}]
       }
     },
     "upload": {
