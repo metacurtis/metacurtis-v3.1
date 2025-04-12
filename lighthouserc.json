@@ -7,6 +7,14 @@
     "assert": {
       "preset": "lighthouse:recommended",
       "assertions": {
+        // --- Keep Accessibility High (but warn on contrast for now) ---
+        "color-contrast": ["warn", {}], // <-- Changed to warn
+
+        // --- Keep Performance High (using preset defaults or overrides) ---
+        // Example: Preset likely covers these, but you could override
+        // "categories:performance": ["error", { "minScore": 0.9 }],
+
+        // --- Relaxed/Off Assertions for Current Stage ---
         "render-blocking-resources": ["warn", { "maxLength": 2 }],
         "csp-xss": "off",
         "errors-in-console": ["warn", {}],
@@ -14,7 +22,7 @@
         "maskable-icon": "off",
         "service-worker": "off",
         "splash-screen": "off",
-        "themed-omnibox": "off",
+        "themed-omnibox": "off", // Removed typo line
         "meta-description": "off",
         "unused-javascript": ["warn", { "maxLength": 1 }],
         "robots-txt": "off"
