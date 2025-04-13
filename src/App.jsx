@@ -11,9 +11,9 @@ import WebGLBackground from './components/webgl/WebGLBackground'; // <-- Using W
 // Corrected import path and component name based on your 'tree' output
 import Hero from './sections/Hero'; // Corrected path and name
 // Import other sections as they are created
-// import About from './sections/About';
-// import Features from './sections/Features';
-// import Contact from './sections/Contact';
+import About from './sections/About';
+import Features from './sections/Features';
+import Contact from './sections/Contact';
 
 function App() {
   return (
@@ -44,9 +44,9 @@ function App() {
         {/* Ensure Hero component exists and is imported correctly */}
         <Hero />
         {/* Add other sections here as they are created */}
-        {/* <About /> */}
-        {/* <Features /> */}
-        {/* <Contact /> */}
+        <About />
+        <Features />
+        <Contact />
         {/* Temporary divs for spacing if needed during dev */}
         <div id="about" className="h-screen"></div> {/* Example spacer */}
         <div id="features" className="h-screen"></div> {/* Example spacer */}
