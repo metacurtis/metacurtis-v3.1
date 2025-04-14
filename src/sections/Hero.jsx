@@ -1,62 +1,107 @@
 // src/sections/Hero.jsx
-import { useRef, useEffect } from 'react'; // Import only needed Hooks
+import { useRef, useEffect } from 'react';
+import gsap from 'gsap'; // Import GSAP
 
 /**
- * The Hero section component - the first main content area users see.
+ * The Hero section component - GSAP entrance with explicit set and cleanup.
  */
 function Hero() {
-  // Refs for potential GSAP animations targeting specific elements
   const sectionRef = useRef(null);
-  const headingRef = useRef(null);
-  const paragraphRef = useRef(null);
+  const lettersContainerRef = useRef(null);
 
-  // Example placeholder for entrance animations triggered on mount
+  // GSAP Entrance Animation with Cleanup
   useEffect(() => {
-    // TODO: Implement GSAP entrance animations (e.g., fade in, slide up)
-    // Example using GSAP (make sure GSAP is imported/available if uncommented):
-    // const gsap = window.gsap; // Assuming GSAP is globally available or import it
-    // if (gsap && headingRef.current && paragraphRef.current) {
-    //   gsap.from(headingRef.current, { autoAlpha: 0, y: 50, duration: 1, ease: 'power3.out' });
-    //   gsap.from(paragraphRef.current, { autoAlpha: 0, y: 30, duration: 0.8, ease: 'power3.out', delay: 0.3 });
-    // }
-    console.log('Hero component mounted'); // Log for verification
-  }, []); // Empty dependency array means this runs once on mount
+    let tl; // Define timeline variable in the effect's scope
+    // Target elements using the ref with optional chaining for safety
+    const letters = lettersContainerRef.current?.children;
+
+    // Ensure the container ref and children exist and GSAP is available
+    if (letters && letters.length > 0 && gsap) {
+      // --- Explicitly Set Final State ---
+      // Set the elements to their final state (visible, at y=0) immediately.
+      // This ensures that the 'from' animation has a clear target to animate towards,
+      // even across HMR updates or StrictMode double-invokes.
+      gsap.set(letters, { autoAlpha: 1, y: 0 });
+      // --- End Explicit Set ---
+
+      // Create the timeline
+      tl = gsap.timeline();
+
+      // Define the 'from' animation
+      tl.from(letters, {
+        autoAlpha: 0, // Animate from invisible
+        y: 50, // Animate from 50px down
+        // scale: 0.5,    // Can add these back later if desired
+        // rotation: -15, // Can add these back later if desired
+        duration: 1.0,
+        ease: 'power4.out',
+        stagger: 0.15,
+      });
+      console.log('Hero component mounted, stagger animation triggered.');
+    } else {
+      console.log('Hero mount: GSAP targets not ready yet.');
+    }
+
+    // --- Cleanup Function ---
+    return () => {
+      if (tl) {
+        console.log('Cleaning up Hero animation timeline.');
+        // Kill the timeline AND immediately set elements back to final state
+        // to prevent flashes if the component remounts quickly
+        tl.kill();
+        // Optional: If elements sometimes flash hidden on fast HMR, uncommenting this set might help
+        // if (letters && letters.length > 0) {
+        //   gsap.set(letters, { autoAlpha: 1, y: 0 });
+        // }
+      }
+    };
+    // --- End Cleanup Function ---
+  }, []); // Empty dependency array ensures this runs only once on mount (per mount cycle)
 
   return (
-    // Section container with ID for navigation and ref for animation scope
     <section
-      id="hero" // <-- ID must match the Navbar link's href="#hero"
+      id="hero"
       ref={sectionRef}
-      // Basic styling: minimum viewport height, flex centering, padding, semi-transparent background
-      // Added relative positioning and overflow hidden as good practice for sections containing animations
       className="min-h-screen flex flex-col justify-center items-center text-center relative overflow-hidden px-4 py-20 bg-gradient-to-b from-sky-200/60 via-sky-100/40 to-transparent"
     >
-      {/* Content wrapper ensures content is above background canvas (z-10) */}
-      <div className="relative z-10 max-w-4xl">
-        {' '}
-        {/* Constrain content width */}
-        <h1
-          ref={headingRef}
-          // Responsive text size, bold weight, color, margin, line height
-          className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-gray-900 mb-6 leading-tight"
+      {/* Content Wrapper */}
+      <div className="relative z-20 max-w-4xl">
+        {/* Container for the letters */}
+        <div
+          ref={lettersContainerRef}
+          className="flex justify-center items-baseline space-x-1 sm:space-x-2 md:space-x-3 lg:space-x-4"
+          aria-label="MC3V"
         >
-          Engage & Experience {/* Placeholder Headline */}
-        </h1>
-        <p
-          ref={paragraphRef}
-          // Responsive text size, color, margin
-          className="text-lg sm:text-xl lg:text-2xl text-gray-700 mb-8"
-        >
-          Discover seamless interactivity powered by cutting-edge WebGL.{' '}
-          {/* Placeholder Sub-headline */}
-        </p>
-        {/* TODO: Add Call-to-Action Button(s) or other interactive elements */}
-        {/* Example using custom component class from index.css: */}
-        {/* <button className="btn btn-primary mt-8">Explore Now</button> */}
+          {/* NO initial opacity/visibility styles needed - GSAP handles it */}
+          <span
+            className="inline-block text-8xl md:text-9xl lg:text-[10rem] xl:text-[12rem] font-extrabold"
+            style={{ color: '#ff00ff' }}
+          >
+            M
+          </span>
+          <span
+            className="inline-block text-8xl md:text-9xl lg:text-[10rem] xl:text-[12rem] font-extrabold"
+            style={{ color: '#ff00ff' }}
+          >
+            C
+          </span>
+          <span
+            className="inline-block text-8xl md:text-9xl lg:text-[10rem] xl:text-[12rem] font-extrabold"
+            style={{ color: '#ff66ff' }}
+          >
+            3
+          </span>
+          <span
+            className="inline-block text-8xl md:text-9xl lg:text-[10rem] xl:text-[12rem] font-extrabold"
+            style={{ color: '#ff66ff' }}
+          >
+            V
+          </span>
+        </div>
+        {/* TODO: Add subtitle, scroll indicator, etc. */}
       </div>
     </section>
   );
 }
 
-// Ensure the default export matches the component name used in App.jsx's import
 export default Hero;
