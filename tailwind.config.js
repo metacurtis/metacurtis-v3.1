@@ -2,33 +2,45 @@ import { defineConfig } from 'tailwindcss';
 
 export default defineConfig({
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  // safelist: [],
   theme: {
     extend: {
       colors: {
-        primary: 'rgb(var(--color-primary-rgb) / <alpha-value>)',
-        secondary: 'rgb(var(--color-secondary-rgb) / <alpha-value>)',
-        background: 'var(--color-background)',
-        'text-base': 'rgb(var(--color-text-base-rgb) / <alpha-value>)',
-        'bg-base': 'rgb(var(--color-bg-base-rgb) / <alpha-value>)',
+        primary: '#10b981',
+        secondary: '#64748b',
+        background: '#0f172a',
+        'text-base': '#cbd5e1',
+        'bg-base': '#ffffff',
       },
       fontFamily: {
-        sans: ['var(--font-sans)'],
-        mono: ['var(--font-mono)'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['Fira Code', 'monospace'],
       },
       borderRadius: {
-        DEFAULT: 'var(--border-radius)',
-        md: 'var(--border-radius-md)',
-        lg: 'var(--border-radius-lg)',
-        xl: 'var(--border-radius-xl)',
-        full: 'var(--border-radius-full)',
+        DEFAULT: '0.5rem',
+        md: '0.5rem',
+        lg: '0.75rem',
+        xl: '1rem',
+        full: '9999px',
       },
       zIndex: {
-        background: 'var(--z-background)',
-        default: 'var(--z-default)',
-        overlay: 'var(--z-overlay)',
-        modal: 'var(--z-modal)',
-        tooltip: 'var(--z-tooltip)',
+        background: '-10',
+        default: '1',
+        overlay: '10',
+        modal: '100',
+        tooltip: '1000',
       },
+      // --- Add Custom Font Sizes ---
+      fontSize: {
+        // Define sizes corresponding to the defaults we tried to use
+        // Naming them slightly differently (e.g., hero-*) avoids potential conflicts
+        'hero-8xl': ['6rem', { lineHeight: '1' }], // Equivalent to text-8xl
+        'hero-9xl': ['8rem', { lineHeight: '1' }], // Equivalent to text-9xl
+        'hero-10r': ['10rem', { lineHeight: '1' }], // Equivalent to text-[10rem]
+        'hero-12r': ['12rem', { lineHeight: '1' }], // Equivalent to text-[12rem]
+        // Add other custom sizes if needed
+      },
+      // --- End Custom Font Sizes ---
     },
   },
   plugins: [],
