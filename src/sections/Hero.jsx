@@ -1,9 +1,9 @@
 // src/sections/Hero.jsx
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react'; // <-- Import useMemo
 import gsap from 'gsap';
 
 /**
- * The Hero section component - Fixed useEffect dependency warning.
+ * The Hero section component - Memoized letterRefs to fix exhaustive-deps warning.
  */
 function Hero() {
   const sectionRef = useRef(null);
@@ -12,21 +12,21 @@ function Hero() {
   const cRef = useRef(null);
   const ref3 = useRef(null);
   const vRef = useRef(null);
-  // Define letterRefs array - stable reference across renders in this case
-  const letterRefs = [mRef, cRef, ref3, vRef];
   const subtitleRef = useRef(null);
+
+  // Memoize the letterRefs array so its instance is stable across renders
+  const letterRefs = useMemo(() => [mRef, cRef, ref3, vRef], []); // <-- Wrapped in useMemo
 
   // GSAP Entrance Animation & Magnetic Effect Setup
   useEffect(() => {
     let mainTl;
-    // Note: Accessing .current inside useEffect is fine
     const letters = lettersContainerRef.current?.children;
     const subtitle = subtitleRef.current;
 
     // --- Magnetic Effect Setup ---
-    // Create setters only if refs are valid
     const setters = letterRefs
       .map(ref => {
+        // letterRefs is now stable
         if (!ref.current) return null;
         return {
           x: gsap.quickSetter(ref.current, 'x', 'px'),
@@ -38,11 +38,9 @@ function Hero() {
     const handleMouseMove = event => {
       const mouseX = event.clientX;
       const mouseY = event.clientY;
-
-      // Use letterRefs from outer scope here
       letterRefs.forEach((ref, index) => {
-        if (!ref.current || !setters[index]) return; // Check setter exists too
-
+        // letterRefs is now stable
+        if (!ref.current || !setters[index]) return;
         const rect = ref.current.getBoundingClientRect();
         const letterCenterX = rect.left + rect.width / 2;
         const letterCenterY = rect.top + rect.height / 2;
@@ -53,13 +51,11 @@ function Hero() {
         const maxShift = 25;
         let shiftX = 0;
         let shiftY = 0;
-
         if (distance < maxDistance) {
           const pullFactor = (maxDistance - distance) / maxDistance;
           shiftX = -(deltaX * Math.pow(pullFactor, 3) * (maxShift / maxDistance));
           shiftY = -(deltaY * Math.pow(pullFactor, 3) * (maxShift / maxDistance));
         }
-        // Use setter from outer scope
         setters[index].x(shiftX);
         setters[index].y(shiftY);
       });
@@ -101,20 +97,17 @@ function Hero() {
     return () => {
       console.log('Cleaning up Hero component...');
       if (mainTl) {
-        console.log('Killing entrance timeline.');
         mainTl.kill();
       }
       window.removeEventListener('mousemove', handleMouseMove);
-      console.log('Mousemove listener removed.');
-      // Use letterRefs from outer scope here for cleanup
+      // Use stable letterRefs here
       letterRefs.forEach(ref => {
         if (ref.current) {
           gsap.to(ref.current, { x: 0, y: 0, duration: 0.2 });
         }
       });
     };
-    // --- End Cleanup Function ---
-  }, [letterRefs]); // <-- Added letterRefs to dependency array
+  }, [letterRefs]); // Dependency array still includes letterRefs (now stable)
 
   return (
     <section
