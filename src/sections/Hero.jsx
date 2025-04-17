@@ -1,9 +1,14 @@
 // src/sections/Hero.jsx
-import { useRef, useEffect, useMemo } from 'react'; // <-- Import useMemo
+import { useRef, useEffect, useMemo } from 'react';
 import gsap from 'gsap';
+// ScrollToPlugin is often needed for more complex targets or offsets,
+// but basic ID targeting might work without explicit import/registration.
+// If scrolling fails, uncomment the next two lines:
+// import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+// gsap.registerPlugin(ScrollToPlugin);
 
 /**
- * The Hero section component - Memoized letterRefs to fix exhaustive-deps warning.
+ * The Hero section component - Letters are now clickable for scrolling.
  */
 function Hero() {
   const sectionRef = useRef(null);
@@ -12,57 +17,14 @@ function Hero() {
   const cRef = useRef(null);
   const ref3 = useRef(null);
   const vRef = useRef(null);
+  const letterRefs = useMemo(() => [mRef, cRef, ref3, vRef], []);
   const subtitleRef = useRef(null);
-
-  // Memoize the letterRefs array so its instance is stable across renders
-  const letterRefs = useMemo(() => [mRef, cRef, ref3, vRef], []); // <-- Wrapped in useMemo
 
   // GSAP Entrance Animation & Magnetic Effect Setup
   useEffect(() => {
     let mainTl;
     const letters = lettersContainerRef.current?.children;
     const subtitle = subtitleRef.current;
-
-    // --- Magnetic Effect Setup ---
-    const setters = letterRefs
-      .map(ref => {
-        // letterRefs is now stable
-        if (!ref.current) return null;
-        return {
-          x: gsap.quickSetter(ref.current, 'x', 'px'),
-          y: gsap.quickSetter(ref.current, 'y', 'px'),
-        };
-      })
-      .filter(Boolean);
-
-    const handleMouseMove = event => {
-      const mouseX = event.clientX;
-      const mouseY = event.clientY;
-      letterRefs.forEach((ref, index) => {
-        // letterRefs is now stable
-        if (!ref.current || !setters[index]) return;
-        const rect = ref.current.getBoundingClientRect();
-        const letterCenterX = rect.left + rect.width / 2;
-        const letterCenterY = rect.top + rect.height / 2;
-        const deltaX = letterCenterX - mouseX;
-        const deltaY = letterCenterY - mouseY;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const maxDistance = 300;
-        const maxShift = 25;
-        let shiftX = 0;
-        let shiftY = 0;
-        if (distance < maxDistance) {
-          const pullFactor = (maxDistance - distance) / maxDistance;
-          shiftX = -(deltaX * Math.pow(pullFactor, 3) * (maxShift / maxDistance));
-          shiftY = -(deltaY * Math.pow(pullFactor, 3) * (maxShift / maxDistance));
-        }
-        setters[index].x(shiftX);
-        setters[index].y(shiftY);
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    console.log('Adding mousemove listener for magnetic effect.');
 
     // --- Entrance Animation ---
     if (letters && letters.length > 0 && subtitle && gsap) {
@@ -93,21 +55,69 @@ function Hero() {
       console.log('Hero mount: Entrance animation targets not ready yet.');
     }
 
+    // --- Magnetic Effect Setup ---
+    const setters = letterRefs
+      .map(ref => {
+        if (!ref.current) return null;
+        return {
+          x: gsap.quickSetter(ref.current, 'x', 'px'),
+          y: gsap.quickSetter(ref.current, 'y', 'px'),
+        };
+      })
+      .filter(Boolean);
+
+    const handleMouseMove = event => {
+      const mouseX = event.clientX;
+      const mouseY = event.clientY;
+      letterRefs.forEach((ref, index) => {
+        if (!ref.current || !setters[index]) return;
+        const rect = ref.current.getBoundingClientRect();
+        const letterCenterX = rect.left + rect.width / 2;
+        const letterCenterY = rect.top + rect.height / 2;
+        const deltaX = letterCenterX - mouseX;
+        const deltaY = letterCenterY - mouseY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const maxDistance = 300;
+        const maxShift = 25;
+        let shiftX = 0;
+        let shiftY = 0;
+        if (distance < maxDistance) {
+          const pullFactor = (maxDistance - distance) / maxDistance;
+          shiftX = -(deltaX * Math.pow(pullFactor, 3) * (maxShift / maxDistance));
+          shiftY = -(deltaY * Math.pow(pullFactor, 3) * (maxShift / maxDistance));
+        }
+        setters[index].x(shiftX);
+        setters[index].y(shiftY);
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
     // --- Cleanup Function ---
     return () => {
-      console.log('Cleaning up Hero component...');
       if (mainTl) {
         mainTl.kill();
       }
       window.removeEventListener('mousemove', handleMouseMove);
-      // Use stable letterRefs here
       letterRefs.forEach(ref => {
         if (ref.current) {
           gsap.to(ref.current, { x: 0, y: 0, duration: 0.2 });
         }
       });
     };
-  }, [letterRefs]); // Dependency array still includes letterRefs (now stable)
+  }, [letterRefs]); // Added letterRefs back as dependency after memoization
+
+  // --- ScrollTo Function ---
+  const scrollToSection = sectionId => {
+    console.log(`Scrolling to: ${sectionId}`);
+    gsap.to(window, {
+      duration: 1.5, // Adjust duration as needed
+      ease: 'power3.inOut', // Smooth easing
+      scrollTo: {
+        y: `#${sectionId}`, // Target the section ID
+        offsetY: 80, // Optional: offset from the top (adjust for sticky navbar height)
+      },
+    });
+  };
 
   return (
     <section
@@ -121,32 +131,36 @@ function Hero() {
           className="letters-container flex justify-center items-baseline space-x-1 sm:space-x-2 md:space-x-3 lg:space-x-4"
           aria-label="MC3V"
         >
-          {/* Assign refs to each letter span */}
+          {/* Added onClick handlers and cursor-pointer */}
           <span
             ref={mRef}
-            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white"
+            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white cursor-pointer" // Added cursor-pointer
             style={{ color: '#ff00ff' }}
+            onClick={() => scrollToSection('hero')} // Example: M scrolls to Hero (top)
           >
             M
           </span>
           <span
             ref={cRef}
-            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white"
+            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white cursor-pointer" // Added cursor-pointer
             style={{ color: '#ff00ff' }}
+            onClick={() => scrollToSection('about')} // Example: C scrolls to About
           >
             C
           </span>
           <span
             ref={ref3}
-            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white"
+            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white cursor-pointer" // Added cursor-pointer
             style={{ color: '#ff66ff' }}
+            onClick={() => scrollToSection('features')} // Example: 3 scrolls to Features
           >
             3
           </span>
           <span
             ref={vRef}
-            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white"
+            className="inline-block text-[6rem] md:text-[8rem] lg:text-[10rem] xl:text-[12rem] font-extrabold text-white cursor-pointer" // Added cursor-pointer
             style={{ color: '#ff66ff' }}
+            onClick={() => scrollToSection('contact')} // Example: V scrolls to Contact
           >
             V
           </span>
