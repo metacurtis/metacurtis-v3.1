@@ -1,123 +1,93 @@
 // src/components/webgl/WebGLBackground.jsx
-import * as THREE from 'three'; // Import THREE namespace
-import { useMemo, useRef, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { useInteractionStore } from '@/stores/useInteractionStore'; // Import Zustand store (ensure alias @ works or use relative path)
+import * as THREE from 'three';
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+// Removed store/useThree imports for now as interactions are temporarily disabled
 
 // Settings
-const particleCount = 5000;
-const particleSize = 0.05;
+const particleCount = 7000; // Increased count for denser field like reference
+const particleBaseSize = 0.02; // Base size for points material
 const fieldRadius = 10;
-const cursorInteractionRadius = 1.5;
-const cursorRepulsionStrength = 0.05;
-
-// Colors for scroll interpolation
-const topColor = new THREE.Color('#ffffff'); // White at top
-const bottomColor = new THREE.Color('#ff00ff'); // Magenta at bottom (example)
 
 /**
- * Renders the background WebGL scene with particles reacting to cursor and scroll.
+ * Renders the background WebGL scene using PointsMaterial for particles.
  */
 function WebGLBackground() {
-  const instancedMeshRef = useRef();
-  const materialRef = useRef(); // Ref for the material to change its color
-  const dummyRef = useRef(new THREE.Object3D());
-  const { viewport, mouse } = useThree();
+  const pointsRef = useRef();
 
-  // --- Get Scroll Progress from Zustand Store ---
-  // This hook subscribes the component to changes in scrollProgress
-  const scrollProgress = useInteractionStore(state => state.scrollProgress);
-
-  // Generate particle data
-  const particlesData = useMemo(() => {
+  // Generate particle positions and colors only once
+  const [positions, colors] = useMemo(() => {
     const positions = new Float32Array(particleCount * 3);
-    const data = Array.from({ length: particleCount }, () => ({
-      initialY: 0,
-      offset: Math.random() * Math.PI * 2,
-      speedFactor: 0.5 + Math.random() * 0.5,
-      amplitudeFactor: 0.05 + Math.random() * 0.1,
-    }));
-    const tempVec = new THREE.Vector3();
+    const colors = new Float32Array(particleCount * 3); // RGB for each particle
+    const color = new THREE.Color(); // Helper to set colors
+
     for (let i = 0; i < particleCount; i++) {
-      tempVec.randomDirection().multiplyScalar(Math.random() * fieldRadius);
-      tempVec.toArray(positions, i * 3);
-      data[i].initialY = tempVec.y;
+      const i3 = i * 3;
+
+      // Position (random sphere distribution)
+      const radius = Math.random() * fieldRadius;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1); // Correct spherical distribution
+
+      positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i3 + 2] = radius * Math.cos(phi);
+
+      // Color (Example: lerp between magenta and purple based on distance from center)
+      const distanceFromCenter = Math.sqrt(
+        positions[i3] ** 2 + positions[i3 + 1] ** 2 + positions[i3 + 2] ** 2
+      );
+      const colorFactor = Math.min(distanceFromCenter / (fieldRadius * 0.8), 1.0); // Normalize distance
+      color.lerpColors(new THREE.Color('#ff00ff'), new THREE.Color('#8800ff'), colorFactor);
+      color.toArray(colors, i3);
     }
-    return { positions, data };
-  }, []);
+    return [positions, colors];
+  }, []); // Empty dependency array ensures this runs only once
 
-  // Initialize instance matrices
-  useEffect(() => {
-    const mesh = instancedMeshRef.current;
-    if (!mesh) return;
-    const dummy = dummyRef.current;
-    for (let i = 0; i < particleCount; i++) {
-      dummy.position.fromArray(particlesData.positions, i * 3);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
+  // Animate the whole system (simple rotation for now)
+  useFrame((state, delta) => {
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y += delta * 0.05; // Slow rotation
+      // TODO: Implement more complex particle movement later
     }
-    mesh.instanceMatrix.needsUpdate = true;
-    console.log('Particle instances initialized.');
-  }, [particlesData]);
-
-  // Animate particles, add cursor interaction, and scroll color change
-  // Rename 'delta' to '_delta' as it's unused in this effect
-  useFrame((state, _delta) => {
-    const mesh = instancedMeshRef.current;
-    const material = materialRef.current;
-    if (!mesh || !material) return; // Ensure mesh and material exist
-    const dummy = dummyRef.current;
-    const time = state.clock.elapsedTime;
-
-    // --- Update Particle Color based on Scroll ---
-    // Interpolate color based on scrollProgress (0=top, 1=bottom)
-    // The lerpColors function modifies the first color (material.color) in place
-    material.color.lerpColors(topColor, bottomColor, scrollProgress);
-
-    // --- Cursor Interaction ---
-    const pointer = new THREE.Vector3(
-      (mouse.x * viewport.width) / 2,
-      (mouse.y * viewport.height) / 2,
-      0
-    );
-
-    // --- Update Particle Positions (Oscillation + Repulsion) ---
-    for (let i = 0; i < particleCount; i++) {
-      dummy.position.fromArray(particlesData.positions, i * 3);
-      const { initialY, offset, speedFactor, amplitudeFactor } = particlesData.data[i];
-      const oscillation = Math.sin(time * speedFactor + offset) * amplitudeFactor;
-      dummy.position.y = initialY + oscillation;
-
-      const distanceToCursor = dummy.position.distanceTo(pointer);
-      if (distanceToCursor < cursorInteractionRadius) {
-        const repulsionFactor = 1 - distanceToCursor / cursorInteractionRadius;
-        const repulsionVec = dummy.position.clone().sub(pointer).normalize();
-        dummy.position.addScaledVector(repulsionVec, repulsionFactor * cursorRepulsionStrength);
-      }
-
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
   });
 
   return (
     <>
-      {/* Set background color explicitly to black */}
+      {/* Black background */}
       <color attach="background" args={['#000000']} />
+      {/* No lights needed for PointsMaterial with vertexColors */}
+      {/* <ambientLight intensity={0.4} /> */}
 
-      {/* Reduced ambient light intensity for better contrast */}
-      <ambientLight intensity={0.4} />
-
-      <instancedMesh
-        ref={instancedMeshRef}
-        args={[null, null, particleCount]}
-        frustumCulled={false}
-      >
-        <sphereGeometry args={[particleSize, 8, 8]} />
-        {/* Assign ref to material and start with topColor (white) */}
-        <meshStandardMaterial ref={materialRef} color={topColor} roughness={0.5} />
-      </instancedMesh>
+      {/* Points primitive for rendering particles */}
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          {/* Define attributes for position and color */}
+          <bufferAttribute
+            attach="attributes-position" // Use 'attributes-position' shortcut
+            count={particleCount}
+            array={positions}
+            itemSize={3} // x, y, z
+          />
+          <bufferAttribute
+            attach="attributes-color" // Use 'attributes-color' shortcut
+            count={particleCount}
+            array={colors}
+            itemSize={3} // r, g, b
+            normalized={false} // Colors are 0.0 to 1.0
+          />
+        </bufferGeometry>
+        {/* Material for rendering points */}
+        <pointsMaterial
+          size={particleBaseSize}
+          vertexColors={true} // <-- Tell material to use the 'color' attribute
+          sizeAttenuation={true} // Make points smaller further away
+          depthWrite={false} // Often good for particle blending
+          blending={THREE.AdditiveBlending} // <-- Creates a brighter, glowy effect
+          transparent={true} // Needed for additive blending
+          opacity={0.8} // Adjust opacity
+        />
+      </points>
     </>
   );
 }
