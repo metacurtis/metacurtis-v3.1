@@ -1,8 +1,34 @@
 import { defineConfig } from 'tailwindcss';
 
 export default defineConfig({
-  content: ['./index.html', './src/**/*.{js,jsx}'],
-  // safelist: [],
+  content: [
+    './index.html',
+    './src/**/*.{js,jsx}',
+    './src/components/**/*.{js,jsx}',
+    './src/sections/**/*.{js,jsx}',
+  ],
+  safelist: [
+    'text-hero-base',
+    'text-hero-md',
+    'text-hero-lg',
+    'text-hero-xl',
+    'sm:text-hero-base',
+    'md:text-hero-base',
+    'lg:text-hero-base',
+    'xl:text-hero-base',
+    'sm:text-hero-md',
+    'md:text-hero-md',
+    'lg:text-hero-md',
+    'xl:text-hero-md',
+    'sm:text-hero-lg',
+    'md:text-hero-lg',
+    'lg:text-hero-lg',
+    'xl:text-hero-lg',
+    'sm:text-hero-xl',
+    'md:text-hero-xl',
+    'lg:text-hero-xl',
+    'xl:text-hero-xl',
+  ],
   theme: {
     extend: {
       colors: {
@@ -30,17 +56,12 @@ export default defineConfig({
         modal: '100',
         tooltip: '1000',
       },
-      // --- Add Custom Font Sizes ---
       fontSize: {
-        // Define sizes corresponding to the defaults we tried to use
-        // Naming them slightly differently (e.g., hero-*) avoids potential conflicts
-        'hero-8xl': ['6rem', { lineHeight: '1' }], // Equivalent to text-8xl
-        'hero-9xl': ['8rem', { lineHeight: '1' }], // Equivalent to text-9xl
-        'hero-10r': ['10rem', { lineHeight: '1' }], // Equivalent to text-[10rem]
-        'hero-12r': ['12rem', { lineHeight: '1' }], // Equivalent to text-[12rem]
-        // Add other custom sizes if needed
+        'hero-base': ['6rem', { lineHeight: '1' }],
+        'hero-md': ['8rem', { lineHeight: '1' }],
+        'hero-lg': ['10rem', { lineHeight: '1' }],
+        'hero-xl': ['12rem', { lineHeight: '1' }],
       },
-      // --- End Custom Font Sizes ---
     },
   },
   plugins: [],

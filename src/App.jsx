@@ -1,56 +1,87 @@
-// src/App.jsx (Corrected Import Paths based on 'tree' output & user confirmation)
-
+// src/App.jsx (Restoring Correct Canvas Style)
+import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 
-// Core Layout and Scene Components
-// Corrected import paths based on your 'tree' output
-import Layout from './components/ui/Layout'; // Corrected path to 'ui' directory
-import WebGLBackground from './components/webgl/WebGLBackground'; // <-- Using WebGLBackground as confirmed
+// Store Hook & Action
+import { useInteractionStore } from './stores/useInteractionStore'; // Verify path
 
-// Import Section Components
-// Corrected import path and component name based on your 'tree' output
-import Hero from './sections/Hero'; // Corrected path and name
-// Import other sections as they are created
-import About from './sections/About';
-import Features from './sections/Features';
-import Contact from './sections/Contact';
+// Core Components
+import Layout from './components/ui/Layout'; // Verify path
+import WebGLBackground from './components/webgl/WebGLBackground'; // Verify path/name
+import CanvasSizeUpdater from './components/webgl/CanvasSizeUpdater'; // Verify path
+
+// Section Components
+import Hero from './sections/Hero'; // Verify path
+import About from './sections/About'; // Verify path
+import Features from './sections/Features'; // Verify path
+import Contact from './sections/Contact'; // Verify path
 
 function App() {
+  // Get actions from the Zustand store
+  const setCursorPosition = useInteractionStore(state => state.setCursorPosition);
+  const setScrollProgress = useInteractionStore(state => state.setScrollProgress);
+
+  // Effect for Mouse Listener
+  useEffect(() => {
+    const handleMouseMove = event => {
+      setCursorPosition({ x: event.clientX, y: event.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    console.log('App mounted, mousemove listener added.');
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      console.log('App unmounting, mousemove listener removed.');
+    };
+  }, [setCursorPosition]);
+
+  // Effect for Scroll Listener
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const windowHeight = window.innerHeight;
+      const maxScrollTop = docHeight - windowHeight;
+      const progress = maxScrollTop > 0 ? scrollTop / maxScrollTop : 0;
+      const clampedProgress = Math.max(0, Math.min(1, progress));
+      setScrollProgress(clampedProgress);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    console.log('App mounted, scroll listener added.');
+    handleScroll(); // Call initially
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      console.log('App unmounting, scroll listener removed.');
+    };
+  }, [setScrollProgress]);
+
   return (
     <>
-      {/* Fixed canvas using the 'style' prop */}
+      {/* Canvas with CORRECT fixed background style */}
       <Canvas
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: -1,
+          width: '100vw', // <-- Correct full width
+          height: '100vh', // <-- Correct full height
+          zIndex: -1, // <-- Correct background z-index
         }}
+        // Restore other props
         camera={{ position: [0, 0, 5], fov: 50 }}
         dpr={[1, 1.5]}
         flat
       >
-        {/* Render your WebGL scene component */}
-        {/* Ensure WebGLBackground component exists and filename matches import */}
-        <WebGLBackground /> {/* <-- Using WebGLBackground as confirmed */}
+        {/* Restore children */}
+        <WebGLBackground />
+        <CanvasSizeUpdater />
       </Canvas>
 
-      {/* Layout component renders Navbar/Footer and scrolls over the canvas */}
-      {/* Ensure Layout component exists and is imported correctly */}
+      {/* Layout renders on top */}
       <Layout>
-        {/* Page sections are rendered as children of Layout */}
-        {/* Ensure Hero component exists and is imported correctly */}
         <Hero />
-        {/* Add other sections here as they are created */}
         <About />
         <Features />
         <Contact />
-        {/* Temporary divs for spacing if needed during dev */}
-        <div id="about" className="h-screen"></div> {/* Example spacer */}
-        <div id="features" className="h-screen"></div> {/* Example spacer */}
-        <div id="contact" className="h-screen"></div> {/* Example spacer */}
       </Layout>
     </>
   );

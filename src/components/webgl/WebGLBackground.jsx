@@ -1,47 +1,56 @@
 // src/components/webgl/WebGLBackground.jsx
-import * as THREE from 'three';
+import * as THREE from 'three'; // Import THREE namespace
 import { useMemo, useRef, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useInteractionStore } from '@/stores/useInteractionStore'; // Import Zustand store (ensure alias @ works or use relative path)
 
-// Settings for the particle system
-const particleCount = 5000; // Number of particles
-const particleSize = 0.05; // Size of each particle
-const fieldRadius = 10; // Radius of the sphere particles are distributed in
+// Settings
+const particleCount = 5000;
+const particleSize = 0.05;
+const fieldRadius = 10;
+const cursorInteractionRadius = 1.5;
+const cursorRepulsionStrength = 0.05;
+
+// Colors for scroll interpolation
+const topColor = new THREE.Color('#ffffff'); // White at top
+const bottomColor = new THREE.Color('#ff00ff'); // Magenta at bottom (example)
 
 /**
- * Renders the background WebGL scene with an animated particle system.
+ * Renders the background WebGL scene with particles reacting to cursor and scroll.
  */
 function WebGLBackground() {
   const instancedMeshRef = useRef();
-  // Ref to store the dummy object for matrix updates
+  const materialRef = useRef(); // Ref for the material to change its color
   const dummyRef = useRef(new THREE.Object3D());
+  const { viewport, mouse } = useThree();
 
-  // Generate random particle positions and initial animation offsets only once
+  // --- Get Scroll Progress from Zustand Store ---
+  // This hook subscribes the component to changes in scrollProgress
+  const scrollProgress = useInteractionStore(state => state.scrollProgress);
+
+  // Generate particle data
   const particlesData = useMemo(() => {
     const positions = new Float32Array(particleCount * 3);
     const data = Array.from({ length: particleCount }, () => ({
-      // Store initial y position and random factors for animation variation
       initialY: 0,
-      offset: Math.random() * Math.PI * 2, // Random phase offset
-      speedFactor: 0.5 + Math.random() * 0.5, // Random speed variation
-      amplitudeFactor: 0.05 + Math.random() * 0.1, // Random movement amplitude variation
+      offset: Math.random() * Math.PI * 2,
+      speedFactor: 0.5 + Math.random() * 0.5,
+      amplitudeFactor: 0.05 + Math.random() * 0.1,
     }));
     const tempVec = new THREE.Vector3();
-
     for (let i = 0; i < particleCount; i++) {
       tempVec.randomDirection().multiplyScalar(Math.random() * fieldRadius);
       tempVec.toArray(positions, i * 3);
-      data[i].initialY = tempVec.y; // Store initial Y for oscillation calculation
+      data[i].initialY = tempVec.y;
     }
     return { positions, data };
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
 
-  // Set initial instance transforms only once after mount
+  // Initialize instance matrices
   useEffect(() => {
     const mesh = instancedMeshRef.current;
     if (!mesh) return;
     const dummy = dummyRef.current;
-
     for (let i = 0; i < particleCount; i++) {
       dummy.position.fromArray(particlesData.positions, i * 3);
       dummy.updateMatrix();
@@ -49,40 +58,55 @@ function WebGLBackground() {
     }
     mesh.instanceMatrix.needsUpdate = true;
     console.log('Particle instances initialized.');
-  }, [particlesData]); // Depend on particlesData
+  }, [particlesData]);
 
-  // Animate particles on each frame
+  // Animate particles, add cursor interaction, and scroll color change
   useFrame((state, delta) => {
     const mesh = instancedMeshRef.current;
-    if (!mesh) return;
+    const material = materialRef.current;
+    if (!mesh || !material) return; // Ensure mesh and material exist
     const dummy = dummyRef.current;
     const time = state.clock.elapsedTime;
 
+    // --- Update Particle Color based on Scroll ---
+    // Interpolate color based on scrollProgress (0=top, 1=bottom)
+    // The lerpColors function modifies the first color (material.color) in place
+    material.color.lerpColors(topColor, bottomColor, scrollProgress);
+
+    // --- Cursor Interaction ---
+    const pointer = new THREE.Vector3(
+      (mouse.x * viewport.width) / 2,
+      (mouse.y * viewport.height) / 2,
+      0
+    );
+
+    // --- Update Particle Positions (Oscillation + Repulsion) ---
     for (let i = 0; i < particleCount; i++) {
-      // Get current matrix (optional, can recalculate from initial pos)
-      // mesh.getMatrixAt(i, dummy.matrix);
-      // dummy.position.setFromMatrixPosition(dummy.matrix);
-
-      // Start from initial position
       dummy.position.fromArray(particlesData.positions, i * 3);
-
-      // Apply oscillation based on time, initial position, and random factors
       const { initialY, offset, speedFactor, amplitudeFactor } = particlesData.data[i];
-      dummy.position.y = initialY + Math.sin(time * speedFactor + offset) * amplitudeFactor;
+      const oscillation = Math.sin(time * speedFactor + offset) * amplitudeFactor;
+      dummy.position.y = initialY + oscillation;
 
-      // Update the matrix for this instance
+      const distanceToCursor = dummy.position.distanceTo(pointer);
+      if (distanceToCursor < cursorInteractionRadius) {
+        const repulsionFactor = 1 - distanceToCursor / cursorInteractionRadius;
+        const repulsionVec = dummy.position.clone().sub(pointer).normalize();
+        dummy.position.addScaledVector(repulsionVec, repulsionFactor * cursorRepulsionStrength);
+      }
+
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     }
-
-    // VERY Important: Flag the instance matrix as needing an update
     mesh.instanceMatrix.needsUpdate = true;
   });
 
   return (
     <>
-      <ambientLight intensity={0.8} />
-      {/* <directionalLight position={[5, 5, -5]} intensity={0.3} /> */}
+      {/* Using default black background now */}
+      <color attach="background" args={['#000000']} />
+
+      {/* Reduced ambient light intensity for better contrast with white/magenta */}
+      <ambientLight intensity={0.4} />
 
       <instancedMesh
         ref={instancedMeshRef}
@@ -90,7 +114,8 @@ function WebGLBackground() {
         frustumCulled={false}
       >
         <sphereGeometry args={[particleSize, 8, 8]} />
-        <meshStandardMaterial color="#888888" roughness={0.5} />
+        {/* Assign ref to material and start with topColor (white) */}
+        <meshStandardMaterial ref={materialRef} color={topColor} roughness={0.5} />
       </instancedMesh>
     </>
   );
