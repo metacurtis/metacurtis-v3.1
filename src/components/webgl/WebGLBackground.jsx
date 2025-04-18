@@ -1,8 +1,8 @@
 // src/components/webgl/WebGLBackground.jsx
-import * as THREE from 'three'; // Import THREE namespace
+import * as THREE from 'three';
 import { useMemo, useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useInteractionStore } from '@/stores/useInteractionStore'; // Import Zustand store (ensure alias @ works or use relative path)
+import { useInteractionStore } from '@/stores/useInteractionStore'; // Adjust path if needed
 
 // Settings
 const particleCount = 5000;
@@ -13,19 +13,17 @@ const cursorRepulsionStrength = 0.05;
 
 // Colors for scroll interpolation
 const topColor = new THREE.Color('#ffffff'); // White at top
-const bottomColor = new THREE.Color('#ff00ff'); // Magenta at bottom (example)
+const bottomColor = new THREE.Color('#ff00ff'); // Magenta at bottom
 
 /**
  * Renders the background WebGL scene with particles reacting to cursor and scroll.
+ * Fixed unused 'delta' variable warning.
  */
 function WebGLBackground() {
   const instancedMeshRef = useRef();
-  const materialRef = useRef(); // Ref for the material to change its color
+  const materialRef = useRef();
   const dummyRef = useRef(new THREE.Object3D());
   const { viewport, mouse } = useThree();
-
-  // --- Get Scroll Progress from Zustand Store ---
-  // This hook subscribes the component to changes in scrollProgress
   const scrollProgress = useInteractionStore(state => state.scrollProgress);
 
   // Generate particle data
@@ -61,26 +59,26 @@ function WebGLBackground() {
   }, [particlesData]);
 
   // Animate particles, add cursor interaction, and scroll color change
-  useFrame((state, delta) => {
+  // Rename 'delta' to '_delta' as it's unused in this effect
+  useFrame((state, _delta) => {
+    // <-- RENAMED delta to _delta
     const mesh = instancedMeshRef.current;
     const material = materialRef.current;
-    if (!mesh || !material) return; // Ensure mesh and material exist
+    if (!mesh || !material) return;
     const dummy = dummyRef.current;
-    const time = state.clock.elapsedTime;
+    const time = state.clock.elapsedTime; // Use time from state instead of delta
 
-    // --- Update Particle Color based on Scroll ---
-    // Interpolate color based on scrollProgress (0=top, 1=bottom)
-    // The lerpColors function modifies the first color (material.color) in place
+    // Update Particle Color based on Scroll
     material.color.lerpColors(topColor, bottomColor, scrollProgress);
 
-    // --- Cursor Interaction ---
+    // Cursor Interaction
     const pointer = new THREE.Vector3(
       (mouse.x * viewport.width) / 2,
       (mouse.y * viewport.height) / 2,
       0
     );
 
-    // --- Update Particle Positions (Oscillation + Repulsion) ---
+    // Update Particle Positions
     for (let i = 0; i < particleCount; i++) {
       dummy.position.fromArray(particlesData.positions, i * 3);
       const { initialY, offset, speedFactor, amplitudeFactor } = particlesData.data[i];
@@ -102,19 +100,14 @@ function WebGLBackground() {
 
   return (
     <>
-      {/* Using default black background now */}
       <color attach="background" args={['#000000']} />
-
-      {/* Reduced ambient light intensity for better contrast with white/magenta */}
       <ambientLight intensity={0.4} />
-
       <instancedMesh
         ref={instancedMeshRef}
         args={[null, null, particleCount]}
         frustumCulled={false}
       >
         <sphereGeometry args={[particleSize, 8, 8]} />
-        {/* Assign ref to material and start with topColor (white) */}
         <meshStandardMaterial ref={materialRef} color={topColor} roughness={0.5} />
       </instancedMesh>
     </>
