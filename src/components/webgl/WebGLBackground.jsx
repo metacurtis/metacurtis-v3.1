@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber'; // Re-add useThree
-import { useInteractionStore } from '@/stores/useInteractionStore'; // Keep store import for scroll
+import { useInteractionStore } from '@/stores/useInteractionStore'; // Re-add store import
 
 // --- GLSL Noise Function (Simplex 3D) ---
 const glslSimplexNoise = `
@@ -87,18 +87,20 @@ const rawVertexShader = `
 const rawFragmentShader = `
   precision mediump float;
 
-  // Uniforms for scroll color interpolation
+  // Uniforms for scroll color interpolation - ADDED BACK
   uniform float uScrollProgress;
-  uniform vec3 uColorA; // Magenta
-  uniform vec3 uColorB; // Cyan
+  uniform vec3 uColorA; // e.g., Magenta
+  uniform vec3 uColorB; // e.g., Cyan
 
   void main() {
-    // Calculate scroll color lerp
+    // Calculate scroll color lerp - ADDED BACK
     vec3 finalColor = mix(uColorA, uColorB, uScrollProgress);
 
-    // Circular point shape with soft edges
+    // Circular point shape with soft edges - ADDED BACK
     float distanceToCenter = length(gl_PointCoord - vec2(0.5));
     float alpha = 1.0 - smoothstep(0.45, 0.5, distanceToCenter);
+
+    // Discard fully transparent pixels - ADDED BACK
     if (alpha < 0.01) discard;
 
     // Set final color and alpha
@@ -113,15 +115,16 @@ const particleCount = 7000;
 const fieldRadius = 10;
 const cursorInteractionRadius = 1.5;
 const cursorRepulsionStrength = 1.5;
+// Define colors for the mix
 const colorA = new THREE.Color('#ff00ff'); // Magenta
 const colorB = new THREE.Color('#00ffff'); // Cyan
 
 function WebGLBackground() {
   const pointsRef = useRef();
-  const materialRef = useRef();
+  const materialRef = useRef(); // Ref needed to update uniforms
   // Get interaction states
   const { viewport, mouse } = useThree(); // <-- Need mouse/viewport for cursor pos
-  const scrollProgress = useInteractionStore(state => state.scrollProgress);
+  const scrollProgress = useInteractionStore(state => state.scrollProgress); // Need scroll
 
   // Generate particle positions and animation factors
   const [positions, animFactors1, animFactors2] = useMemo(() => {
@@ -146,15 +149,15 @@ function WebGLBackground() {
     return [positions, animFactors1, animFactors2];
   }, []);
 
-  // Define uniforms for RawShaderMaterial, including cursor interaction
+  // Define uniforms for RawShaderMaterial, including interactions
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0.0 },
-      uSize: { value: 0.015 },
-      uScrollProgress: { value: 0.0 },
-      uColorA: { value: colorA },
+      uSize: { value: 0.015 }, // Keep smaller size
+      uScrollProgress: { value: 0.0 }, // Add scroll uniform
+      uColorA: { value: colorA }, // Add color uniforms
       uColorB: { value: colorB },
-      uCursorPos: { value: new THREE.Vector3() }, // Add cursor uniform
+      uCursorPos: { value: new THREE.Vector3() }, // Add cursor uniforms
       uCursorRadius: { value: cursorInteractionRadius },
       uRepulsionStrength: { value: cursorRepulsionStrength },
     }),
@@ -166,24 +169,25 @@ function WebGLBackground() {
     () =>
       new THREE.RawShaderMaterial({
         uniforms: uniforms,
-        vertexShader: rawVertexShader,
-        fragmentShader: rawFragmentShader,
+        vertexShader: rawVertexShader, // Includes noise AND cursor logic
+        fragmentShader: rawFragmentShader, // Includes scroll color logic
         depthWrite: false,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
+        transparent: true, // Needed for soft edges / blending
+        blending: THREE.AdditiveBlending, // Use additive blending
       }),
     [uniforms]
   );
 
   // Update uniforms on each frame
   useFrame(state => {
-    // Update time and scroll uniforms
-    if (material?.uniforms) {
-      material.uniforms.uTime.value = state.clock.elapsedTime;
-      material.uniforms.uScrollProgress.value = scrollProgress;
-
+    // Check if uniforms exist before updating
+    if (materialRef.current?.uniforms) {
+      // Use ref to access material uniforms
+      materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+      // Update scroll progress uniform from Zustand store
+      materialRef.current.uniforms.uScrollProgress.value = scrollProgress;
       // Update cursor position uniform - ADDED BACK
-      material.uniforms.uCursorPos.value.set(
+      materialRef.current.uniforms.uCursorPos.value.set(
         (mouse.x * viewport.width) / 2,
         (mouse.y * viewport.height) / 2,
         0 // Assuming interaction on z=0 plane
@@ -194,8 +198,11 @@ function WebGLBackground() {
   return (
     <>
       <color attach="background" args={['#000000']} />
+      {/* No lights needed */}
+
       <points ref={pointsRef}>
         <bufferGeometry>
+          {/* Attach position AND custom animation factor attributes */}
           <bufferAttribute
             attach="attributes-position"
             count={particleCount}
@@ -215,6 +222,7 @@ function WebGLBackground() {
             itemSize={4}
           />
         </bufferGeometry>
+        {/* Attach the RawShaderMaterial instance using primitive */}
         <primitive object={material} attach="material" ref={materialRef} />
       </points>
     </>
