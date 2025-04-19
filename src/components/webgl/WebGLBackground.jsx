@@ -1,11 +1,10 @@
 // src/components/webgl/WebGLBackground.jsx
-// Reverted to using RawShaderMaterial directly in this component
 import * as THREE from 'three';
 import { useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { useInteractionStore } from '@/stores/useInteractionStore'; // Re-add store import
+import { useFrame, useThree } from '@react-three/fiber'; // Re-add useThree
+import { useInteractionStore } from '@/stores/useInteractionStore'; // Keep store import for scroll
 
-// --- GLSL Noise Function ---
+// --- GLSL Noise Function (Simplex 3D) ---
 const glslSimplexNoise = `
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -39,28 +38,47 @@ const glslSimplexNoise = `
 
 const rawVertexShader = `
   precision mediump float;
-  uniform mat4 modelViewMatrix; uniform mat4 projectionMatrix;
-  uniform float uTime; uniform float uSize;
-  uniform vec3 uCursorPos; uniform float uCursorRadius; uniform float uRepulsionStrength;
-  attribute vec3 position;
-  attribute vec4 animFactors1; attribute vec4 animFactors2;
 
-  ${glslSimplexNoise} // Inject noise function
+  // --- UNIFORMS ---
+  uniform mat4 modelViewMatrix;
+  uniform mat4 projectionMatrix;
+  uniform float uTime;
+  uniform float uSize;
+  uniform vec3 uCursorPos; // <-- ADDED BACK
+  uniform float uCursorRadius; // <-- ADDED BACK
+  uniform float uRepulsionStrength; // <-- ADDED BACK
+
+  // --- ATTRIBUTES ---
+  attribute vec3 position;
+  attribute vec4 animFactors1; // xFreq, yFreq, zFreq, phase
+  attribute vec4 animFactors2; // amplitude, unused, unused, unused
+
+  // --- Noise Function ---
+  ${glslSimplexNoise} // Inject noise function code
 
   void main() {
-    float time = uTime * 0.1; float noiseFrequency = 0.2;
+    // --- Noise-Based Animation Logic ---
+    float time = uTime * 0.1;
+    float noiseFrequency = 0.3;
+    float noiseAmplitude = animFactors2.x * 1.5;
     float noise = snoise(vec3(position.xy * noiseFrequency + animFactors1.w, time + animFactors1.w));
-    vec3 displacement = normalize(position) * noise * animFactors2.x * 3.0; // Use amplitude from animFactors2.x
+    vec3 displacement = normalize(position) * noise * noiseAmplitude;
     vec3 animatedPos = position + displacement;
+    // --- End Noise-Based Animation Logic ---
 
+    // --- Cursor Repulsion Logic --- ADDED BACK
     float distToCursor = distance(animatedPos, uCursorPos);
     if (distToCursor < uCursorRadius) {
        float repulsionFactor = 1.0 - (distToCursor / uCursorRadius);
        vec3 repulsionDir = normalize(animatedPos - uCursorPos);
+       // Apply repulsion force
        animatedPos += repulsionDir * pow(repulsionFactor, 2.0) * uRepulsionStrength;
     }
+    // --- End Cursor Repulsion ---
 
     vec4 mvPosition = modelViewMatrix * vec4(animatedPos, 1.0);
+
+    // Point size with attenuation
     gl_PointSize = uSize * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -68,15 +86,22 @@ const rawVertexShader = `
 
 const rawFragmentShader = `
   precision mediump float;
+
+  // Uniforms for scroll color interpolation
   uniform float uScrollProgress;
   uniform vec3 uColorA; // Magenta
   uniform vec3 uColorB; // Cyan
 
   void main() {
+    // Calculate scroll color lerp
     vec3 finalColor = mix(uColorA, uColorB, uScrollProgress);
+
+    // Circular point shape with soft edges
     float distanceToCenter = length(gl_PointCoord - vec2(0.5));
     float alpha = 1.0 - smoothstep(0.45, 0.5, distanceToCenter);
     if (alpha < 0.01) discard;
+
+    // Set final color and alpha
     gl_FragColor = vec4(finalColor, alpha * 0.8);
   }
 `;
@@ -93,45 +118,43 @@ const colorB = new THREE.Color('#00ffff'); // Cyan
 
 function WebGLBackground() {
   const pointsRef = useRef();
-  const materialRef = useRef(); // Ref needed to update uniforms
-  const { viewport, mouse } = useThree();
+  const materialRef = useRef();
+  // Get interaction states
+  const { viewport, mouse } = useThree(); // <-- Need mouse/viewport for cursor pos
   const scrollProgress = useInteractionStore(state => state.scrollProgress);
 
   // Generate particle positions and animation factors
   const [positions, animFactors1, animFactors2] = useMemo(() => {
     const positions = new Float32Array(particleCount * 3);
-    const animFactors1 = new Float32Array(particleCount * 4); // xF, yF, zF, phase
-    const animFactors2 = new Float32Array(particleCount * 4); // amp, unused, unused, unused
-    // Removed tempVec
+    const animFactors1 = new Float32Array(particleCount * 4);
+    const animFactors2 = new Float32Array(particleCount * 4);
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
       const i4 = i * 4;
-      // Position
       const radius = Math.random() * fieldRadius;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
       positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
       positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
       positions[i3 + 2] = radius * Math.cos(phi);
-      // Animation Factors
       animFactors1[i4 + 0] = 0.5 + Math.random() * 0.5;
       animFactors1[i4 + 1] = 0.5 + Math.random() * 0.5;
       animFactors1[i4 + 2] = 0.5 + Math.random() * 0.5;
-      animFactors1[i4 + 3] = Math.random() * Math.PI * 2; // Phase
-      animFactors2[i4 + 0] = 0.1 + Math.random() * 0.2; // Amplitude in .x
+      animFactors1[i4 + 3] = Math.random() * Math.PI * 2;
+      animFactors2[i4 + 0] = 0.1 + Math.random() * 0.15; // Amplitude in .x
     }
     return [positions, animFactors1, animFactors2];
   }, []);
 
-  // Define uniforms for RawShaderMaterial
+  // Define uniforms for RawShaderMaterial, including cursor interaction
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0.0 },
-      uSize: { value: 0.02 },
+      uSize: { value: 0.015 },
       uScrollProgress: { value: 0.0 },
       uColorA: { value: colorA },
       uColorB: { value: colorB },
-      uCursorPos: { value: new THREE.Vector3() },
+      uCursorPos: { value: new THREE.Vector3() }, // Add cursor uniform
       uCursorRadius: { value: cursorInteractionRadius },
       uRepulsionStrength: { value: cursorRepulsionStrength },
     }),
@@ -154,13 +177,16 @@ function WebGLBackground() {
 
   // Update uniforms on each frame
   useFrame(state => {
+    // Update time and scroll uniforms
     if (material?.uniforms) {
       material.uniforms.uTime.value = state.clock.elapsedTime;
       material.uniforms.uScrollProgress.value = scrollProgress;
+
+      // Update cursor position uniform - ADDED BACK
       material.uniforms.uCursorPos.value.set(
         (mouse.x * viewport.width) / 2,
         (mouse.y * viewport.height) / 2,
-        0
+        0 // Assuming interaction on z=0 plane
       );
     }
   });
