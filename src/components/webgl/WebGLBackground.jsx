@@ -1,7 +1,7 @@
 // src/components/webgl/WebGLBackground.jsx
 import * as THREE from 'three';
 import { useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber'; // Re-add useThree
+import { useFrame } from '@react-three/fiber';
 import { useInteractionStore } from '@/stores/useInteractionStore'; // Re-add store import
 
 // --- GLSL Noise Function (Simplex 3D) ---
@@ -38,52 +38,32 @@ const glslSimplexNoise = `
 
 const rawVertexShader = `
   precision mediump float;
-
-  // --- UNIFORMS ---
-  uniform mat4 modelViewMatrix;
-  uniform mat4 projectionMatrix;
-  uniform float uTime;
-  uniform float uSize;
-  uniform vec3 uCursorPos; // <-- ADDED BACK
-  uniform float uCursorRadius; // <-- ADDED BACK
-  uniform float uRepulsionStrength; // <-- ADDED BACK
-
-  // --- ATTRIBUTES ---
+  uniform mat4 modelViewMatrix; uniform mat4 projectionMatrix;
+  uniform float uTime; uniform float uSize;
+  // Removed cursor uniforms temporarily
   attribute vec3 position;
-  attribute vec4 animFactors1; // xFreq, yFreq, zFreq, phase
-  attribute vec4 animFactors2; // amplitude, unused, unused, unused
+  attribute vec4 animFactors1; attribute vec4 animFactors2;
 
-  // --- Noise Function ---
   ${glslSimplexNoise} // Inject noise function code
 
   void main() {
-    // --- Noise-Based Animation Logic ---
-    float time = uTime * 0.1;
-    float noiseFrequency = 0.3;
+    // Noise-Based Animation Logic
+    float time = uTime * 0.1; float noiseFrequency = 0.3;
     float noiseAmplitude = animFactors2.x * 1.5;
     float noise = snoise(vec3(position.xy * noiseFrequency + animFactors1.w, time + animFactors1.w));
     vec3 displacement = normalize(position) * noise * noiseAmplitude;
     vec3 animatedPos = position + displacement;
-    // --- End Noise-Based Animation Logic ---
 
-    // --- Cursor Repulsion Logic --- ADDED BACK
-    float distToCursor = distance(animatedPos, uCursorPos);
-    if (distToCursor < uCursorRadius) {
-       float repulsionFactor = 1.0 - (distToCursor / uCursorRadius);
-       vec3 repulsionDir = normalize(animatedPos - uCursorPos);
-       // Apply repulsion force
-       animatedPos += repulsionDir * pow(repulsionFactor, 2.0) * uRepulsionStrength;
-    }
-    // --- End Cursor Repulsion ---
+    // Cursor Repulsion Logic (Commented out)
+    /* ... */
 
     vec4 mvPosition = modelViewMatrix * vec4(animatedPos, 1.0);
-
-    // Point size with attenuation
     gl_PointSize = uSize * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
+// Updated Fragment Shader with Scroll Color Logic
 const rawFragmentShader = `
   precision mediump float;
 
@@ -104,7 +84,7 @@ const rawFragmentShader = `
     if (alpha < 0.01) discard;
 
     // Set final color and alpha
-    gl_FragColor = vec4(finalColor, alpha * 0.8);
+    gl_FragColor = vec4(finalColor, alpha * 0.8); // Use calculated color and alpha
   }
 `;
 
@@ -113,8 +93,6 @@ const rawFragmentShader = `
 // Settings
 const particleCount = 7000;
 const fieldRadius = 10;
-const cursorInteractionRadius = 1.5;
-const cursorRepulsionStrength = 1.5;
 // Define colors for the mix
 const colorA = new THREE.Color('#ff00ff'); // Magenta
 const colorB = new THREE.Color('#00ffff'); // Cyan
@@ -122,9 +100,8 @@ const colorB = new THREE.Color('#00ffff'); // Cyan
 function WebGLBackground() {
   const pointsRef = useRef();
   const materialRef = useRef(); // Ref needed to update uniforms
-  // Get interaction states
-  const { viewport, mouse } = useThree(); // <-- Need mouse/viewport for cursor pos
-  const scrollProgress = useInteractionStore(state => state.scrollProgress); // Need scroll
+  // Get scroll progress from Zustand store
+  const scrollProgress = useInteractionStore(state => state.scrollProgress);
 
   // Generate particle positions and animation factors
   const [positions, animFactors1, animFactors2] = useMemo(() => {
@@ -149,17 +126,15 @@ function WebGLBackground() {
     return [positions, animFactors1, animFactors2];
   }, []);
 
-  // Define uniforms for RawShaderMaterial, including interactions
+  // Define uniforms for RawShaderMaterial, including scroll/color
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0.0 },
-      uSize: { value: 0.015 }, // Keep smaller size
-      uScrollProgress: { value: 0.0 }, // Add scroll uniform
-      uColorA: { value: colorA }, // Add color uniforms
-      uColorB: { value: colorB },
-      uCursorPos: { value: new THREE.Vector3() }, // Add cursor uniforms
-      uCursorRadius: { value: cursorInteractionRadius },
-      uRepulsionStrength: { value: cursorRepulsionStrength },
+      uSize: { value: 0.015 },
+      uScrollProgress: { value: 0.0 }, // <-- ADDED BACK
+      uColorA: { value: colorA }, // <-- ADDED BACK
+      uColorB: { value: colorB }, // <-- ADDED BACK
+      // Cursor uniforms still removed for now
     }),
     []
   );
@@ -169,29 +144,23 @@ function WebGLBackground() {
     () =>
       new THREE.RawShaderMaterial({
         uniforms: uniforms,
-        vertexShader: rawVertexShader, // Includes noise AND cursor logic
-        fragmentShader: rawFragmentShader, // Includes scroll color logic
+        vertexShader: rawVertexShader,
+        fragmentShader: rawFragmentShader, // <-- Use fragment shader with color logic
         depthWrite: false,
-        transparent: true, // Needed for soft edges / blending
-        blending: THREE.AdditiveBlending, // Use additive blending
+        transparent: true, // <-- ADDED BACK (needed for alpha/blending)
+        blending: THREE.AdditiveBlending, // <-- ADDED BACK
       }),
     [uniforms]
   );
 
   // Update uniforms on each frame
   useFrame(state => {
-    // Check if uniforms exist before updating
     if (materialRef.current?.uniforms) {
-      // Use ref to access material uniforms
+      // Use optional chaining
       materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-      // Update scroll progress uniform from Zustand store
+      // Update scroll progress uniform from Zustand store - ADDED BACK
       materialRef.current.uniforms.uScrollProgress.value = scrollProgress;
-      // Update cursor position uniform - ADDED BACK
-      materialRef.current.uniforms.uCursorPos.value.set(
-        (mouse.x * viewport.width) / 2,
-        (mouse.y * viewport.height) / 2,
-        0 // Assuming interaction on z=0 plane
-      );
+      // Cursor uniform update removed temporarily
     }
   });
 
@@ -222,7 +191,7 @@ function WebGLBackground() {
             itemSize={4}
           />
         </bufferGeometry>
-        {/* Attach the RawShaderMaterial instance using primitive */}
+        {/* Attach the RawShaderMaterial instance */}
         <primitive object={material} attach="material" ref={materialRef} />
       </points>
     </>
