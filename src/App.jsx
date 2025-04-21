@@ -20,8 +20,8 @@ function App() {
   useEffect(() => {
     const onScroll = () => {
       const sTop = window.scrollY;
-      const mScroll = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(mScroll > 0 ? sTop / mScroll : 0);
+      const maxScrl = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(maxScrl > 0 ? sTop / maxScrl : 0);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -32,7 +32,7 @@ function App() {
     <>
       <ParticleField
         count={8000}
-        baseSize={0.015}
+        baseSize={0.04}
         colors={['#ff00ff', '#00ffff', '#0066ff']}
         quality="high"
       />
