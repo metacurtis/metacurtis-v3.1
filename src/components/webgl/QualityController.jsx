@@ -1,16 +1,10 @@
 // src/components/webgl/QualityController.jsx
+
 import { createContext, useContext } from 'react';
-import usePerformanceStore from '@/stores/performanceStore';
+import usePerformanceStore from '@/stores/performanceStore.js';
+import presets from '@/config/qualityPresets.js';
 
-// Define the shape of quality settings per tier
-const presets = {
-  ultra: { complexity: 1.0, textureResolution: 2048, geometryDetail: 1.0 },
-  high: { complexity: 0.8, textureResolution: 1024, geometryDetail: 0.8 },
-  medium: { complexity: 0.6, textureResolution: 512, geometryDetail: 0.6 },
-  low: { complexity: 0.4, textureResolution: 256, geometryDetail: 0.4 },
-};
-
-// Create context
+// Create a React context whose default value is the “high” preset
 const QualityContext = createContext(presets.high);
 
 /**
@@ -20,9 +14,10 @@ const QualityContext = createContext(presets.high);
  * based on the Zustand performance store's `quality` value.
  */
 export function QualityProvider({ children }) {
+  // Read the current quality level from your performance store
   const quality = usePerformanceStore(state => state.quality);
+  // Look up the corresponding settings from your centralized presets
   const settings = presets[quality] || presets.high;
-
   return <QualityContext.Provider value={settings}>{children}</QualityContext.Provider>;
 }
 
@@ -30,7 +25,7 @@ export function QualityProvider({ children }) {
  * useQuality
  *
  * Hook for consuming components to read current quality settings:
- * { complexity, textureResolution, geometryDetail }
+ * { dprMin, dprMax, antialias, shaderComplexity, textureResolution, geometryDetailScale }
  */
 export function useQuality() {
   return useContext(QualityContext);
