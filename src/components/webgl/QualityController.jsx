@@ -1,10 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 // src/components/webgl/QualityController.jsx
 
 import { createContext, useContext } from 'react';
 import usePerformanceStore from '@/stores/performanceStore.js';
 import presets from '@/config/qualityPresets.js';
 
-// Create a React context whose default value is the “high” preset
+// Create a React context whose default is the “high” preset
 const QualityContext = createContext(presets.high);
 
 /**

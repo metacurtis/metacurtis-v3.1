@@ -1,6 +1,6 @@
 // src/components/webgl/WebGLBackground.jsx
 
-import React, { useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useInteractionStore } from '@/stores/useInteractionStore';

@@ -1,6 +1,5 @@
 // src/components/webgl/ParticleField.jsx
 
-import React from 'react';
 import { QualityProvider } from './QualityController';
 import AdaptiveRenderer from './AdaptiveRenderer';
 import WebGLBackground from './WebGLBackground';
