@@ -1,82 +1,67 @@
-// src/App.jsx (Restoring Correct Canvas Style)
-import { useEffect } from 'react';
+// src/App.jsx
+import React, { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Store Hook & Action
-import { useInteractionStore } from './stores/useInteractionStore'; // Verify path
+import { useInteractionStore } from './stores/useInteractionStore';
 
 // Core Components
-import Layout from './components/ui/Layout'; // Verify path
-import WebGLBackground from './components/webgl/WebGLBackground'; // Verify path/name
-import CanvasSizeUpdater from './components/webgl/CanvasSizeUpdater'; // Verify path
+import Layout from './components/ui/Layout';
+import WebGLBackground from './components/webgl/WebGLBackground';
+import CanvasSizeUpdater from './components/webgl/CanvasSizeUpdater';
 
 // Section Components
-import Hero from './sections/Hero'; // Verify path
-import About from './sections/About'; // Verify path
-import Features from './sections/Features'; // Verify path
-import Contact from './sections/Contact'; // Verify path
+import Hero from './sections/Hero';
+import About from './sections/About';
+import Features from './sections/Features';
+import Contact from './sections/Contact';
 
 function App() {
-  // Get actions from the Zustand store
   const setCursorPosition = useInteractionStore(state => state.setCursorPosition);
   const setScrollProgress = useInteractionStore(state => state.setScrollProgress);
 
-  // Effect for Mouse Listener
+  // Mouse listener
   useEffect(() => {
-    const handleMouseMove = event => {
-      setCursorPosition({ x: event.clientX, y: event.clientY });
-    };
+    const handleMouseMove = e => setCursorPosition({ x: e.clientX, y: e.clientY });
     window.addEventListener('mousemove', handleMouseMove);
-    console.log('App mounted, mousemove listener added.');
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      console.log('App unmounting, mousemove listener removed.');
-    };
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [setCursorPosition]);
 
-  // Effect for Scroll Listener
+  // Scroll listener
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight;
-      const windowHeight = window.innerHeight;
-      const maxScrollTop = docHeight - windowHeight;
-      const progress = maxScrollTop > 0 ? scrollTop / maxScrollTop : 0;
-      const clampedProgress = Math.max(0, Math.min(1, progress));
-      setScrollProgress(clampedProgress);
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
+      setScrollProgress(Math.min(1, Math.max(0, progress)));
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    console.log('App mounted, scroll listener added.');
-    handleScroll(); // Call initially
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      console.log('App unmounting, scroll listener removed.');
-    };
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [setScrollProgress]);
 
   return (
     <>
-      {/* Canvas with CORRECT fixed background style */}
-      <Canvas
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw', // <-- Correct full width
-          height: '100vh', // <-- Correct full height
-          zIndex: -1, // <-- Correct background z-index
-        }}
-        // Restore other props
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        dpr={[1, 1.5]}
-        flat
-      >
-        {/* Restore children */}
-        <WebGLBackground />
-        <CanvasSizeUpdater />
-      </Canvas>
+      <ErrorBoundary>
+        <Canvas
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: -1,
+          }}
+          camera={{ position: [0, 0, 5], fov: 50 }}
+          dpr={[1, 1.5]}
+          flat
+        >
+          <WebGLBackground />
+          <CanvasSizeUpdater />
+        </Canvas>
+      </ErrorBoundary>
 
-      {/* Layout renders on top */}
       <Layout>
         <Hero />
         <About />
