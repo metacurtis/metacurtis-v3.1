@@ -1,40 +1,24 @@
-// src/components/webgl/BackgroundPoints.jsx
-import * as THREE from 'three';
 import { useMemo } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
 
-export function BackgroundPoints() {
-  const { viewport, mouse } = useThree();
+export function BackgroundPoints({ count = 8000, size = 5, color = '#ffffff' }) {
   const geometry = useMemo(() => {
-    const positions = new Float32Array([-0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0]);
+    const positions = new Float32Array(count * 3);
+    const half = 10;
+    for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
+      positions[i3] = (Math.random() * 2 - 1) * half;
+      positions[i3 + 1] = (Math.random() * 2 - 1) * half;
+      positions[i3 + 2] = (Math.random() * 2 - 1) * half;
+    }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     return geo;
-  }, []);
+  }, [count]);
 
-  const material = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: { uSize: { value: 30.0 } },
-        vertexShader: `
-      precision mediump float;
-      uniform float uSize;
-      void main() {
-        gl_PointSize = uSize;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-      }
-    `,
-        fragmentShader: `
-      precision mediump float;
-      void main() {
-        gl_FragColor = vec4(1.0); // white
-      }
-    `,
-        transparent: true,
-        depthWrite: false,
-      }),
-    []
+  return (
+    <points geometry={geometry}>
+      <pointsMaterial attach="material" size={size} color={color} depthWrite={false} transparent />
+    </points>
   );
-
-  return <points geometry={geometry} material={material} />;
 }

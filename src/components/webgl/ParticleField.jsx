@@ -1,18 +1,13 @@
-import { ParticleField } from '@webgl/ParticleField';
+import { Canvas } from '@react-three/fiber';
+import { BackgroundPoints } from './BackgroundPoints';
+import { useInteractionStore } from '@/stores/useInteractionStore';
 
-function BackgroundScene() {
-  const quality = useInteractionStore(s => s.qualityLevel);
+export default function ParticleField() {
+  const scrollProgress = useInteractionStore(state => state.scrollProgress);
+
   return (
-    <>
-      <color attach="background" args={['#000000']} />
-      <ParticleField
-        count={12000}
-        quality={quality}
-        colors={['#f0f', '#0ff', '#06f']}
-        size={0.05}
-        radius={3}
-        strength={2}
-      />
-    </>
+    <Canvas pixelRatio={window.devicePixelRatio}>
+      <BackgroundPoints color="#00ffff" />
+    </Canvas>
   );
 }
