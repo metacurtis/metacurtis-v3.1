@@ -1,6 +1,5 @@
-// src/components/webgl/WebGLBackground.jsx
-import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useInteractionStore } from '@/stores/useInteractionStore';
 
@@ -13,13 +12,13 @@ export default function WebGLBackground() {
   const scrollProgress = useInteractionStore(s => s.scrollProgress);
   const materialRef = useRef();
 
-  // 1) Generate particle data arrays
+  // 1) Generate your particle arrays (as before)
   const [posArr, a1Arr, a2Arr] = useMemo(() => {
-    const count = 8000;
-    const p = new Float32Array(count * 3);
-    const a1 = new Float32Array(count * 4);
-    const a2 = new Float32Array(count * 4);
-    for (let i = 0; i < count; i++) {
+    const c = 8000;
+    const p = new Float32Array(c * 3);
+    const a1 = new Float32Array(c * 4);
+    const a2 = new Float32Array(c * 4);
+    for (let i = 0; i < c; i++) {
       const i3 = i * 3,
         i4 = i * 4;
       p[i3] = (Math.random() * 2 - 1) * (viewport.width / 2);
@@ -28,7 +27,7 @@ export default function WebGLBackground() {
       a1[i4] = 0.3 + Math.random() * 0.7;
       a1[i4 + 1] = 0.3 + Math.random() * 0.7;
       a1[i4 + 2] = 0.3 + Math.random() * 0.7;
-      a1[i4 + 3] = Math.random() * Math.PI * 2;
+      a1[i4 + 3] = Math.random() * 6.283;
       a2[i4] = 0.1 + Math.random() * 0.2;
     }
     return [p, a1, a2];
@@ -36,19 +35,20 @@ export default function WebGLBackground() {
 
   // 2) Build geometry
   const geometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-    geo.setAttribute('animFactors1', new THREE.BufferAttribute(a1Arr, 4));
-    geo.setAttribute('animFactors2', new THREE.BufferAttribute(a2Arr, 4));
-    return geo;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+    g.setAttribute('animFactors1', new THREE.BufferAttribute(a1Arr, 4));
+    g.setAttribute('animFactors2', new THREE.BufferAttribute(a2Arr, 4));
+    return g;
   }, [posArr, a1Arr, a2Arr]);
 
-  // 3) Concatenate noise + vertex GLSL (static imports, no deps)
-  const vertexShader = useMemo(() => {
-    return `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`;
-  }, []); // ← noiseSrc & vertexSrc are static imports, remove them from deps
+  // 3) Concatenate noise + vertex
+  const vertexShader = useMemo(
+    () => `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`,
+    [noiseSrc, vertexSrc]
+  );
 
-  // 4) Create material
+  // 4) Material
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -65,18 +65,17 @@ export default function WebGLBackground() {
           uRepulsionStrength: { value: 1.0 },
         },
         vertexShader,
-        fragmentShader: fragmentSrc, // fragmentSrc is static, no need in deps
+        fragmentShader: fragmentSrc,
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-    [scrollProgress, vertexShader]
-  ); // ← fragmentSrc is static, exclude it
+    [vertexShader, fragmentSrc, scrollProgress]
+  );
 
-  // 5) Update dynamic uniforms each frame
+  // 5) Animate uniforms
   useFrame(({ clock }) => {
     const mat = materialRef.current;
-    if (!mat) return;
     mat.uniforms.uTime.value = clock.elapsedTime;
     mat.uniforms.uScrollProgress.value = scrollProgress;
     mat.uniforms.uCursorPos.value.set(
