@@ -7,20 +7,25 @@ import noiseSrc from './shaders/noise.glsl';
 import vertexSrc from './shaders/vertex.glsl';
 import fragmentSrc from './shaders/fragment.glsl';
 
-export default function WebGLBackground() {
+export default function WebGLBackground({
+  count = 8000,
+  baseSize = 0.015,
+  colors = ['#ff00ff', '#00ffff', '#0066ff'],
+  quality = 'high',
+}) {
   const { viewport, mouse } = useThree();
   const scrollProgress = useInteractionStore(s => s.scrollProgress);
   const materialRef = useRef();
 
-  // 1) Generate arrays
+  // 1) Generate particle data arrays
   const [posArr, a1Arr, a2Arr] = useMemo(() => {
-    const count = 8000;
-    const p = new Float32Array(count * 3);
-    const a1 = new Float32Array(count * 4);
-    const a2 = new Float32Array(count * 4);
+    const pCount = count;
+    const p = new Float32Array(pCount * 3);
+    const a1 = new Float32Array(pCount * 4);
+    const a2 = new Float32Array(pCount * 4);
     const halfW = viewport.width / 2;
     const halfH = viewport.height / 2;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < pCount; i++) {
       const i3 = i * 3,
         i4 = i * 4;
       p[i3] = (Math.random() * 2 - 1) * halfW;
@@ -33,9 +38,9 @@ export default function WebGLBackground() {
       a2[i4] = 0.1 + Math.random() * 0.2;
     }
     return [p, a1, a2];
-  }, [viewport]);
+  }, [viewport, count]);
 
-  // 2) Build geometry
+  // 2) Buffer geometry setup
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
@@ -44,20 +49,28 @@ export default function WebGLBackground() {
     return geo;
   }, [posArr, a1Arr, a2Arr]);
 
-  // 3) Concatenate modular shaders (static imports → empty deps)
-  const vertexShader = useMemo(() => `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`, []);
+  // 3) Build vertex shader string (noise + main)
+  const vertexShader = useMemo(
+    () => `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`,
+    [] // static GLSL imports
+  );
 
-  // 4) Create material (only scrollProgress & vertexShader are dynamic)
+  // 4) ShaderMaterial with props and quality defines
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
+        defines: {
+          QUALITY_HIGH: quality === 'high' ? '' : undefined,
+          QUALITY_MEDIUM: quality === 'medium' ? '' : undefined,
+          QUALITY_LOW: quality === 'low' ? '' : undefined,
+        },
         uniforms: {
           uTime: { value: 0 },
-          uSize: { value: 0.05 },
+          uSize: { value: baseSize },
           uScrollProgress: { value: scrollProgress },
-          uColorA: { value: new THREE.Color('#ff00ff') },
-          uColorB: { value: new THREE.Color('#00ffff') },
-          uColorC: { value: new THREE.Color('#0066ff') },
+          uColorA: { value: new THREE.Color(colors[0]) },
+          uColorB: { value: new THREE.Color(colors[1]) },
+          uColorC: { value: new THREE.Color(colors[2]) },
           uColorIntensity: { value: 1.2 },
           uCursorPos: { value: new THREE.Vector3() },
           uCursorRadius: { value: 2.0 },
@@ -69,10 +82,10 @@ export default function WebGLBackground() {
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-    [scrollProgress, vertexShader]
+    [scrollProgress, baseSize, colors, quality, vertexShader]
   );
 
-  // 5) Update uniforms each frame
+  // 5) Update dynamic uniforms
   useFrame(({ clock }) => {
     const mat = materialRef.current;
     if (!mat) return;
@@ -85,7 +98,7 @@ export default function WebGLBackground() {
     );
   });
 
-  // 6) Render
+  // 6) Render points on black background
   return (
     <>
       <color attach="background" args={['#000000']} />
