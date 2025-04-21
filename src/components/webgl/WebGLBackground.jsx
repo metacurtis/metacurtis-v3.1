@@ -54,7 +54,7 @@ export default function WebGLBackground() {
       new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uSize: { value: 0.015 },
+          uSize: { value: 0.03 },
           uScrollProgress: { value: scrollProgress },
           uColorA: { value: new THREE.Color('#ff00ff') },
           uColorB: { value: new THREE.Color('#00ffff') },
