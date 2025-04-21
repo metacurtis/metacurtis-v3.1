@@ -1,9 +1,11 @@
-import { useMemo, useRef } from 'react';
+// src/components/webgl/WebGLBackground.jsx
+
+import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useInteractionStore } from '@/stores/useInteractionStore';
-
-import noiseSrc from './shaders/noise.glsl';
+import useAdaptiveQuality from '@/hooks/useAdaptiveQuality.js';
+import { includeChunk, wrapQualityDefines } from '@/shaders/shaderUtils.js';
 import vertexSrc from './shaders/vertex.glsl';
 import fragmentSrc from './shaders/fragment.glsl';
 
@@ -13,10 +15,26 @@ export default function WebGLBackground({
   colors = ['#ff00ff', '#00ffff', '#0066ff'],
   quality = 'high',
 }) {
+  // Now this runs inside R3F's <Canvas> context
+  useAdaptiveQuality();
+
+  // Standard R3F/Three.js setup
   const { viewport, mouse } = useThree();
   const scrollProgress = useInteractionStore(s => s.scrollProgress);
   const materialRef = useRef();
 
+  // 1) Prepare shaders with quality defines
+  const vertexShader = useMemo(() => {
+    const base = includeChunk('noise.glsl') + '\nprecision mediump float;\n' + vertexSrc;
+    return wrapQualityDefines(quality, base);
+  }, [quality]);
+
+  const fragmentShader = useMemo(() => {
+    const base = 'precision mediump float;\n' + fragmentSrc;
+    return wrapQualityDefines(quality, base);
+  }, [quality]);
+
+  // 2) Generate particle data
   const [posArr, a1Arr, a2Arr] = useMemo(() => {
     const pCount = count;
     const p = new Float32Array(pCount * 3);
@@ -24,21 +42,26 @@ export default function WebGLBackground({
     const a2 = new Float32Array(pCount * 4);
     const halfW = viewport.width / 2;
     const halfH = viewport.height / 2;
+
     for (let i = 0; i < pCount; i++) {
       const i3 = i * 3,
         i4 = i * 4;
       p[i3] = (Math.random() * 2 - 1) * halfW;
       p[i3 + 1] = (Math.random() * 2 - 1) * halfH;
       p[i3 + 2] = (Math.random() * 2 - 1) * 2;
+
       a1[i4] = 0.3 + Math.random() * 0.7;
       a1[i4 + 1] = 0.3 + Math.random() * 0.7;
       a1[i4 + 2] = 0.3 + Math.random() * 0.7;
       a1[i4 + 3] = Math.random() * Math.PI * 2;
+
       a2[i4] = 0.1 + Math.random() * 0.2;
     }
+
     return [p, a1, a2];
   }, [viewport, count]);
 
+  // 3) Build geometry
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
@@ -47,16 +70,10 @@ export default function WebGLBackground({
     return geo;
   }, [posArr, a1Arr, a2Arr]);
 
-  const vertexShader = useMemo(() => `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`, []);
-
+  // 4) Create material
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        defines: {
-          QUALITY_HIGH: quality === 'high' ? '' : undefined,
-          QUALITY_MEDIUM: quality === 'medium' ? '' : undefined,
-          QUALITY_LOW: quality === 'low' ? '' : undefined,
-        },
         uniforms: {
           uTime: { value: 0 },
           uSize: { value: baseSize },
@@ -70,14 +87,15 @@ export default function WebGLBackground({
           uRepulsionStrength: { value: 1.0 },
         },
         vertexShader,
-        fragmentShader: fragmentSrc,
+        fragmentShader,
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
-    [scrollProgress, baseSize, colors, quality, vertexShader]
+    [vertexShader, fragmentShader, baseSize, scrollProgress, colors]
   );
 
+  // 5) Update uniforms each frame
   useFrame(({ clock }) => {
     const mat = materialRef.current;
     if (!mat) return;
@@ -90,6 +108,7 @@ export default function WebGLBackground({
     );
   });
 
+  // 6) Render
   return (
     <>
       <color attach="background" args={['#000000']} />

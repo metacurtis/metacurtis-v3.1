@@ -1,26 +1,29 @@
-import { Canvas } from '@react-three/fiber';
+// src/components/webgl/ParticleField.jsx
+
+import React from 'react';
+import { QualityProvider } from './QualityController';
+import AdaptiveRenderer from './AdaptiveRenderer';
 import WebGLBackground from './WebGLBackground';
 import CanvasSizeUpdater from './CanvasSizeUpdater';
 
-export default function ParticleField({
-  count,
-  baseSize,
-  colors,
-  quality,
-  zIndex = -1,
-  cameraPos = [0, 0, 5],
-  fov = 50,
-  dpr = [1, 1.5],
-}) {
+export default function ParticleField(props) {
   return (
-    <Canvas
-      style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex }}
-      camera={{ position: cameraPos, fov }}
-      dpr={dpr}
-      flat
-    >
-      <WebGLBackground count={count} baseSize={baseSize} colors={colors} quality={quality} />
-      <CanvasSizeUpdater />
-    </Canvas>
+    <QualityProvider>
+      <AdaptiveRenderer
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: -1,
+        }}
+        camera={{ position: [0, 0, 5], fov: 50 }}
+      >
+        {/* NO useAdaptiveQuality() here */}
+        <WebGLBackground {...props} />
+        <CanvasSizeUpdater />
+      </AdaptiveRenderer>
+    </QualityProvider>
   );
 }

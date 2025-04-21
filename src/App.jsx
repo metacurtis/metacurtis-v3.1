@@ -1,6 +1,9 @@
+// src/App.jsx
+
 import { useEffect } from 'react';
 import ParticleField from './components/webgl/ParticleField';
 import { useInteractionStore } from './stores/useInteractionStore';
+import CanvasErrorBoundary from './components/ui/CanvasErrorBoundary'; // import the boundary
 import Layout from './components/ui/Layout';
 import Hero from './sections/Hero';
 import About from './sections/About';
@@ -30,12 +33,15 @@ function App() {
 
   return (
     <>
-      <ParticleField
-        count={8000}
-        baseSize={0.04}
-        colors={['#ff00ff', '#00ffff', '#0066ff']}
-        quality="high"
-      />
+      <CanvasErrorBoundary>
+        <ParticleField
+          count={8000}
+          baseSize={0.04}
+          colors={['#ff00ff', '#00ffff', '#0066ff']}
+          quality="high"
+        />
+      </CanvasErrorBoundary>
+
       <Layout>
         <Hero />
         <About />
