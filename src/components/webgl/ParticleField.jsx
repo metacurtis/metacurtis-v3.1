@@ -1,4 +1,4 @@
-import React from 'react';
+// src/components/webgl/ParticleField.jsx
 import { Canvas } from '@react-three/fiber';
 import WebGLBackground from './WebGLBackground';
 import CanvasSizeUpdater from './CanvasSizeUpdater';
