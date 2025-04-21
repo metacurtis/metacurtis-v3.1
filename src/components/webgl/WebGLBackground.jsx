@@ -17,7 +17,7 @@ export default function WebGLBackground({
   const scrollProgress = useInteractionStore(s => s.scrollProgress);
   const materialRef = useRef();
 
-  // 1) Generate particle data arrays
+  // 1) Generate data
   const [posArr, a1Arr, a2Arr] = useMemo(() => {
     const pCount = count;
     const p = new Float32Array(pCount * 3);
@@ -40,7 +40,7 @@ export default function WebGLBackground({
     return [p, a1, a2];
   }, [viewport, count]);
 
-  // 2) Buffer geometry setup
+  // 2) Geometry
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
@@ -49,13 +49,10 @@ export default function WebGLBackground({
     return geo;
   }, [posArr, a1Arr, a2Arr]);
 
-  // 3) Build vertex shader string (noise + main)
-  const vertexShader = useMemo(
-    () => `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`,
-    [] // static GLSL imports
-  );
+  // 3) Shader strings
+  const vertexShader = useMemo(() => `${noiseSrc}\nprecision mediump float;\n${vertexSrc}`, []);
 
-  // 4) ShaderMaterial with props and quality defines
+  // 4) Material
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -85,7 +82,7 @@ export default function WebGLBackground({
     [scrollProgress, baseSize, colors, quality, vertexShader]
   );
 
-  // 5) Update dynamic uniforms
+  // 5) Frame uniforms
   useFrame(({ clock }) => {
     const mat = materialRef.current;
     if (!mat) return;
@@ -98,7 +95,7 @@ export default function WebGLBackground({
     );
   });
 
-  // 6) Render points on black background
+  // 6) Render
   return (
     <>
       <color attach="background" args={['#000000']} />
