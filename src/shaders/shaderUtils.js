@@ -1,50 +1,21 @@
 // src/shaders/shaderUtils.js
 
-// Import any reusable GLSL chunks here (adjust paths as needed)
-import noiseChunk from '@/components/webgl/shaders/noise.glsl';
-
 /**
- * Map of chunk names → GLSL source.
- * Add more entries as you split out additional .glsl snippets.
+ * Emit only valid GLSL defines for each quality tier.
  */
-const GLSL_CHUNKS = {
-  'noise.glsl': noiseChunk,
-  // 'lighting.glsl': lightingChunk,
-  // 'easing.glsl': easingChunk,
-};
-
-/**
- * includeChunk(name)
- *
- * Returns the GLSL text for a given chunk filename,
- * or an empty string if not found.
- */
-export function includeChunk(name) {
-  return GLSL_CHUNKS[name] || '';
+export function wrapQualityDefines(level) {
+  return {
+    QUALITY_ULTRA: level === 'ultra' ? 1 : 0,
+    QUALITY_HIGH: level === 'high' ? 1 : 0,
+    QUALITY_MEDIUM: level === 'medium' ? 1 : 0,
+    QUALITY_LOW: level === 'low' ? 1 : 0,
+  };
 }
 
 /**
- * wrapQualityDefines(level, source)
- *
- * Prefixes your GLSL source with a single `#define QUALITY_*`
- * based on the `level` string ("ultra", "high", "medium", "low").
+ * No-op chunk injector. If you split GLSL across files, you can
+ * implement actual text‑injection here; otherwise, just return src.
  */
-export function wrapQualityDefines(level, source) {
-  let define = '';
-  switch (level) {
-    case 'ultra':
-      define = '#define QUALITY_ULTRA';
-      break;
-    case 'high':
-      define = '#define QUALITY_HIGH';
-      break;
-    case 'medium':
-      define = '#define QUALITY_MEDIUM';
-      break;
-    case 'low':
-    default:
-      define = '#define QUALITY_LOW';
-      break;
-  }
-  return `${define}\n${source}`;
+export function includeChunk(src, _chunkName) {
+  return src;
 }

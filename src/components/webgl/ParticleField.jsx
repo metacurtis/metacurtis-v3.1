@@ -19,7 +19,6 @@ export default function ParticleField(props) {
         }}
         camera={{ position: [0, 0, 5], fov: 50 }}
       >
-        {/* NO useAdaptiveQuality() here */}
         <WebGLBackground {...props} />
         <CanvasSizeUpdater />
       </AdaptiveRenderer>

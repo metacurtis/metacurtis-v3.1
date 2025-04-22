@@ -3,92 +3,60 @@
 /**
  * PerformanceMetrics
  *
- * Tracks raw frame‑times, computes moving‑average FPS,
- * exposes statistics and simple jank detection.
+ * Tracks per‑frame timings, computes a moving average of frame durations,
+ * derives average FPS, and detects “jank” frames exceeding a threshold.
  */
-
 export default class PerformanceMetrics {
   /**
-   * @param {object} options
-   * @param {number} options.windowSize       Number of samples to keep for moving average (default 60)
-   * @param {number} options.jankThreshold    ms threshold above which a frame is considered jank (default 50ms)
+   * @param {Object} options
+   * @param {number} [options.windowSize=60]      - Number of frames to include in the moving window
+   * @param {number} [options.jankThreshold=50]   - Frame duration (ms) above which a frame counts as “jank”
    */
   constructor({ windowSize = 60, jankThreshold = 50 } = {}) {
     this.windowSize = windowSize;
     this.jankThreshold = jankThreshold;
-
-    // Circular buffer of recent frame durations (ms)
-    this.frameTimes = new Array(windowSize).fill(0);
-    this.index = 0;
-    this.count = 0; // how many real samples we have (≤ windowSize)
+    this.frameTimes = []; // circular buffer of recent frame durations (ms)
+    this.jankCount = 0; // count of frames in buffer exceeding jankThreshold
   }
 
   /**
-   * Record the duration of the latest frame.
-   * @param {number} deltaTime — frame time in seconds (from requestAnimationFrame)
+   * Call once per frame with the delta in milliseconds.
+   * Returns an object of current metrics:
+   * {
+   *   fps,            // average frames per second over the window
+   *   avgFrameTime,   // average frame duration in ms
+   *   jankCount,      // number of “jank” frames (> threshold) in the window
+   *   jankRatio       // fraction of frames considered jank
+   * }
+   *
+   * @param {number} deltaMs  — time since last frame in milliseconds
    */
-  tick(deltaTime) {
-    const ms = deltaTime * 1000;
+  tick(deltaMs) {
+    // Add this frame’s duration
+    this.frameTimes.push(deltaMs);
+    if (deltaMs > this.jankThreshold) {
+      this.jankCount++;
+    }
 
-    // Store
-    this.frameTimes[this.index] = ms;
-    this.index = (this.index + 1) % this.windowSize;
-    if (this.count < this.windowSize) this.count++;
+    // Remove oldest if over window size
+    if (this.frameTimes.length > this.windowSize) {
+      const removed = this.frameTimes.shift();
+      if (removed > this.jankThreshold) {
+        this.jankCount--;
+      }
+    }
 
-    // Return stats optionally
+    // Compute averages
+    const sumMs = this.frameTimes.reduce((sum, t) => sum + t, 0);
+    const avgFrameTime = sumMs / this.frameTimes.length;
+    const fps = avgFrameTime > 0 ? 1000 / avgFrameTime : 0;
+    const jankRatio = this.frameTimes.length > 0 ? this.jankCount / this.frameTimes.length : 0;
+
     return {
-      lastFrameMs: ms,
-      avgFps: this.getAverageFps(),
-      avgFrameTime: this.getAverageFrameTime(),
-      jankCount: this.getJankCount(),
+      fps,
+      avgFrameTime,
+      jankCount: this.jankCount,
+      jankRatio,
     };
-  }
-
-  /**
-   * Compute average frame time (ms) over the window.
-   */
-  getAverageFrameTime() {
-    if (this.count === 0) return 0;
-    const sum = this.frameTimes.slice(0, this.count).reduce((a, b) => a + b, 0);
-    return sum / this.count;
-  }
-
-  /**
-   * Compute moving‑average FPS = 1000 / avgFrameTime.
-   */
-  getAverageFps() {
-    const avgMs = this.getAverageFrameTime();
-    return avgMs > 0 ? 1000 / avgMs : 0;
-  }
-
-  /**
-   * Count how many frames in the buffer exceed the jank threshold.
-   */
-  getJankCount() {
-    if (this.count === 0) return 0;
-    return this.frameTimes.slice(0, this.count).filter(ms => ms > this.jankThreshold).length;
-  }
-
-  /**
-   * Returns an object of current metrics.
-   */
-  getStats() {
-    return {
-      frameTimes: this.frameTimes.slice(0, this.count),
-      averageFrameMs: this.getAverageFrameTime(),
-      averageFps: this.getAverageFps(),
-      jankThreshold: this.jankThreshold,
-      jankCount: this.getJankCount(),
-      windowSize: this.windowSize,
-      sampleCount: this.count,
-    };
-  }
-
-  /**
-   * Utility: is the last frame janky?
-   */
-  isLastFrameJank() {
-    const lastIndex = (this.index + this.windowSize - 1) % this.windowSize;
-    return this.frameTimes[lastIndex] > this.jankThreshold;
   }
 }
