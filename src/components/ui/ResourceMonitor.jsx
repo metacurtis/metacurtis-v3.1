@@ -1,38 +1,34 @@
 // src/components/ui/ResourceMonitor.jsx
-
-import React, { useEffect } from 'react';
-import useResourceStore from '@/stores/resourceStore.js';
+import { useEffect, useState } from 'react';
+import useResourceStats from '@/stores/resourceStore';
 
 export default function ResourceMonitor() {
-  const sample = useResourceStore(s => s.sampleResources);
-  const stats = useResourceStore(s => s.resourceStats);
+  const stats = useResourceStats();
+  const [snapshot, setSnapshot] = useState({
+    geometries: 0,
+    textures: 0,
+    materials: 0,
+    memoryMB: '0.0',
+  });
 
   useEffect(() => {
-    sample();
-    const id = setInterval(sample, 1000);
-    return () => clearInterval(id);
-  }, [sample]);
+    const unsub = useResourceStats.subscribe(s => {
+      setSnapshot({
+        geometries: s.geometryCount,
+        textures: s.textureCount,
+        materials: s.materialCount,
+        memoryMB: s.estimatedMemoryMB.toFixed(1),
+      });
+    });
+    return unsub;
+  }, []);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: 10,
-        left: 10,
-        color: '#fff',
-        background: 'rgba(0,0,0,0.6)',
-        padding: '8px 12px',
-        borderRadius: 4,
-        fontFamily: 'sans-serif',
-        zIndex: 1000,
-      }}
-    >
-      <div>Textures: {stats.counts.texture}</div>
-      <div>Materials: {stats.counts.material}</div>
-      <div>Geometry: {stats.counts.geometry}</div>
-      {stats.leakWarning && (
-        <div style={{ color: 'salmon', marginTop: 4 }}>⚠️ Resource leak detected!</div>
-      )}
+    <div className="resource-monitor fixed bottom-4 right-4 p-2 bg-black/50 text-white rounded text-sm">
+      <p>Geometries: {snapshot.geometries}</p>
+      <p>Textures: {snapshot.textures}</p>
+      <p>Materials: {snapshot.materials}</p>
+      <p>Memory: {snapshot.memoryMB} MB</p>
     </div>
   );
 }

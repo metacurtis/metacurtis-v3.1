@@ -11,7 +11,7 @@ export default function QualitySelector() {
   const [locked, setLocked] = useState(false);
   const [local, setLocal] = useState(quality);
 
-  // sync outside lock
+  // Keep local in sync unless the user has locked in a manual choice
   useEffect(() => {
     if (!locked) setLocal(quality);
   }, [quality, locked]);
@@ -22,7 +22,10 @@ export default function QualitySelector() {
     setQuality(q);
     setLocked(true);
   };
-  const onReset = () => setLocked(false);
+
+  const onReset = () => {
+    setLocked(false);
+  };
 
   return (
     <div
