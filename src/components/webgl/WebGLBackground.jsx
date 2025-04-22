@@ -7,7 +7,7 @@ import { useInteractionStore } from '@/stores/useInteractionStore';
 import useResourceTracker from '@/hooks/useResourceTracker.js';
 import { wrapQualityDefines } from '@/shaders/shaderUtils.js';
 
-// Import the three separate GLSL files:
+// Import GLSL chunks
 import noiseSrc from './shaders/noise.glsl';
 import vertexSrc from './shaders/vertex.glsl';
 import fragmentSrc from './shaders/fragment.glsl';
@@ -25,7 +25,7 @@ export default function WebGLBackground({
   const { viewport, mouse } = useThree();
   const tracker = useResourceTracker();
 
-  // 1) Build up particle data arrays once
+  // 1) Build particle arrays once
   const [positions, anim1, anim2] = useMemo(() => {
     const pos = new Float32Array(count * 3);
     const a1 = new Float32Array(count * 4);
@@ -50,8 +50,9 @@ export default function WebGLBackground({
     return [pos, a1, a2];
   }, [count]);
 
-  // 2) Prepare uniforms & colors
+  // 2) Create uniforms (and colors) in one useMemo
   const uniforms = useMemo(() => {
+    // build color objects here so they're stable within this memo
     const colorA = new THREE.Color(colors[0]);
     const colorB = new THREE.Color(colors[1]);
     const colorC = new THREE.Color(colors[2]);
@@ -70,9 +71,9 @@ export default function WebGLBackground({
     };
   }, [baseSize, cursorRadius, repulsionStr, colors]);
 
-  // 3) Create the material, *prepending* noiseSrc
+  // 3) Build the ShaderMaterial
   const material = useMemo(() => {
-    const mat = new THREE.ShaderMaterial({
+    return new THREE.ShaderMaterial({
       defines: wrapQualityDefines(quality),
       uniforms,
       vertexShader: noiseSrc + '\n' + vertexSrc,
@@ -81,19 +82,9 @@ export default function WebGLBackground({
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-
-    // Debug: print final code
-    mat.onBeforeCompile = ({ vertexShader, fragmentShader }) => {
-      console.group('🛠️ Shader Compilation Debug');
-      console.log('--- VERTEX SHADER ---\n', vertexShader);
-      console.log('--- FRAGMENT SHADER ---\n', fragmentShader);
-      console.groupEnd();
-    };
-
-    return mat;
   }, [uniforms, quality]);
 
-  // 4) Build geometry
+  // 4) Build geometry once
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -102,14 +93,14 @@ export default function WebGLBackground({
     return geo;
   }, [positions, anim1, anim2]);
 
-  // 5) Track resources once mounted
+  // 5) Track resources on mount
   useEffect(() => {
     if (pointsRef.current) {
       tracker.track(pointsRef.current);
     }
   }, [tracker]);
 
-  // 6) Update uniforms every frame
+  // 6) Update per-frame uniforms
   useFrame(({ clock }) => {
     uniforms.uTime.value = clock.elapsedTime;
     uniforms.uScrollProgress.value = scrollProgress;

@@ -1,28 +1,61 @@
-// src/components/ui/ResourceMonitor.jsx
-import { useEffect } from 'react';
-import useResourceStore from '@/stores/resourceStore.js';
+// src/components/ui/QualitySelector.jsx
 
-export default function ResourceMonitor() {
-  // Pull values and the updater from the store
-  const geometryCount = useResourceStore(s => s.geometryCount);
-  const materialCount = useResourceStore(s => s.materialCount);
-  const textureCount = useResourceStore(s => s.textureCount);
-  const estimatedMemoryMB = useResourceStore(s => s.estimatedMemoryMB);
-  const updateStats = useResourceStore(s => s.updateStats);
+import { useState, useEffect } from 'react';
+import usePerformanceStore from '@/stores/performanceStore.js';
 
-  // On mount, immediately refresh, then every second thereafter
+const LEVELS = ['ultra', 'high', 'medium', 'low'];
+
+export default function QualitySelector() {
+  const quality = usePerformanceStore(s => s.quality);
+  const setQuality = usePerformanceStore(s => s.setQuality);
+  const [locked, setLocked] = useState(false);
+  const [local, setLocal] = useState(quality);
+
+  // Keep local in sync unless the user has locked in a manual choice
   useEffect(() => {
-    updateStats(); // first tick
-    const interval = setInterval(updateStats, 1000);
-    return () => clearInterval(interval);
-  }, [updateStats]);
+    if (!locked) setLocal(quality);
+  }, [quality, locked]);
+
+  const onChange = e => {
+    const q = e.target.value;
+    setLocal(q);
+    setQuality(q);
+    setLocked(true);
+  };
+
+  const onReset = () => {
+    setLocked(false);
+  };
 
   return (
-    <div className="resource-monitor fixed bottom-4 right-4 p-2 bg-black/50 text-white rounded text-sm">
-      <p>Geometries: {geometryCount}</p>
-      <p>Materials: {materialCount}</p>
-      <p>Textures: {textureCount}</p>
-      <p>Memory: {(typeof estimatedMemoryMB === 'number' ? estimatedMemoryMB : 0).toFixed(1)} MB</p>
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 10,
+        right: 10,
+        background: 'rgba(0,0,0,0.6)',
+        color: '#fff',
+        padding: '8px 12px',
+        borderRadius: 4,
+        fontFamily: 'sans-serif',
+        zIndex: 1000,
+      }}
+    >
+      <label>
+        Quality:
+        <select value={local} onChange={onChange} style={{ marginLeft: 8 }}>
+          {LEVELS.map(l => (
+            <option key={l} value={l}>
+              {l[0].toUpperCase() + l.slice(1)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {locked && (
+        <button onClick={onReset} style={{ marginLeft: 12, padding: '2px 6px' }}>
+          Auto
+        </button>
+      )}
     </div>
   );
 }
