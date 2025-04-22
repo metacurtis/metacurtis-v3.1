@@ -1,6 +1,6 @@
 // src/components/ui/QualitySelector.jsx
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import usePerformanceStore from '@/stores/performanceStore.js';
 
 const LEVELS = ['ultra', 'high', 'medium', 'low'];

@@ -1,7 +1,6 @@
 // src/utils/webgl/ResourceTracker.js
 
 import Registry from './ResourceRegistry.js';
-import * as THREE from 'three';
 
 /**
  * Tracks resources created/used by a single component or scene.

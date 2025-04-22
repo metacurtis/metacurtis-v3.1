@@ -1,34 +1,28 @@
 // src/components/ui/ResourceMonitor.jsx
-import { useEffect, useState } from 'react';
-import useResourceStats from '@/stores/resourceStore';
+import { useEffect } from 'react';
+import useResourceStore from '@/stores/resourceStore.js';
 
 export default function ResourceMonitor() {
-  const stats = useResourceStats();
-  const [snapshot, setSnapshot] = useState({
-    geometries: 0,
-    textures: 0,
-    materials: 0,
-    memoryMB: '0.0',
-  });
+  // Pull values and the updater from the store
+  const geometryCount = useResourceStore(s => s.geometryCount);
+  const materialCount = useResourceStore(s => s.materialCount);
+  const textureCount = useResourceStore(s => s.textureCount);
+  const estimatedMemoryMB = useResourceStore(s => s.estimatedMemoryMB);
+  const updateStats = useResourceStore(s => s.updateStats);
 
+  // On mount, immediately refresh, then every second thereafter
   useEffect(() => {
-    const unsub = useResourceStats.subscribe(s => {
-      setSnapshot({
-        geometries: s.geometryCount,
-        textures: s.textureCount,
-        materials: s.materialCount,
-        memoryMB: s.estimatedMemoryMB.toFixed(1),
-      });
-    });
-    return unsub;
-  }, []);
+    updateStats(); // first tick
+    const interval = setInterval(updateStats, 1000);
+    return () => clearInterval(interval);
+  }, [updateStats]);
 
   return (
     <div className="resource-monitor fixed bottom-4 right-4 p-2 bg-black/50 text-white rounded text-sm">
-      <p>Geometries: {snapshot.geometries}</p>
-      <p>Textures: {snapshot.textures}</p>
-      <p>Materials: {snapshot.materials}</p>
-      <p>Memory: {snapshot.memoryMB} MB</p>
+      <p>Geometries: {geometryCount}</p>
+      <p>Materials: {materialCount}</p>
+      <p>Textures: {textureCount}</p>
+      <p>Memory: {(typeof estimatedMemoryMB === 'number' ? estimatedMemoryMB : 0).toFixed(1)} MB</p>
     </div>
   );
 }

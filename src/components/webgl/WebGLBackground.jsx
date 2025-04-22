@@ -51,12 +51,12 @@ export default function WebGLBackground({
   }, [count]);
 
   // 2) Prepare uniforms & colors
-  const colorA = new THREE.Color(colors[0]);
-  const colorB = new THREE.Color(colors[1]);
-  const colorC = new THREE.Color(colors[2]);
+  const uniforms = useMemo(() => {
+    const colorA = new THREE.Color(colors[0]);
+    const colorB = new THREE.Color(colors[1]);
+    const colorC = new THREE.Color(colors[2]);
 
-  const uniforms = useMemo(
-    () => ({
+    return {
       uTime: { value: 0 },
       uSize: { value: baseSize },
       uScrollProgress: { value: 0 },
@@ -67,9 +67,8 @@ export default function WebGLBackground({
       uColorB: { value: colorB },
       uColorC: { value: colorC },
       uColorIntensity: { value: 1.2 },
-    }),
-    [baseSize, cursorRadius, repulsionStr, colorA, colorB, colorC]
-  );
+    };
+  }, [baseSize, cursorRadius, repulsionStr, colors]);
 
   // 3) Create the material, *prepending* noiseSrc
   const material = useMemo(() => {
