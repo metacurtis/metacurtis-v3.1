@@ -2,47 +2,47 @@
 
 import { useEffect } from 'react';
 import ParticleField from './components/webgl/ParticleField';
-import { useInteractionStore } from './stores/useInteractionStore';
 import CanvasErrorBoundary from './components/ui/CanvasErrorBoundary';
-import ResourceMonitor from './components/ui/ResourceMonitor';
+import DevPerformanceMonitor from './components/ui/DevPerformanceMonitor';
 import QualitySelector from './components/ui/QualitySelector';
+import ResourceMonitor from './components/ui/ResourceMonitor';
 import Layout from './components/ui/Layout';
 import Hero from './sections/Hero';
 import About from './sections/About';
 import Features from './sections/Features';
 import Contact from './sections/Contact';
+import { useInteractionStore } from './stores/useInteractionStore';
 
-function App() {
-  const setCursorPosition = useInteractionStore(state => state.setCursorPosition);
-  const setScrollProgress = useInteractionStore(state => state.setScrollProgress);
+export default function App() {
+  const isDev = process.env.NODE_ENV === 'development';
+  const setCursorPosition = useInteractionStore(s => s.setCursorPosition);
+  const setScrollProgress = useInteractionStore(s => s.setScrollProgress);
 
-  // Mouse position → Zustand
+  // Mouse → Zustand
   useEffect(() => {
     const onMouse = e => setCursorPosition({ x: e.clientX, y: e.clientY });
     window.addEventListener('mousemove', onMouse);
     return () => window.removeEventListener('mousemove', onMouse);
   }, [setCursorPosition]);
 
-  // Scroll progress → Zustand
+  // Scroll → Zustand
   useEffect(() => {
     const onScroll = () => {
-      const sTop = window.scrollY;
-      const maxScrl = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(maxScrl > 0 ? sTop / maxScrl : 0);
+      const top = window.scrollY;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(max > 0 ? top / max : 0);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    // initialize
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, [setScrollProgress]);
 
   return (
     <>
-      {/* DOM-overlays, outside of Canvas */}
-      <ResourceMonitor />
-      <QualitySelector />
+      {isDev && <DevPerformanceMonitor />}
+      {isDev && <QualitySelector />}
+      {isDev && <ResourceMonitor />}
 
-      {/* Canvas & 3D scene, with error boundary */}
       <CanvasErrorBoundary>
         <ParticleField
           count={8000}
@@ -52,7 +52,6 @@ function App() {
         />
       </CanvasErrorBoundary>
 
-      {/* Site content */}
       <Layout>
         <Hero />
         <About />
@@ -62,5 +61,3 @@ function App() {
     </>
   );
 }
-
-export default App;

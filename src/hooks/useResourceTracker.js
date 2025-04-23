@@ -1,24 +1,21 @@
 // src/hooks/useResourceTracker.js
-
 import { useRef, useEffect } from 'react';
 import ResourceTracker from '@/utils/webgl/ResourceTracker.js';
 
-/**
- * Hook that provides a ResourceTracker instance
- * and automatically disposes on unmount.
- */
 export default function useResourceTracker() {
-  const ref = useRef(null);
-  if (!ref.current) {
-    ref.current = new ResourceTracker();
+  const trackerRef = useRef(null);
+
+  if (!trackerRef.current) {
+    // only construct once
+    trackerRef.current = new ResourceTracker();
   }
 
   useEffect(() => {
+    // on unmount, dispose
     return () => {
-      ref.current.dispose();
-      ref.current = null;
+      trackerRef.current.dispose();
     };
   }, []);
 
-  return ref.current;
+  return trackerRef.current;
 }

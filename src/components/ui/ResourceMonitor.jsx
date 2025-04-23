@@ -1,61 +1,35 @@
-// src/components/ui/QualitySelector.jsx
+// src/components/ui/ResourceMonitor.jsx
 
-import { useState, useEffect } from 'react';
-import usePerformanceStore from '@/stores/performanceStore.js';
+import useResourceStore from '@/stores/resourceStore.js';
 
-const LEVELS = ['ultra', 'high', 'medium', 'low'];
-
-export default function QualitySelector() {
-  const quality = usePerformanceStore(s => s.quality);
-  const setQuality = usePerformanceStore(s => s.setQuality);
-  const [locked, setLocked] = useState(false);
-  const [local, setLocal] = useState(quality);
-
-  // Keep local in sync unless the user has locked in a manual choice
-  useEffect(() => {
-    if (!locked) setLocal(quality);
-  }, [quality, locked]);
-
-  const onChange = e => {
-    const q = e.target.value;
-    setLocal(q);
-    setQuality(q);
-    setLocked(true);
+export default function ResourceMonitor() {
+  // Safely retrieve stats; fallback to zeros
+  const stats = useResourceStore(s => s.stats) || {
+    geometry: 0,
+    material: 0,
+    texture: 0,
   };
-
-  const onReset = () => {
-    setLocked(false);
-  };
+  const { geometry, material, texture } = stats;
 
   return (
     <div
       style={{
         position: 'fixed',
-        bottom: 10,
-        right: 10,
+        top: 8,
+        left: 8,
         background: 'rgba(0,0,0,0.6)',
-        color: '#fff',
-        padding: '8px 12px',
+        color: '#0ff',
+        padding: '4px 8px',
+        fontFamily: 'monospace',
+        fontSize: 12,
         borderRadius: 4,
-        fontFamily: 'sans-serif',
+        pointerEvents: 'none',
         zIndex: 1000,
       }}
     >
-      <label>
-        Quality:
-        <select value={local} onChange={onChange} style={{ marginLeft: 8 }}>
-          {LEVELS.map(l => (
-            <option key={l} value={l}>
-              {l[0].toUpperCase() + l.slice(1)}
-            </option>
-          ))}
-        </select>
-      </label>
-      {locked && (
-        <button onClick={onReset} style={{ marginLeft: 12, padding: '2px 6px' }}>
-          Auto
-        </button>
-      )}
+      <div>Geometries: {geometry}</div>
+      <div>Materials: {material}</div>
+      <div>Textures: {texture}</div>
     </div>
   );
 }

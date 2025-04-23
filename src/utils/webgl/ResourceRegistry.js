@@ -1,90 +1,68 @@
 // src/utils/webgl/ResourceRegistry.js
 
-/**
- * Singleton registry to track all created WebGL resources.
- * Categorizes by type and emits lifecycle events.
- */
 class ResourceRegistry {
   constructor() {
-    if (ResourceRegistry._instance) {
-      return ResourceRegistry._instance;
-    }
-    this.resources = {
-      texture: new Set(),
-      material: new Set(),
+    this._resources = {
       geometry: new Set(),
-      buffer: new Set(),
-      other: new Set(),
+      material: new Set(),
+      texture: new Set(),
     };
-    this.listeners = new Set();
-    ResourceRegistry._instance = this;
+    this._listeners = new Set();
   }
 
   /**
-   * Register a resource under its type.
-   * @param {string} type  – 'texture'|'material'|'geometry'|'buffer'|'other'
-   * @param {*} resource
+   * Register a resource of a given type.
+   * @param {'geometry'|'material'|'texture'} type
+   * @param {object} item
    */
-  register(type, resource) {
-    (this.resources[type] || this.resources.other).add(resource);
-    this.emit('registered', { type, resource });
-  }
-
-  /**
-   * Unregister a resource.
-   * @param {string} type
-   * @param {*} resource
-   */
-  unregister(type, resource) {
-    (this.resources[type] || this.resources.other).delete(resource);
-    this.emit('unregistered', { type, resource });
-  }
-
-  /**
-   * Dispose and remove every tracked resource.
-   */
-  disposeAll() {
-    for (const [type, set] of Object.entries(this.resources)) {
-      for (const res of set) {
-        if (typeof res.dispose === 'function') {
-          res.dispose();
-        }
-        this.emit('disposed', { type, resource: res });
-      }
-      set.clear();
+  register(type, item) {
+    if (!this._resources[type].has(item)) {
+      this._resources[type].add(item);
+      this._emit();
     }
   }
 
   /**
-   * Subscribe to registry events.
-   * @param {(event:string, payload:any)=>void} callback
+   * Unregister (dispose) a resource.
+   * @param {'geometry'|'material'|'texture'} type
+   * @param {object} item
+   */
+  unregister(type, item) {
+    if (this._resources[type].delete(item)) {
+      this._emit();
+    }
+  }
+
+  /** Synchronous snapshot of counts */
+  getStats() {
+    return {
+      geometry: this._resources.geometry.size,
+      material: this._resources.material.size,
+      texture: this._resources.texture.size,
+    };
+  }
+
+  /**
+   * Subscribe to changes. Immediately calls your callback with the
+   * current stats, then on every register/unregister.
+   * @param {function(Object)} callback
    * @returns {() => void} unsubscribe
    */
-  on(callback) {
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
+  subscribe(callback) {
+    this._listeners.add(callback);
+    // immediate notify
+    callback(this.getStats());
+    return () => {
+      this._listeners.delete(callback);
+    };
   }
 
-  emit(event, payload) {
-    for (const cb of this.listeners) {
-      try {
-        cb(event, payload);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }
-
-  /**
-   * Get counts of each resource type.
-   */
-  getCounts() {
-    const counts = {};
-    for (const [type, set] of Object.entries(this.resources)) {
-      counts[type] = set.size;
-    }
-    return counts;
+  /** @private */
+  _emit() {
+    const stats = this.getStats();
+    for (const fn of this._listeners) fn(stats);
   }
 }
 
+// Export a singleton instance:
 export default new ResourceRegistry();
