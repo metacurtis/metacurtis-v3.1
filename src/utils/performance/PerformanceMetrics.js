@@ -3,54 +3,57 @@
 /**
  * PerformanceMetrics
  *
- * Tracks per‑frame timings, computes a moving average of frame durations,
- * derives average FPS, and detects “jank” frames exceeding a threshold.
+ * Tracks the last N frame‐times (ms) and computes:
+ *  - fps: 1000 / avg frame time
+ *  - avgFrameTime: moving average in ms
+ *  - jankCount: number of frames > jankThreshold (ms)
+ *  - jankRatio: jankCount / windowSize
  */
 export default class PerformanceMetrics {
   /**
-   * @param {Object} options
-   * @param {number} [options.windowSize=60]      - Number of frames to include in the moving window
-   * @param {number} [options.jankThreshold=50]   - Frame duration (ms) above which a frame counts as “jank”
+   * @param {Object} [opts]
+   * @param {number} [opts.windowSize=60]      Number of frames to average over
+   * @param {number} [opts.jankThreshold=50]   Frame‐time (ms) above which a frame is considered “janky”
    */
   constructor({ windowSize = 60, jankThreshold = 50 } = {}) {
     this.windowSize = windowSize;
     this.jankThreshold = jankThreshold;
-    this.frameTimes = []; // circular buffer of recent frame durations (ms)
-    this.jankCount = 0; // count of frames in buffer exceeding jankThreshold
+    this.frameTimes = []; // ms
+    this.jankCount = 0;
   }
 
   /**
-   * Call once per frame with the delta in milliseconds.
-   * Returns an object of current metrics:
-   * {
-   *   fps,            // average frames per second over the window
-   *   avgFrameTime,   // average frame duration in ms
-   *   jankCount,      // number of “jank” frames (> threshold) in the window
-   *   jankRatio       // fraction of frames considered jank
-   * }
-   *
-   * @param {number} deltaMs  — time since last frame in milliseconds
+   * Call once per frame with the delta (seconds) from useFrame.
+   * @param {number} deltaSeconds
    */
-  tick(deltaMs) {
-    // Add this frame’s duration
-    this.frameTimes.push(deltaMs);
-    if (deltaMs > this.jankThreshold) {
-      this.jankCount++;
-    }
+  tick(deltaSeconds) {
+    const ms = deltaSeconds * 1000;
+    this.frameTimes.push(ms);
 
-    // Remove oldest if over window size
+    // Keep window capped
     if (this.frameTimes.length > this.windowSize) {
       const removed = this.frameTimes.shift();
       if (removed > this.jankThreshold) {
-        this.jankCount--;
+        this.jankCount = Math.max(0, this.jankCount - 1);
       }
     }
 
-    // Compute averages
-    const sumMs = this.frameTimes.reduce((sum, t) => sum + t, 0);
-    const avgFrameTime = sumMs / this.frameTimes.length;
+    // Count jank
+    if (ms > this.jankThreshold) {
+      this.jankCount++;
+    }
+  }
+
+  /**
+   * Returns the current metrics snapshot.
+   * @returns {{ fps: number, avgFrameTime: number, jankCount: number, jankRatio: number }}
+   */
+  getMetrics() {
+    const n = this.frameTimes.length;
+    const sum = this.frameTimes.reduce((a, b) => a + b, 0);
+    const avgFrameTime = n > 0 ? sum / n : 0;
     const fps = avgFrameTime > 0 ? 1000 / avgFrameTime : 0;
-    const jankRatio = this.frameTimes.length > 0 ? this.jankCount / this.frameTimes.length : 0;
+    const jankRatio = n > 0 ? this.jankCount / n : 0;
 
     return {
       fps,

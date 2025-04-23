@@ -1,18 +1,21 @@
 // src/stores/resourceStore.js
-
 import { create } from 'zustand';
 import Registry from '@/utils/webgl/ResourceRegistry.js';
 
-// 1) Create your Zustand store: initial stats + an updater action
-const useResourceStore = create(set => ({
-  stats: Registry.getStats(), // start off with whatever’s already registered
-  updateStats: stats => set({ stats }), // action to overwrite stats
-}));
+// Create a Zustand store keyed around the Registry’s stats
+const useResourceStore = create(set => {
+  // Seed with the registry’s current snapshot
+  set({ stats: Registry.getStats() });
 
-// 2) _Outside_ of any React component, subscribe once.
-//    Whenever your registry emits, we call updateStats.
-Registry.subscribe(newStats => {
-  useResourceStore.getState().updateStats(newStats);
+  // Subscribe to future Registry updates
+  const unsubscribe = Registry.subscribe(stats => {
+    set({ stats });
+  });
+
+  // Return no-op cleanup for Zustand (optional)
+  return () => {
+    unsubscribe();
+  };
 });
 
 export default useResourceStore;

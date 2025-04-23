@@ -1,11 +1,9 @@
-// src/App.jsx
-
 import { useEffect } from 'react';
+import AdaptiveRenderer from './components/webgl/AdaptiveRenderer';
 import ParticleField from './components/webgl/ParticleField';
 import CanvasErrorBoundary from './components/ui/CanvasErrorBoundary';
 import DevPerformanceMonitor from './components/ui/DevPerformanceMonitor';
 import QualitySelector from './components/ui/QualitySelector';
-import ResourceMonitor from './components/ui/ResourceMonitor';
 import Layout from './components/ui/Layout';
 import Hero from './sections/Hero';
 import About from './sections/About';
@@ -14,18 +12,17 @@ import Contact from './sections/Contact';
 import { useInteractionStore } from './stores/useInteractionStore';
 
 export default function App() {
-  const isDev = process.env.NODE_ENV === 'development';
   const setCursorPosition = useInteractionStore(s => s.setCursorPosition);
   const setScrollProgress = useInteractionStore(s => s.setScrollProgress);
 
-  // Mouse → Zustand
+  // Mouse → store
   useEffect(() => {
     const onMouse = e => setCursorPosition({ x: e.clientX, y: e.clientY });
     window.addEventListener('mousemove', onMouse);
     return () => window.removeEventListener('mousemove', onMouse);
   }, [setCursorPosition]);
 
-  // Scroll → Zustand
+  // Scroll → store
   useEffect(() => {
     const onScroll = () => {
       const top = window.scrollY;
@@ -39,19 +36,34 @@ export default function App() {
 
   return (
     <>
-      {isDev && <DevPerformanceMonitor />}
-      {isDev && <QualitySelector />}
-      {isDev && <ResourceMonitor />}
+      {/* ← DOM overlays OUTSIDE the Canvas */}
+      <DevPerformanceMonitor />
+      <QualitySelector />
 
+      {/* ← Canvas & 3D scene (no <div> in here!) */}
       <CanvasErrorBoundary>
-        <ParticleField
-          count={8000}
-          baseSize={0.04}
-          colors={['#ff00ff', '#00ffff', '#0066ff']}
-          quality="high"
-        />
+        <AdaptiveRenderer
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: -1,
+          }}
+          camera={{ position: [0, 0, 5], fov: 50 }}
+          dpr={[1, 1.5]}
+        >
+          <ParticleField
+            count={8000}
+            baseSize={0.04}
+            colors={['#ff00ff', '#00ffff', '#0066ff']}
+            quality="high"
+          />
+        </AdaptiveRenderer>
       </CanvasErrorBoundary>
 
+      {/* Your page content */}
       <Layout>
         <Hero />
         <About />
