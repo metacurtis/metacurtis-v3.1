@@ -1,31 +1,57 @@
 // src/hooks/useAdaptiveQuality.js
-import { useEffect } from 'react';
+
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import AdaptiveQualitySystem, { QualityLevels } from '@/utils/performance/AdaptiveQualitySystem.js';
+import PerformanceMetrics from '@/utils/performance/PerformanceMetrics.js';
 import usePerformanceStore from '@/stores/performanceStore.js';
 
 /**
- * useAdaptiveQuality
- *
- * Watches the FPS in your performance store and only
- * bumps the quality tier when it actually changes.
+ * Default‑exported hook for adaptive quality.
+ * Must be used inside an R3F <Canvas> subtree.
  */
-export default function useAdaptiveQuality() {
-  const setQuality = usePerformanceStore(s => s.setQuality);
+export default function useAdaptiveQuality({
+  windowSize = 60,
+  jankThreshold = 50,
+  ultraFps = 65,
+  highFps = 55,
+  mediumFps = 45,
+  initial = QualityLevels.HIGH,
+} = {}) {
+  // Grab only the setters
+  const setMetrics = usePerformanceStore(state => state.setMetrics);
+  const setQuality = usePerformanceStore(state => state.setQuality);
 
-  useEffect(() => {
-    const unsubscribe = usePerformanceStore.subscribe(state => {
-      const { fps } = state.metrics;
-      let tier;
-      if (fps >= 65) tier = 'ultra';
-      else if (fps >= 55) tier = 'high';
-      else if (fps >= 45) tier = 'medium';
-      else tier = 'low';
+  const aqsRef = useRef(null);
+  const metricsRef = useRef(null);
 
-      // only update when different
-      if (state.quality !== tier) {
-        setQuality(tier);
-      }
+  // Initialize metrics & AQS once
+  if (!metricsRef.current) {
+    metricsRef.current = new PerformanceMetrics({ windowSize, jankThreshold });
+  }
+  if (!aqsRef.current) {
+    aqsRef.current = new AdaptiveQualitySystem({
+      windowSize,
+      ultraFps,
+      highFps,
+      mediumFps,
+      initial,
     });
+    // Seed the store
+    setQuality(aqsRef.current.currentLevel);
+  }
 
-    return unsubscribe;
-  }, [setQuality]);
+  // Every R3F frame
+  useFrame((_, delta) => {
+    // 1) update performance metrics
+    const metrics = metricsRef.current.tick(delta);
+    // 2) advance quality system
+    const newLevel = aqsRef.current.tick();
+    // 3) write back to store
+    setMetrics(metrics);
+    setQuality(newLevel);
+  });
+
+  // Return current quality so React re‑renders when it changes
+  return usePerformanceStore(state => state.quality);
 }

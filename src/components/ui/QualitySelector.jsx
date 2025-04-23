@@ -3,13 +3,17 @@ import usePerformanceStore from '@/stores/performanceStore.js';
 
 const LEVELS = ['ultra', 'high', 'medium', 'low'];
 
+/**
+ * Plain-DOM overlay to lock or auto quality.
+ * Must live *outside* the Canvas.
+ */
 export default function QualitySelector() {
   const quality = usePerformanceStore(s => s.quality);
   const setQuality = usePerformanceStore(s => s.setQuality);
   const [locked, setLocked] = useState(false);
   const [local, setLocal] = useState(quality);
 
-  // Keep `local` synced unless user “locks” a selection
+  // Keep local in sync until user locks it
   useEffect(() => {
     if (!locked) setLocal(quality);
   }, [quality, locked]);
@@ -20,7 +24,6 @@ export default function QualitySelector() {
     setQuality(q);
     setLocked(true);
   };
-  const onReset = () => setLocked(false);
 
   return (
     <div
@@ -41,13 +44,13 @@ export default function QualitySelector() {
         <select value={local} onChange={onChange} style={{ marginLeft: 8 }}>
           {LEVELS.map(l => (
             <option key={l} value={l}>
-              {l.toUpperCase()}
+              {l[0].toUpperCase() + l.slice(1)}
             </option>
           ))}
         </select>
       </label>
       {locked && (
-        <button onClick={onReset} style={{ marginLeft: 12, padding: '2px 6px' }}>
+        <button onClick={() => setLocked(false)} style={{ marginLeft: 12, padding: '2px 6px' }}>
           Auto
         </button>
       )}
