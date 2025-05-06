@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useInteractionStore } from '@/stores/useInteractionStore';
 import useResourceTracker from '@/hooks/useResourceTracker.js';
-import { wrapQualityDefines } from '@/shaders/shaderUtils.js';
+import { wrapQualityDefines } from '@/utils/shaderUtils.js';
 
 // Import GLSL chunks
 import noiseSrc from './shaders/noise.glsl';
