@@ -1,5 +1,4 @@
 // src/components/webgl/WebGLCanvas.jsx
-import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei'; // Only import needed Drei components
 import { SimpleAnimatedCube } from '../graphics/SimpleAnimatedCube'; // Adjust path if needed

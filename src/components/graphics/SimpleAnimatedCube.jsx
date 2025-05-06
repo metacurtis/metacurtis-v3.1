@@ -1,5 +1,5 @@
 // src/components/graphics/SimpleAnimatedCube.jsx
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
 export const SimpleAnimatedCube = props => {
@@ -18,8 +18,8 @@ export const SimpleAnimatedCube = props => {
   return (
     // Pass meshRef to the mesh component
     <mesh ref={meshRef} {...props}>
+      {/* eslint-disable-next-line react/no-unknown-property */}
       <boxGeometry args={[1, 1, 1]} />
-      {/* Let's use a different color to see the change */}
       <meshStandardMaterial color="mediumseagreen" />
     </mesh>
   );

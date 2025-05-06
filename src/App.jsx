@@ -51,7 +51,7 @@ const FrameloopSwitcher = () => {
 };
 
 export default function App() {
-  const isDev = process.env.NODE_ENV === 'development';
+  const _isDev = process.env.NODE_ENV === 'development';
   const setCursorPosition = useInteractionStore(s => s.setCursorPosition);
   const setScrollProgress = useInteractionStore(s => s.setScrollProgress);
 
