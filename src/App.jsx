@@ -15,6 +15,40 @@ import { useInteractionStore } from './stores/useInteractionStore'; // Ensure pa
 
 // --- Import the new minimal canvas ---
 import { WebGLCanvas } from './components/webgl/WebGLCanvas'; // Make sure path is correct
+import { useQualityStore, FRAMELOOP_MODES } from './stores/qualityStore'; // Adjust path
+
+const FrameloopSwitcher = () => {
+  const setFrameloopMode = useQualityStore(state => state.setFrameloopMode);
+  const currentMode = useQualityStore(state => state.frameloopMode);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 10,
+        right: 10,
+        zIndex: 100,
+        background: 'rgba(0,0,0,0.7)',
+        padding: '10px',
+        borderRadius: '5px',
+      }}
+    >
+      <p style={{ margin: '0 0 5px 0', color: 'white', fontSize: '12px' }}>
+        Frameloop: {currentMode}
+      </p>
+      {FRAMELOOP_MODES.map(mode => (
+        <button
+          key={mode}
+          onClick={() => setFrameloopMode(mode)}
+          style={{ marginRight: '5px', padding: '2px 5px', fontSize: '10px', cursor: 'pointer' }}
+          disabled={mode === currentMode} // Disable button for current mode
+        >
+          {mode}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 export default function App() {
   const isDev = process.env.NODE_ENV === 'development';
@@ -42,6 +76,9 @@ export default function App() {
 
   return (
     <>
+      {/* --- Add the switcher component here --- */}
+      <FrameloopSwitcher />
+
       {/* {isDev && <DevPerformanceMonitor />} */}
       {/* {isDev && <QualitySelector />} */}
       {/* {isDev && <ResourceMonitor />} */}
