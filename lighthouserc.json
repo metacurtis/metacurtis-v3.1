@@ -1,9 +1,11 @@
 {
   "ci": {
     "collect": {
+      "startServerCommand": "npm run start",
+      "startServerReadyPattern": "Local:",
+      "startServerReadyTimeout": 60000,
       "url": ["http://localhost:4173"],
-      "numberOfRuns": 3,
-      "settings": {}
+      "numberOfRuns": 3
     },
     "assert": {
       "preset": "lighthouse:recommended",
@@ -26,11 +28,6 @@
     },
     "upload": {
       "target": "temporary-public-storage"
-    },
-    "server": {
-      "startServerCommand": "npm run start -- --port=4173",
-      "serverReadyPattern": "ready on|listening on|compiled successfully",
-      "serverReadyTimeout": 60000
     }
   }
 }
