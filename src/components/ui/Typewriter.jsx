@@ -1,6 +1,6 @@
 // src/components/ui/Typewriter.jsx
 import { useEffect, useState } from 'react';
-import { useInteractionStore } from '@/stores/useInteractionStore';
+import { useInteractionStore } from '../../stores/useInteractionStore';
 
 export default function Typewriter({
   text = '',

@@ -1,50 +1,20 @@
-/* src/index.css */
+/* src/styles/index.css */
 
-/* ==========================================================================
-   Tailwind Directives - Must come first
-   ========================================================================== */
+/* Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-      Custom CSS Variables (Still useful for direct use)
-      ========================================================================== */
+/* Your Custom CSS Variables */
 :root {
-  /* Colors */
   --color-primary: #10b981;
   --color-secondary: #64748b;
-  --color-background: #0f172a;
-  --color-text-base: #cbd5e1; /* Example: slate-300 value directly */
-
-  /* Fonts */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'Fira Code', monospace;
-
-  /* Animation Timing */
-  --transition-slow: 0.5s;
-  --transition-medium: 0.3s;
-  --transition-fast: 0.15s;
-
-  /* Z-index Layers */
-  --z-background: -10;
-  --z-default: 1;
-  --z-overlay: 10;
-  --z-modal: 100;
-  --z-tooltip: 1000;
-
-  /* Base Border Radius (Example) */
-  --border-radius-base: 0.5rem;
-  --border-radius-md: 0.5rem;
-  --border-radius-lg: 0.75rem;
-  --border-radius-xl: 1rem;
-  --border-radius-full: 9999px;
+  --color-background: #0f172a; /* Used by Tailwind base potentially */
+  --color-text-base: #cbd5e1; /* Used by Tailwind base potentially */
+  /* ... other variables ... */
 }
 
-/* ==========================================================================
-      Global Base Styles
-      ========================================================================== */
-
+/* Your Global Base Styles */
 html,
 body,
 #root {
@@ -52,8 +22,8 @@ body,
   min-height: 100%;
   margin: 0;
   padding: 0;
-  background-color: transparent;
-  position: relative;
+  background-color: transparent; /* Or set your desired base background */
+  position: relative; /* Keep this if needed, but might reconsider if still causing issues */
 }
 
 html {
@@ -63,63 +33,30 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Apply base styles to Body */
 body {
-  /* Apply base font directly using the CSS variable */
   font-family: var(--font-sans);
-  /* Apply base text color directly using the CSS variable */
   color: var(--color-text-base);
-  /* Apply other utilities using @apply */
   @apply antialiased;
   min-height: 100vh;
+  /* display: flex; flex-direction: column; */ /* Remove if added during debug */
 }
 
-/* ==========================================================================
-      Tailwind v4 CSS-based Theme Configuration - REMAINS REMOVED/COMMENTED
-      ========================================================================== */
-/* @theme { ... } */
+/* #root { ... remove if added during debug ... } */
 
-/* ==========================================================================
-      Element Specific Styles
-      ========================================================================== */
-
+/* Element Specific Styles */
 canvas {
-  /* Base canvas styles - display: block is important */
   display: block;
   touch-action: none;
   outline: none;
 }
 
-/* REMOVED DEBUGGING RULES FOR CANVAS CONTAINER AND CANVAS */
-
-/* ==========================================================================
-      Custom Utility Classes
-      ========================================================================== */
+/* Your Custom Utilities / Components */
 @layer utilities {
-  .container-fluid {
-    width: 100%;
-    max-width: 1920px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  .flex-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .absolute-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
+  /* ... your utilities like .container-fluid ... */
+}
+@layer components {
+  /* ... your components like .btn ... */
 }
 
-/* ==========================================================================
-      Custom Component Classes (Example)
-      ========================================================================== */
-@layer components {
-  /* .btn { ... } */
-}
+/* REMOVE any temporary body border/background rules */
+/* body { border: ...; background-color: ...; } */

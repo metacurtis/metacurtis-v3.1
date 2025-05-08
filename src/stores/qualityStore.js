@@ -1,23 +1,33 @@
 // src/stores/qualityStore.js
 import { create } from 'zustand';
 
-// Define the possible frameloop modes
 export const FRAMELOOP_MODES = ['always', 'demand', 'never'];
 
-export const useQualityStore = create(set => ({
-  // --- State ---
-  frameloopMode: 'always', // Default frameloop mode
+export const useQualityStore = create((set, get) => ({
+  // State
+  frameloopMode: 'always',
+  currentFps: null,
+  targetDpr: Math.min(window.devicePixelRatio || 1, 1.5), // Sensible default
 
-  // --- Actions ---
+  // Actions
   setFrameloopMode: mode => {
     if (FRAMELOOP_MODES.includes(mode)) {
       set({ frameloopMode: mode });
-      console.log(`Frameloop mode set to: ${mode}`); // For debugging
     } else {
       console.warn(`Invalid frameloop mode attempted: ${mode}`);
     }
   },
+  setMeasuredFps: fps => set({ currentFps: fps }),
+  setTargetDpr: dpr => {
+    const maxDpr = window.devicePixelRatio || 1;
+    const newDpr = Math.max(0.5, Math.min(maxDpr, dpr)); // Clamped DPR
+    if (get().targetDpr !== newDpr) {
+      set({ targetDpr: newDpr });
+    }
+  },
 }));
 
-// Optional: Selector hook for convenience
+// Optional selector hooks
 export const useFrameloopMode = () => useQualityStore(state => state.frameloopMode);
+export const useCurrentFps = () => useQualityStore(state => state.currentFps);
+export const useTargetDpr = () => useQualityStore(state => state.targetDpr);

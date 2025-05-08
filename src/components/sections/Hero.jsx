@@ -167,8 +167,7 @@ function Hero() {
         </div>
         <p
           ref={subtitleRef}
-          className="mt-6 md:mt-8 text-lg sm:text-xl lg:text-2xl text-slate-300 opacity-0"
-          style={{ visibility: 'hidden' }}
+          className="mt-6 md:mt-8 text-lg sm:text-xl lg:text-2xl text-slate-300" // Removed opacity-0 and inline style
         >
           Digital Experience Creator
         </p>

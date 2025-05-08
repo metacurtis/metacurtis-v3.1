@@ -1,94 +1,43 @@
-// src/App.jsx (Simplified for Phase 3 - Step 1)
+// src/App.jsx (Cleaned up - End of Phase 4)
 
-import { useEffect } from 'react';
-// import ParticleField from './components/webgl/ParticleField'; // REMOVED FOR NOW
-import CanvasErrorBoundary from './components/ui/CanvasErrorBoundary';
-// import DevPerformanceMonitor from './components/ui/DevPerformanceMonitor'; // REMOVED FOR NOW
-// import QualitySelector from './components/ui/QualitySelector'; // REMOVED FOR NOW
-// import ResourceMonitor from './components/ui/ResourceMonitor'; // REMOVED FOR NOW
-import Layout from './components/ui/Layout';
-import Hero from './components/sections/Hero'; // Ensure path is correct (components/sections/Hero ?)
-import About from './components/sections/About'; // Ensure path is correct
-import Features from './components/sections/Features'; // Ensure path is correct
-import Contact from './components/sections/Contact'; // Ensure path is correct
-import { useInteractionStore } from './stores/useInteractionStore'; // Ensure path is correct
+// Removed 'React' and 'useEffect' import as they are likely unused now
+// If you add hooks back later, re-import { useEffect } from 'react';
+import Layout from './components/ui/Layout'; // Check Path
+import Hero from './components/sections/Hero'; // Check Path
+import About from './components/sections/About'; // Check Path
+import Features from './components/sections/Features'; // Check Path
+import Contact from './components/sections/Contact'; // Check Path
+import CanvasErrorBoundary from './components/ui/CanvasErrorBoundary'; // Check Path
+import { WebGLCanvas } from './components/webgl/WebGLCanvas'; // Check Path
+// Removed store imports related to FrameloopSwitcher unless kept
+// import { useQualityStore, FRAMELOOP_MODES } from './stores/qualityStore';
+// Removed interaction store imports unless used elsewhere now
+// import { useInteractionStore } from './stores/useInteractionStore';
 
-// --- Import the new minimal canvas ---
-import { WebGLCanvas } from './components/webgl/WebGLCanvas'; // Make sure path is correct
-import { useQualityStore, FRAMELOOP_MODES } from './stores/qualityStore'; // Adjust path
-
+// Removed FrameloopSwitcher definition unless you want to keep it uncommented below
+/*
 const FrameloopSwitcher = () => {
-  const setFrameloopMode = useQualityStore(state => state.setFrameloopMode);
-  const currentMode = useQualityStore(state => state.frameloopMode);
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 10,
-        right: 10,
-        zIndex: 100,
-        background: 'rgba(0,0,0,0.7)',
-        padding: '10px',
-        borderRadius: '5px',
-      }}
-    >
-      <p style={{ margin: '0 0 5px 0', color: 'white', fontSize: '12px' }}>
-        Frameloop: {currentMode}
-      </p>
-      {FRAMELOOP_MODES.map(mode => (
-        <button
-          key={mode}
-          onClick={() => setFrameloopMode(mode)}
-          style={{ marginRight: '5px', padding: '2px 5px', fontSize: '10px', cursor: 'pointer' }}
-          disabled={mode === currentMode} // Disable button for current mode
-        >
-          {mode}
-        </button>
-      ))}
-    </div>
-  );
+  const setFrameloopMode = useQualityStore((state) => state.setFrameloopMode);
+  const currentMode = useQualityStore((state) => state.frameloopMode);
+  // ... return JSX for buttons ...
 };
+*/
 
 export default function App() {
-  const _isDev = process.env.NODE_ENV === 'development';
-  const setCursorPosition = useInteractionStore(s => s.setCursorPosition);
-  const setScrollProgress = useInteractionStore(s => s.setScrollProgress);
-
-  // Mouse → Zustand (Keep)
-  useEffect(() => {
-    const onMouse = e => setCursorPosition({ x: e.clientX, y: e.clientY });
-    window.addEventListener('mousemove', onMouse);
-    return () => window.removeEventListener('mousemove', onMouse);
-  }, [setCursorPosition]);
-
-  // Scroll → Zustand (Keep)
-  useEffect(() => {
-    const onScroll = () => {
-      const top = window.scrollY;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(max > 0 ? top / max : 0);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // Initial call
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [setScrollProgress]);
+  // Removed unused _isDev variable
+  // Removed interaction store logic unless needed
 
   return (
     <>
-      {/* --- Add the switcher component here --- */}
-      <FrameloopSwitcher />
+      {/* Optional: Keep the FrameloopSwitcher for manual testing if desired */}
+      {/* <FrameloopSwitcher /> */}
 
-      {/* {isDev && <DevPerformanceMonitor />} */}
-      {/* {isDev && <QualitySelector />} */}
-      {/* {isDev && <ResourceMonitor />} */}
-
-      {/* Render the minimal WebGL Canvas inside the error boundary */}
+      {/* R3F Canvas rendering within an Error Boundary */}
       <CanvasErrorBoundary>
         <WebGLCanvas />
       </CanvasErrorBoundary>
 
-      {/* Keep the main page layout and sections */}
+      {/* Main page layout and sections */}
       <Layout>
         <Hero />
         <About />

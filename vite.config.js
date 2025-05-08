@@ -1,22 +1,24 @@
-// vite.config.js
+// vite.config.js (Corrected for ESLint errors and Tailwind v4)
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
-import glsl from 'vite-plugin-glsl'; // <-- Import the plugin
+// NO import for @tailwindcss/vite
+import glsl from 'vite-plugin-glsl'; // Keep GLSL plugin
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Calculate __dirname directly from import.meta.url (Fixes unused __filename)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
-    glsl(), // <-- Add the plugin here
+    // NO tailwindcss() v3 plugin here
+    glsl(),
   ],
   resolve: {
     alias: {
+      // Ensure there are no typos like a stray 'x' here (around line 22)
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
       '@webgl': path.resolve(__dirname, './src/components/webgl'),
@@ -26,6 +28,11 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, './src/assets'),
     },
   },
+  // Explicitly point to PostCSS config (added during CSS debug, generally safe)
+  css: {
+    postcss: './postcss.config.js',
+  },
+  // --- Keep your original Build/Server/Optimize/Test options ---
   build: {
     target: 'esnext',
     minify: 'terser',

@@ -1,10 +1,9 @@
-// src/main.jsx (Reverted)
-
+// src/main.jsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import './styles/index.css';
-import App from './App'; // Keep importing App
+import './styles/index.css'; // Correct relative path to CSS
+import App from './App';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,7 +13,6 @@ const root = createRoot(rootElement);
 
 root.render(
   <StrictMode>
-    {/* No BrowserRouter needed */}
     <App />
   </StrictMode>
 );

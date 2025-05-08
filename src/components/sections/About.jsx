@@ -2,7 +2,7 @@
 import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Typewriter from '@/components/ui/Typewriter';
+import Typewriter from '../ui/Typewriter';
 
 gsap.registerPlugin(ScrollTrigger);
 
