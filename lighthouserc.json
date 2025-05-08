@@ -2,53 +2,35 @@
   "ci": {
     "collect": {
       "url": ["http://localhost:4173"],
-      "numberOfRuns": 3, // Increased for more stable results
-      "settings": {
-        // Optional: uncomment and set if you want to test specific conditions
-        // "emulatedFormFactor": "mobile",
-        // "throttlingMethod": "simulate"
-      }
+      "numberOfRuns": 3,
+      "settings": {}
     },
     "assert": {
-      "preset": "lighthouse:recommended", // Base preset, good starting point
+      "preset": "lighthouse:recommended",
       "assertions": {
-        // Override preset defaults to be warnings initially, and adjust scores
         "categories:performance": ["warn", { "minScore": 0.7 }],
         "categories:accessibility": ["warn", { "minScore": 0.8 }],
         "categories:best-practices": ["warn", { "minScore": 0.85 }],
         "categories:seo": ["warn", { "minScore": 0.8 }],
-
-        // Your specific overrides - review and enable as needed:
-        "meta-description": ["warn", {}], // Important for SEO, was "off"
-        "robots-txt": ["warn", {}], // Important for SEO, was "off"
-        "errors-in-console": ["warn", {}], // Good to keep as warn or error
-        "color-contrast": ["warn", {}], // Good to keep as warn or error
-
-        // PWA-related checks - keep "off" if not a PWA, otherwise enable
+        "meta-description": ["warn", {}],
+        "robots-txt": ["warn", {}],
+        "errors-in-console": ["warn", {}],
+        "color-contrast": ["warn", {}],
         "installable-manifest": "off",
         "maskable-icon": "off",
         "service-worker": "off",
         "splash-screen": "off",
         "themed-omnibox": "off",
-
-        // Security-related - consider your app's needs
-        "csp-xss": "off" // Enable if you implement Content Security Policy for XSS protection
-
-        // Removed your specific 'render-blocking-resources' and 'unused-javascript'
-        // as 'categories:performance' and 'lighthouse:recommended' cover their impact.
-        // You can add specific metric assertions if you need finer-grained control later.
+        "csp-xss": "off"
       }
     },
     "upload": {
       "target": "temporary-public-storage"
     },
     "server": {
-      // IMPORTANT: If your server at http://localhost:4173 is not already
-      // running when lhci autorun executes, you NEED to configure this.
-      // Example for a typical Node.js app:
-      // "startServerCommand": "npm run start -- --port=4173", // Adjust to your start command
-      // "serverReadyPattern": "ready on|listening on|compiled successfully", // Adjust to your server's output
-      // "serverReadyTimeout": 60000 // Optional: timeout in ms
+      "startServerCommand": "npm run start -- --port=4173",
+      "serverReadyPattern": "ready on|listening on|compiled successfully",
+      "serverReadyTimeout": 60000
     }
   }
 }
