@@ -2,15 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="MetaCurtis V3.1 - A high-performance WebGL-powered website featuring cutting-edge particle systems, smooth animations, and futuristic design." />
-    <meta name="robots" content="index, follow" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MetaCurtis Premium WebGL</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Critical hero CSS inlined for instant LCP -->
+    <style>
+      .hero-heading-wrapper { min-height: 5rem; overflow: hidden; }
+      h2 { font-size:2.5rem; line-height:1.2; margin-bottom:1rem; opacity:1; }
+    </style>
+
+    <!-- Preload & load your Inter font -->
+    <link rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+          as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Main CSS bundle -->
+    <link rel="stylesheet" href="/src/styles/index.css" />
+
+    <!-- Meta tags -->
+    <meta name="description"
+          content="MetaCurtis V3.1—high-performance WebGL site with interactive particles and smooth animations" />
+    <meta name="robots" content="index, follow" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <link rel="icon" href="/vite.svg" type="image/svg+xml" />
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

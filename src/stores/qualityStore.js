@@ -1,33 +1,17 @@
 // src/stores/qualityStore.js
 import { create } from 'zustand';
+// import { QualityLevels } from '@/utils/performance/AdaptiveQualitySystem.js'; // If needed for initial state
 
-export const FRAMELOOP_MODES = ['always', 'demand', 'never'];
-
-export const useQualityStore = create((set, get) => ({
-  // State
+export const useQualityStore = create(set => ({
+  currentQualityTier: 'HIGH',
+  targetDpr: 1.0,
   frameloopMode: 'always',
-  currentFps: null,
-  targetDpr: Math.min(window.devicePixelRatio || 1, 1.5), // Sensible default
+  webglEnabled: true,
+  particleCount: 5000,
 
-  // Actions
-  setFrameloopMode: mode => {
-    if (FRAMELOOP_MODES.includes(mode)) {
-      set({ frameloopMode: mode });
-    } else {
-      console.warn(`Invalid frameloop mode attempted: ${mode}`);
-    }
-  },
-  setMeasuredFps: fps => set({ currentFps: fps }),
-  setTargetDpr: dpr => {
-    const maxDpr = window.devicePixelRatio || 1;
-    const newDpr = Math.max(0.5, Math.min(maxDpr, dpr)); // Clamped DPR
-    if (get().targetDpr !== newDpr) {
-      set({ targetDpr: newDpr });
-    }
-  },
+  setCurrentQualityTier: tier => set({ currentQualityTier: tier }),
+  setTargetDpr: dpr => set({ targetDpr: dpr }),
+  setFrameloopMode: mode => set({ frameloopMode: mode }),
+  setWebglEnabled: isEnabled => set({ webglEnabled: isEnabled }),
+  setParticleCount: count => set({ particleCount: count }),
 }));
-
-// Optional selector hooks
-export const useFrameloopMode = () => useQualityStore(state => state.frameloopMode);
-export const useCurrentFps = () => useQualityStore(state => state.currentFps);
-export const useTargetDpr = () => useQualityStore(state => state.targetDpr);

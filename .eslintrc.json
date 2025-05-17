@@ -1,0 +1,29 @@
+{
+  "root": true,
+
+  // DON’T lint your dist/ folder or node_modules/
+  "ignorePatterns": ["dist/", "node_modules/"],
+
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended"
+    // add other extends you need…
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    // your project-specific rule overrides…
+  }
+}

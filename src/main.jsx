@@ -1,18 +1,17 @@
 // src/main.jsx
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-
-import './styles/index.css'; // Correct relative path to CSS
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import App from './App';
+import './styles/index.css'; // Your global styles, including Tailwind
+// import './console-shim.js'; // Only if still needed
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Failed to find the root element with ID 'root'");
+const appRootElement = document.getElementById('root');
+if (appRootElement) {
+  ReactDOM.createRoot(appRootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+} else {
+  console.error('Failed to find the main app root element #root');
 }
-const root = createRoot(rootElement);
-
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);

@@ -1,49 +1,39 @@
-// src/App.jsx (Cleaned up - End of Phase 4)
+// src/App.jsx
+import { Suspense, lazy } from 'react';
+import CanvasErrorBoundary from '@/components/ui/CanvasErrorBoundary';
+import Layout from '@/components/ui/Layout';
+import Hero from '@/components/sections/Hero';
+import About from '@/components/sections/About';
+import Features from '@/components/sections/Features';
+import Contact from '@/components/sections/Contact';
+import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 
-// Removed 'React' and 'useEffect' import as they are likely unused now
-// If you add hooks back later, re-import { useEffect } from 'react';
-import Layout from './components/ui/Layout'; // Check Path
-import Hero from './components/sections/Hero'; // Check Path
-import About from './components/sections/About'; // Check Path
-import Features from './components/sections/Features'; // Check Path
-import Contact from './components/sections/Contact'; // Check Path
-import CanvasErrorBoundary from './components/ui/CanvasErrorBoundary'; // Check Path
-import { WebGLCanvas } from './components/webgl/WebGLCanvas'; // Check Path
-// Removed store imports related to FrameloopSwitcher unless kept
-// import { useQualityStore, FRAMELOOP_MODES } from './stores/qualityStore';
-// Removed interaction store imports unless used elsewhere now
-// import { useInteractionStore } from './stores/useInteractionStore';
-
-// Removed FrameloopSwitcher definition unless you want to keep it uncommented below
-/*
-const FrameloopSwitcher = () => {
-  const setFrameloopMode = useQualityStore((state) => state.setFrameloopMode);
-  const currentMode = useQualityStore((state) => state.frameloopMode);
-  // ... return JSX for buttons ...
-};
-*/
+const WebGLCanvas = lazy(() => import('@/components/webgl/WebGLCanvas'));
 
 export default function App() {
-  // Removed unused _isDev variable
-  // Removed interaction store logic unless needed
+  const isDevelopment = import.meta.env.DEV;
+  console.log(
+    `App.jsx: isDevelopment = ${isDevelopment}. DevPerformanceMonitor will be rendered if true.`
+  );
 
   return (
     <>
-      {/* Optional: Keep the FrameloopSwitcher for manual testing if desired */}
-      {/* <FrameloopSwitcher /> */}
-
-      {/* R3F Canvas rendering within an Error Boundary */}
       <CanvasErrorBoundary>
-        <WebGLCanvas />
+        <Suspense fallback={null}>
+          <WebGLCanvas />
+        </Suspense>
       </CanvasErrorBoundary>
 
-      {/* Main page layout and sections */}
       <Layout>
-        <Hero />
+        <div className="hero-heading-wrapper animate-fade-in">
+          <Hero />
+        </div>
         <About />
         <Features />
         <Contact />
       </Layout>
+
+      {isDevelopment && <DevPerformanceMonitor />}
     </>
   );
 }

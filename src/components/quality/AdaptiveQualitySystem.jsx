@@ -1,41 +1,94 @@
 // src/components/quality/AdaptiveQualitySystem.jsx
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useQualityStore } from '../../stores/qualityStore'; // Adjust path
+import { useQualityStore } from '@/stores/qualityStore';
+import usePerformanceStore from '@/stores/performanceStore'; // Default import
+import AQSEngine, { QualityLevels } from '@/utils/performance/AdaptiveQualitySystem.js';
 
-// Constants for AQS logic
-const FPS_UPDATE_INTERVAL = 0.5; // Seconds
-const LOW_FPS_THRESHOLD = 40;
-const HIGH_FPS_THRESHOLD = 55;
-const LOW_DPR = 0.75;
-const HIGH_DPR = Math.min(window.devicePixelRatio || 1, 1.5); // Use same cap as store init
+export default function AdaptiveQualitySystem_ReactComponent() {
+  // Quality Store setters
+  const setCurrentQualityTierInStore = useQualityStore(s => s.setCurrentQualityTier);
+  const setTargetDprInStore = useQualityStore(s => s.setTargetDpr);
+  const setFrameloopModeInStore = useQualityStore(s => s.setFrameloopMode);
+  const setParticleCountInStore = useQualityStore(s => s.setParticleCount);
 
-export const AdaptiveQualitySystem = () => {
-  const setMeasuredFps = useQualityStore(state => state.setMeasuredFps);
-  const setTargetDpr = useQualityStore(state => state.setTargetDpr);
+  // Get the tickFrame action from performanceStore
+  const tickPerformanceFrame = usePerformanceStore.getState().tickFrame;
 
-  const lastUpdateTime = useRef(0);
-  const frameCount = useRef(0);
+  const aqsEngineRef = useRef(null);
 
-  useFrame(state => {
-    frameCount.current++;
-    const time = state.clock.elapsedTime;
+  useEffect(() => {
+    console.log('AdaptiveQualitySystem_ReactComponent: useEffect mounting, init AQSEngine.');
+    try {
+      aqsEngineRef.current = new AQSEngine({
+        ultraFps: 55,
+        highFps: 45,
+        mediumFps: 25,
+        checkInterval: 1500,
+        windowSize: 90,
+        hysteresisChecks: 3,
+        initialLevel: QualityLevels.HIGH,
+      });
+      console.log('AdaptiveQualitySystem_ReactComponent: AQSEngine instantiated.');
 
-    if (time - lastUpdateTime.current >= FPS_UPDATE_INTERVAL) {
-      const fps = Math.round(frameCount.current / (time - lastUpdateTime.current));
-      setMeasuredFps(fps);
-      frameCount.current = 0;
-      lastUpdateTime.current = time;
+      const unsubscribeFromAQSEngine = aqsEngineRef.current.subscribe(level => {
+        console.log('AdaptiveQualitySystem_ReactComponent: New level from AQSEngine:', level);
+        setCurrentQualityTierInStore(level);
 
-      // Basic AQS Logic using direct state check
-      const currentDpr = useQualityStore.getState().targetDpr;
-      if (fps < LOW_FPS_THRESHOLD && currentDpr !== LOW_DPR) {
-        setTargetDpr(LOW_DPR);
-      } else if (fps > HIGH_FPS_THRESHOLD && currentDpr !== HIGH_DPR) {
-        setTargetDpr(HIGH_DPR);
-      }
+        switch (level) {
+          case QualityLevels.ULTRA:
+            setTargetDprInStore(Math.min(window.devicePixelRatio || 1, 1.5));
+            setFrameloopModeInStore('always');
+            setParticleCountInStore(8000);
+            break;
+          case QualityLevels.HIGH:
+            setTargetDprInStore(1.0);
+            setFrameloopModeInStore('always');
+            setParticleCountInStore(5000);
+            break;
+          case QualityLevels.MEDIUM:
+            setTargetDprInStore(0.75);
+            setFrameloopModeInStore('demand');
+            setParticleCountInStore(2500);
+            break;
+          case QualityLevels.LOW: // This was the line with the syntax error
+          default: // Added default to catch any other case
+            setTargetDprInStore(0.5);
+            setFrameloopModeInStore('demand');
+            setParticleCountInStore(1000);
+            break;
+        }
+      });
+
+      // No separate requestAnimationFrame loop needed here for AQSEngine.tick(),
+      // as useFrame will handle the ticking for both engines.
+      return () => {
+        console.log('AdaptiveQualitySystem_ReactComponent: Cleaning up AQSEngine subscription.');
+        unsubscribeFromAQSEngine();
+      };
+    } catch (e) {
+      console.error(
+        '!!! CRITICAL ERROR initializing AQSEngine in AdaptiveQualitySystem_ReactComponent:',
+        e.message,
+        e.stack
+      );
+    }
+  }, [
+    setCurrentQualityTierInStore,
+    setTargetDprInStore,
+    setFrameloopModeInStore,
+    setParticleCountInStore,
+  ]);
+
+  useFrame((state, delta) => {
+    // delta is time since last frame in seconds
+    if (aqsEngineRef.current) {
+      aqsEngineRef.current.tick(); // AQSEngine uses performance.now() internally
+    }
+    if (tickPerformanceFrame) {
+      tickPerformanceFrame(delta); // Call the action from performanceStore
     }
   });
 
-  return null;
-};
+  return null; // This component does not render any UI itself
+}

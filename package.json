@@ -3,42 +3,30 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "start": "vite preview --port=5000 --strictPort",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
-    "format:check": "prettier --check ./**/*.{js,jsx,css,md,json} --ignore-path ./.prettierignore --config ./.prettierrc.json",
+    "format": "prettier --write ./**/*.{js,jsx,css,md,json}",
+    "format:check": "prettier --check ./**/*.{js,jsx,css,md,json}",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest watch",
     "lighthouse": "lhci autorun --config=./lighthouserc.json",
     "lighthouse:full": "npm run build && npm run lighthouse",
     "prepare": "husky install"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/metacurtis/metacurtis-v3.1.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/metacurtis/metacurtis-v3.1/issues"
-  },
-  "homepage": "https://github.com/metacurtis/metacurtis-v3.1#readme",
-  "type": "module",
   "dependencies": {
-    "@react-three/drei": "^10.0.6",
+    "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
-    "gsap": "^3.12.7",
-    "r3f-perf": "^7.2.3",
+    "gsap": "^3.13.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.175.0",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
@@ -65,6 +53,7 @@
   },
   "lint-staged": {
     "*.{js,jsx}": [
+      "eslint --fix",
       "prettier --write"
     ],
     "*.{css,md,json}": [

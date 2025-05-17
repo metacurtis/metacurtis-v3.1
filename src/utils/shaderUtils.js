@@ -1,14 +1,27 @@
-// src/shaders/shaderUtils.js
+// src/utils/shaderUtils.js
 
 /**
  * Emit only valid GLSL defines for each quality tier.
+ * Ensures case-insensitive comparison for the level string.
  */
-export function wrapQualityDefines(level) {
+export function wrapQualityDefines(levelString) {
+  // levelString will be 'ULTRA', 'HIGH', etc.
+  if (typeof levelString !== 'string') {
+    console.warn('wrapQualityDefines: received non-string level', levelString);
+    // Default to lowest quality if level is invalid, to prevent shader errors
+    return {
+      QUALITY_ULTRA: 0,
+      QUALITY_HIGH: 0,
+      QUALITY_MEDIUM: 0,
+      QUALITY_LOW: 1, // Default to LOW if level is unknown
+    };
+  }
+  const level = levelString.toUpperCase(); // Normalize to uppercase for comparison
   return {
-    QUALITY_ULTRA: level === 'ultra' ? 1 : 0,
-    QUALITY_HIGH: level === 'high' ? 1 : 0,
-    QUALITY_MEDIUM: level === 'medium' ? 1 : 0,
-    QUALITY_LOW: level === 'low' ? 1 : 0,
+    QUALITY_ULTRA: level === 'ULTRA' ? 1 : 0,
+    QUALITY_HIGH: level === 'HIGH' ? 1 : 0,
+    QUALITY_MEDIUM: level === 'MEDIUM' ? 1 : 0,
+    QUALITY_LOW: level === 'LOW' ? 1 : 0,
   };
 }
 

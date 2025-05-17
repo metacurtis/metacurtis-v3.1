@@ -1,97 +1,112 @@
 // src/utils/performance/AdaptiveQualitySystem.js
+// core engine, no React here
+import qualityPresets from '@/config/qualityPresets.js'; // Ensure this path and file exist
 
-import qualityPresets from '@/config/qualityPresets.js';
-
-/**
- * Named export: all possible quality tiers.
- */
+// NAMED EXPORT for QualityLevels
 export const QualityLevels = {
-  ULTRA: 'ultra',
-  HIGH: 'high',
-  MEDIUM: 'medium',
-  LOW: 'low',
+  ULTRA: 'ULTRA',
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW',
 };
 
-/**
- * Default export: the Adaptive Quality System class.
- * Tracks frame times, computes avg FPS, and switches tiers.
- */
-export default class AdaptiveQualitySystem {
+// DEFAULT EXPORT for the class
+export default class AQSEngine {
   constructor({
-    windowSize = 60,
-    ultraFps = 65,
-    highFps = 55,
-    mediumFps = 45,
-    initial = QualityLevels.HIGH,
+    checkInterval = 1500,
+    windowSize = 90,
+    ultraFps = 55,
+    highFps = 45,
+    mediumFps = 25,
+    initialLevel = QualityLevels.HIGH, // Uses the locally defined QualityLevels
+    hysteresisChecks = 3,
   } = {}) {
     this.presets = qualityPresets;
     this.windowSize = windowSize;
     this.ultraFps = ultraFps;
     this.highFps = highFps;
     this.mediumFps = mediumFps;
-    this.currentLevel = initial;
+    this.currentLevel = initialLevel;
     this.frameTimes = [];
     this.lastTime = performance.now();
     this.subscribers = new Set();
+
+    this.frameCount = 0;
+    this.checkInterval = checkInterval;
+    this.lastCheckTime = performance.now();
+
+    this.hysteresisChecks = hysteresisChecks;
+    this.checksAtCurrentPotentialTier = 0;
+    this.potentialNewTier = initialLevel;
+
+    console.log(
+      `AQSEngine: Initialized. Level: ${this.currentLevel}, Check Interval: ${checkInterval}ms, FPS Thresholds (U/H/M): ${ultraFps}/${highFps}/${mediumFps}, Hysteresis Checks: ${this.hysteresisChecks}`
+    );
   }
 
-  /**
-   * Call each frame. Returns the (possibly updated) quality level.
-   */
   tick() {
+    this.frameCount++;
     const now = performance.now();
-    const delta = now - this.lastTime;
-    this.lastTime = now;
+    const timeSinceLastCheck = now - this.lastCheckTime;
 
-    this.frameTimes.push(delta);
-    if (this.frameTimes.length > this.windowSize) {
-      this.frameTimes.shift();
+    if (timeSinceLastCheck >= this.checkInterval) {
+      if (this.frameCount > 0 && timeSinceLastCheck > 0) {
+        const fps = (this.frameCount * 1000) / timeSinceLastCheck;
+        // console.log(`AQSEngine: Interval reached. Calculated Avg FPS over ~${(timeSinceLastCheck/1000).toFixed(1)}s: ${fps.toFixed(1)} (Frames: ${this.frameCount})`);
+        this._adjustQuality(fps);
+      } else {
+        // console.log(`AQSEngine: Interval reached, but no frames counted or no time elapsed. Frames: ${this.frameCount}, Time: ${timeSinceLastCheck}`);
+      }
+      this.frameCount = 0;
+      this.lastCheckTime = now;
     }
-
-    if (this.frameTimes.length === this.windowSize) {
-      this._adjustQuality();
-    }
-
-    return this.currentLevel;
   }
 
-  /** @private */
-  _adjustQuality() {
-    const sumMs = this.frameTimes.reduce((sum, v) => sum + v, 0);
-    const avgMs = sumMs / this.windowSize;
-    const avgFps = 1000 / avgMs;
-    const prev = this.currentLevel;
+  _adjustQuality(fps) {
+    let newCalculatedTier;
+    // Uses the locally defined QualityLevels
+    if (fps >= this.ultraFps) newCalculatedTier = QualityLevels.ULTRA;
+    else if (fps >= this.highFps) newCalculatedTier = QualityLevels.HIGH;
+    else if (fps >= this.mediumFps) newCalculatedTier = QualityLevels.MEDIUM;
+    else newCalculatedTier = QualityLevels.LOW;
 
-    if (avgFps >= this.ultraFps) {
-      this.currentLevel = QualityLevels.ULTRA;
-    } else if (avgFps >= this.highFps) {
-      this.currentLevel = QualityLevels.HIGH;
-    } else if (avgFps >= this.mediumFps) {
-      this.currentLevel = QualityLevels.MEDIUM;
+    // console.log(`AQSEngine _adjustQuality: Current Level: ${this.currentLevel}, Potential New Tier: ${this.potentialNewTier}, Calculated Tier from FPS (${fps.toFixed(1)}): ${newCalculatedTier}, Checks at Potential: ${this.checksAtCurrentPotentialTier}`);
+
+    if (newCalculatedTier === this.potentialNewTier) {
+      this.checksAtCurrentPotentialTier++;
     } else {
-      this.currentLevel = QualityLevels.LOW;
+      this.potentialNewTier = newCalculatedTier;
+      this.checksAtCurrentPotentialTier = 1;
+      // console.log(`AQSEngine _adjustQuality: Potential new tier is now ${this.potentialNewTier}. Resetting stability counter.`);
     }
 
-    if (this.currentLevel !== prev) {
+    if (
+      this.checksAtCurrentPotentialTier >= this.hysteresisChecks &&
+      this.currentLevel !== this.potentialNewTier
+    ) {
+      const prevLevel = this.currentLevel;
+      this.currentLevel = this.potentialNewTier;
+      console.log(
+        `AQSEngine: !!! QUALITY TIER CHANGED !!! From ${prevLevel} to ${this.currentLevel} (Avg FPS: ~${fps.toFixed(1)})`
+      );
       this.subscribers.forEach(cb => cb(this.currentLevel));
+      this.checksAtCurrentPotentialTier = 0;
+    } else if (
+      this.currentLevel === this.potentialNewTier &&
+      this.potentialNewTier === newCalculatedTier
+    ) {
+      this.checksAtCurrentPotentialTier = 0;
     }
   }
 
-  /**
-   * Subscribe to level changes.
-   * @param {(level:string)=>void} cb
-   * @returns {() => void} unsubscribe
-   */
   subscribe(cb) {
     this.subscribers.add(cb);
     cb(this.currentLevel);
     return () => this.subscribers.delete(cb);
   }
 
-  /**
-   * Get the preset parameters for the active tier.
-   */
   getCurrentPreset() {
-    return this.presets[this.currentLevel] || this.presets.high;
+    // Uses the locally defined QualityLevels
+    return this.presets[this.currentLevel.toLowerCase()] || this.presets.high;
   }
 }

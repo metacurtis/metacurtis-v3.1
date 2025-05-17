@@ -1,62 +1,68 @@
-/* src/styles/index.css */
-
 /* Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Your Custom CSS Variables */
+/* CSS Variables */
 :root {
   --color-primary: #10b981;
   --color-secondary: #64748b;
-  --color-background: #0f172a; /* Used by Tailwind base potentially */
-  --color-text-base: #cbd5e1; /* Used by Tailwind base potentially */
-  /* ... other variables ... */
+  --color-background: #0f172a;
+  --color-text-base: #cbd5e1;
 }
 
-/* Your Global Base Styles */
+/* Global Reset */
 html,
 body,
 #root {
   height: 100%;
-  min-height: 100%;
   margin: 0;
   padding: 0;
-  background-color: transparent; /* Or set your desired base background */
-  position: relative; /* Keep this if needed, but might reconsider if still causing issues */
-}
-
-html {
+  background: var(--color-background);
+  color: var(--color-text-base);
+  font-family: var(--font-sans);
   scroll-behavior: smooth;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 body {
-  font-family: var(--font-sans);
-  color: var(--color-text-base);
-  @apply antialiased;
   min-height: 100vh;
-  /* display: flex; flex-direction: column; */ /* Remove if added during debug */
 }
 
-/* #root { ... remove if added during debug ... } */
-
-/* Element Specific Styles */
+/* Canvas Reset */
 canvas {
   display: block;
   touch-action: none;
   outline: none;
 }
 
-/* Your Custom Utilities / Components */
-@layer utilities {
-  /* ... your utilities like .container-fluid ... */
-}
+/* Tap-Targets & Clickables */
 @layer components {
-  /* ... your components like .btn ... */
+  a,
+  button,
+  [role='button'],
+  .tap-target {
+    @apply inline-block px-4 py-2 m-2;
+  }
 }
 
-/* REMOVE any temporary body border/background rules */
-/* body { border: ...; background-color: ...; } */
+/* Reserve Hero Space & Contain for CLS */
+.hero-heading-wrapper {
+  min-height: 5rem;
+  contain: layout style paint;
+}
+
+/* Performance: hint composites */
+@layer components {
+  .animate-fade-in,
+  canvas {
+    will-change: opacity, transform;
+    backface-visibility: hidden;
+  }
+}
+
+/* Utilities */
+@layer utilities {
+  /* your custom utils */
+}

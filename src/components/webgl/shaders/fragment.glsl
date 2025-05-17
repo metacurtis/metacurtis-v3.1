@@ -1,34 +1,39 @@
 // src/components/webgl/shaders/fragment.glsl
 
-precision mediump float;
-
-uniform float uScrollProgress;
-uniform vec3  uColorA;
-uniform vec3  uColorB;
-uniform vec3  uColorC;
+uniform vec3 uColorA;
+uniform vec3 uColorB;
+uniform vec3 uColorC;
 uniform float uColorIntensity;
+uniform float uTime;
 
-varying float vElevation;
+varying vec3 vColorFactor;
 varying float vAlpha;
+varying vec3 vWorldPosition;
+
+// snoise function is assumed to be prepended from noise.glsl
+// float snoise(vec3 v);
 
 void main() {
-  // mix elevation & scroll to a single value
-  float m = smoothstep(
-    0.0, 1.0,
-    mix(vElevation, uScrollProgress, 0.7)
-  );
+  vec2 coord = gl_PointCoord - vec2(0.5);
+  float dist = length(coord);
+  float mask = smoothstep(0.5, 0.45, dist); // Soft circular mask
 
-  // 3‑color gradient
-  vec3 col = (m < 0.5)
-    ? mix(uColorA, uColorB, m * 2.0)
-    : mix(uColorB, uColorC, (m - 0.5) * 2.0);
+  if (mask < 0.01) { // Discard fully transparent pixels
+    discard;
+  }
 
-  col *= uColorIntensity;
+  // Color mixing based on factors from vertex shader
+  vec3 color = mix(uColorA, uColorB, smoothstep(0.0, 1.0, vColorFactor.x));
+  color = mix(color, uColorC, smoothstep(0.0, 1.0, vColorFactor.y));
 
-  // circular point shape
-  float distToCenter = length(gl_PointCoord - vec2(0.5));
-  float alpha       = 1.0 - smoothstep(0.45, 0.5, distToCenter);
-  if (alpha < 0.01) discard;
+  // Add a subtle shimmer or time-based color variation for higher quality levels
+  #if defined(QUALITY_MEDIUM) || defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
+    float timeColorShift = (sin(uTime * 0.5 + vWorldPosition.x * 0.2 + vWorldPosition.y * 0.1) + 1.0) * 0.5;
+    vec3 shimmerColor = mix(uColorA * 0.7, uColorC * 1.3, sin(uTime * 2.0 + vColorFactor.z * 5.0) * 0.5 + 0.5);
+    color = mix(color, shimmerColor, timeColorShift * 0.25 * vColorFactor.z);
+  #endif
 
-  gl_FragColor = vec4(col, alpha * vAlpha);
+  color *= uColorIntensity;
+
+  gl_FragColor = vec4(color, vAlpha * mask);
 }
