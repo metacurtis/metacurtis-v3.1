@@ -1,14 +1,21 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import glsl from 'vite-plugin-glsl';
+import glsl from 'vite-plugin-glsl'; // Your existing plugin
+import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react(), glsl()],
+  plugins: [
+    react(),
+    glsl(), // Your existing plugin
+    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
+  ],
   resolve: {
+    // Your existing resolve aliases
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
@@ -19,10 +26,14 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, './src/assets'),
     },
   },
-  css: {
-    postcss: './postcss.config.js',
-  },
+  // Remove or comment out the explicit css.postcss configuration
+  // if your postcss.config.js was mainly for Tailwind.
+  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
+  // css: {
+  //   postcss: './postcss.config.js',
+  // },
   build: {
+    // Your existing build configurations
     target: 'esnext',
     minify: 'terser',
     terserOptions: { compress: { drop_console: false, drop_debugger: true } },
@@ -45,11 +56,13 @@ export default defineConfig({
     assetsInlineLimit: 4096,
   },
   server: {
+    // Your existing server configurations
     host: true,
     open: true,
     hmr: { overlay: true },
   },
   optimizeDeps: {
+    // Your existing optimizeDeps
     include: [
       'react',
       'react-dom',
@@ -61,6 +74,7 @@ export default defineConfig({
     ],
   },
   test: {
+    // Your existing test configurations
     passWithNoTests: true,
     environment: 'jsdom',
     globals: true,

@@ -1,68 +1,34 @@
-/* Tailwind Directives */
+/* src/styles/index.css */
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Define custom colors as CSS custom properties */
+  /* These will be available to Tailwind to generate utilities */
+  --color-custom-canary: #ff00ff; /* Define your bright magenta as a CSS variable */
+}
+
+/* Standard Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables */
+/* Your existing :root variables for general CSS use (can co-exist) */
 :root {
-  --color-primary: #10b981;
-  --color-secondary: #64748b;
-  --color-background: #0f172a;
-  --color-text-base: #cbd5e1;
+  --color-primary-css: #10b981;
+  --color-secondary-css: #64748b;
+  --color-background-css: #0f172a !important;
+  --color-text-base-css: #cbd5e1 !important;
+  --font-sans-css: 'Inter', system-ui, sans-serif;
 }
 
-/* Global Reset */
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: var(--color-background);
-  color: var(--color-text-base);
-  font-family: var(--font-sans);
-  scroll-behavior: smooth;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-body {
-  min-height: 100vh;
-}
-
-/* Canvas Reset */
-canvas {
-  display: block;
-  touch-action: none;
-  outline: none;
-}
-
-/* Tap-Targets & Clickables */
-@layer components {
-  a,
-  button,
-  [role='button'],
-  .tap-target {
-    @apply inline-block px-4 py-2 m-2;
-  }
-}
-
-/* Reserve Hero Space & Contain for CLS */
-.hero-heading-wrapper {
-  min-height: 5rem;
-  contain: layout style paint;
-}
-
-/* Performance: hint composites */
-@layer components {
-  .animate-fade-in,
-  canvas {
-    will-change: opacity, transform;
-    backface-visibility: hidden;
-  }
-}
-
-/* Utilities */
-@layer utilities {
-  /* your custom utils */
+  background-color: var(--color-background-css) !important;
+  color: var(--color-text-base-css) !important;
+  font-family: var(--font-sans-css);
+  /* ... other global styles ... */
 }
