@@ -18,21 +18,29 @@ export default function App() {
 
   return (
     <>
+      {/* WebGL Particles - Behind everything */}
       <CanvasErrorBoundary>
         <Suspense fallback={null}>
           <WebGLCanvas />
         </Suspense>
       </CanvasErrorBoundary>
 
+      {/* Hero Section - Full Viewport, breaks out of Layout */}
+      <Hero />
+
+      {/* Layout with other sections */}
       <Layout>
-        <div className="hero-heading-wrapper animate-fade-in">
-          <Hero />
+        {/* Content sections that scroll normally */}
+        <div style={{ paddingTop: '100vh' }}>
+          {' '}
+          {/* Offset for full-screen Hero */}
+          <About />
+          <Features />
+          <Contact />
         </div>
-        <About />
-        <Features />
-        <Contact />
       </Layout>
 
+      {/* Dev tools */}
       {isDevelopment && <DevPerformanceMonitor />}
     </>
   );

@@ -1,15 +1,15 @@
 // src/components/ui/Layout.jsx
 import PropTypes from 'prop-types';
 
-// --- ORIGINAL Tailwind-styled Navbar ---
+// --- OPTIMIZED Navbar for Full-Viewport Design ---
 const Navbar = () => {
   return (
-    <header className="bg-gray-900/70 backdrop-blur-md text-white shadow-lg sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="fixed top-0 left-0 right-0 bg-gray-900/70 backdrop-blur-md text-white shadow-lg z-50">
+      <nav className="w-full px-6 py-3 flex justify-between items-center">
         <div className="text-xl font-bold hover:text-primary transition-colors">
           <a href="#hero">MetaCurtis Premium</a>
         </div>
-        <div className="space-x-4">
+        <div className="space-x-6">
           <a href="#hero" className="hover:text-primary transition-colors">
             Home
           </a>
@@ -28,32 +28,26 @@ const Navbar = () => {
   );
 };
 
-// --- ORIGINAL Tailwind-styled Footer ---
+// --- OPTIMIZED Footer ---
 const Footer = () => {
   return (
-    <footer className="bg-slate-900/50 text-slate-400 py-4 mt-auto border-t border-slate-700">
-      <div className="container mx-auto text-center text-sm">
+    <footer className="bg-slate-900/50 text-slate-400 py-4 border-t border-slate-700 relative z-30">
+      <div className="w-full text-center text-sm px-6">
         &copy; {new Date().getFullYear()} MetaCurtis Project. All Rights Reserved.
       </div>
     </footer>
   );
 };
 
-// --- Main Layout Component ---
+// --- OPTIMIZED Layout Component for Full-Viewport Hero ---
 function Layout({ children }) {
   return (
-    <div
-      // Final working classes using absolute positioning fix
-      className="layout-container absolute inset-0 flex flex-col z-10 overflow-hidden"
-    >
+    <div className="layout-container min-h-screen flex flex-col">
       <Navbar />
-      <main
-        // Main grows and handles its own scroll
-        className="flex-grow overflow-y-auto"
-        // Add padding back if needed, e.g., "px-4 py-8" or similar
-      >
-        {children}
-      </main>
+
+      {/* Main content area that accommodates full-viewport Hero */}
+      <main className="flex-grow relative">{children}</main>
+
       <Footer />
     </div>
   );
