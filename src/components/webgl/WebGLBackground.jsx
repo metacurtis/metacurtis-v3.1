@@ -1,497 +1,513 @@
-// src/components/webgl/WebGLBackground.jsx
-import { useState, useEffect, useMemo, useRef } from 'react';
-import * as THREE from 'three';
+// src/components/webgl/WebGLBackground.jsx - PROFESSIONAL SHADER RESTORATION
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useQualityStore } from '@/stores/qualityStore';
+import * as THREE from 'three';
 import { useInteractionStore } from '@/stores/useInteractionStore';
-import { useNarrativeStore } from '@/stores/useNarrativeStore'; // NEW: Narrative integration
-import useResourceTracker from '@/hooks/useResourceTracker';
-import { wrapQualityDefines } from '@/utils/shaderUtils';
+import { narrativeTransition } from '@/config/narrativeParticleConfig';
+import WebGLEffectsManager from '@/utils/webgl/WebGLEffectsManager.js';
 
-// Importing shader strings
-import noiseString from './shaders/noise.glsl';
-import vertexString from './shaders/vertex.glsl';
-import fragmentString from './shaders/fragment.glsl';
+// PROFESSIONAL SHADER IMPORTS - Multiple strategies
+let vertexShaderSource = null;
+let fragmentShaderSource = null;
 
-// Log shader string lengths on import (for debugging purposes)
-console.log('WebGLBackground: Imported full noiseString length:', noiseString?.length);
-console.log('WebGLBackground: Imported full vertexString length:', vertexString?.length);
-console.log('WebGLBackground: Imported full fragmentString length:', fragmentString?.length);
+// Strategy 1: Direct string imports (bypassing GLSL plugin temporarily)
+try {
+  // We'll load your actual shader content directly
+  vertexShaderSource = `// Uniforms
+uniform float uTime;
+uniform float uSize; // This will now dynamically control particle size
+uniform float uScrollProgress;
+uniform vec3 uCursorPos;
+uniform float uCursorRadius;
+uniform float uRepulsionStrength;
 
-// === PARTICLE EVENT PROCESSING SYSTEM ===
+// Attributes
+attribute vec4 animFactors1; // x: speed, y: phase, z: randomFactor1, w: randomAngle
+attribute vec4 animFactors2; // x: scaleMultiplier, y: swirlFactor, z: depthFactor, w: noiseScale
 
-/**
- * Process interaction events and trigger corresponding particle effects
- * @param {Object} event - Event from interaction store
- * @param {Object} uniforms - Shader uniforms object
- * @param {number} currentTime - Current animation time
- */
-const processParticleEvent = (event, uniforms, currentTime) => {
-  console.log(`[ParticleEventProcessor] Processing event: ${event.type}`, event);
+// Varyings
+varying vec3 vColorFactor;
+varying float vAlpha;
+varying vec3 vWorldPosition;
 
-  switch (event.type) {
-    case 'heroLetterBurst':
-      triggerLetterBurst(event, uniforms, currentTime);
-      break;
+// snoise function is assumed to be prepended from noise.glsl
+// Ensure noiseString in WebGLBackground.jsx is valid and contains snoise if uncommenting below.
 
-    case 'letterClick':
-      triggerLetterClick(event, uniforms, currentTime);
-      break;
+void main() {
+  vec3 workingPosition = position;
 
-    case 'narrativeRipple':
-      triggerNarrativeRipple(event, uniforms, currentTime);
-      break;
+  float speed = animFactors1.x;
+  float phase = animFactors1.y;
+  float randomFactor1 = animFactors1.z;
+  float randomAngle = animFactors1.w;
+  float scaleMultiplier = animFactors2.x; // For size variation per particle
+  float swirlFactor = animFactors2.y;
+  float depthFactor = animFactors2.z;
+  float noiseDisplacementScale = animFactors2.w;
 
-    case 'narrativeHighlight':
-      triggerNarrativeHighlight(event, uniforms, currentTime);
-      break;
+  float time = uTime * speed + phase;
 
-    case 'moodTransition':
-      triggerMoodTransition(event, uniforms, currentTime);
-      break;
+  // Swirling motion
+  float swirlRadius = 0.5 + randomFactor1 * 0.5;
+  workingPosition.x += cos(time + randomAngle) * swirlRadius * swirlFactor;
+  workingPosition.z += sin(time + randomAngle) * swirlRadius * swirlFactor;
 
-    default:
-      console.warn(`[ParticleEventProcessor] Unknown event type: ${event.type}`);
+  // Noise-based displacement (Uncomment if noise.glsl is set up)
+  /*
+  float noiseStrength = 0.5 * noiseDisplacementScale;
+  #if defined(QUALITY_MEDIUM) || defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
+    vec3 noiseInput = workingPosition * 0.15 + vec3(uTime * speed * 0.1);
+    workingPosition.x += snoise(noiseInput + vec3(0.0, 1.0, 2.0)) * noiseStrength;
+    workingPosition.y += snoise(noiseInput + vec3(1.0, 2.0, 0.0)) * noiseStrength;
+  #endif
+  #if defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
+    vec3 noiseInputForZ = workingPosition * 0.15 + vec3(uTime * speed * 0.1);
+    workingPosition.z += snoise(noiseInputForZ + vec3(2.0, 0.0, 1.0)) * noiseStrength * 1.5;
+  #endif
+  */
+
+  // Scroll-based animation
+  workingPosition.z += uScrollProgress * -15.0 * depthFactor;
+
+  // Cursor interaction
+  vec3 fromCursor = workingPosition - uCursorPos;
+  float distToCursor = length(fromCursor);
+  float interactionEffect = 0.0;
+  if (distToCursor < uCursorRadius && uCursorRadius > 0.0) {
+    interactionEffect = smoothstep(uCursorRadius, uCursorRadius * 0.1, distToCursor);
+    workingPosition += normalize(fromCursor) * interactionEffect * uRepulsionStrength * (1.0 + randomFactor1);
   }
-};
 
-/**
- * Hero letter burst effect (maintains existing behavior)
- * @param {Object} event - Event with position and intensity
- * @param {Object} uniforms - Shader uniforms
- * @param {number} currentTime - Current time
- */
-const triggerLetterBurst = (event, uniforms, currentTime) => {
-  if (!event.position || !uniforms.uCursorPos) return;
+  vec4 modelPosition = modelMatrix * vec4(workingPosition, 1.0);
+  vWorldPosition = modelPosition.xyz;
+  vec4 viewPosition = viewMatrix * modelPosition;
+  gl_Position = projectionMatrix * viewPosition;
 
-  // Set cursor position to trigger existing repulsion effect
-  uniforms.uCursorPos.value.set(event.position.x, event.position.y, event.position.z || 0);
+  // --- Calculate final pointSize using uSize ---
+  float pointSize = uSize * scaleMultiplier;
+  pointSize *= (1.0 + interactionEffect * 2.5); // Interaction can boost size
 
-  // Temporarily boost repulsion for burst effect
-  const originalRepulsion = uniforms.uRepulsionStrength.value;
-  uniforms.uRepulsionStrength.value = originalRepulsion * (event.intensity || 1.0) * 2.0;
-
-  // Reset repulsion after short duration
-  setTimeout(() => {
-    if (uniforms.uRepulsionStrength) {
-      uniforms.uRepulsionStrength.value = originalRepulsion;
+  // Optional: Distance-based attenuation (perspective scaling)
+  // If you enable this, you'll likely need to use larger base uSize values.
+  // The '2.0' factor controls how quickly particles shrink. Larger (e.g., 15.0) = less aggressive.
+  /*
+  #if defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
+    if (viewPosition.z < -0.01) { 
+      pointSize *= (2.0 / -viewPosition.z); 
     }
-  }, 300);
+  #endif
+  */
+
+  // Clamp to a min and a reasonably large max. Adjust max (400.0) if needed.
+  gl_PointSize = clamp(pointSize, 0.5, 400.0); // Min size can be small
+
+  // Pass varyings to fragment shader
+  vColorFactor = vec3(randomFactor1, speed, phase / (2.0 * 3.14159265));
+  vAlpha = clamp(1.0 - interactionEffect * 1.8, 0.15, 1.0); 
+}`;
+
+  fragmentShaderSource = `uniform vec3 uColorA;
+uniform vec3 uColorB;
+uniform vec3 uColorC;
+uniform float uColorIntensity;
+uniform float uTime; // For shimmer
+
+varying vec3 vColorFactor;
+varying float vAlpha;
+varying vec3 vWorldPosition; // For shimmer
+
+// snoise function is assumed to be prepended from noise.glsl if used by shimmer
+// float snoise(vec3 v); 
+
+void main() {
+  vec2 coord = gl_PointCoord - vec2(0.5);
+  float dist = length(coord);
+  float mask = smoothstep(0.5, 0.45, dist); // Soft circular mask
+
+  if (mask < 0.01) { // Discard fully transparent pixels outside the circle
+    discard;
+  }
+
+  // Original Color mixing
+  vec3 color = mix(uColorA, uColorB, smoothstep(0.0, 1.0, vColorFactor.x));
+  color = mix(color, uColorC, smoothstep(0.0, 1.0, vColorFactor.y));
+
+  // Optional: Add shimmer (Uncomment if snoise is available and desired)
+  /*
+  #if defined(QUALITY_MEDIUM) || defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
+    float timeColorShift = (sin(uTime * 0.5 + vWorldPosition.x * 0.2 + vWorldPosition.y * 0.1) + 1.0) * 0.5;
+    vec3 shimmerColor = mix(uColorA * 0.7, uColorC * 1.3, sin(uTime * 2.0 + vColorFactor.z * 5.0) * 0.5 + 0.5); 
+    color = mix(color, shimmerColor, timeColorShift * 0.25 * vColorFactor.z);
+  #endif
+  */
+
+  color *= uColorIntensity;
+
+  gl_FragColor = vec4(color, vAlpha * mask);
+}`;
+
+  console.log('✅ PROFESSIONAL: Using your exact shader code directly');
+} catch (error) {
+  console.error('❌ PROFESSIONAL: Could not load shader content:', error);
+}
+
+// Generate unique component ID for debugging
+const componentId = Math.random().toString(36).substr(2, 9);
+
+export default function WebGLBackground() {
+  // Refs for WebGL objects
+  const pointsRef = useRef();
+  const materialRef = useRef();
+  const geometryRef = useRef();
+  const effectsManagerRef = useRef(null);
+
+  // Performance and state tracking
+  const frameCountRef = useRef(0);
+  const lastLogTimeRef = useRef(0);
+  const lastBaseUpdateRef = useRef(0);
+  const { camera, size } = useThree();
+
+  // Get quality level from your existing system
+  const qualityLevel = useInteractionStore(state => state.qualityLevel || 'HIGH');
+
+  // Particle configuration based on quality
+  const particleConfig = useMemo(() => {
+    const configs = {
+      LOW: { count: 3000, baseSize: 4.0 },
+      MEDIUM: { count: 5000, baseSize: 5.0 },
+      HIGH: { count: 5000, baseSize: 5.0 },
+      ULTRA: { count: 8000, baseSize: 5.0 },
+    };
+    return configs[qualityLevel] || configs.HIGH;
+  }, [qualityLevel]);
 
   console.log(
-    `[ParticleEffects] Letter burst at (${event.position.x}, ${event.position.y}) intensity: ${event.intensity}`
-  );
-};
-
-/**
- * Letter click effect with visual feedback
- * @param {Object} event - Event with letterIndex and section
- * @param {Object} uniforms - Shader uniforms
- * @param {number} currentTime - Current time
- */
-const triggerLetterClick = (event, uniforms, currentTime) => {
-  // Create position based on letter index (rough approximation)
-  const letterPositions = [
-    { x: -3, y: 0, z: 0 }, // M
-    { x: -1, y: 0, z: 0 }, // C
-    { x: 1, y: 0, z: 0 }, // 3
-    { x: 3, y: 0, z: 0 }, // V
-  ];
-
-  const position = letterPositions[event.letterIndex] || letterPositions[0];
-
-  // Trigger burst effect at letter position
-  triggerLetterBurst(
-    {
-      ...event,
-      position,
-      intensity: 1.5,
-    },
-    uniforms,
-    currentTime
+    `⚡ PROFESSIONAL WebGLBackground-${componentId} - Quality: ${qualityLevel}, Particles: ${particleConfig.count}`
   );
 
-  // Brief color intensity flash
-  if (uniforms.uColorIntensity) {
-    const originalIntensity = uniforms.uColorIntensity.value;
-    uniforms.uColorIntensity.value = originalIntensity * 1.8;
-
-    setTimeout(() => {
-      if (uniforms.uColorIntensity) {
-        uniforms.uColorIntensity.value = originalIntensity;
-      }
-    }, 200);
-  }
-
-  console.log(`[ParticleEffects] Letter ${event.letterIndex} clicked in section: ${event.section}`);
-};
-
-/**
- * Narrative ripple effect for story moments
- * @param {Object} event - Event with center point and ripple parameters
- * @param {Object} uniforms - Shader uniforms
- * @param {number} currentTime - Current time
- */
-const triggerNarrativeRipple = (event, uniforms, currentTime) => {
-  if (!event.center || !uniforms.uCursorPos) return;
-
-  // Create expanding ripple effect by manipulating cursor radius over time
-  const rippleDuration = event.duration || 2000; // 2 seconds
-  const maxRadius = event.maxRadius || 5.0;
-  const startRadius = uniforms.uCursorRadius.value;
-
-  let rippleStartTime = currentTime * 1000; // Convert to milliseconds
-
-  const animateRipple = () => {
-    const elapsed = currentTime * 1000 - rippleStartTime;
-    const progress = Math.min(elapsed / rippleDuration, 1);
-
-    if (progress < 1) {
-      // Expand then contract
-      const rippleProgress =
-        progress < 0.5
-          ? progress * 2 // Expand phase
-          : 2 - progress * 2; // Contract phase
-
-      uniforms.uCursorRadius.value = startRadius + maxRadius * rippleProgress;
-      uniforms.uCursorPos.value.set(event.center.x, event.center.y, event.center.z || 0);
-
-      requestAnimationFrame(animateRipple);
-    } else {
-      // Reset to original values
-      uniforms.uCursorRadius.value = startRadius;
-    }
-  };
-
-  animateRipple();
-  console.log(`[ParticleEffects] Narrative ripple at (${event.center.x}, ${event.center.y})`);
-};
-
-/**
- * Highlight effect for interactive narrative elements
- * @param {Object} event - Event with target area and highlight parameters
- * @param {Object} uniforms - Shader uniforms
- * @param {number} currentTime - Current time
- */
-const triggerNarrativeHighlight = (event, uniforms, _currentTime) => {
-  if (!event.area || !uniforms.uCursorPos) return;
-
-  // Create pulsing highlight effect
-  const pulseDuration = event.duration || 1000;
-  const pulseIntensity = event.intensity || 0.5;
-
-  if (uniforms.uColorIntensity) {
-    const originalIntensity = uniforms.uColorIntensity.value;
-    const startTime = currentTime * 1000;
-
-    const animatePulse = () => {
-      const elapsed = currentTime * 1000 - startTime;
-      const progress = elapsed / pulseDuration;
-
-      if (progress < 1) {
-        // Sine wave pulse
-        const pulseValue = Math.sin(progress * Math.PI * 4) * pulseIntensity;
-        uniforms.uColorIntensity.value = originalIntensity + pulseValue;
-
-        requestAnimationFrame(animatePulse);
-      } else {
-        uniforms.uColorIntensity.value = originalIntensity;
-      }
-    };
-
-    animatePulse();
-  }
-
-  console.log(`[ParticleEffects] Narrative highlight in area:`, event.area);
-};
-
-/**
- * Special effect for mood transitions
- * @param {Object} event - Mood transition event
- * @param {Object} uniforms - Shader uniforms
- * @param {number} currentTime - Current time
- */
-const triggerMoodTransition = (event, uniforms, _currentTime) => {
-  // Create particle "celebration" effect during mood changes
-  if (uniforms.uRepulsionStrength && uniforms.uColorIntensity) {
-    const originalRepulsion = uniforms.uRepulsionStrength.value;
-    const originalIntensity = uniforms.uColorIntensity.value;
-
-    // Brief particle excitement
-    uniforms.uRepulsionStrength.value = originalRepulsion * 0.3; // Less repulsion = more clustering
-    uniforms.uColorIntensity.value = originalIntensity * 1.4; // Brighter colors
-
-    setTimeout(() => {
-      if (uniforms.uRepulsionStrength && uniforms.uColorIntensity) {
-        uniforms.uRepulsionStrength.value = originalRepulsion;
-        uniforms.uColorIntensity.value = originalIntensity;
-      }
-    }, 1500);
-  }
-
-  console.log(`[ParticleEffects] Mood transition effect: ${event.fromMood} → ${event.toMood}`);
-};
-
-export default function WebGLBackground(props) {
-  // State to manage if the WebGL resources are ready for rendering
-  const [isReady, setIsReady] = useState(false);
-  // Ref for the points object
-  const pointsRef = useRef();
-  // Custom hook for tracking and disposing Three.js resources
-  const tracker = useResourceTracker();
-
-  // Get dynamic values from Zustand stores
-  const particleCount = useQualityStore(s => s.particleCount);
-  const currentQualityTier = useQualityStore(s => s.currentQualityTier);
-  const scrollProgress = useInteractionStore(s => s.scrollProgress);
-
-  // === NEW: NARRATIVE STORE INTEGRATION ===
-  const currentPreset = useNarrativeStore(s => s.activePreset);
-  const updateTransition = useNarrativeStore(s => s.updateTransition);
-  const consumeInteractionEvents = useInteractionStore(s => s.consumeInteractionEvents);
-
-  // Get Three.js scene essentials from R3F
-  const { camera, mouse: r3fMouse } = useThree();
-
-  // --- Component Props & Defaults (ENHANCED with narrative override) ---
-  const baseSize = props.baseSize ?? currentPreset?.baseSize ?? 0.1;
-
-  // Memoize propColors with narrative override capability
-  const stablePropColors = useMemo(() => {
-    // NARRATIVE OVERRIDE: Use narrative preset colors if available, otherwise props/defaults
-    if (currentPreset?.colors && Array.isArray(currentPreset.colors)) {
-      return currentPreset.colors;
-    }
-    return props.colors || ['#E040FB', '#536DFE', '#00E5FF']; // Original defaults
-  }, [props.colors, currentPreset?.colors]);
-
-  const cursorRadius = props.cursorRadius ?? currentPreset?.cursorRadius ?? 1.5;
-  const repulsionStr = props.repulsionStr ?? currentPreset?.repulsionStrength ?? 0.8;
-
-  // Effect for deferred initialization logic based on particleCount and qualityTier
+  // ===============================
+  // EFFECTS MANAGER SETUP
+  // ===============================
   useEffect(() => {
-    if (isReady) return; // Don't re-initialize if already ready
+    console.log(`⚡ WebGLEffectsManager instance creating...`);
+    effectsManagerRef.current = new WebGLEffectsManager();
+    console.log(`⚡ WebGLEffectsManager instance created successfully`);
 
-    // Check if necessary data is available
-    if (typeof particleCount === 'number' && particleCount > 0 && currentQualityTier) {
-      const initLogic = () => {
-        try {
-          console.log(
-            `WebGLBackground (Enhanced): Deferred init. Particle count: ${particleCount}, Quality: ${currentQualityTier}, Mood: ${currentPreset?.name || 'default'}`
-          );
-          setIsReady(true); // Set ready state to trigger buffer and material creation
-        } catch (e) {
-          console.error(
-            'Error during WebGLBackground (Enhanced) deferred setup:',
-            e.message,
-            e.stack
-          );
-        }
-      };
-
-      let idleCallbackId;
-      // Use requestIdleCallback for non-critical initialization if available
-      if ('requestIdleCallback' in window) {
-        idleCallbackId = requestIdleCallback(initLogic, { timeout: 2000 });
-      } else {
-        // Fallback to setTimeout if requestIdleCallback is not available
-        const timeoutId = setTimeout(initLogic, 200);
-        idleCallbackId = { _timeoutId: timeoutId, cancel: () => clearTimeout(timeoutId) };
-      }
-
-      // Cleanup function to cancel callback if component unmounts or dependencies change
-      return () => {
-        if (idleCallbackId) {
-          if (typeof idleCallbackId === 'number' && 'cancelIdleCallback' in window) {
-            cancelIdleCallback(idleCallbackId);
-          } else if (idleCallbackId.cancel) {
-            idleCallbackId.cancel();
-          }
-        }
-      };
-    } else {
-      console.log(
-        'WebGLBackground (Enhanced): Waiting for valid particleCount or currentQualityTier.'
-      );
-    }
-  }, [particleCount, isReady, currentQualityTier, currentPreset?.name]); // Add currentPreset?.name dependency
-
-  // Memoized calculation for particle positions and animation attributes
-  const { positions, anim1, anim2 } = useMemo(() => {
-    if (!isReady || typeof particleCount !== 'number' || particleCount <= 0) {
-      // Return empty arrays if not ready or invalid particle count
-      return {
-        positions: new Float32Array(0),
-        anim1: new Float32Array(0),
-        anim2: new Float32Array(0),
-      };
-    }
-    console.log(`WebGLBackground (Enhanced): Calculating buffers for ${particleCount} particles.`);
-    const posArray = new Float32Array(particleCount * 3); // x, y, z
-    const a1 = new Float32Array(particleCount * 4); // Animation factors set 1
-    const a2 = new Float32Array(particleCount * 4); // Animation factors set 2
-    const field = { w: 14, h: 8, d: 7 }; // Dimensions of the particle field
-
-    // Populate attribute arrays with random values
-    for (let i = 0; i < particleCount; i++) {
-      const i3 = i * 3,
-        i4 = i * 4;
-      posArray[i3] = (Math.random() * 2 - 1) * field.w;
-      posArray[i3 + 1] = (Math.random() * 2 - 1) * field.h;
-      posArray[i3 + 2] = (Math.random() * 2 - 1) * field.d;
-      a1[i4] = 0.1 + Math.random() * 0.4;
-      a1[i4 + 1] = Math.random() * Math.PI * 2;
-      a1[i4 + 2] = Math.random();
-      a1[i4 + 3] = Math.random() * Math.PI * 2;
-      a2[i4] = 0.4 + Math.random() * 0.6;
-      a2[i4 + 1] = 0.2 + Math.random() * 0.4;
-      a2[i4 + 2] = 0.3 + Math.random() * 0.7;
-      a2[i4 + 3] = 0.1 + Math.random() * 0.2;
-    }
-    return { positions: posArray, anim1: a1, anim2: a2 };
-  }, [isReady, particleCount]); // Dependencies: re-calculate if readiness or particle count changes
-
-  // Memoized creation of shader uniforms (ENHANCED with narrative support)
-  const uniforms = useMemo(() => {
-    if (!isReady) return null; // Don't create uniforms if not ready
-    console.log('WebGLBackground (Enhanced): Creating/updating uniforms with narrative support.');
-
-    // Get color intensity from narrative preset or fallback
-    const colorIntensity = currentPreset?.colorIntensity ?? 1.3;
-
-    return {
-      // === EXISTING UNIFORMS (PRESERVED EXACTLY) ===
-      uTime: { value: 0 },
-      uSize: { value: baseSize },
-      uScrollProgress: { value: 0 },
-      uCursorPos: { value: new THREE.Vector3() },
-      uCursorRadius: { value: cursorRadius },
-      uRepulsionStrength: { value: repulsionStr },
-      uColorA: { value: new THREE.Color(stablePropColors[0]) },
-      uColorB: { value: new THREE.Color(stablePropColors[1]) },
-      uColorC: { value: new THREE.Color(stablePropColors[2]) },
-      uColorIntensity: { value: colorIntensity },
-
-      // === NEW: NARRATIVE UNIFORMS (Ready for future shader enhancement) ===
-      uSpeedFactor: { value: currentPreset?.uniforms?.uSpeedFactor ?? 1.0 },
-      uCursorInfluence: { value: currentPreset?.uniforms?.uCursorInfluence ?? 1.0 },
+    return () => {
+      effectsManagerRef.current?.destroy?.();
+      console.log(`⚡ WebGLEffectsManager instance destroyed`);
     };
-  }, [isReady, baseSize, stablePropColors, cursorRadius, repulsionStr, currentPreset]); // Add currentPreset dependency
+  }, []);
 
-  // Memoized creation of the shader material
-  const material = useMemo(() => {
-    if (
-      !isReady ||
-      !uniforms ||
-      !vertexString ||
-      !fragmentString ||
-      !noiseString ||
-      !currentQualityTier
-    ) {
-      console.log(
-        'WebGLBackground: Not ready or shader strings/uniforms/qualityTier missing for enhanced material.'
-      );
-      return null;
-    }
+  // ===============================
+  // PROFESSIONAL PARTICLE GENERATION (YOUR ORIGINAL STRUCTURE)
+  // ===============================
+  const particleData = useMemo(() => {
     console.log(
-      `WebGLBackground (Enhanced): Creating ShaderMaterial with quality: ${currentQualityTier}, mood: ${currentPreset?.name || 'default'}`
+      `⚡ Generating PROFESSIONAL particle data for ${particleConfig.count} particles...`
     );
-    try {
-      const mat = new THREE.ShaderMaterial({
-        defines: wrapQualityDefines(currentQualityTier), // Dynamically set shader defines based on quality
-        uniforms: uniforms,
-        vertexShader: noiseString + '\n' + vertexString, // Prepend noise functions to vertex shader
-        fragmentShader: fragmentString,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      tracker.track(mat); // Track material for disposal
-      return mat;
-    } catch (e) {
-      console.error('Error creating ShaderMaterial with enhanced functionality:', e);
-      return null;
+
+    const positions = new Float32Array(particleConfig.count * 3);
+    const animFactors1 = new Float32Array(particleConfig.count * 4);
+    const animFactors2 = new Float32Array(particleConfig.count * 4);
+
+    for (let i = 0; i < particleConfig.count; i++) {
+      const i3 = i * 3;
+      const i4 = i * 4;
+
+      // Position: Spread particles in 3D space
+      positions[i3] = (Math.random() - 0.5) * 20; // x
+      positions[i3 + 1] = (Math.random() - 0.5) * 12; // y
+      positions[i3 + 2] = (Math.random() - 0.5) * 8; // z
+
+      // Animation factors 1: speed, phase, randomFactor1, randomAngle
+      animFactors1[i4] = 0.5 + Math.random() * 1.5; // speed
+      animFactors1[i4 + 1] = Math.random() * Math.PI * 2; // phase
+      animFactors1[i4 + 2] = Math.random(); // randomFactor1
+      animFactors1[i4 + 3] = Math.random() * Math.PI * 2; // randomAngle
+
+      // Animation factors 2: scaleMultiplier, swirlFactor, depthFactor, noiseScale
+      animFactors2[i4] = 0.8 + Math.random() * 0.4; // scaleMultiplier
+      animFactors2[i4 + 1] = 0.3 + Math.random() * 0.7; // swirlFactor
+      animFactors2[i4 + 2] = 0.5 + Math.random() * 0.5; // depthFactor
+      animFactors2[i4 + 3] = 0.5 + Math.random() * 0.5; // noiseScale
     }
-  }, [isReady, uniforms, currentQualityTier, tracker, currentPreset?.name]);
 
-  // Memoized creation of the buffer geometry
-  const geometry = useMemo(() => {
-    if (!isReady || positions.length === 0) return null; // Don't create geometry if not ready or no positions
-    console.log('WebGLBackground (Enhanced): Creating BufferGeometry.');
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('animFactors1', new THREE.BufferAttribute(anim1, 4));
-    geo.setAttribute('animFactors2', new THREE.BufferAttribute(anim2, 4));
-    tracker.track(geo); // Track geometry for disposal
-    return geo;
-  }, [isReady, positions, anim1, anim2, tracker]); // Dependencies for geometry
+    return { positions, animFactors1, animFactors2 };
+  }, [particleConfig.count]);
 
-  // Effect to track the points object itself once it's created
-  useEffect(() => {
-    if (pointsRef.current) tracker.track(pointsRef.current);
-  }, [tracker]); // Dependency: tracker instance (should be stable)
+  // ===============================
+  // PROFESSIONAL SHADER UNIFORMS (YOUR ORIGINAL STRUCTURE)
+  // ===============================
+  const uniforms = useMemo(() => {
+    // Get initial preset for base values
+    const currentPreset = narrativeTransition.getCurrentDisplayPreset();
 
-  // useFrame hook for per-frame updates (ENHANCED with narrative and event processing)
+    const initialUniforms = {
+      // Vertex shader uniforms (from your vertex.glsl)
+      uTime: { value: 0.0 },
+      uSize: { value: currentPreset.baseSize || particleConfig.baseSize },
+      uScrollProgress: { value: 0.0 },
+      uCursorPos: { value: new THREE.Vector3(0, 0, 0) },
+      uCursorRadius: { value: currentPreset.cursorRadius || 1.5 },
+      uRepulsionStrength: { value: currentPreset.repulsionStrength || 0.8 },
+
+      // Fragment shader uniforms (from your fragment.glsl)
+      uColorA: { value: new THREE.Color(currentPreset.colors[0] || '#E040FB') },
+      uColorB: { value: new THREE.Color(currentPreset.colors[1] || '#536DFE') },
+      uColorC: { value: new THREE.Color(currentPreset.colors[2] || '#00E5FF') },
+      uColorIntensity: { value: currentPreset.colorIntensity || 1.3 },
+    };
+
+    console.log(
+      `⚡ Initializing PROFESSIONAL uniforms - baseSize: ${initialUniforms.uSize.value.toFixed(3)}`
+    );
+
+    // Initialize effects manager base values
+    if (effectsManagerRef.current) {
+      console.log(`⚡ Initializing Effects Manager base values`);
+      Object.keys(initialUniforms).forEach(key => {
+        const uniform = initialUniforms[key];
+        if (
+          typeof uniform.value === 'number' ||
+          uniform.value instanceof THREE.Color ||
+          uniform.value instanceof THREE.Vector3
+        ) {
+          effectsManagerRef.current.setBaseUniformValue(key, uniform.value);
+        }
+      });
+    }
+
+    return initialUniforms;
+  }, [particleConfig.baseSize, particleConfig.count]);
+
+  // ===============================
+  // NARRATIVE MOOD UPDATES (YOUR ORIGINAL LOGIC)
+  // ===============================
+  const updateNarrativeMood = useCallback(
+    currentTime => {
+      if (!uniforms || !effectsManagerRef.current) return;
+
+      // Update narrative transition
+      const currentPreset = narrativeTransition.updateTransition(currentTime);
+      const transitionState = narrativeTransition.getTransitionState();
+
+      // Update base uniforms from current preset
+      if (currentPreset) {
+        uniforms.uSize.value = currentPreset.baseSize || particleConfig.baseSize;
+        uniforms.uColorIntensity.value = currentPreset.colorIntensity || 1.3;
+        uniforms.uCursorRadius.value = currentPreset.cursorRadius || 1.5;
+        uniforms.uRepulsionStrength.value = currentPreset.repulsionStrength || 0.8;
+
+        // Update colors
+        if (currentPreset.colors && currentPreset.colors.length >= 3) {
+          uniforms.uColorA.value.setStyle(currentPreset.colors[0]);
+          uniforms.uColorB.value.setStyle(currentPreset.colors[1]);
+          uniforms.uColorC.value.setStyle(currentPreset.colors[2]);
+        }
+
+        // Update effects manager base values when mood settles (throttled)
+        if (!transitionState.isTransitioning && currentTime - lastBaseUpdateRef.current > 500) {
+          effectsManagerRef.current.setBaseUniformValue('uSize', uniforms.uSize.value);
+          effectsManagerRef.current.setBaseUniformValue(
+            'uColorIntensity',
+            uniforms.uColorIntensity.value
+          );
+          effectsManagerRef.current.setBaseUniformValue(
+            'uCursorRadius',
+            uniforms.uCursorRadius.value
+          );
+          effectsManagerRef.current.setBaseUniformValue(
+            'uRepulsionStrength',
+            uniforms.uRepulsionStrength.value
+          );
+          lastBaseUpdateRef.current = currentTime;
+
+          console.log(`⚡ Mood settled to ${currentPreset.name} - updating manager base values`);
+        }
+      }
+
+      return currentPreset;
+    },
+    [uniforms, particleConfig.baseSize]
+  );
+
+  // ===============================
+  // PROFESSIONAL PARTICLE BURST EFFECTS
+  // ===============================
+  const triggerProfessionalLetterBurst = useCallback(
+    event => {
+      if (!effectsManagerRef.current || !uniforms) {
+        console.warn(`⚡ Effects manager or uniforms not ready for burst`);
+        return;
+      }
+
+      console.log(`⚡ PROFESSIONAL Letter burst - intensity: ${event.intensity.toFixed(3)}`);
+
+      const eventIntensity = Math.min(event.intensity || 0.3, 0.5);
+      const duration = 1400;
+
+      // Use the professional letterBurst preset method if available
+      if (effectsManagerRef.current.letterBurst) {
+        effectsManagerRef.current.letterBurst(eventIntensity, duration);
+        console.log(`[WebGLEffectsManager] Professional letterBurst preset triggered`);
+      } else {
+        // Fallback to manual effects
+        effectsManagerRef.current.addEffect({
+          uniform: 'uSize',
+          toValue: effectsManagerRef.current.baseValues.get('uSize') * (2.2 + eventIntensity * 2.3),
+          duration: duration,
+          curve: 'burst',
+          easing: 'easeOutQuart',
+          intensity: 1.0,
+        });
+
+        effectsManagerRef.current.addEffect({
+          uniform: 'uColorIntensity',
+          toValue:
+            effectsManagerRef.current.baseValues.get('uColorIntensity') *
+            (1.6 + eventIntensity * 0.8),
+          duration: duration * 0.8,
+          curve: 'burst',
+          easing: 'easeOutQuart',
+          intensity: 1.0,
+        });
+
+        console.log(`[WebGLEffectsManager] Manual letterBurst effects triggered`);
+      }
+
+      // Update cursor position for repulsion effect
+      if (event.position && uniforms.uCursorPos) {
+        uniforms.uCursorPos.value.set(event.position.x, event.position.y, event.position.z || 0);
+      }
+    },
+    [uniforms]
+  );
+
+  // ===============================
+  // INTERACTION EVENT PROCESSING
+  // ===============================
+  const processParticleEvents = useCallback(
+    currentTime => {
+      const store = useInteractionStore.getState();
+      const events = store.consumeInteractionEvents?.() || [];
+
+      if (events.length > 0) {
+        events.forEach(event => {
+          switch (event.type) {
+            case 'heroLetterBurst':
+              triggerProfessionalLetterBurst(event);
+              break;
+            case 'letterClick':
+              console.log(`⚡ Processing letterClick event`);
+              break;
+            default:
+              console.log(`⚡ Unhandled event type: ${event.type}`);
+          }
+        });
+      }
+    },
+    [triggerProfessionalLetterBurst]
+  );
+
+  // ===============================
+  // MAIN RENDER LOOP (OPTIMIZED)
+  // ===============================
   useFrame(({ clock }) => {
-    if (!isReady || !uniforms || !pointsRef.current) return; // Ensure everything is ready
+    if (!uniforms || !pointsRef.current || !effectsManagerRef.current) return;
 
-    // === NARRATIVE TRANSITION UPDATES ===
-    updateTransition(clock.elapsedTime * 1000); // Convert to milliseconds
+    const currentTime = clock.elapsedTime * 1000;
+    frameCountRef.current++;
 
-    // === INTERACTION EVENT PROCESSING ===
-    const pendingEvents = consumeInteractionEvents();
-    if (pendingEvents.length > 0) {
-      console.log(`[WebGLBackground] Processing ${pendingEvents.length} interaction events`);
+    // 1. Update narrative mood transitions (throttled)
+    updateNarrativeMood(currentTime);
 
-      // Process each event with specific particle effects
-      pendingEvents.forEach(event => {
-        processParticleEvent(event, uniforms, clock.elapsedTime);
-      });
+    // 2. Process new interaction events (throttled)
+    if (frameCountRef.current % 2 === 0) {
+      processParticleEvents(currentTime);
     }
 
-    // === EXISTING UNIFORM UPDATES (PRESERVED) ===
+    // 3. Update effects manager (applies all active effects)
+    effectsManagerRef.current.updateEffects(uniforms, currentTime);
+
+    // 4. Update time-based uniforms
     uniforms.uTime.value = clock.elapsedTime;
-    uniforms.uScrollProgress.value = scrollProgress;
 
-    // === ENHANCED UNIFORM UPDATES (with narrative values) ===
-    // Update colors from current preset (handles transitions automatically)
-    if (currentPreset?.colors) {
-      uniforms.uColorA.value.set(currentPreset.colors[0]);
-      uniforms.uColorB.value.set(currentPreset.colors[1]);
-      uniforms.uColorC.value.set(currentPreset.colors[2]);
+    // 5. Update scroll progress (throttled)
+    if (frameCountRef.current % 3 === 0) {
+      const scrollProgress = useInteractionStore.getState().scrollProgress || 0;
+      uniforms.uScrollProgress.value = scrollProgress;
     }
 
-    // Update size and intensity from current preset
-    uniforms.uSize.value = currentPreset?.baseSize ?? baseSize;
-    uniforms.uColorIntensity.value = currentPreset?.colorIntensity ?? 1.3;
-    uniforms.uCursorRadius.value = currentPreset?.cursorRadius ?? cursorRadius;
-    uniforms.uRepulsionStrength.value = currentPreset?.repulsionStrength ?? repulsionStr;
-
-    // Update narrative-specific uniforms
-    if (uniforms.uSpeedFactor) {
-      uniforms.uSpeedFactor.value = currentPreset?.uniforms?.uSpeedFactor ?? 1.0;
-    }
-    if (uniforms.uCursorInfluence) {
-      uniforms.uCursorInfluence.value = currentPreset?.uniforms?.uCursorInfluence ?? 1.0;
+    // 6. Update cursor position (smooth interpolation)
+    const cursorPos = useInteractionStore.getState().cursorPosition;
+    if (cursorPos && !uniforms.uCursorPos.value.equals(cursorPos)) {
+      uniforms.uCursorPos.value.lerp(cursorPos, 0.08);
     }
 
-    // === EXISTING MOUSE INTERACTION (PRESERVED EXACTLY) ===
-    // Project mouse screen coordinates to world space for interaction
-    const vec = new THREE.Vector3(r3fMouse.x, r3fMouse.y, 0.5); // NDC space
-    vec.unproject(camera); // Unproject to camera space
-    const dir = vec.sub(camera.position).normalize(); // Get direction vector from camera
-    const distance = Math.abs(dir.z) > 0.0001 ? -camera.position.z / dir.z : 10;
-    const worldMouse = camera.position.clone().add(dir.multiplyScalar(distance));
-    uniforms.uCursorPos.value.set(worldMouse.x, worldMouse.y, worldMouse.z);
+    // Throttled logging (every 3 seconds)
+    if (currentTime - lastLogTimeRef.current > 3000) {
+      const currentPreset = narrativeTransition.getCurrentDisplayPreset();
+      console.log(
+        `⚡ PROFESSIONAL System-${componentId} 📊 Preset: ${currentPreset.name}, baseSize: ${uniforms.uSize.value.toFixed(3)}, Quality: ${qualityLevel}`
+      );
+      lastLogTimeRef.current = currentTime;
+    }
   });
 
-  // Conditional rendering: only render if ready and essential components exist
-  if (!isReady || !geometry || !material) {
-    return null;
-  }
+  // ===============================
+  // COMPONENT CLEANUP
+  // ===============================
+  useEffect(() => {
+    return () => {
+      if (geometryRef.current) {
+        geometryRef.current.dispose();
+      }
+      if (materialRef.current) {
+        materialRef.current.dispose();
+      }
+      console.log(`⚡ PROFESSIONAL WebGLBackground-${componentId} cleanup completed`);
+    };
+  }, []);
 
-  console.log(
-    `WebGLBackground (Enhanced): Rendering points with mood: ${currentPreset?.name || 'default'}`
+  // ===============================
+  // RENDER JSX WITH YOUR PROFESSIONAL SHADERS
+  // ===============================
+  return (
+    <>
+      <color attach="background" args={['#0a0a0a']} />
+      <points ref={pointsRef}>
+        <bufferGeometry ref={geometryRef}>
+          <bufferAttribute
+            attach="attributes-position"
+            count={particleConfig.count}
+            array={particleData.positions}
+            itemSize={3}
+          />
+          <bufferAttribute
+            attach="attributes-animFactors1"
+            count={particleConfig.count}
+            array={particleData.animFactors1}
+            itemSize={4}
+          />
+          <bufferAttribute
+            attach="attributes-animFactors2"
+            count={particleConfig.count}
+            array={particleData.animFactors2}
+            itemSize={4}
+          />
+        </bufferGeometry>
+        <shaderMaterial
+          ref={materialRef}
+          vertexShader={vertexShaderSource}
+          fragmentShader={fragmentShaderSource}
+          uniforms={uniforms}
+          transparent={true}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          vertexColors={false}
+        />
+      </points>
+    </>
   );
-  return <points ref={pointsRef} geometry={geometry} material={material} frustumCulled={false} />;
 }

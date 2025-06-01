@@ -8,9 +8,9 @@ import './styles/index.css'; // Your global styles, including Tailwind
 const appRootElement = document.getElementById('root');
 if (appRootElement) {
   ReactDOM.createRoot(appRootElement).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
+    // <React.StrictMode>
+    <App />
+    // </React.StrictMode>
   );
 } else {
   console.error('Failed to find the main app root element #root');

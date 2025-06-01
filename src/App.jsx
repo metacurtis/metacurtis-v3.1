@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx - FIXED VERSION
 import { Suspense, lazy } from 'react';
 import CanvasErrorBoundary from '@/components/ui/CanvasErrorBoundary';
 import Layout from '@/components/ui/Layout';
@@ -17,31 +17,68 @@ export default function App() {
   );
 
   return (
-    <>
-      {/* WebGL Particles - Behind everything */}
-      <CanvasErrorBoundary>
-        <Suspense fallback={null}>
-          <WebGLCanvas />
-        </Suspense>
-      </CanvasErrorBoundary>
+    <div className="app-container relative">
+      {/* WebGL Particles - Isolated rendering layer */}
+      <div
+        className="webgl-layer"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}
+      >
+        <CanvasErrorBoundary>
+          <Suspense
+            fallback={
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  color: 'white',
+                  fontSize: '18px',
+                  fontFamily: 'monospace',
+                }}
+              >
+                Loading particles...
+              </div>
+            }
+          >
+            <WebGLCanvas />
+          </Suspense>
+        </CanvasErrorBoundary>
+      </div>
 
-      {/* Hero Section - Full Viewport, breaks out of Layout */}
-      <Hero />
+      {/* HTML Content Layer - Completely separate rendering */}
+      <div
+        className="html-layer"
+        style={{
+          position: 'relative',
+          zIndex: 10,
+        }}
+      >
+        {/* Hero Section - Full Viewport, HTML only */}
+        <Hero />
 
-      {/* Layout with other sections */}
-      <Layout>
-        {/* Content sections that scroll normally */}
-        <div style={{ paddingTop: '100vh' }}>
-          {' '}
-          {/* Offset for full-screen Hero */}
-          <About />
-          <Features />
-          <Contact />
-        </div>
-      </Layout>
+        {/* Layout with other sections - HTML only */}
+        <Layout>
+          <div style={{ paddingTop: '100vh' }}>
+            {' '}
+            {/* Offset for full-screen Hero */}
+            <About />
+            <Features />
+            <Contact />
+          </div>
+        </Layout>
+      </div>
 
       {/* Dev tools */}
       {isDevelopment && <DevPerformanceMonitor />}
-    </>
+    </div>
   );
 }

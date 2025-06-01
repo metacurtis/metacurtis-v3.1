@@ -1,4 +1,4 @@
-// src/components/webgl/WebGLCanvas.jsx
+// src/components/webgl/WebGLCanvas.jsx - FIXED VERSION
 import { Suspense, lazy, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
@@ -6,7 +6,9 @@ import { useQualityStore } from '@/stores/qualityStore';
 import AdaptiveQualitySystem_ReactComponent from '@/components/quality/AdaptiveQualitySystem.jsx';
 
 // LAZY-LOAD WebGLBackground with explicit .jsx extension
-const WebGLBackground = lazy(() => import('./WebGLBackground.jsx')); // Added .jsx
+// 🚨 CRITICAL: Ensure WebGLBackground.jsx is in the SAME directory as this file,
+// OR update this path to be correct relative to WebGLCanvas.jsx
+const WebGLBackground = lazy(() => import('./WebGLBackground.jsx'));
 
 export default function WebGLCanvas() {
   console.log('👋 WebGLCanvas render (Testing Lazy Load with Explicit Extension)');
@@ -30,37 +32,72 @@ export default function WebGLCanvas() {
   if (typeof AdaptiveQualitySystem_ReactComponent !== 'function') {
     console.error('WebGLCanvas: AdaptiveQualitySystem_ReactComponent is NOT a function!');
     return (
-      <div style={{ color: 'red', background: 'black', padding: '20px', fontSize: '20px' }}>
-        Error: AQS component failed.
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'red',
+          background: 'black',
+          fontSize: '20px',
+          fontFamily: 'monospace',
+        }}
+      >
+        Error: AQS component failed to load
       </div>
     );
   }
 
   return (
-    <Canvas
-      frameloop={frameloopMode}
-      dpr={targetDpr}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 0,
-        pointerEvents: 'none',
-      }}
+    <Suspense
+      fallback={
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            background: 'rgba(0, 0, 0, 0.8)',
+            fontSize: '18px',
+          }}
+        >
+          Loading WebGL...
+        </div>
+      }
     >
-      <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={75} />
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[5, 10, 7]} intensity={0.8} />
+      <Canvas
+        frameloop={frameloopMode}
+        dpr={targetDpr}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      >
+        <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={75} />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[5, 10, 7]} intensity={0.8} />
 
-      <Suspense fallback={null}>
-        {' '}
-        {/* Suspense is crucial for lazy loading */}
         <WebGLBackground />
-      </Suspense>
 
-      <AdaptiveQualitySystem_ReactComponent />
-    </Canvas>
+        <AdaptiveQualitySystem_ReactComponent />
+      </Canvas>
+    </Suspense>
   );
 }
