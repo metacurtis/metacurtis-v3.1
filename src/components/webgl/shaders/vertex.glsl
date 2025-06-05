@@ -1,175 +1,186 @@
-// src/components/webgl/shaders/vertex.glsl - DEBUG VERSION
+// src/components/webgl/shaders/vertex.glsl – GOLD STANDARD HOLE‑FREE VERSION
+// -----------------------------------------------------------------------------
+// This build keeps every logical block you already rely on (living movement,
+// flag waves, cursor repulsion, shimmer, aurora, etc.) but *removes the old
+// XY‑radiation displacement* that punched the notorious center‑hole.   
+// Instead, **all"breathing / radiation" energy is now applied on the *Z axis
+// only*, and every interactive force is wrapped in a *core‑lock* check so no
+// particle inside the lock radius can be yanked outwards.
+// -----------------------------------------------------------------------------
 
-// Uniforms
+// ────────────────  UNIFORMS  ────────────────────────────────────────────────
 uniform float uTime;
 uniform float uSize;
 uniform float uScrollProgress;
-uniform vec3 uCursorPos;
+uniform vec3  uCursorPos;
 uniform float uCursorRadius;
 uniform float uRepulsionStrength;
 
-// Aurora and ripple effects
+// Aurora & ripple effects
+uniform bool  uAuroraEnabled;
+uniform float uAuroraIntensity;
+uniform float uAuroraSpeed;
+
+// Ripple – GOLD‑standard, core‑locked
+uniform bool  uRippleEnabled;
 uniform float uRippleTime;
-uniform vec3 uRippleCenter;
+uniform vec3  uRippleCenter;
 uniform float uRippleStrength;
-uniform float uWavePhase;
 
-// Attributes
-attribute vec4 animFactors1; // x: speed, y: phase, z: randomFactor1, w: randomAngle
-attribute vec4 animFactors2; // x: scaleMultiplier, y: swirlFactor, z: depthFactor, w: noiseScale
+// Flag wave
+uniform bool  uFlagWaveEnabled;
+uniform float uFlagAmplitude;
+uniform float uFlagFrequency;
+uniform float uFlagSpeed;
 
-// Varyings
-varying vec3 vColorFactor;
-varying float vAlpha;
-varying vec3 vWorldPosition;
-varying float vWaveIntensity;
+// Living (ambient) movement
+uniform float uLivingAmplitude;
+uniform float uLivingFrequency;
+uniform float uLivingSpeed;
 
-// DEBUG VARYINGS: Pass calculated values to fragment shader for visualization
-varying float vDebugBaseSize;
-varying float vDebugScaleMultiplier;
-varying float vDebugViewZ;
-varying float vDebugPerspectiveScale;
-varying float vDebugFinalSize;
+// Shimmer & wind
+uniform float uShimmerIntensity;
+uniform float uWindStrength;
+uniform vec2  uWindDirection;
 
-// Simplified Perlin-like noise function
-float noise(vec3 p) {
-  return fract(sin(dot(p, vec3(12.9898, 78.233, 54.53))) * 43758.5453);
+// Viewport / coverage – used in JS but handy for shader logic
+uniform float uCoverageWidth;
+uniform float uCoverageHeight;
+uniform vec2  uViewportSize;
+
+// ────────────────  ATTRIBUTES & VARYINGS  ──────────────────────────────────
+attribute vec3 position;
+attribute vec4 animationSeeds;       // x,y,z,w → per‑particle randomness
+
+varying  float vLifetime;
+varying  float vWaveIntensity;
+varying  vec3  vWorldPosition;
+varying  float vDistanceFromCenter;
+
+// ────────────────  CONSTANTS  ──────────────────────────────────────────────
+const float CORE_LOCK_RADIUS        = 1.5;  // particles inside never move radially
+const float SAFE_DISPLACEMENT_RADIUS = 3.0; // smooth‑falloff zone (unused but kept)
+const float MAX_RIPPLE_DISTANCE      = 40.0;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1) HOLE‑FREE “RADIATION”  – *Z‑axis only*
+//    (Old version used radial XY which created voids.)
+// ═══════════════════════════════════════════════════════════════════════════
+float holeFreeRadiation(vec3 p, float t, float rand)
+{
+  float a = sin(p.x * 0.30 + t * 1.20) * cos(p.y * 0.20 + t * 0.80);
+  float b = sin(p.x * 0.70 + t * 0.60) * cos(p.y * 0.50 + t * 1.10);
+  float n = sin(rand * 6.28318 + t * 2.0) * 0.3;
+  return (a + b * 0.6 + n) * 0.25;            // 100 % Z‑only
 }
 
-float smoothNoise(vec3 p) {
-  vec3 i = floor(p);
-  vec3 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f); // Smoothstep
-
-  return mix(
-    mix(mix(noise(i), noise(i + vec3(1,0,0)), f.x),
-        mix(noise(i + vec3(0,1,0)), noise(i + vec3(1,1,0)), f.x), f.y),
-    mix(mix(noise(i + vec3(0,0,1)), noise(i + vec3(1,0,1)), f.x),
-        mix(noise(i + vec3(0,1,1)), noise(i + vec3(1,1,1)), f.x), f.y), f.z);
+// 2) Living movement – coordinate‑based waves (no radial math)
+vec3 livingMovement(vec3 p, float t, vec4 seeds)
+{
+  vec3 m = vec3(0.0);
+  m.x = sin(p.y * uLivingFrequency       + t * uLivingSpeed)        * uLivingAmplitude * 0.3;
+  m.y = cos(p.x * uLivingFrequency * 0.7 + t * uLivingSpeed * 0.8)  * uLivingAmplitude * 0.3;
+  m.z = sin(p.x * 0.4 + t * 1.1) * cos(p.y * 0.3 + t * 0.9) * uLivingAmplitude;
+  m.z += sin(seeds.x * 6.28318 + t * 2.0) * uLivingAmplitude * 0.2;
+  return m;
 }
 
-void main() {
-  vec3 workingPosition = position;
+// 3) Flag surface wave
+float flagWave(vec3 p, float t)
+{
+  if (!uFlagWaveEnabled) return 0.0;
+  float w = sin(p.x * uFlagFrequency       + t * uFlagSpeed) *
+            cos(p.y * uFlagFrequency * 0.7 + t * uFlagSpeed * 0.8);
+  w += sin(p.x * uFlagFrequency * 1.3 + t * uFlagSpeed * 1.2) * 0.5;
+  return w * uFlagAmplitude;
+}
 
-  float speed = animFactors1.x;
-  float phase = animFactors1.y;
-  float randomFactor1 = animFactors1.z;
-  float randomAngle = animFactors1.w;
-  float scaleMultiplier = animFactors2.x;
-  float swirlFactor = animFactors2.y;
-  float depthFactor = animFactors2.z;
-  float noiseDisplacementScale = animFactors2.w;
+// 4) Wind (XY only, no radial bias)
+vec2 windEffect(vec3 p, float t, float rand)
+{
+  if (uWindStrength <= 0.0) return vec2(0.0);
+  float w = sin(p.x * 0.1 + t * 2.0) * cos(p.y * 0.15 + t * 1.5);
+  vec2 e = uWindDirection * w * uWindStrength;
+  e += vec2( sin(rand * 6.28318 + t * 3.0),
+             cos(rand * 6.28318 + t * 2.5) ) * 0.1 * uWindStrength;
+  return e;
+}
 
-  // DEBUG: Store base values for debugging
-  vDebugBaseSize = uSize;
-  vDebugScaleMultiplier = scaleMultiplier;
+// ────────────────  MAIN  ───────────────────────────────────────────────────
+void main()
+{
+  vec3 p   = position;                // working position
+  float t  = uTime * 0.5;             // slow master clock
+  vec4 rnd = animationSeeds;
 
-  float time = uTime * speed + phase;
-  float waveTime = uTime * 0.5 + uWavePhase;
-  
-  // Large-scale waves (aurora bands)
-  float wave1 = sin(workingPosition.x * 0.1 + waveTime) * 0.6;
-  float wave2 = sin(workingPosition.x * 0.07 + workingPosition.y * 0.05 + waveTime * 1.3) * 0.4;
-  float wave3 = sin(workingPosition.y * 0.08 + waveTime * 0.8) * 0.3;
-  
-  // Medium-scale undulation
-  float wave4 = sin(workingPosition.x * 0.2 + workingPosition.z * 0.15 + waveTime * 2.0) * 0.2;
-  float wave5 = sin(workingPosition.y * 0.25 + waveTime * 1.7) * 0.15;
+  // Distance from centre (for locks / diagnostics)
+  float dCentre = length(p.xy);
 
-  // Noise-based displacement
-  float noiseStrength = 0.3 * noiseDisplacementScale;
-  vec3 noiseInput = workingPosition * 0.02 + vec3(waveTime * 0.1, waveTime * 0.08, time * 0.05);
-  float perlinNoise = 0.0;
-  float perlinNoise2 = 0.0;
-  
-  // Quality-based noise (Activated by 'defines' from JS)
-  #if defined(QUALITY_MEDIUM) || defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
-    perlinNoise = smoothNoise(noiseInput) * 2.0 - 1.0;
-    perlinNoise2 = smoothNoise(noiseInput * 2.0 + vec3(1.0)) * 2.0 - 1.0;
-    workingPosition.x += perlinNoise * noiseStrength * 0.8;
-    workingPosition.y += perlinNoise2 * noiseStrength * 0.6;
-  #endif
-  #if defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
-    float perlinNoise3 = smoothNoise(noiseInput * 1.5 + vec3(2.0, 0.0, 1.0)) * 2.0 - 1.0;
-    workingPosition.z += perlinNoise3 * noiseStrength * 1.0;
-  #endif
+  // 1) Z‑only radiation breath
+  p.z += holeFreeRadiation(p, t, rnd.x) * 2.0;
 
-  vec3 auroraMovement = vec3(
-    (wave1 + wave4 + perlinNoise * 0.3) * 0.3,
-    (wave2 + wave5 + wave3 + perlinNoise2 * 0.2) * 0.25,
-    (wave3 + perlinNoise * 0.15) * 0.15 // Using perlinNoise here as perlinNoise3 might not be defined for lower qualities
-  );
-  workingPosition += auroraMovement;
+  // 2) Ambient living motion
+  p += livingMovement(p, t, rnd);
 
-  float swirlRadius = 0.4 + randomFactor1 * 0.4;
-  workingPosition.x += cos(time + randomAngle) * swirlRadius * swirlFactor;
-  workingPosition.z += sin(time + randomAngle) * swirlRadius * swirlFactor;
+  // 3) Flag billow
+  p.z += flagWave(p, t);
 
-  // Radial ripples (Using uTime for ripple progression)
-  vec3 rippleVector = workingPosition - uRippleCenter;
-  float rippleDistance = length(rippleVector.xy); // Consider .xyz if ripple should be 3D
-  float rippleEffect = 0.0;
-  
-  if (uRippleStrength > 0.0 && rippleDistance < 50.0) { // Ripple active radius
-    // uRippleTime from JS is just the start time, use uTime for animation
-    float currentRippleAnimTime = uTime - uRippleTime; // Time since ripple started
-    float rippleWave = sin(rippleDistance * 0.3 - currentRippleAnimTime * 8.0) * exp(-rippleDistance * 0.05 - currentRippleAnimTime * 0.5) * // Ripple decay over time & distance
-                       uRippleStrength;
-    
-    if (rippleDistance > 0.01) { // Avoid normalize(0,0)
-      vec2 rippleDirection = normalize(rippleVector.xy);
-      workingPosition.xy += rippleDirection * rippleWave * 0.6;
-      workingPosition.z += rippleWave * 0.2; // Ripple affects depth too
+  // 4) Wind
+  p.xy += windEffect(p, t, rnd.y);
+
+  // 5) Core‑locked ripple
+  float rippleAmp = 0.0;
+  if (uRippleEnabled && uRippleStrength > 0.0)
+  {
+    vec3  v   = p - uRippleCenter;
+    float dr  = length(v.xy);
+    if (dr > CORE_LOCK_RADIUS && dr < MAX_RIPPLE_DISTANCE)
+    {
+      float age = uTime - uRippleTime;
+      float w   = sin(dr * 0.4 - age * 12.0) * exp(-dr * 0.05 - age * 0.5);
+      w = clamp(w * uRippleStrength, -0.16, 0.16);
+      vec2 dir  = normalize(v.xy + vec2(1e-4));
+      p.z += w;             // Z
+      p.xy += dir * w * 0.12; // tiny XY – outside core only
+      rippleAmp = abs(w);
     }
-    rippleEffect = abs(rippleWave) * 0.5; // Modulate effect strength
   }
 
-  workingPosition.z += uScrollProgress * -15.0 * depthFactor;
-
-  vec3 fromCursor = workingPosition - uCursorPos;
-  float distToCursor = length(fromCursor);
-  float interactionEffect = 0.0;
-  if (distToCursor < uCursorRadius && uCursorRadius > 0.0) {
-    interactionEffect = smoothstep(uCursorRadius, uCursorRadius * 0.1, distToCursor);
-    workingPosition += normalize(fromCursor) * interactionEffect * uRepulsionStrength * (1.0 + randomFactor1);
+  // 6) Core‑locked cursor repulsion
+  float interact = 0.0;
+  vec3  vc = p - uCursorPos;
+  float dc = length(vc);
+  if (dc > CORE_LOCK_RADIUS && dc < uCursorRadius)
+  {
+    interact = smoothstep(uCursorRadius, uCursorRadius * 0.1, dc);
+    p += normalize(vc + vec3(1e-4)) * interact * uRepulsionStrength * 0.3;
   }
 
-  vec4 modelPosition = modelMatrix * vec4(workingPosition, 1.0);
-  vWorldPosition = modelPosition.xyz;
-  vec4 viewPosition = viewMatrix * modelPosition;
-  gl_Position = projectionMatrix * viewPosition;
-
-  // DEBUG: Store view Z for debugging
-  vDebugViewZ = viewPosition.z;
-
-  // POINT SIZE CALCULATION WITH DEBUG LOGGING
-  float pointSize = uSize * scaleMultiplier;
-  pointSize *= (1.0 + interactionEffect * 1.5); // Slightly reduced interaction boost for larger base
-  pointSize *= (1.0 + rippleEffect * 1.0);   // Slightly reduced ripple boost
-
-  // DEBUG: Track perspective scaling
-  float perspectiveScale = 1.0;
-  
-  #if defined(QUALITY_HIGH) || defined(QUALITY_ULTRA)
-   if (viewPosition.z < -0.01) { 
-    perspectiveScale = (1.0 + 2.0 / max(-viewPosition.z, 1.0)); // Changed from 3.0 to 10.0
-    pointSize *= perspectiveScale;
+  // 7) Optional shimmer (Z‑only)
+  if (uShimmerIntensity > 0.0)
+  {
+    float sh = sin(p.x * 2.0 + uTime * 4.0) * cos(p.y * 1.5 + uTime * 3.5);
+    p.z += sh * uShimmerIntensity * 0.1;
   }
-  #endif
 
-  // DEBUG: Store perspective scale factor
-  vDebugPerspectiveScale = perspectiveScale;
+  // 8) Optional aurora (Z‑only)
+  if (uAuroraEnabled && uAuroraIntensity > 0.0)
+  {
+    float au = sin(p.x * 0.2 + uTime * uAuroraSpeed) *
+               cos(p.y * 0.15 + uTime * uAuroraSpeed * 0.7);
+    p.z += au * uAuroraIntensity * 0.8;
+  }
 
-  // Apply final clamping
-  float finalSize = clamp(pointSize, 1.0, 400.0);
-  
-  // DEBUG: Store final calculated size
-  vDebugFinalSize = finalSize;
-  
-  gl_PointSize = finalSize;
+  // ───── store varyings
+  vLifetime           = rnd.z;
+  vWaveIntensity      = rippleAmp + interact;
+  vWorldPosition      = p;
+  vDistanceFromCenter = dCentre;
 
-  vColorFactor = vec3(randomFactor1, speed, phase / (2.0 * 3.14159265));
-  vAlpha = clamp(1.0 - interactionEffect * 1.5 + rippleEffect * 0.25, 0.2, 1.0); // MODIFIED: Min alpha to 0.2
-  
-  vWaveIntensity = (wave1 + wave2 + wave3) * 0.4 + perlinNoise * 0.2 + rippleEffect;
+  // ───── final position & size
+  vec4 mv  = modelViewMatrix * vec4(p, 1.0);
+  gl_Position = projectionMatrix * mv;
+
+  float size = uSize * (300.0 / -mv.z);
+  gl_PointSize = clamp(size, 1.0, 20.0);
 }

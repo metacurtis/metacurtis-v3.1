@@ -1,4 +1,6 @@
-// src/components/sections/Hero.jsx - Enhanced with Optimized Scroll-to-Reappear & Performance
+// src/components/sections/Hero.jsx - Simplified Clean Navigation
+// Removed all particle effects, ripples, and complex animations
+
 import { useRef, useEffect, useMemo, useCallback, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
@@ -10,8 +12,6 @@ gsap.registerPlugin(ScrollToPlugin);
 function Hero() {
   const heroId = useRef(Math.random().toString(36).substr(2, 9));
   const renderCount = useRef(0);
-  const magneticSetupDone = useRef(false);
-  const scrollListenerActive = useRef(false);
 
   renderCount.current++;
   if (renderCount.current % 10 === 0) {
@@ -34,9 +34,8 @@ function Hero() {
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const [activeLetterIndex, setActiveLetterIndex] = useState(-1);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [, forceUpdate] = useState({});
 
-  // Configuration
+  // Configuration - SIMPLIFIED
   const sectionMoodMap = useMemo(
     () => ({
       hero: 'heroIntro',
@@ -49,77 +48,26 @@ function Hero() {
 
   const letterConfig = useMemo(
     () => [
-      { letter: 'M', section: 'hero', color: '#FF0080', description: '🏠 Home', intensity: 0.3 },
-      { letter: 'C', section: 'about', color: '#00FF80', description: '👤 About', intensity: 0.2 },
-      {
-        letter: '3',
-        section: 'features',
-        color: '#0080FF',
-        description: '⚡ Features',
-        intensity: 0.4,
-      },
-      {
-        letter: 'V',
-        section: 'contact',
-        color: '#FF8000',
-        description: '📧 Contact',
-        intensity: 0.3,
-      },
+      { letter: 'M', section: 'hero', color: '#FF0080', description: '🏠 Home' },
+      { letter: 'C', section: 'about', color: '#00FF80', description: '👤 About' },
+      { letter: '3', section: 'features', color: '#0080FF', description: '⚡ Features' },
+      { letter: 'V', section: 'contact', color: '#FF8000', description: '📧 Contact' },
     ],
     []
   );
 
-  // Narrative subscription with cleanup
-  useEffect(() => {
-    const unsubscribe = narrativeTransition.subscribe(() => {
-      forceUpdate({});
-    });
-    return unsubscribe;
-  }, []);
-
-  // Store actions - memoized for performance
+  // Store actions - SIMPLIFIED (no particle effects)
   const storeActions = useMemo(
     () => ({
       setSection: section => {
         const store = useInteractionStore.getState();
         if (store.setCurrentSection) store.setCurrentSection(section);
       },
-      triggerLetterClick: (index, section) => {
-        const store = useInteractionStore.getState();
-        if (store.addInteractionEvent) {
-          store.addInteractionEvent({
-            type: 'letterClick',
-            letterIndex: index,
-            targetSection: section,
-            position: { x: 0, y: 0 },
-            intensity: letterConfig[index].intensity,
-          });
-        }
-      },
-      triggerParticleBurst: (position, intensity, mood) => {
-        console.log(
-          `🎬 Hero [${heroId.current}]: 💥 Burst request - intensity: ${intensity.toFixed(3)}`
-        );
-        const store = useInteractionStore.getState();
-        if (store.addInteractionEvent) {
-          store.addInteractionEvent({
-            type: 'heroLetterBurst',
-            position,
-            intensity: Math.min(intensity, 0.4),
-            mood,
-            timestamp: performance.now(),
-          });
-        }
-      },
-      setCursorPosition: pos => {
-        const store = useInteractionStore.getState();
-        if (store.setCursorPosition) store.setCursorPosition(pos);
-      },
     }),
-    [letterConfig]
+    []
   );
 
-  // Entrance animation - runs once
+  // Entrance animation - SIMPLIFIED
   useEffect(() => {
     if (isInitialized) return;
     const letters = lettersContainerRef.current?.children;
@@ -127,22 +75,20 @@ function Hero() {
     const heroContent = heroContentRef.current;
 
     if (letters?.length > 0 && subtitle && heroContent) {
-      console.log(`🎬 Hero [${heroId.current}]: 🎭 Starting entrance animation`);
+      console.log(`🎬 Hero [${heroId.current}]: 🎭 Starting simple entrance animation`);
       setIsInitialized(true);
       storeActions.setSection('hero');
-      narrativeTransition.setMood('heroIntro', { duration: 3000 });
+      narrativeTransition.setMood('heroIntro', { duration: 2000 });
 
-      // Clean up any existing animations
+      // Clean, simple entrance
       gsap.killTweensOf([letters, subtitle, heroContent]);
-
-      // Set initial states
       gsap.set(heroContent, { opacity: 1, scale: 1 });
-      gsap.set(letters, { opacity: 0, y: 150, scale: 0.8, rotationY: 45 });
-      gsap.set(subtitle, { opacity: 0, y: 50 });
+      gsap.set(letters, { opacity: 0, y: 50, scale: 0.9 });
+      gsap.set(subtitle, { opacity: 0, y: 30 });
 
       const entranceTl = gsap.timeline({
-        delay: 0.5,
-        onComplete: () => console.log(`🎬 Hero [${heroId.current}]: ✨ Entrance complete`),
+        delay: 0.3,
+        onComplete: () => console.log(`🎬 Hero [${heroId.current}]: ✨ Simple entrance complete`),
       });
 
       entranceTl
@@ -150,189 +96,86 @@ function Hero() {
           opacity: 1,
           y: 0,
           scale: 1,
-          rotationY: 0,
-          duration: 1.8,
-          ease: 'power4.out',
-          stagger: { amount: 0.8, from: 'center' },
+          duration: 1.2,
+          ease: 'power3.out',
+          stagger: { amount: 0.4, from: 'center' },
         })
         .to(
           subtitle,
           {
             opacity: 1,
             y: 0,
-            duration: 1.2,
-            ease: 'power3.out',
+            duration: 0.8,
+            ease: 'power2.out',
           },
-          '-=0.8'
+          '-=0.6'
         );
     }
   }, [isInitialized, storeActions]);
 
-  // Magnetic interaction system
+  // SIMPLIFIED INTERACTION - Just hover effects, no particle bursts
   useEffect(() => {
-    if (!isInitialized || magneticSetupDone.current) return;
-    console.log(`🎬 Hero [${heroId.current}]: 🧲 Setting up magnetic system ONCE`);
-    magneticSetupDone.current = true;
+    if (!isInitialized) return;
+    console.log(`🎬 Hero [${heroId.current}]: 🎯 Setting up simple hover system`);
 
-    const setters = letterRefs
-      .map(ref => {
-        if (!ref.current) return null;
-        return {
-          x: gsap.quickSetter(ref.current, 'x', 'px'),
-          y: gsap.quickSetter(ref.current, 'y', 'px'),
-          scaleX: gsap.quickSetter(ref.current, 'scaleX'),
-          scaleY: gsap.quickSetter(ref.current, 'scaleY'),
-          rotationY: gsap.quickSetter(ref.current, 'rotationY', 'deg'),
-        };
-      })
-      .filter(Boolean);
+    let activeTimeline = null;
 
-    let mouseUpdateTimeout;
-    let lastBurstTime = 0;
-    let hoverTimeline = null;
-
-    const handleMouseMove = event => {
-      if (isTransitioning || !isHeroVisible) return;
-
-      const mouseX = event.clientX;
-      const mouseY = event.clientY;
-      const now = Date.now();
-
-      // Throttled cursor position update
-      clearTimeout(mouseUpdateTimeout);
-      mouseUpdateTimeout = setTimeout(() => {
-        const normalizedX = (mouseX / window.innerWidth) * 2 - 1;
-        const normalizedY = -(mouseY / window.innerHeight) * 2 + 1;
-        storeActions.setCursorPosition({ x: normalizedX, y: normalizedY });
-      }, 16);
-
-      let maxPullIntensity = 0;
-      let closestLetterIndex = -1;
-      let bestLetterConfig = null;
-
-      // Process each letter's magnetic effect
-      letterRefs.forEach((ref, index) => {
-        if (!ref.current || !setters[index]) return;
-
-        const rect = ref.current.getBoundingClientRect();
-        const letterCenterX = rect.left + rect.width / 2;
-        const letterCenterY = rect.top + rect.height / 2;
-        const deltaX = letterCenterX - mouseX;
-        const deltaY = letterCenterY - mouseY;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        const maxDistance = 200;
-        const maxShift = 10;
-        const maxScale = 1.06;
-        const maxRotation = 6;
-
-        if (distance < maxDistance) {
-          const pullIntensity = (maxDistance - distance) / maxDistance;
-          const smoothPull = Math.pow(pullIntensity, 0.9);
-
-          setters[index].x(-(deltaX * smoothPull * (maxShift / maxDistance)));
-          setters[index].y(-(deltaY * smoothPull * (maxShift / maxDistance)));
-          setters[index].scaleX(1 + smoothPull * (maxScale - 1));
-          setters[index].scaleY(1 + smoothPull * (maxScale - 1));
-          setters[index].rotationY(-(deltaX * smoothPull * (maxRotation / maxDistance)));
-
-          if (pullIntensity > maxPullIntensity) {
-            maxPullIntensity = pullIntensity;
-            closestLetterIndex = index;
-            bestLetterConfig = letterConfig[index];
-          }
-        } else {
-          // Reset to neutral position
-          setters[index].x(0);
-          setters[index].y(0);
-          setters[index].scaleX(1);
-          setters[index].scaleY(1);
-          setters[index].rotationY(0);
-        }
-      });
-
-      // Handle hover state changes
-      if (closestLetterIndex !== activeLetterIndex) {
-        setActiveLetterIndex(closestLetterIndex);
-        if (hoverTimeline) hoverTimeline.kill();
-
-        if (closestLetterIndex >= 0 && bestLetterConfig) {
-          const activeLetter = letterRefs[closestLetterIndex].current;
-          if (activeLetter) {
-            hoverTimeline = gsap.timeline().to(activeLetter, {
-              textShadow: `0 0 20px ${bestLetterConfig.color}ff, 0 0 40px ${bestLetterConfig.color}aa, 0 0 60px ${bestLetterConfig.color}77`,
-              duration: 0.3,
-              ease: 'power2.out',
-            });
-          }
-        }
-      }
-
-      // Trigger particle burst on strong interaction
-      if (maxPullIntensity > 0.8 && now - lastBurstTime > 300 && bestLetterConfig) {
-        const normalizedPos = {
-          x: (mouseX / window.innerWidth) * 2 - 1,
-          y: -(mouseY / window.innerHeight) * 2 + 1,
-        };
-        const cappedIntensity = Math.min(maxPullIntensity * bestLetterConfig.intensity, 0.3);
-        storeActions.triggerParticleBurst(
-          normalizedPos,
-          cappedIntensity,
-          sectionMoodMap[bestLetterConfig.section]
-        );
-        lastBurstTime = now;
-      }
-    };
-
-    const handleMouseLeave = () => {
+    const handleMouseEnter = (event, index) => {
       if (isTransitioning) return;
 
-      setActiveLetterIndex(-1);
-      clearTimeout(mouseUpdateTimeout);
-      if (hoverTimeline) hoverTimeline.kill();
+      const target = event.currentTarget;
+      const config = letterConfig[index];
 
-      letterRefs.forEach((ref, index) => {
-        if (ref.current && setters[index]) {
-          gsap.to(ref.current, {
-            x: 0,
-            y: 0,
-            scaleX: 1,
-            scaleY: 1,
-            rotationY: 0,
-            textShadow: `0 0 10px ${letterConfig[index].color}aa, 0 0 20px ${letterConfig[index].color}77`,
-            duration: 0.6,
-            ease: 'power2.out',
-          });
-        }
+      setActiveLetterIndex(index);
+
+      if (activeTimeline) activeTimeline.kill();
+      activeTimeline = gsap.timeline().to(target, {
+        scale: 1.1,
+        textShadow: `0 0 20px ${config.color}ff, 0 0 40px ${config.color}aa`,
+        duration: 0.3,
+        ease: 'power2.out',
       });
     };
 
-    const container = lettersContainerRef.current;
-    if (container) {
-      container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('mouseleave', handleMouseLeave);
-    }
+    const handleMouseLeave = (event, index) => {
+      if (isTransitioning) return;
+
+      const target = event.currentTarget;
+      const config = letterConfig[index];
+
+      setActiveLetterIndex(-1);
+
+      if (activeTimeline) activeTimeline.kill();
+      activeTimeline = gsap.timeline().to(target, {
+        scale: 1,
+        textShadow: `0 0 10px ${config.color}aa, 0 0 20px ${config.color}77`,
+        duration: 0.4,
+        ease: 'power2.out',
+      });
+    };
+
+    // Add event listeners
+    letterRefs.forEach((ref, index) => {
+      if (ref.current) {
+        const element = ref.current;
+        element.addEventListener('mouseenter', e => handleMouseEnter(e, index));
+        element.addEventListener('mouseleave', e => handleMouseLeave(e, index));
+      }
+    });
 
     return () => {
-      clearTimeout(mouseUpdateTimeout);
-      if (hoverTimeline) hoverTimeline.kill();
-      if (container) {
-        container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-      }
+      if (activeTimeline) activeTimeline.kill();
+      letterRefs.forEach((ref, index) => {
+        if (ref.current) {
+          const element = ref.current;
+          element.removeEventListener('mouseenter', e => handleMouseEnter(e, index));
+          element.removeEventListener('mouseleave', e => handleMouseLeave(e, index));
+        }
+      });
     };
-  }, [
-    isInitialized,
-    storeActions,
-    activeLetterIndex,
-    isTransitioning,
-    isHeroVisible,
-    letterConfig,
-    sectionMoodMap,
-    letterRefs,
-  ]);
+  }, [isInitialized, letterRefs, letterConfig, isTransitioning]);
 
-  // Letter click handler
+  // SIMPLIFIED CLICK HANDLER - No particle effects
   const handleLetterClick = useCallback(
     (letterIndex, targetSection) => {
       if (isTransitioning) {
@@ -343,107 +186,81 @@ function Hero() {
       const config = letterConfig[letterIndex];
       const targetMood = sectionMoodMap[targetSection];
       console.log(
-        `🎬 Hero [${heroId.current}]: 🎭 Letter click: ${config.letter} → ${targetSection}`
+        `🎬 Hero [${heroId.current}]: 🎯 Simple navigation: ${config.letter} → ${targetSection}`
       );
 
       setIsTransitioning(true);
 
-      // Letter feedback animation
+      // Simple letter feedback
       const targetLetter = letterRefs[letterIndex].current;
       if (targetLetter) {
         gsap
           .timeline()
           .to(targetLetter, {
-            scaleX: 1.12,
-            scaleY: 1.12,
-            textShadow: `0 0 30px ${config.color}ff, 0 0 60px ${config.color}ff`,
+            scale: 1.15,
             duration: 0.1,
             ease: 'power2.out',
           })
           .to(targetLetter, {
-            scaleX: 1,
-            scaleY: 1,
+            scale: 1,
             duration: 0.2,
             ease: 'power2.out',
           });
       }
 
-      // Trigger particle burst
-      const rect = targetLetter?.getBoundingClientRect();
-      if (rect) {
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const normalizedPos = {
-          x: (centerX / window.innerWidth) * 2 - 1,
-          y: -(centerY / window.innerHeight) * 2 + 1,
-        };
-        const burstIntensity = Math.min(config.intensity * 1.2, 0.4);
-        storeActions.triggerParticleBurst(normalizedPos, burstIntensity, targetMood);
-        storeActions.triggerLetterClick(letterIndex, targetSection);
-      }
-
-      // Navigation timeline
+      // Simple navigation timeline
       const transitionTimeline = gsap.timeline({
         onComplete: () => {
-          console.log(`🎬 Hero [${heroId.current}]: ✨ GSAP Scroll/Fade Transition complete`);
+          console.log(`🎬 Hero [${heroId.current}]: ✨ Simple navigation complete`);
           setIsTransitioning(false);
         },
       });
 
       if (targetSection === 'hero') {
         // Navigate to hero (scroll to top)
-        narrativeTransition.setMood('heroIntro', { duration: 1500 });
+        narrativeTransition.setMood('heroIntro', { duration: 1000 });
         storeActions.setSection('hero');
         transitionTimeline.to(window, {
-          duration: 1.8,
+          duration: 1.5,
           ease: 'power2.inOut',
           scrollTo: { y: 0, offsetY: 0, autoKill: true },
         });
       } else {
         // Navigate to other section
-        narrativeTransition.setMood(targetMood, { duration: 2500 });
+        narrativeTransition.setMood(targetMood, { duration: 1500 });
         transitionTimeline
           .to(heroContentRef.current, {
             opacity: 0,
-            scale: 0.95,
-            y: -20,
-            duration: 0.8,
+            scale: 0.98,
+            y: -10,
+            duration: 0.6,
             ease: 'power2.inOut',
             onComplete: () => setIsHeroVisible(false),
           })
-          .call(() => storeActions.setSection(targetSection), null, '-=0.4')
+          .call(() => storeActions.setSection(targetSection), null, '-=0.3')
           .to(
             window,
             {
-              duration: 1.5,
-              ease: 'power3.inOut',
+              duration: 1.2,
+              ease: 'power2.inOut',
               scrollTo: { y: `#${targetSection}`, offsetY: 80, autoKill: true },
             },
-            '-=0.2'
-          )
-          .call(() => {
-            const sectionElement = document.getElementById(targetSection);
-            if (sectionElement) {
-              const event = new CustomEvent('heroNavigationComplete', {
-                detail: { targetSection, mood: targetMood, fromHero: true },
-              });
-              sectionElement.dispatchEvent(event);
-            }
-          });
+            '-=0.1'
+          );
       }
     },
     [letterRefs, storeActions, isTransitioning, letterConfig, sectionMoodMap, heroId]
   );
 
-  // Hero visibility animation
+  // Hero visibility animation - SIMPLIFIED
   useEffect(() => {
     if (!heroContentRef.current) return;
 
     gsap.to(heroContentRef.current, {
       opacity: isHeroVisible ? 1 : 0,
-      scale: isHeroVisible ? 1 : 0.95,
-      y: isHeroVisible ? 0 : -20,
-      duration: 0.8,
+      scale: isHeroVisible ? 1 : 0.98,
+      y: isHeroVisible ? 0 : -10,
+      duration: 0.6,
       ease: 'power2.inOut',
       onStart: () => {
         if (!isHeroVisible && heroContentRef.current) {
@@ -458,81 +275,33 @@ function Hero() {
     });
   }, [isHeroVisible]);
 
-  // Enhanced scroll listener with performance optimization
+  // SIMPLIFIED SCROLL LISTENER - No complex logic
   useEffect(() => {
-    if (scrollListenerActive.current) return;
-    scrollListenerActive.current = true;
-
     let ticking = false;
-    let lastScrollY = window.scrollY;
     const SCROLL_THRESHOLD = 100;
-    const DEBOUNCE_THRESHOLD = 16; // ~60fps
 
     const handleScroll = () => {
       if (!ticking) {
         ticking = true;
-
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
 
-          // Only process if scroll position changed significantly
-          if (Math.abs(currentScrollY - lastScrollY) < 5) {
-            ticking = false;
-            return;
-          }
-
-          lastScrollY = currentScrollY;
-
-          // Get current states inside rAF for freshest values
-          const currentHeroVisible = isHeroVisible;
-          const currentLocalTransitioning = isTransitioning;
-          const narrativeState = narrativeTransition.getTransitionState();
-
-          // Enhanced debugging (uncomment for detailed logs)
-          // console.log(
-          //   `🎬 Hero Scroll Debug: scrollY=${currentScrollY.toFixed(0)}, ` +
-          //   `heroVisible=${currentHeroVisible}, localTransition=${currentLocalTransitioning}, ` +
-          //   `narrativeTransition=${narrativeState.isTransitioning}`
-          // );
-
-          // Hero reappear logic
-          if (
-            !currentHeroVisible &&
-            !currentLocalTransitioning &&
-            !narrativeState.isTransitioning &&
-            currentScrollY < SCROLL_THRESHOLD
-          ) {
+          // Simple reappear logic
+          if (!isHeroVisible && !isTransitioning && currentScrollY < SCROLL_THRESHOLD) {
             console.log(
-              `🎬 Hero [${heroId.current}]: 📜 Scroll-triggered reappear (scrollY: ${currentScrollY.toFixed(0)})`
+              `🎬 Hero [${heroId.current}]: 📜 Simple reappear (scrollY: ${currentScrollY.toFixed(0)})`
             );
-
             setIsHeroVisible(true);
 
-            // Corrected lines for Hero.jsx:
-            const currentMoodName = narrativeTransition.getMood(); // Use the existing getMood() method
+            const currentMoodName = narrativeTransition.getMood();
             if (currentMoodName !== 'heroIntro') {
-              console.log(
-                `🎬 Hero [${heroId.current}]: 🎭 Setting mood to heroIntro via scroll (current: ${currentMoodName})`
-              );
-              narrativeTransition.setMood('heroIntro', { duration: 1000 });
+              narrativeTransition.setMood('heroIntro', { duration: 800 });
             }
 
-            // Update store section if needed
             const currentStoreSection = useInteractionStore.getState().currentSection;
             if (currentStoreSection !== 'hero') {
               storeActions.setSection('hero');
             }
-          }
-
-          // Optional: Auto-hide when scrolled far down (uncomment if desired)
-          else if (
-            currentHeroVisible &&
-            !currentLocalTransitioning &&
-            !narrativeState.isTransitioning &&
-            currentScrollY > window.innerHeight * 1.5
-          ) {
-            console.log(`🎬 Hero [${heroId.current}]: 📜 Auto-hide on far scroll`);
-            setIsHeroVisible(false);
           }
 
           ticking = false;
@@ -540,13 +309,12 @@ function Hero() {
       }
     };
 
-    console.log(`🎬 Hero [${heroId.current}]: 📜 Activating scroll listener`);
+    console.log(`🎬 Hero [${heroId.current}]: 📜 Activating simple scroll listener`);
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       console.log(`🎬 Hero [${heroId.current}]: 📜 Deactivating scroll listener`);
       window.removeEventListener('scroll', handleScroll);
-      scrollListenerActive.current = false;
     };
   }, [storeActions, heroId, isHeroVisible, isTransitioning]);
 
@@ -574,7 +342,7 @@ function Hero() {
         <div
           ref={lettersContainerRef}
           className="letters-container flex justify-center items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-12 mb-8 w-full"
-          aria-label="MC3V Interactive Navigation"
+          aria-label="MC3V Navigation"
         >
           {letterConfig.map((config, index) => {
             const ref = letterRefs[index];
@@ -582,14 +350,14 @@ function Hero() {
               <span
                 key={config.letter}
                 ref={ref}
-                className="inline-block font-black cursor-pointer select-none"
+                className="inline-block font-black cursor-pointer select-none transition-transform duration-200 hover:scale-105"
                 style={{
                   fontSize: 'clamp(3rem, 15vw, 16rem)',
                   lineHeight: 0.8,
                   color: config.color,
                   textShadow: `0 0 10px ${config.color}aa, 0 0 20px ${config.color}77, 0 0 30px ${config.color}44`,
                   userSelect: 'none',
-                  willChange: 'transform, opacity',
+                  willChange: 'transform',
                   mixBlendMode: 'screen',
                 }}
                 onClick={() => handleLetterClick(index, config.section)}
@@ -604,7 +372,7 @@ function Hero() {
         <div className="text-center w-full max-w-4xl mx-auto">
           <p
             ref={subtitleRef}
-            className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-6 font-medium leading-relaxed"
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl mb-6 font-medium leading-relaxed transition-opacity duration-300"
             style={{
               color: 'rgba(255, 255, 255, 0.9)',
               textShadow: '0 0 10px rgba(255, 255, 255, 0.2)',
@@ -615,7 +383,7 @@ function Hero() {
 
           {activeLetterIndex >= 0 && (
             <div
-              className="text-sm md:text-base animate-pulse font-medium"
+              className="text-sm md:text-base font-medium transition-all duration-300"
               style={{
                 color: letterConfig[activeLetterIndex].color + 'dd',
                 textShadow: `0 0 8px ${letterConfig[activeLetterIndex].color}77`,
@@ -627,7 +395,7 @@ function Hero() {
 
           {isTransitioning && (
             <div
-              className="text-xs md:text-sm mt-4 animate-pulse font-medium"
+              className="text-xs md:text-sm mt-4 font-medium transition-opacity duration-300"
               style={{
                 color: 'rgba(255, 255, 255, 0.7)',
                 textShadow: '0 0 4px rgba(255, 255, 255, 0.3)',
@@ -643,3 +411,34 @@ function Hero() {
 }
 
 export default Hero;
+
+/*
+🎯 SIMPLIFIED HERO - CLEAN NAVIGATION
+
+✅ REMOVED ALL PARTICLE EFFECTS:
+- No particle bursts on click/hover
+- No ripple triggering
+- No complex magnetic interactions
+- No cursor position tracking for particles
+
+✅ SIMPLIFIED INTERACTIONS:
+- Clean hover effects with scale and glow
+- Simple click feedback animation
+- Smooth navigation transitions
+- Basic scroll-based reappear logic
+
+✅ MAINTAINED FUNCTIONALITY:
+- Navigation between sections
+- Narrative mood transitions
+- Visual feedback and descriptions
+- Responsive design and accessibility
+
+✅ PERFORMANCE OPTIMIZED:
+- Reduced event listeners
+- Simplified animations
+- No complex calculations
+- Clean state management
+
+This version focuses purely on navigation without any particle system interference.
+The background particle canvas can now operate independently without any holes or disruption.
+*/
