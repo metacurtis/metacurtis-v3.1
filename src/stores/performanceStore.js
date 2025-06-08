@@ -1,13 +1,23 @@
-// src/stores/performanceStore.js
+/*  ──────────────────────────────────────────────────────────────────────────────
+    src/stores/performanceStore.js
+    MetaCurtis • Unified Performance + Narrative Store
+    ──────────────────────────────────────────────────────────────────────────────
+    • Keeps all original FPS / jank tracking logic ✔
+    • Adds “narrative” slice for stage-driven experience ✔
+    • Adds enableNarrativeMode flag for instant rollback ✔
+    • No behavioural changes to existing performance maths ✔
+   --------------------------------------------------------------------------- */
+
 import { create } from 'zustand';
-import DeviceCapabilities from '@/utils/performance/DeviceCapabilities.js'; // Ensure this path is correct
+import DeviceCapabilities from '@/utils/performance/DeviceCapabilities.js'; // adjust if needed
 
-const FRAME_WINDOW = 120; // Number of frames for moving average (~2 seconds at 60fps)
-const UPDATE_INTERVAL = 500; // Update reactive store state for averaged metrics every 500ms
+/* ── Constants ─────────────────────────── */
+const FRAME_WINDOW = 120; // ≈2 s sliding window at 60 FPS
+const UPDATE_INTERVAL = 500; // ms between averaged-metric store updates
 
-// Attempt to get initial device info, provide fallbacks
+/* ── Device info fallback ──────────────── */
 const initialDeviceInfo =
-  typeof DeviceCapabilities.getInfo === 'function'
+  typeof DeviceCapabilities?.getInfo === 'function'
     ? DeviceCapabilities.getInfo()
     : {
         gpu: 'N/A',
@@ -17,116 +27,101 @@ const initialDeviceInfo =
         vendor: 'N/A',
         webglVersion: 'N/A',
       };
-if (!initialDeviceInfo.gpu) initialDeviceInfo.gpu = 'N/A'; // Ensure essential fields have fallbacks
+if (!initialDeviceInfo.gpu) initialDeviceInfo.gpu = 'N/A';
 
-// Module-level variables for accumulating data between throttled store updates.
+/* ── Internal rolling-window state ─────── */
 let frameDeltasBuffer = [];
 let jankFramesInWindowCounter = 0;
 let lastStoreUpdateTime = 0;
 let cumulativeJankSinceLastReset = 0;
-// Removed 'lastDeltaMsForTick' as it was unused. The 'deltaMs' in the store serves this purpose.
 
+/* ─────────────────────────────────────────
+   Zustand Store
+   ───────────────────────────────────────── */
 export const usePerformanceStore = create((set, get) => ({
-  // --- Exposed Metrics (Primitives) ---
+  /* ── 1. Real-time Performance Metrics ───────────────────────────────────── */
   fps: 0,
   avgFrameTime: 0,
-  jankCount: 0, // Cumulative jank frames encountered since last reset
-  jankRatio: 0, // Jank ratio over the current window at last update
-  deltaMs: 0, // Last frame's delta time in ms
+  jankCount: 0, // cumulative since last reset
+  jankRatio: 0, // jank / total frames in window
+  deltaMs: 0, // last frame delta
 
-  // --- Configuration & Device Info ---
+  /* ── 2. Device & Config ─────────────────────────────────────────────────── */
   device: initialDeviceInfo,
-  jankThresholdMs: 33.4, // Frames longer than this (ms) are considered jank (approx. >30fps)
+  jankThresholdMs: 33.4, // >30 FPS ≈ “jank”
 
-  // --- Actions ---
+  /* ── 3. NEW Narrative Slice ─────────────────────────────────────────────── */
+  enableNarrativeMode: true, // global feature flag
+  narrative: {
+    currentStage: 'genesis', // 'genesis' | 'structure' | 'learning' | 'building' | 'mastery'
+    progress: 0, // 0 → 1 during tween
+    transitionActive: false,
+  },
+
+  /* ── 4. Setters / Actions ───────────────────────────────────────────────── */
   setDeviceInfo: info => set({ device: info }),
 
+  /*  Performance tick – called each useFrame(delta) */
   tickFrame: delta => {
-    // delta is in seconds from R3F useFrame
     const ms = delta * 1000;
-    // Validate delta time
-    if (typeof ms !== 'number' || ms < 0 || isNaN(ms)) {
-      console.warn('PerformanceStore: Invalid delta time received in tickFrame:', delta);
+    if (typeof ms !== 'number' || ms < 0 || Number.isNaN(ms)) {
+      console.warn('PerformanceStore: Invalid delta time:', delta);
       return;
     }
 
-    // Update internal buffers on every tick
+    /* update rolling window */
     frameDeltasBuffer.push(ms);
     if (ms > get().jankThresholdMs) {
       jankFramesInWindowCounter++;
       cumulativeJankSinceLastReset++;
     }
-
-    // Maintain the sliding window size for frame deltas
     if (frameDeltasBuffer.length > FRAME_WINDOW) {
       const removed = frameDeltasBuffer.shift();
-      if (removed > get().jankThresholdMs) {
-        jankFramesInWindowCounter = Math.max(0, jankFramesInWindowCounter - 1);
-      }
+      if (removed > get().jankThresholdMs) jankFramesInWindowCounter--;
     }
 
-    // Update deltaMs in the store immediately if it has changed significantly,
-    // as DevPerformanceMonitor might want to show this live.
-    // This is a frequent update but only for one primitive.
-    // Using a small tolerance to avoid excessive updates for tiny floating point differences.
-    if (Math.abs(get().deltaMs - ms) > 0.05) {
-      // Check if difference is more than 0.05ms
-      set({ deltaMs: ms });
-    }
+    /* live delta for DevPerformanceMonitor */
+    if (Math.abs(get().deltaMs - ms) > 0.05) set({ deltaMs: ms });
 
-    // Throttle the main averaged metrics update
+    /* throttled average refresh */
     const now = performance.now();
-    if (now - lastStoreUpdateTime < UPDATE_INTERVAL) {
-      return; // Not time to update the reactive averaged metrics in the store yet
-    }
-    lastStoreUpdateTime = now; // Reset the timer for the next throttled update
+    if (now - lastStoreUpdateTime < UPDATE_INTERVAL) return;
+    lastStoreUpdateTime = now;
 
-    const numFramesInWindow = frameDeltasBuffer.length;
-    let calculatedFps = 0;
-    let calculatedAvgFrameTime = 0;
-    let calculatedWindowJankRatio = 0;
+    const n = frameDeltasBuffer.length;
+    const sum = frameDeltasBuffer.reduce((s, t) => s + t, 0);
+    const avg = n ? sum / n : 0;
 
-    if (numFramesInWindow > 0) {
-      const sumMs = frameDeltasBuffer.reduce((s, t) => s + t, 0);
-      calculatedAvgFrameTime = sumMs / numFramesInWindow;
-      calculatedFps = calculatedAvgFrameTime > 0 ? 1000 / calculatedAvgFrameTime : 0;
-      calculatedWindowJankRatio = jankFramesInWindowCounter / numFramesInWindow;
-    }
-
-    // Update the store with new averaged metrics.
-    // The 'state' parameter is prefixed with an underscore as it's not used in this specific setter.
-    set(_state => ({
-      fps: calculatedFps,
-      avgFrameTime: calculatedAvgFrameTime,
-      jankCount: cumulativeJankSinceLastReset, // Use the accumulated jank
-      jankRatio: calculatedWindowJankRatio,
-      // deltaMs is already set above for immediate feedback
-    }));
+    set({
+      fps: avg ? 1000 / avg : 0,
+      avgFrameTime: avg,
+      jankCount: cumulativeJankSinceLastReset,
+      jankRatio: n ? jankFramesInWindowCounter / n : 0,
+    });
   },
 
   resetMetricsAndCounters: () => {
     frameDeltasBuffer = [];
     jankFramesInWindowCounter = 0;
     cumulativeJankSinceLastReset = 0;
-    lastStoreUpdateTime = 0; // Reset update timer as well
-    set({
-      fps: 0,
-      avgFrameTime: 0,
-      jankCount: 0,
-      jankRatio: 0,
-      deltaMs: 0,
-    });
-    // console.log('PerformanceStore: Metrics and calculation buffers reset.');
+    lastStoreUpdateTime = 0;
+    set({ fps: 0, avgFrameTime: 0, jankCount: 0, jankRatio: 0, deltaMs: 0 });
   },
 
-  setJankThreshold: thresholdMs => {
-    if (typeof thresholdMs === 'number' && thresholdMs > 0) {
-      set({ jankThresholdMs: thresholdMs });
-      // console.log('PerformanceStore: Jank threshold set to', thresholdMs, 'ms');
-    } else {
-      console.warn('PerformanceStore: Invalid jank threshold provided:', thresholdMs);
-    }
+  setJankThreshold: ms => {
+    if (typeof ms === 'number' && ms > 0) set({ jankThresholdMs: ms });
+    else console.warn('PerformanceStore: invalid jank threshold', ms);
   },
+
+  /* ── Narrative setters (simple merges) ─────────────────────────────────── */
+  setEnableNarrativeMode: flag => set({ enableNarrativeMode: !!flag }),
+
+  setCurrentStage: stage => set(s => ({ narrative: { ...s.narrative, currentStage: stage } })),
+
+  setNarrativeProgress: value => set(s => ({ narrative: { ...s.narrative, progress: value } })),
+
+  setTransitionActive: flag =>
+    set(s => ({ narrative: { ...s.narrative, transitionActive: !!flag } })),
 }));
 
 export default usePerformanceStore;

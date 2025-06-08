@@ -1,32 +1,32 @@
-// src/config/narrativeParticleConfig.js - MC3V DIGITAL AWAKENING STORY
+// src/config/narrativeParticleConfig.js - COMPLETE REPLACEMENT
 /**
  * Curtis Whorton's Digital Awakening - Complete Origin Story Configuration
- * Overwrite existing presets with authentic narrative stages
+ * REPLACES existing narrative system with MC3V story
  */
 
 // === MC3V STORY CONFIGURATION ===
 export const BASELINE_CONFIG = {
   baseSize: 4.0,
-  colors: ['#00FF00', '#4338CA', '#0D9488'], // C64 → Neural → Mastery
+  colors: ['#00FF00', '#4338CA', '#0D9488'],
   cursorRadius: 1.5,
   repulsionStrength: 0.8,
   colorIntensity: 1.3,
   field: { w: 14, h: 8, d: 7 },
 };
 
-// === MC3V DIGITAL AWAKENING STAGES ===
+// === MC3V DIGITAL AWAKENING STAGES (COMPLETE REPLACEMENT) ===
 export const NARRATIVE_PRESETS = {
   genesis: {
     name: 'Genesis Code (1983)',
     description: 'Age 8: Ping-pong game on Commodore 64. The spark that would sleep for 42 years.',
-    colors: ['#00FF00', '#FFFF00', '#00FFFF'], // Authentic C64 green/yellow/cyan
-    baseSize: 2, // Small dormant particles
+    colors: ['#00FF00', '#FFFF00', '#00FFFF'], // C64 green/yellow/cyan
+    baseSize: 2,
     particleCount: 2000,
     colorIntensity: 0.9,
-    speedMultiplier: 0.5, // Slow, dormant movement
+    speedMultiplier: 0.5,
     cursorRadius: 2.5,
     repulsionStrength: 0.3,
-    transitionDuration: 3000, // Longest for opening
+    transitionDuration: 3000,
     uniforms: {
       uColorIntensity: 0.9,
       uSpeedFactor: 0.5,
@@ -41,12 +41,12 @@ export const NARRATIVE_PRESETS = {
 
   silent: {
     name: 'Silent Years (1983-2022)',
-    description: 'Marine Corps precision. Systems thinking forged in discipline. The code sleeps.',
-    colors: ['#1E40AF', '#374151', '#6B7280'], // Navy blue, disciplined grays
+    description: 'Marine Corps precision. Systems thinking forged in discipline.',
+    colors: ['#1E40AF', '#374151', '#6B7280'],
     baseSize: 3,
     particleCount: 4000,
     colorIntensity: 1.0,
-    speedMultiplier: 0.8, // Structured, controlled movement
+    speedMultiplier: 0.8,
     cursorRadius: 3.0,
     repulsionStrength: 0.6,
     transitionDuration: 2500,
@@ -56,20 +56,20 @@ export const NARRATIVE_PRESETS = {
       uCursorInfluence: 0.6,
     },
     memoryFragments: [
-      'Marine Corps: mission completion mindset acquired',
-      'Leadership principles that shape thinking',
+      'Marine Corps: mission completion mindset',
+      'Leadership principles shape thinking',
       'Systematic approach to every challenge',
     ],
   },
 
   awakening: {
     name: 'AI Awakening (2022)',
-    description: 'ChatGPT curriculum request. Neural networks demystified. The partnership begins.',
-    colors: ['#4338CA', '#7C3AED', '#EC4899'], // Deep purple → bright purple → pink
+    description: 'ChatGPT curriculum request. Neural networks demystified. Partnership begins.',
+    colors: ['#4338CA', '#7C3AED', '#EC4899'],
     baseSize: 4,
     particleCount: 8000,
     colorIntensity: 1.3,
-    speedMultiplier: 1.2, // Learning acceleration
+    speedMultiplier: 1.2,
     cursorRadius: 2.0,
     repulsionStrength: 0.8,
     transitionDuration: 2000,
@@ -80,19 +80,19 @@ export const NARRATIVE_PRESETS = {
     },
     memoryFragments: [
       'Strategic AI partnership begins',
-      'Linear algebra: understanding the mathematics',
+      'Linear algebra: understanding mathematics',
       'Pattern recognition mastery unlocked',
     ],
   },
 
   acceleration: {
     name: 'Acceleration (Feb 2025)',
-    description: 'Day 1: Teach me to code. Architecture revelation. Systems dancing in harmony.',
-    colors: ['#7C3AED', '#0D9488', '#059669'], // Purple → teal → green gradient
+    description: 'Day 1: Teach me to code. Architecture revelation. Systems in harmony.',
+    colors: ['#7C3AED', '#0D9488', '#059669'],
     baseSize: 5,
     particleCount: 12000,
     colorIntensity: 1.5,
-    speedMultiplier: 1.6, // Rapid development pace
+    speedMultiplier: 1.6,
     cursorRadius: 1.5,
     repulsionStrength: 1.0,
     transitionDuration: 1500,
@@ -110,30 +110,29 @@ export const NARRATIVE_PRESETS = {
 
   transcendence: {
     name: 'GLSL Transcendence (Mar 2025)',
-    description:
-      'Direct GPU access unlocked. 8M particles/second. Top 0.001% performance achieved.',
-    colors: ['#0D9488', '#D97706', '#FFD700'], // Teal → orange → gold
+    description: 'Direct GPU access. 8M particles/second. Top 0.001% performance.',
+    colors: ['#0D9488', '#D97706', '#FFD700'],
     baseSize: 6,
-    particleCount: 16000, // Full performance capability
+    particleCount: 16000,
     colorIntensity: 1.8,
-    speedMultiplier: 1.4, // Mastery: controlled power
+    speedMultiplier: 1.4,
     cursorRadius: 1.2,
     repulsionStrength: 1.2,
-    transitionDuration: 1000, // Quick, confident transitions
+    transitionDuration: 1000,
     uniforms: {
       uColorIntensity: 1.8,
       uSpeedFactor: 1.4,
       uCursorInfluence: 1.2,
     },
     memoryFragments: [
-      'GLSL breakthrough: hardware-level mastery',
+      'GLSL breakthrough: hardware mastery',
       'MetaCurtis emerges: vision realized',
       'Human-AI collaboration perfected',
     ],
   },
 };
 
-// === UTILITY FUNCTIONS (Keep existing) ===
+// === UTILITY FUNCTIONS ===
 export const getPreset = presetName => {
   return NARRATIVE_PRESETS[presetName] || NARRATIVE_PRESETS.genesis;
 };
@@ -142,16 +141,14 @@ export const getAvailablePresets = () => {
   return Object.keys(NARRATIVE_PRESETS);
 };
 
-// Linear interpolation utility
 const lerp = (a, b, t) => {
   if (typeof a !== 'number' || typeof b !== 'number' || typeof t !== 'number') {
-    console.warn('[MC3V Narrative] Invalid lerp inputs:', { a, b, t });
+    console.warn('[MC3V] Invalid lerp inputs:', { a, b, t });
     return typeof a === 'number' ? a : typeof b === 'number' ? b : 0;
   }
   return a * (1 - t) + b * t;
 };
 
-// Convert hex color to RGB components
 const hexToRgb = hex => {
   if (typeof hex !== 'string') return null;
   const cleanHex = hex.replace('#', '');
@@ -164,7 +161,6 @@ const hexToRgb = hex => {
       : cleanHex;
 
   if (!/^[a-f\d]{6}$/i.test(fullHex)) return null;
-
   const result = /^([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);
   return result
     ? {
@@ -175,7 +171,6 @@ const hexToRgb = hex => {
     : null;
 };
 
-// Convert RGB components to hex color
 const rgbToHex = rgb => {
   const toHex = component => {
     const hexVal = Math.round(Math.max(0, Math.min(255, component * 255))).toString(16);
@@ -184,16 +179,12 @@ const rgbToHex = rgb => {
   return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
 };
 
-// Interpolate between two colors in RGB space
 const interpolateColor = (fromColorHex, toColorHex, progress) => {
   const fromRgb = hexToRgb(fromColorHex);
   const toRgb = hexToRgb(toColorHex);
 
   if (!fromRgb || !toRgb) {
-    console.warn('[MC3V Narrative] Invalid color for interpolation.', {
-      fromColorHex,
-      toColorHex,
-    });
+    console.warn('[MC3V] Invalid color for interpolation.', { fromColorHex, toColorHex });
     return fromRgb ? fromColorHex : toRgb ? toColorHex : '#FFFFFF';
   }
 
@@ -206,7 +197,6 @@ const interpolateColor = (fromColorHex, toColorHex, progress) => {
   return rgbToHex(interpolatedRgb);
 };
 
-// Smooth easing function for natural transitions
 const easeInOutCubic = t => {
   let tClamped = Math.max(0, Math.min(1, t));
   return tClamped < 0.5
@@ -214,15 +204,13 @@ const easeInOutCubic = t => {
     : 1 - Math.pow(-2 * tClamped + 2, 3) / 2;
 };
 
-// Create smooth transition between two presets
 export const interpolatePresets = (fromPresetConfig, toPresetConfig, progress) => {
   if (!fromPresetConfig || !toPresetConfig) {
-    console.warn('[MC3V Narrative] Invalid preset for interpolation');
+    console.warn('[MC3V] Invalid preset for interpolation');
     return toPresetConfig || fromPresetConfig || NARRATIVE_PRESETS.genesis;
   }
 
   const easedProgress = easeInOutCubic(progress);
-
   const getSafe = (obj, path, fallback) => {
     return path
       .split('.')
@@ -285,7 +273,7 @@ export const interpolatePresets = (fromPresetConfig, toPresetConfig, progress) =
   };
 };
 
-// Enhanced transition manager for MC3V story
+// === MC3V NARRATIVE MANAGER ===
 export class MC3VNarrativeManager {
   constructor() {
     this.currentStage = 'genesis';
@@ -309,16 +297,15 @@ export class MC3VNarrativeManager {
     this.listeners.forEach(listener => listener());
   }
 
-  // Set stage by name
   setStage(stageName, options = {}) {
     if (stageName === this.currentStage && !this.isTransitioning) {
-      console.log(`[MC3V Narrative] Already in stage "${stageName}"`);
+      console.log(`[MC3V] Already in stage "${stageName}"`);
       return;
     }
 
     const targetPreset = getPreset(stageName);
     if (!targetPreset) {
-      console.error(`[MC3V Narrative] Stage "${stageName}" not found`);
+      console.error(`[MC3V] Stage "${stageName}" not found`);
       return;
     }
 
@@ -327,7 +314,7 @@ export class MC3VNarrativeManager {
       this.currentStageIndex = stageIndex;
     }
 
-    console.log(`[MC3V Narrative] Stage transition: ${this.currentStage} → ${stageName}`);
+    console.log(`[MC3V] Stage transition: ${this.currentStage} → ${stageName}`);
 
     this.currentStage = stageName;
     this.isTransitioning = true;
@@ -340,7 +327,6 @@ export class MC3VNarrativeManager {
     this.notify();
   }
 
-  // Navigate to next stage in story sequence
   nextStage() {
     const nextIndex = Math.min(this.currentStageIndex + 1, this.stageOrder.length - 1);
     if (nextIndex > this.currentStageIndex) {
@@ -350,7 +336,6 @@ export class MC3VNarrativeManager {
     return false;
   }
 
-  // Navigate to previous stage in story sequence
   prevStage() {
     const prevIndex = Math.max(this.currentStageIndex - 1, 0);
     if (prevIndex < this.currentStageIndex) {
@@ -360,7 +345,6 @@ export class MC3VNarrativeManager {
     return false;
   }
 
-  // Get current stage info
   getCurrentStageInfo() {
     const preset = getPreset(this.currentStage);
     return {
@@ -384,7 +368,7 @@ export class MC3VNarrativeManager {
     this.transitionProgress = Math.min(elapsed / this.duration, 1.0);
 
     if (this.transitionProgress >= 1.0) {
-      console.log(`[MC3V Narrative] Transition to "${this.currentStage}" complete`);
+      console.log(`[MC3V] Transition to "${this.currentStage}" complete`);
       this.isTransitioning = false;
       this.transitionProgress = 1.0;
       this.notify();
@@ -415,7 +399,7 @@ export class MC3VNarrativeManager {
     };
   }
 
-  // Legacy compatibility methods
+  // Legacy compatibility
   setMood(stageName, options = {}) {
     return this.setStage(stageName, options);
   }
@@ -430,32 +414,3 @@ export const narrativeTransition = new MC3VNarrativeManager();
 
 // === DEFAULT EXPORT ===
 export default NARRATIVE_PRESETS;
-
-/*
-🔥 MC3V DIGITAL AWAKENING - COMPLETE NARRATIVE SYSTEM
-
-✅ AUTHENTIC STORY STAGES:
-- Genesis (1983): C64 origin, dormant particles
-- Silent (1983-2022): Marine discipline, structured movement  
-- Awakening (2022): AI partnership, neural patterns
-- Acceleration (Feb 2025): Rapid development, architectural forms
-- Transcendence (Mar 2025): GLSL mastery, signature patterns
-
-✅ PARTICLE COUNT SCALING:
-- Stage 1: 2k particles (dormant beginning)
-- Stage 5: 16k particles (full mastery)
-- AQS automatically adapts for mobile/desktop
-
-✅ ENHANCED STAGE MANAGEMENT:
-- Sequential navigation (nextStage/prevStage)
-- Story progression tracking
-- Memory fragments for each stage
-- Rich stage information API
-
-✅ PERFORMANCE OPTIMIZED:
-- Smooth transitions between stages
-- Memory fragment system for hover reveals
-- Compatible with existing AQS and WebGL systems
-
-This replaces all existing narrative presets with your authentic origin story.
-*/

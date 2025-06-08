@@ -1,24 +1,22 @@
-// src/App.jsx - FIXED VERSION
+// src/App.jsx - PURE STATE-DRIVEN ARCHITECTURE
+// No scrolling, no traditional sections, pure narrative state transitions
+
 import { Suspense, lazy } from 'react';
 import CanvasErrorBoundary from '@/components/ui/CanvasErrorBoundary';
-import Layout from '@/components/ui/Layout';
-import Hero from '@/components/sections/Hero';
-import About from '@/components/sections/About';
-import Features from '@/components/sections/Features';
-import Contact from '@/components/sections/Contact';
+import GenesisCodeExperience from '@/components/sections/GenesisCodeExperience';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 
 const WebGLCanvas = lazy(() => import('@/components/webgl/WebGLCanvas'));
 
 export default function App() {
   const isDevelopment = import.meta.env.DEV;
-  console.log(
-    `App.jsx: isDevelopment = ${isDevelopment}. DevPerformanceMonitor will be rendered if true.`
-  );
+
+  console.log('🚀 MetaCurtis App: Pure state-driven architecture initialized');
+  console.log(`🔧 Development mode: ${isDevelopment}`);
 
   return (
-    <div className="app-container relative">
-      {/* WebGL Particles - Isolated rendering layer */}
+    <div className="metacurtis-app">
+      {/* WebGL Particle Layer - Responds to narrative state */}
       <div
         className="webgl-layer"
         style={{
@@ -40,12 +38,13 @@ export default function App() {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  color: 'white',
+                  color: '#00ff00',
                   fontSize: '18px',
-                  fontFamily: 'monospace',
+                  fontFamily: '"Courier New", monospace',
+                  textShadow: '0 0 10px #00ff00',
                 }}
               >
-                Loading particles...
+                LOADING GENESIS CODE...
               </div>
             }
           >
@@ -54,31 +53,50 @@ export default function App() {
         </CanvasErrorBoundary>
       </div>
 
-      {/* HTML Content Layer - Completely separate rendering */}
+      {/* Complete Interface Layer - State-driven narrative experience */}
       <div
-        className="html-layer"
+        className="interface-layer"
         style={{
           position: 'relative',
           zIndex: 10,
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden', // No scrolling
         }}
       >
-        {/* Hero Section - Full Viewport, HTML only */}
-        <Hero />
-
-        {/* Layout with other sections - HTML only */}
-        <Layout>
-          <div style={{ paddingTop: '100vh' }}>
-            {' '}
-            {/* Offset for full-screen Hero */}
-            <About />
-            <Features />
-            <Contact />
-          </div>
-        </Layout>
+        <GenesisCodeExperience />
       </div>
 
-      {/* Dev tools */}
+      {/* Development Tools */}
       {isDevelopment && <DevPerformanceMonitor />}
+
+      {/* Global Styles */}
     </div>
   );
 }
+
+/*
+🎯 PURE STATE-DRIVEN ARCHITECTURE
+
+✅ NO SCROLLING:
+- Fixed viewport dimensions (100vh/100vw)
+- overflow: hidden at all levels
+- No traditional sections or Layout component
+
+✅ PURE STATE INTERFACE:
+- GenesisCodeExperience is the complete interface
+- All navigation via narrative state transitions
+- Particles respond to narrative state changes
+
+✅ CLEAN ARCHITECTURE:
+- WebGL layer for particles (zIndex: 1)
+- Interface layer for interactions (zIndex: 10)
+- No section management or ScrollTrigger needed
+
+✅ PERFORMANCE OPTIMIZED:
+- Lazy loading for WebGL canvas
+- Proper error boundaries
+- Development tools conditionally loaded
+
+This replaces all traditional website architecture with pure state-driven narrative experience.
+*/

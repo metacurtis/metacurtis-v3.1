@@ -1,226 +1,165 @@
-// src/stores/useNarrativeStore.js
+// src/stores/narrativeStore.js
+//
+// ➤  Combines the tiny “stage / fragment” API we added yesterday
+//    with your advanced mood-preset transition logic.
+// ➤  Exposes *both* paradigms so existing UI or future modules can
+//    use whichever they prefer without refactor.
+//
+
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+
 import {
   NARRATIVE_PRESETS,
   getPreset as getNarrativePresetConfig,
   interpolatePresets as interpolateNarrativePresets,
-} from '@/config/narrativeParticleConfig.js'; // Ensure this path is correct
+} from '@/config/narrativeParticleConfig';
 
-// DEBUG LOG ADDED: Log imported NARRATIVE_PRESETS and the function to check them
-console.log(
-  '[NarrativeStore] DIAGNOSTIC - Imported NARRATIVE_PRESETS keys:',
-  Object.keys(NARRATIVE_PRESETS)
-);
-console.log(
-  '[NarrativeStore] DIAGNOSTIC - Result of getNarrativePresetConfig("heroIntro"):',
-  getNarrativePresetConfig('heroIntro')
-);
+// ────────────────────────────────────────────────────────────
+// CONSTANTS
+// ────────────────────────────────────────────────────────────
+const DEFAULT_TRANSITION_DURATION = 2000; // ms
+const FALLBACK_PRESET_KEY = 'heroIntro'; // always exists
 
-const DEFAULT_TRANSITION_DURATION = 2000;
-
-const initialHeroPreset = getNarrativePresetConfig('heroIntro');
-
-// DEBUG LOG ADDED: Log the preset that's about to be used for initial state
-console.log(
-  '[NarrativeStore] Initial heroPreset determined for initialState:',
-  initialHeroPreset
-    ? { name: initialHeroPreset.name, baseSize: initialHeroPreset.baseSize }
-    : 'UNDEFINED'
-);
-if (!initialHeroPreset) {
-  console.error(
-    '[NarrativeStore] CRITICAL FAILURE: initialHeroPreset is UNDEFINED. Check NARRATIVE_PRESETS export and "heroIntro" key in narrativeParticleConfig.js'
+const fallbackPreset = getNarrativePresetConfig(FALLBACK_PRESET_KEY);
+if (!fallbackPreset) {
+  // Hard crash now: if this fails the rest of the app can’t run sensibly.
+  throw new Error(
+    `[NarrativeStore] FATAL: Preset “${FALLBACK_PRESET_KEY}” not found in narrativeParticleConfig.`
   );
 }
 
+// ────────────────────────────────────────────────────────────
+// INITIAL STATE
+// ────────────────────────────────────────────────────────────
 const initialState = {
-  currentMood: 'heroIntro',
-  currentDisplayPreset: initialHeroPreset, // This should now correctly hold the heroIntro object
-
+  /* — legacy mood / preset engine — */
+  currentMood: FALLBACK_PRESET_KEY,
+  currentDisplayPreset: fallbackPreset,
   isTransitioning: false,
   transitionProgress: 0,
-
   moodTransitionInternal: {
-    fromPreset: initialHeroPreset,
-    toPreset: initialHeroPreset,
+    fromPreset: fallbackPreset,
+    toPreset: fallbackPreset,
     startTime: 0,
-    duration: initialHeroPreset?.transitionDuration || DEFAULT_TRANSITION_DURATION,
+    duration: fallbackPreset.transitionDuration || DEFAULT_TRANSITION_DURATION,
   },
+  lastTransitionTime: 0,
 
+  /* — lightweight “stage-only” API for new UI — */
+  currentStage: FALLBACK_PRESET_KEY, // alias of currentMood
+  scrollProgress: 0,
+  memoryFragmentId: null,
+
+  /* — misc — */
   currentSection: '',
   eventHistory: [],
-  lastTransitionTime: 0,
 };
 
+// ────────────────────────────────────────────────────────────
+// STORE
+// ────────────────────────────────────────────────────────────
 export const useNarrativeStore = create(
   subscribeWithSelector((set, get) => ({
     ...initialState,
 
-    setMood: (newMoodName, transitionOptions = {}) => {
+    // ────────   HIGH-LEVEL “STAGE” API   ────────
+    setStage: stageName => get().setMood(stageName),
+    setScrollProgress: p => set({ scrollProgress: Math.max(0, Math.min(1, p)) }),
+    revealFragment: id => set({ memoryFragmentId: id }),
+    clearFragment: () => set({ memoryFragmentId: null }),
+
+    // ────────   ORIGINAL MOOD / PRESET ENGINE   ────────
+    setMood: (newMoodName, transitionOpts = {}) => {
       const state = get();
       const now = performance.now();
 
-      const transitionThrottleMs =
+      // throttle consecutive transitions
+      const throttle =
         state.currentDisplayPreset?.transitionDuration || DEFAULT_TRANSITION_DURATION;
-      if (now - state.lastTransitionTime < transitionThrottleMs && state.isTransitioning) {
-        console.warn(`[NarrativeStore] Mood change to "${newMoodName}" throttled.`);
-        return;
-      }
+      if (state.isTransitioning && now - state.lastTransitionTime < throttle) return;
 
-      if (newMoodName === state.currentMood && !state.isTransitioning) {
-        console.log(`[NarrativeStore] Already in mood "${newMoodName}".`);
-        return;
-      }
+      // same mood? do nothing
+      if (newMoodName === state.currentMood && !state.isTransitioning) return;
 
       const targetPreset = getNarrativePresetConfig(newMoodName);
       if (!targetPreset) {
-        console.error(
-          `[NarrativeStore] Preset for "${newMoodName}" not found. Reverting to heroIntro.`
-        );
-        if (newMoodName !== 'heroIntro') get().setMood('heroIntro');
-        return;
+        console.error(`[NarrativeStore] Unknown mood “${newMoodName}”. Reverting to fallback.`);
+        return get().setMood(FALLBACK_PRESET_KEY);
       }
 
-      console.log(
-        `[NarrativeStore] Initiating transition from "${state.currentMood}" to "${newMoodName}". Target baseSize: ${targetPreset.baseSize}`
-      );
-
-      const effectiveFromPreset = state.isTransitioning
+      const fromPreset = state.isTransitioning
         ? state.moodTransitionInternal.toPreset
         : state.currentDisplayPreset;
 
       set({
         currentMood: newMoodName,
+        currentStage: newMoodName, // keep alias in-sync
         isTransitioning: true,
         transitionProgress: 0,
         lastTransitionTime: now,
         moodTransitionInternal: {
-          fromPreset: effectiveFromPreset,
+          fromPreset,
           toPreset: targetPreset,
           startTime: now,
           duration:
-            transitionOptions.duration ||
-            targetPreset.transitionDuration ||
+            transitionOpts.duration ??
+            targetPreset.transitionDuration ??
             DEFAULT_TRANSITION_DURATION,
         },
-        // ... (eventHistory update)
       });
     },
 
-    updateTransition: currentTime => {
+    updateTransition: currentTimeMs => {
       const state = get();
       if (!state.isTransitioning) {
-        const targetPreset = getNarrativePresetConfig(state.currentMood);
-        // Ensure currentDisplayPreset is the static target if not transitioning
-        if (targetPreset && state.currentDisplayPreset?.name !== targetPreset.name) {
-          // DEBUG LOG ADDED: Clarify when static preset is applied
-          console.log(
-            `[NarrativeStore] updateTransition: Not transitioning. Ensuring currentDisplayPreset is static target: ${targetPreset.name}`
-          );
-          set({ currentDisplayPreset: targetPreset, transitionProgress: 0 }); // Ensure progress is 0 or 1 if not transitioning
+        // make sure displayPreset is correct when idle
+        const staticPreset = getNarrativePresetConfig(state.currentMood);
+        if (staticPreset && staticPreset !== state.currentDisplayPreset) {
+          set({ currentDisplayPreset: staticPreset, transitionProgress: 0 });
         }
         return;
       }
 
-      const elapsed = currentTime - state.moodTransitionInternal.startTime;
-      let progress = Math.min(elapsed / state.moodTransitionInternal.duration, 1.0);
+      const elapsed = currentTimeMs - state.moodTransitionInternal.startTime;
+      const progress = Math.min(elapsed / state.moodTransitionInternal.duration, 1);
 
-      const interpolatedPreset = interpolateNarrativePresets(
+      const interpolated = interpolateNarrativePresets(
         state.moodTransitionInternal.fromPreset,
         state.moodTransitionInternal.toPreset,
         progress
       );
 
-      // DEBUG LOG ADDED: Log interpolated preset details during transition
-      // This log can be very verbose, enable if needed or make it conditional
-      // console.log(`[NarrativeStore] updateTransition: Progress: ${progress.toFixed(3)}, Interpolated baseSize: ${interpolatedPreset.baseSize.toFixed(3)}`);
-
       set({
-        currentDisplayPreset: interpolatedPreset,
+        currentDisplayPreset: interpolated,
         transitionProgress: progress,
       });
 
-      if (progress >= 1.0) {
-        console.log(
-          `[NarrativeStore] Transition to "${state.currentMood}" complete. Final baseSize: ${state.moodTransitionInternal.toPreset.baseSize}`
-        );
+      if (progress >= 1) {
         set({
           isTransitioning: false,
           currentDisplayPreset: state.moodTransitionInternal.toPreset,
-          transitionProgress: 1.0,
+          transitionProgress: 1,
         });
       }
     },
 
-    // ... (setCurrentSection, getAvailableMoods - kept as you provided) ...
-    setCurrentSection: _section =>
-      set(() => ({
-        /* … */
-      })),
-    getAvailableMoods: () => Object.keys(NARRATIVE_PRESETS),
-
-    reset: () => {
-      const resetHeroPreset = getNarrativePresetConfig('heroIntro');
-      console.log(
-        '[NarrativeStore] Resetting store. Initial hero preset for reset:',
-        resetHeroPreset
-          ? { name: resetHeroPreset.name, baseSize: resetHeroPreset.baseSize }
-          : 'UNDEFINED'
-      );
-      if (!resetHeroPreset) {
-        console.error('[NarrativeStore] CRITICAL: heroIntro preset UNDEFINED during reset!');
-      }
-      const trulyInitialState = {
-        currentMood: 'heroIntro',
-        currentDisplayPreset: resetHeroPreset || NARRATIVE_PRESETS.heroIntro, // Fallback just in case
-        isTransitioning: false,
-        transitionProgress: 0,
-        moodTransitionInternal: {
-          fromPreset: resetHeroPreset || NARRATIVE_PRESETS.heroIntro,
-          toPreset: resetHeroPreset || NARRATIVE_PRESETS.heroIntro,
-          startTime: 0,
-          duration:
-            (resetHeroPreset || NARRATIVE_PRESETS.heroIntro)?.transitionDuration ||
-            DEFAULT_TRANSITION_DURATION,
-        },
-        currentSection: '',
-        eventHistory: [],
-        lastTransitionTime: 0,
-      };
-      set(trulyInitialState);
-    },
-
+    /* optional helpers / debug */
+    reset: () => set(initialState),
     getDebugInfo: () => {
-      // ... (your enhanced getDebugInfo - kept as you provided) ...
-      const state = get();
+      const s = get();
       return {
-        currentMoodString: state.currentMood,
-        isTransitioning: state.isTransitioning,
-        transitionProgress: state.transitionProgress,
-        currentDisplayPresetName: state.currentDisplayPreset?.name,
-        currentDisplayPresetBaseSize: state.currentDisplayPreset?.baseSize,
-        fromPresetName: state.moodTransitionInternal?.fromPreset?.name,
-        toPresetName: state.moodTransitionInternal?.toPreset?.name,
-        transitionDuration: state.moodTransitionInternal?.duration,
+        mood: s.currentMood,
+        stage: s.currentStage,
+        transitioning: s.isTransitioning,
+        progress: +s.transitionProgress.toFixed(3),
+        preset: s.currentDisplayPreset?.name,
       };
     },
   }))
 );
 
-// DEBUG LOG ADDED: Log the store state immediately after its definition.
-const finalInitialState = useNarrativeStore.getState();
-console.log(
-  '[NarrativeStore] STORE MODULE EXECUTED. Initial currentDisplayPreset from getState():',
-  finalInitialState.currentDisplayPreset
-    ? {
-        name: finalInitialState.currentDisplayPreset.name,
-        baseSize: finalInitialState.currentDisplayPreset.baseSize,
-      }
-    : 'UNDEFINED'
-);
-if (!finalInitialState.currentDisplayPreset) {
-  console.error(
-    '[NarrativeStore] CRITICAL FINAL CHECK: currentDisplayPreset is UNDEFINED after store module execution!'
-  );
+// quick console confirmation in dev
+if (import.meta.env.DEV) {
+  console.log('[NarrativeStore] initialised →', useNarrativeStore.getState().getDebugInfo());
 }
