@@ -1,0 +1,14 @@
+Manual fix needed for App.jsx lines 53, 66, 79, 92:
+
+Find blocks like:
+  case 'value':
+    const variable = something;
+    break;
+
+Replace with:
+  case 'value': {
+    const variable = something;
+    break;
+  }
+
+Same for AdaptiveQualitySystem.jsx line 86.

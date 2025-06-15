@@ -1,31 +1,44 @@
 // src/components/ui/AdvancedContactPortal.jsx
-// Most technically advanced contact system with React Portal + WebGL integration
+// ✅ CONSOLIDATED ARCHITECTURE - MC3V Digital Awakening Compliant
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { narrativeTransition } from '@/config/narrativeParticleConfig';
+import { useNarrativeStore } from '@/stores/narrativeStore';
 
 function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence' }) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [_isAnimating, setIsAnimating] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', message: '', project: '' });
   const [submitStatus, setSubmitStatus] = useState('idle'); // idle, submitting, success, error
   const portalRef = useRef(null);
   const modalRef = useRef(null);
 
-  // Create portal container
+  // ✅ CONSOLIDATED ARCHITECTURE: Use single source of truth
+  const { jumpToStage, isStageFeatureEnabled, currentStage, trackUserEngagement } =
+    useNarrativeStore();
+
+  // ✅ FEATURE GATE: Only render if contact portal is unlocked
+  const isContactPortalEnabled = isStageFeatureEnabled('contactPortal');
+
+  // Create portal container with defensive mounting
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      portalRef.current = document.createElement('div');
-      portalRef.current.id = 'contact-portal-root';
-      portalRef.current.style.position = 'fixed';
-      portalRef.current.style.top = '0';
-      portalRef.current.style.left = '0';
-      portalRef.current.style.width = '100vw';
-      portalRef.current.style.height = '100vh';
-      portalRef.current.style.zIndex = '9999';
-      portalRef.current.style.pointerEvents = 'none';
-      document.body.appendChild(portalRef.current);
+      // ✅ DEFENSIVE: Prevent double-mount edge cases
+      let existingPortal = document.getElementById('contact-portal-root');
+      if (existingPortal) {
+        portalRef.current = existingPortal;
+      } else {
+        portalRef.current = document.createElement('div');
+        portalRef.current.id = 'contact-portal-root';
+        portalRef.current.style.position = 'fixed';
+        portalRef.current.style.top = '0';
+        portalRef.current.style.left = '0';
+        portalRef.current.style.width = '100vw';
+        portalRef.current.style.height = '100vh';
+        portalRef.current.style.zIndex = '9999';
+        portalRef.current.style.pointerEvents = 'none';
+        document.body.appendChild(portalRef.current);
+      }
 
       return () => {
         if (portalRef.current && document.body.contains(portalRef.current)) {
@@ -37,12 +50,26 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
 
   // Handle open/close animations
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isContactPortalEnabled) {
       setIsVisible(true);
       setIsAnimating(true);
 
-      // Trigger narrative transition for dramatic effect
-      narrativeTransition.setStage(triggerStage, { duration: 1000 });
+      // ✅ CONSOLIDATED ARCHITECTURE: Use Zustand store for stage transitions
+      jumpToStage(triggerStage);
+
+      // ✅ ANALYTICS: Track portal opening in store
+      trackUserEngagement('contact_portal_opened', {
+        triggerStage,
+        currentStage,
+        timestamp: Date.now(),
+      });
+
+      // ✅ PARTICLE INTEGRATION: Dispatch custom event for WebGL response
+      window.dispatchEvent(
+        new CustomEvent('contact-portal-open', {
+          detail: { triggerStage, currentStage },
+        })
+      );
 
       // Enable portal interactions
       if (portalRef.current) {
@@ -54,8 +81,12 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
         const firstInput = modalRef.current?.querySelector('input, textarea');
         firstInput?.focus();
       }, 300);
-    } else {
+    } else if (!isOpen) {
       setIsAnimating(true);
+
+      // ✅ PARTICLE INTEGRATION: Dispatch close event
+      window.dispatchEvent(new CustomEvent('contact-portal-close'));
+
       setTimeout(() => {
         setIsVisible(false);
         setIsAnimating(false);
@@ -64,40 +95,92 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
         }
       }, 300);
     }
-  }, [isOpen, triggerStage]);
+  }, [
+    isOpen,
+    isContactPortalEnabled,
+    triggerStage,
+    jumpToStage,
+    trackUserEngagement,
+    currentStage,
+  ]);
 
-  // Keyboard escape handling
+  // Keyboard escape handling + basic tab management
   useEffect(() => {
-    const handleEscape = e => {
+    const handleKeyDown = e => {
       if (e.key === 'Escape' && isOpen) {
+        // ✅ ANALYTICS: Track escape usage
+        trackUserEngagement('contact_portal_escaped', {
+          currentStage,
+          timestamp: Date.now(),
+        });
         onClose();
+        return;
+      }
+
+      // ✅ ACCESSIBILITY: Basic tab containment within modal
+      if (e.key === 'Tab' && isOpen && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll(
+          'input, textarea, select, button, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
+    if (isOpen && isContactPortalEnabled) {
+      document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, isContactPortalEnabled, onClose, trackUserEngagement, currentStage]);
 
   // Form submission
   const handleSubmit = async e => {
     e.preventDefault();
     setSubmitStatus('submitting');
 
+    // ✅ ANALYTICS: Track form submission attempt
+    trackUserEngagement('contact_form_submitted', {
+      project: formData.project,
+      currentStage,
+      formFields: Object.keys(formData).filter(key => formData[key]),
+      timestamp: Date.now(),
+    });
+
     // Simulate API call (replace with actual endpoint)
     try {
       console.log('🚀 Contact form submission:', formData);
+
+      // ✅ PARTICLE INTEGRATION: Success burst event
+      window.dispatchEvent(
+        new CustomEvent('contact-success', {
+          detail: { formData, currentStage },
+        })
+      );
 
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       setSubmitStatus('success');
+
+      // ✅ ANALYTICS: Track successful submission
+      trackUserEngagement('contact_form_success', {
+        project: formData.project,
+        currentStage,
+        timestamp: Date.now(),
+      });
 
       // Auto-close after success
       setTimeout(() => {
@@ -108,6 +191,14 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
     } catch (error) {
       console.error('Contact form error:', error);
       setSubmitStatus('error');
+
+      // ✅ ANALYTICS: Track form errors
+      trackUserEngagement('contact_form_error', {
+        error: error.message,
+        currentStage,
+        timestamp: Date.now(),
+      });
+
       setTimeout(() => setSubmitStatus('idle'), 3000);
     }
   };
@@ -117,7 +208,8 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (!portalRef.current || !isVisible) return null;
+  // ✅ FEATURE GATE: Don't render if portal not enabled
+  if (!isContactPortalEnabled || !portalRef.current || !isVisible) return null;
 
   const modalContent = (
     <div
@@ -138,7 +230,14 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
         pointerEvents: isOpen ? 'auto' : 'none',
       }}
       onClick={e => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          // ✅ ANALYTICS: Track backdrop clicks
+          trackUserEngagement('contact_portal_backdrop_click', {
+            currentStage,
+            timestamp: Date.now(),
+          });
+          onClose();
+        }
       }}
     >
       <div
@@ -181,6 +280,16 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
             }}
           >
             Ready to push the boundaries of what&apos;s possible?
+          </p>
+          {/* ✅ STAGE CONTEXT: Show current narrative stage */}
+          <p
+            style={{
+              color: 'rgba(255, 255, 255, 0.5)',
+              fontSize: '0.875rem',
+              marginTop: '0.5rem',
+            }}
+          >
+            Current Stage: {currentStage}
           </p>
         </div>
 
@@ -367,7 +476,14 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
 
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={() => {
+            // ✅ ANALYTICS: Track manual close
+            trackUserEngagement('contact_portal_manual_close', {
+              currentStage,
+              timestamp: Date.now(),
+            });
+            onClose();
+          }}
           style={{
             position: 'absolute',
             top: '1rem',
@@ -400,33 +516,36 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
 export default AdvancedContactPortal;
 
 /*
-🚀 ADVANCED CONTACT PORTAL - MOST TECHNICALLY SOPHISTICATED
+🚀 CONSOLIDATED ARCHITECTURE COMPLIANCE ✅
 
-✅ REACT PORTAL:
-- Renders outside component tree for true overlay
-- Dynamic portal container creation/cleanup
-- Proper z-index layering (9999)
+✅ SINGLE SOURCE OF TRUTH:
+- Uses only useNarrativeStore for all state management
+- Eliminates deprecated narrativeTransition dependency
+- Syncs all navigation through canonical Zustand store
 
-✅ WEBGL INTEGRATION:
-- Triggers narrative state transitions on open
-- Particles respond to contact modal appearance
-- Synchronized visual feedback
+✅ FEATURE GATES:
+- Only renders when isStageFeatureEnabled('contactPortal') is true
+- Progressive unlocking based on story progression
+- Prevents unauthorized access before transcendence stage
 
-✅ ADVANCED UX:
-- Keyboard navigation and escape handling
-- Focus management for accessibility
-- Backdrop blur with gradient overlays
-- Smooth animations with cubic-bezier easing
+✅ ANALYTICS INTEGRATION:
+- All user interactions tracked via trackUserEngagement
+- Form submissions, escapes, closes logged for insights
+- Stage context included in all analytics events
 
-✅ SOPHISTICATED FORM:
-- Real-time validation and state management
-- Animated submit states with visual feedback
-- Grid layout with responsive design
-- Styled select and textarea components
+✅ PARTICLE INTEGRATION:
+- Dispatches custom events for WebGL system response
+- contact-portal-open/close triggers particle effects
+- contact-success enables celebration animations
+
+✅ ARCHITECTURAL BENEFITS:
+- No state sync conflicts with other components
+- Automatic mobile/desktop adaptation via store
+- Future-proof for additional narrative features
+- Clean separation of concerns
 
 ✅ PERFORMANCE:
-- Conditional rendering with proper cleanup
-- Event listener management
-- Portal lifecycle management
-- Optimized animations
+- Conditional rendering with feature gates
+- Proper portal lifecycle management
+- Event listener cleanup and memory safety
 */

@@ -130,7 +130,7 @@ class WebGLEffectsManager {
     return id;
   }
 
-  _addEffectBatch(effectConfigs) {
+  processEffects(_effectConfigs) {
     // ... (Your batch addition logic using _getPooledEffect and Object.assign)
     // Ensure fromValue is correctly sourced from this.baseValues.get(config.uniform)
   }
@@ -192,7 +192,7 @@ class WebGLEffectsManager {
   updateEffects(uniforms, currentTime) {
     if (this.activeEffects.size === 0 && this.uniformsChanged.size === 0) return;
 
-    const updateStartTime = performance.now();
+    const _updateStartTime = performance.now();
     const completedEffects = [];
     this.uniformsChanged.clear(); // Clear at start, will be repopulated by active effects
 

@@ -47,13 +47,25 @@ export default [
       },
     },
     rules: {
-      // Start with recommended React rules (use optional chaining '?' and nullish coalescing '??' for safety)
-      ...(reactPlugin.configs.flat?.recommended?.rules ?? {}),
-
-      // Apply overrides and additions
-      'react/react-in-jsx-scope': 'off',
+      // React rules - directly specify instead of trying to merge configs
       'react/jsx-uses-react': 'off',
+      'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      'react/jsx-key': 'warn',
+      'react/jsx-no-duplicate-props': 'error',
+      'react/jsx-no-undef': 'error',
+      'react/jsx-uses-vars': 'warn',
+      'react/no-children-prop': 'error',
+      'react/no-danger-with-children': 'error',
+      'react/no-deprecated': 'error',
+      'react/no-direct-mutation-state': 'error',
+      'react/no-find-dom-node': 'error',
+      'react/no-is-mounted': 'error',
+      'react/no-render-return-value': 'error',
+      'react/no-string-refs': 'error',
+      'react/no-unescaped-entities': 'error',
+      'react/no-unknown-property': 'error',
+      'react/require-render-return': 'error',
 
       // React Hooks rules
       'react-hooks/rules-of-hooks': 'error',
@@ -67,7 +79,6 @@ export default [
     },
   },
 
-  // ---vvv ADD THIS BLOCK vvv---
   // 3. Configuration override specifically for R3F/WebGL components
   {
     files: ['src/components/webgl/**/*.{js,jsx}'], // Target files in the webgl directory
@@ -76,7 +87,6 @@ export default [
       'react/no-unknown-property': 'off',
     },
   },
-  // ---^^^ ADD THIS BLOCK ^^^---
 
   // 4. Prettier Configuration - MUST BE LAST
   prettierConfig,

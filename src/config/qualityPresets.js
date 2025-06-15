@@ -1,4 +1,5 @@
 // src/config/qualityPresets.js
+// ✅ CONTENT INTEGRITY: Fixed default export for proper import compatibility
 
 /**
  * qualityPresets

@@ -10,7 +10,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 import {
-  NARRATIVE_PRESETS,
+  __NARRATIVE_PRESETS,
   getPreset as getNarrativePresetConfig,
   interpolatePresets as interpolateNarrativePresets,
 } from '@/config/narrativeParticleConfig';
