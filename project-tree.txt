@@ -1,0 +1,131 @@
+.
+├── MANUAL_FIXES_NEEDED.md
+├── README.md
+├── case_fix_template.txt
+├── eslint.config.js
+├── fix-eslint-errors.sh
+├── fix-eslint-final.sh
+├── index.html
+├── jsconfig.json
+├── lighthouserc.json
+├── package-lock.json
+├── package.json
+├── project-tree.txt
+├── public
+│   └── robots.txt
+├── quick_case_fix.sh
+├── src
+│   ├── App.jsx
+│   ├── __tests__
+│   │   └── smoke.test.js
+│   ├── components
+│   │   ├── ConsolidatedNavigationController.jsx
+│   │   ├── common
+│   │   │   └── ErrorBoundary.jsx
+│   │   ├── consciousness
+│   │   │   ├── ConsciousnessEngine.js
+│   │   │   ├── ConsciousnessTheater.jsx
+│   │   │   ├── ConsciousnessTheaterOpening.jsx
+│   │   │   ├── NarrativeOverlay.jsx
+│   │   │   └── StageProgression.jsx
+│   │   ├── debug
+│   │   │   └── EventQueueTest.jsx
+│   │   ├── dev
+│   │   │   └── DevPerformanceMonitor.jsx
+│   │   ├── graphics
+│   │   │   └── SimpleAnimatedCube.jsx
+│   │   ├── layout
+│   │   │   └── Navbar.jsx
+│   │   ├── quality
+│   │   │   └── AdaptiveQualitySystem.jsx
+│   │   ├── sections
+│   │   │   ├── ConsciousnessTheaterOpening.jsx
+│   │   │   ├── GenesisCodeExperience.jsx
+│   │   │   └── NarrativeSection.disable
+│   │   ├── ui
+│   │   │   ├── AdvancedContactPortal.jsx
+│   │   │   ├── CanvasErrorBoundary.jsx
+│   │   │   ├── DevPerformanceMonitor.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Layout.jsx
+│   │   │   ├── NarrativeUIControls.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── QualitySelector.jsx
+│   │   │   ├── ResourceMonitor.jsx
+│   │   │   ├── Typewriter.jsx
+│   │   │   ├── narrative
+│   │   │   └── navigation
+│   │   └── webgl
+│   │       ├── AQSTicker.jsx
+│   │       ├── AdaptiveRenderer.jsx
+│   │       ├── BackgroundPoints.jsx
+│   │       ├── CanvasSizeUpdater.jsx
+│   │       ├── FPSCalculator.jsx
+│   │       ├── MinimalTestCanvas.jsx
+│   │       ├── ParticleEngine.disable
+│   │       ├── ParticleField.disable
+│   │       ├── QualityController.jsx
+│   │       ├── WebGLBackground.jsx
+│   │       ├── WebGLCanvas.jsx
+│   │       ├── consciousness
+│   │       ├── narrative
+│   │       └── shaders
+│   ├── config
+│   │   ├── consciousness
+│   │   │   ├── consciousnessStages.js
+│   │   │   ├── consciousnessTheaterConfig.js
+│   │   │   ├── memoryFragments.js
+│   │   │   ├── microInteractions.js
+│   │   │   └── narrativeBeats.js
+│   │   ├── narrativeParticleConfig.js
+│   │   ├── narrativeStageOrder.js
+│   │   └── qualityPresets.js
+│   ├── console-shim.js
+│   ├── hooks
+│   │   ├── useAdaptiveQuality.js
+│   │   ├── useIdle.js
+│   │   └── useResourceTracker.js
+│   ├── main.jsx
+│   ├── sections
+│   │   ├── About.jsx
+│   │   ├── Contact.jsx
+│   │   └── Features.jsx
+│   ├── stores
+│   │   ├── consciousness
+│   │   │   └── consciousnessStore.js
+│   │   ├── narrativeStore.js
+│   │   ├── narrativeStore.js.backup
+│   │   ├── particleConfigStore.js
+│   │   ├── performanceStore.js
+│   │   ├── performanceStore.js.backup
+│   │   ├── qualityStore.js
+│   │   ├── resourceStore.js
+│   │   ├── useInteractionStore.js
+│   │   └── useNarrativeStore.js
+│   ├── styles
+│   │   └── index.css
+│   └── utils
+│       ├── consciousness
+│       ├── fitCameraToGeometry.js
+│       ├── narrative
+│       │   ├── PerformanceBridge.js
+│       │   └── stageMappingUtils.js
+│       ├── performance
+│       │   ├── AdaptiveQualitySystem.js
+│       │   ├── DeviceCapabilities.js
+│       │   ├── PerformanceMetrics.js
+│       │   └── ResourceMetrics.js
+│       ├── shaderUtils.js
+│       └── webgl
+│           ├── FrustumAwareParticleGenerator.js
+│           ├── NarrativeShaderSystem.js
+│           ├── ResourceRegistry.js
+│           ├── ResourceTracker.js
+│           ├── ShaderDebugSystem.js
+│           └── StagePerformanceModes.js
+├── tailwind.config.js
+├── update-vscode-settings.sh
+├── vite.config.js
+└── yarn.lock
+
+31 directories, 97 files

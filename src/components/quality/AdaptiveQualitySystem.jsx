@@ -1,5 +1,5 @@
 // src/components/quality/AdaptiveQualitySystem.jsx
-// ✅ ENHANCED: Device-Aware AQS with Intelligent Initial Quality Selection
+// ✅ STABILITY ENHANCED: Frame-synchronized sampling + device-aware initialization
 
 import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -19,16 +19,23 @@ export default function AdaptiveQualitySystem_ReactComponent() {
   const tickPerformanceFrame = usePerformanceStore.getState().tickFrame;
 
   const aqsEngineRef = useRef(null);
+  const initializationRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization
+    if (initializationRef.current) {
+      console.log('[AQS] Initialization already completed, skipping...');
+      return;
+    }
+
     console.log('[AQS] Enhanced initialization with device-aware quality selection...');
 
     try {
-      // ✅ MERGED API: Use your existing DeviceCapabilities.getInfo() method
+      // ✅ ENHANCED: Use cached device capabilities
       const deviceInfo = DeviceCapabilities.getInfo();
       const recommendedTier = deviceInfo.recommendedQualityTier || 'HIGH';
 
-      // ✅ SYNERGY: Device-aware AQS configuration
+      // ✅ ENHANCED: Device-aware AQS configuration with stability focus
       const deviceConfig = {
         // Base thresholds
         ultraFps: 55,
@@ -36,7 +43,8 @@ export default function AdaptiveQualitySystem_ReactComponent() {
         mediumFps: 25,
         checkInterval: 1500,
         windowSize: 90,
-        hysteresisChecks: 3,
+        hysteresisChecks: 4,        // ✅ ENHANCED: Increased stability
+        quietPeriodMs: 300,         // ✅ NEW: Quiet period between changes
 
         // ✅ ENHANCED: Device-specific starting tier
         initialLevel: QualityLevels[recommendedTier] || QualityLevels.HIGH,
@@ -45,38 +53,54 @@ export default function AdaptiveQualitySystem_ReactComponent() {
       // ✅ DEVICE-AWARE: Adjust thresholds based on device capabilities
       if (deviceInfo.deviceType === 'mobile' || deviceInfo.deviceType === 'tablet') {
         // Mobile devices - more conservative thresholds
-        deviceConfig.ultraFps = 50; // Slightly lower ultra threshold
-        deviceConfig.highFps = 40; // More conservative high threshold
-        deviceConfig.hysteresisChecks = 4; // More stability checks
-        console.log('[AQS] Mobile/tablet device detected - using conservative thresholds');
+        deviceConfig.ultraFps = 50;          // Slightly lower ultra threshold
+        deviceConfig.highFps = 40;           // More conservative high threshold
+        deviceConfig.hysteresisChecks = 5;   // Even more stability checks
+        deviceConfig.quietPeriodMs = 500;    // Longer quiet period
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AQS] Mobile/tablet device detected - using conservative thresholds');
+        }
       }
 
       if (deviceInfo.webglVersion === 'WebGL1') {
         // WebGL1 - more conservative approach
         deviceConfig.ultraFps = 50;
-        deviceConfig.checkInterval = 2000; // Less frequent checks
-        console.log('[AQS] WebGL1 detected - using conservative settings');
+        deviceConfig.checkInterval = 2000;   // Less frequent checks
+        deviceConfig.hysteresisChecks = 5;   // More stability
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AQS] WebGL1 detected - using conservative settings');
+        }
       }
 
       // ✅ ENHANCED: Log device-aware initialization
-      console.log('[AQS] Device-aware configuration:', {
-        device: deviceInfo.renderer?.substring(0, 50),
-        mobile: deviceInfo.deviceType === 'mobile' || deviceInfo.deviceType === 'tablet',
-        webgl: deviceInfo.webglVersion,
-        recommendedTier,
-        thresholds: `${deviceConfig.ultraFps}/${deviceConfig.highFps}/${deviceConfig.mediumFps}`,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AQS] Device-aware configuration:', {
+          device: deviceInfo.renderer?.substring(0, 50),
+          mobile: deviceInfo.deviceType === 'mobile' || deviceInfo.deviceType === 'tablet',
+          webgl: deviceInfo.webglVersion,
+          recommendedTier,
+          thresholds: `${deviceConfig.ultraFps}/${deviceConfig.highFps}/${deviceConfig.mediumFps}`,
+          stability: `${deviceConfig.hysteresisChecks} checks, ${deviceConfig.quietPeriodMs}ms quiet`,
+        });
+      }
 
+      // ✅ ENHANCED: Create engine with stability configuration
       aqsEngineRef.current = new AQSEngine(deviceConfig);
 
       const unsubscribeFromAQSEngine = aqsEngineRef.current.subscribe(level => {
         const isMobileDevice =
           deviceInfo.deviceType === 'mobile' || deviceInfo.deviceType === 'tablet';
-        console.log(
-          '[AQS] Quality tier change:',
-          level,
-          `(Device: ${isMobileDevice ? 'Mobile/Tablet' : 'Desktop'})`
-        );
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '[AQS] Quality tier change:',
+            level,
+            `(Device: ${isMobileDevice ? 'Mobile/Tablet' : 'Desktop'})`
+          );
+        }
+        
         setCurrentQualityTierInStore(level);
 
         // ✅ ENHANCED: Device-aware quality settings
@@ -117,21 +141,29 @@ export default function AdaptiveQualitySystem_ReactComponent() {
       });
 
       // ✅ ENHANCED: Log successful initialization with device context
-      console.log('[AQS] Device-aware initialization complete:', {
-        engine: 'AQSEngine',
-        initialTier: recommendedTier,
-        deviceType: deviceInfo.deviceType,
-        webglVersion: deviceInfo.webglVersion,
-        renderer: deviceInfo.renderer?.substring(0, 50),
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AQS] Device-aware initialization complete:', {
+          engine: 'AQSEngine (Enhanced)',
+          initialTier: recommendedTier,
+          deviceType: deviceInfo.deviceType,
+          webglVersion: deviceInfo.webglVersion,
+          renderer: deviceInfo.renderer?.substring(0, 50),
+          stability: 'Enhanced hysteresis + quiet period',
+        });
+      }
+
+      initializationRef.current = true;
 
       return () => {
-        console.log('[AQS] Cleaning up device-aware AQS engine...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AQS] Cleaning up enhanced AQS engine...');
+        }
         unsubscribeFromAQSEngine();
+        initializationRef.current = false;
       };
     } catch (error) {
       console.error(
-        '[AQS] CRITICAL ERROR during device-aware initialization:',
+        '[AQS] CRITICAL ERROR during enhanced initialization:',
         error.message,
         error.stack
       );
@@ -143,68 +175,67 @@ export default function AdaptiveQualitySystem_ReactComponent() {
     setParticleCountInStore,
   ]);
 
+  // ✅ ENHANCED: Frame-synchronized sampling
   useFrame((state, delta) => {
-    // delta is time since last frame in seconds
+    // Use the new frame-based sampling method
     if (aqsEngineRef.current) {
-      aqsEngineRef.current.tick(); // AQS uses performance.now() internally
+      aqsEngineRef.current.tickFrame(delta); // ✅ NEW: Pass actual frame delta
     }
+    
+    // Update performance store
     if (tickPerformanceFrame) {
-      tickPerformanceFrame(delta); // Call the action from performanceStore
+      tickPerformanceFrame(delta);
     }
   });
+
+  // ✅ NEW: Global development access
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      window.aqsEngine = aqsEngineRef.current;
+      window.aqsDebug = {
+        getInfo: () => aqsEngineRef.current?.getDebugInfo(),
+        setTier: (tier) => aqsEngineRef.current?.setTier(tier),
+        getAvailableTiers: () => Object.values(QualityLevels),
+      };
+    }
+  }, []);
 
   return null; // This component does not render any UI itself
 }
 
 /*
-🔧 ENHANCED AQS - MERGED DEVICE CAPABILITIES INTEGRATION ✅
+🔧 ENHANCED AQS COMPONENT - STABILITY + FRAME SYNCHRONIZATION ✅
 
-✅ FIXED: Case declaration error by adding braces around all case blocks with const declarations
-
-✅ MERGED API INTEGRATION:
-- Uses DeviceCapabilities.getInfo() (your existing API)
-- Accesses recommendedQualityTier from enhanced device detection
-- Supports deviceType field: 'mobile', 'tablet', 'desktop'
-- Integrates with proper WebGL context cleanup (no more conflicts)
-
-✅ DEVICE-AWARE INITIALIZATION:
-- Uses device capabilities for intelligent quality tier startup
-- Applies device-specific quality tier recommendations
-- Adjusts AQS thresholds based on mobile/tablet vs desktop
-- Configures conservative settings for WebGL1 devices
-
-✅ MOBILE/TABLET OPTIMIZED QUALITY SETTINGS:
-- Lower DPR targets for mobile/tablet devices (battery/thermal management)
-- Reduced particle counts for mobile/tablet performance
-- More conservative FPS thresholds for mobile/tablet stability
-- Increased hysteresis checks for mobile/tablet stability
-
-✅ ENHANCED SYNERGY WITH MERGED CAPABILITIES:
-- Device capabilities directly inform initial quality selection
-- Quality settings adjust based on actual device capabilities
-- WebGL version awareness (WebGL1 vs WebGL2 optimizations)
-- Mobile/tablet vs desktop automatic optimization
-- Proper WebGL context cleanup prevents initialization conflicts
-
-✅ IMPROVED LOGGING & DEBUGGING:
-- Device-aware logging shows context for quality decisions
-- Renderer information truncated for readability
-- Quality tier changes include device type context
-- Initialization status includes device profile summary
+✅ STABILITY ENHANCEMENTS:
+- Frame-synchronized sampling via tickFrame(delta) instead of independent timer
+- Enhanced hysteresis with increased checks and quiet periods
+- Device-aware stability configurations (mobile = more conservative)
+- Initialization guard to prevent double-mounting issues
 
 ✅ PERFORMANCE OPTIMIZATIONS:
-- Device-specific particle count ranges
-- Mobile/tablet-aware DPR capping (prevents excessive resolution)
-- Conservative thresholds for resource-constrained devices
-- Intelligent frameloop mode selection based on device type
+- Cached device info reduces WebGL context creation
+- Frame-based sampling eliminates timer conflicts
+- Reduced logging noise with development-only output
+- Mobile/tablet specific optimizations
 
-✅ STANDARDS COMPLIANCE:
-- Uses cached device info (no additional WebGL context creation)
-- Proper error handling with detailed logging
-- Resource cleanup maintained from original implementation
-- Backward compatibility with existing quality store interface
-- Integrates with properly cleaned WebGL contexts
+✅ DEVELOPMENT FEATURES:
+- Enhanced debug information and global access
+- Real-time AQS engine inspection via window.aqsDebug
+- Comprehensive logging with device context
+- Manual tier control for testing
 
-This enhanced AQS now works seamlessly with the merged DeviceCapabilities
-while intelligently adapting to device capabilities and maintaining performance! 🌟
+✅ INTEGRATION IMPROVEMENTS:
+- Seamless coordination with R3F useFrame
+- Performance store integration maintained
+- Quality store updates with device awareness
+- Error handling and cleanup protocols
+
+✅ MOBILE/TABLET ENHANCEMENTS:
+- Conservative quality thresholds for mobile devices
+- Longer quiet periods for stability
+- Capped DPR to prevent thermal issues
+- Optimized particle counts per device type
+
+This enhanced AQS component eliminates timer conflicts and provides
+stable, device-aware quality management with comprehensive debugging! 🌟
 */

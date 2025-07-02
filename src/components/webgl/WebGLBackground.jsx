@@ -382,7 +382,7 @@ export default function WebGLBackground() {
         const isHighComplexity = digitalAwakeningConfig.stageIndex >= 2; // Awakening, Acceleration, Transcendence
         if (
           isHighComplexity &&
-          Math.floor(newTime) % 3 === 0 &&
+          Math.floor(newTime) % 3 === 0 &&  
           Math.floor(newTime * 10) % 10 === 0
         ) {
           const cognitiveLoad = digitalAwakeningConfig.stageIndex * 25; // 0%, 25%, 50%, 75%, 100%
