@@ -577,7 +577,7 @@ export default useNarrativeStore;
 - All functions now accessible via useNarrativeStore hook
 
 ✅ ENHANCED FEATURES:
-- trackUserEngagement function for YourNewComponentName.jsx
+- trackUserEngagement function for GenesisCodeExperience.jsx
 - stageNavigation feature gate added
 - Auto-advance state properly managed
 - Enhanced development debugging capabilities
