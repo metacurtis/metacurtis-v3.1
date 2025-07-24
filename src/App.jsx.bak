@@ -1,0 +1,192 @@
+// src/App.jsx
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { useCentralClockBootstrap } from '@/hooks/useCentralClock';                  
+import { useNarrativeStore } from '@/stores/narrativeStore';
+import { usePerformanceStore } from '@/stores/performanceStore';
+import CanvasErrorBoundary from '@/components/ui/CanvasErrorBoundary';
+import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
+
+const WebGLCanvas = lazy(() => import('@/components/webgl/WebGLCanvas'));
+
+export default function App() {
+  useCentralClockBootstrap();
+
+  const isDevelopment = import.meta.env.DEV;
+  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
+
+  const {
+    currentStage,
+    stageProgress,
+    isTransitioning,
+    nextStage,
+    prevStage,
+    jumpToStage,
+    toggleAutoAdvance,
+    isStageFeatureEnabled,
+    getNavigationState,
+  } = useNarrativeStore();
+
+  console.log('🚀 MetaCurtis Digital Awakening initialized');
+  console.log(`🔧 DEV MODE: ${isDevelopment}`);
+  console.log(`🎯 STAGE: ${currentStage} (${Math.round(stageProgress * 100)}%)`);
+
+  useEffect(() => {
+    const perfLog = usePerformanceStore.getState().addEventLog;
+    const handleKey = e => {
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      const log = (name, payload) => perfLog?.(name, payload);
+
+      switch (e.key) {
+        case 'ArrowRight': case ' ': case 'Enter':
+          e.preventDefault(); nextStage();
+          log('keyboard_navigation',{action:'next',stage:currentStage});
+          isDevelopment && console.log('→ Next stage');
+          break;
+        case 'ArrowLeft':
+          e.preventDefault(); prevStage();
+          log('keyboard_navigation',{action:'prev',stage:currentStage});
+          isDevelopment && console.log('← Prev stage');
+          break;
+        case 'Home':
+          e.preventDefault(); jumpToStage('genesis');
+          log('keyboard_navigation',{action:'jump_genesis'});
+          isDevelopment && console.log('⤒ Jump genesis');
+          break;
+        case 'End':
+          e.preventDefault(); jumpToStage('transcendence');
+          log('keyboard_navigation',{action:'jump_transcendence'});
+          isDevelopment && console.log('⤓ Jump transcendence');
+          break;
+        case 'p': case 'P':
+          if (e.ctrlKey && e.shiftKey) {
+            e.preventDefault(); setShowPerformanceMonitor(v=>!v);
+            log('debug_toggle',{monitor:!showPerformanceMonitor});
+            isDevelopment && console.log('🔧 Toggle perf monitor');
+          } else if (e.ctrlKey||e.metaKey) {
+            e.preventDefault(); toggleAutoAdvance();
+            log('keyboard_navigation',{action:'toggle_auto'});
+            isDevelopment && console.log('🔁 Toggle auto-advance');
+          }
+          break;
+        case '0': case '1': case '2': case '3': case '4': case '5': case '6':
+          if ((e.ctrlKey||e.metaKey) && isDevelopment) {
+            e.preventDefault();
+            const names = ['genesis','discipline','neural','velocity','architecture','harmony','transcendence'];
+            const target = names[+e.key];
+            if (target) {
+              jumpToStage(target);
+              log('keyboard_navigation',{action:'debug_jump',stage:target,index:+e.key});
+              console.log(`🎮 Jump to ${target} (SST v2.0)`);
+            }
+          }
+          break;
+        case 'N':
+          if (e.ctrlKey && e.shiftKey && isDevelopment) {
+            e.preventDefault();
+            const nav = getNavigationState();
+            console.group('🔍 Navigation State (SST v2.0)');
+            console.log('Stage:', nav.currentStage);
+            console.log('Progress:', nav.stageProgress);
+            console.log('Transitioning:', nav.isTransitioning);
+            console.log('Total Stages:', nav.totalStages);
+            console.groupEnd();
+            log('debug_nav_state',nav);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    isDevelopment && console.log('🔑 Keyboard navigation active (SST v2.0 7-stage system)');
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [
+    nextStage, prevStage, jumpToStage,
+    toggleAutoAdvance, getNavigationState,
+    currentStage, showPerformanceMonitor,
+    isDevelopment
+  ]);
+
+  const bgClass = (() => {
+    const base = 'fixed inset-0 transition-colors duration-1000 pointer-events-none';
+    switch (currentStage) {
+      case 'genesis':       return `${base} bg-gradient-to-br from-slate-900 via-green-900/10 to-slate-900`;
+      case 'discipline':    return `${base} bg-gradient-to-br from-slate-900 via-blue-900/10 to-slate-900`;
+      case 'neural':        return `${base} bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900`;
+      case 'velocity':      return `${base} bg-gradient-to-br from-slate-900 via-cyan-900/10 to-slate-900`;
+      case 'architecture':  return `${base} bg-gradient-to-br from-slate-900 via-indigo-900/10 to-slate-900`;
+      case 'harmony':       return `${base} bg-gradient-to-br from-slate-900 via-amber-900/10 to-slate-900`;
+      case 'transcendence': return `${base} bg-gradient-to-br from-slate-900 via-yellow-900/10 to-slate-900`;
+      default:              return `${base} bg-slate-900`;
+    }
+  })();
+
+  return (
+    <div className="metacurtis-app">
+      <div className={bgClass} />
+
+      <div
+        className="webgl-layer"
+        style={{ position:'fixed',top:0,left:0,width:'100vw',height:'100vh',zIndex:1,pointerEvents:'none' }}
+      >
+        <CanvasErrorBoundary>
+          <Suspense fallback={
+            <div style={{
+              position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+              color:'#0f0',fontSize:18,fontFamily:'Courier New',textShadow:'0 0 10px #0f0',textAlign:'center'
+            }}>
+              INITIALIZING DIGITAL AWAKENING…
+              <div style={{ fontSize:14,marginTop:10,opacity:0.8 }}>
+                Loading atmospheric particle system (SST v2.0)
+              </div>
+            </div>
+          }>
+            <WebGLCanvas />
+          </Suspense>
+        </CanvasErrorBoundary>
+      </div>
+
+      <div
+        className="interface-layer"
+        style={{ position:'relative',zIndex:10,width:'100vw',height:'100vh',overflow:'hidden' }}
+      >
+      
+      </div>
+
+      {isDevelopment && showPerformanceMonitor && <DevPerformanceMonitor />}
+
+      {isTransitioning && (
+        <div style={{
+          position:'fixed',top:20,left:'50%',transform:'translateX(-50%)',
+          zIndex:50,background:'rgba(0,0,0,0.7)',backdropFilter:'blur(10px)',
+          borderRadius:8,padding:'8px 16px',color:'#0f0',
+          fontSize:14,fontFamily:'Courier New',textShadow:'0 0 5px #0f0',
+          border:'1px solid rgba(0,255,0,0.3)'
+        }}>
+          TRANSITIONING TO {currentStage.toUpperCase()}… (SST v2.0)
+        </div>
+      )}
+
+      {isDevelopment && <>
+        <div style={{
+          position:'fixed',bottom:20,right:20,zIndex:50,
+          background:'rgba(0,0,0,0.8)',borderRadius:6,padding:10,
+          fontSize:11,color:'rgba(255,255,255,0.6)',fontFamily:'Courier New',lineHeight:1.4,
+          border:'1px solid rgba(255,255,255,0.1)'
+        }}>
+          ←→ Navigate • Space/Enter Next • Home/End First/Last • Ctrl+P Toggle Auto • Ctrl+Shift+P Perf Monitor
+          <br/>🧠 SST v2.0: 7-Stage Consciousness Evolution • Ctrl+0-6 Stage Jump
+        </div>
+        <div style={{
+          position:'fixed',top:20,left:20,zIndex:50,
+          background:'rgba(0,0,0,0.8)',borderRadius:6,padding:'8px 12px',
+          fontSize:12,color:'#0f0',fontFamily:'Courier New',textShadow:'0 0 5px #0f0',
+          border:'1px solid rgba(0,255,0,0.3)'
+        }}>
+          SST v2.0: {currentStage.toUpperCase()} ({Math.round(stageProgress*100)}%)
+        </div>
+      </>}
+    </div>
+  );
+}

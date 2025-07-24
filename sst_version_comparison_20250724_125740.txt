@@ -1,0 +1,714 @@
+// src/config/canonical/sstV2Stages.jsx
+// ✅ SST v2.0 CANONICAL AUTHORITY - Immutable Stage Definitions
+// THE SINGLE SOURCE OF TRUTH - Never modify without SST update
+
+/**
+ * ✅ CANONICAL STAGE SYSTEM - SST v2.0
+ * Immutable definitions for 7-stage consciousness evolution
+ * Any deviation from these definitions is contamination
+ */
+
+// ✅ STAGE ORDER: Canonical sequence (IMMUTABLE)
+export const SST_V2_STAGE_ORDER = [
+  'genesis',       // 0: Genesis Spark
+  'discipline',    // 1: Discipline Forge  
+  'neural',        // 2: Neural Awakening
+  'velocity',      // 3: Velocity Explosion
+  'architecture',  // 4: Architecture Consciousness
+  'harmony',       // 5: Harmonic Mastery
+  'transcendence'  // 6: Consciousness Transcendence
+];
+
+// ✅ STAGE MAPPINGS: Bidirectional (IMMUTABLE)
+export const SST_V2_NAME_TO_INDEX = Object.freeze({
+  genesis: 0,
+  discipline: 1,
+  neural: 2,
+  velocity: 3,
+  architecture: 4,
+  harmony: 5,
+  transcendence: 6
+});
+
+export const SST_V2_INDEX_TO_NAME = Object.freeze({
+  0: 'genesis',
+  1: 'discipline',
+  2: 'neural',
+  3: 'velocity',
+  4: 'architecture',
+  5: 'harmony',
+  6: 'transcendence'
+});
+
+// ✅ STAGE DEFINITIONS: Complete metadata (IMMUTABLE)
+export const SST_V2_STAGE_DEFINITIONS = Object.freeze({
+  genesis: {
+    index: 0,
+    name: 'genesis',
+    title: 'Genesis Spark',
+    description: '1983: Age 8 - The Genesis Code',
+    narrative: 'A single spark of curiosity on a Commodore 64',
+    brainRegion: 'hippocampus',
+    particles: 2000,
+    colors: ['#00FF00', '#22c55e', '#15803d'],
+    scrollRange: [0, 14]
+  },
+  discipline: {
+    index: 1,
+    name: 'discipline',
+    title: 'Discipline Forge',
+    description: '1983-2022: The Silent Years - Discipline Forged',
+    narrative: '39 years in business, logistics, and finance',
+    brainRegion: 'brainstem',
+    particles: 3000,
+    colors: ['#1e40af', '#3b82f6', '#1d4ed8'],
+    scrollRange: [14, 28]
+  },
+  neural: {
+    index: 2,
+    name: 'neural',
+    title: 'Neural Awakening',
+    description: '2022-2025: AI Foundation - Mathematical Mastery',
+    narrative: 'AI partnership consciousness emerging',
+    brainRegion: 'leftTemporal',
+    particles: 5000,
+    colors: ['#4338ca', '#a855f7', '#7c3aed'],
+    scrollRange: [28, 42]
+  },
+  velocity: {
+    index: 3,
+    name: 'velocity',
+    title: 'Velocity Explosion',
+    description: 'February 2025: "Teach me to code" - Velocity Unleashed',
+    narrative: 'Global electrical storm constellation',
+    brainRegion: 'rightTemporal',
+    particles: 12000,
+    colors: ['#7c3aed', '#9333ea', '#6b21a8'],
+    scrollRange: [42, 56]
+  },
+  architecture: {
+    index: 4,
+    name: 'architecture',
+    title: 'Architecture Consciousness',
+    description: 'March 2025: WebGL Crisis → Architecture Awakening',
+    narrative: 'Analytical grid constellations forming order from chaos',
+    brainRegion: 'frontalLobe',
+    particles: 8000,
+    colors: ['#0891b2', '#06b6d4', '#0e7490'],
+    scrollRange: [56, 70]
+  },
+  harmony: {
+    index: 5,
+    name: 'harmony',
+    title: 'Harmonic Mastery',
+    description: 'March 2025: Systems Choreography - Code as Dance',
+    narrative: 'Golden balletic constellation flows',
+    brainRegion: 'leftPrefrontal',
+    particles: 12000,
+    colors: ['#f59e0b', '#d97706', '#b45309'],
+    scrollRange: [70, 84]
+  },
+  transcendence: {
+    index: 6,
+    name: 'transcendence',
+    title: 'Consciousness Transcendence',
+    description: 'Present: Digital Consciousness - Proven Mastery',
+    narrative: 'Unified golden galaxy constellation',
+    brainRegion: 'consciousnessCore',
+    particles: 15000,
+    colors: ['#ffffff', '#f59e0b', '#00ffcc'],
+    scrollRange: [84, 100]
+  }
+});
+
+// ✅ SYSTEM CONSTANTS: Performance and scaling (IMMUTABLE)
+export const SST_V2_SYSTEM_CONSTANTS = Object.freeze({
+  TOTAL_STAGES: 7,
+  MIN_STAGE_INDEX: 0,
+  MAX_STAGE_INDEX: 6,
+  OPERATIONAL_PARTICLES: 15000,
+  SHOWCASE_PARTICLES: 17000,
+  TARGET_FPS: 60,
+  LIGHTHOUSE_TARGET: 90
+});
+
+// ✅ VALIDATION FUNCTIONS: Contamination prevention
+export function validateStageName(stageName) {
+  return SST_V2_STAGE_ORDER.includes(stageName);
+}
+
+export function validateStageIndex(stageIndex) {
+  return Number.isInteger(stageIndex) && 
+         stageIndex >= SST_V2_SYSTEM_CONSTANTS.MIN_STAGE_INDEX && 
+         stageIndex <= SST_V2_SYSTEM_CONSTANTS.MAX_STAGE_INDEX;
+}
+
+export function getStageByName(stageName) {
+  if (!validateStageName(stageName)) {
+    throw new Error(`SST v2.0 VIOLATION: Invalid stage name "${stageName}". Valid stages: ${SST_V2_STAGE_ORDER.join(', ')}`);
+  }
+  return SST_V2_STAGE_DEFINITIONS[stageName];
+}
+
+export function getStageByIndex(stageIndex) {
+  if (!validateStageIndex(stageIndex)) {
+    throw new Error(`SST v2.0 VIOLATION: Invalid stage index "${stageIndex}". Valid range: 0-6`);
+  }
+  const stageName = SST_V2_INDEX_TO_NAME[stageIndex];
+  return SST_V2_STAGE_DEFINITIONS[stageName];
+}
+
+// ✅ CONTAMINATION DETECTION: Forbidden patterns
+export const CONTAMINATION_PATTERNS = Object.freeze([
+  'silent',           // Old stage name
+  'awakening',        // Old stage name  
+  'acceleration',     // Old stage name
+  'digital-awakening', // Old system reference
+  '5-stage',          // Old system reference
+  'curtisStory',      // Personal contamination
+  'brain-metaphor'    // Personal contamination
+]);
+
+export function detectContamination(codeString) {
+  const violations = [];
+  
+  CONTAMINATION_PATTERNS.forEach(pattern => {
+    if (codeString.toLowerCase().includes(pattern.toLowerCase())) {
+      violations.push(pattern);
+    }
+  });
+  
+  return {
+    contaminated: violations.length > 0,
+    violations,
+    clean: violations.length === 0
+  };
+}
+
+// ✅ MIGRATION UTILITIES: Safe transitions
+export function migrateStageReference(oldReference) {
+  const migrations = {
+    'silent': 'discipline',
+    'awakening': 'neural', 
+    'acceleration': 'velocity'
+  };
+  
+  return migrations[oldReference] || oldReference;
+}
+
+// ✅ DEVELOPMENT: Global access and validation
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  window.SST_V2_CANONICAL = {
+    STAGE_ORDER: SST_V2_STAGE_ORDER,
+    STAGE_DEFINITIONS: SST_V2_STAGE_DEFINITIONS,
+    NAME_TO_INDEX: SST_V2_NAME_TO_INDEX,
+    INDEX_TO_NAME: SST_V2_INDEX_TO_NAME,
+    SYSTEM_CONSTANTS: SST_V2_SYSTEM_CONSTANTS,
+    
+    // Validation functions
+    validateStageName,
+    validateStageIndex,
+    getStageByName,
+    getStageByIndex,
+    detectContamination,
+    migrateStageReference,
+    
+    // Quick validation
+    validateSystem: () => {
+      console.log('🧪 SST v2.0 System Validation:');
+      console.log(`✅ Total Stages: ${SST_V2_SYSTEM_CONSTANTS.TOTAL_STAGES}`);
+      console.log(`✅ Stage Order: ${SST_V2_STAGE_ORDER.join(' → ')}`);
+      console.log(`✅ Particle Range: ${SST_V2_STAGE_DEFINITIONS.genesis.particles} → ${SST_V2_STAGE_DEFINITIONS.transcendence.particles}`);
+      console.log(`✅ Showcase Capability: ${SST_V2_SYSTEM_CONSTANTS.SHOWCASE_PARTICLES} particles`);
+      return true;
+    }
+  };
+  
+  console.log('🎭 SST v2.0 Canonical Authority: System definitions loaded');
+  console.log('🔧 Available: window.SST_V2_CANONICAL');
+  console.log('🧪 Validate: window.SST_V2_CANONICAL.validateSystem()');
+}
+
+export default {
+  STAGE_ORDER: SST_V2_STAGE_ORDER,
+  STAGE_DEFINITIONS: SST_V2_STAGE_DEFINITIONS,
+  NAME_TO_INDEX: SST_V2_NAME_TO_INDEX,
+  INDEX_TO_NAME: SST_V2_INDEX_TO_NAME,
+  SYSTEM_CONSTANTS: SST_V2_SYSTEM_CONSTANTS,
+  
+  validate: {
+    stageName: validateStageName,
+    stageIndex: validateStageIndex,
+    contamination: detectContamination
+  },
+  
+  get: {
+    stageByName: getStageByName,
+    stageByIndex: getStageByIndex
+  },
+  
+  migrate: {
+    stageReference: migrateStageReference
+  }
+};  // CANONICAL AUTHORITY - SST v3.0
+// Version: 3.0.0 | Date: 2025-07-23 | Status: ABSOLUTE
+
+export const SST_V3_CONFIG = {
+  version: "3.0.0",
+  schemaVersion: "2025-07-23",
+
+  stages: {
+    genesis: {
+      id: 0,
+      name: "genesis",
+      title: "Genesis Spark",
+      scrollRange: [0, 14],
+      particles: 2000,
+      tierRatios: [0.60, 0.20, 0.10, 0.10],
+      colors: ["#00FF00", "#22c55e", "#15803d"],
+      brainRegion: "hippocampus",
+      camera: { movement: "intimate_dolly", angle: 5, duration: 30 },
+      sprites: { tier1: [7], tier2: [0, 1], tier3: [4], tier4: [1] }
+    },
+    discipline: {
+      id: 1,
+      name: "discipline",
+      title: "Discipline Forge",
+      scrollRange: [14, 28],
+      particles: 3000,
+      tierRatios: [0.55, 0.25, 0.10, 0.10],
+      colors: ["#1e40af", "#3b82f6", "#1d4ed8"],
+      brainRegion: "brainstem",
+      camera: { movement: "authority_orbit", angle: 10, duration: 35 },
+      sprites: { tier1: [7], tier2: [0, 1], tier3: [5], tier4: [11] }
+    },
+    neural: {
+      id: 2,
+      name: "neural",
+      title: "Neural Awakening",
+      scrollRange: [28, 42],
+      particles: 5000,
+      tierRatios: [0.55, 0.20, 0.15, 0.10],
+      colors: ["#4338ca", "#a855f7", "#7c3aed"],
+      brainRegion: "leftTemporal",
+      camera: { movement: "discovery_orbit", angle: 15, duration: 35 },
+      sprites: { tier1: [7], tier2: [0, 1, 2], tier3: [2], tier4: [10] }
+    },
+    velocity: {
+      id: 3,
+      name: "velocity",
+      title: "Velocity Explosion",
+      scrollRange: [42, 56],
+      particles: 12000,
+      tierRatios: [0.45, 0.20, 0.15, 0.20],
+      colors: ["#7c3aed", "#9333ea", "#6b21a8"],
+      brainRegion: "multiRegion",
+      camera: { movement: "dramatic_pullback", angle: 20, duration: 40, shake: true },
+      sprites: { tier1: [7], tier2: [0, 1, 6], tier3: [6], tier4: [13] }
+    },
+    architecture: {
+      id: 4,
+      name: "architecture",
+      title: "Architecture Consciousness",
+      scrollRange: [56, 70],
+      particles: 8000,
+      tierRatios: [0.50, 0.20, 0.15, 0.15],
+      colors: ["#0891b2", "#06b6d4", "#0e7490"],
+      brainRegion: "frontalLobe",
+      camera: { movement: "grid_tracking", angle: 12, duration: 35 },
+      sprites: { tier1: [7], tier2: [0, 1], tier3: [11], tier4: [12] }
+    },
+    harmony: {
+      id: 5,
+      name: "harmony",
+      title: "Harmonic Mastery",
+      scrollRange: [70, 84],
+      particles: 12000,
+      tierRatios: [0.50, 0.20, 0.15, 0.15],
+      colors: ["#f59e0b", "#d97706", "#b45309"],
+      brainRegion: "cerebellum",
+      camera: { movement: "balletic_orbit", angle: 25, duration: 35 },
+      sprites: { tier1: [7], tier2: [0, 1, 9], tier3: [9], tier4: [15] }
+    },
+    transcendence: {
+      id: 6,
+      name: "transcendence",
+      title: "Consciousness Transcendence",
+      scrollRange: [84, 100],
+      particles: 15000,
+      tierRatios: [0.50, 0.20, 0.15, 0.15],
+      colors: ["#ffffff", "#f59e0b", "#00ffcc"],
+      brainRegion: "consciousnessCore",
+      camera: { movement: "reverent_orbit", angle: 30, duration: 40 },
+      sprites: { tier1: [7], tier2: [0, 1, 14], tier3: [14], tier4: [15] }
+    }
+  },
+
+  features: {
+    gaussianFalloff: true,
+    noiseClusteringTier1: false,
+    centerWeightingTier4: true,
+    fusionMoments: true,
+    tierLOD: true,
+    memoryFragments: true,
+    narrativeDialogue: true
+  },
+
+  performance: {
+    targetFPS: 60,
+    minFPS: 55,
+    maxParticles: 17000,
+    maxRenderTime: 16.67,
+    heapLimit: 250,
+    gcPauseMax: 3
+  }
+};
+
+export const getStageByName = (name) => SST_V3_CONFIG.stages[name];
+export const isFeatureEnabled = (flag) => !!SST_V3_CONFIG.features[flag];
+// src/engine/ConsciousnessEngine.js
+// ✅ ENHANCED: Brain with full tier support and deterministic generation
+
+import seedrandom from 'seedrandom';
+import SST_V2_CANONICAL from '../config/canonical/sstV2Stages.jsx'; // Fixed import
+import { ConsciousnessPatterns } from '../components/webgl/consciousness/ConsciousnessPatterns.js';
+import { getPointSpriteAtlasSingleton } from '../components/webgl/consciousness/PointSpriteAtlas.js';
+
+// ✅ TIER DISTRIBUTION CONSTANTS
+const DEFAULT_TIER_RATIOS = {
+  tier1: 0.60,  // 60% atmospheric dust
+  tier2: 0.20,  // 20% depth field
+  tier3: 0.10,  // 10% visual anchors
+  tier4: 0.10   // 10% constellation points
+};
+
+// Schema version for cache busting
+const STAGE_SCHEMA_VERSION = 'v1.0';
+
+class ConsciousnessEngine {
+  constructor() {
+    this.isInitialized = false;
+    this.blueprintCache = new Map();
+    this.currentTier = 'HIGH';
+    this.currentStage = 'genesis';
+    
+    // ✅ NEW: AQS integration with error handling
+    this.listenToAQS();
+    
+    console.log('🧠 ConsciousnessEngine: Initialized with tier support');
+  }
+
+  // ✅ MUST HAVE: Listen for quality changes with error handling
+  listenToAQS() {
+    if (!window.addEventListener) return; // SSR safety
+    
+    window.addEventListener('aqsQualityChange', (event) => {
+      if (!event?.detail?.tier) {
+        console.warn('🧠 Engine: Invalid AQS event', event);
+        return;
+      }
+      
+      const { tier, particles } = event.detail;
+      const oldTier = this.currentTier;
+      this.currentTier = tier;
+      
+      console.log(`🧠 Engine: Quality changed ${oldTier} → ${tier}`);
+      
+      // Emit event for renderer
+      window.dispatchEvent(new CustomEvent('engineTierChange', {
+        detail: { 
+          tier, 
+          particles,
+          stage: this.currentStage 
+        }
+      }));
+    });
+  }
+
+  // ✅ MUST HAVE: Get tier counts for a stage
+  getTierCounts(stageName, totalParticles) {
+    const ratios = DEFAULT_TIER_RATIOS;
+    
+    return {
+      tier1: Math.round(totalParticles * ratios.tier1),
+      tier2: Math.round(totalParticles * ratios.tier2),
+      tier3: Math.round(totalParticles * ratios.tier3),
+      tier4: Math.round(totalParticles * ratios.tier4)
+    };
+  }
+
+  // ✅ MUST HAVE: Deterministic RNG
+  getRNG(stageName, tier) {
+    const seed = `${stageName}|${tier}|${STAGE_SCHEMA_VERSION}`;
+    return seedrandom(seed);
+  }
+
+  // ✅ MUST HAVE: Generate complete blueprint with tier support
+  async generateConstellationParticleData(particleCount, options = {}) {
+    const { stageName = 'genesis' } = options;
+    this.currentStage = stageName;
+    
+    // Check cache first
+    const cacheKey = `${stageName}-${this.currentTier}-${particleCount}`;
+    if (this.blueprintCache.has(cacheKey)) {
+      console.log(`🧠 Engine: Using cached blueprint for ${cacheKey}`);
+      return this.blueprintCache.get(cacheKey);
+    }
+    
+    console.log(`🧠 Engine: Generating new blueprint for ${stageName} (${particleCount} particles)`);
+    
+    // Get RNG for deterministic generation
+    const rng = this.getRNG(stageName, this.currentTier);
+    
+    // Get tier distribution
+    const tierCounts = this.getTierCounts(stageName, particleCount);
+    
+    // Pre-allocate arrays for 17K max
+    const maxParticles = 17000;
+    const atmosphericPositions = new Float32Array(maxParticles * 3);
+    const allenAtlasPositions = new Float32Array(maxParticles * 3);
+    const animationSeeds = new Float32Array(maxParticles * 3);
+    const sizeMultipliers = new Float32Array(maxParticles);
+    const opacityData = new Float32Array(maxParticles);
+    const atlasIndices = new Float32Array(maxParticles);
+    const tierData = new Float32Array(maxParticles);
+    
+    // Get brain pattern for this stage
+    const brainPattern = ConsciousnessPatterns.getBrainRegionInfo(stageName);
+    const atlas = getPointSpriteAtlasSingleton();
+    
+    // ✅ GENERATE PARTICLES IN TIER ORDER
+    let particleIndex = 0;
+    
+    // Generate each tier
+    const tiers = [
+      { count: tierCounts.tier1, tier: 1 },
+      { count: tierCounts.tier2, tier: 2 },
+      { count: tierCounts.tier3, tier: 3 },
+      { count: tierCounts.tier4, tier: 4 }
+    ];
+    
+    for (const { count, tier } of tiers) {
+      for (let i = 0; i < count && particleIndex < maxParticles; i++, particleIndex++) {
+        this.generateParticle(
+          particleIndex,
+          tier,
+          stageName,
+          brainPattern,
+          rng,
+          atlas,
+          atmosphericPositions,
+          allenAtlasPositions,
+          animationSeeds,
+          sizeMultipliers,
+          opacityData,
+          atlasIndices,
+          tierData
+        );
+      }
+    }
+    
+    // Create blueprint
+    const blueprint = {
+      stageName,
+      tier: this.currentTier,
+      particleCount,
+      maxParticles,
+      tierCounts,
+      atmosphericPositions,
+      allenAtlasPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      timestamp: Date.now()
+    };
+    
+    // Cache it
+    this.blueprintCache.set(cacheKey, blueprint);
+    
+    // Limit cache size
+    if (this.blueprintCache.size > 20) {
+      const firstKey = this.blueprintCache.keys().next().value;
+      this.blueprintCache.delete(firstKey);
+    }
+    
+    return blueprint;
+  }
+
+  // ✅ Generate individual particle with tier awareness
+  generateParticle(
+    index,
+    tier,
+    stageName,
+    brainPattern,
+    rng,
+    atlas,
+    atmosphericPositions,
+    allenAtlasPositions,
+    animationSeeds,
+    sizeMultipliers,
+    opacityData,
+    atlasIndices,
+    tierData
+  ) {
+    const i3 = index * 3;
+    
+    // Atmospheric position (starting position)
+    const spread = tier === 1 ? 40 : tier === 2 ? 30 : tier === 3 ? 20 : 15;
+    atmosphericPositions[i3] = (rng() - 0.5) * spread;
+    atmosphericPositions[i3 + 1] = (rng() - 0.5) * spread;
+    atmosphericPositions[i3 + 2] = (rng() - 0.5) * spread * 0.5;
+    
+    // Brain position (target position)
+    if (tier === 4 && brainPattern.coordinates) {
+      // Tier 4 uses exact brain coordinates
+      const points = brainPattern.coordinates.points;
+      const pointIndex = Math.floor(rng() * points.length);
+      const point = points[pointIndex];
+      const variation = 0.3;
+      
+      allenAtlasPositions[i3] = point[0] + (rng() - 0.5) * variation;
+      allenAtlasPositions[i3 + 1] = point[1] + (rng() - 0.5) * variation;
+      allenAtlasPositions[i3 + 2] = point[2] + (rng() - 0.5) * variation;
+    } else {
+      // Other tiers use broader distribution
+      const brainSpread = tier === 1 ? 25 : tier === 2 ? 20 : 15;
+      allenAtlasPositions[i3] = (rng() - 0.5) * brainSpread;
+      allenAtlasPositions[i3 + 1] = (rng() - 0.5) * brainSpread;
+      allenAtlasPositions[i3 + 2] = (rng() - 0.5) * brainSpread * 0.5;
+    }
+    
+    // Animation seeds
+    animationSeeds[i3] = rng();
+    animationSeeds[i3 + 1] = rng();
+    animationSeeds[i3 + 2] = rng();
+    
+    // Tier-specific properties
+    tierData[index] = tier - 1; // 0-3 for shader
+    
+    // Size multipliers by tier
+    sizeMultipliers[index] = 
+      tier === 1 ? 0.7 + rng() * 0.2 :
+      tier === 2 ? 0.85 + rng() * 0.15 :
+      tier === 3 ? 1.0 + rng() * 0.2 :
+      1.2 + rng() * 0.3;
+    
+    // Opacity by tier
+    opacityData[index] = 
+      tier === 1 ? 0.5 + rng() * 0.2 :
+      tier === 2 ? 0.65 + rng() * 0.2 :
+      tier === 3 ? 0.8 + rng() * 0.15 :
+      0.9 + rng() * 0.1;
+    
+    // Atlas sprite selection
+    atlasIndices[index] = atlas.getContextualSpriteIndex(stageName, index);
+  }
+
+  // ✅ MUST HAVE: Get active particle count for current quality
+  getActiveParticleCount(stageName) {
+    // Fixed to use the proper method structure
+    const stageData = SST_V2_CANONICAL.get.stageByName(stageName);
+    const baseCount = stageData.particles;
+    
+    // Quality multipliers matching AQS tiers
+    const qualityMultipliers = {
+      LOW: 0.6,    // Just tier 1
+      MEDIUM: 0.8,  // Tiers 1+2
+      HIGH: 0.9,    // Tiers 1+2+3
+      ULTRA: 1.0    // All tiers
+    };
+    
+    return Math.round(baseCount * (qualityMultipliers[this.currentTier] || 1.0));
+  }
+
+  // Cleanup
+  dispose() {
+    this.blueprintCache.clear();
+    window.removeEventListener('aqsQualityChange', this.listenToAQS);
+  }
+}
+
+// ✅ HMR-safe singleton
+const getConsciousnessEngineSingleton = () => {
+  if (!globalThis.__CONSCIOUSNESS_ENGINE__) {
+    globalThis.__CONSCIOUSNESS_ENGINE__ = new ConsciousnessEngine();
+  }
+  return globalThis.__CONSCIOUSNESS_ENGINE__;
+};
+
+export default getConsciousnessEngineSingleton();#!/usr/bin/env node
+import { SST_V3_CONFIG } from "../src/config/sst3/sst-v3.0-config.js";
+import { TIER_BEHAVIORS } from "../src/config/sst3/tier-behaviors.js";
+import { NARRATIVE_DIALOGUE } from "../src/config/sst3/narrative-dialogue.js";
+import { MEMORY_FRAGMENTS } from "../src/config/sst3/memory-fragments.js";
+
+const errors = [];
+const warnings = [];
+
+function validateStages() {
+  Object.entries(SST_V3_CONFIG.stages).forEach(([name, stage]) => {
+    const sum = stage.tierRatios.reduce((a, b) => a + b, 0);
+    if (Math.abs(sum - 1.0) > 0.001) errors.push(`${name}: tier ratios sum to ${sum}, must equal 1.0`);
+    if (stage.scrollRange[0] >= stage.scrollRange[1]) errors.push(`${name}: invalid scroll range ${stage.scrollRange}`);
+    Object.entries(stage.sprites).forEach(([tier, sprites]) => {
+      sprites.forEach(idx => {
+        if (idx < 0 || idx > 15) errors.push(`${name}: invalid sprite index ${idx} for ${tier}`);
+      });
+    });
+    if (stage.particles < 1000 || stage.particles > SST_V3_CONFIG.performance.maxParticles) {
+      warnings.push(`${name}: particle count ${stage.particles} outside recommended range`);
+    }
+  });
+}
+
+function validateNarrative() {
+  Object.entries(NARRATIVE_DIALOGUE).forEach(([stage, dialogue]) => {
+    if (!SST_V3_CONFIG.stages[stage]) {
+      errors.push(`Narrative for unknown stage: ${stage}`);
+      return;
+    }
+    const segs = dialogue.narration?.segments || [];
+    let lastEnd = 0;
+    segs.forEach(segment => {
+      const { start = 0, duration = 0 } = segment.timing || {};
+      if (start < lastEnd) warnings.push(`${stage}: overlapping narration at ${segment.id}`);
+      lastEnd = start + duration;
+    });
+  });
+}
+
+function validateFragments() {
+  Object.entries(MEMORY_FRAGMENTS).forEach(([id, fragment]) => {
+    if (!SST_V3_CONFIG.stages[fragment.stage]) errors.push(`Fragment ${id} references unknown stage: ${fragment.stage}`);
+    if (fragment.trigger?.type === "scroll") {
+      const range = SST_V3_CONFIG.stages[fragment.stage]?.scrollRange;
+      if (range && (fragment.trigger.value < range[0] || fragment.trigger.value > range[1])) {
+        warnings.push(`Fragment ${id} triggers outside stage scroll range`);
+      }
+    }
+  });
+}
+
+console.log("🔍 Validating SST v3.0 configuration...\n");
+validateStages();
+validateNarrative();
+validateFragments();
+
+if (errors.length) {
+  console.error("❌ ERRORS FOUND:");
+  errors.forEach(e => console.error("  - " + e));
+  process.exit(1);
+}
+if (warnings.length) {
+  console.warn("\n⚠️  WARNINGS:");
+  warnings.forEach(w => console.warn("  - " + w));
+}
+
+console.log("\n✅ SST v3.0 configuration validated successfully!");
+console.log(`  - ${Object.keys(SST_V3_CONFIG.stages).length} stages`);
+console.log(`  - ${Object.keys(NARRATIVE_DIALOGUE).length} narratives`);
+console.log(`  - ${Object.keys(MEMORY_FRAGMENTS).length} memory fragments`);
+console.log(`  - ${Object.keys(TIER_BEHAVIORS).length} tier behaviors`);
+'"$@"'

@@ -1,0 +1,3718 @@
+
+
+--- src/components/layout/Navbar.jsx ---
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Menu, X, Aperture } from 'lucide-react';
+
+const navLinks = [
+  { id: 'hero', label: 'Home' },
+  { id: 'about', label: 'About' },
+  { id: 'features', label: 'Features' },
+  { id: 'contact', label: 'Contact' },
+];
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [active, setActive] = useState('hero');
+
+  const handleNavLinkClick = useCallback(sectionId => {
+    setIsOpen(false);
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // scroll-based hide/show + active-link tracking
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const y = window.scrollY;
+          // visibility
+          if (y < 50 || y < lastY) setIsVisible(true);
+          else if (!isOpen && y > lastY && y > 200) setIsVisible(false);
+          lastY = y;
+
+          // active link
+          let best = 'hero',
+            bestRatio = 0;
+          navLinks.forEach(({ id }) => {
+            const el = document.getElementById(id);
+            if (el) {
+              const r = el.getBoundingClientRect();
+              const vh = window.innerHeight;
+              if (r.top < vh && r.bottom > 0) {
+                const visH = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+                const ratio = visH / el.offsetHeight;
+                if (ratio > bestRatio) {
+                  bestRatio = ratio;
+                  best = id;
+                }
+              }
+            }
+          });
+          setActive(best);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isOpen]);
+
+  return (
+    <nav
+      className={`
+        fixed top-0 left-0 right-0 z-50 p-4
+        bg-black/60 backdrop-blur-lg text-white shadow-xl
+        transition-transform transition-opacity duration-300
+        ${isVisible || isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full'}
+      `}
+    >
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo */}
+        <a
+          href="#hero"
+          onClick={e => {
+            e.preventDefault();
+            handleNavLinkClick('hero');
+          }}
+          className="flex items-center space-x-2 text-xl md:text-2xl font-bold hover:text-cyan-300 transition-colors"
+        >
+          <Aperture size={28} className="text-cyan-400" />
+          <span>MC3V</span>
+        </a>
+
+        {/* Desktop Links */}
+        <div className="hidden md:flex space-x-4">
+          {navLinks.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => handleNavLinkClick(id)}
+              className={`
+                relative px-3 py-2 rounded-md text-sm font-medium transition-colors
+                ${active === id ? 'text-cyan-400' : 'text-gray-300'}
+                hover:text-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-500/50
+              `}
+            >
+              <span className="relative z-10">{label}</span>
+              <span
+                className={`
+                  absolute inset-0 rounded-md transition-all
+                  ${active === id ? 'bg-cyan-600/30' : 'group-hover:bg-cyan-500/20'}
+                `}
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* Mobile Toggle */}
+        <button
+          onClick={() => setIsOpen(o => !o)}
+          className="md:hidden p-2 hover:bg-gray-700/50 rounded-md transition-colors"
+          aria-label="Toggle menu"
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden mt-2 space-y-1 bg-gray-900/80 backdrop-blur-sm p-3 rounded-md">
+          {navLinks.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => handleNavLinkClick(id)}
+              className={`
+                block w-full text-left px-3 py-2 rounded-md text-base font-medium
+                ${active === id ? 'text-cyan-400 bg-cyan-700/20' : 'text-gray-200'}
+                hover:text-cyan-300 hover:bg-cyan-600/30 transition-colors
+              `}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </nav>
+  );
+};
+
+export default React.memo(Navbar);
+
+--- src/components/ui/Navbar.jsx ---
+
+// src/components/layout/Navbar.jsx
+
+/**
+ * Application Navigation Bar component.
+ */
+function Navbar() {
+  return (
+    <header className="bg-gray-800 text-white shadow-lg sticky top-0 z-50">
+      {' '}
+      {/* Sticky Navbar */}
+      <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div className="text-xl font-bold hover:text-primary transition-colors">
+          {/* Link to top of page or hero section */}
+          <a href="#hero">MetaCurtis Premium</a>
+        </div>
+        <div className="space-x-4">
+          {/* TODO: Replace with actual <Link> components if using a router, or implement smooth scroll logic */}
+          <a href="#hero" className="hover:text-primary transition-colors">
+            Home
+          </a>
+          <a href="#about" className="hover:text-primary transition-colors">
+            About
+          </a>
+          <a href="#features" className="hover:text-primary transition-colors">
+            Features
+          </a>
+          <a href="#contact" className="hover:text-primary transition-colors">
+            Contact
+          </a>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default Navbar;
+
+--- central_clock_backup_20250706_215239/AdaptiveQualitySystem.js ---
+
+// src/utils/performance/AdaptiveQualitySystem.js
+// core engine, no React here
+import qualityPresets from '@/config/qualityPresets.js'; // Ensure this path and file exist
+
+// NAMED EXPORT for QualityLevels
+export const QualityLevels = {
+  ULTRA: 'ULTRA',
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW',
+};
+
+// DEFAULT EXPORT for the class
+export default class AQSEngine {
+  constructor({
+    checkInterval = 1500,
+    windowSize = 90,
+    ultraFps = 55,
+    highFps = 45,
+    mediumFps = 25,
+    initialLevel = QualityLevels.HIGH, // Uses the locally defined QualityLevels
+    hysteresisChecks = 3,
+  } = {}) {
+    this.presets = qualityPresets;
+    this.windowSize = windowSize;
+    this.ultraFps = ultraFps;
+    this.highFps = highFps;
+    this.mediumFps = mediumFps;
+    this.currentLevel = initialLevel;
+    this.frameTimes = [];
+    this.lastTime = performance.now();
+    this.subscribers = new Set();
+
+    this.frameCount = 0;
+    this.checkInterval = checkInterval;
+    this.lastCheckTime = performance.now();
+
+    this.hysteresisChecks = hysteresisChecks;
+    this.checksAtCurrentPotentialTier = 0;
+    this.potentialNewTier = initialLevel;
+
+    console.log(
+      `AQSEngine: Initialized. Level: ${this.currentLevel}, Check Interval: ${checkInterval}ms, FPS Thresholds (U/H/M): ${ultraFps}/${highFps}/${mediumFps}, Hysteresis Checks: ${this.hysteresisChecks}`
+    );
+  }
+
+  tick() {
+    this.frameCount++;
+    const now = performance.now();
+    const timeSinceLastCheck = now - this.lastCheckTime;
+
+    if (timeSinceLastCheck >= this.checkInterval) {
+      if (this.frameCount > 0 && timeSinceLastCheck > 0) {
+        const fps = (this.frameCount * 1000) / timeSinceLastCheck;
+        // console.log(`AQSEngine: Interval reached. Calculated Avg FPS over ~${(timeSinceLastCheck/1000).toFixed(1)}s: ${fps.toFixed(1)} (Frames: ${this.frameCount})`);
+        this._adjustQuality(fps);
+      } else {
+        // console.log(`AQSEngine: Interval reached, but no frames counted or no time elapsed. Frames: ${this.frameCount}, Time: ${timeSinceLastCheck}`);
+      }
+      this.frameCount = 0;
+      this.lastCheckTime = now;
+    }
+  }
+
+  _adjustQuality(fps) {
+    let newCalculatedTier;
+    // Uses the locally defined QualityLevels
+    if (fps >= this.ultraFps) newCalculatedTier = QualityLevels.ULTRA;
+    else if (fps >= this.highFps) newCalculatedTier = QualityLevels.HIGH;
+    else if (fps >= this.mediumFps) newCalculatedTier = QualityLevels.MEDIUM;
+    else newCalculatedTier = QualityLevels.LOW;
+
+    // console.log(`AQSEngine _adjustQuality: Current Level: ${this.currentLevel}, Potential New Tier: ${this.potentialNewTier}, Calculated Tier from FPS (${fps.toFixed(1)}): ${newCalculatedTier}, Checks at Potential: ${this.checksAtCurrentPotentialTier}`);
+
+    if (newCalculatedTier === this.potentialNewTier) {
+      this.checksAtCurrentPotentialTier++;
+    } else {
+      this.potentialNewTier = newCalculatedTier;
+      this.checksAtCurrentPotentialTier = 1;
+      // console.log(`AQSEngine _adjustQuality: Potential new tier is now ${this.potentialNewTier}. Resetting stability counter.`);
+    }
+
+    if (
+      this.checksAtCurrentPotentialTier >= this.hysteresisChecks &&
+      this.currentLevel !== this.potentialNewTier
+    ) {
+      const prevLevel = this.currentLevel;
+      this.currentLevel = this.potentialNewTier;
+      console.log(
+        `AQSEngine: !!! QUALITY TIER CHANGED !!! From ${prevLevel} to ${this.currentLevel} (Avg FPS: ~${fps.toFixed(1)})`
+      );
+      this.subscribers.forEach(cb => cb(this.currentLevel));
+      this.checksAtCurrentPotentialTier = 0;
+    } else if (
+      this.currentLevel === this.potentialNewTier &&
+      this.potentialNewTier === newCalculatedTier
+    ) {
+      this.checksAtCurrentPotentialTier = 0;
+    }
+  }
+
+  subscribe(cb) {
+    this.subscribers.add(cb);
+    cb(this.currentLevel);
+    return () => this.subscribers.delete(cb);
+  }
+
+  getCurrentPreset() {
+    // Uses the locally defined QualityLevels
+    return this.presets[this.currentLevel.toLowerCase()] || this.presets.high;
+  }
+}
+
+--- vite.config.js ---
+
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import glsl from 'vite-plugin-glsl'; // Your existing plugin
+import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [
+    react(),
+    glsl(), // Your existing plugin
+    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
+  ],
+  resolve: {
+    // Your existing resolve aliases
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@webgl': path.resolve(__dirname, './src/components/webgl'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+    },
+  },
+  // Remove or comment out the explicit css.postcss configuration
+  // if your postcss.config.js was mainly for Tailwind.
+  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
+  // css: {
+  //   postcss: './postcss.config.js',
+  // },
+  build: {
+    // Your existing build configurations
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: { compress: { drop_console: false, drop_debugger: true } },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three')) return 'three-vendor';
+            if (id.includes('gsap')) return 'gsap-vendor';
+            if (id.includes('@react-three')) return 'drei-vendor';
+            if (id.includes('zustand')) return 'zustand-vendor';
+            if (id.includes('react')) return 'react-vendor';
+            return 'vendor';
+          }
+        },
+      },
+    },
+    sourcemap: true,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+  },
+  server: {
+    // Your existing server configurations
+    host: true,
+    open: true,
+    hmr: { overlay: true },
+  },
+  optimizeDeps: {
+    // Your existing optimizeDeps
+    include: [
+      'react',
+      'react-dom',
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      'gsap',
+      'zustand',
+    ],
+  },
+  test: {
+    // Your existing test configurations
+    passWithNoTests: true,
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{js,jsx}', 'src/**/*.spec.{js,jsx}'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/assets/'],
+    },
+    deps: { optimizer: { web: { include: ['@react-three/fiber', '@react-three/drei'] } } },
+  },
+});
+
+--- vite.config.js.backup_20250706_173422 ---
+
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import glsl from 'vite-plugin-glsl'; // Your existing plugin
+import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [
+    react(),
+    glsl(), // Your existing plugin
+    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
+  ],
+  resolve: {
+    // Your existing resolve aliases
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@webgl': path.resolve(__dirname, './src/components/webgl'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+    },
+  },
+  // Remove or comment out the explicit css.postcss configuration
+  // if your postcss.config.js was mainly for Tailwind.
+  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
+  // css: {
+  //   postcss: './postcss.config.js',
+  // },
+  build: {
+    // Your existing build configurations
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: { compress: { drop_console: false, drop_debugger: true } },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three')) return 'three-vendor';
+            if (id.includes('gsap')) return 'gsap-vendor';
+            if (id.includes('@react-three')) return 'drei-vendor';
+            if (id.includes('zustand')) return 'zustand-vendor';
+            if (id.includes('react')) return 'react-vendor';
+            return 'vendor';
+          }
+        },
+      },
+    },
+    sourcemap: true,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+  },
+  server: {
+    // Your existing server configurations
+    host: true,
+    open: true,
+    hmr: { overlay: true },
+  },
+  optimizeDeps: {
+    // Your existing optimizeDeps
+    include: [
+      'react',
+      'react-dom',
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      'gsap',
+      'zustand',
+    ],
+  },
+  test: {
+    // Your existing test configurations
+    passWithNoTests: true,
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{js,jsx}', 'src/**/*.spec.{js,jsx}'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/assets/'],
+    },
+    deps: { optimizer: { web: { include: ['@react-three/fiber', '@react-three/drei'] } } },
+  },
+});
+
+--- src/utils/performance/AdaptiveQualitySystem.js ---
+
+// src/utils/performance/AdaptiveQualitySystem.js
+// ✅ PHASE 2: Quality Tier Stabilization - Enhanced AQS Engine
+// Eliminates tier flapping with intelligent debouncing and variance checking
+
+export const QualityLevels = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM', 
+  HIGH: 'HIGH',
+  ULTRA: 'ULTRA',
+};
+
+// ✅ ENHANCED: Stability configuration
+const ENHANCED_STABILITY_CONFIG = {
+  // Tier change requirements
+  consecutiveChecks: 6,        // Require 6 consecutive stable readings
+  debounceMs: 2000,           // 2 second minimum between tier changes
+  fpsVarianceThreshold: 8,    // FPS must be within 8 of target for stability
+  emergencyDropThreshold: 15, // Emergency drop to LOW if FPS < 15
+  
+  // Tier thresholds with clear separation
+  tiers: {
+    ULTRA: { minFps: 55, particles: 15000 },
+    HIGH: { minFps: 45, particles: 12000 },
+    MEDIUM: { minFps: 30, particles: 8000 },
+    LOW: { minFps: 0, particles: 4000 }
+  }
+};
+
+class StabilizedQualityManager {
+  constructor() {
+    this.currentTier = 'HIGH';
+    this.potentialTier = 'HIGH';
+    this.stabilityChecks = 0;
+    this.lastTierChange = 0;
+    this.fpsHistory = [];
+    this.maxHistoryLength = 10;
+  }
+
+  updateFPS(fps) {
+    // Track FPS history for variance calculation
+    this.fpsHistory.push(fps);
+    if (this.fpsHistory.length > this.maxHistoryLength) {
+      this.fpsHistory.shift();
+    }
+
+    const now = Date.now();
+    const timeSinceLastChange = now - this.lastTierChange;
+    
+    // Emergency drop for very low FPS
+    if (fps < ENHANCED_STABILITY_CONFIG.emergencyDropThreshold) {
+      this.emergencyDrop();
+      return this.currentTier;
+    }
+
+    // Calculate what tier FPS suggests
+    const suggestedTier = this.calculateTierFromFPS(fps);
+    
+    // Check if we're in debounce period
+    if (timeSinceLastChange < ENHANCED_STABILITY_CONFIG.debounceMs) {
+      console.log(`🛡️ AQS: Debounce active (${Math.round(timeSinceLastChange)}ms), staying at ${this.currentTier}`);
+      return this.currentTier;
+    }
+
+    // Check FPS variance for stability
+    if (!this.isFPSStable()) {
+      console.log(`⚠️ AQS: FPS unstable (variance: ${this.getFPSVariance().toFixed(1)}), maintaining ${this.currentTier}`);
+      this.stabilityChecks = 0;
+      return this.currentTier;
+    }
+
+    // Handle tier change logic
+    if (suggestedTier !== this.potentialTier) {
+      this.potentialTier = suggestedTier;
+      this.stabilityChecks = 1;
+      console.log(`🔄 AQS: Potential tier change to ${suggestedTier}, checks: 1/${ENHANCED_STABILITY_CONFIG.consecutiveChecks}`);
+    } else if (suggestedTier !== this.currentTier) {
+      this.stabilityChecks++;
+      console.log(`🔄 AQS: Confirming ${suggestedTier}, checks: ${this.stabilityChecks}/${ENHANCED_STABILITY_CONFIG.consecutiveChecks}`);
+      
+      // Only change tier after sufficient consecutive checks
+      if (this.stabilityChecks >= ENHANCED_STABILITY_CONFIG.consecutiveChecks) {
+        this.changeTier(suggestedTier);
+      }
+    } else {
+      // FPS stable at current tier
+      this.stabilityChecks = 0;
+    }
+
+    return this.currentTier;
+  }
+
+  calculateTierFromFPS(fps) {
+    // Conservative tier calculation with clear boundaries
+    if (fps >= ENHANCED_STABILITY_CONFIG.tiers.ULTRA.minFps) return 'ULTRA';
+    if (fps >= ENHANCED_STABILITY_CONFIG.tiers.HIGH.minFps) return 'HIGH';
+    if (fps >= ENHANCED_STABILITY_CONFIG.tiers.MEDIUM.minFps) return 'MEDIUM';
+    return 'LOW';
+  }
+
+  isFPSStable() {
+    if (this.fpsHistory.length < 3) return false;
+    
+    const variance = this.getFPSVariance();
+    return variance <= ENHANCED_STABILITY_CONFIG.fpsVarianceThreshold;
+  }
+
+  getFPSVariance() {
+    if (this.fpsHistory.length < 2) return 0;
+    
+    const recent = this.fpsHistory.slice(-5); // Last 5 readings
+    const max = Math.max(...recent);
+    const min = Math.min(...recent);
+    return max - min;
+  }
+
+  changeTier(newTier) {
+    const oldTier = this.currentTier;
+    this.currentTier = newTier;
+    this.potentialTier = newTier;
+    this.stabilityChecks = 0;
+    this.lastTierChange = Date.now();
+    
+    console.log(`✅ AQS: Stable tier change ${oldTier} → ${newTier} (${ENHANCED_STABILITY_CONFIG.tiers[newTier].particles} particles)`);
+    
+    // Trigger particle count update
+    this.triggerQualityUpdate(newTier);
+  }
+
+  emergencyDrop() {
+    if (this.currentTier !== 'LOW') {
+      console.log(`🚨 AQS: Emergency drop to LOW tier`);
+      this.changeTier('LOW');
+    }
+  }
+
+  triggerQualityUpdate(tier) {
+    // Emit event for WebGL background to update particle count
+    window.dispatchEvent(new CustomEvent('aqsQualityChange', {
+      detail: {
+        tier,
+        particles: ENHANCED_STABILITY_CONFIG.tiers[tier].particles,
+        stable: true
+      }
+    }));
+  }
+}
+
+// Create global instance
+const stabilizedManager = new StabilizedQualityManager();
+
+// ✅ ENHANCED: Main AQS Engine class with stabilization
+export default class AQSEngine {
+  constructor(config = {}) {
+    this.ultraFps = config.ultraFps || 55;
+    this.highFps = config.highFps || 45;
+    this.mediumFps = config.mediumFps || 25;
+    this.checkInterval = config.checkInterval || 1500;
+    this.windowSize = config.windowSize || 90;
+    this.hysteresisChecks = config.hysteresisChecks || 4;
+    this.initialLevel = config.initialLevel || QualityLevels.HIGH;
+
+    this.currentLevel = this.initialLevel;
+    this.checks = 0;
+    this.potentialLevel = this.currentLevel;
+    this.listeners = new Set();
+    this.isEnabled = true;
+
+    console.log(
+      `AQSEngine: Initialized for Central Clock. Level: ${this.currentLevel}, FPS Thresholds (U/H/M): ${this.ultraFps}/${this.highFps}/${this.mediumFps}, Hysteresis Checks: ${this.hysteresisChecks}`
+    );
+
+    // ✅ ENHANCED: Use stabilized manager
+    this.stabilizedManager = stabilizedManager;
+  }
+
+  handleFPSUpdate(fps) {
+    if (!this.isEnabled) return;
+
+    // ✅ ENHANCED: Route through stabilized manager
+    const newTier = this.stabilizedManager.updateFPS(fps);
+    
+    // Only emit if tier actually changed
+    if (newTier !== this.currentLevel) {
+      const oldLevel = this.currentLevel;
+      this.currentLevel = newTier;
+      
+      console.log(`✅ AQSEngine: STABLE QUALITY TIER CHANGED: ${oldLevel} → ${newTier} (FPS: ${fps.toFixed(1)})`);
+      
+      // Notify listeners
+      this.listeners.forEach(callback => {
+        try {
+          callback(newTier);
+        } catch (error) {
+          console.error('AQSEngine: Listener callback error:', error);
+        }
+      });
+    }
+  }
+
+  subscribe(callback) {
+    this.listeners.add(callback);
+    callback(this.currentLevel);
+    
+    return () => {
+      this.listeners.delete(callback);
+    };
+  }
+
+  getCurrentLevel() {
+    return this.currentLevel;
+  }
+
+  setEnabled(enabled) {
+    this.isEnabled = enabled;
+    console.log(`AQSEngine: ${enabled ? 'Enabled' : 'Disabled'}`);
+  }
+
+  getDebugInfo() {
+    return {
+      currentLevel: this.currentLevel,
+      potentialLevel: this.stabilizedManager.potentialTier,
+      stabilityChecks: this.stabilizedManager.stabilityChecks,
+      fpsHistory: this.stabilizedManager.fpsHistory,
+      fpsVariance: this.stabilizedManager.getFPSVariance(),
+      timeSinceLastChange: Date.now() - this.stabilizedManager.lastTierChange,
+      isEnabled: this.isEnabled,
+      listeners: this.listeners.size,
+      config: {
+        ultraFps: this.ultraFps,
+        highFps: this.highFps,
+        mediumFps: this.mediumFps,
+        checkInterval: this.checkInterval,
+        hysteresisChecks: this.hysteresisChecks
+      }
+    };
+  }
+}
+
+// ✅ ENHANCED: Development access with stability tools
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  window.aqsStabilize = {
+    // Emergency commands for console
+    forceTier: (tier) => {
+      stabilizedManager.changeTier(tier);
+      console.log(`🛠️ Forced tier to ${tier}`);
+    },
+    
+    getTierInfo: () => {
+      console.log('🔍 AQS TIER STABILITY DIAGNOSTIC');
+      console.log('================================');
+      
+      const manager = stabilizedManager;
+      console.log(`Current Tier: ${manager.currentTier}`);
+      console.log(`Potential Tier: ${manager.potentialTier}`);
+      console.log(`Stability Checks: ${manager.stabilityChecks}`);
+      console.log(`FPS History:`, manager.fpsHistory);
+      console.log(`FPS Variance: ${manager.getFPSVariance().toFixed(1)}`);
+      console.log(`Time Since Last Change: ${Date.now() - manager.lastTierChange}ms`);
+      console.log(`Debounce Period: ${ENHANCED_STABILITY_CONFIG.debounceMs}ms`);
+      
+      return {
+        stable: manager.stabilityChecks === 0,
+        variance: manager.getFPSVariance(),
+        recommendation: manager.getFPSVariance() > 10 ? 'Reduce particle count' : 'System stable'
+      };
+    },
+    
+    resetStability: () => {
+      stabilizedManager.stabilityChecks = 0;
+      stabilizedManager.lastTierChange = 0;
+      console.log('🔄 Stability counters reset');
+    },
+    
+    enableConservativeMode: () => {
+      ENHANCED_STABILITY_CONFIG.tiers.ULTRA.minFps = 58;
+      ENHANCED_STABILITY_CONFIG.tiers.HIGH.minFps = 48;
+      ENHANCED_STABILITY_CONFIG.consecutiveChecks = 8;
+      console.log('🛡️ Conservative mode enabled');
+    }
+  };
+
+  console.log('✅ Quality tier stabilization loaded');
+  console.log('🎮 Use window.aqsStabilize.getTierInfo() to check stability');
+  console.log('🛠️ Use window.aqsStabilize.forceTier("HIGH") for manual control');
+}
+--- src/core/CentralEventClock.js ---
+
+// src/core/CentralEventClock.js
+// ✅ PHASE 2B OPTIMIZATION: Performance Profiling + Adaptive Throttling + Advanced EventEmitter
+// ✅ CLOCK OPTIMIZATION: Intelligent frame pacing with performance monitoring
+
+import mitt from 'mitt';
+
+/**
+ * ✅ ENHANCED CENTRAL EVENT CLOCK - Performance Optimized
+ * - Advanced performance profiling and adaptive throttling
+ * - Intelligent frame pacing based on device capabilities
+ * - Memory-efficient event emission with listener optimization
+ * - Comprehensive performance monitoring and reporting
+ */
+
+// ✅ ENHANCED: Performance profiler for clock operations
+class ClockPerformanceProfiler {
+  constructor() {
+    this.enabled = import.meta.env.DEV;
+    this.metrics = {
+      frameTime: {
+        current: 0,
+        average: 16.67,
+        min: Infinity,
+        max: 0,
+        samples: [],
+        maxSamples: 120 // 2 seconds at 60fps
+      },
+      jank: {
+        count: 0,
+        ratio: 0,
+        threshold: 33.4, // >30fps
+        recentJanks: []
+      },
+      events: {
+        emitted: 0,
+        totalTime: 0,
+        averageEmissionTime: 0,
+        listenerCounts: new Map()
+      },
+      performance: {
+        grade: 'A',
+        targetFPS: 60,
+        actualFPS: 60,
+        efficiency: 1.0,
+        recommendations: []
+      }
+    };
+    
+    this.lastFrameTime = 0;
+    this.frameStartTime = 0;
+  }
+  
+  startFrame() {
+    this.frameStartTime = performance.now();
+  }
+  
+  endFrame() {
+    if (!this.enabled) return;
+    
+    const endTime = performance.now();
+    const frameTime = endTime - this.frameStartTime;
+    
+    // Update frame time metrics
+    this.metrics.frameTime.current = frameTime;
+    this.metrics.frameTime.min = Math.min(this.metrics.frameTime.min, frameTime);
+    this.metrics.frameTime.max = Math.max(this.metrics.frameTime.max, frameTime);
+    
+    // Add to samples and maintain buffer
+    this.metrics.frameTime.samples.push(frameTime);
+    if (this.metrics.frameTime.samples.length > this.metrics.frameTime.maxSamples) {
+      this.metrics.frameTime.samples.shift();
+    }
+    
+    // Calculate rolling average
+    this.metrics.frameTime.average = 
+      this.metrics.frameTime.samples.reduce((sum, time) => sum + time, 0) / 
+      this.metrics.frameTime.samples.length;
+    
+    // Update FPS
+    this.metrics.performance.actualFPS = frameTime > 0 ? 1000 / frameTime : 0;
+    
+    // Track jank (frames significantly over target)
+    if (frameTime > this.metrics.jank.threshold) {
+      this.metrics.jank.count++;
+      this.metrics.jank.recentJanks.push({
+        frameTime,
+        timestamp: endTime
+      });
+      
+      // Keep only recent janks (last 5 seconds)
+      const fiveSecondsAgo = endTime - 5000;
+      this.metrics.jank.recentJanks = this.metrics.jank.recentJanks.filter(
+        jank => jank.timestamp > fiveSecondsAgo
+      );
+    }
+    
+    // Calculate jank ratio
+    const totalFrames = this.metrics.frameTime.samples.length;
+    const recentJankCount = this.metrics.jank.recentJanks.length;
+    this.metrics.jank.ratio = totalFrames > 0 ? recentJankCount / totalFrames : 0;
+    
+    // Update performance grade
+    this.updatePerformanceGrade();
+  }
+  
+  recordEventEmission(eventType, listenerCount, emissionTime) {
+    if (!this.enabled) return;
+    
+    this.metrics.events.emitted++;
+    this.metrics.events.totalTime += emissionTime;
+    this.metrics.events.averageEmissionTime = 
+      this.metrics.events.totalTime / this.metrics.events.emitted;
+    
+    this.metrics.events.listenerCounts.set(eventType, listenerCount);
+  }
+  
+  updatePerformanceGrade() {
+    const fps = this.metrics.performance.actualFPS;
+    const jankRatio = this.metrics.jank.ratio;
+    const frameTime = this.metrics.frameTime.average;
+    
+    let grade = 'A';
+    let efficiency = 1.0;
+    const recommendations = [];
+    
+    if (fps < 30) {
+      grade = 'F';
+      efficiency = 0.3;
+      recommendations.push('Critical: FPS below 30, consider reducing quality');
+    } else if (fps < 45) {
+      grade = 'D';
+      efficiency = 0.5;
+      recommendations.push('Poor: FPS below 45, optimize performance');
+    } else if (fps < 55) {
+      grade = 'C';
+      efficiency = 0.7;
+      recommendations.push('Fair: FPS below target, minor optimizations needed');
+    } else if (fps < 65) {
+      grade = 'B';
+      efficiency = 0.85;
+    }
+    
+    if (jankRatio > 0.1) {
+      grade = Math.max(grade, 'C');
+      efficiency = Math.min(efficiency, 0.7);
+      recommendations.push('High jank ratio detected, consider frame pacing');
+    }
+    
+    if (frameTime > 20) {
+      efficiency = Math.min(efficiency, 0.8);
+      recommendations.push('High frame time variance, consider adaptive throttling');
+    }
+    
+    this.metrics.performance.grade = grade;
+    this.metrics.performance.efficiency = efficiency;
+    this.metrics.performance.recommendations = recommendations;
+  }
+  
+  getMetrics() {
+    return { ...this.metrics };
+  }
+  
+  reset() {
+    this.metrics.frameTime.samples = [];
+    this.metrics.jank.count = 0;
+    this.metrics.jank.recentJanks = [];
+    this.metrics.events.emitted = 0;
+    this.metrics.events.totalTime = 0;
+    this.metrics.events.listenerCounts.clear();
+  }
+}
+
+// ✅ ENHANCED: Adaptive throttling system
+class AdaptiveThrottler {
+  constructor() {
+    this.targetFPS = 60;
+    this.currentThrottle = 0; // 0 = no throttle, 1 = maximum throttle
+    this.lastThrottleAdjustment = 0;
+    this.adjustmentInterval = 1000; // 1 second
+    this.performanceHistory = [];
+    this.maxHistoryLength = 60; // 1 minute of data
+    
+    // Throttling configuration
+    this.config = {
+      minFPS: 30,
+      targetFPS: 60,
+      maxThrottle: 0.5,
+      aggressiveness: 0.1, // How quickly to adjust throttling
+      stabilityThreshold: 5, // Frames needed for stable performance
+      emergencyThreshold: 20 // FPS threshold for emergency throttling
+    };
+  }
+  
+  updatePerformance(fps, frameTime, jankRatio) {
+    const now = performance.now();
+    
+    // Add to performance history
+    this.performanceHistory.push({
+      fps,
+      frameTime,
+      jankRatio,
+      timestamp: now,
+      throttle: this.currentThrottle
+    });
+    
+    // Maintain history size
+    if (this.performanceHistory.length > this.maxHistoryLength) {
+      this.performanceHistory.shift();
+    }
+    
+    // Adjust throttling if needed
+    if (now - this.lastThrottleAdjustment > this.adjustmentInterval) {
+      this.adjustThrottling(fps, frameTime, jankRatio);
+      this.lastThrottleAdjustment = now;
+    }
+  }
+  
+  adjustThrottling(fps, frameTime, jankRatio) {
+    const prevThrottle = this.currentThrottle;
+    
+    // Emergency throttling for very low FPS
+    if (fps < this.config.emergencyThreshold) {
+      this.currentThrottle = Math.min(this.config.maxThrottle, this.currentThrottle + 0.2);
+      this.logThrottleChange('emergency', prevThrottle, this.currentThrottle);
+      return;
+    }
+    
+    // Calculate recent performance trend
+    const recentFrames = this.performanceHistory.slice(-this.config.stabilityThreshold);
+    if (recentFrames.length < this.config.stabilityThreshold) return;
+    
+    const avgFPS = recentFrames.reduce((sum, frame) => sum + frame.fps, 0) / recentFrames.length;
+    const avgJank = recentFrames.reduce((sum, frame) => sum + frame.jankRatio, 0) / recentFrames.length;
+    
+    // Determine if we need to increase or decrease throttling
+    let targetThrottle = this.currentThrottle;
+    
+    if (avgFPS < this.config.targetFPS - 5 || avgJank > 0.1) {
+      // Performance is poor, increase throttling
+      targetThrottle = Math.min(
+        this.config.maxThrottle, 
+        this.currentThrottle + this.config.aggressiveness
+      );
+    } else if (avgFPS > this.config.targetFPS + 5 && avgJank < 0.05) {
+      // Performance is good, decrease throttling
+      targetThrottle = Math.max(
+        0, 
+        this.currentThrottle - this.config.aggressiveness * 0.5
+      );
+    }
+    
+    // Apply throttle change
+    if (Math.abs(targetThrottle - this.currentThrottle) > 0.01) {
+      this.currentThrottle = targetThrottle;
+      this.logThrottleChange('adaptive', prevThrottle, this.currentThrottle);
+    }
+  }
+  
+  logThrottleChange(reason, oldThrottle, newThrottle) {
+    if (import.meta.env.DEV) {
+      console.debug(`🎯 Throttle ${reason}: ${(oldThrottle * 100).toFixed(1)}% → ${(newThrottle * 100).toFixed(1)}%`);
+    }
+  }
+  
+  getThrottledFrameTime() {
+    const baseFrameTime = 1000 / this.targetFPS; // 16.67ms for 60fps
+    const throttledFrameTime = baseFrameTime * (1 + this.currentThrottle);
+    return throttledFrameTime;
+  }
+  
+  shouldSkipFrame(lastFrameTime) {
+    if (this.currentThrottle <= 0) return false;
+    
+    const targetFrameTime = this.getThrottledFrameTime();
+    const timeSinceLastFrame = performance.now() - lastFrameTime;
+    
+    return timeSinceLastFrame < targetFrameTime;
+  }
+  
+  getStats() {
+    return {
+      currentThrottle: this.currentThrottle,
+      targetFPS: this.targetFPS,
+      throttledFPS: this.targetFPS / (1 + this.currentThrottle),
+      performanceHistoryLength: this.performanceHistory.length,
+      config: this.config
+    };
+  }
+  
+  reset() {
+    this.currentThrottle = 0;
+    this.performanceHistory = [];
+    this.lastThrottleAdjustment = 0;
+  }
+}
+
+// ✅ ENHANCED: Optimized event emitter with listener management
+class OptimizedEventEmitter {
+  constructor() {
+    this.emitter = mitt();
+    this.listenerCounts = new Map();
+    this.emissionStats = new Map();
+    this.enabled = true;
+  }
+  
+  on(type, handler) {
+    this.emitter.on(type, handler);
+    this.listenerCounts.set(type, (this.listenerCounts.get(type) || 0) + 1);
+    return () => this.off(type, handler);
+  }
+  
+  off(type, handler) {
+    this.emitter.off(type, handler);
+    const count = this.listenerCounts.get(type) || 1;
+    this.listenerCounts.set(type, Math.max(0, count - 1));
+  }
+  
+  emit(type, data) {
+    if (!this.enabled) return;
+    
+    const startTime = performance.now();
+    const listenerCount = this.listenerCounts.get(type) || 0;
+    
+    if (listenerCount > 0) {
+      this.emitter.emit(type, data);
+    }
+    
+    const emissionTime = performance.now() - startTime;
+    
+    // Track emission statistics
+    if (!this.emissionStats.has(type)) {
+      this.emissionStats.set(type, {
+        count: 0,
+        totalTime: 0,
+        averageTime: 0,
+        maxTime: 0,
+        listenerCount: 0
+      });
+    }
+    
+    const stats = this.emissionStats.get(type);
+    stats.count++;
+    stats.totalTime += emissionTime;
+    stats.averageTime = stats.totalTime / stats.count;
+    stats.maxTime = Math.max(stats.maxTime, emissionTime);
+    stats.listenerCount = listenerCount;
+    
+    return { emissionTime, listenerCount };
+  }
+  
+  getStats() {
+    return {
+      listenerCounts: Object.fromEntries(this.listenerCounts),
+      emissionStats: Object.fromEntries(this.emissionStats),
+      totalListeners: Array.from(this.listenerCounts.values()).reduce((sum, count) => sum + count, 0)
+    };
+  }
+  
+  reset() {
+    this.emissionStats.clear();
+  }
+  
+  setEnabled(enabled) {
+    this.enabled = enabled;
+  }
+}
+
+// ✅ ENHANCED: Main clock implementation
+let isRunning = false;
+let startTime = 0;
+let frameCount = 0;
+let lastFrameTime = 0;
+let fpsBuffer = [];
+let fpsBufferSize = 60; // 1 second at 60fps
+let clockDrift = 0;
+
+// ✅ ENHANCED: Initialize systems
+const profiler = new ClockPerformanceProfiler();
+const throttler = new AdaptiveThrottler();
+const optimizedEmitter = new OptimizedEventEmitter();
+
+// ✅ LEGACY: Callback support
+const tickCallbacks = [];
+const resizeCallbacks = [];
+const visibilityCallbacks = [];
+
+// ✅ RAF LOOP: Enhanced with performance monitoring and adaptive throttling
+let rafId = null;
+let skippedFrames = 0;
+
+function tick(currentTime) {
+  if (!isRunning) return;
+
+  profiler.startFrame();
+  
+  // Check if we should skip this frame due to throttling
+  if (throttler.shouldSkipFrame(lastFrameTime)) {
+    skippedFrames++;
+    rafId = requestAnimationFrame(tick);
+    return;
+  }
+
+  // Calculate delta time
+  const deltaTime = lastFrameTime ? currentTime - lastFrameTime : 16.67;
+  lastFrameTime = currentTime;
+  frameCount++;
+
+  // Update FPS buffer
+  if (fpsBuffer.length >= fpsBufferSize) {
+    fpsBuffer.shift();
+  }
+  fpsBuffer.push(deltaTime);
+
+  // Calculate performance metrics
+  const avgDelta = fpsBuffer.reduce((sum, dt) => sum + dt, 0) / fpsBuffer.length;
+  const avgFps = avgDelta > 0 ? 1000 / avgDelta : 0;
+  const jankCount = fpsBuffer.filter(dt => dt > 33.4).length;
+  const jankRatio = jankCount / fpsBuffer.length;
+
+  // Update adaptive throttling
+  throttler.updatePerformance(avgFps, avgDelta, jankRatio);
+
+  // Calculate elapsed time and clock drift
+  const elapsedTime = currentTime - startTime;
+  const expectedTime = frameCount * 16.67; // 60fps baseline
+  clockDrift = elapsedTime - expectedTime;
+
+  // ✅ ENHANCED: Optimized event emission
+  const tickEmission = optimizedEmitter.emit('tick', { deltaTime, currentTime, avgFps, jankRatio });
+  
+  // Emit FPS window event periodically
+  if (frameCount % fpsBufferSize === 0) {
+    const fpsEmission = optimizedEmitter.emit('fpsWindow', { 
+      avgFps, 
+      jankRatio, 
+      frameCount, 
+      throttleStats: throttler.getStats(),
+      skippedFrames 
+    });
+    
+    profiler.recordEventEmission('fpsWindow', fpsEmission.listenerCount, fpsEmission.emissionTime);
+    
+    // Reset skipped frames counter
+    skippedFrames = 0;
+  }
+
+  profiler.recordEventEmission('tick', tickEmission.listenerCount, tickEmission.emissionTime);
+
+  // ✅ LEGACY: Callback support
+  tickCallbacks.forEach(callback => {
+    try {
+      callback(deltaTime, currentTime);
+    } catch (error) {
+      console.error('CentralEventClock: Tick callback error:', error);
+    }
+  });
+
+  profiler.endFrame();
+
+  // Continue RAF loop
+  rafId = requestAnimationFrame(tick);
+}
+
+// ✅ ENHANCED: Resize handler with optimization
+function handleResize() {
+  const resizeData = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    devicePixelRatio: window.devicePixelRatio || 1,
+    timestamp: performance.now(),
+  };
+
+  // Legacy callbacks
+  resizeCallbacks.forEach(callback => {
+    try {
+      callback(resizeData);
+    } catch (error) {
+      console.error('CentralEventClock: Resize callback error:', error);
+    }
+  });
+
+  // ✅ ENHANCED: Optimized emission
+  const emission = optimizedEmitter.emit('resize', resizeData);
+  profiler.recordEventEmission('resize', emission.listenerCount, emission.emissionTime);
+}
+
+// ✅ ENHANCED: Visibility handler with performance awareness
+function handleVisibilityChange() {
+  const visibilityData = {
+    hidden: document.hidden,
+    visibilityState: document.visibilityState,
+    timestamp: performance.now(),
+  };
+
+  // Legacy callbacks
+  visibilityCallbacks.forEach(callback => {
+    try {
+      callback(visibilityData);
+    } catch (error) {
+      console.error('CentralEventClock: Visibility callback error:', error);
+    }
+  });
+
+  // ✅ ENHANCED: Optimized emission
+  const emission = optimizedEmitter.emit('visibility', visibilityData);
+  profiler.recordEventEmission('visibility', emission.listenerCount, emission.emissionTime);
+
+  // Auto-pause/resume with performance preservation
+  if (document.hidden && isRunning) {
+    console.log('🔄 CentralEventClock: Auto-pausing (page hidden) - preserving performance state');
+    centralEventClock.pause();
+  } else if (!document.hidden && !isRunning) {
+    console.log('🔄 CentralEventClock: Auto-resuming (page visible) - restoring performance state');
+    centralEventClock.resume();
+  }
+}
+
+// ✅ ENHANCED: Main clock object with performance optimization
+const centralEventClock = {
+  // ✅ EXISTING API: Preserved for compatibility
+  start() {
+    if (isRunning) {
+      console.warn('CentralEventClock: Already running');
+      return;
+    }
+
+    isRunning = true;
+    startTime = performance.now();
+    lastFrameTime = 0;
+    frameCount = 0;
+    fpsBuffer = [];
+    clockDrift = 0;
+    skippedFrames = 0;
+
+    // Reset performance systems
+    profiler.reset();
+    throttler.reset();
+    optimizedEmitter.reset();
+
+    // Start RAF loop
+    rafId = requestAnimationFrame(tick);
+    
+    // Add event listeners
+    window.addEventListener('resize', handleResize, { passive: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
+
+    console.log('🎯 CentralEventClock: Started with performance profiling and adaptive throttling');
+    optimizedEmitter.emit('start', { timestamp: startTime });
+  },
+
+  stop() {
+    if (!isRunning) {
+      console.warn('CentralEventClock: Already stopped');
+      return;
+    }
+
+    isRunning = false;
+    
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    // Remove event listeners
+    window.removeEventListener('resize', handleResize);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+    const finalMetrics = profiler.getMetrics();
+    const throttleStats = throttler.getStats();
+
+    console.log('🛑 CentralEventClock: Stopped');
+    console.log('📊 Final Performance Metrics:', finalMetrics);
+    
+    optimizedEmitter.emit('stop', { 
+      frameCount, 
+      elapsedTime: performance.now() - startTime,
+      finalMetrics,
+      throttleStats
+    });
+  },
+
+  pause() {
+    if (!isRunning) return;
+    
+    isRunning = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    
+    console.log('⏸️ CentralEventClock: Paused (performance state preserved)');
+    optimizedEmitter.emit('pause', { frameCount, timestamp: performance.now() });
+  },
+
+  resume() {
+    if (isRunning) return;
+    
+    isRunning = true;
+    lastFrameTime = 0; // Reset to prevent large delta
+    rafId = requestAnimationFrame(tick);
+    
+    console.log('▶️ CentralEventClock: Resumed');
+    optimizedEmitter.emit('resume', { frameCount, timestamp: performance.now() });
+  },
+
+  // ✅ ENHANCED: Comprehensive metrics
+  getMetrics() {
+    const currentTime = performance.now();
+    const elapsedTime = isRunning ? currentTime - startTime : 0;
+    const avgDelta = fpsBuffer.length > 0 ? 
+      fpsBuffer.reduce((sum, dt) => sum + dt, 0) / fpsBuffer.length : 16.67;
+    const currentFps = avgDelta > 0 ? 1000 / avgDelta : 0;
+    const jankCount = fpsBuffer.filter(dt => dt > 33.4).length;
+    const jankRatio = fpsBuffer.length > 0 ? jankCount / fpsBuffer.length : 0;
+
+    return {
+      // Basic metrics
+      isRunning,
+      frameCount,
+      elapsedTime,
+      clockDrift,
+      currentFps,
+      avgFrameTime: avgDelta,
+      fpsBufferSize: fpsBuffer.length,
+      startTime,
+      
+      // ✅ ENHANCED: Performance metrics
+      jankCount,
+      jankRatio,
+      skippedFrames,
+      performance: profiler.getMetrics(),
+      throttling: throttler.getStats(),
+      events: optimizedEmitter.getStats()
+    };
+  },
+
+  // ✅ ENHANCED: Performance controls
+  setTargetFPS(fps) {
+    throttler.targetFPS = fps;
+    throttler.config.targetFPS = fps;
+    console.log(`🎯 CentralEventClock: Target FPS set to ${fps}`);
+  },
+
+  enableAdaptiveThrottling(enabled = true) {
+    if (enabled) {
+      throttler.reset();
+      console.log('🎯 CentralEventClock: Adaptive throttling enabled');
+    } else {
+      throttler.currentThrottle = 0;
+      console.log('🎯 CentralEventClock: Adaptive throttling disabled');
+    }
+  },
+
+  forceThrottle(throttleRatio) {
+    throttler.currentThrottle = Math.max(0, Math.min(0.5, throttleRatio));
+    console.log(`🎯 CentralEventClock: Forced throttle to ${(throttleRatio * 100).toFixed(1)}%`);
+  },
+
+  // ✅ ENHANCED: Performance analysis
+  analyzePerformance() {
+    const metrics = this.getMetrics();
+    const analysis = {
+      grade: metrics.performance.performance.grade,
+      efficiency: metrics.performance.performance.efficiency,
+      recommendations: metrics.performance.performance.recommendations,
+      
+      framePacing: {
+        stable: metrics.performance.frameTime.max - metrics.performance.frameTime.min < 10,
+        variance: metrics.performance.frameTime.max - metrics.performance.frameTime.min,
+        target: 16.67
+      },
+      
+      throttling: {
+        active: metrics.throttling.currentThrottle > 0,
+        effectiveness: metrics.skippedFrames / Math.max(metrics.frameCount, 1),
+        targetReached: metrics.currentFps >= metrics.throttling.targetFPS * 0.9
+      },
+      
+      events: {
+        efficient: metrics.events.emissionStats.tick?.averageTime < 1,
+        listenerOptimal: metrics.events.totalListeners < 50
+      }
+    };
+    
+    return analysis;
+  },
+
+  // ✅ LEGACY API: Preserved
+  addTickCallback(callback) {
+    if (typeof callback === 'function') {
+      tickCallbacks.push(callback);
+    }
+  },
+
+  removeTickCallback(callback) {
+    const index = tickCallbacks.indexOf(callback);
+    if (index > -1) {
+      tickCallbacks.splice(index, 1);
+    }
+  },
+
+  addResizeCallback(callback) {
+    if (typeof callback === 'function') {
+      resizeCallbacks.push(callback);
+    }
+  },
+
+  removeResizeCallback(callback) {
+    const index = resizeCallbacks.indexOf(callback);
+    if (index > -1) {
+      resizeCallbacks.splice(index, 1);
+    }
+  },
+
+  addVisibilityCallback(callback) {
+    if (typeof callback === 'function') {
+      visibilityCallbacks.push(callback);
+    }
+  },
+
+  removeVisibilityCallback(callback) {
+    const index = visibilityCallbacks.indexOf(callback);
+    if (index > -1) {
+      visibilityCallbacks.splice(index, 1);
+    }
+  },
+
+  // ✅ ENHANCED: EventEmitter API
+  on: optimizedEmitter.on.bind(optimizedEmitter),
+  off: optimizedEmitter.off.bind(optimizedEmitter),
+  emit: optimizedEmitter.emit.bind(optimizedEmitter),
+
+  addEventListener(event, callback) {
+    return this.on(event, callback);
+  },
+
+  removeEventListener(event, callback) {
+    return this.off(event, callback);
+  },
+
+  // ✅ ENHANCED: Development and debugging
+  getEventListeners() {
+    return optimizedEmitter.getStats();
+  },
+
+  testEventEmitter() {
+    console.log('🧪 Testing enhanced EventEmitter...');
+    
+    const testCallback = (data) => {
+      console.log('✅ Test event received:', data);
+    };
+
+    this.on('test', testCallback);
+    this.emit('test', { message: 'Enhanced EventEmitter working correctly' });
+    this.off('test', testCallback);
+    
+    console.log('🧪 Enhanced EventEmitter test complete');
+    return true;
+  },
+
+  // ✅ ENHANCED: Performance testing
+  runPerformanceTest(duration = 5000) {
+    console.log(`🧪 Running ${duration}ms performance test...`);
+    
+    const startMetrics = this.getMetrics();
+    const startTime = performance.now();
+    
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const endMetrics = this.getMetrics();
+        const endTime = performance.now();
+        
+        const results = {
+          duration: endTime - startTime,
+          framesDuring: endMetrics.frameCount - startMetrics.frameCount,
+          averageFPS: (endMetrics.frameCount - startMetrics.frameCount) / ((endTime - startTime) / 1000),
+          jankRatio: endMetrics.jankRatio,
+          throttleUsed: endMetrics.throttling.currentThrottle,
+          grade: endMetrics.performance.performance.grade,
+          efficiency: endMetrics.performance.performance.efficiency
+        };
+        
+        console.log('✅ Performance test completed:', results);
+        resolve(results);
+      }, duration);
+    });
+  }
+};
+
+// ✅ ENHANCED: Development access
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  window.centralEventClock = centralEventClock;
+  
+  window.clockDebug = {
+    getMetrics: () => centralEventClock.getMetrics(),
+    getListeners: () => centralEventClock.getEventListeners(),
+    testEvents: () => centralEventClock.testEventEmitter(),
+    analyzePerformance: () => centralEventClock.analyzePerformance(),
+    runPerfTest: (duration) => centralEventClock.runPerformanceTest(duration),
+    
+    // ✅ ENHANCED: Performance controls
+    setTargetFPS: (fps) => centralEventClock.setTargetFPS(fps),
+    enableThrottling: (enabled) => centralEventClock.enableAdaptiveThrottling(enabled),
+    forceThrottle: (ratio) => centralEventClock.forceThrottle(ratio),
+    
+    // ✅ ENHANCED: Manual controls
+    start: () => centralEventClock.start(),
+    stop: () => centralEventClock.stop(),
+    pause: () => centralEventClock.pause(),
+    resume: () => centralEventClock.resume(),
+    
+    // ✅ ENHANCED: Stress testing
+    stressTest: () => {
+      console.log('🧪 Running stress test with 30 FPS target...');
+      centralEventClock.setTargetFPS(30);
+      
+      return centralEventClock.runPerformanceTest(3000).then(results => {
+        centralEventClock.setTargetFPS(60);
+        console.log('🧪 Stress test completed, FPS restored to 60');
+        return results;
+      });
+    }
+  };
+  
+  console.log('🎯 CentralEventClock: Enhanced with performance profiling and adaptive throttling');
+  console.log('🔧 Available: window.centralEventClock, window.clockDebug');
+  console.log('🧪 Test performance: window.clockDebug.runPerfTest(5000)');
+  console.log('⚡ Stress test: window.clockDebug.stressTest()');
+  console.log('📊 Analysis: window.clockDebug.analyzePerformance()');
+}
+
+export default centralEventClock;
+
+/*
+✅ PHASE 2B OPTIMIZATION: CENTRALEVENTCLOCK.JS ENHANCED ✅
+
+🚀 PERFORMANCE PROFILING:
+- ✅ Real-time frame time monitoring with rolling averages
+- ✅ Jank detection and ratio calculation for performance grading
+- ✅ Event emission timing and listener count tracking
+- ✅ Comprehensive performance grading (A-F) with recommendations
+
+⚡ ADAPTIVE THROTTLING:
+- ✅ Intelligent frame pacing based on actual performance
+- ✅ Emergency throttling for critical performance drops
+- ✅ Performance history tracking for trend analysis
+- ✅ Configurable throttling aggressiveness and thresholds
+
+🧠 OPTIMIZED EVENT SYSTEM:
+- ✅ Memory-efficient event emission with listener optimization
+- ✅ Event emission statistics and performance tracking
+- ✅ Optimized listener management with count tracking
+- ✅ Backward compatibility with legacy callback system
+
+💎 ADVANCED FEATURES:
+- ✅ Performance analysis with detailed metrics and recommendations
+- ✅ Stress testing capabilities with configurable duration
+- ✅ Manual throttling controls for testing and optimization
+- ✅ Comprehensive debugging tools and performance visualization
+
+🛡️ RELIABILITY FEATURES:
+- ✅ Graceful degradation under performance pressure
+- ✅ State preservation during pause/resume cycles
+- ✅ Error isolation in callback and event systems
+- ✅ Automatic performance recovery mechanisms
+
+Ready for Phase 2C: Component Integration Efficiency!
+*/
+--- src/stores/atoms/clockAtom.js ---
+
+// src/stores/atoms/clockAtom.js
+const createClockAtom = () => {
+  let state = { 
+    fps: 60, 
+    deltaMs: 16.67, 
+    averageFrameTime: 16.67, 
+    jankCount: 0, 
+    performanceGrade: 'A' 
+  };
+  const listeners = new Set();
+  
+  return {
+    getState: () => state,
+    setState: (newState) => {
+      state = { ...state, ...newState };
+      listeners.forEach(fn => fn(state));
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    }
+  };
+};
+
+export const clockAtom = createClockAtom();
+
+--- src/components/webgl/WebGLBackground.jsx ---
+
+// src/components/webgl/WebGLBackground.jsx
+// FINAL VERSION: Beautiful animated consciousness particles
+
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { stageAtom } from '../../stores/atoms/stageAtom.js';
+import consciousnessEngine from '../../engine/ConsciousnessEngine.js';
+
+function WebGLBackground() {
+  const meshRef = useRef();
+  const [blueprint, setBlueprint] = useState(null);
+  
+  // Get current stage
+  const [currentStage, setCurrentStage] = useState('genesis');
+  const [stageProgress, setStageProgress] = useState(0);
+  
+  useEffect(() => {
+    const unsubscribe = stageAtom.subscribe((state) => {
+      setCurrentStage(state.currentStage || 'genesis');
+      setStageProgress(state.stageProgress || 0);
+    });
+    return unsubscribe;
+  }, []);
+  
+  // Generate particles from consciousness engine
+  useEffect(() => {
+    async function generate() {
+      try {
+        const data = await consciousnessEngine.generateConstellationParticleData(2000, { 
+          stageName: currentStage 
+        });
+        if (data) {
+          setBlueprint(data);
+          console.log('✅ Consciousness particles loaded:', currentStage);
+        }
+      } catch (error) {
+        console.error('Failed to generate blueprint:', error);
+      }
+    }
+    generate();
+  }, [currentStage]);
+  
+  // Create geometry from blueprint with all attributes
+  const geometry = useMemo(() => {
+    if (!blueprint) return null;
+    
+    const geo = new THREE.BufferGeometry();
+    
+    // Positions
+    geo.setAttribute('position', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    geo.setAttribute('brainPosition', new THREE.BufferAttribute(blueprint.allenAtlasPositions, 3));
+    
+    // Animation seeds for floating movement
+    geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
+    
+    // Size and opacity variations
+    geo.setAttribute('size', new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
+    geo.setAttribute('opacity', new THREE.BufferAttribute(blueprint.opacityData, 1));
+    
+    return geo;
+  }, [blueprint]);
+
+  // Custom shader material for advanced effects
+  const material = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color('#00ff88') },
+        uStageProgress: { value: 0 },
+        uPointSize: { value: 30.0 }
+      },
+      vertexShader: `
+        attribute vec3 atmosphericPosition;
+        attribute vec3 brainPosition;
+        attribute vec3 animationSeed;
+        attribute float size;
+        attribute float opacity;
+        
+        uniform float uTime;
+        uniform float uStageProgress;
+        uniform float uPointSize;
+        
+        varying float vOpacity;
+        
+        void main() {
+          // Interpolate between atmospheric and brain positions
+          vec3 pos = mix(atmosphericPosition, brainPosition, uStageProgress);
+          
+          // Add floating animation
+          pos += animationSeed * sin(uTime * animationSeed) * 0.5;
+          
+          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          
+          // Size with depth fade
+          float depth = -mvPosition.z;
+          gl_PointSize = uPointSize * size * (1.0 / depth) * 100.0;
+          
+          vOpacity = opacity;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        varying float vOpacity;
+        
+        void main() {
+          // Circular particle shape
+          vec2 xy = gl_PointCoord.xy - vec2(0.5);
+          float r = length(xy);
+          if (r > 0.5) discard;
+          
+          // Soft edges
+          float softness = 1.0 - smoothstep(0.0, 0.5, r);
+          
+          gl_FragColor = vec4(uColor, vOpacity * softness * 0.8);
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+  }, []);
+
+  // Animate
+  useFrame((state) => {
+    if (meshRef.current && material) {
+      // Update time uniform
+      material.uniforms.uTime.value = state.clock.elapsedTime;
+      material.uniforms.uStageProgress.value = stageProgress;
+      
+      // Gentle rotation
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      
+      // Update color based on stage
+      const stageColors = {
+        genesis: '#00ff41',
+        discipline: '#0066ff',
+        neural: '#6600ff',
+        velocity: '#9900ff',
+        architecture: '#00ccff',
+        harmony: '#ffb000',
+        transcendence: '#ffffff'
+      };
+      
+      material.uniforms.uColor.value.set(stageColors[currentStage] || '#00ff88');
+    }
+  });
+
+  if (!geometry || !blueprint) {
+    return null;
+  }
+
+  return (
+    <points ref={meshRef} geometry={geometry} material={material} />
+  );
+}
+
+export default React.memo(WebGLBackground);
+--- src/components/webgl/WebGLCanvas.jsx ---
+
+// src/components/webgl/WebGLCanvas.jsx
+// ✅ COMPLETE WORKING VERSION with all dependencies
+
+import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { PerspectiveCamera } from '@react-three/drei';
+import { stageAtom } from '@/stores/atoms/stageAtom';
+import { qualityAtom } from '@/stores/atoms/qualityAtom';
+import { clockAtom } from '@/stores/atoms/clockAtom';
+import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
+import DebugExpose from '@/components/dev/DebugExpose';
+
+// Lazy load WebGL components
+const WebGLBackground = lazy(() => import('./WebGLBackground'));
+
+// ✅ FIX: WebGL context pool class definition
+class WebGLContextPool {
+  constructor() {
+    this.contextPool = [];
+    this.maxPoolSize = 3;
+    this.activeContexts = new Set();
+    this.contextStats = {
+      created: 0,
+      reused: 0,
+      disposed: 0,
+      maxConcurrent: 0
+    };
+    this.stateCache = new Map();
+  }
+  
+  createOptimizedContext(canvas, contextAttributes = {}) {
+    const optimizedAttributes = {
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance',
+      failIfMajorPerformanceCaveat: false,
+      premultipliedAlpha: false,
+      stencil: false,
+      depth: true,
+      ...contextAttributes
+    };
+    
+    let context = null;
+    try {
+      context = canvas.getContext('webgl2', optimizedAttributes) ||
+                canvas.getContext('webgl', optimizedAttributes);
+    } catch (error) {
+      console.error('WebGLContextPool: Context creation failed:', error);
+    }
+    
+    if (context) {
+      this.contextStats.created++;
+      this.activeContexts.add(context);
+    }
+    
+    return context;
+  }
+  
+  cacheWebGLState(context) {
+    if (!context) return;
+    // Cache state for later restoration
+    this.stateCache.set(context, {
+      timestamp: Date.now()
+    });
+  }
+  
+  getStats() {
+    return { ...this.contextStats };
+  }
+  
+  clearPool() {
+    this.contextPool = [];
+    this.stateCache.clear();
+  }
+}
+
+// ✅ FIX: Performance monitor class
+class CanvasPerformanceMonitor {
+  constructor() {
+    this.metrics = {
+      frameRate: 0,
+      renderTime: 0,
+      memoryUsage: 0,
+      lastUpdate: 0
+    };
+  }
+  
+  updateMetrics(data) {
+    Object.assign(this.metrics, data, { lastUpdate: Date.now() });
+  }
+  
+  getPerformanceGrade() {
+    if (this.metrics.frameRate >= 55) return 'A';
+    if (this.metrics.frameRate >= 45) return 'B';
+    if (this.metrics.frameRate >= 30) return 'C';
+    return 'D';
+  }
+}
+
+// ✅ FIX: Extension interference detection
+const detectAdvancedExtensionInterference = () => {
+  try {
+    const testCanvas = document.createElement('canvas');
+    const ctx = testCanvas.getContext('webgl');
+    const interference = !ctx || typeof ctx.TRIANGLES !== 'number';
+    testCanvas.remove();
+    
+    return {
+      interference,
+      type: interference ? 'webgl_blocked' : 'none'
+    };
+  } catch (error) {
+    return {
+      interference: true,
+      type: 'detection_failed',
+      error: error.message
+    };
+  }
+};
+
+export default function WebGLCanvas() {
+  // ✅ Canvas reference
+  const canvasRef = useRef(null);
+  
+  // ✅ Component state
+  const [webglSupported, setWebglSupported] = useState(true);
+  const [contextLost, setContextLost] = useState(false);
+  const [extensionInterference, setExtensionInterference] = useState(null);
+  const [canvasStrategy, setCanvasStrategy] = useState(0);
+  
+  // ✅ FIX: Initialize systems with useMemo
+  const contextPool = useMemo(() => new WebGLContextPool(), []);
+  const performanceMonitor = useMemo(() => new CanvasPerformanceMonitor(), []);
+  
+  // ✅ Atomic state subscriptions
+  const [stageState, setStageState] = useState(stageAtom.getState());
+  const [qualityState, setQualityState] = useState(qualityAtom.getState());
+  const [clockState, setClockState] = useState(clockAtom.getState());
+  
+  useEffect(() => {
+    const unsubscribeStage = stageAtom.subscribe(setStageState);
+    const unsubscribeQuality = qualityAtom.subscribe(setQualityState);
+    const unsubscribeClock = clockAtom.subscribe((state) => {
+      setClockState(state);
+      performanceMonitor.updateMetrics({ 
+        frameRate: state.fps || 0,
+        renderTime: state.averageFrameTime || 0
+      });
+    });
+
+    return () => {
+      unsubscribeStage();
+      unsubscribeQuality();
+      unsubscribeClock();
+    };
+  }, [performanceMonitor]);
+  
+  // ✅ Extract values
+  const currentStage = stageState.currentStage || 'genesis';
+  const stageProgress = stageState.stageProgress || 0;
+  const webglEnabled = qualityState.webglEnabled !== false;
+  const currentQualityTier = qualityState.currentQualityTier || 'HIGH';
+  const particleCount = qualityAtom.getParticleBudget(currentStage);
+  
+  // ✅ FIX: Event logging with useCallback
+  const addEventLog = useCallback((eventName, payload) => {
+    performanceMonitor.updateMetrics({ 
+      lastEvent: eventName,
+      eventTimestamp: Date.now(),
+      ...payload 
+    });
+    
+    if (import.meta.env.DEV) {
+      console.log(`🎯 Canvas Event: ${eventName}`, payload);
+    }
+  }, [performanceMonitor]);
+  
+  // ✅ Extension interference detection
+  useEffect(() => {
+    const interference = detectAdvancedExtensionInterference();
+    setExtensionInterference(interference);
+    if (interference.interference) {
+      console.warn('[WebGLCanvas] Extension interference detected:', interference);
+      addEventLog('extension_interference_detected', interference);
+    }
+  }, [addEventLog]);
+  
+  // ✅ FIX: Canvas error handler
+  const handleCanvasError = useCallback((error) => {
+    console.error('[WebGLCanvas] Canvas creation failed:', error);
+    addEventLog('webgl_canvas_error', {
+      error: error.message,
+      strategy: canvasStrategy,
+      extensionInterference: extensionInterference?.interference,
+      contextPoolStats: contextPool.getStats()
+    });
+
+    if (canvasStrategy < 2) {
+      console.log(`[WebGLCanvas] Trying fallback strategy ${canvasStrategy + 1}`);
+      setCanvasStrategy(canvasStrategy + 1);
+    } else {
+      console.error('[WebGLCanvas] All strategies failed, disabling WebGL');
+      setWebglSupported(false);
+      contextPool.clearPool();
+    }
+  }, [canvasStrategy, extensionInterference, contextPool, addEventLog]);
+  
+  // ✅ Context loss handling
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleContextLost = (event) => {
+      event.preventDefault();
+      setContextLost(true);
+      console.warn('[WebGLCanvas] WebGL context lost, initiating recovery...');
+      addEventLog('webgl_context_lost', {
+        recovery: 'initiated',
+        extensionInterference: extensionInterference?.interference,
+        contextPoolStats: contextPool.getStats()
+      });
+    };
+
+    const handleContextRestored = () => {
+      setContextLost(false);
+      console.log('[WebGLCanvas] WebGL context restored successfully');
+      addEventLog('webgl_context_restored', {
+        status: 'success',
+        strategy: canvasStrategy,
+        contextPoolStats: contextPool.getStats()
+      });
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [extensionInterference, canvasStrategy, contextPool, addEventLog]);
+  
+  // ✅ Canvas performance monitoring
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        performanceMonitor.updateMetrics({
+          canvasWidth: width,
+          canvasHeight: height,
+          pixelCount: width * height
+        });
+      }
+    });
+
+    resizeObserver.observe(canvas);
+    return () => resizeObserver.disconnect();
+  }, [performanceMonitor]);
+  
+  // ✅ Canvas configuration
+  const canvasConfig = useMemo(() => {
+    const baseConfig = {
+      className: "w-full h-full",
+      gl: {
+        antialias: currentQualityTier !== 'LOW',
+        alpha: true,
+        preserveDrawingBuffer: false,
+        powerPreference: 'high-performance',
+        failIfMajorPerformanceCaveat: false,
+      }
+    };
+
+    switch (canvasStrategy) {
+      case 1:
+        baseConfig.gl.powerPreference = 'default';
+        break;
+      case 2:
+        baseConfig.gl.antialias = false;
+        baseConfig.gl.alpha = false;
+        break;
+    }
+
+    return baseConfig;
+  }, [currentQualityTier, canvasStrategy]);
+  
+  // ✅ Fallback renders
+  if (!webglSupported) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="absolute inset-0 opacity-30">
+          <div className="w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]" />
+        </div>
+        <div className="absolute bottom-4 right-4 bg-black/80 border border-red-600 rounded-lg p-3 text-red-400 font-mono text-sm">
+          <div className="font-bold mb-2">⚛️ WebGL Not Supported</div>
+          <div>Stage: {currentStage}</div>
+          <div>Progress: {Math.round(stageProgress * 100)}%</div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (contextLost) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-green-400 text-lg font-mono">Restoring WebGL context...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="fixed inset-0 w-full h-full">
+      <Canvas
+        ref={canvasRef}
+        {...canvasConfig}
+        onCreated={({ gl, scene, camera, size }) => {
+          const startTime = performance.now();
+          
+          // Access canvas element
+          const canvasElement = canvasRef.current;
+          if (canvasElement) {
+            canvasElement.setAttribute('data-webgl-version', gl.capabilities.isWebGL2 ? '2' : '1');
+            canvasElement.setAttribute('data-quality-tier', currentQualityTier);
+            canvasElement.setAttribute('data-particle-count', particleCount.toString());
+          }
+          
+          // Context optimization
+          const context = gl.getContext();
+          contextPool.cacheWebGLState(context);
+          
+          // Optimal WebGL settings
+          gl.setClearColor('#000000', 1);
+          gl.shadowMap.enabled = false;
+          scene.fog = null;
+          
+          // Check point size range
+          const glContext = gl.getContext();
+          const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
+          
+          const setupTime = performance.now() - startTime;
+
+          console.log('[WebGLCanvas] Canvas created with constellation optimization', {
+            renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
+            maxTextures: gl.capabilities.maxTextures,
+            maxVertexAttributes: gl.capabilities.maxVertexAttributes,
+            pointSizeRange: pointSizeRange,
+            canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
+            setupTime: setupTime.toFixed(2) + 'ms',
+            contextPoolStats: contextPool.getStats(),
+            quality: currentQualityTier,
+            particles: particleCount,
+            stage: currentStage,
+            strategy: canvasStrategy
+          });
+
+          addEventLog('webgl_canvas_created', {
+            webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
+            point_size_range: pointSizeRange,
+            setup_time: setupTime
+          });
+        }}
+        onError={handleCanvasError}
+      >
+        {/* ✅ Optimal camera for constellation viewing */}
+        <PerspectiveCamera
+          makeDefault
+          position={[0, 0, 80]}
+          fov={75}
+          near={0.1}
+          far={200}
+        />
+
+        {/* Minimal lighting for particles */}
+        <ambientLight intensity={0.4} />
+
+        {/* Dev tools */}
+        {import.meta.env.DEV && <DebugExpose />}
+
+        {/* Main particle system */}
+        <Suspense fallback={null}>
+          {webglEnabled && <WebGLBackground />}
+        </Suspense>
+      </Canvas>
+
+      {/* Performance monitoring */}
+      <DevPerformanceMonitor />
+
+      {/* ✅ Debug overlay */}
+      {import.meta.env.DEV && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(0,0,0,0.9)',
+          color: '#00ff88',
+          padding: '16px',
+          borderRadius: '8px',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '12px',
+          border: '1px solid #00ff88',
+          zIndex: 1000,
+          minWidth: '300px'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#00ffcc' }}>
+            🌌 CONSTELLATION STATUS
+          </div>
+          <div>Stage: {currentStage}</div>
+          <div>Progress: {Math.round(stageProgress * 100)}%</div>
+          <div>Quality: {currentQualityTier}</div>
+          <div>Particles: {particleCount}</div>
+          <div>WebGL: {webglEnabled ? '✓' : '✗'}</div>
+          <div>Canvas: {canvasRef.current ? '✓' : '✗'}</div>
+          <div>Context: {contextLost ? '✗' : '✓'}</div>
+          
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+            <div style={{ color: '#00ccff', fontWeight: 'bold', marginBottom: '4px' }}>Performance:</div>
+            <div>Grade: {performanceMonitor.getPerformanceGrade()}</div>
+            <div>FPS: {clockState.fps?.toFixed(1) || 'N/A'}</div>
+            <div>Frame Time: {clockState.averageFrameTime?.toFixed(1) || 'N/A'}ms</div>
+          </div>
+          
+          {/* Debug controls */}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+            <button 
+              onClick={() => {
+                window.location.hash = '#debug-particles';
+                window.location.reload();
+              }}
+              style={{
+                background: '#00ff88',
+                color: '#000',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                marginRight: '8px'
+              }}
+            >
+              Debug Mode
+            </button>
+            <button 
+              onClick={() => {
+                const event = new CustomEvent('webgl-force-init', {
+                  detail: { stage: currentStage, reason: 'manual_test' }
+                });
+                window.dispatchEvent(event);
+              }}
+              style={{
+                background: '#00ccff',
+                color: '#000',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px'
+              }}
+            >
+              Force Render
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ✅ Global debug access
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.canvasDebug = {
+    getCanvasElement: () => document.querySelector('canvas'),
+    
+    getCanvasInfo: () => {
+      const canvas = document.querySelector('canvas');
+      if (!canvas) return 'No canvas found';
+      
+      return {
+        width: canvas.width,
+        height: canvas.height,
+        clientWidth: canvas.clientWidth,
+        clientHeight: canvas.clientHeight,
+        webglVersion: canvas.getAttribute('data-webgl-version'),
+        qualityTier: canvas.getAttribute('data-quality-tier'),
+        particleCount: canvas.getAttribute('data-particle-count')
+      };
+    },
+    
+    testContextPooling: () => {
+      console.log('🧪 Testing WebGL context pooling...');
+      const testCanvas = document.createElement('canvas');
+      const contextPool = new WebGLContextPool();
+      const ctx = contextPool.createOptimizedContext(testCanvas);
+      const stats = contextPool.getStats();
+      testCanvas.remove();
+      return stats;
+    },
+    
+    detectInterference: () => detectAdvancedExtensionInterference(),
+    
+    testWebGLSupport: () => {
+      const canvas = document.createElement('canvas');
+      const webgl2 = canvas.getContext('webgl2');
+      const webgl1 = canvas.getContext('webgl');
+      
+      const support = {
+        webgl2: !!webgl2,
+        webgl1: !!webgl1,
+        pointSizeRange: webgl2 ? webgl2.getParameter(webgl2.ALIASED_POINT_SIZE_RANGE) : 
+                        webgl1 ? webgl1.getParameter(webgl1.ALIASED_POINT_SIZE_RANGE) : null
+      };
+      
+      canvas.remove();
+      console.log('🧪 WebGL Support Test:', support);
+      return support;
+    }
+  };
+  
+  console.log('🎯 Enhanced Canvas Debug Tools Available:');
+  console.log('🧪 Test context pooling: window.canvasDebug.testContextPooling()');
+  console.log('🔍 Detect interference: window.canvasDebug.detectInterference()');
+  console.log('🧪 Test WebGL support: window.canvasDebug.testWebGLSupport()');
+  console.log('📊 Get canvas info: window.canvasDebug.getCanvasInfo()');
+}
+--- src/utils/webgl/FrustumAwareParticleGenerator.js ---
+
+// src/utils/webgl/FrustumAwareParticleGenerator.js
+// FRUSTUM-AWARE PARTICLE CULLING - Memory and draw call optimization
+
+import * as THREE from 'three';
+
+// Frustum culling configuration
+const CULLING_CONFIG = {
+  enabled: true,
+  margin: 1.2, // 20% margin around visible area
+  minParticles: 1000, // Minimum particles regardless of culling
+  maxCullingRatio: 0.7, // Maximum 70% of particles can be culled
+  dynamicLOD: true, // Enable dynamic level-of-detail
+  debugVisualization: false,
+};
+
+// Performance tier culling settings
+const CULLING_TIERS = {
+  ULTRA: { enabled: false, margin: 1.0 }, // No culling on ULTRA
+  HIGH: { enabled: true, margin: 1.2 },
+  MEDIUM: { enabled: true, margin: 1.4 },
+  LOW: { enabled: true, margin: 1.6 },
+};
+
+class FrustumAwareParticleGenerator {
+  constructor() {
+    this.lastCullTime = 0;
+    this.cullInterval = 100; // Recalculate every 100ms
+    this.visibleParticles = new Set();
+    this.culledCount = 0;
+    this.totalGenerated = 0;
+  }
+
+  // Enhanced grid calculation with frustum culling
+  calculateOptimalGridWithCulling(
+    visibleWidth,
+    visibleHeight,
+    stage,
+    qualityLevel,
+    camera,
+    frustum
+  ) {
+    const config = CULLING_TIERS[qualityLevel] || CULLING_TIERS.HIGH;
+
+    if (!config.enabled || !CULLING_CONFIG.enabled) {
+      return this.calculateBasicGrid(visibleWidth, visibleHeight, stage, qualityLevel);
+    }
+
+    // Calculate expanded visible area with margin
+    const expandedWidth = visibleWidth * config.margin;
+    const expandedHeight = visibleHeight * config.margin;
+
+    // Base particle calculation
+    const baseGrid = this.calculateBasicGrid(expandedWidth, expandedHeight, stage, qualityLevel);
+
+    // Apply frustum culling
+    const culledGrid = this.applyCulling(baseGrid, expandedWidth, expandedHeight, frustum);
+
+    console.log(
+      `🔍 Frustum culling: ${baseGrid.totalParticles} → ${culledGrid.totalParticles} particles (${this.culledCount} culled)`
+    );
+
+    return culledGrid;
+  }
+
+  // Basic grid calculation (fallback)
+  calculateBasicGrid(visibleWidth, visibleHeight, stage, qualityLevel) {
+    const NARRATIVE_STAGES = {
+      0: { particles: 2000 },
+      1: { particles: 4000 },
+      2: { particles: 6000 },
+      3: { particles: 8000 },
+      4: { particles: 12000 },
+      5: { particles: 16000 },
+    };
+
+    const stageConfig = NARRATIVE_STAGES[stage] || NARRATIVE_STAGES[0];
+    const qualityMultipliers = { LOW: 0.5, MEDIUM: 0.7, HIGH: 1.0, ULTRA: 1.0 };
+    const targetParticles = Math.floor(
+      stageConfig.particles * (qualityMultipliers[qualityLevel] || 1.0)
+    );
+
+    const aspect = visibleWidth / visibleHeight;
+    const rows = Math.ceil(Math.sqrt(targetParticles / aspect));
+    const cols = Math.ceil(targetParticles / rows);
+
+    return {
+      width: cols,
+      height: rows,
+      totalParticles: cols * rows,
+      visibleWidth,
+      visibleHeight,
+      cullingApplied: false,
+    };
+  }
+
+  // Apply frustum culling to grid
+  applyCulling(baseGrid, visibleWidth, visibleHeight, frustum) {
+    if (!frustum) return baseGrid;
+
+    const now = performance.now();
+    if (now - this.lastCullTime < this.cullInterval) {
+      return baseGrid; // Use cached result
+    }
+    this.lastCullTime = now;
+
+    const { width, height } = baseGrid;
+    const visibleIndices = [];
+    let culledCount = 0;
+    this.totalGenerated = width * height;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const posX = (x / width - 0.5) * visibleWidth;
+        const posY = (y / height - 0.5) * visibleHeight;
+        const posZ = 0; // Particles are in screen plane
+
+        // Create a point for frustum testing
+        const point = new THREE.Vector3(posX, posY, posZ);
+
+        // Test if point is within expanded frustum
+        if (this.isPointInExpandedFrustum(point, visibleWidth, visibleHeight)) {
+          visibleIndices.push({ x, y, index: y * width + x });
+        } else {
+          culledCount++;
+        }
+      }
+    }
+
+    // Ensure minimum particle count
+    const minRequired = Math.max(
+      CULLING_CONFIG.minParticles,
+      baseGrid.totalParticles * (1 - CULLING_CONFIG.maxCullingRatio)
+    );
+
+    if (visibleIndices.length < minRequired) {
+      // Add back some culled particles to meet minimum
+      const additionalNeeded = minRequired - visibleIndices.length;
+      console.warn(`🔍 Adding back ${additionalNeeded} particles to meet minimum requirement`);
+      // Implementation would add back particles here
+    }
+
+    this.culledCount = culledCount;
+
+    return {
+      ...baseGrid,
+      totalParticles: visibleIndices.length,
+      visibleIndices,
+      cullingApplied: true,
+      culledCount,
+      cullRatio: culledCount / this.totalGenerated,
+    };
+  }
+
+  // Simple frustum test (can be enhanced with proper frustum object)
+  isPointInExpandedFrustum(point, visibleWidth, visibleHeight) {
+    const margin = CULLING_CONFIG.margin;
+    const halfWidth = (visibleWidth * margin) / 2;
+    const halfHeight = (visibleHeight * margin) / 2;
+
+    return Math.abs(point.x) <= halfWidth && Math.abs(point.y) <= halfHeight;
+  }
+
+  // Generate particle data with culling applied
+  generateParticleDataWithCulling(gridConfig, stage) {
+    const totalParticles = gridConfig.cullingApplied
+      ? gridConfig.visibleIndices.length
+      : gridConfig.totalParticles;
+
+    const positions = new Float32Array(totalParticles * 3);
+    const colors = new Float32Array(totalParticles * 3);
+    const animationSeeds = new Float32Array(totalParticles * 4);
+    const gridCoords = new Float32Array(totalParticles * 2);
+
+    // Stage color configuration
+    const stageColors = {
+      0: '#1E3A8A',
+      1: '#D97706',
+      2: '#059669',
+      3: '#0EA5E9',
+      4: '#7C3AED',
+      5: '#F59E0B',
+    };
+    const stageColor = new THREE.Color(stageColors[stage] || stageColors[0]);
+
+    let particleIndex = 0;
+
+    if (gridConfig.cullingApplied) {
+      // Use only visible particles
+      for (const visibleParticle of gridConfig.visibleIndices) {
+        this.generateSingleParticle(
+          particleIndex,
+          visibleParticle.x,
+          visibleParticle.y,
+          gridConfig,
+          stageColor,
+          positions,
+          colors,
+          animationSeeds,
+          gridCoords
+        );
+        particleIndex++;
+      }
+    } else {
+      // Generate all particles (no culling)
+      for (let y = 0; y < gridConfig.height; y++) {
+        for (let x = 0; x < gridConfig.width; x++) {
+          this.generateSingleParticle(
+            particleIndex,
+            x,
+            y,
+            gridConfig,
+            stageColor,
+            positions,
+            colors,
+            animationSeeds,
+            gridCoords
+          );
+          particleIndex++;
+        }
+      }
+    }
+
+    return { positions, colors, animationSeeds, gridCoords, actualParticleCount: particleIndex };
+  }
+
+  // Generate single particle data
+  generateSingleParticle(
+    index,
+    x,
+    y,
+    gridConfig,
+    stageColor,
+    positions,
+    colors,
+    animationSeeds,
+    gridCoords
+  ) {
+    // Position
+    const posX = (x / gridConfig.width - 0.5) * gridConfig.visibleWidth;
+    const posY = (y / gridConfig.height - 0.5) * gridConfig.visibleHeight;
+    const posZ = (Math.random() - 0.5) * 2;
+
+    positions[index * 3] = posX;
+    positions[index * 3 + 1] = posY;
+    positions[index * 3 + 2] = posZ;
+
+    // Colors
+    colors[index * 3] = stageColor.r;
+    colors[index * 3 + 1] = stageColor.g;
+    colors[index * 3 + 2] = stageColor.b;
+
+    // Animation seeds
+    animationSeeds[index * 4] = Math.random();
+    animationSeeds[index * 4 + 1] = Math.random();
+    animationSeeds[index * 4 + 2] = Math.random();
+    animationSeeds[index * 4 + 3] = Math.random();
+
+    // Grid coordinates
+    gridCoords[index * 2] = x / gridConfig.width;
+    gridCoords[index * 2 + 1] = y / gridConfig.height;
+  }
+
+  // Dynamic LOD based on distance/zoom
+  applyDynamicLOD(camera, baseParticleCount) {
+    if (!CULLING_CONFIG.dynamicLOD) return baseParticleCount;
+
+    // Reduce particles based on camera distance
+    const distance = camera.position.z || 8;
+    const lodFactor = Math.max(0.3, Math.min(1.0, 10 / distance));
+
+    return Math.floor(baseParticleCount * lodFactor);
+  }
+
+  // Performance monitoring
+  getCullingStats() {
+    return {
+      totalGenerated: this.totalGenerated,
+      culledCount: this.culledCount,
+      visibleCount: this.totalGenerated - this.culledCount,
+      cullRatio: this.totalGenerated > 0 ? this.culledCount / this.totalGenerated : 0,
+      memoryReduction: this.culledCount * 32, // Estimated bytes saved (8 floats * 4 bytes)
+      lastCullTime: this.lastCullTime,
+    };
+  }
+
+  // Update culling configuration
+  updateCullingConfig(newConfig) {
+    Object.assign(CULLING_CONFIG, newConfig);
+    console.log('🔧 Culling config updated:', CULLING_CONFIG);
+  }
+
+  // Enable/disable culling
+  setCullingEnabled(enabled) {
+    CULLING_CONFIG.enabled = enabled;
+    console.log(`🔍 Frustum culling ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  // Debug visualization
+  createDebugVisualization(scene, gridConfig) {
+    if (!CULLING_CONFIG.debugVisualization || !gridConfig.cullingApplied) return;
+
+    // Create wireframe showing culled vs visible areas
+    const geometry = new THREE.BoxGeometry(
+      gridConfig.visibleWidth * CULLING_CONFIG.margin,
+      gridConfig.visibleHeight * CULLING_CONFIG.margin,
+      0.1
+    );
+
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x00ff00,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.3,
+    });
+
+    const debugBox = new THREE.Mesh(geometry, material);
+    debugBox.name = 'FrustumDebugBox';
+    scene.add(debugBox);
+  }
+}
+
+// Export singleton instance
+export const frustumAwareGenerator = new FrustumAwareParticleGenerator();
+
+// Export configuration and class
+export { CULLING_CONFIG, CULLING_TIERS, FrustumAwareParticleGenerator };
+
+// Development global access
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  window.frustumAwareGenerator = frustumAwareGenerator;
+  window.CULLING_CONFIG = CULLING_CONFIG;
+}
+
+--- src/utils/webgl/ResourceRegistry.js ---
+
+// src/utils/webgl/ResourceRegistry.js
+
+class ResourceRegistry {
+  constructor() {
+    this._resources = {
+      geometry: new Set(),
+      material: new Set(),
+      texture: new Set(),
+    };
+    this._listeners = new Set();
+  }
+
+  /**
+   * Register a resource of a given type.
+   * @param {'geometry'|'material'|'texture'} type
+   * @param {object} item
+   */
+  register(type, item) {
+    if (!this._resources[type].has(item)) {
+      this._resources[type].add(item);
+      this._emit();
+    }
+  }
+
+  /**
+   * Unregister (dispose) a resource.
+   * @param {'geometry'|'material'|'texture'} type
+   * @param {object} item
+   */
+  unregister(type, item) {
+    if (this._resources[type].delete(item)) {
+      this._emit();
+    }
+  }
+
+  /** Synchronous snapshot of counts */
+  getStats() {
+    return {
+      geometry: this._resources.geometry.size,
+      material: this._resources.material.size,
+      texture: this._resources.texture.size,
+    };
+  }
+
+  /**
+   * Subscribe to changes. Immediately calls your callback with the
+   * current stats, then on every register/unregister.
+   * @param {function(Object)} callback
+   * @returns {() => void} unsubscribe
+   */
+  subscribe(callback) {
+    this._listeners.add(callback);
+    // immediate notify
+    callback(this.getStats());
+    return () => {
+      this._listeners.delete(callback);
+    };
+  }
+
+  /** @private */
+  _emit() {
+    const stats = this.getStats();
+    for (const fn of this._listeners) fn(stats);
+  }
+}
+
+// Export a singleton instance:
+export default new ResourceRegistry();
+
+--- src/utils/webgl/ResourceTracker.js ---
+
+// src/utils/webgl/ResourceTracker.js
+// This file defines the ResourceTracker CLASS.
+// It should be default exported.
+
+export default class ResourceTracker {
+  constructor() {
+    this.resources = new Set();
+    console.log('ResourceTracker Class: Instance created');
+  }
+
+  track(resource) {
+    if (!resource || this.resources.has(resource)) {
+      return resource;
+    }
+    this.resources.add(resource);
+    // console.log('ResourceTracker: Tracking', resource.constructor.name, resource.uuid);
+
+    if (resource.isObject3D && typeof resource.traverse === 'function') {
+      resource.traverse(child => {
+        if (child.isMesh || child.isPoints || child.isLine) {
+          if (child.geometry && !this.resources.has(child.geometry)) {
+            this.resources.add(child.geometry);
+          }
+          if (child.material) {
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach(material => {
+              if (material && !this.resources.has(material)) {
+                this.resources.add(material);
+                this._trackMaterialTextures(material);
+              }
+            });
+          }
+        }
+      });
+    } else if (resource.isMaterial) {
+      this._trackMaterialTextures(resource);
+    }
+    return resource;
+  }
+
+  _trackMaterialTextures(material) {
+    if (!material) return;
+    for (const key in material) {
+      if (material[key] && material[key].isTexture && !this.resources.has(material[key])) {
+        this.resources.add(material[key]);
+      }
+    }
+  }
+
+  untrack(resource) {
+    this.resources.delete(resource);
+  }
+
+  dispose() {
+    let disposedCount = 0;
+    console.log(`ResourceTracker Class: Disposing ${this.resources.size} tracked resources...`);
+    for (const resource of this.resources) {
+      if (resource.dispose && typeof resource.dispose === 'function') {
+        resource.dispose();
+        disposedCount++;
+      } else if (resource.isWebGLRenderTarget) {
+        resource.dispose();
+        disposedCount++;
+      }
+    }
+    this.resources.clear();
+    console.log(`ResourceTracker Class: Successfully disposed of ${disposedCount} resources.`);
+  }
+}
+
+--- src/utils/webgl/ShaderDebugSystem.js ---
+
+// src/utils/webgl/ShaderDebugSystem.js
+// SHADER DEBUG SYSTEM - Development tools, visualization, and AI co-debugging
+
+import * as THREE from 'three';
+
+// Debug mode configuration
+const DEBUG_CONFIG = {
+  enabled: process.env.NODE_ENV === 'development',
+  visualizations: {
+    stageColors: true,
+    gridOverlay: true,
+    particleFlashing: true,
+    uniformValues: true,
+    performanceMetrics: true,
+  },
+  logging: {
+    uniformUpdates: false,
+    shaderCompilation: true,
+    performanceWarnings: true,
+    stageTransitions: true,
+  },
+  controls: {
+    keyboardShortcuts: true,
+    onScreenOverlay: true,
+    realTimeEditing: false, // Future: Live shader editing
+  },
+};
+
+// Debug visualization modes
+const DEBUG_MODES = {
+  OFF: { name: 'Off', value: 0 },
+  STAGE_COLORS: { name: 'Stage Colors', value: 1 },
+  GRID_COORDS: { name: 'Grid Coordinates', value: 2 },
+  ANIMATION_SEEDS: { name: 'Animation Seeds', value: 3 },
+  PERFORMANCE_HEAT: { name: 'Performance Heatmap', value: 4 },
+  UNIFORM_VALUES: { name: 'Uniform Visualization', value: 5 },
+  PARTICLE_IDS: { name: 'Particle IDs', value: 6 },
+};
+
+// Debug shader extensions
+const DEBUG_VERTEX_ADDITIONS = `
+  uniform int uDebugMode;
+  uniform float uDebugIntensity;
+  uniform vec3 uDebugColor;
+  
+  varying float vDebugValue;
+  varying vec3 vDebugColor;
+  varying vec2 vGridCoords;
+  varying vec4 vAnimationSeeds;
+  
+  void applyDebugModifications(inout vec3 pos, inout vec3 debugColor) {
+    vGridCoords = gridCoords;
+    vAnimationSeeds = animationSeeds;
+    
+    if (uDebugMode == 1) { // Stage Colors
+      debugColor = uDebugColor;
+      vDebugValue = float(uStage) / 5.0;
+    }
+    else if (uDebugMode == 2) { // Grid Coordinates
+      debugColor = vec3(gridCoords.x, gridCoords.y, 0.5);
+      vDebugValue = gridCoords.x + gridCoords.y;
+    }
+    else if (uDebugMode == 3) { // Animation Seeds
+      debugColor = vec3(animationSeeds.xyz);
+      vDebugValue = animationSeeds.w;
+    }
+    else if (uDebugMode == 4) { // Performance Heat (based on particle distance)
+      float dist = length(pos.xy);
+      debugColor = vec3(dist * 0.1, 1.0 - dist * 0.1, 0.0);
+      vDebugValue = dist;
+    }
+    else if (uDebugMode == 5) { // Uniform Values
+      debugColor = vec3(uStageProgress, float(uStage) / 5.0, uColorIntensity);
+      vDebugValue = uStageProgress;
+    }
+    else if (uDebugMode == 6) { // Particle IDs
+      float particleId = float(gl_VertexID) / 16000.0;
+      debugColor = vec3(sin(particleId * 10.0), cos(particleId * 15.0), sin(particleId * 20.0));
+      vDebugValue = particleId;
+    }
+    
+    vDebugColor = debugColor;
+    
+    // Debug flash effect
+    if (uDebugMode > 0) {
+      float flashRate = 2.0 + float(uDebugMode);
+      float flash = sin(uTime * flashRate) * 0.1 + 1.0;
+      pos *= flash * uDebugIntensity;
+    }
+  }
+`;
+
+const DEBUG_FRAGMENT_ADDITIONS = `
+  uniform int uDebugMode;
+  uniform float uDebugIntensity;
+  uniform bool uShowDebugOverlay;
+  
+  varying float vDebugValue;
+  varying vec3 vDebugColor;
+  varying vec2 vGridCoords;
+  varying vec4 vAnimationSeeds;
+  
+  vec3 applyDebugVisualization(vec3 baseColor, float alpha) {
+    if (uDebugMode == 0) return baseColor;
+    
+    vec3 debugColor = vDebugColor;
+    float debugAlpha = alpha * uDebugIntensity;
+    
+    // Add debug overlay information
+    if (uShowDebugOverlay) {
+      // Grid lines
+      float gridX = abs(fract(vGridCoords.x * 10.0) - 0.5);
+      float gridY = abs(fract(vGridCoords.y * 10.0) - 0.5);
+      if (gridX < 0.1 || gridY < 0.1) {
+        debugColor = mix(debugColor, vec3(1.0), 0.3);
+      }
+      
+      // Value indicators
+      if (vDebugValue > 0.8) {
+        debugColor = mix(debugColor, vec3(1.0, 0.0, 0.0), 0.5); // High values in red
+      }
+    }
+    
+    return mix(baseColor, debugColor, 0.7);
+  }
+`;
+
+class ShaderDebugSystem {
+  constructor() {
+    this.enabled = DEBUG_CONFIG.enabled;
+    this.currentMode = DEBUG_MODES.OFF;
+    this.debugIntensity = 1.0;
+    this.showOverlay = true;
+    this.uniformLog = [];
+    this.performanceLog = [];
+    this.overlayElement = null;
+    this.keyboardListeners = [];
+
+    if (this.enabled) {
+      this.initializeDebugSystem();
+    }
+  }
+
+  // Initialize debug system
+  initializeDebugSystem() {
+    console.log('🔍 Shader Debug System initialized');
+
+    if (DEBUG_CONFIG.controls.keyboardShortcuts) {
+      this.setupKeyboardShortcuts();
+    }
+
+    if (DEBUG_CONFIG.controls.onScreenOverlay) {
+      this.createDebugOverlay();
+    }
+  }
+
+  // Setup keyboard shortcuts
+  setupKeyboardShortcuts() {
+    const handleKeyDown = event => {
+      if (!event.altKey) return; // Alt + key combinations
+
+      switch (event.code) {
+        case 'KeyD':
+          this.toggleDebugMode();
+          event.preventDefault();
+          break;
+        case 'Digit1':
+        case 'Digit2':
+        case 'Digit3':
+        case 'Digit4':
+        case 'Digit5':
+        case 'Digit6':
+          {
+            /* eslint-disable-next-line no-unused-vars */
+            const mode = parseInt(event.code.replace('Digit', ''));
+          }
+          break;
+        case 'KeyO':
+          this.toggleOverlay();
+          event.preventDefault();
+          break;
+        case 'KeyI':
+          this.adjustIntensity(event.shiftKey ? 0.1 : -0.1);
+          event.preventDefault();
+          break;
+        case 'KeyL':
+          this.logCurrentState();
+          event.preventDefault();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    this.keyboardListeners.push(() => window.removeEventListener('keydown', handleKeyDown));
+  }
+
+  // Create debug overlay UI
+  createDebugOverlay() {
+    if (this.overlayElement) return;
+
+    this.overlayElement = document.createElement('div');
+    this.overlayElement.style.cssText = `
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      width: 300px;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      z-index: 10000;
+      border: 1px solid #333;
+      display: ${this.showOverlay ? 'block' : 'none'};
+    `;
+
+    document.body.appendChild(this.overlayElement);
+    this.updateOverlay();
+  }
+
+  // Update debug overlay content
+  updateOverlay() {
+    if (!this.overlayElement) return;
+
+    const currentModeName =
+      Object.values(DEBUG_MODES).find(m => m.value === this.currentMode.value)?.name || 'Unknown';
+
+    this.overlayElement.innerHTML = `
+      <h3 style="margin: 0 0 10px 0; color: #00ff00;">🔍 Shader Debug</h3>
+      <div><strong>Mode:</strong> ${currentModeName}</div>
+      <div><strong>Intensity:</strong> ${this.debugIntensity.toFixed(2)}</div>
+      <div><strong>Overlay:</strong> ${this.showOverlay ? 'ON' : 'OFF'}</div>
+      <br>
+      <div style="font-size: 10px; color: #888;">
+        <strong>Shortcuts:</strong><br>
+        Alt+D: Toggle debug<br>
+        Alt+1-6: Debug modes<br>
+        Alt+O: Toggle overlay<br>
+        Alt+I: Adjust intensity<br>
+        Alt+L: Log state
+      </div>
+      <br>
+      <div id="debug-stats" style="font-size: 10px; color: #0ff;">
+        ${this.getStatsHTML()}
+      </div>
+    `;
+  }
+
+  // Get stats HTML for overlay
+  getStatsHTML() {
+    const recent = this.performanceLog.slice(-5);
+    if (recent.length === 0) return 'No performance data';
+
+    const avgFps = recent.reduce((sum, log) => sum + log.fps, 0) / recent.length;
+    const lastLog = recent[recent.length - 1];
+
+    return `
+      <strong>Performance:</strong><br>
+      FPS: ${avgFps.toFixed(1)}<br>
+      Particles: ${lastLog.particleCount || 'N/A'}<br>
+      Stage: ${lastLog.stage || 'N/A'}
+    `;
+  }
+
+  // Enhance shader material with debug uniforms
+  enhanceShaderMaterial(material, stage = 0) {
+    if (!this.enabled) return material;
+
+    // Add debug uniforms
+    material.uniforms = {
+      ...material.uniforms,
+      uDebugMode: { value: this.currentMode.value },
+      uDebugIntensity: { value: this.debugIntensity },
+      uDebugColor: { value: this.getStageDebugColor(stage) },
+      uShowDebugOverlay: { value: this.showOverlay },
+    };
+
+    // Enhance shaders with debug code
+    if (material.vertexShader && !material.vertexShader.includes('applyDebugModifications')) {
+      material.vertexShader = this.injectDebugCode(material.vertexShader, 'vertex');
+    }
+
+    if (material.fragmentShader && !material.fragmentShader.includes('applyDebugVisualization')) {
+      material.fragmentShader = this.injectDebugCode(material.fragmentShader, 'fragment');
+    }
+
+    // Force shader recompilation
+    material.needsUpdate = true;
+
+    if (DEBUG_CONFIG.logging.shaderCompilation) {
+      console.log(
+        `🔧 Enhanced shader material for stage ${stage} with debug mode ${this.currentMode.value}`
+      );
+    }
+
+    return material;
+  }
+
+  // Inject debug code into shaders
+  injectDebugCode(shader, type) {
+    if (type === 'vertex') {
+      // Add debug variables and functions after uniforms
+      const uniformsEnd = shader.lastIndexOf('varying');
+      const insertPoint = shader.indexOf('\n', uniformsEnd);
+
+      return (
+        shader.slice(0, insertPoint) +
+        '\n' +
+        DEBUG_VERTEX_ADDITIONS +
+        shader.slice(insertPoint).replace(
+          'gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);',
+          `
+               vec3 debugColor = vec3(1.0);
+               applyDebugModifications(pos, debugColor);
+               gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+               `
+        )
+      );
+    } else {
+      // Fragment shader
+      const uniformsEnd = shader.lastIndexOf('varying');
+      const insertPoint = shader.indexOf('\n', uniformsEnd);
+
+      return (
+        shader.slice(0, insertPoint) +
+        '\n' +
+        DEBUG_FRAGMENT_ADDITIONS +
+        shader.slice(insertPoint).replace(
+          'gl_FragColor = vec4(color * circle, alpha * circle);',
+          `
+               color = applyDebugVisualization(color, alpha);
+               gl_FragColor = vec4(color * circle, alpha * circle);
+               `
+        )
+      );
+    }
+  }
+
+  // Get debug color for stage
+  getStageDebugColor(stage) {
+    const colors = [
+      new THREE.Color(1, 0, 0), // Red - Genesis
+      new THREE.Color(1, 0.5, 0), // Orange - Awakening
+      new THREE.Color(1, 1, 0), // Yellow - Structure
+      new THREE.Color(0, 1, 0), // Green - Learning
+      new THREE.Color(0, 0, 1), // Blue - Building
+      new THREE.Color(1, 0, 1), // Magenta - Mastery
+    ];
+    return colors[stage] || colors[0];
+  }
+
+  // Debug mode controls
+  setDebugMode(mode) {
+    const modeObj = Object.values(DEBUG_MODES).find(m => m.value === mode);
+    if (modeObj) {
+      this.currentMode = modeObj;
+      this.updateOverlay();
+      console.log(`🔍 Debug mode set to: ${modeObj.name}`);
+    }
+  }
+
+  toggleDebugMode() {
+    const modes = Object.values(DEBUG_MODES);
+    const currentIndex = modes.findIndex(m => m.value === this.currentMode.value);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    this.setDebugMode(modes[nextIndex].value);
+  }
+
+  toggleOverlay() {
+    this.showOverlay = !this.showOverlay;
+    if (this.overlayElement) {
+      this.overlayElement.style.display = this.showOverlay ? 'block' : 'none';
+    }
+    console.log(`🔍 Debug overlay ${this.showOverlay ? 'enabled' : 'disabled'}`);
+  }
+
+  adjustIntensity(delta) {
+    this.debugIntensity = Math.max(0.1, Math.min(2.0, this.debugIntensity + delta));
+    this.updateOverlay();
+    console.log(`🔍 Debug intensity: ${this.debugIntensity.toFixed(2)}`);
+  }
+
+  // Logging and monitoring
+  logUniformUpdate(uniformName, value, stage) {
+    if (!DEBUG_CONFIG.logging.uniformUpdates) return;
+
+    this.uniformLog.push({
+      timestamp: performance.now(),
+      uniform: uniformName,
+      value: typeof value === 'object' ? JSON.stringify(value) : value,
+      stage,
+    });
+
+    // Keep only last 100 entries
+    if (this.uniformLog.length > 100) {
+      this.uniformLog = this.uniformLog.slice(-100);
+    }
+  }
+
+  logPerformance(fps, particleCount, stage, memoryUsage = 0) {
+    this.performanceLog.push({
+      timestamp: performance.now(),
+      fps,
+      particleCount,
+      stage,
+      memoryUsage,
+    });
+
+    if (this.performanceLog.length > 50) {
+      this.performanceLog = this.performanceLog.slice(-50);
+    }
+
+    this.updateOverlay();
+
+    // Performance warnings
+    if (DEBUG_CONFIG.logging.performanceWarnings && fps < 30) {
+      console.warn(
+        `⚠️ Low FPS detected: ${fps.toFixed(1)} at stage ${stage} with ${particleCount} particles`
+      );
+    }
+  }
+
+  logCurrentState() {
+    const state = {
+      debugMode: this.currentMode,
+      intensity: this.debugIntensity,
+      recentPerformance: this.performanceLog.slice(-5),
+      recentUniforms: this.uniformLog.slice(-10),
+    };
+
+    console.log('🔍 Current Debug State:', state);
+
+    // Copy to clipboard if possible
+    if (navigator.clipboard) {
+      navigator.clipboard
+        .writeText(JSON.stringify(state, null, 2))
+        .then(() => console.log('📋 Debug state copied to clipboard'));
+    }
+  }
+
+  // Get debug information for AI co-debugging
+  getDebugInfo() {
+    return {
+      enabled: this.enabled,
+      currentMode: this.currentMode,
+      intensity: this.debugIntensity,
+      performanceMetrics: this.getPerformanceMetrics(),
+      recommendations: this.getDebugRecommendations(),
+    };
+  }
+
+  getPerformanceMetrics() {
+    const recent = this.performanceLog.slice(-10);
+    if (recent.length === 0) return null;
+
+    const avgFps = recent.reduce((sum, log) => sum + log.fps, 0) / recent.length;
+    const minFps = Math.min(...recent.map(log => log.fps));
+    const maxFps = Math.max(...recent.map(log => log.fps));
+
+    return { avgFps, minFps, maxFps, sampleCount: recent.length };
+  }
+
+  getDebugRecommendations() {
+    const metrics = this.getPerformanceMetrics();
+    const recommendations = [];
+
+    if (metrics && metrics.avgFps < 45) {
+      recommendations.push('Consider reducing particle count');
+      recommendations.push('Enable frustum culling');
+      recommendations.push('Check for shader complexity issues');
+    }
+
+    if (this.uniformLog.length > 80) {
+      recommendations.push('High uniform update frequency detected');
+    }
+
+    return recommendations;
+  }
+
+  // Cleanup
+  destroy() {
+    this.keyboardListeners.forEach(cleanup => cleanup());
+    if (this.overlayElement) {
+      document.body.removeChild(this.overlayElement);
+    }
+  }
+
+  // Enable/disable debug system
+  setEnabled(enabled) {
+    this.enabled = enabled;
+    if (enabled && !this.overlayElement) {
+      this.initializeDebugSystem();
+    } else if (!enabled && this.overlayElement) {
+      this.overlayElement.style.display = 'none';
+    }
+  }
+}
+
+// Export singleton instance
+export const shaderDebugSystem = new ShaderDebugSystem();
+
+// Export configurations and class
+export { DEBUG_CONFIG, DEBUG_MODES, ShaderDebugSystem };
+
+// Development global access
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  window.shaderDebugSystem = shaderDebugSystem;
+  window.DEBUG_MODES = DEBUG_MODES;
+}
+
+--- src/utils/webgl/WebGLEffectsManager.js ---
+
+// src/utils/webgl/WebGLEffectsManager.js - Your Enhanced Version
+
+import * as THREE from 'three'; // Keep for Color/Vector3 if manager handles them
+
+console.log('[WebGLEffectsManager] Module loaded.');
+
+class WebGLEffectsManager {
+  constructor() {
+    this.activeEffects = new Map();
+    this.baseValues = new Map(); // Stores the "resting" or "current base" value of a uniform
+    this.nextEffectId = 0;
+
+    // IMPROVEMENT 1: Effect Pooling
+    this.effectPool = [];
+    this.maxPoolSize = 50;
+
+    // IMPROVEMENT 2: Uniform Change Tracking
+    this.uniformsChanged = new Set();
+    this.lastFrameValues = new Map();
+
+    // IMPROVEMENT 3: Batch Processing Groups
+    this.effectGroups = new Map();
+
+    // IMPROVEMENT 4: Performance Metrics
+    this.metrics = {
+      effectsProcessed: 0,
+      averageUpdateTime: 0,
+      peakMemoryUsage: 0, // You'd need to implement logic to track this
+      framesSinceLastCleanup: 0,
+    };
+
+    console.log('[WebGLEffectsManager] Enhanced instance initialized');
+  }
+
+  // --- Effect Pooling ---
+  _getPooledEffect() {
+    const effect = this.effectPool.pop() || {};
+    // Initialize/reset common properties
+    effect.id = null;
+    effect.startTime = 0;
+    effect.duration = 0;
+    effect.easingType = 'linear';
+    effect.uniformName = null;
+    effect.fromValue = 0;
+    effect.toValue = 0;
+    effect.intensity = 1.0;
+    effect.curve = 'standard';
+    effect.onComplete = null;
+    effect._lastAppliedValue = 0; // Or initial value type
+    effect._isActive = false;
+    return effect;
+  }
+
+  _returnToPool(effect) {
+    effect._isActive = false; // Mark as inactive
+    // Further reset properties if necessary
+    effect.onComplete = null;
+    if (this.effectPool.length < this.maxPoolSize) {
+      this.effectPool.push(effect);
+    }
+  }
+
+  // --- Base Value Management ---
+  setBaseUniformValue(uniformName, value) {
+    let valueToStore = value;
+    if (value instanceof THREE.Color) {
+      valueToStore =
+        this.baseValues.get(uniformName) instanceof THREE.Color
+          ? this.baseValues.get(uniformName).copy(value)
+          : value.clone();
+    } else if (
+      value instanceof THREE.Vector2 ||
+      value instanceof THREE.Vector3 ||
+      value instanceof THREE.Vector4
+    ) {
+      valueToStore =
+        this.baseValues.get(uniformName)?.constructor === value.constructor
+          ? this.baseValues.get(uniformName).copy(value)
+          : value.clone();
+    }
+    this.baseValues.set(uniformName, valueToStore);
+    // console.log(`[WebGLEffectsManager] Base value updated for ${uniformName}:`, valueToStore);
+  }
+
+  // --- Add Effect (using pooling and batching) ---
+  addEffect(config) {
+    const id = config.id || `${config.uniform}_effect_${this.nextEffectId++}`;
+    const now = performance.now();
+
+    const effect = this._getPooledEffect();
+
+    const baseVal = this.baseValues.get(config.uniform);
+    if (baseVal === undefined) {
+      console.warn(
+        `[WebGLEffectsManager] No base value for "${config.uniform}" found when adding effect "${id}". Using 0 or current uniform value. Call setBaseUniformValue first.`
+      );
+      // This situation should ideally be avoided by proper initialization.
+      // If WebGLBackground passes current live uniforms, could use that as a fallback.
+    }
+
+    effect.id = id;
+    effect.startTime = now;
+    effect.duration = config.duration || 1000;
+    effect.easingType = config.easing || 'linear';
+    effect.uniformName = config.uniform;
+    // fromValue is CRITICAL: it's the value the effect starts from, often the base value.
+    effect.fromValue = baseVal ?? config.fromValue ?? 0; // Prioritize stored base, then explicit fromValue, then 0
+    effect.toValue = config.toValue;
+    effect.intensity = config.intensity || 1.0;
+    effect.curve = config.curve || 'standard';
+    effect.onComplete = config.onComplete;
+    effect._isActive = true;
+
+    // Clone if fromValue is an object to prevent shared reference modification
+    if (typeof effect.fromValue === 'object' && effect.fromValue?.clone) {
+      effect.fromValue = effect.fromValue.clone();
+    }
+    effect._lastAppliedValue = effect.fromValue;
+
+    this.activeEffects.set(id, effect);
+
+    if (!this.effectGroups.has(config.uniform)) {
+      this.effectGroups.set(config.uniform, new Set());
+    }
+    this.effectGroups.get(config.uniform).add(id);
+
+    this.uniformsChanged.add(config.uniform); // Mark this uniform as potentially dirty
+
+    // console.log(`[WebGLEffectsManager] Added effect: ${id} for ${effect.uniformName}`);
+    return id;
+  }
+
+  processEffects(_effectConfigs) {
+    // ... (Your batch addition logic using _getPooledEffect and Object.assign)
+    // Ensure fromValue is correctly sourced from this.baseValues.get(config.uniform)
+  }
+
+  // --- Update Effects ---
+  _applyEasing(t, type) {
+    // ... (Your existing easing functions) ...
+    switch (type) {
+      case 'easeOutQuart':
+        return 1 - Math.pow(1 - t, 4);
+      case 'easeOutBounce':
+        if (t < 1 / 2.75) return 7.5625 * t * t;
+        if (t < 2 / 2.75) return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+        if (t < 2.5 / 2.75) return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+        return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+      case 'easeInOutCubic':
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      default:
+        return t; // linear
+    }
+  }
+
+  _calculateEffectValue(effect, easedProgress) {
+    // Ensure fromValue, toValue are correctly used.
+    // This version is for numeric uniforms.
+    const { fromValue, toValue, intensity, curve } = effect;
+
+    if (typeof fromValue === 'number' && typeof toValue === 'number') {
+      const range = toValue - fromValue;
+      switch (curve) {
+        case 'pulse':
+          return fromValue + range * Math.sin(easedProgress * Math.PI) * intensity;
+
+        case 'burst': {
+          // <-- Added opening brace for block scope
+          const burstProgress =
+            easedProgress < 0.3 ? easedProgress / 0.3 : 1.0 - (easedProgress - 0.3) / 0.7;
+          return fromValue + range * burstProgress * intensity;
+        } // <-- Added closing brace
+
+        case 'wave':
+          return (
+            fromValue + range * (Math.sin(easedProgress * Math.PI * 2) * 0.5 + 0.5) * intensity
+          );
+
+        default: // 'standard'
+          return fromValue + range * easedProgress;
+      }
+    }
+
+    // Fallback for non-numeric - needs proper typed interpolation
+    // Consider if this fallback is still appropriate or if an error should be thrown for unsupported types.
+    if (easedProgress >= 1.0) {
+      return toValue;
+    }
+    return fromValue;
+  }
+
+  updateEffects(uniforms, currentTime) {
+    if (this.activeEffects.size === 0 && this.uniformsChanged.size === 0) return;
+
+    const _updateStartTime = performance.now();
+    const completedEffects = [];
+    this.uniformsChanged.clear(); // Clear at start, will be repopulated by active effects
+
+    this.effectGroups.forEach((effectIds, uniformName) => {
+      if (!uniforms[uniformName]) return;
+
+      const uniformEffectsOnThis = [];
+      effectIds.forEach(id => {
+        const effect = this.activeEffects.get(id);
+        if (effect?._isActive) uniformEffectsOnThis.push(effect);
+      });
+
+      if (uniformEffectsOnThis.length === 0) {
+        // No active effects for this uniform, ensure it's at its base value if it was changed last frame by an effect
+        const baseValue = this.baseValues.get(uniformName);
+        const lastValue = this.lastFrameValues.get(uniformName);
+        if (baseValue !== undefined && lastValue !== baseValue) {
+          // Check type for proper assignment/copy
+          if (
+            uniforms[uniformName].value instanceof THREE.Color &&
+            baseValue instanceof THREE.Color
+          ) {
+            uniforms[uniformName].value.copy(baseValue);
+          } else if (
+            uniforms[uniformName].value instanceof THREE.Vector3 &&
+            baseValue instanceof THREE.Vector3
+          ) {
+            // Example
+            uniforms[uniformName].value.copy(baseValue);
+          } else {
+            uniforms[uniformName].value = baseValue;
+          }
+          this.lastFrameValues.set(uniformName, baseValue);
+          this.uniformsChanged.add(uniformName);
+        }
+        return;
+      }
+
+      // For simplicity, current override: last active effect processed sets the value.
+      // A more complex system would blend/sum values if multiple effects target the same uniform.
+      let finalCalculatedValue;
+      let effectToApply;
+
+      uniformEffectsOnThis.forEach(effect => {
+        const elapsed = currentTime - effect.startTime;
+        const progress = Math.min(elapsed / effect.duration, 1.0);
+
+        if (progress >= 1.0) {
+          completedEffects.push(effect.id);
+          effect._isActive = false;
+          // The value will be set to base by the block above in the next frame if no other effects,
+          // or to its end value by the effect itself if it's the last one.
+          // For burst/pulse, the curve itself should return it to fromValue.
+          if (effect.curve === 'burst' || effect.curve === 'pulse') {
+            finalCalculatedValue = effect.fromValue; // Ensure it ends at fromValue
+          } else {
+            finalCalculatedValue = effect.toValue; // Standard effects end at toValue
+          }
+          effectToApply = effect; // Mark this one
+          return; // No further processing for this effect this frame
+        }
+
+        const easedProgress = this._applyEasing(progress, effect.easingType);
+        finalCalculatedValue = this._calculateEffectValue(effect, easedProgress);
+        effectToApply = effect; // This effect is active and sets the value
+      });
+
+      if (effectToApply) {
+        // If any effect was processed (active or just completed)
+        const lastKnownValue = this.lastFrameValues.get(uniformName);
+        // Crude change detection for numbers, needs type handling for objects
+        let valueChanged = true;
+        if (typeof finalCalculatedValue === 'number' && typeof lastKnownValue === 'number') {
+          valueChanged = Math.abs(finalCalculatedValue - lastKnownValue) > 0.001;
+        } else if (finalCalculatedValue !== lastKnownValue) {
+          // Basic reference check for objects
+          valueChanged = true;
+        }
+
+        if (valueChanged) {
+          if (
+            uniforms[uniformName].value instanceof THREE.Color &&
+            finalCalculatedValue instanceof THREE.Color
+          ) {
+            uniforms[uniformName].value.copy(finalCalculatedValue);
+          } else {
+            // Assuming numeric for now based on _calculateEffectValue
+            uniforms[uniformName].value = finalCalculatedValue;
+          }
+          this.lastFrameValues.set(uniformName, finalCalculatedValue);
+          this.uniformsChanged.add(uniformName);
+        }
+      }
+    });
+
+    completedEffects.forEach(effectId => {
+      const effect = this.activeEffects.get(effectId);
+      if (effect) {
+        this.effectGroups.get(effect.uniformName)?.delete(effectId);
+        if (effect.onComplete) effect.onComplete();
+        this._returnToPool(effect);
+        this.activeEffects.delete(effectId);
+      }
+    });
+
+    this.metrics.framesSinceLastCleanup++;
+    if (this.metrics.framesSinceLastCleanup > 300) {
+      this._performPeriodicCleanup();
+      this.metrics.framesSinceLastCleanup = 0;
+    }
+    // ... (update performance metrics) ...
+  }
+
+  _performPeriodicCleanup() {
+    /* ... Your cleanup ... */
+  }
+
+  // --- Preset Effects (Example for letterBurst) ---
+  letterBurst(intensity = 1.0, duration = 800) {
+    const effectIdBase = `letterBurst_${this.nextEffectId}`; // Use common base for ID for batched effects
+    this.nextEffectId++; // Increment once for the batch
+
+    const baseSize = this.baseValues.get('uSize') ?? 1.0; // Fallback needed
+    const baseColorIntensity = this.baseValues.get('uColorIntensity') ?? 1.0; // Fallback needed
+
+    const effectsToBatch = [
+      {
+        id: `${effectIdBase}_size`,
+        uniform: 'uSize',
+        toValue: baseSize * (1.8 + intensity * 0.7), // Peak of burst
+        fromValue: baseSize, // Manager will use this as start & end for burst curve
+        duration: duration,
+        curve: 'burst',
+        easing: 'easeOutQuart',
+        intensity: 1.0, // curve's own intensity
+      },
+      {
+        id: `${effectIdBase}_color`,
+        uniform: 'uColorIntensity',
+        toValue: baseColorIntensity * (1.4 + intensity * 0.3),
+        fromValue: baseColorIntensity,
+        duration: duration * 0.8, // Slightly shorter
+        curve: 'burst',
+        easing: 'easeOutQuart',
+        intensity: 1.0,
+      },
+    ];
+
+    // Using a loop instead of _addEffectBatch for clarity on individual addEffect calls
+    effectsToBatch.forEach(config => this.addEffect(config));
+    console.log(`[WebGLEffectsManager] Batched letterBurst effects: ${effectIdBase}`);
+    return effectIdBase;
+  }
+
+  // ... (other preset methods, getPerformanceMetrics, _estimateMemoryUsage, destroy) ...
+  destroy() {
+    this.activeEffects.forEach(effect => this._returnToPool(effect));
+    this.activeEffects.clear();
+    this.baseValues.clear();
+    this.effectGroups.clear();
+    this.lastFrameValues.clear();
+    this.uniformsChanged.clear();
+    this.effectPool.length = 0; // Empty the pool
+    console.log('[WebGLEffectsManager] Enhanced instance destroyed and cleaned up.');
+  }
+}
+
+export default WebGLEffectsManager;

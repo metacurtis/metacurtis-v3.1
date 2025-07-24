@@ -1,0 +1,298 @@
+
+
+--- central_clock_backup_20250706_215239/AdaptiveQualitySystem.js ---
+
+// src/utils/performance/AdaptiveQualitySystem.js
+// core engine, no React here
+import qualityPresets from '@/config/qualityPresets.js'; // Ensure this path and file exist
+
+// NAMED EXPORT for QualityLevels
+export const QualityLevels = {
+  ULTRA: 'ULTRA',
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW',
+};
+
+// DEFAULT EXPORT for the class
+export default class AQSEngine {
+  constructor({
+    checkInterval = 1500,
+    windowSize = 90,
+    ultraFps = 55,
+    highFps = 45,
+    mediumFps = 25,
+    initialLevel = QualityLevels.HIGH, // Uses the locally defined QualityLevels
+    hysteresisChecks = 3,
+  } = {}) {
+    this.presets = qualityPresets;
+    this.windowSize = windowSize;
+    this.ultraFps = ultraFps;
+    this.highFps = highFps;
+    this.mediumFps = mediumFps;
+    this.currentLevel = initialLevel;
+    this.frameTimes = [];
+    this.lastTime = performance.now();
+    this.subscribers = new Set();
+
+    this.frameCount = 0;
+    this.checkInterval = checkInterval;
+    this.lastCheckTime = performance.now();
+
+    this.hysteresisChecks = hysteresisChecks;
+    this.checksAtCurrentPotentialTier = 0;
+    this.potentialNewTier = initialLevel;
+
+    console.log(
+      `AQSEngine: Initialized. Level: ${this.currentLevel}, Check Interval: ${checkInterval}ms, FPS Thresholds (U/H/M): ${ultraFps}/${highFps}/${mediumFps}, Hysteresis Checks: ${this.hysteresisChecks}`
+    );
+  }
+
+  tick() {
+    this.frameCount++;
+    const now = performance.now();
+    const timeSinceLastCheck = now - this.lastCheckTime;
+
+    if (timeSinceLastCheck >= this.checkInterval) {
+      if (this.frameCount > 0 && timeSinceLastCheck > 0) {
+        const fps = (this.frameCount * 1000) / timeSinceLastCheck;
+        // console.log(`AQSEngine: Interval reached. Calculated Avg FPS over ~${(timeSinceLastCheck/1000).toFixed(1)}s: ${fps.toFixed(1)} (Frames: ${this.frameCount})`);
+        this._adjustQuality(fps);
+      } else {
+        // console.log(`AQSEngine: Interval reached, but no frames counted or no time elapsed. Frames: ${this.frameCount}, Time: ${timeSinceLastCheck}`);
+      }
+      this.frameCount = 0;
+      this.lastCheckTime = now;
+    }
+  }
+
+  _adjustQuality(fps) {
+    let newCalculatedTier;
+    // Uses the locally defined QualityLevels
+    if (fps >= this.ultraFps) newCalculatedTier = QualityLevels.ULTRA;
+    else if (fps >= this.highFps) newCalculatedTier = QualityLevels.HIGH;
+    else if (fps >= this.mediumFps) newCalculatedTier = QualityLevels.MEDIUM;
+    else newCalculatedTier = QualityLevels.LOW;
+
+    // console.log(`AQSEngine _adjustQuality: Current Level: ${this.currentLevel}, Potential New Tier: ${this.potentialNewTier}, Calculated Tier from FPS (${fps.toFixed(1)}): ${newCalculatedTier}, Checks at Potential: ${this.checksAtCurrentPotentialTier}`);
+
+    if (newCalculatedTier === this.potentialNewTier) {
+      this.checksAtCurrentPotentialTier++;
+    } else {
+      this.potentialNewTier = newCalculatedTier;
+      this.checksAtCurrentPotentialTier = 1;
+      // console.log(`AQSEngine _adjustQuality: Potential new tier is now ${this.potentialNewTier}. Resetting stability counter.`);
+    }
+
+    if (
+      this.checksAtCurrentPotentialTier >= this.hysteresisChecks &&
+      this.currentLevel !== this.potentialNewTier
+    ) {
+      const prevLevel = this.currentLevel;
+      this.currentLevel = this.potentialNewTier;
+      console.log(
+        `AQSEngine: !!! QUALITY TIER CHANGED !!! From ${prevLevel} to ${this.currentLevel} (Avg FPS: ~${fps.toFixed(1)})`
+      );
+      this.subscribers.forEach(cb => cb(this.currentLevel));
+      this.checksAtCurrentPotentialTier = 0;
+    } else if (
+      this.currentLevel === this.potentialNewTier &&
+      this.potentialNewTier === newCalculatedTier
+    ) {
+      this.checksAtCurrentPotentialTier = 0;
+    }
+  }
+
+  subscribe(cb) {
+    this.subscribers.add(cb);
+    cb(this.currentLevel);
+    return () => this.subscribers.delete(cb);
+  }
+
+  getCurrentPreset() {
+    // Uses the locally defined QualityLevels
+    return this.presets[this.currentLevel.toLowerCase()] || this.presets.high;
+  }
+}
+
+--- vite.config.js ---
+
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import glsl from 'vite-plugin-glsl'; // Your existing plugin
+import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [
+    react(),
+    glsl(), // Your existing plugin
+    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
+  ],
+  resolve: {
+    // Your existing resolve aliases
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@webgl': path.resolve(__dirname, './src/components/webgl'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+    },
+  },
+  // Remove or comment out the explicit css.postcss configuration
+  // if your postcss.config.js was mainly for Tailwind.
+  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
+  // css: {
+  //   postcss: './postcss.config.js',
+  // },
+  build: {
+    // Your existing build configurations
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: { compress: { drop_console: false, drop_debugger: true } },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three')) return 'three-vendor';
+            if (id.includes('gsap')) return 'gsap-vendor';
+            if (id.includes('@react-three')) return 'drei-vendor';
+            if (id.includes('zustand')) return 'zustand-vendor';
+            if (id.includes('react')) return 'react-vendor';
+            return 'vendor';
+          }
+        },
+      },
+    },
+    sourcemap: true,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+  },
+  server: {
+    // Your existing server configurations
+    host: true,
+    open: true,
+    hmr: { overlay: true },
+  },
+  optimizeDeps: {
+    // Your existing optimizeDeps
+    include: [
+      'react',
+      'react-dom',
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      'gsap',
+      'zustand',
+    ],
+  },
+  test: {
+    // Your existing test configurations
+    passWithNoTests: true,
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{js,jsx}', 'src/**/*.spec.{js,jsx}'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/assets/'],
+    },
+    deps: { optimizer: { web: { include: ['@react-three/fiber', '@react-three/drei'] } } },
+  },
+});
+
+--- vite.config.js.backup_20250706_173422 ---
+
+// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import glsl from 'vite-plugin-glsl'; // Your existing plugin
+import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [
+    react(),
+    glsl(), // Your existing plugin
+    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
+  ],
+  resolve: {
+    // Your existing resolve aliases
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@webgl': path.resolve(__dirname, './src/components/webgl'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+    },
+  },
+  // Remove or comment out the explicit css.postcss configuration
+  // if your postcss.config.js was mainly for Tailwind.
+  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
+  // css: {
+  //   postcss: './postcss.config.js',
+  // },
+  build: {
+    // Your existing build configurations
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: { compress: { drop_console: false, drop_debugger: true } },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three')) return 'three-vendor';
+            if (id.includes('gsap')) return 'gsap-vendor';
+            if (id.includes('@react-three')) return 'drei-vendor';
+            if (id.includes('zustand')) return 'zustand-vendor';
+            if (id.includes('react')) return 'react-vendor';
+            return 'vendor';
+          }
+        },
+      },
+    },
+    sourcemap: true,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+  },
+  server: {
+    // Your existing server configurations
+    host: true,
+    open: true,
+    hmr: { overlay: true },
+  },
+  optimizeDeps: {
+    // Your existing optimizeDeps
+    include: [
+      'react',
+      'react-dom',
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      'gsap',
+      'zustand',
+    ],
+  },
+  test: {
+    // Your existing test configurations
+    passWithNoTests: true,
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{js,jsx}', 'src/**/*.spec.{js,jsx}'],
+    coverage: {
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/assets/'],
+    },
+    deps: { optimizer: { web: { include: ['@react-three/fiber', '@react-three/drei'] } } },
+  },
+});

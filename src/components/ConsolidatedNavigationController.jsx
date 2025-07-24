@@ -1,21 +1,130 @@
 // src/components/narrative/ConsolidatedNavigationController.jsx
-// 🎯 SINGLE NAVIGATION SYSTEM - Replaces all other navigation components
-// Handles keyboard, UI, auto-advance, and programmatic navigation
+// 🎯 SINGLE NAVIGATION SYSTEM - SST v2.0 COMPLIANT
+// ✅ FIXED: Updated to use SST v2.0 canonical sources only
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useNarrativeStore } from '@/stores/narrativeStore';
-import { narrativeTransition } from '@/config/narrativeParticleConfig';
-import {
-  MC3V_STAGE_ORDER,
-  STAGE_METADATA,
-  stageUtils,
-  validateStageIntegrity,
-} from '@/config/narrativeStageOrder';
-import { NARRATIVE_PRESETS } from '@/config/narrativeParticleConfig';
+
+// ✅ SST v2.0: Import canonical stage definitions from narrativeStore
+import { 
+  NARRATIVE_STAGES, 
+  STAGE_NAME_TO_INDEX, 
+  STAGE_INDEX_TO_NAME 
+} from '@/stores/narrativeStore';
+
+// ✅ SST v2.0: Canonical 7-stage order
+const MC3V_STAGE_ORDER = [
+  'genesis',       // Stage 0: Hippocampus activation
+  'discipline',    // Stage 1: Brainstem activation  
+  'neural',        // Stage 2: Left temporal
+  'velocity',      // Stage 3: Right temporal
+  'architecture',  // Stage 4: Frontal lobe
+  'harmony',       // Stage 5: Left prefrontal
+  'transcendence'  // Stage 6: Consciousness core
+];
+
+// ✅ SST v2.0: Stage metadata
+const STAGE_METADATA = {
+  totalStages: MC3V_STAGE_ORDER.length,
+  firstStage: MC3V_STAGE_ORDER[0],
+  lastStage: MC3V_STAGE_ORDER[MC3V_STAGE_ORDER.length - 1],
+  
+  stageLabels: {
+    genesis: '1983',
+    discipline: '1983-2022',
+    neural: '2022',
+    velocity: 'Feb 2025',
+    architecture: 'Mar 2025',
+    harmony: 'Mar 2025',
+    transcendence: 'Present'
+  },
+  
+  autoAdvanceTiming: {
+    genesis: 8000,
+    discipline: 6000,
+    neural: 10000,
+    velocity: 8000,
+    architecture: 8000,
+    harmony: 8000,
+    transcendence: 12000
+  }
+};
+
+// ✅ SST v2.0: Stage utilities
+const stageUtils = {
+  stageToIndex: stageName => {
+    const index = MC3V_STAGE_ORDER.indexOf(stageName);
+    if (index === -1) {
+      console.warn(`[MC3V] Unknown stage name: "${stageName}". Defaulting to 0.`);
+      return 0;
+    }
+    return index;
+  },
+
+  indexToStage: index => {
+    if (index < 0 || index >= MC3V_STAGE_ORDER.length) {
+      console.warn(`[MC3V] Invalid stage index: ${index}. Defaulting to "${MC3V_STAGE_ORDER[0]}".`);
+      return MC3V_STAGE_ORDER[0];
+    }
+    return MC3V_STAGE_ORDER[index];
+  },
+
+  getNextStage: currentStage => {
+    const currentIndex = stageUtils.stageToIndex(currentStage);
+    const nextIndex = Math.min(currentIndex + 1, MC3V_STAGE_ORDER.length - 1);
+    return MC3V_STAGE_ORDER[nextIndex];
+  },
+
+  getPrevStage: currentStage => {
+    const currentIndex = stageUtils.stageToIndex(currentStage);
+    const prevIndex = Math.max(currentIndex - 1, 0);
+    return MC3V_STAGE_ORDER[prevIndex];
+  },
+
+  isValidStage: stageName => {
+    return MC3V_STAGE_ORDER.includes(stageName);
+  },
+
+  canAdvance: currentStage => {
+    const currentIndex = stageUtils.stageToIndex(currentStage);
+    return currentIndex < MC3V_STAGE_ORDER.length - 1;
+  },
+
+  canGoBack: currentStage => {
+    const currentIndex = stageUtils.stageToIndex(currentStage);
+    return currentIndex > 0;
+  },
+
+  getStageInfo: stageName => {
+    const index = stageUtils.stageToIndex(stageName);
+    return {
+      name: stageName,
+      index,
+      label: STAGE_METADATA.stageLabels[stageName] || stageName,
+      autoAdvanceTime: STAGE_METADATA.autoAdvanceTiming[stageName] || 5000,
+      progress: index / (MC3V_STAGE_ORDER.length - 1),
+      isFirst: index === 0,
+      isLast: index === MC3V_STAGE_ORDER.length - 1,
+      canAdvance: stageUtils.canAdvance(stageName),
+      canGoBack: stageUtils.canGoBack(stageName),
+    };
+  },
+
+  getAllStagesInfo: () => {
+    return MC3V_STAGE_ORDER.map(stage => stageUtils.getStageInfo(stage));
+  }
+};
 
 export default function ConsolidatedNavigationController() {
-  const { setStage, currentStage, updateEngagement, isStageFeatureEnabled, getNarrativeSnapshot } =
-    useNarrativeStore();
+  const { 
+    jumpToStage, 
+    nextStage, 
+    prevStage, 
+    currentStage, 
+    updateEngagement, 
+    isStageFeatureEnabled, 
+    getNarrativeSnapshot 
+  } = useNarrativeStore();
 
   // Navigation state
   const transitionTimeoutRef = useRef(null);
@@ -33,7 +142,7 @@ export default function ConsolidatedNavigationController() {
 
   // ✅ CANONICAL STAGE-BASED NAVIGATION FUNCTIONS
 
-  const nextStage = useCallback(() => {
+  const nextStageHandler = useCallback(() => {
     if (isTransitioning.current) return false;
 
     const nextStageName = stageUtils.getNextStage(currentStage);
@@ -43,8 +152,7 @@ export default function ConsolidatedNavigationController() {
 
     // Trigger transition
     isTransitioning.current = true;
-    narrativeTransition.setStage(nextStageName);
-    setStage(nextStageName); // ✅ STRING stage name to store
+    jumpToStage(nextStageName); // Use narrativeStore function
     stageStartTime.current = Date.now();
 
     // Trigger events and setup auto-advance
@@ -57,9 +165,9 @@ export default function ConsolidatedNavigationController() {
       isTransitioning.current = false;
     }, 500);
     return true;
-  }, [currentStage, setStage]);
+  }, [currentStage, jumpToStage]);
 
-  const prevStage = useCallback(() => {
+  const prevStageHandler = useCallback(() => {
     if (isTransitioning.current) return false;
 
     const prevStageName = stageUtils.getPrevStage(currentStage);
@@ -68,8 +176,7 @@ export default function ConsolidatedNavigationController() {
     console.log(`🎬 Previous: ${currentStage} → ${prevStageName}`);
 
     isTransitioning.current = true;
-    narrativeTransition.setStage(prevStageName);
-    setStage(prevStageName); // ✅ STRING stage name to store
+    jumpToStage(prevStageName); // Use narrativeStore function
     stageStartTime.current = Date.now();
 
     clearAutoAdvance();
@@ -79,9 +186,9 @@ export default function ConsolidatedNavigationController() {
       isTransitioning.current = false;
     }, 500);
     return true;
-  }, [currentStage, setStage]);
+  }, [currentStage, jumpToStage]);
 
-  const jumpToStage = useCallback(
+  const jumpToStageHandler = useCallback(
     targetStage => {
       if (isTransitioning.current) return false;
       if (!stageUtils.isValidStage(targetStage)) {
@@ -93,8 +200,7 @@ export default function ConsolidatedNavigationController() {
       console.log(`🎬 Jump: ${currentStage} → ${targetStage}`);
 
       isTransitioning.current = true;
-      narrativeTransition.setStage(targetStage);
-      setStage(targetStage); // ✅ STRING stage name to store
+      jumpToStage(targetStage); // Use narrativeStore function
       stageStartTime.current = Date.now();
 
       clearAutoAdvance();
@@ -108,7 +214,7 @@ export default function ConsolidatedNavigationController() {
       }, 500);
       return true;
     },
-    [currentStage, setStage]
+    [currentStage, jumpToStage]
   );
 
   // ✅ AUTO-ADVANCE FUNCTIONALITY
@@ -120,13 +226,13 @@ export default function ConsolidatedNavigationController() {
       const advanceTime = STAGE_METADATA.autoAdvanceTiming[stageName];
       if (advanceTime && stageUtils.canAdvance(stageName)) {
         transitionTimeoutRef.current = setTimeout(() => {
-          nextStage();
+          nextStageHandler();
         }, advanceTime);
 
         console.log(`⏰ Auto-advance scheduled for ${stageName}: ${advanceTime}ms`);
       }
     },
-    [nextStage]
+    [nextStageHandler]
   );
 
   const clearAutoAdvance = useCallback(() => {
@@ -162,41 +268,41 @@ export default function ConsolidatedNavigationController() {
         stageReached.current[stageName] = true;
 
         switch (stageName) {
-          case 'silent':
+          case 'discipline':
             console.log('🎖️ Narrative Event: Marine discipline foundation');
             if (isStageFeatureEnabled('disciplineEffects')) {
               window.dispatchEvent(
                 new CustomEvent('narrativeEvent', {
-                  detail: { type: 'disciplineActivated', stage: 'silent' },
+                  detail: { type: 'disciplineActivated', stage: 'discipline' },
                 })
               );
             }
             break;
 
-          case 'awakening':
+          case 'neural':
             console.log('🤖 Narrative Event: AI partnership begins');
             if (isStageFeatureEnabled('metacurtisEmergence')) {
               window.dispatchEvent(
                 new CustomEvent('narrativeEvent', {
-                  detail: { type: 'metacurtisAwakening', stage: 'awakening' },
+                  detail: { type: 'metacurtisAwakening', stage: 'neural' },
                 })
               );
             }
             break;
 
-          case 'acceleration':
+          case 'velocity':
             console.log('🚀 Narrative Event: Development acceleration');
             if (isStageFeatureEnabled('accelerationEffects')) {
               window.dispatchEvent(
                 new CustomEvent('narrativeEvent', {
-                  detail: { type: 'accelerationActivated', stage: 'acceleration' },
+                  detail: { type: 'accelerationActivated', stage: 'velocity' },
                 })
               );
             }
             break;
 
           case 'transcendence':
-            console.log('⚡ Narrative Event: GLSL transcendence achieved');
+            console.log('⚡ Narrative Event: Consciousness transcendence achieved');
             if (isStageFeatureEnabled('transcendenceEffects')) {
               window.dispatchEvent(
                 new CustomEvent('narrativeEvent', {
@@ -228,7 +334,7 @@ export default function ConsolidatedNavigationController() {
     [isStageFeatureEnabled, updateEngagement]
   );
 
-  // ✅ UI HELPER FUNCTIONS (Replaces StageNavigation functionality)
+  // ✅ UI HELPER FUNCTIONS
 
   const getNavigationState = useCallback(() => {
     const stageInfo = stageUtils.getStageInfo(currentStage);
@@ -251,9 +357,9 @@ export default function ConsolidatedNavigationController() {
       label: STAGE_METADATA.stageLabels[stageName],
       isActive: stageName === currentStage,
       isReached: stageReached.current[stageName],
-      onClick: () => jumpToStage(stageName),
+      onClick: () => jumpToStageHandler(stageName),
     }));
-  }, [currentStage, jumpToStage]);
+  }, [currentStage, jumpToStageHandler]);
 
   // ✅ KEYBOARD NAVIGATION
 
@@ -265,19 +371,19 @@ export default function ConsolidatedNavigationController() {
         case 'ArrowRight':
         case ' ':
         case 'Enter':
-          handled = nextStage();
+          handled = nextStageHandler();
           break;
 
         case 'ArrowLeft':
-          handled = prevStage();
+          handled = prevStageHandler();
           break;
 
         case 'Home':
-          handled = jumpToStage(STAGE_METADATA.firstStage);
+          handled = jumpToStageHandler(STAGE_METADATA.firstStage);
           break;
 
         case 'End':
-          handled = jumpToStage(STAGE_METADATA.lastStage);
+          handled = jumpToStageHandler(STAGE_METADATA.lastStage);
           break;
 
         case 'p':
@@ -291,10 +397,10 @@ export default function ConsolidatedNavigationController() {
 
       // Development shortcuts
       if (process.env.NODE_ENV === 'development') {
-        if (event.ctrlKey && event.key >= '0' && event.key <= '4') {
+        if (event.ctrlKey && event.key >= '0' && event.key <= '6') {
           const targetIndex = parseInt(event.key);
           const targetStage = stageUtils.indexToStage(targetIndex);
-          handled = jumpToStage(targetStage);
+          handled = jumpToStageHandler(targetStage);
           console.log(`🎮 Dev shortcut: Stage ${targetIndex} (${targetStage})`);
         }
 
@@ -315,29 +421,23 @@ export default function ConsolidatedNavigationController() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    nextStage,
-    prevStage,
-    jumpToStage,
+    nextStageHandler,
+    prevStageHandler,
+    jumpToStageHandler,
     toggleAutoAdvance,
     getNavigationState,
     getNarrativeSnapshot,
   ]);
 
-  // ✅ INITIALIZATION & INTEGRITY CHECK
+  // ✅ INITIALIZATION
 
   useEffect(() => {
-    console.log('🎭 Consolidated Navigation Controller: Initializing...');
-
-    // ✅ STAGE INTEGRITY CHECK
-    const isValid = validateStageIntegrity(NARRATIVE_PRESETS);
-    if (!isValid) {
-      console.error('❌ Stage integrity check failed - navigation may not work correctly');
-    }
+    console.log('🎭 Consolidated Navigation Controller: SST v2.0 Initialized...');
 
     // Initialize with first stage if not already set
     if (!stageUtils.isValidStage(currentStage)) {
       console.log(`🔧 Invalid current stage "${currentStage}", initializing to genesis`);
-      jumpToStage('genesis');
+      jumpToStageHandler('genesis');
     } else {
       console.log(`✅ Navigation initialized at stage: ${currentStage}`);
       stageStartTime.current = Date.now();
@@ -347,17 +447,17 @@ export default function ConsolidatedNavigationController() {
     return () => {
       clearAutoAdvance();
     };
-  }, [currentStage, jumpToStage, triggerStageEvents, clearAutoAdvance]);
+  }, [currentStage, jumpToStageHandler, triggerStageEvents, clearAutoAdvance]);
 
-  // ✅ GLOBAL API EXPOSURE (For UI components and external systems)
+  // ✅ GLOBAL API EXPOSURE
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.narrativeNavigation = {
         // Core navigation
-        nextStage,
-        prevStage,
-        jumpToStage,
+        nextStage: nextStageHandler,
+        prevStage: prevStageHandler,
+        jumpToStage: jumpToStageHandler,
 
         // Auto-advance
         toggleAutoAdvance,
@@ -392,9 +492,9 @@ export default function ConsolidatedNavigationController() {
     };
   }, [
     currentStage,
-    nextStage,
-    prevStage,
-    jumpToStage,
+    nextStageHandler,
+    prevStageHandler,
+    jumpToStageHandler,
     toggleAutoAdvance,
     getNavigationState,
     getStageButtonData,
@@ -407,11 +507,6 @@ export default function ConsolidatedNavigationController() {
 // ✅ EXPORT UTILITIES FOR EXTERNAL USE
 
 export const navigationUtils = {
-  // These will be overridden by the running controller
-  nextStage: () => console.warn('NavigationController not initialized'),
-  prevStage: () => console.warn('NavigationController not initialized'),
-  jumpToStage: () => console.warn('NavigationController not initialized'),
-
   // Static utilities (always available)
   stageOrder: MC3V_STAGE_ORDER,
   stageLabels: STAGE_METADATA.stageLabels,

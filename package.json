@@ -17,14 +17,20 @@
     "test:watch": "vitest watch",
     "lighthouse": "lhci autorun --config=./lighthouserc.json",
     "lighthouse:full": "npm run build && npm run lighthouse",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "validate:sst3": "node ./scripts/validate-sst3.js",
+    "predev": "npm run validate:sst3",
+    "prebuild": "npm run validate:sst3"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
     "gsap": "^3.13.0",
+    "mitt": "^3.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "seedrandom": "^3.0.5",
+    "simplex-noise": "^4.0.3",
     "three": "^0.175.0",
     "zustand": "^5.0.4"
   },
