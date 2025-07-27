@@ -1,5 +1,5 @@
 // src/components/webgl/WebGLCanvas.jsx
-// ✅ COMPLETE WORKING VERSION with all dependencies
+// SST v3.0 COMPLIANT - Updated to pass props to WebGLBackground
 
 import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
@@ -13,7 +13,7 @@ import DebugExpose from '@/components/dev/DebugExpose';
 // Lazy load WebGL components
 const WebGLBackground = lazy(() => import('./WebGLBackground'));
 
-// ✅ FIX: WebGL context pool class definition
+// WebGL context pool class
 class WebGLContextPool {
   constructor() {
     this.contextPool = [];
@@ -59,7 +59,6 @@ class WebGLContextPool {
   
   cacheWebGLState(context) {
     if (!context) return;
-    // Cache state for later restoration
     this.stateCache.set(context, {
       timestamp: Date.now()
     });
@@ -75,7 +74,7 @@ class WebGLContextPool {
   }
 }
 
-// ✅ FIX: Performance monitor class
+// Performance monitor class
 class CanvasPerformanceMonitor {
   constructor() {
     this.metrics = {
@@ -98,7 +97,7 @@ class CanvasPerformanceMonitor {
   }
 }
 
-// ✅ FIX: Extension interference detection
+// Extension interference detection
 const detectAdvancedExtensionInterference = () => {
   try {
     const testCanvas = document.createElement('canvas');
@@ -119,21 +118,22 @@ const detectAdvancedExtensionInterference = () => {
   }
 };
 
-export default function WebGLCanvas() {
-  // ✅ Canvas reference
+// ===== MAIN COMPONENT WITH PROPS =====
+export default function WebGLCanvas({ stage = 'genesis', morphProgress = 0, scrollProgress = 0 }) {
+  // Canvas reference
   const canvasRef = useRef(null);
   
-  // ✅ Component state
+  // Component state
   const [webglSupported, setWebglSupported] = useState(true);
   const [contextLost, setContextLost] = useState(false);
   const [extensionInterference, setExtensionInterference] = useState(null);
   const [canvasStrategy, setCanvasStrategy] = useState(0);
   
-  // ✅ FIX: Initialize systems with useMemo
+  // Initialize systems with useMemo
   const contextPool = useMemo(() => new WebGLContextPool(), []);
   const performanceMonitor = useMemo(() => new CanvasPerformanceMonitor(), []);
   
-  // ✅ Atomic state subscriptions
+  // Atomic state subscriptions (for existing functionality)
   const [stageState, setStageState] = useState(stageAtom.getState());
   const [qualityState, setQualityState] = useState(qualityAtom.getState());
   const [clockState, setClockState] = useState(clockAtom.getState());
@@ -156,14 +156,12 @@ export default function WebGLCanvas() {
     };
   }, [performanceMonitor]);
   
-  // ✅ Extract values
-  const currentStage = stageState.currentStage || 'genesis';
-  const stageProgress = stageState.stageProgress || 0;
+  // Extract values
   const webglEnabled = qualityState.webglEnabled !== false;
   const currentQualityTier = qualityState.currentQualityTier || 'HIGH';
-  const particleCount = qualityAtom.getParticleBudget(currentStage);
+  const particleCount = qualityAtom.getParticleBudget(stage || stageState.currentStage);
   
-  // ✅ FIX: Event logging with useCallback
+  // Event logging
   const addEventLog = useCallback((eventName, payload) => {
     performanceMonitor.updateMetrics({ 
       lastEvent: eventName,
@@ -176,7 +174,7 @@ export default function WebGLCanvas() {
     }
   }, [performanceMonitor]);
   
-  // ✅ Extension interference detection
+  // Extension interference detection
   useEffect(() => {
     const interference = detectAdvancedExtensionInterference();
     setExtensionInterference(interference);
@@ -186,7 +184,7 @@ export default function WebGLCanvas() {
     }
   }, [addEventLog]);
   
-  // ✅ FIX: Canvas error handler
+  // Canvas error handler
   const handleCanvasError = useCallback((error) => {
     console.error('[WebGLCanvas] Canvas creation failed:', error);
     addEventLog('webgl_canvas_error', {
@@ -206,7 +204,7 @@ export default function WebGLCanvas() {
     }
   }, [canvasStrategy, extensionInterference, contextPool, addEventLog]);
   
-  // ✅ Context loss handling
+  // Context loss handling
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -241,7 +239,7 @@ export default function WebGLCanvas() {
     };
   }, [extensionInterference, canvasStrategy, contextPool, addEventLog]);
   
-  // ✅ Canvas performance monitoring
+  // Canvas performance monitoring
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -261,7 +259,7 @@ export default function WebGLCanvas() {
     return () => resizeObserver.disconnect();
   }, [performanceMonitor]);
   
-  // ✅ Canvas configuration
+  // Canvas configuration
   const canvasConfig = useMemo(() => {
     const baseConfig = {
       className: "w-full h-full",
@@ -287,7 +285,7 @@ export default function WebGLCanvas() {
     return baseConfig;
   }, [currentQualityTier, canvasStrategy]);
   
-  // ✅ Fallback renders
+  // Fallback renders
   if (!webglSupported) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -296,8 +294,8 @@ export default function WebGLCanvas() {
         </div>
         <div className="absolute bottom-4 right-4 bg-black/80 border border-red-600 rounded-lg p-3 text-red-400 font-mono text-sm">
           <div className="font-bold mb-2">⚛️ WebGL Not Supported</div>
-          <div>Stage: {currentStage}</div>
-          <div>Progress: {Math.round(stageProgress * 100)}%</div>
+          <div>Stage: {stage}</div>
+          <div>Progress: {Math.round(scrollProgress * 100)}%</div>
         </div>
       </div>
     );
@@ -355,7 +353,7 @@ export default function WebGLCanvas() {
             contextPoolStats: contextPool.getStats(),
             quality: currentQualityTier,
             particles: particleCount,
-            stage: currentStage,
+            stage: stage,
             strategy: canvasStrategy
           });
 
@@ -367,7 +365,7 @@ export default function WebGLCanvas() {
         }}
         onError={handleCanvasError}
       >
-        {/* ✅ Optimal camera for constellation viewing */}
+        {/* Optimal camera for constellation viewing */}
         <PerspectiveCamera
           makeDefault
           position={[0, 0, 80]}
@@ -382,16 +380,22 @@ export default function WebGLCanvas() {
         {/* Dev tools */}
         {import.meta.env.DEV && <DebugExpose />}
 
-        {/* Main particle system */}
+        {/* Main particle system WITH PROPS */}
         <Suspense fallback={null}>
-          {webglEnabled && <WebGLBackground />}
+          {webglEnabled && (
+            <WebGLBackground 
+              stage={stage}
+              morphProgress={morphProgress}
+              scrollProgress={scrollProgress}
+            />
+          )}
         </Suspense>
       </Canvas>
 
       {/* Performance monitoring */}
       <DevPerformanceMonitor />
 
-      {/* ✅ Debug overlay */}
+      {/* Debug overlay */}
       {import.meta.env.DEV && (
         <div style={{
           position: 'fixed',
@@ -410,8 +414,9 @@ export default function WebGLCanvas() {
           <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#00ffcc' }}>
             🌌 CONSTELLATION STATUS
           </div>
-          <div>Stage: {currentStage}</div>
-          <div>Progress: {Math.round(stageProgress * 100)}%</div>
+          <div>Stage: {stage}</div>
+          <div>Progress: {Math.round(scrollProgress * 100)}%</div>
+          <div>Morph: {Math.round(morphProgress * 100)}%</div>
           <div>Quality: {currentQualityTier}</div>
           <div>Particles: {particleCount}</div>
           <div>WebGL: {webglEnabled ? '✓' : '✗'}</div>
@@ -423,6 +428,14 @@ export default function WebGLCanvas() {
             <div>Grade: {performanceMonitor.getPerformanceGrade()}</div>
             <div>FPS: {clockState.fps?.toFixed(1) || 'N/A'}</div>
             <div>Frame Time: {clockState.averageFrameTime?.toFixed(1) || 'N/A'}ms</div>
+          </div>
+          
+          {/* SST v3.0 Props */}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+            <div style={{ color: '#ffff00', fontWeight: 'bold', marginBottom: '4px' }}>SST v3.0 Props:</div>
+            <div>Stage: {stage}</div>
+            <div>Morph: {morphProgress.toFixed(2)}</div>
+            <div>Scroll: {scrollProgress.toFixed(2)}</div>
           </div>
           
           {/* Debug controls */}
@@ -448,7 +461,7 @@ export default function WebGLCanvas() {
             <button 
               onClick={() => {
                 const event = new CustomEvent('webgl-force-init', {
-                  detail: { stage: currentStage, reason: 'manual_test' }
+                  detail: { stage: stage, reason: 'manual_test' }
                 });
                 window.dispatchEvent(event);
               }}
@@ -471,7 +484,7 @@ export default function WebGLCanvas() {
   );
 }
 
-// ✅ Global debug access
+// Global debug access
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.canvasDebug = {
     getCanvasElement: () => document.querySelector('canvas'),

@@ -1,0 +1,90 @@
+// Minimal fragment data for validator
+export const MEMORY_FRAGMENTS = {
+  genesis_spark: {
+    id: "frag_001",
+    stage: "genesis",
+    trigger: { type: "scroll", value: 5, unit: "percentage" },
+    content: { type: "interactive", element: "commodore_terminal", interaction: "type_enabled" },
+    duration: 10000,
+    dismissible: true,
+    particleEffect: { targetTier: 0, behavior: "converge", intensity: 0.7, radius: 100 },
+    audio: { trigger: "keyboard_click_1980s.mp3" }
+  }
+  // TODO Add the rest
+};
+
+export const getFragmentsForStage = (stageName) =>
+  Object.values(MEMORY_FRAGMENTS).filter(f => f.stage === stageName);
+
+// --- AUTO-APPENDED MISSING EXPORTS ---
+
+// Get active fragments based on current state
+export const getActiveFragments = (stageName, scrollPercent, narrativeSegmentId) => {
+  return Object.values(MEMORY_FRAGMENTS).filter(frag => {
+    if (frag.stage !== stageName) return false;
+    
+    // Check scroll trigger
+    if (frag.trigger.type === 'scroll' && 
+        Math.abs(frag.trigger.value - scrollPercent) < 2) {
+      return true;
+    }
+    
+    // Check narrative trigger
+    if (frag.trigger.type === 'narrative' && 
+        frag.trigger.segmentId === narrativeSegmentId) {
+      return true;
+    }
+    
+    return false;
+  });
+};
+
+// Additional utility functions that might be useful
+export const getFragmentById = (fragmentId) => {
+  return MEMORY_FRAGMENTS[fragmentId];
+};
+
+export const getFragmentByScrollPosition = (stageName, scrollPercent) => {
+  return Object.values(MEMORY_FRAGMENTS).find(frag => 
+    frag.stage === stageName &&
+    frag.trigger.type === 'scroll' &&
+    frag.trigger.value <= scrollPercent &&
+    scrollPercent < (frag.trigger.value + 2) // 2% activation window
+  );
+};
+
+// Fragment interaction handlers (if not already exported)
+export const FRAGMENT_INTERACTIONS = FRAGMENT_INTERACTIONS || {};
+
+// Fragment lifecycle (if not already exported)
+export const FRAGMENT_LIFECYCLE = FRAGMENT_LIFECYCLE || {
+  states: ['pending', 'triggering', 'active', 'dismissing', 'completed'],
+  transitions: {
+    pending_to_triggering: { duration: 500, particleEffect: true, audioTrigger: true },
+    triggering_to_active: { duration: 1000, enableInteraction: true, pauseNarration: true },
+    active_to_dismissing: { duration: 500, disableInteraction: true, resumeNarration: true },
+    dismissing_to_completed: { duration: 500, particleDisperse: true, cleanup: true }
+  }
+};
+
+// Development helpers
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  window.MEMORY_FRAGMENTS = MEMORY_FRAGMENTS;
+  window.testFragment = (fragmentId) => {
+    const fragment = MEMORY_FRAGMENTS[fragmentId];
+    if (!fragment) {
+      console.error(`Fragment ${fragmentId} not found`);
+      return;
+    }
+    console.log(`Testing fragment: ${fragmentId}`, fragment);
+    return fragment;
+  };
+  window.listFragments = () => {
+    console.table(
+      Object.entries(MEMORY_FRAGMENTS).map(([id, frag]) => ({
+        id,
+        stage: frag.stage,
+        name: frag.name,
+        triggerType: frag.trigger.type,
+        triggerValue: frag.trigger.value || frag.trigger.segmentId
+      }))

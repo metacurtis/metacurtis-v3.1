@@ -1,18 +1,19 @@
 // src/components/webgl/WebGLBackground.jsx
-// SST v3.0 COMPLIANT - Pure renderer with fixed uniforms
+// ✅ SIMPLIFIED: Pure renderer with no decision logic
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { stageAtom } from '../../stores/atoms/stageAtom.js';
 import consciousnessEngine from '../../engine/ConsciousnessEngine.js';
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
-import { Canonical } from '../../config/canonical/canonicalAuthority.js';
+import SST_V2_CANONICAL from '../../config/canonical/sstV2Stages.jsx';
 
-// Import shaders
+// Import shaders - ensure these paths are correct
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 
-function WebGLBackground({ stage = 'genesis', morphProgress = 0, scrollProgress = 0 }) {
+function WebGLBackground() {
   const meshRef = useRef();
   const geometryRef = useRef();
   const { size, gl } = useThree();
@@ -22,7 +23,29 @@ function WebGLBackground({ stage = 'genesis', morphProgress = 0, scrollProgress 
   const [atlasTexture, setAtlasTexture] = useState(null);
   const [activeCount, setActiveCount] = useState(0);
   
-  // Create atlas texture once
+  // Stage data from atom
+  const [stageData, setStageData] = useState({
+    currentStage: 'genesis',
+    nextStage: 'genesis',
+    stageProgress: 0,
+    stageBlend: 0
+  });
+  
+  // ✅ MUST HAVE: Subscribe to stage changes
+  useEffect(() => {
+    const unsubscribe = stageAtom.subscribe((state) => {
+      setStageData({
+        currentStage: state.currentStage || 'genesis',
+        nextStage: state.nextStage || state.currentStage || 'genesis',
+        stageProgress: state.stageProgress || 0,
+        stageBlend: state.stageBlend || 0
+      });
+    });
+    
+    return unsubscribe;
+  }, []);
+  
+  // ✅ MUST HAVE: Create atlas texture once
   useEffect(() => {
     const atlas = getPointSpriteAtlasSingleton();
     const texture = atlas.createWebGLTexture();
@@ -33,48 +56,43 @@ function WebGLBackground({ stage = 'genesis', morphProgress = 0, scrollProgress 
     };
   }, []);
   
-  // Request blueprint when stage changes
+  // ✅ MUST HAVE: Request blueprint from engine with error handling
   useEffect(() => {
     async function requestBlueprint() {
       try {
-        const stageData = Canonical.stages[stage];
-        if (!stageData) {
-          console.error('❌ Unknown stage:', stage);
-          return;
-        }
-        
-        const activeParticles = consciousnessEngine.getActiveParticleCount(stage);
+        const activeParticles = consciousnessEngine.getActiveParticleCount(stageData.currentStage);
         const data = await consciousnessEngine.generateConstellationParticleData(
           activeParticles,
-          { stageName: stage }
+          { stageName: stageData.currentStage }
         );
         
         if (data) {
           setBlueprint(data);
           setActiveCount(activeParticles);
-          console.log(`✅ Renderer: Blueprint for ${stage} (${activeParticles} particles)`);
+          console.log(`✅ Renderer: Received blueprint for ${stageData.currentStage} (${activeParticles} particles)`);
         }
       } catch (error) {
         console.error('❌ Renderer: Blueprint generation failed', error);
+        // Continue with previous blueprint if available
       }
     }
     
     requestBlueprint();
-  }, [stage]);
+  }, [stageData.currentStage]);
   
-  // Create geometry with blueprint data
+  // ✅ MUST HAVE: Create pre-allocated geometry (17K max)
   const geometry = useMemo(() => {
     if (!blueprint) return null;
     
     const geo = new THREE.BufferGeometry();
     
-    // Particle index array for WebGL 1 compatibility
+    // ✅ NEW: Create particle index array for WebGL 1 compatibility
     const indexArray = new Float32Array(blueprint.maxParticles);
     for (let i = 0; i < blueprint.maxParticles; i++) {
       indexArray[i] = i;
     }
     
-    // Set all attributes
+    // Set all attributes from blueprint
     geo.setAttribute('position', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
     geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
     geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(blueprint.allenAtlasPositions, 3));
@@ -83,49 +101,47 @@ function WebGLBackground({ stage = 'genesis', morphProgress = 0, scrollProgress 
     geo.setAttribute('opacityData', new THREE.BufferAttribute(blueprint.opacityData, 1));
     geo.setAttribute('atlasIndex', new THREE.BufferAttribute(blueprint.atlasIndices, 1));
     geo.setAttribute('tierData', new THREE.BufferAttribute(blueprint.tierData, 1));
+    
+    // ✅ NEW: Add particle index attribute
     geo.setAttribute('particleIndex', new THREE.BufferAttribute(indexArray, 1));
     
-    // Set draw range
+    // Set initial draw range
     geo.setDrawRange(0, activeCount);
     
-    // Store ref
+    // Store ref for dynamic updates
     geometryRef.current = geo;
     
     return geo;
   }, [blueprint, activeCount]);
   
-  // Update draw range when count changes
+  // ✅ MUST HAVE: Update draw range when active count changes
   useEffect(() => {
     if (geometryRef.current && activeCount > 0) {
       geometryRef.current.setDrawRange(0, activeCount);
     }
   }, [activeCount]);
   
-  // Create shader material
+  // ✅ MUST HAVE: Create shader material with all uniforms
   const material = useMemo(() => {
     if (!atlasTexture) return null;
     
-    const stageData = Canonical.stages[stage];
-    if (!stageData) return null;
+    const currentStageData = SST_V2_CANONICAL.get.stageByName(stageData.currentStage);
+    const nextStageData = SST_V2_CANONICAL.get.stageByName(stageData.nextStage);
     
-    // Get next stage for blending
-    const stageIndex = Canonical.stageOrder.indexOf(stage);
-    const nextStageIndex = Math.min(stageIndex + 1, Canonical.stageOrder.length - 1);
-    const nextStage = Canonical.stageOrder[nextStageIndex];
-    const nextStageData = Canonical.stages[nextStage];
+    // ✅ FIX: Don't modify the fragment shader - use it as-is
+    // The uniforms are already declared in the shader file
+    const fragmentShader = fragmentShaderSource;
     
-    const mat = new THREE.ShaderMaterial({
+    return new THREE.ShaderMaterial({
       uniforms: {
-        // Time and morphing
+        // Time and progression
         uTime: { value: 0 },
-        uMorphProgress: { value: morphProgress },
-        uScrollProgress: { value: scrollProgress },
+        uStageProgress: { value: 0 },
+        uStageBlend: { value: 0 },
         
-        // Colors from SST v3.0
-        uColorCurrent: { value: new THREE.Color(stageData.colors[0]) },
+        // Colors from SST
+        uColorCurrent: { value: new THREE.Color(currentStageData.colors[0]) },
         uColorNext: { value: new THREE.Color(nextStageData.colors[0]) },
-        uColorAccent1: { value: new THREE.Color(stageData.colors[1] || stageData.colors[0]) },
-        uColorAccent2: { value: new THREE.Color(stageData.colors[2] || stageData.colors[0]) },
         
         // Atlas
         uAtlasTexture: { value: atlasTexture },
@@ -136,73 +152,56 @@ function WebGLBackground({ stage = 'genesis', morphProgress = 0, scrollProgress 
         uDevicePixelRatio: { value: gl.getPixelRatio() },
         uResolution: { value: new THREE.Vector2(size.width, size.height) },
         
-        // Tier control - renamed from uTierCutoff
-        uActiveCount: { value: activeCount },
+        // Tier fade
+        uTierCutoff: { value: activeCount },
         uFadeProgress: { value: 1.0 },
         
-        // Effects from features
-        uGaussianFalloff: { value: Canonical.features.gaussianFalloff ? 1.0 : 0.0 },
-        uCenterWeighting: { value: Canonical.features.centerWeightingTier4 ? 1.0 : 0.0 },
-        
-        // Stage-specific
-        uStageIndex: { value: stageIndex },
-        uBrainRegion: { value: stageIndex } // Map to brain region
+        // Depth fade
+        uFadeNear: { value: 0.1 },
+        uFadeFar: { value: 100.0 }
       },
       vertexShader: vertexShaderSource,
-      fragmentShader: fragmentShaderSource,
+      fragmentShader,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       depthTest: true
     });
-    
-    // Force update flag
-    mat.uniformsNeedUpdate = true;
-    
-    return mat;
-  }, [atlasTexture, stage, morphProgress, scrollProgress, size, gl, activeCount]);
+  }, [atlasTexture, stageData.currentStage, stageData.nextStage, size, gl, activeCount]);
   
-  // Update uniforms on resize
+  // ✅ MUST HAVE: Update uniforms on resize
   useEffect(() => {
     if (material) {
       material.uniforms.uResolution.value.set(size.width, size.height);
       material.uniforms.uDevicePixelRatio.value = gl.getPixelRatio();
-      material.uniformsNeedUpdate = true;
     }
   }, [size, material, gl]);
   
-  // Animation frame
+  // ✅ MUST HAVE: Animation frame updates
   useFrame((state) => {
     if (meshRef.current && material) {
       // Update time
       material.uniforms.uTime.value = state.clock.elapsedTime;
       
-      // Update morph progress (ensure it's always current)
-      material.uniforms.uMorphProgress.value = morphProgress;
-      material.uniforms.uScrollProgress.value = scrollProgress;
-      material.uniforms.uActiveCount.value = activeCount;
+      // Update stage progression
+      material.uniforms.uStageProgress.value = stageData.stageProgress;
+      material.uniforms.uStageBlend.value = stageData.stageBlend;
       
-      // Stage-specific rotation
-      const stageData = Canonical.stages[stage];
-      const cameraConfig = stageData?.camera;
+      // Keep tier cutoff at active count
+      material.uniforms.uTierCutoff.value = activeCount;
       
-      if (cameraConfig?.movement === 'balletic_orbit') {
-        // Harmony - figure-8 pattern
-        const t = state.clock.elapsedTime * 0.1;
-        meshRef.current.rotation.y = Math.sin(t) * 0.5;
-        meshRef.current.rotation.x = Math.sin(t * 2) * 0.1;
-      } else if (cameraConfig?.movement === 'dramatic_pullback' && cameraConfig?.shake) {
-        // Velocity - shake effect
-        const shake = Math.sin(state.clock.elapsedTime * 10) * 0.01;
-        meshRef.current.rotation.y = state.clock.elapsedTime * 0.02 + shake;
-        meshRef.current.rotation.x = shake * 0.5;
-      } else if (cameraConfig?.movement === 'reverent_orbit') {
-        // Transcendence - wide orbit
-        meshRef.current.rotation.y = state.clock.elapsedTime * 0.01;
-        meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
-      } else {
-        // Default gentle rotation
-        meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      // Gentle rotation
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      
+      // Update colors if needed
+      const currentStageData = SST_V2_CANONICAL.get.stageByName(stageData.currentStage);
+      const nextStageData = SST_V2_CANONICAL.get.stageByName(stageData.nextStage);
+      
+      if (currentStageData?.colors?.[0]) {
+        material.uniforms.uColorCurrent.value.set(currentStageData.colors[0]);
+      }
+      if (nextStageData?.colors?.[0]) {
+        material.uniforms.uColorNext.value.set(nextStageData.colors[0]);
       }
     }
   });
