@@ -1,3 +1,4 @@
+import { integrateUnifiedTimeline } from '@/bootstrap/integrateUnifiedTimeline';
 // src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';

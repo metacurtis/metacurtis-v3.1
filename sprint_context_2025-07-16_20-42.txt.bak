@@ -1,0 +1,1207 @@
+// src/components/webgl/WebGLBackground.jsx
+// ✅ VIEWPORT SCALE FIX: Corrected position generator for proper particle visibility
+// ✅ AI PLAYBOOK v7.0: Critical scale mismatch resolved
+// ✅ SST v2.0 Compatible: 7-stage consciousness system operational
+
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { useAtomValue } from '@/stores/atoms/createAtom';
+import { stageAtom } from '@/stores/atoms/stageAtom';
+import { qualityAtom } from '@/stores/atoms/qualityAtom';
+import consciousnessEngine from '@/engine/ConsciousnessEngine.js';
+import PointSpriteAtlas from '@/components/webgl/consciousness/PointSpriteAtlas.js';
+
+// ✅ EXTERNAL SHADER IMPORTS - Phase 1 Complete
+import vertexShader from '@/shaders/templates/consciousness-vertex.glsl?raw';
+import fragmentShader from '@/shaders/templates/consciousness-fragment.glsl?raw';
+
+// ✅ MATERIAL CREATION - Using external shaders, no viewport dependency
+const createEnhancedMaterial = () => {
+  const devicePixelRatio = Math.min(window.devicePixelRatio, 2);
+  const basePointSize = 8; // ✅ VIEWPORT FIX: Reduced from 150 to proper Genesis dust size
+
+  const ENHANCED_STAGE_COLORS = [
+    new THREE.Color('#00FF41'), // Genesis - Bright Matrix Green
+    new THREE.Color('#0066FF'), // Discipline - Electric Blue  
+    new THREE.Color('#6600FF'), // Neural - Vivid Purple
+    new THREE.Color('#9900FF'), // Velocity - Bright Violet
+    new THREE.Color('#00CCFF'), // Architecture - Cyan Electric
+    new THREE.Color('#FFB000'), // Harmony - Golden Amber
+    new THREE.Color('#FFFFFF')  // Transcendence - Pure White
+  ];
+
+  const material = new THREE.ShaderMaterial({
+    vertexShader, // ✅ EXTERNAL SHADER: From consciousness-vertex.glsl
+    fragmentShader, // ✅ EXTERNAL SHADER: From consciousness-fragment.glsl
+    uniforms: {
+      uTime: { value: 0.0 },
+      uStageProgress: { value: 0.0 },
+      uPointSize: { value: basePointSize },
+      uColorCurrent: { value: ENHANCED_STAGE_COLORS[0] },
+      uColorNext: { value: ENHANCED_STAGE_COLORS[1] },
+      uStageBlend: { value: 0.0 },
+      uTotalSprites: { value: 16.0 },
+      uFadeNear: { value: 50.0 },
+      uFadeFar: { value: 100.0 },
+      uAtlasTexture: { value: null },
+      uDevicePixelRatio: { value: devicePixelRatio },
+      uResolution: { value: new THREE.Vector2(1920, 1080) } // Updated dynamically
+    },
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false
+  });
+
+  material.userData.stageColors = ENHANCED_STAGE_COLORS;
+  material.userData.creationTime = Date.now();
+  material.userData.shaderSource = 'EXTERNAL_FILES'; // ✅ PHASE 1 COMPLETE FLAG
+
+  if (import.meta.env.DEV) {
+    console.log('✅ Enhanced Material: Created with EXTERNAL shaders, viewport-aware');
+  }
+
+  return material;
+};
+
+// ✅ CRITICAL FIX: Corrected viewport-aware position generator with ACTUAL camera distance
+const createCachedPositionGenerator = () => {
+  const cache = new Map();
+  
+  return function generateViewportAwarePositions(particleCount, camera, viewport, renderer) {
+    // ✅ FIX #2: Use renderer size, not viewport object for cache key
+    const { width: rw, height: rh } = renderer.getSize(new THREE.Vector2());
+    const cacheKey = `${particleCount}-${rw}-${rh}-${camera.fov}`;
+    
+    // Skip dummy canvas sizes from extensions
+    if (rw < 200 || rh < 200) {
+      if (cache.size > 0) {
+        return cache.values().next().value.slice(); // return any cached positions
+      }
+      return new Float32Array(particleCount * 3); // fallback empty
+    }
+    
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey).slice();
+    }
+    
+    const positions = new Float32Array(particleCount * 3);
+    
+    // ✅ FIX #1: Use camera's ACTUAL Z position, not hard-coded 25
+    const distance = camera.position.z; // live distance from camera
+    const fov = THREE.MathUtils.degToRad(camera.fov);
+    const height = 2 * Math.tan(fov / 2) * distance;
+    const width = height * camera.aspect;
+    
+    // ✅ FIX #1: Slight overscan for edge coverage, works with correct distance
+    const scaleMultiplier = 1.05; // slight overscan is fine with correct distance
+    
+    if (import.meta.env.DEV) {
+      console.log(`🔧 VIEWPORT FIX: Camera at Z:${distance.toFixed(1)} - Frustum W:${width.toFixed(1)} H:${height.toFixed(1)} (using renderer size: ${rw}x${rh})`);
+    }
+    
+    for (let i = 0; i < particleCount; i++) {
+      const z = -Math.random() * 20 - 5; // -5 to -25 range for depth variety
+      
+      // ✅ CRITICAL FIX: Use camera frustum dimensions with actual distance
+      positions[i * 3] = (Math.random() - 0.5) * width * scaleMultiplier;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * height * scaleMultiplier;
+      positions[i * 3 + 2] = z;
+    }
+    
+    if (cache.size > 10) {
+      const firstKey = cache.keys().next().value;
+      cache.delete(firstKey);
+    }
+    cache.set(cacheKey, positions);
+    
+    if (import.meta.env.DEV) {
+      console.log(`🔧 Viewport-aware positions: Camera Z:${distance.toFixed(1)} → Frustum W:${width.toFixed(1)} H:${height.toFixed(1)}`);
+    }
+    
+    return positions.slice();
+  };
+};
+
+// ✅ STAGE COLOR UPDATES - Proper uniform management
+function updateEnhancedStageColors(material, stageName, stageBlend) {
+  if (!material || !material.uniforms) return;
+  
+  const STAGES = ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'];
+  const colors = material.userData.stageColors;
+  if (!colors) return;
+  
+  let currentIndex = STAGES.findIndex(s => s.toLowerCase() === stageName.toLowerCase());
+  if (currentIndex === -1) {
+    console.warn(`Unknown stage: ${stageName}, using genesis`);
+    currentIndex = 0;
+  }
+  
+  const nextIndex = (currentIndex + 1) % STAGES.length;
+  
+  if (material.uniforms.uColorCurrent && colors[currentIndex]) {
+    material.uniforms.uColorCurrent.value.copy(colors[currentIndex]);
+  }
+  if (material.uniforms.uColorNext && colors[nextIndex]) {
+    material.uniforms.uColorNext.value.copy(colors[nextIndex]);
+  }
+  if (material.uniforms.uStageBlend) {
+    material.uniforms.uStageBlend.value = stageBlend;
+  }
+  
+  material.uniformsNeedUpdate = true;
+  
+  if (import.meta.env.DEV && Math.random() < 0.05) {
+    console.debug(`🎨 Enhanced Colors: ${stageName}[${currentIndex}]→${STAGES[nextIndex]}[${nextIndex}] (blend: ${stageBlend.toFixed(3)})`);
+  }
+}
+
+// ✅ ATLAS INTEGRATION - Unchanged, working correctly
+class AtlasIntegration {
+  constructor() {
+    this.atlas = new PointSpriteAtlas();
+    this.atlasTexture = null;
+    this.initializeAtlas();
+  }
+
+  initializeAtlas() {
+    this.atlasTexture = this.atlas.createWebGLTexture();
+    this.atlasTexture.needsUpdate = true;
+    
+    if (import.meta.env.DEV) {
+      console.log('✅ Enhanced AtlasIntegration: 256×256 atlas ready');
+    }
+  }
+
+  updateShaderUniforms(material) {
+    if (material.uniforms && material.uniforms.uAtlasTexture) {
+      material.uniforms.uAtlasTexture.value = this.atlasTexture;
+    }
+  }
+
+  generateAtlasIndices(particleCount, stage) {
+    return this.atlas.generateAtlasIndices(particleCount, stage);
+  }
+
+  getAtlasTexture() {
+    return this.atlasTexture;
+  }
+
+  dispose() {
+    if (this.atlas) {
+      this.atlas.dispose();
+    }
+  }
+}
+
+// ✅ GEOMETRY MANAGER - Memory-safe with disposal tracking
+class GeometryReallocationManager {
+  constructor() {
+    this.lastAllocation = {
+      stageName: null,
+      particleCount: 0,
+      qualityTier: null,
+      timestamp: 0
+    };
+    this.debounceTimeout = null;
+    this.pendingChanges = new Set();
+    this.isDestroyed = false;
+  }
+
+  shouldReallocate(stageName, particleCount, qualityTier) {
+    const current = this.lastAllocation;
+    
+    if (current.particleCount === 0) return true;
+    
+    if (current.stageName === stageName && 
+        current.particleCount === particleCount && 
+        current.qualityTier === qualityTier) {
+      return false;
+    }
+    
+    const particleThreshold = current.particleCount > 0 ? 
+      Math.abs(current.particleCount - particleCount) / current.particleCount : 1;
+      
+    if (particleThreshold < 0.05 && current.stageName === stageName) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  scheduleReallocation(stageName, particleCount, qualityTier, callback) {
+    if (this.isDestroyed) return;
+    
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+    
+    this.pendingChanges.add(`${stageName}-${particleCount}-${qualityTier}`);
+    
+    this.debounceTimeout = setTimeout(() => {
+      if (this.isDestroyed) return;
+      
+      if (this.shouldReallocate(stageName, particleCount, qualityTier)) {
+        callback();
+        
+        this.lastAllocation = {
+          stageName,
+          particleCount,
+          qualityTier,
+          timestamp: performance.now()
+        };
+        
+        if (import.meta.env.DEV) {
+          console.log(`🔧 Enhanced: Geometry reallocated - ${stageName} (${particleCount} particles, ${qualityTier})`);
+        }
+      }
+      
+      this.pendingChanges.clear();
+      this.debounceTimeout = null;
+    }, 150);
+  }
+
+  destroy() {
+    this.isDestroyed = true;
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+      this.debounceTimeout = null;
+    }
+    this.pendingChanges.clear();
+  }
+}
+
+// ✅ GEOMETRY CREATION - Disposal tracking
+const createAtomicGeometry = () => {
+  const geometry = new THREE.BufferGeometry();
+  geometry.userData.needsDisposal = true;
+  return geometry;
+};
+
+// ✅ MAIN COMPONENT - VIEWPORT SCALE FIX APPLIED
+function WebGLBackground() {
+  const { camera, viewport, gl: renderer } = useThree();
+  
+  // Atomic state consumption
+  const currentStage = useAtomValue(stageAtom, state => state.currentStage);
+  const stageProgress = useAtomValue(stageAtom, state => state.stageProgress);
+  const stageIndex = useAtomValue(stageAtom, state => state.stageIndex);
+  const qualityTier = useAtomValue(qualityAtom, state => state.currentQualityTier);
+  
+  const particleCount = useAtomValue(
+    qualityAtom,
+    () => {
+      try {
+        return qualityAtom.getParticleBudget(currentStage);
+      } catch (err) {
+        console.error('[Enhanced] particle budget failed', err);
+        return 2000;
+      }
+    }
+  );
+
+  // Fresh refs pattern
+  const stageProgressRef = useRef(0);
+  const stageIndexRef = useRef(0);
+  const currentStageRef = useRef('genesis');
+
+  useEffect(() => {
+    stageProgressRef.current = stageProgress;
+  }, [stageProgress]);
+
+  useEffect(() => {
+    stageIndexRef.current = stageIndex;
+  }, [stageIndex]);
+
+  useEffect(() => {
+    currentStageRef.current = currentStage;
+  }, [currentStage]);
+
+  // ✅ CRITICAL FIX: Updated position generator
+  const generateViewportAwarePositions = useMemo(() => createCachedPositionGenerator(), []);
+
+  // ✅ MATERIAL CREATION - ONCE only, with external shaders
+  const { material, atlasIntegration } = useMemo(() => {
+    const mat = createEnhancedMaterial();
+    const atlas = new AtlasIntegration();
+    
+    atlas.updateShaderUniforms(mat);
+    
+    if (import.meta.env.DEV) {
+      console.log('🎯 FINAL: Material created ONCE with external shaders');
+    }
+    
+    return { material: mat, atlasIntegration: atlas };
+  }, []);
+
+  const geometry = useMemo(createAtomicGeometry, []);
+
+  // Refs
+  const reallocationManager = useRef(new GeometryReallocationManager());
+  const geometryRef = useRef(geometry);
+  const materialRef = useRef(material);
+  const atlasRef = useRef(atlasIntegration);
+  const particleSystemRef = useRef(null);
+  const isUnmounted = useRef(false);
+
+  const particleSystemConfig = useMemo(() => {
+    const config = consciousnessEngine.getConsciousnessStageConfig(currentStage, qualityTier);
+    
+    if (import.meta.env.DEV) {
+      console.log(`🧠 Enhanced: ${currentStage} → ${particleCount} particles (${qualityTier})`);
+    }
+    
+    return {
+      stageName: currentStage,
+      particles: particleCount,
+      qualityTier: qualityTier,
+      colors: config.colors,
+      shaderEffects: config.shaderEffects || { pointScale: 8.0 } // ✅ VIEWPORT FIX: Genesis dust size
+    };
+  }, [currentStage, qualityTier, particleCount]);
+
+  // ✅ CRITICAL FIX: Enhanced geometry reallocation with corrected positioning
+  const reallocateGeometry = useCallback(() => {
+    if (!particleSystemConfig || isUnmounted.current) {
+      return;
+    }
+
+    const { particles, stageName } = particleSystemConfig;
+    
+    consciousnessEngine.generateConstellationParticleData(particles, particleSystemConfig)
+      .then(particleData => {
+        if (isUnmounted.current || !geometryRef.current || !materialRef.current) {
+          return;
+        }
+
+        if (!particleData?.allenAtlasPositions?.length) {
+          console.error('❌ Enhanced engine produced empty position buffer');
+          return;
+        }
+
+        // ✅ MEMORY MANAGEMENT: Dispose old geometry
+        const oldGeometry = geometryRef.current;
+        if (oldGeometry && oldGeometry.userData.needsDisposal) {
+          Object.values(oldGeometry.attributes).forEach(attr => attr?.dispose?.());
+          oldGeometry.dispose();
+        }
+
+        // Create new geometry
+        geometryRef.current = createAtomicGeometry();
+        const newGeometry = geometryRef.current;
+
+        // ✅ CRITICAL FIX: Pass renderer for proper size detection
+        const enhancedAtmosphericPositions = generateViewportAwarePositions(
+          particles, 
+          camera, 
+          viewport,
+          renderer
+        );
+
+        // Upload positioning data
+        newGeometry.setAttribute('atmosphericPosition', new THREE.BufferAttribute(enhancedAtmosphericPositions, 3));
+        newGeometry.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(particleData.allenAtlasPositions, 3));
+        newGeometry.setAttribute('position', new THREE.BufferAttribute(enhancedAtmosphericPositions, 3));
+        newGeometry.setAttribute('animationSeed', new THREE.BufferAttribute(particleData.animationSeeds, 3));
+
+        // Generate atlas indices
+        const atlasIndices = atlasRef.current.generateAtlasIndices(particles, stageName);
+        newGeometry.setAttribute('atlasIndex', new THREE.BufferAttribute(atlasIndices, 1));
+
+        // Compute bounding sphere
+        newGeometry.computeBoundingSphere();
+
+        // Update uniforms
+        const material = materialRef.current;
+        material.uniforms.uPointSize.value = particleSystemConfig.shaderEffects?.pointScale || 8.0;
+
+        // Update points object
+        if (particleSystemRef.current) {
+          particleSystemRef.current.geometry = newGeometry;
+        }
+
+        if (import.meta.env.DEV) {
+          console.log(`✅ VIEWPORT FIX: Geometry updated for ${stageName} - ${particles} particles with corrected positioning`);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Enhanced: Geometry reallocation failed:', error);
+      });
+  }, [particleSystemConfig, camera, viewport, generateViewportAwarePositions, renderer]);
+
+  // ✅ CHANGE DETECTION - Reallocation triggers
+  useEffect(() => {
+    const manager = reallocationManager.current;
+    const config = particleSystemConfig;
+    
+    if (!config || isUnmounted.current) return;
+
+    manager.scheduleReallocation(
+      config.stageName,
+      config.particles,
+      config.qualityTier,
+      reallocateGeometry
+    );
+  }, [particleSystemConfig, reallocateGeometry]);
+
+  // ✅ ANIMATION LOOP - With live viewport resolution updates
+  useFrame((state) => {
+    try {
+      const material = materialRef.current;
+      if (!material || isUnmounted.current) return;
+      
+      // ✅ VIEWPORT FIX: Update resolution every frame from state.size
+      const { width, height } = state.size;
+      material.uniforms.uResolution.value.set(width, height);
+      
+      const freshStageProgress = stageProgressRef.current;
+      const freshStageName = currentStageRef.current;
+      
+      if (material.uniforms.uTime) {
+        material.uniforms.uTime.value = state.clock.elapsedTime;
+      }
+      
+      if (material.uniforms.uStageProgress) {
+        material.uniforms.uStageProgress.value = freshStageProgress;
+      }
+      
+      // Update colors
+      updateEnhancedStageColors(material, freshStageName, freshStageProgress);
+      
+      if (import.meta.env.DEV && Math.random() < 0.01) {
+        console.log(`🎬 VIEWPORT FIX: progress=${freshStageProgress.toFixed(3)}, stage=${freshStageName}, resolution=${width}x${height}`);
+      }
+    } catch (error) {
+      console.error('🚨 Enhanced useFrame error:', error);
+    }
+  });
+
+  // ✅ VIEWPORT CHANGE HANDLER - Force reallocation with corrected positions
+  useEffect(() => {
+    if (!reallocationManager.current || !particleSystemConfig) return;
+
+    // Force reallocation when viewport changes to regenerate positions
+    reallocationManager.current.scheduleReallocation(
+      currentStageRef.current,
+      particleSystemConfig.particles,
+      particleSystemConfig.qualityTier,
+      reallocateGeometry
+    );
+    
+    if (import.meta.env.DEV) {
+      console.log(`📐 VIEWPORT FIX: Viewport change detected - forcing position recalculation`);
+    }
+  }, [viewport.width, viewport.height, reallocateGeometry, particleSystemConfig]);
+
+  // ✅ LIFECYCLE MANAGEMENT - Enhanced debug tools
+  useEffect(() => {
+    geometryRef.current = geometry;
+    materialRef.current = material;
+
+    // ✅ ENHANCED DEVELOPMENT TOOLS
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      window.sstV2WebglShader = {
+        forceReallocate: () => {
+          console.log('🔧 SST v2.0 FORCE REALLOCATE: Manual trigger with viewport fix');
+          reallocateGeometry();
+          return 'SST v2.0 force reallocation triggered with viewport corrections!';
+        },
+        
+        debugViewportFix: () => {
+          console.log('🔍 VIEWPORT FIX DEBUG:');
+          console.log('  Camera position:', camera.position.toArray());
+          console.log('  Camera FOV:', camera.fov);
+          console.log('  Camera aspect:', camera.aspect);
+          console.log('  Viewport object:', viewport);
+          console.log('  Point size:', material.uniforms.uPointSize.value);
+          console.log('  Resolution uniform:', material.uniforms.uResolution.value);
+          
+          // Calculate expected frustum
+          const distance = camera.position.z;
+          const fov = THREE.MathUtils.degToRad(camera.fov);
+          const height = 2 * Math.tan(fov / 2) * distance;
+          const width = height * camera.aspect;
+          
+          console.log('  Calculated frustum - Width:', width.toFixed(2), 'Height:', height.toFixed(2));
+          
+          return {
+            camera: { fov: camera.fov, aspect: camera.aspect, position: camera.position.toArray() },
+            viewport: viewport,
+            calculatedFrustum: { width, height },
+            pointSize: material.uniforms.uPointSize.value,
+            resolution: material.uniforms.uResolution.value
+          };
+        },
+        
+        testViewportCoverage: () => {
+          console.log('🎯 Testing viewport coverage with CORRECTED calculations...');
+          const testPositions = generateViewportAwarePositions(100, camera, viewport, renderer);
+          
+          let minX = Infinity, maxX = -Infinity;
+          let minY = Infinity, maxY = -Infinity;
+          
+          for (let i = 0; i < 100; i++) {
+            const x = testPositions[i * 3];
+            const y = testPositions[i * 3 + 1];
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+          }
+          
+          console.log(`CORRECTED X range: ${minX.toFixed(2)} to ${maxX.toFixed(2)}`);
+          console.log(`CORRECTED Y range: ${minY.toFixed(2)} to ${maxY.toFixed(2)}`);
+          
+          // Also show renderer vs camera calculations
+          const { width: rw, height: rh } = renderer.getSize(new THREE.Vector2());
+          const distance = camera.position.z;
+          const fov = THREE.MathUtils.degToRad(camera.fov);
+          const height = 2 * Math.tan(fov / 2) * distance;
+          const width = height * camera.aspect;
+          
+          console.log(`Camera Z: ${distance.toFixed(1)}, Calculated frustum: ${width.toFixed(1)}x${height.toFixed(1)}`);
+          console.log(`Renderer size: ${rw}x${rh}`);
+          
+          return { minX, maxX, minY, maxY, cameraZ: distance, frustum: { width, height }, renderer: { width: rw, height: rh } };
+        },
+        
+        makeParticlesVisible: () => {
+          console.log('🔧 SST v2.0 Emergency Visibility Fix with Viewport Corrections');
+          
+          if (particleSystemRef.current) {
+            particleSystemRef.current.frustumCulled = false;
+            console.log('✅ Frustum culling disabled');
+          }
+          
+          // Force reallocation with corrected positions
+          reallocateGeometry();
+          
+          // Ensure proper point size
+          material.uniforms.uPointSize.value = 12.0; // Increased for visibility
+          material.uniformsNeedUpdate = true;
+          
+          return 'SST v2.0 particles should now be visible with CORRECTED viewport calculations!';
+        },
+        
+        diagnosticReport: () => {
+          console.log('🔍 SST v2.0 DIAGNOSTIC REPORT - VIEWPORT FIX APPLIED');
+          console.log('==============================');
+          
+          const report = {
+            viewportFix: 'APPLIED: Camera frustum calculations corrected',
+            shaderSource: material.userData.shaderSource || 'INLINE',
+            viewportObject: `${viewport.width.toFixed(1)}x${viewport.height.toFixed(1)}`,
+            uniformResolution: `${material.uniforms.uResolution.value.x}x${material.uniforms.uResolution.value.y}`,
+            pointSize: material.uniforms.uPointSize.value,
+            particleCount: particleCount,
+            currentStage: currentStageRef.current,
+            stageProgress: stageProgressRef.current,
+            timeUniform: material.uniforms.uTime.value,
+            animationActive: material.uniforms.uTime.value > 0 ? 'YES' : 'NO',
+            materialAge: `${((Date.now() - material.userData.creationTime) / 1000).toFixed(1)}s`,
+            cameraFrustum: (() => {
+              const distance = camera.position.z; // Use actual camera Z
+              const fov = THREE.MathUtils.degToRad(camera.fov);
+              const height = 2 * Math.tan(fov / 2) * distance;
+              const width = height * camera.aspect;
+              const { width: rw, height: rh } = renderer.getSize(new THREE.Vector2());
+              return `Camera@Z:${distance.toFixed(1)} → ${width.toFixed(1)}x${height.toFixed(1)} (renderer: ${rw}x${rh})`;
+            })()
+          };
+          
+          console.table(report);
+          return report;
+        }
+      };
+      
+      console.log('🎮 SST v2.0 WebGL Shader: VIEWPORT SCALE FIX APPLIED');
+      console.log('🔧 Debug: window.sstV2WebglShader.debugViewportFix()');
+      console.log('🎯 Test: window.sstV2WebglShader.testViewportCoverage()');
+      console.log('🚨 Emergency: window.sstV2WebglShader.makeParticlesVisible()');
+    }
+
+    return () => {
+      isUnmounted.current = true;
+      const manager = reallocationManager.current;
+      manager.destroy();
+      
+      // Cleanup
+      if (geometry && geometry.userData.needsDisposal) {
+        Object.values(geometry.attributes).forEach(attr => attr?.dispose?.());
+        geometry.dispose();
+      }
+      
+      if (material) {
+        material.dispose();
+      }
+
+      if (atlasIntegration) {
+        atlasIntegration.dispose();
+      }
+
+      if (import.meta.env.DEV && typeof window !== 'undefined') {
+        delete window.sstV2WebglShader;
+      }
+    };
+  }, [reallocateGeometry]); // ✅ PROPER DEPENDENCY
+
+  // ✅ FINAL SETUP - Frustum culling disabled
+  useEffect(() => {
+    if (particleSystemRef.current) {
+      particleSystemRef.current.frustumCulled = false;
+      if (import.meta.env.DEV) {
+        console.log('🔧 SST v2.0: Frustum culling disabled for full viewport coverage');
+      }
+    }
+  }, []);
+
+  return (
+    <points 
+      ref={particleSystemRef} 
+      geometry={geometry} 
+      material={material} 
+    />
+  );
+}
+
+export default React.memo(WebGLBackground);
+
+/*
+✅ VIEWPORT SCALE FIX COMPLETE ✅
+
+🔧 CRITICAL FIXES APPLIED:
+✅ ACTUAL CAMERA DISTANCE: Uses camera.position.z instead of hard-coded 25
+✅ RENDERER SIZE FOR CACHE: Uses renderer.getSize() instead of broken viewport object  
+✅ PROPER SCALE MULTIPLIER: 1.05 for slight overscan with correct distance calculations
+✅ DUMMY CANVAS GUARD: Skips extension-created tiny canvases (< 200px)
+✅ ENHANCED DEBUG TOOLS: Complete viewport analysis and frustum calculations
+
+🎯 ROOT CAUSE RESOLVED:
+- Camera distance: Now uses actual camera Z position (likely 5-10, not 25)
+- Cache keys: Now uses actual renderer size, not broken 52x38 viewport
+- Position calculation: Proper camera frustum math with actual distance
+- Debug tools: Show camera Z, frustum calculations, and renderer comparisons
+
+⚡ EXPECTED IMMEDIATE RESULTS:
+✅ Particles visible at proper scale matching camera position
+✅ Full viewport coverage without off-screen rendering  
+✅ Proper atmospheric dust size (8px base, responsive to stage)
+✅ Brain morphing functional with scroll progression
+✅ Enhanced diagnostics for continued monitoring
+
+🚀 TESTING COMMANDS:
+window.sstV2WebglShader.debugViewportFix()     // Shows camera vs renderer analysis
+window.sstV2WebglShader.testViewportCoverage() // Tests position distribution  
+window.sstV2WebglShader.makeParticlesVisible() // Emergency visibility fix
+
+Replace your WebGLBackground.jsx with this corrected version!
+*/// src/components/consciousness/ConsciousnessTheater.jsx
+// ✅ SCROLL MORPHING FIX: Added scroll content for constellation emergence
+// ✅ SST v2.0 COMPLIANCE: Atmospheric dust → brain constellation morphing
+
+import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { useAtomValue } from '@/stores/atoms/createAtom';
+import { stageAtom } from '@/stores/atoms/stageAtom';
+import { qualityAtom } from '@/stores/atoms/qualityAtom';
+import { SST_V2_STAGE_DEFINITIONS } from '@/config/canonical/sstV2Stages';
+import CanvasErrorBoundary from '@/components/ui/CanvasErrorBoundary';
+
+// ✅ LAZY LOAD: WebGL components for performance
+const WebGLCanvas = lazy(() => import('@/components/webgl/WebGLCanvas'));
+
+// ✅ SST v2.0: Stage lookup for enhanced UI
+const getStageDefinition = (stageName) => {
+  return SST_V2_STAGE_DEFINITIONS[stageName] || SST_V2_STAGE_DEFINITIONS.genesis;
+};
+
+// ✅ ENHANCED STYLES: Glassmorphic and translucent effects
+const openingOverlayStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
+  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 20, 40, 0.95) 50%, rgba(0, 0, 0, 0.9) 100%)',
+  zIndex: 50,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#00FF00',
+  fontFamily: 'Courier New, monospace',
+  pointerEvents: 'none',
+  backdropFilter: 'blur(4px)',
+};
+
+const terminalTextStyle = {
+  fontSize: '2.5rem',
+  marginBottom: '2rem',
+  textShadow: '0 0 20px #00FF00, 0 0 40px #00FF00',
+  fontWeight: 'bold',
+  letterSpacing: '0.15em',
+  transition: 'all 1s ease',
+  animation: 'textGlow 2s ease-in-out infinite alternate',
+};
+
+const codeTextStyle = {
+  fontSize: '1.3rem',
+  textAlign: 'center',
+  marginBottom: '2rem',
+  color: '#22c55e',
+  textShadow: '0 0 15px #22c55e',
+  fontWeight: 'normal',
+  letterSpacing: '0.08em',
+  transition: 'all 1s ease',
+  maxWidth: '90%',
+  lineHeight: '1.6',
+};
+
+const scrollPromptStyle = {
+  fontSize: '1.2rem',
+  textAlign: 'center',
+  color: '#00ffcc',
+  textShadow: '0 0 15px #00ffcc',
+  fontWeight: 'bold',
+  animation: 'pulse 2s infinite',
+  transition: 'all 1s ease',
+  marginTop: '1rem',
+};
+
+const progressBarContainerStyle = {
+  position: 'absolute',
+  bottom: '4rem',
+  width: '400px',
+  height: '4px',
+  background: 'rgba(34, 197, 94, 0.2)',
+  borderRadius: '2px',
+  border: '1px solid rgba(34, 197, 94, 0.4)',
+  overflow: 'hidden',
+};
+
+const progressBarStyle = {
+  height: '100%',
+  background: 'linear-gradient(90deg, #22c55e, #00FF00, #00ffcc)',
+  borderRadius: '2px',
+  transition: 'width 0.3s ease',
+  boxShadow: '0 0 20px rgba(34, 197, 94, 0.8)',
+};
+
+// ✅ ENHANCED STAGE BANNER: Glassmorphic with atomic state
+const stageBannerStyle = {
+  position: 'fixed',
+  bottom: '2rem',
+  left: '2rem',
+  right: '2rem',
+  fontFamily: 'Courier New, monospace',
+  textAlign: 'center',
+  zIndex: 25,
+  background: 'rgba(0, 0, 0, 0.7)',
+  padding: '2rem',
+  borderRadius: '16px',
+  backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  pointerEvents: 'none',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+  maxWidth: '800px',
+  margin: '0 auto',
+};
+
+const stageTitleStyle = {
+  fontSize: '2.2rem',
+  marginBottom: '1rem',
+  fontWeight: 'bold',
+  letterSpacing: '0.05em',
+  textShadow: '0 0 15px currentColor',
+};
+
+const stageNarrativeStyle = {
+  fontSize: '1.2rem',
+  opacity: 0.95,
+  lineHeight: '1.5',
+  marginBottom: '0.8rem',
+};
+
+const stageDescriptionStyle = {
+  fontSize: '1rem',
+  opacity: 0.8,
+  lineHeight: '1.4',
+  marginBottom: '1rem',
+  fontStyle: 'italic',
+};
+
+const stageMetricsStyle = {
+  fontSize: '0.9rem',
+  marginTop: '1rem',
+  opacity: 0.7,
+  display: 'flex',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: '1rem',
+};
+
+// ✅ DEV INFO STYLE: Enhanced atomic state display
+const devInfoStyle = {
+  position: 'fixed',
+  top: '20px',
+  left: '20px',
+  fontFamily: 'Courier New, monospace',
+  fontSize: '0.875rem',
+  zIndex: 100,
+  background: 'rgba(0, 0, 0, 0.8)',
+  padding: '1rem',
+  borderRadius: '8px',
+  border: '1px solid rgba(0, 255, 0, 0.3)',
+  backdropFilter: 'blur(6px)',
+  pointerEvents: 'auto',
+  minWidth: '280px',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.6)',
+  color: '#00FF00',
+};
+
+// ✅ SCROLL CONTENT: Invisible content to enable scroll morphing
+const scrollContentStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '1px',
+  height: '500vh', // 5x viewport height for smooth morphing
+  pointerEvents: 'none',
+  opacity: 0,
+  zIndex: -1,
+};
+
+export default function ConsciousnessTheater() {
+  // ✅ ATOMIC STATE: Direct atomic store consumption
+  const currentStage = useAtomValue(stageAtom, state => state.currentStage);
+  const stageProgress = useAtomValue(stageAtom, state => state.stageProgress);
+  const stageIndex = useAtomValue(stageAtom, state => state.stageIndex);
+  const isTransitioning = useAtomValue(stageAtom, state => state.isTransitioning);
+  
+  const currentQualityTier = useAtomValue(qualityAtom, state => state.currentQualityTier);
+  const particleCount = useAtomValue(qualityAtom, () => qualityAtom.getParticleBudget(currentStage));
+  
+  // ✅ OPENING SEQUENCE STATE
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [openingSequenceActive, setOpeningSequenceActive] = useState(true);
+  const [openingProgress, setOpeningProgress] = useState(0);
+  const [sequenceStep, setSequenceStep] = useState(0);
+
+  // ✅ ENHANCED OPENING SEQUENCE: 4-second atomic progression
+  useEffect(() => {
+    console.log('🎭 ConsciousnessTheater: Complete orchestration initializing...');
+    
+    let animationFrame;
+    const startTime = Date.now();
+    const duration = 4000; // 4 seconds for complete materialization
+
+    const animateOpening = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // ✅ SEQUENCE STEPS: 5-step progression
+      const nextStep = Math.floor(progress * 5);
+      setSequenceStep(prev => {
+        if (prev !== nextStep && nextStep < 5) {
+          console.log(`🎭 Opening Sequence: Step ${nextStep + 1}/5 - Consciousness awakening`);
+        }
+        return nextStep;
+      });
+      
+      // ✅ ATOMIC PROGRESSION: Drive stageProgress from 0% → 15%
+      const mappedProgress = progress * 0.15; // 0% → 15% for atmospheric foundation
+      setOpeningProgress(mappedProgress);
+      
+      // ✅ CRITICAL: Update atomic stageProgress during opening
+      stageAtom.setStageProgress(mappedProgress);
+      
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animateOpening);
+      } else {
+        console.log('✅ ConsciousnessTheater: Opening sequence complete - Ready for scroll morphing');
+        setOpeningSequenceActive(false);
+        // Set baseline progress for scroll interaction
+        stageAtom.setStageProgress(0.15);
+        console.log('🎯 SST v2.0: Scroll to see atmospheric dust → brain constellation morphing');
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animateOpening);
+    setIsInitialized(true);
+    
+    console.log(`🎭 ConsciousnessTheater: Active orchestration - Stage ${currentStage}`);
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, []); // ✅ Empty deps: Run once on mount
+
+  // ✅ ENHANCED SCROLL INTERACTION: SST v2.0 constellation morphing
+  useEffect(() => {
+    if (openingSequenceActive) return;
+    
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollProgress = Math.min(scrollTop / scrollHeight, 1);
+      
+      // ✅ SST v2.0 MORPHING: 15% → 100% for full constellation emergence
+      const newProgress = 0.15 + (scrollProgress * 0.85); // 15% baseline → 100% complete
+      stageAtom.setStageProgress(newProgress);
+      
+      if (import.meta.env.DEV) {
+        console.log(`🔄 SST v2.0 Morphing: Scroll ${(scrollProgress * 100).toFixed(1)}% → Progress ${(newProgress * 100).toFixed(1)}% (atmospheric → constellation)`);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    console.log('🎯 SST v2.0: Scroll morphing active - atmospheric dust will organize into brain constellations');
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [openingSequenceActive]);
+
+  // ✅ STAGE DEFINITION: Current stage configuration
+  const stageDefinition = getStageDefinition(currentStage);
+  const effectiveProgress = openingSequenceActive ? openingProgress : stageProgress;
+
+  // ✅ ENHANCED LOADING STATE
+  if (!isInitialized) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw', 
+        height: '100vh',
+        background: 'linear-gradient(135deg, #000000 0%, #001122 50%, #000000 100%)',
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          color: '#00FF00',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '1.8rem',
+          textShadow: '0 0 20px #00FF00',
+          animation: 'pulse 1.5s infinite',
+          textAlign: 'center'
+        }}>
+          INITIALIZING CONSCIOUSNESS THEATER...
+          <div style={{ fontSize: '1rem', marginTop: '1rem', opacity: 0.8 }}>
+            Atomic Integration • Phase 3 Complete Orchestration
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="consciousness-theater">
+      {/* ✅ CSS ANIMATIONS: Enhanced effects */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes textGlow {
+          0% { text-shadow: 0 0 20px #00FF00, 0 0 40px #00FF00; }
+          100% { text-shadow: 0 0 30px #00FF00, 0 0 60px #00FF00, 0 0 80px #00FF00; }
+        }
+      `}</style>
+
+      {/* ✅ CRITICAL FIX: Scroll content for morphing */}
+      <div style={scrollContentStyle} />
+
+      {/* ✅ SINGLE CANVAS OWNERSHIP: ConsciousnessTheater owns the canvas */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 1,
+        pointerEvents: 'none'
+      }}>
+        <CanvasErrorBoundary>
+          <Suspense fallback={
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: '#0f0',
+              fontSize: '1.2rem',
+              fontFamily: 'Courier New',
+              textShadow: '0 0 15px #0f0',
+              textAlign: 'center'
+            }}>
+              MATERIALIZING CONSCIOUSNESS PARTICLES...
+              <div style={{ fontSize: '0.9rem', marginTop: '10px', opacity: 0.8 }}>
+                Atomic Integration • Enhanced Particle System
+              </div>
+            </div>
+          }>
+            <WebGLCanvas />
+          </Suspense>
+        </CanvasErrorBoundary>
+      </div>
+
+      {/* ✅ ENHANCED OPENING SEQUENCE: 4-second atomic progression */}
+      {openingSequenceActive && (
+        <div style={openingOverlayStyle}>
+          {/* Step 1: Terminal Ready */}
+          <div 
+            style={{
+              ...terminalTextStyle,
+              opacity: sequenceStep >= 1 ? 1 : 0,
+            }}
+          >
+            READY.
+          </div>
+          
+          {/* Step 2: Genesis Code */}
+          <div 
+            style={{
+              ...codeTextStyle,
+              opacity: sequenceStep >= 2 ? 1 : 0,
+            }}
+          >
+            10 PRINT 'CURTIS WHORTON DIGITAL AWAKENING'
+            <br />
+            20 GOTO 10
+          </div>
+
+          {/* Step 3: Consciousness Materialization */}
+          <div 
+            style={{
+              ...codeTextStyle,
+              opacity: sequenceStep >= 3 ? 1 : 0,
+              fontSize: '1rem',
+              color: '#ffffff',
+            }}
+          >
+            Consciousness particles materializing across neural pathways...
+            <br />
+            Atmospheric dust → Brain constellation emergence ready
+          </div>
+
+          {/* Step 4: Scroll Prompt */}
+          <div 
+            style={{
+              ...scrollPromptStyle,
+              opacity: sequenceStep >= 4 ? 1 : 0,
+            }}
+          >
+            SCROLL TO WITNESS CONSTELLATION EMERGENCE
+          </div>
+
+          {/* ✅ ENHANCED PROGRESS BAR: Shows atomic progression */}
+          <div style={progressBarContainerStyle}>
+            <div 
+              style={{
+                ...progressBarStyle,
+                width: `${Math.max(0, (openingProgress * 666))}%`, // Map 0→0.15 to 0→100%
+              }} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ✅ ENHANCED DEV INFO: Complete atomic state display */}
+      {import.meta.env.DEV && (
+        <div style={{
+          ...devInfoStyle,
+          color: stageDefinition.colors[0],
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>🎭 CONSCIOUSNESS THEATER</div>
+          <div>Stage: {stageDefinition.title} ({stageIndex})</div>
+          <div>Progress: {Math.round(effectiveProgress * 100)}% {effectiveProgress > 0.15 ? '(MORPHING)' : '(ATMOSPHERIC)'}</div>
+          <div>Brain Region: {stageDefinition.brainRegion}</div>
+          <div>Particles: {particleCount} ({currentQualityTier})</div>
+          <div>Opening: {openingSequenceActive ? 'ACTIVE' : 'COMPLETE'}</div>
+          <div>Morphing: {effectiveProgress > 0.15 ? 'CONSTELLATION EMERGING' : 'ATMOSPHERIC DUST'}</div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.8 }}>
+            SST v2.0 • Scroll for Brain Morphing • 100% Complete
+          </div>
+        </div>
+      )}
+
+      {/* ✅ ENHANCED STAGE BANNER: Glassmorphic with complete info */}
+      {!openingSequenceActive && (
+        <div style={{
+          ...stageBannerStyle,
+          color: stageDefinition.colors[0],
+          borderColor: `${stageDefinition.colors[0]}40`,
+        }}>
+          <div style={stageTitleStyle}>
+            {stageDefinition.title}
+          </div>
+          <div style={stageNarrativeStyle}>
+            {stageDefinition.narrative}
+          </div>
+          <div style={stageDescriptionStyle}>
+            {stageDefinition.description}
+          </div>
+          <div style={stageMetricsStyle}>
+            <span>Brain Region: {stageDefinition.brainRegion}</span>
+            <span>Particles: {particleCount}</span>
+            <span>Quality: {currentQualityTier}</span>
+            <span>Morphing: {effectiveProgress > 0.5 ? 'Constellation' : 'Atmospheric'}</span>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ TRANSITION INDICATOR: Enhanced visual feedback */}
+      {isTransitioning && (
+        <div style={{
+          position: 'fixed',
+          top: '3rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 50,
+          background: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: '12px',
+          padding: '1rem 2rem',
+          color: stageDefinition.colors[0],
+          fontSize: '1.1rem',
+          fontFamily: 'Courier New, monospace',
+          textShadow: `0 0 10px ${stageDefinition.colors[0]}`,
+          border: `1px solid ${stageDefinition.colors[0]}40`,
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+        }}>
+          TRANSITIONING TO {currentStage.toUpperCase()}... ✨
+        </div>
+      )}
+    </div>
+  );
+}
+
+/*
+✅ SCROLL MORPHING FIX COMPLETE ✅
+
+🔧 CRITICAL FIX APPLIED:
+- Added invisible scroll content (500vh height) to enable scrolling
+- Enhanced scroll handler with SST v2.0 morphing logic
+- Scroll drives stageProgress from 15% → 100% for constellation emergence
+- Added morphing status to dev info and stage banner
+
+🎯 SST v2.0 MORPHING BEHAVIOR:
+- Opening: 0% → 15% (atmospheric foundation)  
+- Scroll: 15% → 100% (constellation emergence)
+- Particles morph from scattered dust to organized brain patterns
+- Console logging shows morphing progress and status
+
+⚡ EXPECTED VISUAL BEHAVIOR:
+- Start: Scattered atmospheric dust particles
+- Scroll: Particles gradually organize into hippocampus constellation
+- Progress: Dust becomes increasingly structured brain pattern
+- Complete: Clear anatomical brain constellation visible
+
+Now you should see the atmospheric dust → brain constellation morphing
+as you scroll! The particles will organize from scattered to structured
+based on your scroll position. 🧠✨
+*/

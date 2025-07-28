@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+# Get the directory where the script is located, go up one level, then source husky.sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Execute lint-staged
+# lint-staged will read its configuration from package.json
+# and run the specified linters/formatters ONLY on staged files
+npx lint-staged

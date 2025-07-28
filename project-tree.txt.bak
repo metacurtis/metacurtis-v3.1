@@ -1,0 +1,212 @@
+.
+├── MANUAL_FIXES_NEEDED.md
+├── README.md
+├── STAGE_MIGRATION_REPORT.md
+├── _debug
+│   └── atomic-snapshot-2025-07-07_0834.js
+├── actionable_file_list_20250711.txt
+├── all_shader_glsl_20250711.txt
+├── backup_sst_cleanup_20250706_224237
+│   ├── StageNavigation.jsx
+│   ├── narrativeStageOrder.js
+│   └── stageMappingUtils.js
+├── central_clock_backup_20250706_215239
+│   ├── AdaptiveQualitySystem.js
+│   ├── AdaptiveQualitySystem.jsx
+│   ├── App.jsx
+│   ├── WebGLBackground.jsx
+│   ├── performanceStore.js
+│   └── rollback.sh
+├── consciousness_engine_migration.sh
+├── consciousness_shader_bundle_20250711.txt
+├── consciousness_shader_debug_20250711.txt
+├── core_arch_validation.txt
+├── core_merge_review.txt
+├── core_merge_reviews.txt
+├── eslint.config.js
+├── fix-eslint-errors.sh
+├── fix-eslint-final.sh
+├── focused_merge_20250711.txt
+├── full_arch_merge_20250711.txt
+├── index.html
+├── jsconfig.json
+├── lighthouserc.json
+├── mc3v_core_architecture_review.txt
+├── migration_backup_20250706_194010
+│   └── src
+│       ├── components
+│       │   ├── ui
+│       │   └── webgl
+│       ├── config
+│       │   ├── consciousness
+│       │   └── narrativeStageOrder.js
+│       ├── engine
+│       │   └── ConsciousnessEngine.js
+│       ├── stores
+│       │   └── narrativeStore.js
+│       └── utils
+│           └── narrative
+├── nav_perf_stage_review.txt
+├── package.json
+├── particle_debug_merge_20250711.txt
+├── phase2_merge_20250711.txt
+├── project-tree.txt
+├── public
+│   └── robots.txt
+├── quick_case_fix.sh
+├── scripts
+│   ├── migrate_stages.sh
+│   ├── validate-atomic-stores.js
+│   └── validate-sst-integration.js
+├── shader_bundle_20250711.txt
+├── sprint_context_2025-07-16_18-09.txt
+├── src
+│   ├── App.jsx
+│   ├── App.jsx.bak
+│   ├── __tests__
+│   │   └── smoke.test.js
+│   ├── bridges
+│   │   └── qualityBridge.js
+│   ├── components
+│   │   ├── ConsolidatedNavigationController.jsx
+│   │   ├── common
+│   │   │   └── ErrorBoundary.jsx
+│   │   ├── consciousness
+│   │   │   └── ConsciousnessTheater.jsx
+│   │   ├── debug
+│   │   │   └── EventQueueTest.jsx
+│   │   ├── dev
+│   │   │   ├── DebugExpose.jsx
+│   │   │   └── DevPerformanceMonitor.jsx
+│   │   ├── graphics
+│   │   │   └── SimpleAnimatedCube.jsx
+│   │   ├── layout
+│   │   │   └── Navbar.jsx
+│   │   ├── quality
+│   │   │   └── AdaptiveQualitySystem.jsx
+│   │   ├── sections
+│   │   │   └── NarrativeSection.disable
+│   │   ├── ui
+│   │   │   ├── AdvancedContactPortal.jsx
+│   │   │   ├── CanvasErrorBoundary.jsx
+│   │   │   ├── DevPerformanceMonitor.dis
+│   │   │   ├── DevPerformanceMonitor.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Layout.jsx
+│   │   │   ├── NarrativeUIControls.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── QualitySelector.jsx
+│   │   │   ├── ResourceMonitor.jsx
+│   │   │   ├── Typewriter.jsx
+│   │   │   ├── narrative
+│   │   │   └── navigation
+│   │   └── webgl
+│   │       ├── AQSTicker.jsx
+│   │       ├── AdaptiveRenderer..disable
+│   │       ├── AdaptiveRenderer.jsx
+│   │       ├── BackgroundPoints.jsx
+│   │       ├── CanvasSizeUpdater.jsx
+│   │       ├── FPSCalculator.jsx
+│   │       ├── MinimalTestCanvas.disable
+│   │       ├── MinimalTestCanvas.jsx
+│   │       ├── ParticleEngine.disable
+│   │       ├── ParticleField.disable
+│   │       ├── QualityController.jsx
+│   │       ├── WebGLBackground.jsx
+│   │       ├── WebGLBackground.jsx.backup_20250706_173422
+│   │       ├── WebGLCanvas.jsx
+│   │       ├── consciousness
+│   │       ├── narrative
+│   │       └── shaders
+│   ├── config
+│   │   ├── canonical
+│   │   │   ├── contaminationScan.js
+│   │   │   ├── sstV2Quality.js
+│   │   │   ├── sstV2Stages.js
+│   │   │   └── sstV2Validation.js
+│   │   ├── qualityPresets.js
+│   │   ├── stageConfig.js
+│   │   └── viewportConfig.js
+│   ├── console-shim.js
+│   ├── core
+│   │   ├── CentralEventClock.js
+│   │   ├── CentralEventClock.legacy
+│   │   └── index.js
+│   ├── engine
+│   │   └── ConsciousnessEngine.js
+│   ├── hooks
+│   │   ├── useAdaptiveQuality.js
+│   │   ├── useCentralClock.js
+│   │   ├── useIdle.js
+│   │   └── useResourceTracker.js
+│   ├── main.jsx
+│   ├── sections
+│   │   ├── About.jsx
+│   │   ├── Contact.jsx
+│   │   └── Features.jsx
+│   ├── shaders
+│   │   ├── includes
+│   │   │   ├── uniforms.glsl
+│   │   │   └── utils.glsl
+│   │   ├── modules
+│   │   │   ├── brain-morphing.glsl
+│   │   │   ├── consciousness-stages.glsl
+│   │   │   └── performance-adaptive.glsl
+│   │   └── templates
+│   │       ├── consciousness-fragment.glsl
+│   │       └── consciousness-vertex.glsl
+│   ├── stores
+│   │   ├── atoms
+│   │   │   ├── clockAtom.js
+│   │   │   ├── createAtom.js
+│   │   │   ├── qualityAtom.js
+│   │   │   └── stageAtom.js
+│   │   ├── index.js
+│   │   ├── narrativeStore.atomic.js
+│   │   ├── narrativeStore.js
+│   │   ├── narrativeStore.legacy
+│   │   ├── narrativeStore.legacy.backup
+│   │   ├── narrativeStore.legacy.js
+│   │   ├── particleConfigStore.js
+│   │   ├── performanceStore.js
+│   │   ├── performanceStore.legacy.js
+│   │   ├── qualityStore.js
+│   │   ├── qualityStore.legacy.js
+│   │   ├── resourceStore.js
+│   │   ├── useInteractionStore.js
+│   │   └── useNarrativeStore.js
+│   ├── styles
+│   │   └── index.css
+│   └── utils
+│       ├── featureFlags.js
+│       ├── featureFlags.legacy
+│       ├── migration
+│       │   └── contaminationRollout.js
+│       ├── narrative
+│       │   └── PerformanceBridge.js
+│       ├── performance
+│       │   ├── AdaptiveQualitySystem.js
+│       │   ├── DeviceCapabilities.js
+│       │   ├── PerformanceMetrics.js
+│       │   └── ResourceMetrics.js
+│       ├── shaderUtils.js
+│       └── webgl
+│           ├── FrustumAwareParticleGenerator.js
+│           ├── ResourceRegistry.js
+│           ├── ResourceTracker.js
+│           ├── ShaderDebugSystem.js
+│           └── WebGLEffectsManager.js
+├── sst_atoms_merge_20250711.txt
+├── stage_code_review.txt
+├── stage_review.txt
+├── tailwind.config.js
+├── targeted_merge_20250711.txt
+├── transition_merge_review.txt
+├── update-vscode-settings.sh
+├── urgent_core_review.txt
+├── vite.config.js
+├── vite.config.js.backup_20250706_173422
+├── webgl_debug_bundle_20250711.txt
+└── yarn.lock
+
+53 directories, 156 files

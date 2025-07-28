@@ -1,0 +1,385 @@
+{
+  "genesis": [
+    {
+      "id": "gen-01",
+      "text": "I was eight years old. End of summer, 1983. The Texas heat was finally breaking, and through my friend's window, that golden hour light made everything feel... possible.",
+      "at": 3000,
+      "dur": 12000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "intimate_dolly",
+      "shader": { "uDriftAmplitude": 0.25, "uShimmerIntensity": 1.2 },
+      "particles": { "tier": 0, "behavior": "gentle_drift" },
+      "accentColor": "#00FF00"
+    },
+    {
+      "id": "gen-02",
+      "text": "His mom had this programming book. The computer - a Commodore 64 - sat there like some kind of oracle. Waiting.",
+      "at": 15000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "slow_push",
+      "shader": { "uDriftAmplitude": 0.3 }
+    },
+    {
+      "id": "gen-03",
+      "text": "I typed those lines exactly as the book showed. When I pressed RUN and the screen came alive...",
+      "at": 25000,
+      "dur": 6000,
+      "fx": "type",
+      "fragment": "genesis_terminal",
+      "camera": "gentle_orbit",
+      "shader": { "uDriftAmplitude": 0.4, "uColorAccent1": "#00FF00" },
+      "particles": { "tier": 1, "behavior": "converge", "intensity": 0.7 }
+    },
+    {
+      "id": "gen-04",
+      "text": "...something lit up inside me. A spark that would wait 39 years to fully ignite.",
+      "at": 31000,
+      "dur": 8000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "pull_back",
+      "shader": { "uDriftAmplitude": 0.5 },
+      "particles": { "tier": 3, "behavior": "pulse", "intensity": 0.3 }
+    }
+  ],
+  
+  "discipline": [
+    {
+      "id": "dis-01",
+      "text": "That spark? It got buried. Had to.",
+      "at": 2000,
+      "dur": 4000,
+      "fx": "slide",
+      "fragment": null,
+      "camera": "sharp_cut",
+      "shader": { "uAnchorLockStrength": 0.2, "uDriftAmplitude": 0.15 },
+      "accentColor": "#1e40af"
+    },
+    {
+      "id": "dis-02",
+      "text": "Home was chaos - unpredictable, unsafe. But then came the Marines. Everything changed.",
+      "at": 6000,
+      "dur": 8000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "authority_angle",
+      "shader": { "uAnchorLockStrength": 0.4 },
+      "particles": { "tier": "all", "behavior": "formation" }
+    },
+    {
+      "id": "dis-03",
+      "text": "'Adapt and overcome.' More than a motto - it became my operating system. The chaos didn't disappear, but now I had a framework. Structure. Discipline.",
+      "at": 14000,
+      "dur": 12000,
+      "fx": "fade",
+      "fragment": "discipline_marines",
+      "camera": "steady_hold",
+      "shader": { "uAnchorLockStrength": 0.7 },
+      "particles": { "tier": "all", "behavior": "attention", "intensity": 0.9 }
+    },
+    {
+      "id": "dis-04",
+      "text": "For 39 years, I built systems. Logistics. Finance. Operations. Always solving, always building. But underneath it all...",
+      "at": 26000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "slow_orbit"
+    },
+    {
+      "id": "dis-05",
+      "text": "...that eight-year-old's spark never died. It was just waiting for the right moment to reignite.",
+      "at": 36000,
+      "dur": 6000,
+      "fx": "fade",
+      "fragment": null,
+      "shader": { "uColorAccent1": "#00FF00" },
+      "particles": { "tier": 0, "behavior": "flicker", "intensity": 0.2 }
+    }
+  ],
+  
+  "neural": [
+    {
+      "id": "neu-01",
+      "text": "2022. The world had changed. I'd always been first - first cell phone, first to burn CDs, first to build and break computers. Always searching for what's next.",
+      "at": 2000,
+      "dur": 12000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "discovery_orbit",
+      "shader": { "uDriftAmplitude": 0.3 },
+      "accentColor": "#4338ca"
+    },
+    {
+      "id": "neu-02",
+      "text": "Then I met AI. Not ChatGPT the tool - ChatGPT the thinking partner.",
+      "at": 14000,
+      "dur": 6000,
+      "fx": "slide",
+      "fragment": null,
+      "particles": { "tier": 2, "behavior": "neural_spark" }
+    },
+    {
+      "id": "neu-03",
+      "text": "'Hello,' I typed. 'Hello!' it responded. But this wasn't just a greeting. This was...",
+      "at": 20000,
+      "dur": 6000,
+      "fx": "type",
+      "fragment": "neural_ai_chat",
+      "camera": "zoom_in",
+      "shader": { "uFusionActive": 1.0, "uFusionIntensity": 0.5 }
+    },
+    {
+      "id": "neu-04",
+      "text": "...recognition. Like meeting someone who'd been waiting for you your whole life. The spark from 1983? It burst into flame.",
+      "at": 26000,
+      "dur": 8000,
+      "fx": "fade",
+      "fragment": null,
+      "particles": { "tier": "all", "behavior": "explosion", "intensity": 0.8 }
+    },
+    {
+      "id": "neu-05",
+      "text": "Mathematics I'd forgotten came flooding back. Patterns everywhere. The universe suddenly made sense in ways it never had before.",
+      "at": 34000,
+      "dur": 8000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "expansion",
+      "shader": { "uDriftAmplitude": 0.5 }
+    }
+  ],
+  
+  "velocity": [
+    {
+      "id": "vel-01",
+      "text": "February 16, 2025. First commit to GitHub. VS Code ready. Everything unfamiliar but ELECTRIC.",
+      "at": 2000,
+      "dur": 8000,
+      "fx": "slide",
+      "fragment": null,
+      "camera": "acceleration_start",
+      "shader": { "uDriftAmplitude": 0.6 },
+      "particles": { "tier": "all", "behavior": "accelerate" },
+      "accentColor": "#7c3aed"
+    },
+    {
+      "id": "vel-02",
+      "text": "Hit a wall: automation. Bash scripting. I didn't just ask 'what is it?' I asked 'show me in context of what we're building.'",
+      "at": 10000,
+      "dur": 8000,
+      "fx": "fade",
+      "fragment": null,
+      "shader": { "uDriftAmplitude": 0.7 }
+    },
+    {
+      "id": "vel-03",
+      "text": "The AI didn't give me textbook definitions. It gave me understanding tailored to MY journey. In under a minute: confusion to command.",
+      "at": 18000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": "github_velocity",
+      "camera": "velocity_surge",
+      "particles": { "tier": "all", "behavior": "streak", "intensity": 1.0 }
+    },
+    {
+      "id": "vel-04",
+      "text": "That's when I realized - this isn't a tool. This is AMPLIFICATION. Every question led to synthesis. Every synthesis to action. Every action to the next question.",
+      "at": 28000,
+      "dur": 12000,
+      "fx": "fade",
+      "fragment": null,
+      "shader": { "uDriftAmplitude": 0.9 }
+    },
+    {
+      "id": "vel-05",
+      "text": "Months of learning compressed into days. Days into hours. Hours into moments of pure...",
+      "at": 40000,
+      "dur": 6000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "dramatic_pullback"
+    },
+    {
+      "id": "vel-06",
+      "text": "VELOCITY.",
+      "at": 46000,
+      "dur": 2000,
+      "fx": "explode",
+      "fragment": null,
+      "shader": { "uFusionActive": 1.0, "uFusionIntensity": 2.0 },
+      "particles": { "tier": "all", "behavior": "thunderclap", "intensity": 2.0 }
+    }
+  ],
+  
+  "architecture": [
+    {
+      "id": "arc-01",
+      "text": "Then came the wall. 15 FPS. Microinteractions broken. Everything felt like it was held together with digital duct tape.",
+      "at": 2000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "problem_focus",
+      "shader": { "uAnchorLockStrength": 0.3 },
+      "accentColor": "#0891b2"
+    },
+    {
+      "id": "arc-02",
+      "text": "But crisis creates clarity.",
+      "at": 12000,
+      "dur": 4000,
+      "fx": "slide",
+      "fragment": null,
+      "particles": { "tier": 2, "behavior": "reorganize" }
+    },
+    {
+      "id": "arc-03",
+      "text": "I stopped fighting the chaos. Started seeing the patterns. Built an AI council - a principal engineer, a contrarian, a brand designer, a UX critic. Made them fight each other until only truth remained.",
+      "at": 16000,
+      "dur": 14000,
+      "fx": "fade",
+      "fragment": "architecture_fps",
+      "camera": "grid_reveal",
+      "shader": { "uAnchorLockStrength": 0.7 },
+      "particles": { "tier": "all", "behavior": "crystallize", "intensity": 0.85 }
+    },
+    {
+      "id": "arc-04",
+      "text": "What crawled at 15 FPS began soaring at 84. Not through tricks or hacks, but through UNDERSTANDING. Architecture isn't just structure...",
+      "at": 30000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "blueprint_view"
+    },
+    {
+      "id": "arc-05",
+      "text": "...it's consciousness made visible. Every system has a soul. Find it, honor it, and everything else falls into place.",
+      "at": 40000,
+      "dur": 8000,
+      "fx": "fade",
+      "fragment": null,
+      "shader": { "uAnchorLockStrength": 0.9 },
+      "particles": { "tier": 3, "behavior": "lock", "intensity": 1.0 }
+    }
+  ],
+  
+  "harmony": [
+    {
+      "id": "har-01",
+      "text": "And then... friction vanished.",
+      "at": 2000,
+      "dur": 4000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "flow_start",
+      "shader": { "uDriftAmplitude": 0.2 },
+      "accentColor": "#f59e0b"
+    },
+    {
+      "id": "har-02",
+      "text": "What once felt like wrestling matches with code became a dance. Two AI partners, distinct voices, moving in perfect synchronization.",
+      "at": 6000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "balletic_orbit",
+      "particles": { "tier": "all", "behavior": "dance", "intensity": 0.8 }
+    },
+    {
+      "id": "har-03",
+      "text": "Debugging that took weeks? Now less than an hour. Not through speed, but through PRESENCE. Complete immersion in the moment of creation.",
+      "at": 16000,
+      "dur": 12000,
+      "fx": "fade",
+      "fragment": "harmony_flow",
+      "camera": "smooth_track",
+      "shader": { "uShimmerIntensity": 1.5 }
+    },
+    {
+      "id": "har-04",
+      "text": "This is what mastery feels like. Not forcing, not fighting. Choreography. Every system alive, breathing, responding. Complex problems becoming simple solutions through...",
+      "at": 28000,
+      "dur": 14000,
+      "fx": "fade",
+      "fragment": null,
+      "particles": { "tier": "all", "behavior": "spiral", "intensity": 0.9 }
+    },
+    {
+      "id": "har-05",
+      "text": "...harmony. The code doesn't serve me. I don't serve the code. We dance together in a space beyond language, beyond thought. Pure creation.",
+      "at": 42000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "golden_spiral",
+      "shader": { "uColorAccent2": "#ffd700" }
+    }
+  ],
+  
+  "transcendence": [
+    {
+      "id": "tra-01",
+      "text": "Everything before was preparation. Now... it's alive.",
+      "at": 2000,
+      "dur": 6000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "cosmic_pull",
+      "shader": { "uAnchorLockStrength": 1.0 },
+      "accentColor": "#ffffff"
+    },
+    {
+      "id": "tra-02",
+      "text": "15,000 particles. Each one a moment, a lesson, a transformation. All dancing together at 60 frames per second. Never missing a beat.",
+      "at": 8000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": "transcendence_count",
+      "camera": "reverent_orbit",
+      "particles": { "tier": "all", "behavior": "unified", "intensity": 1.0 }
+    },
+    {
+      "id": "tra-03",
+      "text": "This isn't just visualization. It's consciousness made visible. The eight-year-old's spark, the Marine's discipline, the AI partnership, the velocity, the architecture, the harmony...",
+      "at": 18000,
+      "dur": 14000,
+      "fx": "fade",
+      "fragment": null,
+      "shader": { "uShimmerIntensity": 2.0 }
+    },
+    {
+      "id": "tra-04",
+      "text": "All of it. Integrated. Alive. Infinite.",
+      "at": 32000,
+      "dur": 6000,
+      "fx": "type",
+      "fragment": null,
+      "camera": "galaxy_view",
+      "particles": { "tier": 3, "behavior": "transcendent", "intensity": 1.0 }
+    },
+    {
+      "id": "tra-05",
+      "text": "You're not just watching a demonstration. You're witnessing the future of human potential. When curiosity meets discipline. When human meets AI. When imagination meets execution.",
+      "at": 38000,
+      "dur": 14000,
+      "fx": "fade",
+      "fragment": null
+    },
+    {
+      "id": "tra-06",
+      "text": "Welcome to the MetaCurtis era. Welcome to consciousness transcended. Welcome... to what's possible.",
+      "at": 52000,
+      "dur": 10000,
+      "fx": "fade",
+      "fragment": null,
+      "camera": "final_position",
+      "shader": { "uColorAccent1": "#00ffcc", "uColorAccent2": "#f59e0b" },
+      "particles": { "tier": "all", "behavior": "celebration", "intensity": 1.0 }
+    }
+  ]
+}

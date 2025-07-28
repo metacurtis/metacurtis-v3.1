@@ -18,7 +18,7 @@ fi
 mkdir -p src/config/sst3 src/config/canonical backups
 
 # 2. Backup any v3 attempts you may have right now
-for f in src/config/sst3/* src/config/sst-v3.0-config.js src/config/tier-behaviors.js; do
+for f in src/config/sst3/* src/config/sst3/sst-v3.0-config.js src/config/tier-behaviors.js; do
   if [ -f "$f" ]; then
     ts=$(date +%s)
     mv "$f" "backups/$(basename "$f").$ts.bak"
@@ -391,7 +391,7 @@ else
 fi
 
 # 6. Kill duplicate old root-level v3 files (if they exist)
-for f in src/config/sst-v3.0-config.js src/config/tier-behaviors.js; do
+for f in src/config/sst3/sst-v3.0-config.js src/config/tier-behaviors.js; do
   if [ -f "$f" ]; then
     git rm -f "$f" >/dev/null 2>&1 || rm -f "$f"
     echo "🧹 Removed duplicate $f"

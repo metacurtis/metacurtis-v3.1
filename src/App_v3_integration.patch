@@ -1,0 +1,36 @@
+// Add to App.jsx imports:
+import { integrateV3Systems } from '@/bootstrap/integrateV3Systems.js';
+import { beatBus } from '@/orchestration/BeatBus.js';
+import { Events } from '@/orchestration/events.js';
+
+// Add to App component, in useEffect:
+useEffect(() => {
+  // Initialize v3.0 systems
+  const success = integrateV3Systems();
+  
+  if (!success) {
+    console.error('Failed to initialize SST v3.0 systems');
+    return;
+  }
+
+  // Connect stage changes to BeatBus
+  const unsubStage = stageAtom.subscribe((state) => {
+    beatBus.emit(Events.StageChange, { 
+      stage: state.currentStage,
+      timestamp: Date.now() 
+    });
+  });
+
+  // Connect quality changes
+  const unsubQuality = qualityAtom.subscribe((state) => {
+    beatBus.emit(Events.QualityChange, {
+      tier: state.tier,
+      particles: state.particles
+    });
+  });
+
+  return () => {
+    unsubStage?.();
+    unsubQuality?.();
+  };
+}, []);

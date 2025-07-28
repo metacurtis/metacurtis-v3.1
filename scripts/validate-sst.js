@@ -9,38 +9,30 @@ import { pathToFileURL } from 'node:url';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 // ----- Optional colored output (chalk). Fallback if missing -----
 let chalk;
 try {
   chalk = (await import('chalk')).default;
 } catch {
-  chalk = new Proxy({}, { get: () => (s) => s }); // no-op color
+  chalk = new Proxy({}, { get: () => s => s }); // no-op color
 }
 
 // ----- Load Canonical -----
 const canonicalPath = path.resolve(__dirname, '../src/config/canonical/canonicalAuthority.js');
-const CanonicalMod  = await import(pathToFileURL(canonicalPath).href);
-const Canonical     = CanonicalMod.default || CanonicalMod.Canonical;
+const CanonicalMod = await import(pathToFileURL(canonicalPath).href);
+const Canonical = CanonicalMod.default || CanonicalMod.Canonical;
 
 if (!Canonical) {
   console.error('❌ Could not load Canonical from canonicalAuthority.js');
   process.exit(1);
 }
 
-const {
-  stages,
-  behaviors,
-  dialogue,
-  fragments,
-  performance,
-  features,
-  tierSystem
-} = Canonical;
+const { stages, behaviors, dialogue, fragments, performance, features, tierSystem } = Canonical;
 
 // --- Collect results ---
-const errors   = [];
+const errors = [];
 const warnings = [];
 let checksRun = 0;
 let checksPassed = 0;
@@ -161,7 +153,9 @@ function validateNarrative() {
       check(dupIndex === -1, `${stageName}: duplicate segment id '${seg.id}'`);
 
       check(
-        seg.timing && typeof seg.timing.start === 'number' && typeof seg.timing.duration === 'number',
+        seg.timing &&
+          typeof seg.timing.start === 'number' &&
+          typeof seg.timing.duration === 'number',
         `${stageName}:${seg.id} missing valid timing`
       );
 
@@ -198,7 +192,11 @@ function validateFragments() {
       if (s) {
         const val = frag.trigger.value;
         const inRange = val >= s.scrollRange[0] && val <= s.scrollRange[1];
-        check(inRange, null, `Fragment ${id}: scroll trigger ${val}% outside stage range [${s.scrollRange}]`);
+        check(
+          inRange,
+          null,
+          `Fragment ${id}: scroll trigger ${val}% outside stage range [${s.scrollRange}]`
+        );
       }
     }
 
@@ -228,7 +226,10 @@ function validatePerformance() {
 
   check(perf.targetFPS >= 30, `targetFPS (${perf.targetFPS}) too low`);
   check(perf.minFPS < perf.targetFPS, `minFPS (${perf.minFPS}) must be < targetFPS`);
-  check(perf.maxParticles >= 15000, `maxParticles (${perf.maxParticles}) < 15000 (transcendence needs it)`);
+  check(
+    perf.maxParticles >= 15000,
+    `maxParticles (${perf.maxParticles}) < 15000 (transcendence needs it)`
+  );
 
   const neededLods = ['ultra', 'high', 'medium', 'low'];
   neededLods.forEach(l => {
@@ -269,9 +270,14 @@ if (errors.length === 0 && warnings.length === 0) {
 console.log(chalk.cyan('\n📈 Stats:'));
 console.log(chalk.gray(`   Stages          : ${Object.keys(stages).length}`));
 console.log(chalk.gray(`   Behaviors       : ${Object.keys(behaviors.definitions || {}).length}`));
-console.log(chalk.gray(`   Narrative segs  : ${
-  Object.values(dialogue || {}).reduce((acc, d) => acc + (d?.narration?.segments?.length || 0), 0)
-}`));
+console.log(
+  chalk.gray(
+    `   Narrative segs  : ${Object.values(dialogue || {}).reduce(
+      (acc, d) => acc + (d?.narration?.segments?.length || 0),
+      0
+    )}`
+  )
+);
 console.log(chalk.gray(`   Memory fragments: ${Object.keys(fragments || {}).length}`));
 console.log(chalk.gray(`   Max particles   : ${stages?.transcendence?.particles ?? 'N/A'}`));
 

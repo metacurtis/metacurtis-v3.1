@@ -1,0 +1,9 @@
+# .prettierignore
+node_modules
+dist
+build
+coverage
+*.log
+package-lock.json
+yarn.lock
+# Add any other generated or non-code files

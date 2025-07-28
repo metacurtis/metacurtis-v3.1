@@ -18,9 +18,7 @@ import {
 } from '../sst3/tier-behaviors.js';
 
 import {
-  NARRATIVE_DIALOGUE,
-  getDialogueSegment,
-  getParticleCuesForStage
+  NARRATIVE_DIALOGUE
 } from '../sst3/narrative-dialogue.js';
 
 import {
@@ -29,6 +27,32 @@ import {
   getFragmentsForStage,
   getActiveFragments
 } from '../sst3/memory-fragments.js';
+
+// --- helper: flatten the authoring schema into the runtime schema ---
+function normalizeDialogue(raw) {
+  /**
+   * Converts:
+   *   { genesis: { narration:{ segments:[{timing:{start,duration}, …}] } } }
+   *   → { genesis: { segments:[{start,duration,…}] } }
+   */
+  const out = {};
+  for (const [stage, data] of Object.entries(raw)) {
+    const segs = data?.narration?.segments ?? [];
+    out[stage] = {
+      id: data.id,
+      segments: segs.map((s) => ({
+        id: s.id,
+        text: s.text,
+        note: s.note,
+        start: s.timing?.start ?? 0,
+        duration: s.timing?.duration ?? 0,
+        memoryTrigger: s.memoryFragmentTrigger,
+        particleCue: s.particleCue
+      }))
+    };
+  }
+  return out;
+}
 
 const Canonical = {
   // Version info
@@ -60,10 +84,24 @@ const Canonical = {
     fusion: FUSION_BEHAVIORS
   },
 
-  // Narrative system
-  dialogue: NARRATIVE_DIALOGUE,
-  getDialogueSegment,
-  getParticleCuesForStage,
+  // Narrative system (runtime‑ready)
+  dialogue: normalizeDialogue(NARRATIVE_DIALOGUE),
+
+  // Keep helper signatures but read from normalized data
+  getDialogueSegment(stage, id) {
+    const segArr = this.dialogue?.[stage]?.segments ?? [];
+    return segArr.find((s) => s.id === id) ?? null;
+  },
+  getParticleCuesForStage(stage) {
+    const segArr = this.dialogue?.[stage]?.segments ?? [];
+    return segArr
+      .filter((s) => s.particleCue)
+      .map((s) => ({
+        timing: s.start,
+        cue: s.particleCue,
+        segmentId: s.id
+      }));
+  },
 
   // Memory fragments
   fragments: MEMORY_FRAGMENTS,
@@ -94,3 +132,10 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 
 export { Canonical };
 export default Canonical;
+
+// Improvements:
+// - Consider memoizing the output of normalizeDialogue to avoid re-processing on every module import.
+// - Add input validation within normalizeDialogue to handle unexpected schema shapes gracefully.
+// - Document the expected structure of NARRATIVE_DIALOGUE in a TypeScript declaration or JSDoc for better IDE support.
+// - Evaluate lazy-loading of memory fragments if the fragment list is large to improve initial load performance.
+// - Introduce unit tests for normalizeDialogue to ensure edge cases are covered.

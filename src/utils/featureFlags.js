@@ -1,230 +1,146 @@
-// src/utils/featureFlags.atomic.js
-// ✅ FEATURE FLAGS: Atomic store migration with instant rollback capability
-// Revolutionary Implementation Session 2 - Phase 1
+// src/utils/featureFlags.js
+// ✅ Slim Feature Flags & DEV_LOG helper with zero dynamic store imports
 
-/**
- * ✅ ATOMIC STORE FEATURE FLAGS
- * Allows safe rollback to monolithic stores if needed
- * Control via environment variables or runtime flags
- */
+// -----------------------------------------------------------------------------
+// 1. ENV & DEV DETECTION
+// -----------------------------------------------------------------------------
+const ENV = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
+const isDev = Boolean(ENV.DEV);
 
-// ✅ ENVIRONMENT-BASED FLAGS
-const ATOMIC_STORE_ENABLED = 
-  process.env.VITE_ATOMIC_STORE === 'true' || 
-  process.env.NODE_ENV === 'development' ||
-  (typeof window !== 'undefined' && window.location.search.includes('atomic=true'));
+// Query-string helper
+function hasQueryFlag(flag) {
+  if (typeof window === 'undefined') return false;
+  return window.location.search.includes(`${flag}=true`);
+}
 
-const CONCURRENT_FEATURES_ENABLED = 
-  process.env.VITE_CONCURRENT_FEATURES === 'true' ||
-  process.env.NODE_ENV === 'development' ||
-  (typeof window !== 'undefined' && window.location.search.includes('concurrent=true'));
+function envFlag(envKey, queryKey, defaultVal = false) {
+  const envVal = ENV[envKey];
+  if (typeof envVal !== 'undefined') return envVal === 'true' || envVal === true;
+  return hasQueryFlag(queryKey) || defaultVal;
+}
 
-const SHOWCASE_MODE_ENABLED = 
-  process.env.VITE_SHOWCASE === 'true' ||
-  (typeof window !== 'undefined' && window.location.search.includes('showcase=true'));
-
-const TIME_TRAVEL_DEBUG_ENABLED = 
-  process.env.NODE_ENV === 'development' ||
-  (typeof window !== 'undefined' && window.location.search.includes('timetravel=true'));
-
-// ✅ RUNTIME FLAGS: Can be toggled via console
+// -----------------------------------------------------------------------------
+// 2. RUNTIME FLAGS
+// -----------------------------------------------------------------------------
 const runtimeFlags = {
-  atomicStores: ATOMIC_STORE_ENABLED,
-  concurrentFeatures: CONCURRENT_FEATURES_ENABLED,
-  showcaseMode: SHOWCASE_MODE_ENABLED,
-  timeTravelDebug: TIME_TRAVEL_DEBUG_ENABLED,
-  
-  // Phase progression flags
+  atomicStores: envFlag('VITE_ATOMIC_STORE', 'atomic', isDev),
+  concurrentFeatures: envFlag('VITE_CONCURRENT_FEATURES', 'concurrent', isDev),
+  showcaseMode: envFlag('VITE_SHOWCASE', 'showcase', false),
+  timeTravelDebug: envFlag('VITE_TIME_TRAVEL_DEBUG', 'timetravel', isDev),
+
   phase1Complete: false,
   phase2Complete: false,
   phase3Complete: false,
   phase4Complete: false,
 };
 
-/**
- * ✅ FEATURE FLAG API
- */
+// Exported to use everywhere instead of noisy if(isDev) console.log...
+export const DEV_LOG = isDev && (typeof window !== 'undefined' ? (window.SST_DEV_LOG ?? true) : true);
+
+// -----------------------------------------------------------------------------
+// 3. PUBLIC API
+// -----------------------------------------------------------------------------
 export const featureFlags = {
-  // Core flags
+  // Getters
   isAtomicStoreEnabled: () => runtimeFlags.atomicStores,
   isConcurrentFeaturesEnabled: () => runtimeFlags.concurrentFeatures,
   isShowcaseModeEnabled: () => runtimeFlags.showcaseMode,
   isTimeTravelDebugEnabled: () => runtimeFlags.timeTravelDebug,
-  
-  // Phase progression
+
   isPhase1Complete: () => runtimeFlags.phase1Complete,
   isPhase2Complete: () => runtimeFlags.phase2Complete,
   isPhase3Complete: () => runtimeFlags.phase3Complete,
   isPhase4Complete: () => runtimeFlags.phase4Complete,
-  
-  // Runtime controls
-  enableAtomicStores: () => {
-    runtimeFlags.atomicStores = true;
-    console.log('⚛️ Atomic stores enabled - refresh to take effect');
-  },
-  
-  disableAtomicStores: () => {
-    runtimeFlags.atomicStores = false;
-    console.log('📦 Atomic stores disabled - refresh to revert to monolithic');
-  },
-  
-  enableConcurrentFeatures: () => {
-    runtimeFlags.concurrentFeatures = true;
-    console.log('🔄 Concurrent features enabled');
-  },
-  
-  disableConcurrentFeatures: () => {
-    runtimeFlags.concurrentFeatures = false;
-    console.log('⏸️ Concurrent features disabled');
-  },
-  
-  enableShowcaseMode: () => {
-    runtimeFlags.showcaseMode = true;
-    console.log('🎭 Showcase mode enabled - 17K particles available');
-  },
-  
-  disableShowcaseMode: () => {
-    runtimeFlags.showcaseMode = false;
-    console.log('📺 Showcase mode disabled - standard particle limits');
-  },
-  
-  // Phase completion tracking
-  markPhase1Complete: () => {
-    runtimeFlags.phase1Complete = true;
-    console.log('✅ Phase 1 Complete: Atomic State Refactor');
-  },
-  
-  markPhase2Complete: () => {
-    runtimeFlags.phase2Complete = true;
-    console.log('✅ Phase 2 Complete: React 19 Concurrent Features');
-  },
-  
-  markPhase3Complete: () => {
-    runtimeFlags.phase3Complete = true;
-    console.log('✅ Phase 3 Complete: 17K Particle Scaling');
-  },
-  
-  markPhase4Complete: () => {
-    runtimeFlags.phase4Complete = true;
-    console.log('✅ Phase 4 Complete: Time-Travel Debugging');
-  },
-  
-  // Status reporting
+
+  // Setters
+  enableAtomicStores: () => setFlagAndLog('atomicStores', true, '⚛️ Atomic stores enabled'),
+  disableAtomicStores: () => setFlagAndLog('atomicStores', false, '📦 Atomic stores disabled'),
+  enableConcurrentFeatures: () => setFlagAndLog('concurrentFeatures', true, '🔄 Concurrent features enabled'),
+  disableConcurrentFeatures: () => setFlagAndLog('concurrentFeatures', false, '⏸️ Concurrent features disabled'),
+  enableShowcaseMode: () => setFlagAndLog('showcaseMode', true, '🎭 Showcase mode enabled'),
+  disableShowcaseMode: () => setFlagAndLog('showcaseMode', false, '📺 Showcase mode disabled'),
+
+  markPhase1Complete: () => markPhase(1),
+  markPhase2Complete: () => markPhase(2),
+  markPhase3Complete: () => markPhase(3),
+  markPhase4Complete: () => markPhase(4),
+
   getStatus: () => ({
-    atomicStores: runtimeFlags.atomicStores,
-    concurrentFeatures: runtimeFlags.concurrentFeatures,
-    showcaseMode: runtimeFlags.showcaseMode,
-    timeTravelDebug: runtimeFlags.timeTravelDebug,
-    phases: {
-      phase1: runtimeFlags.phase1Complete,
-      phase2: runtimeFlags.phase2Complete,
-      phase3: runtimeFlags.phase3Complete,
-      phase4: runtimeFlags.phase4Complete,
-    },
+    ...runtimeFlags,
     environment: {
-      NODE_ENV: process.env.NODE_ENV,
-      VITE_ATOMIC_STORE: process.env.VITE_ATOMIC_STORE,
-      VITE_CONCURRENT_FEATURES: process.env.VITE_CONCURRENT_FEATURES,
-      VITE_SHOWCASE: process.env.VITE_SHOWCASE,
+      MODE: ENV.MODE,
+      VITE_ATOMIC_STORE: ENV.VITE_ATOMIC_STORE,
+      VITE_CONCURRENT_FEATURES: ENV.VITE_CONCURRENT_FEATURES,
+      VITE_SHOWCASE: ENV.VITE_SHOWCASE,
     },
     urlParams: typeof window !== 'undefined' ? window.location.search : 'N/A',
   }),
-  
-  // Validation helpers
+
   validateFeatureCombination: () => {
     const warnings = [];
-    
     if (runtimeFlags.showcaseMode && !runtimeFlags.atomicStores) {
-      warnings.push('Showcase mode requires atomic stores for optimal performance');
+      warnings.push('Showcase mode requires atomic stores for optimal performance.');
     }
-    
     if (runtimeFlags.concurrentFeatures && !runtimeFlags.atomicStores) {
-      warnings.push('Concurrent features work best with atomic stores');
+      warnings.push('Concurrent features are best with atomic stores.');
     }
-    
-    if (runtimeFlags.timeTravelDebug && process.env.NODE_ENV === 'production') {
-      warnings.push('Time travel debug should not be enabled in production');
+    if (runtimeFlags.timeTravelDebug && ENV.MODE === 'production') {
+      warnings.push('Time-travel debug should not be enabled in production.');
     }
-    
-    return {
-      valid: warnings.length === 0,
-      warnings,
-    };
+    return { valid: warnings.length === 0, warnings };
   },
 };
 
-/**
- * ✅ STORE SELECTOR: Choose between atomic and monolithic stores
- */
-export const getStoreImplementation = () => {
-  if (featureFlags.isAtomicStoreEnabled()) {
-    return 'atomic';
-  }
-  return 'monolithic';
-};
-
-/**
- * ✅ CONDITIONAL IMPORTS: Load appropriate store implementation
- */
-export const loadNarrativeStore = async () => {
-  const implementation = getStoreImplementation();
-  
-  if (implementation === 'atomic') {
-    const { useNarrativeStore } = await import('@/stores/narrativeStore.atomic.js');
-    console.log('⚛️ Loaded atomic narrative store implementation');
-    return useNarrativeStore;
-  } else {
-    const { useNarrativeStore } = await import('@/stores/narrativeStore.js');
-    console.log('📦 Loaded monolithic narrative store implementation');
-    return useNarrativeStore;
-  }
-};
-
-// ✅ INITIALIZATION: Setup flags and logging
-const initializeFeatureFlags = () => {
-  const status = featureFlags.getStatus();
-  const validation = featureFlags.validateFeatureCombination();
-  
-  console.group('🚩 Feature Flags Initialized');
-  console.log('Implementation:', getStoreImplementation());
-  console.log('Atomic Stores:', status.atomicStores);
-  console.log('Concurrent Features:', status.concurrentFeatures);
-  console.log('Showcase Mode:', status.showcaseMode);
-  console.log('Time Travel Debug:', status.timeTravelDebug);
-  
-  if (!validation.valid) {
-    console.warn('⚠️ Feature combination warnings:', validation.warnings);
-  }
-  
-  console.groupEnd();
-};
-
-// ✅ DEVELOPMENT: Global access and controls
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  window.featureFlags = featureFlags;
-  
-  // Quick toggle functions
-  window.toggleAtomic = () => {
-    if (featureFlags.isAtomicStoreEnabled()) {
-      featureFlags.disableAtomicStores();
-    } else {
-      featureFlags.enableAtomicStores();
-    }
+// Stub for anything expecting loadNarrativeStore
+export async function loadNarrativeStore() {
+  DEV_LOG && console.warn('🧪 loadNarrativeStore() stub: returns a no-op store.');
+  return {
+    getState: () => ({}),
+    subscribe: () => () => {},
+    setState: () => {}
   };
-  
-  window.toggleShowcase = () => {
-    if (featureFlags.isShowcaseModeEnabled()) {
-      featureFlags.disableShowcaseMode();
-    } else {
-      featureFlags.enableShowcaseMode();
-    }
-  };
-  
-  console.log('🚩 Feature flags available: window.featureFlags');
-  console.log('🔄 Quick toggles: window.toggleAtomic(), window.toggleShowcase()');
 }
 
-// Auto-initialize
-initializeFeatureFlags();
+// Helpers
+function setFlagAndLog(key, val, msg) {
+  runtimeFlags[key] = val;
+  DEV_LOG && console.log(msg);
+  if (key === 'atomicStores') {
+    console.log('🔁 Refresh if you expect store code paths to change.');
+  }
+}
+
+function markPhase(n) {
+  runtimeFlags[`phase${n}Complete`] = true;
+  DEV_LOG && console.log(`✅ Phase ${n} Complete`);
+}
+
+// Initialization
+function initializeFeatureFlagsOnce() {
+  if (globalThis.__FF_INIT__) return;
+  globalThis.__FF_INIT__ = true;
+
+  if (DEV_LOG) {
+    const status = featureFlags.getStatus();
+    const validation = featureFlags.validateFeatureCombination();
+    console.group('🚩 Feature Flags Initialized');
+    console.log('DEV_LOG:', DEV_LOG);
+    console.table(status);
+    if (!validation.valid) console.warn('⚠️ Feature combination warnings:', validation.warnings);
+    console.groupEnd();
+  }
+
+  if (typeof window !== 'undefined' && isDev) {
+    window.featureFlags = featureFlags;
+    window.toggleAtomic = () => runtimeFlags.atomicStores
+      ? featureFlags.disableAtomicStores()
+      : featureFlags.enableAtomicStores();
+    window.toggleShowcase = () => runtimeFlags.showcaseMode
+      ? featureFlags.disableShowcaseMode()
+      : featureFlags.enableShowcaseMode();
+  }
+}
+
+initializeFeatureFlagsOnce();
 
 export default featureFlags;

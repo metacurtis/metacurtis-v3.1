@@ -40,6 +40,7 @@
     "@lhci/cli": "^0.12.0",
     "@tailwindcss/postcss": "^4.1.7",
     "@tailwindcss/vite": "^4.1.7",
+    "@types/node": "^24.1.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.24.0",
@@ -55,6 +56,8 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.7",
     "terser": "^5.39.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
     "vite": "^6.2.5",
     "vite-plugin-glsl": "^1.4.0",
     "vitest": "^1.4.0"

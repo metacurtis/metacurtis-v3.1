@@ -1,0 +1,70 @@
+.theater {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.scrollContainer {
+  position: absolute;
+  width: 1px;
+  height: 700vh;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.stageHud {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  color: #00FF00;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  z-index: 50;
+}
+
+.devControls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00FF00;
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  padding: 15px;
+  border-radius: 5px;
+  border: 1px solid #00FF00;
+  max-width: 300px;
+  z-index: 100;
+}
+
+.openingContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cursor {
+  color: #00FF00;
+  font-family: 'Courier New', monospace;
+  font-size: 2rem;
+  transition: opacity 100ms;
+}
+
+.terminalText {
+  color: #00FF00;
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  text-shadow: 0 0 10px #00FF00;
+  margin-bottom: 10px;
+}

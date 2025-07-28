@@ -1,0 +1,1190 @@
+// src/config/sst3/sst-v3.0-config.js
+// CANONICAL AUTHORITY - SST v3.0 Config
+export const SST_V3_CONFIG = {
+  version: "3.0.0",
+  schemaVersion: "2025-07-23",
+  features: {
+    gaussianFalloff: true,
+    noiseClusteringTier1: false,
+    centerWeightingTier4: true,
+    fusionMoments: true,
+    tierLOD: true,
+    memoryFragments: true,
+    narrativeDialogue: true,
+    audioSystem: true
+  },
+  performance: {
+    targetFPS: 60,
+    minFPS: 55,
+    maxParticles: 17000,
+    maxRenderTime: 16.67,
+    heapLimit: 250,
+    gcPauseMax: 3,
+    lodThresholds: { ultra:15000, high:10000, medium:5000, low:2000 }
+  },
+  tierSystem: {
+    count: 4,
+    defaultRatios: [0.5, 0.2, 0.15, 0.15],
+    sizeMultipliers: [0.6, 0.8, 1.2, 1.5],
+    opacityRanges: [
+      [0.3, 0.6],
+      [0.5, 0.8],
+      [0.7, 0.9],
+      [0.8, 1.0]
+    ],
+    names: [
+      "Consciousness Substrate",
+      "Spatial Awareness",
+      "Memory Anchors",
+      "Neural Constellations"
+    ]
+  },
+  stages: {
+    genesis: {
+      id: 0, name: "genesis", title: "Genesis Spark",
+      scrollRange: [0,14], duration: 30, particles: 2000,
+      tierRatios: [0.60,0.20,0.10,0.10],
+      colors: ["#00FF00","#22c55e","#15803d"],
+      brainRegion: "hippocampus",
+      brainCoordinates: { center: [-5, 0, -10], radius: 15 },
+      camera: { movement:"intimate_dolly", angle:5, duration:30 },
+      sprites: { tier1:[7], tier2:[0,1], tier3:[4], tier4:[1] },
+      shader: { worldScale:8.0, anchorLock:0.10, drift:0.45, alphaCutoff:0.32, edgeSoftness:0.10 }
+    },
+    discipline: {
+      id:1, name:"discipline", title:"Discipline Forge",
+      scrollRange:[14,28], duration:35, particles:3000,
+      tierRatios:[0.55,0.25,0.10,0.10],
+      colors:["#1e40af","#3b82f6","#1d4ed8"],
+      brainRegion:"brainstem",
+      brainCoordinates: { center: [0, -20, 0], radius: 10 },
+      camera:{ movement:"authority_orbit", angle:10, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1], tier3:[5], tier4:[11] },
+      shader: { worldScale:8.5, anchorLock:0.25, drift:0.30, alphaCutoff:0.35, edgeSoftness:0.08 }
+    },
+    neural: {
+      id:2, name:"neural", title:"Neural Awakening",
+      scrollRange:[28,42], duration:35, particles:5000,
+      tierRatios:[0.55,0.20,0.15,0.10],
+      colors:["#4338ca","#a855f7","#7c3aed"],
+      brainRegion:"leftTemporal",
+      brainCoordinates: { center: [-15, 0, 0], radius: 18 },
+      camera:{ movement:"discovery_orbit", angle:15, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1,2], tier3:[2], tier4:[10] },
+      shader: { worldScale:9.0, anchorLock:0.50, drift:0.22, alphaCutoff:0.38, edgeSoftness:0.08 }
+    },
+    velocity: {
+      id:3, name:"velocity", title:"Velocity Explosion",
+      scrollRange:[42,56], duration:40, particles:12000,
+      tierRatios:[0.45,0.20,0.15,0.20],
+      colors:["#7c3aed","#9333ea","#6b21a8"],
+      brainRegion:"multiRegion",
+      brainCoordinates: { center: [0, 0, 0], radius: 25 },
+      camera:{ movement:"dramatic_pullback", angle:20, duration:40, shake:true },
+      sprites:{ tier1:[7], tier2:[0,1,6], tier3:[6], tier4:[13] },
+      shader: { worldScale:10.0, anchorLock:0.65, drift:0.35, alphaCutoff:0.35, edgeSoftness:0.06 }
+    },
+    architecture: {
+      id:4, name:"architecture", title:"Architecture Consciousness",
+      scrollRange:[56,70], duration:35, particles:8000,
+      tierRatios:[0.50,0.20,0.15,0.15],
+      colors:["#0891b2","#06b6d4","#0e7490"],
+      brainRegion:"frontalLobe",
+      brainCoordinates: { center: [0, 10, 15], radius: 20 },
+      camera:{ movement:"grid_tracking", angle:12, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1], tier3:[11], tier4:[12] },
+      shader: { worldScale:9.0, anchorLock:0.85, drift:0.15, alphaCutoff:0.42, edgeSoftness:0.06 }
+    },
+    harmony: {
+      id:5, name:"harmony", title:"Harmonic Mastery",
+      scrollRange:[70,84], duration:35, particles:12000,
+      tierRatios:[0.50,0.20,0.15,0.15],
+      colors:["#f59e0b","#d97706","#b45309"],
+      brainRegion:"cerebellum",
+      brainCoordinates: { center: [0, -10, -15], radius: 18 },
+      camera:{ movement:"balletic_orbit", angle:25, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1,9], tier3:[9], tier4:[15] },
+      shader: { worldScale:10.0, anchorLock:0.90, drift:0.12, alphaCutoff:0.40, edgeSoftness:0.08 }
+    },
+    transcendence: {
+      id:6, name:"transcendence", title:"Consciousness Transcendence",
+      scrollRange:[84,100], duration:40, particles:15000,
+      tierRatios:[0.50,0.20,0.15,0.15],
+      colors:["#ffffff","#f59e0b","#00ffcc"],
+      brainRegion:"consciousnessCore",
+      brainCoordinates: { center: [0, 0, 0], radius: 30 },
+      camera:{ movement:"reverent_orbit", angle:30, duration:40 },
+      sprites:{ tier1:[7], tier2:[0,1,14], tier3:[14], tier4:[15] },
+      shader: { worldScale:12.0, anchorLock:1.00, drift:0.08, alphaCutoff:0.42, edgeSoftness:0.05 }
+    }
+  },
+  global: {
+    defaultTransitionDuration: 1000,
+    scrollSmoothing: 0.15,
+    morphAcceleration: 2.0,
+    audioMasterVolume: 0.8,
+    subtitlePosition: "bottom",
+    qualityAutoAdjust: true,
+    analyticsEnabled: true
+  }
+};
+
+// Add brainCoordinates to the freeze list
+Object.freeze(SST_V3_CONFIG);
+Object.freeze(SST_V3_CONFIG.features);
+Object.freeze(SST_V3_CONFIG.performance);
+Object.freeze(SST_V3_CONFIG.tierSystem);
+Object.keys(SST_V3_CONFIG.stages).forEach(k=>{
+  Object.freeze(SST_V3_CONFIG.stages[k]);
+  Object.freeze(SST_V3_CONFIG.stages[k].sprites);
+  Object.freeze(SST_V3_CONFIG.stages[k].camera);
+  Object.freeze(SST_V3_CONFIG.stages[k].brainCoordinates);
+  Object.freeze(SST_V3_CONFIG.stages[k].shader); // Added
+});
+Object.freeze(SST_V3_CONFIG.global);
+
+export const getStageByName = (name) => SST_V3_CONFIG.stages[name];
+export const getStageByScroll = (p) =>
+  Object.values(SST_V3_CONFIG.stages).find(s => p >= s.scrollRange[0] && p < s.scrollRange[1]);
+export const isFeatureEnabled = (flag) => !!SST_V3_CONFIG.features[flag];// Tier behavior definitions - stage-agnostic
+export const TIER_BEHAVIORS = {
+  drift: { type:"cpu", params:{ speed:0.2, pattern:"perlin", frequency:0.1, amplitude:2.0 }, shaderUniforms:{ uDriftSpeed:0.2, uDriftPattern:0 } },
+  cluster: { type:"generation", params:{ noiseScale:0.1, clusterThreshold:0.3, densityMultiplier:0.8 } },
+  orbital: { type:"cpu", params:{ radius:5.0, speed:0.05, axis:[0,1,0] }, shaderUniforms:{ uOrbitRadius:5.0, uOrbitSpeed:0.05 } },
+  structural:{ type:"generation", params:{ gridSize:2.0, flexibility:0.3, alignment:"vertical" } },
+  twinkle: { type:"shader", params:{ frequency:2.0, intensity:0.3, randomSeed:true }, shaderUniforms:{ uTwinkleFreq:2.0, uTwinkleIntensity:0.3 } },
+  pulse: { type:"shader", params:{ frequency:0.5, pattern:"sine", phase:0 }, shaderUniforms:{ uPulseFreq:0.5, uPulsePattern:0 } },
+  prominent:{ type:"hybrid", params:{ scaleBoost:1.2, opacityBoost:1.1, haloEffect:true }, shaderUniforms:{ uProminenceScale:1.2, uProminenceGlow:1.1 } },
+  anatomical:{ type:"generation", params:{ brainAccuracy:0.95, centerWeight:0.7, regionDensity:"variable" } }
+};
+
+export const TIER_BEHAVIOR_SETS = {
+  0: ["drift","cluster"],
+  1: ["orbital","structural"],
+  2: ["twinkle","pulse"],
+  3: ["prominent","anatomical"]
+};
+
+export const applyBehavior = (particleData, behaviorId, time, params = {}) => {
+  const b = TIER_BEHAVIORS[behaviorId];
+  if (!b) return particleData;
+  switch (b.type) {
+    case 'continuous':
+      if (b.cpuAnimation) {
+        return b.cpuAnimation(particleData, time, { ...b.params, ...params }, particleData.seed);
+      }
+      break;
+    case 'generation':
+      if (b.generationFunction) {
+        return b.generationFunction(particleData, particleData.rng, { ...b.params, ...params });
+      }
+      break;
+    default: break;
+  }
+  return particleData;
+};
+
+export const getBehaviorUniforms = (ids = []) => {
+  const u = {};
+  ids.forEach(id => {
+    const b = TIER_BEHAVIORS[id];
+    if (b?.shaderUniforms) Object.assign(u, b.shaderUniforms);
+  });
+  return u;
+};
+
+export const STAGE_BEHAVIOR_OVERRIDES = {
+  velocity: { 0:["drift","fade"], all:{ additionalBehavior:"storm", intensity:1.5 } },
+  harmony: { all:{ syncGroup:"global", harmonicRatio:1.618 } },
+  transcendence: { all:{ prominenceMultiplier:1.2, unifiedField:true } }
+};
+
+export const FUSION_BEHAVIORS = {
+  thunderclap: { trigger:"velocity", timing:8000, behavior:{ type:"explosion", effect:"radialBurst", intensity:2.0, duration:500, targetTiers:"all" } }
+};
+export const NARRATIVE_DIALOGUE = {
+  genesis: {
+    id:"narr_genesis_001",
+    narration:{
+      segments:[
+        { id:"gen_1", text:"I was eight years old...", timing:{start:3000, duration:8000} },
+        { id:"gen_3", text:"I typed those lines exactly...", timing:{start:17000, duration:5000}, memoryFragmentTrigger:"genesis_terminal" }
+      ]
+    }
+  },
+  discipline: {
+    id:"narr_discipline_001",
+    narration:{
+      segments:[
+        { id:"dis_1", text:"That spark? It got buried.", timing:{start:0, duration:3000} }
+      ]
+    }
+  }
+  // ... Add full segments later
+};
+
+export const getDialogueSegment = (stage, segmentId) => {
+  const s = NARRATIVE_DIALOGUE[stage];
+  if (!s) return null;
+  return s.narration?.segments?.find(seg=>seg.id===segmentId) || null;
+};
+
+export const getParticleCuesForStage = (stage) => {
+  const s = NARRATIVE_DIALOGUE[stage];
+  if (!s) return [];
+  return s.narration?.segments
+    ?.filter(seg=>seg.particleCue)
+    .map(seg=>({ timing:seg.timing.start, cue:seg.particleCue, segmentId:seg.id })) || [];
+};
+export const MEMORY_FRAGMENTS = {
+  genesis_terminal: {
+    id:"frag_genesis_001",
+    stage:"genesis",
+    name:"First Code",
+    trigger:{ type:"scroll", value:5, unit:"percentage", allowManual:true },
+    content:{ type:"interactive", element:"commodore_terminal", size:{width:600, height:400}, position:"center" },
+    duration:15000,
+    dismissible:true,
+    particleEffect:{
+      onTrigger:{ targetTiers:[0,1], behavior:"converge", radius:200, intensity:0.7, duration:2000 }
+    }
+  }
+};
+
+export const FRAGMENT_INTERACTIONS = {
+  terminal_emulator: {
+    handler:"TerminalEmulatorHandler",
+    config:{ transition:"fade", duration:500 }
+  }
+};
+
+export const getFragmentsForStage = (stageName) =>
+  Object.values(MEMORY_FRAGMENTS).filter(f=>f.stage===stageName);
+
+export const getActiveFragments = (stageName, scrollPercent, narrativeSegmentId) => {
+  return Object.values(MEMORY_FRAGMENTS).filter(frag=>{
+    if (frag.stage !== stageName) return false;
+    if (frag.trigger.type === 'scroll' &&
+        Math.abs(frag.trigger.value - scrollPercent) < 2) return true;
+    if (frag.trigger.type === 'narrative' &&
+        frag.trigger.segmentId === narrativeSegmentId) return true;
+    return false;
+  });
+};
+
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  window.MEMORY_FRAGMENTS = MEMORY_FRAGMENTS;
+}
+// src/engine/ConsciousnessEngine.js
+// Enhanced consciousness particle engine with tier system support
+// Version: 3.0.1 | Date: 2025-01-24
+
+import seedrandom from "seedrandom";
+import { SST_V3_CONFIG, getStageByName } from "@/config/sst3/sst-v3.0-config.js";
+import { tierSystem } from "./TierSystem.js";
+import { ConsciousnessPatterns } from "@/components/webgl/consciousness/ConsciousnessPatterns.js";
+import { getPointSpriteAtlasSingleton } from "@/components/webgl/consciousness/PointSpriteAtlas.js";
+import { markBlueprint } from '@/utils/performance/Telemetry.js';
+import { DEV_LOG } from '@/utils/featureFlags.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+
+// Schema version for cache invalidation
+const SCHEMA_VERSION = "v3.0.1";
+
+// Hoist static maps for performance
+const BEHAVIOR_MAP = Object.freeze({
+  none: 0,
+  drift: 1,
+  cluster: 2,
+  orbital: 3,
+  structural: 4,
+  twinkle: 5,
+  pulse: 6,
+  anchor: 7,
+  prominent: 8,
+  connected: 9,
+  anatomical: 10
+});
+
+const QUALITY_MULTIPLIERS = Object.freeze({
+  LOW: 0.4,
+  MEDIUM: 0.6,
+  HIGH: 0.9,
+  ULTRA: 1.0
+});
+
+const STAGE_AFFINITY_BOOSTS = Object.freeze({
+  genesis: 0.1,
+  velocity: 0.3,
+  transcendence: 0.4
+});
+
+const ATMOSPHERIC_SPREADS = Object.freeze([40, 30, 20, 15]); // Tier 0-3
+
+export class ConsciousnessEngine {
+  constructor() {
+    this.isInitialized = false;
+    this.blueprintCache = new Map();
+    this.currentStage = "genesis";
+    this.currentQuality = "HIGH";
+
+    // Tier system integration
+    this.tierSystem = tierSystem;
+
+    // Event handler references for cleanup
+    this._aqsHandler = null;
+
+    // Pre-allocated arrays for max performance (reusable)
+    this._preallocatedArrays = null;
+    this._maxParticlesAllocated = 0;
+
+    // Performance tracking with optimized metrics
+    this.metrics = {
+      blueprintsGenerated: 0,
+      cacheHits: 0,
+      totalGenerationTime: 0,
+      particlesGenerated: 0
+    };
+
+    // Listen for quality changes
+    this.listenToAQS();
+
+    console.log("🧠 ConsciousnessEngine v3.0.1: Initialized with optimizations");
+  }
+
+  /**
+   * Listen for adaptive quality system changes (with proper cleanup)
+   */
+  listenToAQS() {
+    if (typeof window === "undefined" || !window.addEventListener) return;
+
+    this._aqsHandler = (event) => {
+      if (!event?.detail?.tier) {
+        console.warn("🧠 Engine: Invalid AQS event", event);
+        return;
+      }
+
+      const { tier, particles } = event.detail;
+      const oldTier = this.currentQuality;
+      this.currentQuality = tier;
+
+      console.log(`🧠 Engine: Quality changed ${oldTier} → ${tier}`);
+      this.clearCache();
+
+      window.dispatchEvent(new CustomEvent("engineQualityChange", {
+        detail: { tier, particles, stage: this.currentStage }
+      }));
+    };
+
+    window.addEventListener("aqsQualityChange", this._aqsHandler);
+  }
+
+  /**
+   * Get deterministic RNG for a stage/tier combination
+   */
+  getRNG(stageName, tier = null) {
+    const seed = tier !== null
+      ? `${stageName}|${tier}|${SCHEMA_VERSION}`
+      : `${stageName}|${SCHEMA_VERSION}`;
+    return seedrandom(seed);
+  }
+
+  /**
+   * Get active particle count for a stage
+   */
+  getActiveParticleCount(stageName) {
+    // First try SST v3.0 config
+    const stageConfig = getStageByName(stageName);
+    if (stageConfig?.particles) {
+      const baseCount = stageConfig.particles;
+      const multiplier = QUALITY_MULTIPLIERS[this.currentQuality] || 0.9;
+      const maxParticles = SST_V3_CONFIG.performance.maxParticles || 17000;
+      return Math.min(Math.round(baseCount * multiplier), maxParticles);
+    }
+
+    // Fallback to Canonical if available
+    const canonicalStage = Canonical?.stages?.[stageName];
+    if (canonicalStage?.particles) {
+      const baseCount = canonicalStage.particles;
+      const multiplier = QUALITY_MULTIPLIERS[this.currentQuality] || 0.9;
+      const maxParticles = Canonical?.performance?.maxParticles || 15000;
+      return Math.min(Math.round(baseCount * multiplier), maxParticles);
+    }
+
+    // Ultimate fallback
+    return 2000;
+  }
+
+  /**
+   * Alternative method name for compatibility
+   */
+  getParticleBudgetForStage(stageName) {
+    return this.getActiveParticleCount(stageName);
+  }
+
+  /**
+   * Generate complete blueprint with tier support
+   */
+  async generateConstellationParticleData(particleCount, options = {}) {
+    const startTime = performance.now();
+    const { stageName = "genesis" } = options;
+    this.currentStage = stageName;
+
+    const maxParticles = SST_V3_CONFIG.performance.maxParticles || 17000;
+    const safeParticleCount = Math.min(particleCount, maxParticles);
+
+    const cacheKey = `${stageName}-${this.currentQuality}-${safeParticleCount}-${SCHEMA_VERSION}-${this.tierSystem.metrics.distributionsCalculated}`;
+
+    if (this.blueprintCache.has(cacheKey)) {
+      this.metrics.cacheHits++;
+      if (DEV_LOG) console.log(`🧠 Engine: Using cached blueprint for ${cacheKey}`);
+      return this.blueprintCache.get(cacheKey);
+    }
+
+    if (DEV_LOG) console.log(`🧠 Engine: Generating new v3.0.1 blueprint for ${stageName} (${safeParticleCount} particles)`);
+
+    const stageConfig = getStageByName(stageName);
+    if (!stageConfig) {
+      console.error(`🧠 Engine: Unknown stage "${stageName}"`);
+      return null;
+    }
+
+    const distribution = this.tierSystem.distributeParticles(safeParticleCount, stageName);
+    const arrays = this.allocateArrays(safeParticleCount);
+    const brainPattern = ConsciousnessPatterns?.getBrainRegionInfo?.(stageName) || null;
+    if (!brainPattern) console.warn(`🧠 Engine: No brain pattern for stage ${stageName}`);
+
+    const atlas = getPointSpriteAtlasSingleton?.() || null;
+    if (!atlas) console.warn("🧠 Engine: No sprite atlas available");
+
+    let particleIndex = 0;
+    for (const tierInfo of distribution.tiers) {
+      const tierRNG = this.getRNG(stageName, tierInfo.tier);
+      for (let i = 0; i < tierInfo.count && particleIndex < safeParticleCount; i++) {
+        this.generateTierAwareParticle(
+          particleIndex,
+          tierInfo,
+          stageName,
+          stageConfig,
+          brainPattern,
+          tierRNG,
+          atlas,
+          arrays
+        );
+        particleIndex++;
+      }
+    }
+
+    const blueprint = Object.freeze({
+      stageName,
+      stageConfig,
+      quality: this.currentQuality,
+      particleCount: safeParticleCount,
+      activeCount: particleIndex,
+      maxParticles,
+      distribution,
+      ...arrays,
+      brainPattern,
+      timestamp: Date.now(),
+      version: SCHEMA_VERSION
+    });
+
+    this.blueprintCache.set(cacheKey, blueprint);
+    this.limitCacheSize();
+    this.metrics.blueprintsGenerated++;
+    this.metrics.particlesGenerated += safeParticleCount;
+    const elapsed = performance.now() - startTime;
+    this.metrics.totalGenerationTime += elapsed;
+    if (DEV_LOG) console.log(`🧠 Engine: Blueprint generated in ${elapsed.toFixed(2)}ms`);
+    markBlueprint(elapsed, safeParticleCount, stageName);
+
+    return blueprint;
+  }
+
+  /**
+   * Allocate typed arrays efficiently (with reuse option)
+   */
+  allocateArrays(particleCount) {
+    if (this._preallocatedArrays && this._maxParticlesAllocated >= particleCount) {
+      return this._preallocatedArrays;
+    }
+
+    const arrays = {
+      atmosphericPositions: new Float32Array(particleCount * 3),
+      allenAtlasPositions:  new Float32Array(particleCount * 3),
+      animationSeeds:       new Float32Array(particleCount * 3),
+      sizeMultipliers:      new Float32Array(particleCount),
+      opacityData:          new Float32Array(particleCount),
+      atlasIndices:         new Float32Array(particleCount),
+      tierData:             new Float32Array(particleCount),
+      behaviorData:         new Float32Array(particleCount * 3),
+      storyAffinity:        new Float32Array(particleCount),
+      memoryFragment:       new Float32Array(particleCount),
+      fusionMoment:         new Float32Array(particleCount)
+    };
+
+    if (particleCount >= SST_V3_CONFIG.performance.maxParticles * 0.8) {
+      this._preallocatedArrays = arrays;
+      this._maxParticlesAllocated = particleCount;
+    }
+    return arrays;
+  }
+
+  /**
+   * Get atmospheric spread distance for a tier
+   * @param {number} tier - Tier index (0-3)
+   * @returns {number} Spread distance
+   */
+  getAtmosphericSpread(tier) {
+    return ATMOSPHERIC_SPREADS[Math.floor(tier)] || 20;
+  }
+
+  /**
+   * Generate individual particle with tier awareness
+   */
+  generateTierAwareParticle(
+    index,
+    tierInfo,
+    stageName,
+    stageConfig,
+    brainPattern,
+    rng,
+    atlas,
+    arrays
+  ) {
+    const i3 = index * 3;
+
+    // Create particle data object for tier system
+    const particleData = {
+      index,
+      tier: tierInfo.tier,
+      position: { x: 0, y: 0, z: 0 }
+    };
+
+    // Generate base atmospheric position
+    const atmosphericSpread = this.getAtmosphericSpread(tierInfo.tier);
+    const u = rng();
+    const v = rng();
+    const theta = 2.0 * Math.PI * u;
+    const phi = Math.acos(2.0 * v - 1.0);
+    const r = atmosphericSpread * Math.cbrt(rng());
+    const sinPhi = Math.sin(phi);
+    particleData.position.x = r * sinPhi * Math.cos(theta);
+    particleData.position.y = r * sinPhi * Math.sin(theta);
+    particleData.position.z = r * Math.cos(phi) * 0.6;
+
+    // Apply tier behaviors
+    const tierEnhanced = this.tierSystem.applyTierBehavior(particleData, stageName, rng);
+
+    // Apply clustering if enabled
+    if (tierEnhanced.clustering && tierEnhanced.clustering.inCluster) {
+      particleData.position = tierEnhanced.clustering.adjustedPosition;
+    }
+
+    // Store atmospheric position
+    arrays.atmosphericPositions[i3]     = particleData.position.x;
+    arrays.atmosphericPositions[i3 + 1] = particleData.position.y;
+    arrays.atmosphericPositions[i3 + 2] = particleData.position.z;
+
+    // Generate brain position (Allen Atlas target)
+    let brainPosition = this.generateBrainPosition(
+      tierInfo.tier,
+      brainPattern,
+      stageConfig.brainCoordinates,
+      rng
+    );
+
+    // Apply center weighting if enabled
+    if (tierEnhanced.centerWeight) {
+      brainPosition = tierEnhanced.centerWeight.adjustedPosition;
+    }
+
+    arrays.allenAtlasPositions[i3]     = brainPosition.x;
+    arrays.allenAtlasPositions[i3 + 1] = brainPosition.y;
+    arrays.allenAtlasPositions[i3 + 2] = brainPosition.z;
+
+    // Animation seeds
+    arrays.animationSeeds[i3]     = rng();
+    arrays.animationSeeds[i3 + 1] = rng();
+    arrays.animationSeeds[i3 + 2] = rng();
+
+    // Tier data
+    arrays.tierData[index] = tierInfo.tier;
+
+    // Size and opacity
+    arrays.sizeMultipliers[index] = tierEnhanced.sizeMultiplier;
+    const opacityRange = tierEnhanced.opacityRange;
+    arrays.opacityData[index] = opacityRange[0] + rng() * (opacityRange[1] - opacityRange[0]);
+
+    // Sprite selection – tier-aware whitelist from atlas
+    if (atlas && typeof atlas.getTierWhitelist === 'function') {
+      const wl = atlas.getTierWhitelist(tierInfo.tier, stageName);
+      arrays.atlasIndices[index] = wl[Math.floor(rng() * wl.length)] || 1;
+    } else {
+      arrays.atlasIndices[index] = tierEnhanced.spriteIndex ?? 1;
+    }
+
+    // Behavior data
+    arrays.behaviorData[i3]     = this.encodeBehavior(tierEnhanced.behaviors[0] || "drift");
+    arrays.behaviorData[i3 + 1] = this.encodeBehavior(tierEnhanced.behaviors[1] || "none");
+    arrays.behaviorData[i3 + 2] = tierEnhanced.behaviorIntensity || 1.0;
+
+    // v3.0: Story affinity
+    arrays.storyAffinity[index] = this.calculateStoryAffinity(tierInfo.tier, index, stageName);
+
+    // v3.0: Memory fragment association
+    arrays.memoryFragment[index] = this.calculateMemoryAssociation(tierInfo.tier, rng);
+
+    // v3.0: Fusion moment readiness
+    arrays.fusionMoment[index] = tierInfo.tier >= 2
+      ? rng() * 0.5 + 0.5
+      : rng() * 0.3;
+  }
+
+  /**
+   * Generate brain position for a particle
+   */
+  generateBrainPosition(tier, brainPattern, brainCoords, rng) {
+    const position = { x: 0, y: 0, z: 0 };
+    const safeCoords = brainCoords || { center: [0, 0, 0], radius: 20 };
+    const center = safeCoords.center || [0, 0, 0];
+    const radius = safeCoords.radius || 20;
+
+    if (tier === 3 && brainPattern?.coordinates?.points?.length > 0) {
+      const points = brainPattern.coordinates.points;
+      const pointIndex = Math.floor(rng() * points.length);
+      const point = points[pointIndex];
+      const variation = 0.5;
+      position.x = point[0] + (rng() - 0.5) * variation;
+      position.y = point[1] + (rng() - 0.5) * variation;
+      position.z = point[2] + (rng() - 0.5) * variation;
+    } else {
+      const spread = tier === 0
+        ? radius * 1.5
+        : tier === 1
+        ? radius * 1.2
+        : radius;
+      position.x = center[0] + (rng() - 0.5) * spread;
+      position.y = center[1] + (rng() - 0.5) * spread;
+      position.z = center[2] + (rng() - 0.5) * spread * 0.5;
+    }
+
+    return position;
+  }
+
+  /**
+   * Encode a behavior string into its numeric map value
+   */
+  encodeBehavior(behavior) {
+    return BEHAVIOR_MAP[behavior] ?? BEHAVIOR_MAP.none;
+  }
+
+  /**
+   * Calculate story affinity for advanced narrative integration
+   */
+  calculateStoryAffinity(tier, index, stageName) {
+    const boost = STAGE_AFFINITY_BOOSTS[stageName] || 0;
+    return boost + (index % (tier + 1)) * 0.01;
+  }
+
+  /**
+   * Determine memory fragment association probability
+   */
+  calculateMemoryAssociation(tier, rng) {
+    return rng() * (tier + 1) * 0.1;
+  }
+
+  /**
+   * Clear the blueprint cache
+   */
+  clearCache() {
+    this.blueprintCache.clear();
+    if (DEV_LOG) console.log("🧠 Engine: Cache cleared");
+  }
+
+  /**
+   * Maintain cache size within configured limits
+   */
+  limitCacheSize() {
+    const maxCache = SST_V3_CONFIG.performance.cacheLimit || 20;
+    while (this.blueprintCache.size > maxCache) {
+      const firstKey = this.blueprintCache.keys().next().value;
+      this.blueprintCache.delete(firstKey);
+    }
+  }
+
+  /**
+   * Get collected performance metrics
+   */
+  getMetrics() {
+    return { ...this.metrics };
+  }
+
+  /**
+   * Dispose of engine resources and handlers
+   */
+  dispose() {
+    if (this._aqsHandler) {
+      window.removeEventListener("aqsQualityChange", this._aqsHandler);
+    }
+    this.clearCache();
+  }
+}
+
+// Ensure we always export the same singleton instance
+function getConsciousnessEngineSingleton() {
+  if (globalThis.__SST_ENGINE__) return globalThis.__SST_ENGINE__;
+  const instance = new ConsciousnessEngine();
+  globalThis.__SST_ENGINE__ = instance;
+  // optional: expose for console debugging
+  if (typeof window !== "undefined") {
+    globalThis.consciousnessEngine = instance;
+  }
+  return instance;
+}
+
+const __ENGINE_INSTANCE__ = getConsciousnessEngineSingleton();
+
+// Provide compatibility wrapper if older callers used getActiveParticleCount
+if (!__ENGINE_INSTANCE__.getActiveParticleCount) {
+  __ENGINE_INSTANCE__.getActiveParticleCount = function (stage) {
+    // Prefer engine method if exists, else fall back to canonical
+    if (this.getParticleBudgetForStage) return this.getParticleBudgetForStage(stage);
+    const stageData = Canonical?.stages?.[stage];
+    return stageData?.particles?.total ?? 2000;
+  };
+}
+
+export { __ENGINE_INSTANCE__ as consciousnessEngine };
+export default __ENGINE_INSTANCE__;
+
+// Development helpers (with SSR safety)
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  window.engineMetrics = () => __ENGINE_INSTANCE__.getMetrics();
+}
+
+/*
+Suggestions (keep commented):
+
+// - Cache the whitelist per (tier, stageName) combination to avoid repeated array allocations.
+// - Validate that atlas.getTierWhitelist always returns a non-empty array; fallback if wl.length === 0.
+// - Expose a hook or event to update sprite whitelists at runtime without restarting the engine.
+// - Consider precomputing a flattened sprite lookup map for constant-time selection.
+// - Profile performance impact of Math.floor(rng() * wl.length) inside massive loops.
+*/
+// src/engine/TierSystem.js
+export const tierSystem = {
+  metrics: { distributionsCalculated: 0 },
+  
+  distributeParticles(count, stageName) {
+    const config = {
+      genesis: [0.60, 0.20, 0.10, 0.10],
+      discipline: [0.55, 0.25, 0.10, 0.10],
+      neural: [0.55, 0.20, 0.15, 0.10],
+      velocity: [0.45, 0.20, 0.15, 0.20],
+      architecture: [0.50, 0.20, 0.15, 0.15],
+      harmony: [0.50, 0.20, 0.15, 0.15],
+      transcendence: [0.50, 0.20, 0.15, 0.15]
+    };
+    
+    const ratios = config[stageName] || [0.5, 0.2, 0.15, 0.15];
+    const tiers = [];
+    
+    for (let i = 0; i < 4; i++) {
+      tiers.push({
+        tier: i,
+        count: Math.floor(count * ratios[i]),
+        ratio: ratios[i]
+      });
+    }
+    
+    this.metrics.distributionsCalculated++;
+    return { tiers, total: count };
+  },
+  
+  applyTierBehavior(particle, stageName, rng) {
+    const tier = particle.tier;
+    const behaviors = [
+      ['drift', 'none'],
+      ['orbital', 'structural'],
+      ['twinkle', 'pulse'],
+      ['prominent', 'connected']
+    ];
+    
+    return {
+      behaviors: behaviors[tier] || ['drift', 'none'],
+      behaviorIntensity: 0.8 + rng() * 0.4,
+      sizeMultiplier: [0.6, 0.8, 1.2, 1.5][tier],
+      opacityRange: [[0.3, 0.6], [0.5, 0.8], [0.7, 0.9], [0.8, 1.0]][tier],
+      spriteIndex: Math.floor(rng() * 16),
+      clustering: null,
+      centerWeight: null
+    };
+  }
+};
+// Placeholder - Paste from paste-2.txt
+// Placeholder - Paste from paste-2.txt
+// src/shaders/templates/consciousness-vertex.glsl
+precision mediump float;
+
+// ====== ATTRIBUTES (do NOT declare position) ======
+attribute float particleIndex;
+attribute vec3  atmosphericPosition;
+attribute vec3  allenAtlasPosition;
+attribute vec3  animationSeed;
+attribute float atlasIndex;
+attribute float sizeMultiplier;
+attribute float tierData;
+attribute float opacityData;
+attribute vec3  behaviorData;
+attribute float storyAffinity;
+attribute float memoryFragment;
+attribute float fusionMoment;
+
+// ====== UNIFORMS ======
+uniform float uTime;
+uniform float uMorphProgress;   // 0..1 morph atmospheric -> brain
+uniform float uStageBlend;      // color blend progress (0..1)
+uniform float uActiveCount;     // active particle cutoff
+
+uniform float uPointSize;
+uniform float uDevicePixelRatio;
+uniform vec2  uResolution;
+
+uniform float uSpritesPerRow;   // atlas grid
+uniform float uTotalSprites;    // spritesPerRow^2
+
+uniform vec3  uColorCurrent;
+uniform vec3  uColorNext;
+
+uniform float uEnableGaussian;  // quality flag (0/1)
+
+uniform float uTierHighlight[4];
+uniform float uHighlightStrength;
+uniform float uFusionActive;
+uniform float uFusionIntensity;
+uniform vec3  uFusionEpicenter;
+
+uniform float uStageIndex;
+uniform float uBrainRegion;
+
+uniform float uSceneScale;
+
+// --- SST v3.0 additions ---
+uniform float uAnchorLockStrength; // 0..1: how strongly tiers ≥2 adhere to atlas positions
+uniform float uDriftAmplitude;     // 0..1: global drift amplitude for low tiers
+
+// ====== VARYINGS ======
+varying float vTierID;
+varying float vBlend;
+varying float vAlpha;
+varying vec2  vAtlasUVOffset;
+varying float vParticleIndex;
+varying float vSizeMultiplier;
+
+const float PI = 3.14159265359;
+const float TWO_PI = 6.28318530718;
+
+// Helper: stage check
+bool isStage(float idx) {
+  return abs(uStageIndex - idx) < 0.5;
+}
+
+// ---- small tier movement baseline ----
+vec3 tierMovement(vec3 basePos, vec3 seeds, float time, float tier) {
+  float p = seeds.x * TWO_PI;
+
+  if (tier < 0.5) {
+    // Substrate drift – scaled by global amplitude
+    return vec3(
+      sin(basePos.x * 0.3 + time * 0.8 + p) * 0.12,
+      cos(basePos.y * 0.25 + time * 0.64 + p * 0.7) * 0.12,
+      sin(time * 0.6 + seeds.z * TWO_PI) * 0.06
+    ) * uDriftAmplitude;
+  } else if (tier < 1.5) {
+    // Spatial mild orbit
+    float a = time * 0.4 + p;
+    return vec3(
+      cos(a) * 0.06 * seeds.y,
+      sin(a * 0.7) * 0.04,
+      sin(a) * 0.03 * seeds.z
+    );
+  } else if (tier < 2.5) {
+    // Anchors twinkle drift
+    float s = 0.05 + sin(time * 2.0 + p) * 0.03;
+    return vec3(
+      sin(time * 0.5 + p) * s,
+      cos(time * 0.4 + p * 1.1) * s,
+      sin(time * 0.6 + seeds.z * TWO_PI) * s * 0.5
+    );
+  } else {
+    // Constellations: very stable
+    float phase = sin(time * 0.5 + p) * 0.5 + 0.5;
+    float scale = 0.03 + phase * 0.02;
+    return vec3(
+      sin(basePos.x * 0.2 + time * 0.3 + p) * scale,
+      cos(basePos.y * 0.15 + time * 0.25 + p * 0.9) * scale,
+      sin(time * 0.4 + seeds.z * TWO_PI) * scale * 0.5
+    );
+  }
+}
+
+float tierPointSize(vec3 viewPos, float baseScale, float tier, float sizeMul, vec3 seeds) {
+  float dist = length(viewPos);
+  float scale = baseScale * sizeMul * (300.0 / max(dist, 1.0));
+
+  float minS = 2.0 * uDevicePixelRatio;
+  float maxS = 30.0 * uDevicePixelRatio;
+
+  if (tier < 0.5) {
+    minS = 1.5 * uDevicePixelRatio; maxS = 15.0 * uDevicePixelRatio;
+  } else if (tier < 1.5) {
+    minS = 2.0 * uDevicePixelRatio; maxS = 20.0 * uDevicePixelRatio;
+  } else if (tier < 2.5) {
+    minS = 3.0 * uDevicePixelRatio; maxS = 25.0 * uDevicePixelRatio;
+    float pulse = 0.9 + 0.1 * sin(uTime * 2.2 + seeds.x * TWO_PI);
+    scale *= pulse;
+  } else {
+    minS = 4.0 * uDevicePixelRatio; maxS = 35.0 * uDevicePixelRatio;
+  }
+
+  return clamp(scale, minS, maxS);
+}
+
+float tierAlpha(float tier, vec3 seeds, float baseOpacity, float distanceFromCenter) {
+  float a = baseOpacity;
+
+  if (tier < 0.5)      a *= 0.9;
+  else if (tier < 1.5) a *= 0.95;
+  else if (tier < 2.5) a *= (0.8 + 0.2 * sin(uTime * 2.5 + seeds.y * TWO_PI));
+  else                 a *= (0.95 + 0.05 * sin(uTime * 1.0 + seeds.z * TWO_PI));
+
+  // gentle center fade
+  float df = 1.0 - smoothstep(25.0, 60.0, distanceFromCenter);
+  a *= df;
+
+  // highlight boost
+  float h = uTierHighlight[int(tier)];
+  if (h > 0.0) a *= (1.0 + h * uHighlightStrength);
+
+  return a;
+}
+
+void main() {
+  vParticleIndex  = particleIndex;
+  vTierID         = tierData;
+  vSizeMultiplier = sizeMultiplier;
+  vBlend          = uStageBlend;
+
+  // atlas tile offset
+  float spriteSize = 1.0 / uSpritesPerRow;
+  float row = floor(atlasIndex / uSpritesPerRow);
+  float col = mod(atlasIndex, uSpritesPerRow);
+  vAtlasUVOffset = vec2(col, row) * spriteSize;
+
+  // morph
+  float m = clamp(uMorphProgress, 0.0, 1.0);
+  vec3 basePos = mix(atmosphericPosition, allenAtlasPosition, m);
+
+  // movement
+  vec3 mv = tierMovement(basePos, animationSeed, uTime, vTierID);
+
+  // Tier locking: tiers >= 2 should adhere to atlas targets as lock→1
+  // lock = 0 for tiers 0/1, lock = uAnchorLockStrength for tiers 2/3
+  float lock = step(1.5, vTierID) * clamp(uAnchorLockStrength, 0.0, 1.0);
+
+  // fusion impulse
+  if (uFusionActive > 0.5) {
+    vec3 toEpi = uFusionEpicenter - basePos;
+    float d = length(toEpi);
+    float effect = exp(-d * 0.05) * uFusionIntensity;
+    mv += normalize(toEpi) * effect * 0.5;
+  }
+
+  vec3 drifted = basePos + mv;
+  vec3 finalPos = mix(drifted, basePos, lock); // lock pulls back to target
+
+  // Stage-specific: Velocity (stageIndex ≈ 3)
+  if (isStage(3.0)) {
+    // radial push + subtle swirl
+    float t = uTime;
+    float push = 1.0 + 0.35 * sin(t * 2.0 + animationSeed.x * TWO_PI);
+    float ang  = 0.6 * t + animationSeed.y * TWO_PI;
+    mat2 rot = mat2(cos(ang), -sin(ang), sin(ang), cos(ang));
+    finalPos.xy = rot * finalPos.xy;
+    finalPos *= push;
+  }
+
+  // apply global scene scale
+  finalPos *= uSceneScale;
+
+  // project
+  vec4 mvPos = modelViewMatrix * vec4(finalPos, 1.0);
+  gl_Position = projectionMatrix * mvPos;
+
+  gl_PointSize = tierPointSize(mvPos.xyz, uPointSize, vTierID, vSizeMultiplier, animationSeed);
+
+  float distCenter = length(finalPos);
+  vAlpha = tierAlpha(vTierID, animationSeed, opacityData, distCenter);
+}// src/shaders/templates/consciousness-fragment.glsl
+precision mediump float;
+
+uniform sampler2D uAtlasTexture;
+
+uniform float uTime;
+uniform vec3  uColorCurrent;
+uniform vec3  uColorNext;
+
+uniform float uEnableGaussian;   // 0/1
+uniform float uShimmerIntensity;
+uniform float uFogDensity;
+
+uniform float uActiveCount;      // active cutoff
+uniform float uFadeProgress;
+
+uniform float uSpritesPerRow;
+uniform float uTotalSprites;
+
+uniform float uTierHighlight[4];
+uniform float uHighlightStrength;
+
+uniform float uStageIndex;
+
+// --- SST v3.0 additions ---
+uniform float uAlphaCutoff;   // e.g. 0.35
+uniform float uEdgeSoftness;  // e.g. 0.08
+
+varying float vTierID;
+varying float vBlend;
+varying float vAlpha;
+varying vec2  vAtlasUVOffset;
+varying float vParticleIndex;
+varying float vSizeMultiplier;
+
+// ---- utils ----
+vec3 rgb2hsv(vec3 c) {
+  float cMax = max(c.r, max(c.g, c.b));
+  float cMin = min(c.r, min(c.g, c.b));
+  float d = cMax - cMin;
+  float h = 0.0;
+  if (d > 0.0) {
+    if (cMax == c.r)      h = mod((c.g - c.b) / d, 6.0);
+    else if (cMax == c.g) h = ((c.b - c.r) / d) + 2.0;
+    else                  h = ((c.r - c.g) / d) + 4.0;
+  }
+  float s = (cMax == 0.0) ? 0.0 : d / cMax;
+  float v = cMax;
+  return vec3(h / 6.0, s, v);
+}
+vec3 hsv2rgb(vec3 c) {
+  vec3 k = abs(mod(c.x * 6.0 + vec3(0.0,4.0,2.0), 6.0) - 3.0);
+  return c.z * mix(vec3(1.0), clamp(k - 1.0, 0.0, 1.0), c.y);
+}
+
+vec4 sampleAtlas(vec2 uvOffset, vec2 pt, float spritesPerRow) {
+  float spriteSize = 1.0 / spritesPerRow;
+  vec2 uv = uvOffset + pt * spriteSize;
+  return texture2D(uAtlasTexture, uv);
+}
+
+float gaussianFalloff(vec2 coord, float sigma) {
+  vec2 c = coord - 0.5;
+  float d = length(c);
+  return exp(-pow(d * sigma, 2.0));
+}
+
+// subtle stage accent (baseline)
+vec3 stageAccent(vec3 base, float tier, vec2 pc, float time, float stageIndex) {
+  if (stageIndex < 0.5) {
+    float g = 0.02 * sin((pc.y * 18.0) + time * 5.0);
+    base.g += g;
+  } else if (stageIndex < 2.5) {
+    float p = 0.03 * sin(length(pc - 0.5) * 10.0 - time * 2.0);
+    base += vec3(p * 0.6, p * 0.2, p * 0.8);
+  } else if (stageIndex < 3.5) {
+    float l = step(0.995, sin(pc.x * 40.0 + pc.y * 30.0 + time * 8.0));
+    base += vec3(l) * 0.12;
+  }
+  return base;
+}
+
+void main() {
+  vec2 pc = gl_PointCoord;
+
+  // activation fade
+  float vis = 1.0;
+  if (vParticleIndex >= uActiveCount) {
+    float d = vParticleIndex - uActiveCount;
+    float range = 1000.0;
+    vis = 1.0 - smoothstep(0.0, range, d);
+    vis *= uFadeProgress;
+  }
+  if (vis <= 0.001) discard;
+
+  // atlas sample
+  float spritesPerRow = floor(sqrt(uTotalSprites + 0.5));
+  vec4 atlasCol = sampleAtlas(vAtlasUVOffset, pc, spritesPerRow);
+  
+  // Clean sprite edges (avoid visible cross/diamond artifacts at small sizes)
+  float softA = smoothstep(uAlphaCutoff, uAlphaCutoff + uEdgeSoftness, atlasCol.a);
+  if (softA <= 0.001) discard;
+
+  // HSV color blend
+  vec3 hsvA = rgb2hsv(uColorCurrent);
+  vec3 hsvB = rgb2hsv(uColorNext);
+
+  float satBoost = 1.0;
+  if (vTierID > 2.5)      satBoost = 1.2;
+  else if (vTierID > 1.5) satBoost = 1.1;
+
+  vec3 hsv = vec3(
+    mix(hsvA.x, hsvB.x, vBlend),
+    min(1.0, mix(hsvA.y, hsvB.y, vBlend) * satBoost),
+    mix(hsvA.z, hsvB.z, vBlend)
+  );
+  vec3 color = hsv2rgb(hsv);
+
+  // sprite influence
+  color = mix(color, color * atlasCol.rgb, 0.6);
+
+  // shimmer
+  float sh = 1.0;
+  if (vTierID < 0.5) {
+    sh = 1.0 + sin(pc.x * 4.0 + uTime) * 0.03 * uShimmerIntensity;
+  } else if (vTierID < 1.5) {
+    sh = 1.0 + sin(pc.y * 3.0 + uTime * 0.8) * 0.04 * uShimmerIntensity;
+  } else if (vTierID < 2.5) {
+    float s1 = sin(pc.x * 8.0 + uTime * 2.0) * 0.08;
+    float s2 = cos(pc.y * 6.0 + uTime * 1.5) * 0.06;
+    sh = 1.0 + (s1 + s2) * uShimmerIntensity;
+  } else {
+    float s1 = sin(pc.x * 10.0 + uTime * 1.8) * 0.10;
+    float s2 = cos(pc.y * 8.0 + uTime * 1.4) * 0.08;
+    float rs = sin(length(pc - 0.5) * 15.0 + uTime * 2.5) * 0.05;
+    sh = 1.0 + (s1 + s2 + rs) * uShimmerIntensity;
+  }
+  color *= sh;
+
+  // stage accent (subtle)
+  color = stageAccent(color, vTierID, pc, uTime, uStageIndex);
+
+  // alpha + falloff
+  float alpha = vAlpha * softA * vis;
+
+  if (uEnableGaussian > 0.5) {
+    float g = gaussianFalloff(pc, 2.5);
+    alpha *= g;
+  } else {
+    float d = length(pc - 0.5);
+    float f = 1.0 - smoothstep(0.3, 0.5, d);
+    alpha *= f;
+  }
+
+  // gentle fog
+  if (uFogDensity > 0.0) {
+    float fog = 0.08 * (1.0 - exp(-uFogDensity * 0.5));
+    color = mix(color, vec3(0.0), fog);
+  }
+
+  gl_FragColor = vec4(color, alpha);
+}
