@@ -1,28 +1,44 @@
 diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
-index 72b0eae..e69de29 100644
+index 7f30dcb..e69de29 100644
 --- a/.ai-queue/test.patch
 +++ b/.ai-queue/test.patch
-@@ -1,234 +0,0 @@
+@@ -1,250 +0,0 @@
 -diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
--index 0dd75e8..e69de29 100644
+-index 72b0eae..e69de29 100644
 ---- a/.ai-queue/test.patch
 -+++ b/.ai-queue/test.patch
--@@ -1,132 +0,0 @@
+-@@ -1,234 +0,0 @@
 --diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
---index 6b84002..e69de29 100644
+--index 0dd75e8..e69de29 100644
 ----- a/.ai-queue/test.patch
 --+++ b/.ai-queue/test.patch
---@@ -1,43 +0,0 @@
+--@@ -1,132 +0,0 @@
 ---diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
----index 8b47d35..e69de29 100644
+---index 6b84002..e69de29 100644
 ------ a/.ai-queue/test.patch
 ---+++ b/.ai-queue/test.patch
----@@ -1,27 +0,0 @@
+---@@ -1,43 +0,0 @@
 ----diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
-----index 15c0807..e69de29 100644
+----index 8b47d35..e69de29 100644
 ------- a/.ai-queue/test.patch
 ----+++ b/.ai-queue/test.patch
-----@@ -1,11 +0,0 @@
+----@@ -1,27 +0,0 @@
+-----diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
+-----index 15c0807..e69de29 100644
+-------- a/.ai-queue/test.patch
+-----+++ b/.ai-queue/test.patch
+-----@@ -1,11 +0,0 @@
+------diff --git a/src/App.jsx b/src/App.jsx
+------index fe54b54..fdeecff 100644
+--------- a/src/App.jsx
+------+++ b/src/App.jsx
+------@@ -21,4 +21,4 @@ export default function App() {
+------   }, []);
+------ 
+------   return <ConsciousnessTheater />;
+-------}
+------\ No newline at end of file
+------+}// test
 -----diff --git a/src/App.jsx b/src/App.jsx
 -----index fe54b54..fdeecff 100644
 -------- a/src/App.jsx
@@ -45,6 +61,79 @@ index 72b0eae..e69de29 100644
 -----}
 ----\ No newline at end of file
 ----+}// test
+---diff --git a/scripts/apply-ai-patch.js b/scripts/apply-ai-patch.js
+---deleted file mode 100644
+---index 81ec176..0000000
+------ a/scripts/apply-ai-patch.js
+---+++ /dev/null
+---@@ -1,67 +0,0 @@
+----'use strict';
+----var __assign =
+----  (this && this.__assign) ||
+----  function () {
+----    __assign =
+----      Object.assign ||
+----      function (t) {
+----        for (var s, i = 1, n = arguments.length; i < n; i++) {
+----          s = arguments[i];
+----          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+----        }
+----        return t;
+----      };
+----    return __assign.apply(this, arguments);
+----  };
+----Object.defineProperty(exports, '__esModule', { value: true });
+----// scripts/apply-ai-patch.ts
+----// ⏩  Pops the oldest *.patch in .ai-queue/, validates, pushes branch, opens PR
+----var node_child_process_1 = require('node:child_process');
+----var node_fs_1 = require('node:fs');
+----var node_path_1 = require('node:path');
+----var node_os_1 = require('node:os');
+----var queueDir = '.ai-queue';
+----var patches = (0, node_fs_1.readdirSync)(queueDir)
+----  .filter(function (f) {
+----    return f.endsWith('.patch');
+----  })
+----  .sort();
+----if (patches.length === 0) {
+----  console.log('✅  No patches in queue. Nothing to do.');
+----  process.exit(0);
+----}
+----var patchPath = (0, node_path_1.join)(queueDir, patches[0]);
+----var branch = 'ai/'.concat(patches[0].replace('.patch', ''));
+----function run(cmd, opts) {
+----  if (opts === void 0) {
+----    opts = {};
+----  }
+----  console.log('$ '.concat(cmd));
+----  return (0, node_child_process_1.execSync)(cmd, __assign({ stdio: 'inherit' }, opts));
+----}
+----try {
+----  // create temp worktree
+----  var workDir = (0, node_fs_1.mkdtempSync)(
+----    (0, node_path_1.join)((0, node_os_1.tmpdir)(), 'ai-patch-')
+----  );
+----  run('git worktree add -b '.concat(branch, ' ').concat(workDir));
+----  // apply patch
+----  process.chdir(workDir);
+----  run('git apply --index '.concat((0, node_path_1.join)('..', patchPath)));
+----  // run project validators
+----  run('npm run lint --silent');
+----  run('npm test --silent');
+----  run('node scripts/validate-sst.js');
+----  // commit & push
+----  run('git commit -am "AI patch: '.concat(patches[0], '"'));
+----  run('git push -u origin '.concat(branch));
+----  // open GitHub PR (gh CLI)
+----  run('gh pr create -f -l "ai-patch" -t "'.concat(patches[0], '" -b "Automated AI patch"'));
+----  // success ⇒ remove patch from queue
+----  process.chdir((0, node_path_1.dirname)(__dirname));
+----  (0, node_fs_1.rmSync)(patchPath);
+----  console.log('🎉  Patch applied & PR opened.');
+----} catch (e) {
+----  console.error('🛑  Patch failed validation; leaving in queue.');
+----  process.exit(1);
+----}
 ---diff --git a/src/App.jsx b/src/App.jsx
 ---index fe54b54..fdeecff 100644
 ------ a/src/App.jsx
@@ -129,6 +218,19 @@ index 72b0eae..e69de29 100644
 ---  console.error('🛑  Patch failed validation; leaving in queue.');
 ---  process.exit(1);
 ---}
+--diff --git a/scripts/apply-ai-patch.ts b/scripts/apply-ai-patch.ts
+--index 81c0c0f..c45648f 100644
+----- a/scripts/apply-ai-patch.ts
+--+++ b/scripts/apply-ai-patch.ts
+--@@ -26,7 +26,7 @@ try {
+-- 
+--   // apply patch
+--   process.chdir(workDir);
+---  run(`git apply --index ${join('..', patchPath)}`);
+--+ run(`git apply --index ${patchPath}`);
+-- 
+--   // run project validators
+--   run('npm run lint --silent');
 --diff --git a/src/App.jsx b/src/App.jsx
 --index fe54b54..fdeecff 100644
 ----- a/src/App.jsx
@@ -140,92 +242,6 @@ index 72b0eae..e69de29 100644
 ---}
 --\ No newline at end of file
 --+}// test
--diff --git a/scripts/apply-ai-patch.js b/scripts/apply-ai-patch.js
--deleted file mode 100644
--index 81ec176..0000000
----- a/scripts/apply-ai-patch.js
--+++ /dev/null
--@@ -1,67 +0,0 @@
---'use strict';
---var __assign =
---  (this && this.__assign) ||
---  function () {
---    __assign =
---      Object.assign ||
---      function (t) {
---        for (var s, i = 1, n = arguments.length; i < n; i++) {
---          s = arguments[i];
---          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
---        }
---        return t;
---      };
---    return __assign.apply(this, arguments);
---  };
---Object.defineProperty(exports, '__esModule', { value: true });
---// scripts/apply-ai-patch.ts
---// ⏩  Pops the oldest *.patch in .ai-queue/, validates, pushes branch, opens PR
---var node_child_process_1 = require('node:child_process');
---var node_fs_1 = require('node:fs');
---var node_path_1 = require('node:path');
---var node_os_1 = require('node:os');
---var queueDir = '.ai-queue';
---var patches = (0, node_fs_1.readdirSync)(queueDir)
---  .filter(function (f) {
---    return f.endsWith('.patch');
---  })
---  .sort();
---if (patches.length === 0) {
---  console.log('✅  No patches in queue. Nothing to do.');
---  process.exit(0);
---}
---var patchPath = (0, node_path_1.join)(queueDir, patches[0]);
---var branch = 'ai/'.concat(patches[0].replace('.patch', ''));
---function run(cmd, opts) {
---  if (opts === void 0) {
---    opts = {};
---  }
---  console.log('$ '.concat(cmd));
---  return (0, node_child_process_1.execSync)(cmd, __assign({ stdio: 'inherit' }, opts));
---}
---try {
---  // create temp worktree
---  var workDir = (0, node_fs_1.mkdtempSync)(
---    (0, node_path_1.join)((0, node_os_1.tmpdir)(), 'ai-patch-')
---  );
---  run('git worktree add -b '.concat(branch, ' ').concat(workDir));
---  // apply patch
---  process.chdir(workDir);
---  run('git apply --index '.concat((0, node_path_1.join)('..', patchPath)));
---  // run project validators
---  run('npm run lint --silent');
---  run('npm test --silent');
---  run('node scripts/validate-sst.js');
---  // commit & push
---  run('git commit -am "AI patch: '.concat(patches[0], '"'));
---  run('git push -u origin '.concat(branch));
---  // open GitHub PR (gh CLI)
---  run('gh pr create -f -l "ai-patch" -t "'.concat(patches[0], '" -b "Automated AI patch"'));
---  // success ⇒ remove patch from queue
---  process.chdir((0, node_path_1.dirname)(__dirname));
---  (0, node_fs_1.rmSync)(patchPath);
---  console.log('🎉  Patch applied & PR opened.');
---} catch (e) {
---  console.error('🛑  Patch failed validation; leaving in queue.');
---  process.exit(1);
---}
--diff --git a/scripts/apply-ai-patch.ts b/scripts/apply-ai-patch.ts
--index 81c0c0f..c45648f 100644
----- a/scripts/apply-ai-patch.ts
--+++ b/scripts/apply-ai-patch.ts
--@@ -26,7 +26,7 @@ try {
-- 
--   // apply patch
--   process.chdir(workDir);
---  run(`git apply --index ${join('..', patchPath)}`);
--+ run(`git apply --index ${patchPath}`);
-- 
--   // run project validators
--   run('npm run lint --silent');
 -diff --git a/src/App.jsx b/src/App.jsx
 -index fe54b54..fdeecff 100644
 ---- a/src/App.jsx
@@ -237,6 +253,52 @@ index 72b0eae..e69de29 100644
 --}
 -\ No newline at end of file
 -+}// test
+diff --git a/.github/workflows/ai-queue.yml b/.github/workflows/ai-queue.yml
+index d503eac..3e5231d 100644
+--- a/.github/workflows/ai-queue.yml
++++ b/.github/workflows/ai-queue.yml
+@@ -1,18 +1,33 @@
+ name: AI Patch Queue
++
+ on:
+   push:
+     paths:
+       - ".ai-queue/**/*.patch"
++
++permissions:
++  contents: write          # so the workflow can push branches
++  pull-requests: write     # so gh pr create works
++
+ jobs:
+   apply:
+     runs-on: ubuntu-latest
+     steps:
+-      - uses: actions/checkout@v4
+-        with: { fetch-depth: 0 }
+-      - uses: actions/setup-node@v4
+-        with: { node-version: '18', cache: 'npm' }
+-      - run: npm ci --ignore-scripts
+-      - run: node scripts/apply-ai-patch.cjs
+-        env:
+-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++      - name: Checkout full history
++        uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
+ 
++      - name: Node 20.x
++        uses: actions/setup-node@v4
++        with:
++          node-version: '20'
++          cache: 'npm'
++
++      - name: Install deps (prod only)
++        run: npm ci --ignore-scripts
++
++      - name: Apply next AI patch
++        run: node scripts/apply-ai-patch.cjs
++        env:
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # picked up by gh CLI
 diff --git a/src/App.jsx b/src/App.jsx
 index fe54b54..fdeecff 100644
 --- a/src/App.jsx
