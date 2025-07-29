@@ -12,16 +12,14 @@ export function useOpeningSequence(onComplete) {
     let time = TC.OPENING_BLACK_DURATION;
 
     // Build sequence
-    sequence.push({ 
-      delay: time, 
-      action: () => setPhase('cursor') 
+    sequence.push({
+      delay: time,
+      action: () => setPhase('cursor'),
     });
-    
+
     // ... rest of sequence logic
-    
-    const timeouts = sequence.map(({ delay, action }) => 
-      setTimeout(action, delay)
-    );
+
+    const timeouts = sequence.map(({ delay, action }) => setTimeout(action, delay));
 
     return () => timeouts.forEach(clearTimeout);
   }, [onComplete]);
@@ -31,6 +29,6 @@ export function useOpeningSequence(onComplete) {
     showCursor,
     terminalLines,
     screenFillActive,
-    isComplete: phase === 'complete'
+    isComplete: phase === 'complete',
   };
 }

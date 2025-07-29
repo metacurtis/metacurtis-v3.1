@@ -1,24 +1,24 @@
 // src/stores/atoms/clockAtom.js
 const createClockAtom = () => {
-  let state = { 
-    fps: 60, 
-    deltaMs: 16.67, 
-    averageFrameTime: 16.67, 
-    jankCount: 0, 
-    performanceGrade: 'A' 
+  let state = {
+    fps: 60,
+    deltaMs: 16.67,
+    averageFrameTime: 16.67,
+    jankCount: 0,
+    performanceGrade: 'A',
   };
   const listeners = new Set();
-  
+
   return {
     getState: () => state,
-    setState: (newState) => {
+    setState: newState => {
       state = { ...state, ...newState };
       listeners.forEach(fn => fn(state));
     },
-    subscribe: (listener) => {
+    subscribe: listener => {
       listeners.add(listener);
       return () => listeners.delete(listener);
-    }
+    },
   };
 };
 

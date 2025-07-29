@@ -45,7 +45,7 @@
       "particles": { "tier": 3, "behavior": "pulse", "intensity": 0.3 }
     }
   ],
-  
+
   "discipline": [
     {
       "id": "dis-01",
@@ -100,7 +100,7 @@
       "particles": { "tier": 0, "behavior": "flicker", "intensity": 0.2 }
     }
   ],
-  
+
   "neural": [
     {
       "id": "neu-01",
@@ -152,7 +152,7 @@
       "shader": { "uDriftAmplitude": 0.5 }
     }
   ],
-  
+
   "velocity": [
     {
       "id": "vel-01",
@@ -214,7 +214,7 @@
       "particles": { "tier": "all", "behavior": "thunderclap", "intensity": 2.0 }
     }
   ],
-  
+
   "architecture": [
     {
       "id": "arc-01",
@@ -267,7 +267,7 @@
       "particles": { "tier": 3, "behavior": "lock", "intensity": 1.0 }
     }
   ],
-  
+
   "harmony": [
     {
       "id": "har-01",
@@ -320,7 +320,7 @@
       "shader": { "uColorAccent2": "#ffd700" }
     }
   ],
-  
+
   "transcendence": [
     {
       "id": "tra-01",

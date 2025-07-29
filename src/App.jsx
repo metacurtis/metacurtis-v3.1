@@ -5,14 +5,13 @@ import React, { useEffect } from 'react';
 import ConsciousnessTheater from './components/consciousness/ConsciousnessTheaterUnified';
 import { clockAtom } from './stores/atoms/clockAtom';
 
-
 export default function App() {
   useEffect(() => {
     const clock = clockAtom.getState();
     if (!clock.isRunning) {
       clockAtom.start?.();
     }
-    
+
     return () => {
       if (clockAtom.getState().isRunning) {
         clockAtom.stop?.();

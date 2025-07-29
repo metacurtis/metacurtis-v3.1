@@ -17,7 +17,7 @@
   position: fixed;
   top: 20px;
   left: 20px;
-  color: #00FF00;
+  color: #00ff00;
   font-family: 'Courier New', monospace;
   font-size: 0.9rem;
   opacity: 0.7;
@@ -29,12 +29,12 @@
   bottom: 20px;
   right: 20px;
   background: rgba(0, 0, 0, 0.8);
-  color: #00FF00;
+  color: #00ff00;
   font-family: 'Courier New', monospace;
   font-size: 0.8rem;
   padding: 15px;
   border-radius: 5px;
-  border: 1px solid #00FF00;
+  border: 1px solid #00ff00;
   max-width: 300px;
   z-index: 100;
 }
@@ -55,16 +55,16 @@
 }
 
 .cursor {
-  color: #00FF00;
+  color: #00ff00;
   font-family: 'Courier New', monospace;
   font-size: 2rem;
   transition: opacity 100ms;
 }
 
 .terminalText {
-  color: #00FF00;
+  color: #00ff00;
   font-family: 'Courier New', monospace;
   font-size: 1.5rem;
-  text-shadow: 0 0 10px #00FF00;
+  text-shadow: 0 0 10px #00ff00;
   margin-bottom: 10px;
 }

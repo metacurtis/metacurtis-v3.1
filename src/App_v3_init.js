@@ -5,6 +5,6 @@ if (window.CANONICAL) {
   console.log('✅ Canonical loaded with:', {
     stages: Object.keys(window.CANONICAL.stages).length,
     dialogue: window.CANONICAL.dialogue ? '✅' : '❌',
-    fragments: window.CANONICAL.fragments ? '✅' : '❌'
+    fragments: window.CANONICAL.fragments ? '✅' : '❌',
   });
 }

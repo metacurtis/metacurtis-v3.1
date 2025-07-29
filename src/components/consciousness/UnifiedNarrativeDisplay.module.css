@@ -8,41 +8,37 @@
   width: 80%;
   max-width: 900px;
   padding: 30px 40px;
-  
+
   color: #ffffff;
   font-family: 'Georgia', 'Garamond', serif;
   font-size: 1.3rem;
   line-height: 1.8;
   letter-spacing: 0.02em;
   text-align: center;
-  
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.85),
-    rgba(0, 0, 0, 0.75)
-  );
-  
+
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.75));
+
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  box-shadow: 
+  box-shadow:
     0 10px 40px rgba(0, 0, 0, 0.8),
     0 0 80px rgba(0, 255, 0, 0.05);
-  
+
   pointer-events: none;
   z-index: 10050;
-  
+
   transition: opacity 0.6s ease-out;
 }
 
 .text {
   margin: 0;
-  text-shadow: 
+  text-shadow:
     0 2px 10px rgba(0, 0, 0, 0.8),
     0 0 40px var(--accent, rgba(255, 255, 255, 0.1));
 }
 
 /* Effect: Fade (default) */
-.overlay[data-fx="fade"] {
+.overlay[data-fx='fade'] {
   animation: fadeIn 0.8s ease-out forwards;
 }
 
@@ -58,7 +54,7 @@
 }
 
 /* Effect: Slide */
-.overlay[data-fx="slide"] {
+.overlay[data-fx='slide'] {
   animation: slideIn 0.6s ease-out forwards;
 }
 
@@ -74,31 +70,40 @@
 }
 
 /* Effect: Typewriter */
-.overlay[data-fx="type"] {
+.overlay[data-fx='type'] {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-.overlay[data-fx="type"] .text {
+.overlay[data-fx='type'] .text {
   overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid var(--accent, #00ff00);
-  animation: 
+  animation:
     typewriter calc(var(--dur) * 0.8) steps(50, end) 0.3s forwards,
     blinkCursor 0.5s step-end infinite 0.3s;
 }
 
 @keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes blinkCursor {
-  from, to { border-color: transparent; }
-  50% { border-color: var(--accent, #00ff00); }
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: var(--accent, #00ff00);
+  }
 }
 
 /* Effect: Explode (for dramatic moments) */
-.overlay[data-fx="explode"] {
+.overlay[data-fx='explode'] {
   animation: explodeIn 0.5s ease-out forwards;
 }
 
@@ -141,14 +146,14 @@
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
-  .overlay[data-fx="fade"],
-  .overlay[data-fx="slide"],
-  .overlay[data-fx="explode"] {
+  .overlay[data-fx='fade'],
+  .overlay[data-fx='slide'],
+  .overlay[data-fx='explode'] {
     animation: none;
     transition: opacity 0.3s ease-out;
   }
-  
-  .overlay[data-fx="type"] .text {
+
+  .overlay[data-fx='type'] .text {
     animation: none;
     width: 100%;
     border-right: none;

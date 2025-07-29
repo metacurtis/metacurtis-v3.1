@@ -14,9 +14,7 @@ export function UnifiedNarrativeDisplay() {
   useEffect(() => {
     const handleClock = ({ detail: { stage, t, timeline } }) => {
       // Find active segment
-      const segment = timeline.find(seg => 
-        t >= segment.at && t < (seg.at + seg.dur)
-      );
+      const segment = timeline.find(seg => t >= segment.at && t < seg.at + seg.dur);
 
       // Handle segment changes
       if (segment?.id !== lastSegmentId.current) {
@@ -31,23 +29,23 @@ export function UnifiedNarrativeDisplay() {
         // Emit segment events
         if (segment) {
           beatBus.emit(Events.SEGMENT_START, { segment, stage });
-          
+
           // Auto-trigger fragment
           if (segment.fragment && t >= segment.at && t <= seg.at + 100) {
-            beatBus.emit(Events.FRAGMENT_TRIGGER, { 
+            beatBus.emit(Events.FRAGMENT_TRIGGER, {
               id: segment.fragment,
-              segment: segment.id 
+              segment: segment.id,
             });
           }
-          
+
           // Trigger visual effects
           if (segment.shader) {
             beatBus.emit(Events.SHADER_UPDATE, segment.shader);
           }
           if (segment.camera) {
-            beatBus.emit(Events.CAMERA_PRESET, { 
+            beatBus.emit(Events.CAMERA_PRESET, {
               preset: segment.camera,
-              duration: 2000 
+              duration: 2000,
             });
           }
           if (segment.particles) {
@@ -55,9 +53,9 @@ export function UnifiedNarrativeDisplay() {
           }
         } else if (lastSegmentId.current) {
           // Segment ended
-          beatBus.emit(Events.SEGMENT_END, { 
+          beatBus.emit(Events.SEGMENT_END, {
             segmentId: lastSegmentId.current,
-            stage 
+            stage,
           });
         }
       }
@@ -72,19 +70,17 @@ export function UnifiedNarrativeDisplay() {
   // Calculate CSS variables for effects
   const cssVars = {
     '--dur': `${activeSegment.dur}ms`,
-    '--accent': activeSegment.accentColor || '#ffffff'
+    '--accent': activeSegment.accentColor || '#ffffff',
   };
 
   return (
-    <div 
+    <div
       key={fadeKey}
       className={styles.overlay}
       data-fx={activeSegment.fx || 'fade'}
       style={cssVars}
     >
-      <p className={styles.text}>
-        {activeSegment.text}
-      </p>
+      <p className={styles.text}>{activeSegment.text}</p>
     </div>
   );
 }

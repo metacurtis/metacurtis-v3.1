@@ -43,7 +43,7 @@ export function integrateV3Systems() {
       fragments: MEMORY_FRAGMENTS,
       engine: consciousnessEngine,
       stage: stageAtom,
-      quality: qualityAtom
+      quality: qualityAtom,
     };
   }
 

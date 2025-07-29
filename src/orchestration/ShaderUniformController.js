@@ -10,19 +10,19 @@ class ShaderUniformController {
     this.getMaterial = getMaterial;
     this.tweens = new Map();
     this.rafId = null;
-    
+
     // Subscribe to events
     this.unsubscribers = [
       beatBus.on(Events.SHADER_UPDATE, this.handleUpdate),
       beatBus.on(Events.SHADER_TWEEN, this.handleTween),
       beatBus.on(Events.SEGMENT_START, this.handleSegmentStart),
-      beatBus.on(Events.STAGE_CHANGE, this.handleStageChange)
+      beatBus.on(Events.STAGE_CHANGE, this.handleStageChange),
     ];
-    
+
     this.startAnimationLoop();
   }
 
-  handleUpdate = (uniforms) => {
+  handleUpdate = uniforms => {
     const material = this.getMaterial();
     if (!material?.uniforms) return;
 
@@ -45,7 +45,7 @@ class ShaderUniformController {
       to,
       duration,
       startTime,
-      ease: this.getEaseFunction(ease)
+      ease: this.getEaseFunction(ease),
     });
   };
 
@@ -55,7 +55,7 @@ class ShaderUniformController {
       this.handleTween({
         uniform: 'uColorAccent1',
         to: new THREE.Color(segment.accentColor),
-        duration: 800
+        duration: 800,
       });
     }
   };
@@ -66,7 +66,9 @@ class ShaderUniformController {
 
     // Apply stage defaults
     Object.entries(stageConfig.shader).forEach(([key, value]) => {
-      const uniformKey = key.startsWith('u') ? key : `u${key.charAt(0).toUpperCase() + key.slice(1)}`;
+      const uniformKey = key.startsWith('u')
+        ? key
+        : `u${key.charAt(0).toUpperCase() + key.slice(1)}`;
       this.handleUpdate({ [uniformKey]: value });
     });
   };
@@ -76,7 +78,7 @@ class ShaderUniformController {
       linear: t => t,
       easeIn: t => t * t,
       easeOut: t => t * (2 - t),
-      easeInOut: t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+      easeInOut: t => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
     };
     return easings[ease] || easings.easeInOut;
   }

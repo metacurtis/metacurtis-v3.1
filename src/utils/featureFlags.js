@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------------
 // 1. ENV & DEV DETECTION
 // -----------------------------------------------------------------------------
-const ENV = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : {};
+const ENV = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
 const isDev = Boolean(ENV.DEV);
 
 // Query-string helper
@@ -35,7 +35,8 @@ const runtimeFlags = {
 };
 
 // Exported to use everywhere instead of noisy if(isDev) console.log...
-export const DEV_LOG = isDev && (typeof window !== 'undefined' ? (window.SST_DEV_LOG ?? true) : true);
+export const DEV_LOG =
+  isDev && (typeof window !== 'undefined' ? (window.SST_DEV_LOG ?? true) : true);
 
 // -----------------------------------------------------------------------------
 // 3. PUBLIC API
@@ -55,8 +56,10 @@ export const featureFlags = {
   // Setters
   enableAtomicStores: () => setFlagAndLog('atomicStores', true, '⚛️ Atomic stores enabled'),
   disableAtomicStores: () => setFlagAndLog('atomicStores', false, '📦 Atomic stores disabled'),
-  enableConcurrentFeatures: () => setFlagAndLog('concurrentFeatures', true, '🔄 Concurrent features enabled'),
-  disableConcurrentFeatures: () => setFlagAndLog('concurrentFeatures', false, '⏸️ Concurrent features disabled'),
+  enableConcurrentFeatures: () =>
+    setFlagAndLog('concurrentFeatures', true, '🔄 Concurrent features enabled'),
+  disableConcurrentFeatures: () =>
+    setFlagAndLog('concurrentFeatures', false, '⏸️ Concurrent features disabled'),
   enableShowcaseMode: () => setFlagAndLog('showcaseMode', true, '🎭 Showcase mode enabled'),
   disableShowcaseMode: () => setFlagAndLog('showcaseMode', false, '📺 Showcase mode disabled'),
 
@@ -97,7 +100,7 @@ export async function loadNarrativeStore() {
   return {
     getState: () => ({}),
     subscribe: () => () => {},
-    setState: () => {}
+    setState: () => {},
   };
 }
 
@@ -132,12 +135,14 @@ function initializeFeatureFlagsOnce() {
 
   if (typeof window !== 'undefined' && isDev) {
     window.featureFlags = featureFlags;
-    window.toggleAtomic = () => runtimeFlags.atomicStores
-      ? featureFlags.disableAtomicStores()
-      : featureFlags.enableAtomicStores();
-    window.toggleShowcase = () => runtimeFlags.showcaseMode
-      ? featureFlags.disableShowcaseMode()
-      : featureFlags.enableShowcaseMode();
+    window.toggleAtomic = () =>
+      runtimeFlags.atomicStores
+        ? featureFlags.disableAtomicStores()
+        : featureFlags.enableAtomicStores();
+    window.toggleShowcase = () =>
+      runtimeFlags.showcaseMode
+        ? featureFlags.disableShowcaseMode()
+        : featureFlags.enableShowcaseMode();
   }
 }
 

@@ -5,7 +5,7 @@ import {
   SST_V3_CONFIG,
   getStageByName,
   getStageByScroll,
-  isFeatureEnabled
+  isFeatureEnabled,
 } from '../sst3/sst-v3.0-config.js';
 
 import {
@@ -14,18 +14,16 @@ import {
   applyBehavior,
   getBehaviorUniforms,
   STAGE_BEHAVIOR_OVERRIDES,
-  FUSION_BEHAVIORS
+  FUSION_BEHAVIORS,
 } from '../sst3/tier-behaviors.js';
 
-import {
-  NARRATIVE_DIALOGUE
-} from '../sst3/narrative-dialogue.js';
+import { NARRATIVE_DIALOGUE } from '../sst3/narrative-dialogue.js';
 
 import {
   MEMORY_FRAGMENTS,
   FRAGMENT_INTERACTIONS,
   getFragmentsForStage,
-  getActiveFragments
+  getActiveFragments,
 } from '../sst3/memory-fragments.js';
 
 // --- helper: flatten the authoring schema into the runtime schema ---
@@ -40,15 +38,15 @@ function normalizeDialogue(raw) {
     const segs = data?.narration?.segments ?? [];
     out[stage] = {
       id: data.id,
-      segments: segs.map((s) => ({
+      segments: segs.map(s => ({
         id: s.id,
         text: s.text,
         note: s.note,
         start: s.timing?.start ?? 0,
         duration: s.timing?.duration ?? 0,
         memoryTrigger: s.memoryFragmentTrigger,
-        particleCue: s.particleCue
-      }))
+        particleCue: s.particleCue,
+      })),
     };
   }
   return out;
@@ -69,7 +67,7 @@ const Canonical = {
   // Stage access methods
   getStageByName,
   getStageByScroll,
-  getStageByIndex: (index) => {
+  getStageByIndex: index => {
     const stageName = Object.keys(SST_V3_CONFIG.stages)[index];
     return SST_V3_CONFIG.stages[stageName];
   },
@@ -81,7 +79,7 @@ const Canonical = {
     apply: applyBehavior,
     getUniforms: getBehaviorUniforms,
     overrides: STAGE_BEHAVIOR_OVERRIDES,
-    fusion: FUSION_BEHAVIORS
+    fusion: FUSION_BEHAVIORS,
   },
 
   // Narrative system (runtime‑ready)
@@ -90,16 +88,16 @@ const Canonical = {
   // Keep helper signatures but read from normalized data
   getDialogueSegment(stage, id) {
     const segArr = this.dialogue?.[stage]?.segments ?? [];
-    return segArr.find((s) => s.id === id) ?? null;
+    return segArr.find(s => s.id === id) ?? null;
   },
   getParticleCuesForStage(stage) {
     const segArr = this.dialogue?.[stage]?.segments ?? [];
     return segArr
-      .filter((s) => s.particleCue)
-      .map((s) => ({
+      .filter(s => s.particleCue)
+      .map(s => ({
         timing: s.start,
         cue: s.particleCue,
-        segmentId: s.id
+        segmentId: s.id,
       }));
   },
 
@@ -120,8 +118,8 @@ const Canonical = {
     OPERATIONAL_PARTICLES: 15000,
     SHOWCASE_PARTICLES: 17000,
     TARGET_FPS: 60,
-    LIGHTHOUSE_TARGET: 90
-  }
+    LIGHTHOUSE_TARGET: 90,
+  },
 };
 
 // DEV exposure

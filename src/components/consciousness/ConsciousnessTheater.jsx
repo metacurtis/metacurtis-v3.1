@@ -57,7 +57,7 @@ const debounce = (func, wait) => {
 };
 
 // ===== OPENING SEQUENCE HOOK =====
-const useOpeningSequence = (onComplete) => {
+const useOpeningSequence = onComplete => {
   const [phase, setPhase] = useState('black');
   const [showCursor, setShowCursor] = useState(false);
   const [terminalLines, setTerminalLines] = useState([]);
@@ -70,9 +70,18 @@ const useOpeningSequence = (onComplete) => {
 
     // Cursor phase
     sequence.push({ delay: currentTime, action: () => setPhase('cursor') });
-    sequence.push({ delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY, action: () => setShowCursor(true) });
-    sequence.push({ delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 2, action: () => setShowCursor(false) });
-    sequence.push({ delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 2.4, action: () => setShowCursor(true) });
+    sequence.push({
+      delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY,
+      action: () => setShowCursor(true),
+    });
+    sequence.push({
+      delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 2,
+      action: () => setShowCursor(false),
+    });
+    sequence.push({
+      delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 2.4,
+      action: () => setShowCursor(true),
+    });
 
     // Terminal phase
     currentTime += THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 3;
@@ -85,12 +94,12 @@ const useOpeningSequence = (onComplete) => {
     });
 
     // Terminal lines
-    THEATER_CONSTANTS.TERMINAL_LINES.forEach((line) => {
+    THEATER_CONSTANTS.TERMINAL_LINES.forEach(line => {
       currentTime += line.delay;
       sequence.push({
         delay: currentTime,
         action: () =>
-          setTerminalLines((prev) => [
+          setTerminalLines(prev => [
             ...prev,
             {
               text: line.text,
@@ -168,7 +177,7 @@ const ScreenFill = ({ active }) => {
     let lineCount = 0;
     const interval = setInterval(() => {
       if (lineCount < THEATER_CONSTANTS.MAX_SCREEN_FILL_LINES) {
-        setLines((prev) => [...prev, `HELLO CURTIS `]);
+        setLines(prev => [...prev, `HELLO CURTIS `]);
         lineCount++;
       } else {
         clearInterval(interval);
@@ -209,7 +218,7 @@ const NarrativeDisplay = ({ stage, isActive, onMemoryTrigger }) => {
     currentSegmentIdRef.current = null;
     if (import.meta.env.DEV) console.log(`🎭 Starting narrative for stage: ${stage}`);
 
-    const loop = (t) => {
+    const loop = t => {
       // throttle to ~NARRATIVE_UPDATE_INTERVAL
       if (t - lastTickRef.current < THEATER_CONSTANTS.NARRATIVE_UPDATE_INTERVAL) {
         rafRef.current = requestAnimationFrame(loop);
@@ -226,7 +235,7 @@ const NarrativeDisplay = ({ stage, isActive, onMemoryTrigger }) => {
       }
 
       const seg = narrative.segments.find(
-        (s) => elapsed >= s.start && elapsed < s.start + s.duration
+        s => elapsed >= s.start && elapsed < s.start + s.duration
       );
 
       if (seg) {
@@ -238,8 +247,7 @@ const NarrativeDisplay = ({ stage, isActive, onMemoryTrigger }) => {
             try {
               onMemoryTrigger(seg.memoryTrigger);
             } catch (e) {
-              if (import.meta.env.DEV)
-                console.warn('Memory trigger failed:', seg.memoryTrigger, e);
+              if (import.meta.env.DEV) console.warn('Memory trigger failed:', seg.memoryTrigger, e);
             }
           }
 
@@ -285,7 +293,8 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
       case 'terminal':
         return (
           <div className={styles.terminalContent}>
-            READY.<br />
+            READY.
+            <br />
             10 PRINT "HELLO CURTIS"
             <br />
             20 GOTO 10
@@ -399,7 +408,7 @@ export default function ConsciousnessTheater() {
   useEffect(() => {
     if (!isInitialized || openingPhase !== 'complete') return;
 
-    const handleKeyPress = (e) => {
+    const handleKeyPress = e => {
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
       switch (e.key) {
@@ -414,11 +423,11 @@ export default function ConsciousnessTheater() {
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setMorphProgress((prev) => Math.min(prev + THEATER_CONSTANTS.MORPH_STEP, 1));
+          setMorphProgress(prev => Math.min(prev + THEATER_CONSTANTS.MORPH_STEP, 1));
           break;
         case 'ArrowDown':
           e.preventDefault();
-          setMorphProgress((prev) => Math.max(prev - THEATER_CONSTANTS.MORPH_STEP, 0));
+          setMorphProgress(prev => Math.max(prev - THEATER_CONSTANTS.MORPH_STEP, 0));
           break;
         case '1':
         case '2':
@@ -443,7 +452,7 @@ export default function ConsciousnessTheater() {
 
   // Stage subscription
   useEffect(() => {
-    const unsubscribe = stageAtom.subscribe((state) => {
+    const unsubscribe = stageAtom.subscribe(state => {
       if (state.currentStage !== currentStage) {
         setCurrentStage(state.currentStage);
         qualityAtom.updateParticleBudget(state.currentStage);
@@ -458,7 +467,10 @@ export default function ConsciousnessTheater() {
     () =>
       debounce(() => {
         const scrollTop = window.scrollY;
-        const scrollHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+        const scrollHeight = Math.max(
+          document.documentElement.scrollHeight - window.innerHeight,
+          1
+        );
         const progress = Math.min(scrollTop / scrollHeight, 1);
 
         setScrollProgress(progress);
@@ -509,7 +521,11 @@ export default function ConsciousnessTheater() {
 
       {/* WebGL Canvas */}
       {showCanvas && (
-        <WebGLCanvas stage={currentStage} morphProgress={morphProgress} scrollProgress={scrollProgress} />
+        <WebGLCanvas
+          stage={currentStage}
+          morphProgress={morphProgress}
+          scrollProgress={scrollProgress}
+        />
       )}
 
       {/* Narrative */}
@@ -520,7 +536,7 @@ export default function ConsciousnessTheater() {
       />
 
       {/* Memory Fragments */}
-      {activeFragments.map((fragment) => {
+      {activeFragments.map(fragment => {
         const state = fragmentStates[fragment.id];
         if (state?.state === 'active') {
           return (
@@ -536,7 +552,8 @@ export default function ConsciousnessTheater() {
 
       {/* Stage HUD */}
       <div className={styles.stageHud}>
-        {stageConfig?.title} | {Math.round(scrollProgress * 100)}% | Morph: {Math.round(morphProgress * 100)}%
+        {stageConfig?.title} | {Math.round(scrollProgress * 100)}% | Morph:{' '}
+        {Math.round(morphProgress * 100)}%
       </div>
 
       {/* Dev Performance Monitor */}
@@ -550,7 +567,9 @@ export default function ConsciousnessTheater() {
           <div>↑ ↓ Manual morph</div>
           <div>1-7 Jump to stage</div>
           <div>Scroll for progression</div>
-          <div className={styles.devStatus}>{morphProgress < 0.5 ? '☁️ Atmospheric' : '🧠 Brain'} Mode</div>
+          <div className={styles.devStatus}>
+            {morphProgress < 0.5 ? '☁️ Atmospheric' : '🧠 Brain'} Mode
+          </div>
         </div>
       )}
     </div>

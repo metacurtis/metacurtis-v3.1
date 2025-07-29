@@ -15,13 +15,13 @@ class CentralStageClock extends EventTarget {
   constructor() {
     super();
 
-    this.currentStage   = 'genesis';
+    this.currentStage = 'genesis';
     this.stageStartTime = Date.now();
-    this.lastTickTime   = 0;
+    this.lastTickTime = 0;
 
     this.isPaused = false;
-    this.rafId    = null;
-    this.debug    = import.meta.env.DEV;
+    this.rafId = null;
+    this.debug = import.meta.env.DEV;
 
     this.stageDurations = this._computeStageDurations();
   }
@@ -30,10 +30,10 @@ class CentralStageClock extends EventTarget {
   /* Public controls                                    */
   /* -------------------------------------------------- */
   start(stage) {
-    this.currentStage   = stage;
+    this.currentStage = stage;
     this.stageStartTime = Date.now();
-    this.lastTickTime   = 0;
-    this.isPaused       = false;
+    this.lastTickTime = 0;
+    this.isPaused = false;
 
     if (this.debug) console.log(`⏰ Stage Clock | start "${stage}"`);
     this._tick();
@@ -48,7 +48,7 @@ class CentralStageClock extends EventTarget {
 
   resume() {
     if (!this.isPaused) return;
-    this.isPaused       = false;
+    this.isPaused = false;
     this.stageStartTime = Date.now() - this.lastTickTime;
     this._tick();
   }
@@ -56,7 +56,7 @@ class CentralStageClock extends EventTarget {
   /** Jump to an absolute ms offset inside the current stage. */
   seek(ms) {
     this.stageStartTime = Date.now() - ms;
-    this.lastTickTime   = ms;
+    this.lastTickTime = ms;
     this._emit(ms);
   }
 
@@ -72,7 +72,7 @@ class CentralStageClock extends EventTarget {
     const out = {};
     for (const [stage, segs] of Object.entries(TIMELINE)) {
       const last = segs[segs.length - 1];
-      out[stage] = last.at + last.dur + 2000;   // +2 s buffer
+      out[stage] = last.at + last.dur + 2000; // +2 s buffer
     }
     return out;
   }
@@ -80,7 +80,7 @@ class CentralStageClock extends EventTarget {
   _tick = () => {
     if (this.isPaused) return;
 
-    const elapsed     = Date.now() - this.stageStartTime;
+    const elapsed = Date.now() - this.stageStartTime;
     this.lastTickTime = elapsed;
     this._emit(elapsed);
 
@@ -88,19 +88,19 @@ class CentralStageClock extends EventTarget {
   };
 
   _emit(elapsed) {
-    const stage    = this.currentStage;
+    const stage = this.currentStage;
     const duration = this.stageDurations[stage] || 1; // guard ÷0
 
     this.dispatchEvent(
       new CustomEvent('stageClock', {
         detail: {
           stage,
-          t        : elapsed,
-          timeline : TIMELINE[stage],
+          t: elapsed,
+          timeline: TIMELINE[stage],
           duration,
-          progress : elapsed / duration,
+          progress: elapsed / duration,
         },
-      }),
+      })
     );
   }
 }
@@ -117,11 +117,11 @@ export default stageClock;
 if (import.meta.env.DEV) {
   window.stageClock = stageClock;
   window.timelineTools = {
-    seek  : (ms)    => stageClock.seek(ms),
-    nudge : (s)     => stageClock.seek(stageClock.lastTickTime + s * 1000),
-    pause : ()      => stageClock.pause(),
-    resume: ()      => stageClock.resume(),
-    jumpTo: (stg)   => stageClock.start(stg),
+    seek: ms => stageClock.seek(ms),
+    nudge: s => stageClock.seek(stageClock.lastTickTime + s * 1000),
+    pause: () => stageClock.pause(),
+    resume: () => stageClock.resume(),
+    jumpTo: stg => stageClock.start(stg),
     getTimeline: () => TIMELINE,
   };
 

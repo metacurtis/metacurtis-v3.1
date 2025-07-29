@@ -6,21 +6,21 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useNarrativeStore } from '@/stores/narrativeStore';
 
 // ✅ SST v2.0: Import canonical stage definitions from narrativeStore
-import { 
-  NARRATIVE_STAGES, 
-  STAGE_NAME_TO_INDEX, 
-  STAGE_INDEX_TO_NAME 
+import {
+  NARRATIVE_STAGES,
+  STAGE_NAME_TO_INDEX,
+  STAGE_INDEX_TO_NAME,
 } from '@/stores/narrativeStore';
 
 // ✅ SST v2.0: Canonical 7-stage order
 const MC3V_STAGE_ORDER = [
-  'genesis',       // Stage 0: Hippocampus activation
-  'discipline',    // Stage 1: Brainstem activation  
-  'neural',        // Stage 2: Left temporal
-  'velocity',      // Stage 3: Right temporal
-  'architecture',  // Stage 4: Frontal lobe
-  'harmony',       // Stage 5: Left prefrontal
-  'transcendence'  // Stage 6: Consciousness core
+  'genesis', // Stage 0: Hippocampus activation
+  'discipline', // Stage 1: Brainstem activation
+  'neural', // Stage 2: Left temporal
+  'velocity', // Stage 3: Right temporal
+  'architecture', // Stage 4: Frontal lobe
+  'harmony', // Stage 5: Left prefrontal
+  'transcendence', // Stage 6: Consciousness core
 ];
 
 // ✅ SST v2.0: Stage metadata
@@ -28,7 +28,7 @@ const STAGE_METADATA = {
   totalStages: MC3V_STAGE_ORDER.length,
   firstStage: MC3V_STAGE_ORDER[0],
   lastStage: MC3V_STAGE_ORDER[MC3V_STAGE_ORDER.length - 1],
-  
+
   stageLabels: {
     genesis: '1983',
     discipline: '1983-2022',
@@ -36,9 +36,9 @@ const STAGE_METADATA = {
     velocity: 'Feb 2025',
     architecture: 'Mar 2025',
     harmony: 'Mar 2025',
-    transcendence: 'Present'
+    transcendence: 'Present',
   },
-  
+
   autoAdvanceTiming: {
     genesis: 8000,
     discipline: 6000,
@@ -46,8 +46,8 @@ const STAGE_METADATA = {
     velocity: 8000,
     architecture: 8000,
     harmony: 8000,
-    transcendence: 12000
-  }
+    transcendence: 12000,
+  },
 };
 
 // ✅ SST v2.0: Stage utilities
@@ -112,18 +112,18 @@ const stageUtils = {
 
   getAllStagesInfo: () => {
     return MC3V_STAGE_ORDER.map(stage => stageUtils.getStageInfo(stage));
-  }
+  },
 };
 
 export default function ConsolidatedNavigationController() {
-  const { 
-    jumpToStage, 
-    nextStage, 
-    prevStage, 
-    currentStage, 
-    updateEngagement, 
-    isStageFeatureEnabled, 
-    getNarrativeSnapshot 
+  const {
+    jumpToStage,
+    nextStage,
+    prevStage,
+    currentStage,
+    updateEngagement,
+    isStageFeatureEnabled,
+    getNarrativeSnapshot,
   } = useNarrativeStore();
 
   // Navigation state

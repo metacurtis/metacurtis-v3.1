@@ -13,7 +13,7 @@ class AdvancedSelectorCache {
     this.cleanupInterval = 30000; // 30 seconds
     this.maxEntries = 100; // Prevent unlimited growth
   }
-  
+
   get(atom, selector) {
     if (this.cache.has(atom)) {
       const atomCache = this.cache.get(atom);
@@ -27,79 +27,79 @@ class AdvancedSelectorCache {
     }
     return undefined;
   }
-  
+
   set(atom, selector, value) {
     if (!this.cache.has(atom)) {
       this.cache.set(atom, new WeakMap());
     }
-    
+
     const atomCache = this.cache.get(atom);
     const entry = {
       value,
       created: Date.now(),
       lastAccessed: Date.now(),
-      accessCount: 1
+      accessCount: 1,
     };
-    
+
     atomCache.set(selector, entry);
-    
+
     // Track metadata for cleanup decisions
     const cacheId = this.getCacheId(atom, selector);
     this.metadata.set(cacheId, {
       atomRef: new WeakRef(atom),
       selectorRef: new WeakRef(selector),
-      created: entry.created
+      created: entry.created,
     });
-    
+
     // Periodic cleanup
     this.maybeCleanup();
   }
-  
+
   clear() {
     // Clear all caches and metadata
     this.cache = new WeakMap();
     this.metadata.clear();
     this.lastCleanup = Date.now();
-    
+
     if (import.meta.env.DEV) {
       console.debug('⚛️ createAtom: Advanced cache cleared');
     }
   }
-  
+
   getCacheId(atom, selector) {
     // Create a unique identifier for tracking
     return `${atom.toString()}-${selector.toString()}-${Date.now()}`;
   }
-  
+
   maybeCleanup() {
     const now = Date.now();
     if (now - this.lastCleanup < this.cleanupInterval) return;
-    
+
     let cleanedCount = 0;
-    
+
     // Clean up stale metadata entries
     for (const [cacheId, meta] of this.metadata.entries()) {
       const atomExists = meta.atomRef.deref() !== undefined;
       const selectorExists = meta.selectorRef.deref() !== undefined;
-      
+
       if (!atomExists || !selectorExists) {
         this.metadata.delete(cacheId);
         cleanedCount++;
       }
     }
-    
+
     this.lastCleanup = now;
-    
+
     if (import.meta.env.DEV && cleanedCount > 0) {
       console.debug(`⚛️ createAtom: Cleaned ${cleanedCount} stale cache entries`);
     }
   }
-  
+
   getStats() {
     return {
       metadataSize: this.metadata.size,
       lastCleanup: this.lastCleanup,
-      cleanupInterval: this.cleanupInterval
+      cleanupInterval: this.cleanupInterval,
     };
   }
 }
@@ -113,41 +113,41 @@ class AtomPerformanceMonitor {
     this.metrics = new Map();
     this.enabled = import.meta.env.DEV;
   }
-  
+
   trackUpdate(atomId, updateType, duration) {
     if (!this.enabled) return;
-    
+
     if (!this.metrics.has(atomId)) {
       this.metrics.set(atomId, {
         updates: 0,
         totalDuration: 0,
         averageDuration: 0,
         lastUpdate: 0,
-        updateTypes: new Map()
+        updateTypes: new Map(),
       });
     }
-    
+
     const metric = this.metrics.get(atomId);
     metric.updates++;
     metric.totalDuration += duration;
     metric.averageDuration = metric.totalDuration / metric.updates;
     metric.lastUpdate = Date.now();
-    
+
     // Track update type frequency
     if (!metric.updateTypes.has(updateType)) {
       metric.updateTypes.set(updateType, 0);
     }
     metric.updateTypes.set(updateType, metric.updateTypes.get(updateType) + 1);
   }
-  
+
   getMetrics(atomId) {
     return this.metrics.get(atomId) || null;
   }
-  
+
   getAllMetrics() {
     return Object.fromEntries(this.metrics);
   }
-  
+
   reset() {
     this.metrics.clear();
   }
@@ -160,28 +160,28 @@ export function createAtom(initialState, actionsFactory) {
   let state = initialState;
   const get = () => state;
   const listeners = new Set();
-  
+
   // ✅ ENHANCED: Atom metadata for tracking
   const atomId = `atom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const createdAt = Date.now();
   let updateCount = 0;
   let lastStateChange = createdAt;
-  
+
   // ✅ ENHANCED: Batch update system for performance
   let updateBatch = [];
   let batchTimeout = null;
   let batchDelay = 0; // Immediate by default, can be adjusted per atom
-  
+
   // ✅ ENHANCED: Update function with batching and monitoring
   const notifyListeners = (updateType = 'direct') => {
     const startTime = performance.now();
-    
+
     updateCount++;
     lastStateChange = Date.now();
-    
+
     // Clear cache on state change
     globalSelectorCache.clear();
-    
+
     // Notify all listeners
     listeners.forEach(listener => {
       try {
@@ -190,26 +190,26 @@ export function createAtom(initialState, actionsFactory) {
         console.error(`[Atom ${atomId}] Listener error:`, error);
       }
     });
-    
+
     // Track performance
     const duration = performance.now() - startTime;
     performanceMonitor.trackUpdate(atomId, updateType, duration);
   };
-  
+
   // ✅ ENHANCED: Batched setState for performance
   const setState = (newState, updateType = 'setState') => {
     const updatedState = typeof newState === 'function' ? newState(state) : newState;
-    
+
     if (updatedState !== state) {
       state = updatedState;
-      
+
       if (batchDelay === 0) {
         // Immediate update
         notifyListeners(updateType);
       } else {
         // Batched update
         updateBatch.push({ state: updatedState, updateType });
-        
+
         if (batchTimeout) clearTimeout(batchTimeout);
         batchTimeout = setTimeout(() => {
           notifyListeners('batched');
@@ -219,18 +219,18 @@ export function createAtom(initialState, actionsFactory) {
       }
     }
   };
-  
+
   // ✅ ENHANCED: Atom object with advanced capabilities
   const atom = {
     // Core API
     getState: get,
     setState,
-    
-    subscribe: (listener) => {
+
+    subscribe: listener => {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    
+
     // ✅ ENHANCED: Performance and debugging API
     getMetadata: () => ({
       atomId,
@@ -238,24 +238,24 @@ export function createAtom(initialState, actionsFactory) {
       updateCount,
       lastStateChange,
       listenerCount: listeners.size,
-      performance: performanceMonitor.getMetrics(atomId)
+      performance: performanceMonitor.getMetrics(atomId),
     }),
-    
+
     // ✅ ENHANCED: Memory management API
     clearCache: () => {
       globalSelectorCache.clear();
     },
-    
+
     // ✅ ENHANCED: Batch configuration
-    setBatchDelay: (delay) => {
+    setBatchDelay: delay => {
       batchDelay = delay;
     },
-    
+
     // ✅ ENHANCED: Force immediate update
     forceUpdate: () => {
       notifyListeners('forced');
     },
-    
+
     // ✅ ENHANCED: Dispose atom and cleanup
     dispose: () => {
       if (batchTimeout) {
@@ -265,21 +265,21 @@ export function createAtom(initialState, actionsFactory) {
       listeners.clear();
       globalSelectorCache.clear();
       updateBatch = [];
-      
+
       if (import.meta.env.DEV) {
         console.debug(`⚛️ Atom ${atomId}: Disposed after ${updateCount} updates`);
       }
     },
-    
+
     // Actions from factory
-    ...actionsFactory(get, setState)
+    ...actionsFactory(get, setState),
   };
-  
+
   // ✅ ENHANCED: Development tracking
   if (import.meta.env.DEV) {
     console.debug(`⚛️ Atom ${atomId}: Created with enhanced memory management`);
   }
-  
+
   return atom;
 }
 
@@ -287,34 +287,34 @@ export function createAtom(initialState, actionsFactory) {
 export function useAtomValue(atom, selector) {
   const getSnapshot = () => {
     const currentState = atom.getState();
-    
+
     if (!selector) {
       return currentState;
     }
-    
+
     if (typeof selector === 'function') {
       // Check advanced cache first
       const cachedValue = globalSelectorCache.get(atom, selector);
       if (cachedValue !== undefined) {
         return cachedValue;
       }
-      
+
       try {
         const result = selector(currentState);
-        
+
         // Cache the result
         globalSelectorCache.set(atom, selector, result);
-        
+
         return result;
       } catch (error) {
         console.error('[useAtomValue] Selector error:', error);
         return currentState;
       }
     }
-    
+
     return currentState;
   };
-  
+
   const stableGetSnapshot = () => {
     try {
       return getSnapshot();
@@ -323,29 +323,25 @@ export function useAtomValue(atom, selector) {
       return atom.getState();
     }
   };
-  
-  return useSyncExternalStore(
-    atom.subscribe,
-    stableGetSnapshot,
-    stableGetSnapshot
-  );
+
+  return useSyncExternalStore(atom.subscribe, stableGetSnapshot, stableGetSnapshot);
 }
 
 // ✅ ENHANCED: Atomic utilities with advanced features
 export const atomicUtils = {
   // Existing utilities
-  getListenerCount: (atom) => {
+  getListenerCount: atom => {
     return atom.listeners ? atom.listeners.size : 0;
   },
-  
-  forceUpdate: (atom) => {
+
+  forceUpdate: atom => {
     atom.forceUpdate?.() || atom.setState(atom.getState());
   },
-  
+
   reset: (atom, initialState) => {
     atom.setState(initialState);
   },
-  
+
   testSelector: (atom, selector) => {
     try {
       const result = selector(atom.getState());
@@ -356,71 +352,71 @@ export const atomicUtils = {
       return null;
     }
   },
-  
+
   // ✅ ENHANCED: Advanced utilities
-  getMetadata: (atom) => {
+  getMetadata: atom => {
     return atom.getMetadata?.() || { error: 'Metadata not available' };
   },
-  
-  getPerformanceStats: (atom) => {
+
+  getPerformanceStats: atom => {
     const metadata = atom.getMetadata?.();
     return metadata?.performance || null;
   },
-  
+
   getAllPerformanceStats: () => {
     return performanceMonitor.getAllMetrics();
   },
-  
+
   clearAllCaches: () => {
     globalSelectorCache.clear();
     console.log('⚛️ All atomic caches cleared');
   },
-  
+
   getCacheStats: () => {
     return globalSelectorCache.getStats();
   },
-  
+
   // ✅ ENHANCED: Memory management utilities
   runGarbageCollection: () => {
     globalSelectorCache.maybeCleanup();
     console.log('⚛️ Manual garbage collection completed');
   },
-  
+
   // ✅ ENHANCED: Performance monitoring controls
   resetPerformanceMonitoring: () => {
     performanceMonitor.reset();
     console.log('⚛️ Performance monitoring reset');
   },
-  
+
   enablePerformanceMonitoring: () => {
     performanceMonitor.enabled = true;
     console.log('⚛️ Performance monitoring enabled');
   },
-  
+
   disablePerformanceMonitoring: () => {
     performanceMonitor.enabled = false;
     console.log('⚛️ Performance monitoring disabled');
   },
-  
+
   // ✅ ENHANCED: Diagnostics
-  diagnoseAtom: (atom) => {
+  diagnoseAtom: atom => {
     const metadata = atom.getMetadata?.();
     if (!metadata) {
       return { error: 'Atom does not support diagnostics' };
     }
-    
+
     const cacheStats = globalSelectorCache.getStats();
-    
+
     return {
       atom: metadata,
       cache: cacheStats,
       recommendations: [
         metadata.listenerCount > 10 ? 'Consider reducing listener count' : null,
         metadata.performance?.averageDuration > 16 ? 'Update performance may be slow' : null,
-        cacheStats.metadataSize > 50 ? 'Consider manual cache cleanup' : null
-      ].filter(Boolean)
+        cacheStats.metadataSize > 50 ? 'Consider manual cache cleanup' : null,
+      ].filter(Boolean),
     };
-  }
+  },
 };
 
 // ✅ ENHANCED: Development access with advanced features
@@ -429,7 +425,7 @@ if (import.meta.env.DEV && typeof globalThis !== 'undefined') {
   globalThis.atomicAdvanced = {
     selectorCache: globalSelectorCache,
     performanceMonitor,
-    
+
     // Quick diagnostics
     diagnoseAll: () => {
       console.group('⚛️ Atomic System Diagnostics');
@@ -437,20 +433,20 @@ if (import.meta.env.DEV && typeof globalThis !== 'undefined') {
       console.log('Performance Stats:', performanceMonitor.getAllMetrics());
       console.groupEnd();
     },
-    
+
     // Memory usage estimation
     estimateMemoryUsage: () => {
       const stats = globalSelectorCache.getStats();
       const perfStats = performanceMonitor.getAllMetrics();
-      
+
       return {
         cacheEntries: stats.metadataSize,
         performanceEntries: Object.keys(perfStats).length,
-        estimatedKB: Math.round((stats.metadataSize * 0.1) + (Object.keys(perfStats).length * 0.05))
+        estimatedKB: Math.round(stats.metadataSize * 0.1 + Object.keys(perfStats).length * 0.05),
       };
-    }
+    },
   };
-  
+
   console.log('⚛️ createAtom: Enhanced with advanced memory management and performance monitoring');
   console.log('🔧 Available: globalThis.atomicUtils, globalThis.atomicAdvanced');
   console.log('🧪 Advanced diagnostics: globalThis.atomicAdvanced.diagnoseAll()');

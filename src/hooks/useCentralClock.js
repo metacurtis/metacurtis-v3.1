@@ -6,18 +6,18 @@ import centralEventClock from '@/core/CentralEventClock';
 
 export const useCentralClock = (eventType, callback, deps = []) => {
   const callbackRef = useRef();
-  
+
   useEffect(() => {
     callbackRef.current = callback;
   }, deps);
-  
+
   useEffect(() => {
     const stableCallback = (...args) => {
       if (callbackRef.current) {
         callbackRef.current(...args);
       }
     };
-    
+
     const unsubscribe = centralEventClock.on(eventType, stableCallback);
     return unsubscribe;
   }, [eventType]);
