@@ -1,7 +1,7 @@
 // src/components/consciousness/UnifiedNarrativeDisplay.jsx
 // Timeline-driven narrative display with effects
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { stageClock } from '@/core/CentralStageClock';
 import { beatBus, Events } from '@/orchestration/BeatBus';
 import styles from './UnifiedNarrativeDisplay.module.css';
@@ -14,7 +14,7 @@ export function UnifiedNarrativeDisplay() {
   useEffect(() => {
     const handleClock = ({ detail: { stage, t, timeline } }) => {
       // Find active segment
-      const segment = timeline.find(seg => t >= segment.at && t < seg.at + seg.dur);
+      const segment = timeline.find(seg => t >= seg.at && t < seg.at + seg.dur);
 
       // Handle segment changes
       if (segment?.id !== lastSegmentId.current) {
@@ -31,7 +31,7 @@ export function UnifiedNarrativeDisplay() {
           beatBus.emit(Events.SEGMENT_START, { segment, stage });
 
           // Auto-trigger fragment
-          if (segment.fragment && t >= segment.at && t <= seg.at + 100) {
+          if (segment.fragment && t >= segment.at && t <= segment.at + 100) {
             beatBus.emit(Events.FRAGMENT_TRIGGER, {
               id: segment.fragment,
               segment: segment.id,

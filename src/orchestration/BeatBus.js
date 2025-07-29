@@ -50,7 +50,6 @@ class BeatBus extends EventTarget {
   on(type, handler) {
     const wrappedHandler = event => handler(event.detail);
     this.addEventListener(type, wrappedHandler);
-    return;
     return () => this.removeEventListener(type, wrappedHandler);
   }
 
@@ -60,7 +59,7 @@ class BeatBus extends EventTarget {
       this.removeEventListener(type, wrappedHandler);
     };
     this.addEventListener(type, wrappedHandler);
-    return;
+    return () => this.removeEventListener(type, wrappedHandler);
   }
 
   getEventLog() {

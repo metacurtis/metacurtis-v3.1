@@ -2,11 +2,10 @@
 // ✅ CUSTOM ATOMIC INTEGRATION: Complete legacy store elimination
 // ✅ SST v2.1 COMPLIANCE: Enhanced adaptive quality with atomic state management
 
-import { useRef, useEffect, useState } from 'react';
-import { useCentralClock } from '@/hooks/useCentralClock';
-import AdaptiveQualitySystem, { QualityLevels } from '@/utils/performance/AdaptiveQualitySystem.js';
-import { qualityAtom } from '@/stores/atoms/qualityAtom';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { clockAtom } from '@/stores/atoms/clockAtom';
+import { qualityAtom } from '@/stores/atoms/qualityAtom';
+import AdaptiveQualitySystem, { QualityLevels } from '@/utils/performance/AdaptiveQualitySystem.js';
 
 /**
  * ✅ CUSTOM ATOMIC ADAPTIVE QUALITY HOOK
@@ -69,19 +68,19 @@ export function useAdaptiveQuality({
   }
 
   // ✅ ENHANCED: Dynamic throttle calculation based on target FPS
-  const calculateThrottleInterval = () => {
+  const calculateThrottleInterval = useCallback(() => {
     // Get target FPS from clock atom or fallback
     const targetFps = clockState.targetFps || 60;
 
     // Sample at ~10 Hz relative to display refresh rate
     return 1000 / Math.min(targetFps / 6, 15); // Max 15 Hz, min based on target FPS
-  };
+  }, [clockState.targetFps]);
 
   // ✅ ATOMIC PERFORMANCE UPDATE: Direct atomic integration
-  const updateAtomicPerformanceState = (fps, frameTime, jankInfo) => {
+  const updateAtomicPerformanceState = useCallback((fps, frameTime, jankInfo) => {
     // Update clock atom with performance metrics
     clockAtom.setState({
-      ...clockState,
+      ...clockAtom.getState(),
       fps: fps,
       averageFrameTime: frameTime,
       deltaMs: frameTime,
@@ -99,10 +98,10 @@ export function useAdaptiveQuality({
         `🎯 Atomic Performance: FPS=${fps.toFixed(1)}, Frame=${frameTime.toFixed(1)}ms, Jank=${jankRatio.toFixed(3)}`
       );
     }
-  };
+  }, []);
 
-  // ✅ ENHANCED: Central Clock integration with atomic state management
-  const handleClockTick = frameTime => {
+  // ✅ ENHANCED: Central Clock tick handler
+  const handleClockTick = useCallback((frameTime) => {
     if (isUnmounted.current) return;
 
     // ✅ DYNAMIC THROTTLE: Calculate based on current target FPS
@@ -111,11 +110,12 @@ export function useAdaptiveQuality({
     lastUpdateTime.current = frameTime;
 
     // ✅ ATOMIC FPS SOURCE: Primary source from clock atom
-    let currentFps = clockState.fps || 0;
+    const currentClockState = clockAtom.getState();
+    let currentFps = currentClockState.fps || 0;
 
     // ✅ FALLBACK: Calculate FPS if not available
     if (currentFps <= 0) {
-      const deltaMs = clockState.deltaMs || 16.67;
+      const deltaMs = currentClockState.deltaMs || 16.67;
       currentFps = deltaMs > 0 ? 1000 / deltaMs : 60;
     }
 
@@ -139,22 +139,36 @@ export function useAdaptiveQuality({
       }
 
       // ✅ ATOMIC PERFORMANCE STATE: Update performance metrics
-      const jankCount = clockState.jankCount || 0;
+      const jankCount = currentClockState.jankCount || 0;
       const jankRatio = jankCount > 0 ? jankCount / 100 : 0;
 
-      updateAtomicPerformanceState(currentFps, clockState.averageFrameTime || 16.67, {
+      updateAtomicPerformanceState(currentFps, currentClockState.averageFrameTime || 16.67, {
         count: jankCount,
         ratio: jankRatio,
       });
     }
-  };
+  }, [calculateThrottleInterval, updateAtomicPerformanceState]);
 
   // ✅ ENHANCED: Central Clock integration with proper cleanup
   useEffect(() => {
     if (isUnmounted.current) return;
 
-    // ✅ CENTRAL CLOCK SUBSCRIPTION: Integrate with existing clock system
-    const unsubscribe = useCentralClock('tick', handleClockTick, [clockState, qualityState]);
+    // ✅ CENTRAL CLOCK SUBSCRIPTION: Use direct subscription pattern
+    let animationFrameId;
+    let lastTime = performance.now();
+    
+    const tick = (currentTime) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+      
+      handleClockTick(currentTime);
+      
+      if (!isUnmounted.current) {
+        animationFrameId = requestAnimationFrame(tick);
+      }
+    };
+    
+    animationFrameId = requestAnimationFrame(tick);
 
     if (import.meta.env.DEV) {
       console.log(
@@ -164,16 +178,17 @@ export function useAdaptiveQuality({
 
     // ✅ PROPER CLEANUP: Clean subscription on unmount
     return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
     };
-  }, []); // ✅ Empty deps prevents re-subscriptions
+  }, [handleClockTick]);
 
   // ✅ ATOMIC INITIALIZATION: Seed quality from atomic state
   useEffect(() => {
     if (aqsRef.current && !isUnmounted.current) {
-      const initialTier = qualityState.currentQualityTier || initial;
+      const currentQualityTier = qualityState.currentQualityTier;
+      const initialTier = currentQualityTier || initial;
 
       // Ensure AQS is synchronized with atomic state
       if (aqsRef.current.currentLevel !== initialTier) {
@@ -184,7 +199,7 @@ export function useAdaptiveQuality({
         console.log(`🎯 useAdaptiveQuality: Initialized with atomic tier: ${initialTier}`);
       }
     }
-  }, []); // Run once after mount
+  }, [qualityState.currentQualityTier, initial]);
 
   // ✅ CLEANUP: Component unmount protection
   useEffect(() => {
@@ -213,45 +228,47 @@ export function useQualityTier(options) {
  * ✅ ENHANCED: Development utilities for debugging atomic integration
  */
 export function useAdaptiveQualityDebug() {
-  if (import.meta.env.DEV) {
-    const [qualityState] = useState(qualityAtom.getState());
-    const [clockState] = useState(clockAtom.getState());
+  // ✅ FIX: Always call hooks at top level
+  const qualityState = qualityAtom.getState();
+  const clockState = clockAtom.getState();
 
-    return {
-      getAtomicState: () => ({
-        quality: qualityState,
-        clock: clockState,
-        atomsAvailable: true,
-      }),
-
-      getCurrentConfig: () => ({
-        source: 'Custom Atomic Integration',
-        throttling: 'Dynamic based on target FPS',
-        qualityTier: qualityState.currentQualityTier,
-        fps: clockState.fps,
-        performanceGrade: clockState.performanceGrade,
-      }),
-
-      testQualityChange: tier => {
-        qualityAtom.setCurrentQualityTier(tier);
-        console.log(`🧪 Test: Quality tier changed to ${tier}`);
-        return `Quality tier updated to ${tier}`;
-      },
-
-      getParticleInfo: (stage = 'genesis') => {
-        const budget = qualityAtom.getParticleBudget(stage);
-        const currentTier = qualityState.currentQualityTier;
-        return {
-          stage,
-          tier: currentTier,
-          budget,
-          expected: budget,
-          efficiency: 100,
-        };
-      },
-    };
+  if (!import.meta.env.DEV) {
+    return null;
   }
-  return null;
+
+  return {
+    getAtomicState: () => ({
+      quality: qualityState,
+      clock: clockState,
+      atomsAvailable: true,
+    }),
+
+    getCurrentConfig: () => ({
+      source: 'Custom Atomic Integration',
+      throttling: 'Dynamic based on target FPS',
+      qualityTier: qualityState.currentQualityTier,
+      fps: clockState.fps,
+      performanceGrade: clockState.performanceGrade,
+    }),
+
+    testQualityChange: tier => {
+      qualityAtom.setCurrentQualityTier(tier);
+      console.log(`🧪 Test: Quality tier changed to ${tier}`);
+      return `Quality tier updated to ${tier}`;
+    },
+
+    getParticleInfo: (stage = 'genesis') => {
+      const budget = qualityAtom.getParticleBudget(stage);
+      const currentTier = qualityState.currentQualityTier;
+      return {
+        stage,
+        tier: currentTier,
+        budget,
+        expected: budget,
+        efficiency: 100,
+      };
+    },
+  };
 }
 
 /**

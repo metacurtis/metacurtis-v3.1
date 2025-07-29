@@ -2,17 +2,17 @@
 // Enhanced consciousness particle engine with tier system support
 // Version: 3.0.1 | Date: 2025-01-24
 
-import seedrandom from 'seedrandom';
-import { SST_V3_CONFIG, getStageByName } from '@/config/sst3/sst-v3.0-config.js';
-import { tierSystem } from './TierSystem.js';
-import { ConsciousnessPatterns } from '@/components/webgl/consciousness/ConsciousnessPatterns.js';
-import { getPointSpriteAtlasSingleton } from '@/components/webgl/consciousness/PointSpriteAtlas.js';
+import seedrandom from "seedrandom";
+import { SST_V3_CONFIG, getStageByName } from "@/config/sst3/sst-v3.0-config.js";
+import { tierSystem } from "./TierSystem.js";
+import { ConsciousnessPatterns } from "@/components/webgl/consciousness/ConsciousnessPatterns.js";
+import { getPointSpriteAtlasSingleton } from "@/components/webgl/consciousness/PointSpriteAtlas.js";
 import { markBlueprint } from '@/utils/performance/Telemetry.js';
 import { DEV_LOG } from '@/utils/featureFlags.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 // Schema version for cache invalidation
-const SCHEMA_VERSION = 'v3.0.1';
+const SCHEMA_VERSION = "v3.0.1";
 
 // Hoist static maps for performance
 const BEHAVIOR_MAP = Object.freeze({
@@ -26,20 +26,20 @@ const BEHAVIOR_MAP = Object.freeze({
   anchor: 7,
   prominent: 8,
   connected: 9,
-  anatomical: 10,
+  anatomical: 10
 });
 
 const QUALITY_MULTIPLIERS = Object.freeze({
   LOW: 0.4,
   MEDIUM: 0.6,
   HIGH: 0.9,
-  ULTRA: 1.0,
+  ULTRA: 1.0
 });
 
 const STAGE_AFFINITY_BOOSTS = Object.freeze({
   genesis: 0.1,
   velocity: 0.3,
-  transcendence: 0.4,
+  transcendence: 0.4
 });
 
 const ATMOSPHERIC_SPREADS = Object.freeze([40, 30, 20, 15]); // Tier 0-3
@@ -48,8 +48,8 @@ export class ConsciousnessEngine {
   constructor() {
     this.isInitialized = false;
     this.blueprintCache = new Map();
-    this.currentStage = 'genesis';
-    this.currentQuality = 'HIGH';
+    this.currentStage = "genesis";
+    this.currentQuality = "HIGH";
 
     // Tier system integration
     this.tierSystem = tierSystem;
@@ -66,24 +66,24 @@ export class ConsciousnessEngine {
       blueprintsGenerated: 0,
       cacheHits: 0,
       totalGenerationTime: 0,
-      particlesGenerated: 0,
+      particlesGenerated: 0
     };
 
     // Listen for quality changes
     this.listenToAQS();
 
-    console.log('🧠 ConsciousnessEngine v3.0.1: Initialized with optimizations');
+    console.log("🧠 ConsciousnessEngine v3.0.1: Initialized with optimizations");
   }
 
   /**
    * Listen for adaptive quality system changes (with proper cleanup)
    */
   listenToAQS() {
-    if (typeof window === 'undefined' || !window.addEventListener) return;
+    if (typeof window === "undefined" || !window.addEventListener) return;
 
-    this._aqsHandler = event => {
+    this._aqsHandler = (event) => {
       if (!event?.detail?.tier) {
-        console.warn('🧠 Engine: Invalid AQS event', event);
+        console.warn("🧠 Engine: Invalid AQS event", event);
         return;
       }
 
@@ -94,22 +94,21 @@ export class ConsciousnessEngine {
       console.log(`🧠 Engine: Quality changed ${oldTier} → ${tier}`);
       this.clearCache();
 
-      window.dispatchEvent(
-        new CustomEvent('engineQualityChange', {
-          detail: { tier, particles, stage: this.currentStage },
-        })
-      );
+      window.dispatchEvent(new CustomEvent("engineQualityChange", {
+        detail: { tier, particles, stage: this.currentStage }
+      }));
     };
 
-    window.addEventListener('aqsQualityChange', this._aqsHandler);
+    window.addEventListener("aqsQualityChange", this._aqsHandler);
   }
 
   /**
    * Get deterministic RNG for a stage/tier combination
    */
   getRNG(stageName, tier = null) {
-    const seed =
-      tier !== null ? `${stageName}|${tier}|${SCHEMA_VERSION}` : `${stageName}|${SCHEMA_VERSION}`;
+    const seed = tier !== null
+      ? `${stageName}|${tier}|${SCHEMA_VERSION}`
+      : `${stageName}|${SCHEMA_VERSION}`;
     return seedrandom(seed);
   }
 
@@ -151,7 +150,7 @@ export class ConsciousnessEngine {
    */
   async generateConstellationParticleData(particleCount, options = {}) {
     const startTime = performance.now();
-    const { stageName = 'genesis' } = options;
+    const { stageName = "genesis" } = options;
     this.currentStage = stageName;
 
     const maxParticles = SST_V3_CONFIG.performance.maxParticles || 17000;
@@ -165,10 +164,7 @@ export class ConsciousnessEngine {
       return this.blueprintCache.get(cacheKey);
     }
 
-    if (DEV_LOG)
-      console.log(
-        `🧠 Engine: Generating new v3.0.1 blueprint for ${stageName} (${safeParticleCount} particles)`
-      );
+    if (DEV_LOG) console.log(`�� Engine: Generating new v3.0.1 blueprint for ${stageName} (${safeParticleCount} particles)`);
 
     const stageConfig = getStageByName(stageName);
     if (!stageConfig) {
@@ -182,7 +178,7 @@ export class ConsciousnessEngine {
     if (!brainPattern) console.warn(`🧠 Engine: No brain pattern for stage ${stageName}`);
 
     const atlas = getPointSpriteAtlasSingleton?.() || null;
-    if (!atlas) console.warn('🧠 Engine: No sprite atlas available');
+    if (!atlas) console.warn("🧠 Engine: No sprite atlas available");
 
     let particleIndex = 0;
     for (const tierInfo of distribution.tiers) {
@@ -213,7 +209,7 @@ export class ConsciousnessEngine {
       ...arrays,
       brainPattern,
       timestamp: Date.now(),
-      version: SCHEMA_VERSION,
+      version: SCHEMA_VERSION
     });
 
     this.blueprintCache.set(cacheKey, blueprint);
@@ -238,16 +234,16 @@ export class ConsciousnessEngine {
 
     const arrays = {
       atmosphericPositions: new Float32Array(particleCount * 3),
-      allenAtlasPositions: new Float32Array(particleCount * 3),
-      animationSeeds: new Float32Array(particleCount * 3),
-      sizeMultipliers: new Float32Array(particleCount),
-      opacityData: new Float32Array(particleCount),
-      atlasIndices: new Float32Array(particleCount),
-      tierData: new Float32Array(particleCount),
-      behaviorData: new Float32Array(particleCount * 3),
-      storyAffinity: new Float32Array(particleCount),
-      memoryFragment: new Float32Array(particleCount),
-      fusionMoment: new Float32Array(particleCount),
+      allenAtlasPositions:  new Float32Array(particleCount * 3),
+      animationSeeds:       new Float32Array(particleCount * 3),
+      sizeMultipliers:      new Float32Array(particleCount),
+      opacityData:          new Float32Array(particleCount),
+      atlasIndices:         new Float32Array(particleCount),
+      tierData:             new Float32Array(particleCount),
+      behaviorData:         new Float32Array(particleCount * 3),
+      storyAffinity:        new Float32Array(particleCount),
+      memoryFragment:       new Float32Array(particleCount),
+      fusionMoment:         new Float32Array(particleCount)
     };
 
     if (particleCount >= SST_V3_CONFIG.performance.maxParticles * 0.8) {
@@ -285,7 +281,7 @@ export class ConsciousnessEngine {
     const particleData = {
       index,
       tier: tierInfo.tier,
-      position: { x: 0, y: 0, z: 0 },
+      position: { x: 0, y: 0, z: 0 }
     };
 
     // Generate base atmospheric position
@@ -309,7 +305,7 @@ export class ConsciousnessEngine {
     }
 
     // Store atmospheric position
-    arrays.atmosphericPositions[i3] = particleData.position.x;
+    arrays.atmosphericPositions[i3]     = particleData.position.x;
     arrays.atmosphericPositions[i3 + 1] = particleData.position.y;
     arrays.atmosphericPositions[i3 + 2] = particleData.position.z;
 
@@ -326,12 +322,12 @@ export class ConsciousnessEngine {
       brainPosition = tierEnhanced.centerWeight.adjustedPosition;
     }
 
-    arrays.allenAtlasPositions[i3] = brainPosition.x;
+    arrays.allenAtlasPositions[i3]     = brainPosition.x;
     arrays.allenAtlasPositions[i3 + 1] = brainPosition.y;
     arrays.allenAtlasPositions[i3 + 2] = brainPosition.z;
 
     // Animation seeds
-    arrays.animationSeeds[i3] = rng();
+    arrays.animationSeeds[i3]     = rng();
     arrays.animationSeeds[i3 + 1] = rng();
     arrays.animationSeeds[i3 + 2] = rng();
 
@@ -352,8 +348,8 @@ export class ConsciousnessEngine {
     }
 
     // Behavior data
-    arrays.behaviorData[i3] = this.encodeBehavior(tierEnhanced.behaviors[0] || 'drift');
-    arrays.behaviorData[i3 + 1] = this.encodeBehavior(tierEnhanced.behaviors[1] || 'none');
+    arrays.behaviorData[i3]     = this.encodeBehavior(tierEnhanced.behaviors[0] || "drift");
+    arrays.behaviorData[i3 + 1] = this.encodeBehavior(tierEnhanced.behaviors[1] || "none");
     arrays.behaviorData[i3 + 2] = tierEnhanced.behaviorIntensity || 1.0;
 
     // v3.0: Story affinity
@@ -363,7 +359,9 @@ export class ConsciousnessEngine {
     arrays.memoryFragment[index] = this.calculateMemoryAssociation(tierInfo.tier, rng);
 
     // v3.0: Fusion moment readiness
-    arrays.fusionMoment[index] = tierInfo.tier >= 2 ? rng() * 0.5 + 0.5 : rng() * 0.3;
+    arrays.fusionMoment[index] = tierInfo.tier >= 2
+      ? rng() * 0.5 + 0.5
+      : rng() * 0.3;
   }
 
   /**
@@ -384,7 +382,11 @@ export class ConsciousnessEngine {
       position.y = point[1] + (rng() - 0.5) * variation;
       position.z = point[2] + (rng() - 0.5) * variation;
     } else {
-      const spread = tier === 0 ? radius * 1.5 : tier === 1 ? radius * 1.2 : radius;
+      const spread = tier === 0
+        ? radius * 1.5
+        : tier === 1
+        ? radius * 1.2
+        : radius;
       position.x = center[0] + (rng() - 0.5) * spread;
       position.y = center[1] + (rng() - 0.5) * spread;
       position.z = center[2] + (rng() - 0.5) * spread * 0.5;
@@ -420,7 +422,7 @@ export class ConsciousnessEngine {
    */
   clearCache() {
     this.blueprintCache.clear();
-    if (DEV_LOG) console.log('🧠 Engine: Cache cleared');
+    if (DEV_LOG) console.log("🧠 Engine: Cache cleared");
   }
 
   /**
@@ -446,7 +448,7 @@ export class ConsciousnessEngine {
    */
   dispose() {
     if (this._aqsHandler) {
-      window.removeEventListener('aqsQualityChange', this._aqsHandler);
+      window.removeEventListener("aqsQualityChange", this._aqsHandler);
     }
     this.clearCache();
   }
@@ -458,7 +460,7 @@ function getConsciousnessEngineSingleton() {
   const instance = new ConsciousnessEngine();
   globalThis.__SST_ENGINE__ = instance;
   // optional: expose for console debugging
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     globalThis.consciousnessEngine = instance;
   }
   return instance;
@@ -480,7 +482,7 @@ export { __ENGINE_INSTANCE__ as consciousnessEngine };
 export default __ENGINE_INSTANCE__;
 
 // Development helpers (with SSR safety)
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
+if (typeof window !== "undefined" && import.meta.env.DEV) {
   window.engineMetrics = () => __ENGINE_INSTANCE__.getMetrics();
 }
 

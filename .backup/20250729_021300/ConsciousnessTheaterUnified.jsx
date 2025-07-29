@@ -1,8 +1,8 @@
-// src/components/consciousness/ConsciousnessTheater.jsx
-// SST v3.0 PRODUCTION – Narrative fixed to source from Canonical.dialogue
-// - Tiered particle system driven elsewhere; this file orchestrates UI, opening, narrative, and fragments.
+// src/components/consciousness/ConsciousnessTheaterUnified.jsx
+// SST v3.0 UNIFIED THEATER - Complete opening sequence, narrative, and WebGL integration
+// CRITICAL: This is the ONLY theater component - handles ALL theater functionality
 
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority';
 import { MEMORY_FRAGMENTS } from '@/config/sst3/memory-fragments.js';
 import { stageAtom } from '@/stores/atoms/stageAtom';
@@ -19,13 +19,13 @@ const THEATER_CONSTANTS = {
   CURSOR_BLINK_DELAY: 500,
   TERMINAL_TYPE_SPEED: 50,
   SCREEN_FILL_DELAY: 50,
-  NARRATIVE_UPDATE_INTERVAL: 100, // kept for reference; we use rAF but align to this cadence
+  NARRATIVE_UPDATE_INTERVAL: 100,
   SCREEN_FILL_COMPLETE_DELAY: 500,
 
   // Interaction
   MORPH_STEP: 0.1,
   SCROLL_MORPH_MULTIPLIER: 2,
-  SCROLL_DEBOUNCE_MS: 16, // ~60fps
+  SCROLL_DEBOUNCE_MS: 16,
 
   // Visual
   MAX_SCREEN_FILL_LINES: 30,
@@ -41,7 +41,7 @@ const THEATER_CONSTANTS = {
   ],
 };
 
-if (import.meta.env.DEV) console.log('🧬 LOADED: ConsciousnessTheater v3.0');
+if (import.meta.env.DEV) console.log('🎭 LOADED: ConsciousnessTheaterUnified v3.0');
 
 // ===== UTILITY =====
 const debounce = (func, wait) => {
@@ -199,7 +199,7 @@ const ScreenFill = ({ active }) => {
   );
 };
 
-// ===== NARRATIVE DISPLAY (FIXED to Canonical.dialogue) =====
+// ===== NARRATIVE DISPLAY =====
 const NarrativeDisplay = ({ stage, isActive, onMemoryTrigger }) => {
   const [activeSegment, setActiveSegment] = useState(null);
   const startTimeRef = useRef(Date.now());
@@ -219,7 +219,6 @@ const NarrativeDisplay = ({ stage, isActive, onMemoryTrigger }) => {
     if (import.meta.env.DEV) console.log(`🎭 Starting narrative for stage: ${stage}`);
 
     const loop = t => {
-      // throttle to ~NARRATIVE_UPDATE_INTERVAL
       if (t - lastTickRef.current < THEATER_CONSTANTS.NARRATIVE_UPDATE_INTERVAL) {
         rafRef.current = requestAnimationFrame(loop);
         return;
@@ -295,7 +294,7 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
           <div className={styles.terminalContent}>
             READY.
             <br />
-            10 PRINT "HELLO CURTIS"
+            10 PRINT &quot;HELLO CURTIS&quot;
             <br />
             20 GOTO 10
             <br />
@@ -351,8 +350,8 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
   );
 };
 
-// ===== MAIN =====
-export default function ConsciousnessTheater() {
+// ===== MAIN COMPONENT =====
+export default function ConsciousnessTheaterUnified() {
   // Core state
   const [currentStage, setCurrentStage] = useState('genesis');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -368,13 +367,10 @@ export default function ConsciousnessTheater() {
   useEffect(() => {
     if (import.meta.env.DEV) {
       window.CANONICAL = Canonical;
-      window.NARRATIVE_DIALOGUE = Canonical.dialogue; // for console tests the user ran
+      window.NARRATIVE_DIALOGUE = Canonical.dialogue;
       window.MEMORY_FRAGMENTS = MEMORY_FRAGMENTS;
     }
   }, []);
-
-  // Stage config
-  const stageConfig = useMemo(() => Canonical.stages[currentStage], [currentStage]);
 
   // Opening sequence
   const openingComplete = useCallback(() => {
@@ -462,37 +458,33 @@ export default function ConsciousnessTheater() {
     return unsubscribe;
   }, [currentStage]);
 
-  // Debounced scroll handler
-  scrollHandlerRef.current = useMemo(
-    () =>
-      debounce(() => {
-        const scrollTop = window.scrollY;
-        const scrollHeight = Math.max(
-          document.documentElement.scrollHeight - window.innerHeight,
-          1
-        );
-        const progress = Math.min(scrollTop / scrollHeight, 1);
-
-        setScrollProgress(progress);
-        setMorphProgress(Math.min(progress * THEATER_CONSTANTS.SCROLL_MORPH_MULTIPLIER, 1));
-
-        const stageProgress = progress * 100;
-        const newStageCfg = Canonical.getStageByScroll?.(stageProgress);
-        if (newStageCfg && newStageCfg.name !== currentStage) {
-          stageAtom.jumpToStage(newStageCfg.name);
-        }
-      }, THEATER_CONSTANTS.SCROLL_DEBOUNCE_MS),
-    [currentStage]
-  );
-
   // Scroll handling
   useEffect(() => {
     if (!isInitialized || openingPhase !== 'complete') return;
+
+    scrollHandlerRef.current = debounce(() => {
+      const scrollTop = window.scrollY;
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1
+      );
+      const progress = Math.min(scrollTop / scrollHeight, 1);
+
+      setScrollProgress(progress);
+      setMorphProgress(Math.min(progress * THEATER_CONSTANTS.SCROLL_MORPH_MULTIPLIER, 1));
+
+      const stageProgress = progress * 100;
+      const newStageCfg = Canonical.getStageByScroll?.(stageProgress);
+      if (newStageCfg && newStageCfg.name !== currentStage) {
+        stageAtom.jumpToStage(newStageCfg.name);
+      }
+    }, THEATER_CONSTANTS.SCROLL_DEBOUNCE_MS);
+
     const handleScroll = scrollHandlerRef.current;
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial call
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isInitialized, openingPhase]);
+  }, [isInitialized, openingPhase, currentStage]);
 
   // Opening render
   if (openingPhase !== 'complete') {
@@ -513,11 +505,11 @@ export default function ConsciousnessTheater() {
     );
   }
 
-  // Main theater
+  // Main theater render
   return (
     <div className={styles.theater}>
-      {/* Scroll container */}
-      <div className={styles.scrollContainer} />
+      {/* Scroll container for height */}
+      <div className={styles.scrollContainer} style={{ height: THEATER_CONSTANTS.SCROLL_CONTAINER_HEIGHT }} />
 
       {/* WebGL Canvas */}
       {showCanvas && (
@@ -551,9 +543,8 @@ export default function ConsciousnessTheater() {
       })}
 
       {/* Stage HUD */}
-      <div className={styles.stageHud}>
-        {stageConfig?.title} | {Math.round(scrollProgress * 100)}% | Morph:{' '}
-        {Math.round(morphProgress * 100)}%
+      <div className={styles.stageHud} style={{ opacity: THEATER_CONSTANTS.STAGE_HUD_OPACITY }}>
+        {Canonical.stages[currentStage]?.title} | {Math.round(scrollProgress * 100)}% | Morph: {Math.round(morphProgress * 100)}%
       </div>
 
       {/* Dev Performance Monitor */}

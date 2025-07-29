@@ -1,12 +1,12 @@
 // src/core/CentralStageClock.js
 // -------------------------------------------------------------
-// Unified Stage Clock  –  SST v3.x
+// Unified Stage Clock - SST v3.x
 // -------------------------------------------------------------
 //  • start(stage)   : begin ticking for a stage
 //  • pause() / resume()
 //  • seek(ms)       : jump within current stage
 //  • dispose()      : stop rAF
-//  • dispatches CustomEvent('stageClock', { detail:{ … } }) each frame
+//  • dispatches CustomEvent('stageClock', { detail:{ ... } }) each frame
 // -------------------------------------------------------------
 
 import TIMELINE from '../config/sst3/narrative-timeline.json';
@@ -60,7 +60,7 @@ class CentralStageClock extends EventTarget {
     this._emit(ms);
   }
 
-  /** Stop forever – used on hot‑module dispose. */
+  /** Stop forever - used on hot-module dispose. */
   dispose() {
     this.pause(); // stopping rAF is enough for GC.
   }
@@ -72,7 +72,7 @@ class CentralStageClock extends EventTarget {
     const out = {};
     for (const [stage, segs] of Object.entries(TIMELINE)) {
       const last = segs[segs.length - 1];
-      out[stage] = last.at + last.dur + 2000; // +2 s buffer
+      out[stage] = last.at + last.dur + 2000; // +2 s buffer
     }
     return out;
   }
@@ -89,7 +89,7 @@ class CentralStageClock extends EventTarget {
 
   _emit(elapsed) {
     const stage = this.currentStage;
-    const duration = this.stageDurations[stage] || 1; // guard ÷0
+    const duration = this.stageDurations[stage] || 1; // guard division by 0
 
     this.dispatchEvent(
       new CustomEvent('stageClock', {
@@ -125,5 +125,5 @@ if (import.meta.env.DEV) {
     getTimeline: () => TIMELINE,
   };
 
-  console.log('⏰ Stage Clock ready – timelineTools.* available in DevTools');
+  console.log('⏰ Stage Clock ready - timelineTools.* available in DevTools');
 }

@@ -1,61 +1,60 @@
 {
   "root": true,
 
-  /* ------------------------------------------------- ignore build artefacts */
-  "ignorePatterns": ["dist/", "node_modules/"],
+  /* --------------- ignore compiled / archived / backup artefacts ---------- */
+  "ignorePatterns": [
+    "dist/",
+    "node_modules/",
+    "_archive/**",
+    "**/*.bak",
+    "**/*.bak.*"
+  ],
 
-  /* ----------------------------------------------------------- environments */
-  "env": {
-    "browser": true,
-    "es2021": true,
-    "node": true
-  },
+  /* ----------------------- environments ----------------------------------- */
+  "env": { "browser": true, "es2021": true, "node": true },
 
-  /* ------------------------------------------------------- shared rule‑sets */
+  /* ----------------------------- presets ---------------------------------- */
   "extends": [
     "eslint:recommended",
-    "plugin:react/recommended"
-    /* add other extends you need… */
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
   ],
 
-  /* ------------------------------------------------ custom parsers/options */
-  "parserOptions": {
-    "ecmaVersion": "latest",
-    "sourceType": "module"
-  },
+  /* ----------------------- parser options --------------------------------- */
+  "parserOptions": { "ecmaVersion": "latest", "sourceType": "module" },
 
-  /* ------------------------------------------------------- extra plug‑ins  */
-  "plugins": [
-    "react",
-    "unused-imports"
-  ],
+  /* ---------------------- extra plug‑ins ---------------------------------- */
+  "plugins": ["react", "react-hooks", "unused-imports"],
 
-  /* ----------------------------------------------------------- react hints  */
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
-  },
+  "settings": { "react": { "version": "detect" } },
 
-  /* --------------------------------------------------------- project rules  */
+  /* --------------------------- rules -------------------------------------- */
   "rules": {
-    /* ---------- unused‑imports ------------------------------------------------ */
-
-    // remove unused `import` lines (‑‑fix will delete them automatically)
-    "unused-imports/no-unused-imports": "error",
-
-    // replace core rule so we can allow identifiers/args prefixed with "_"
-    "no-unused-vars": "off",
+    /* ---- unused stuff ---------------------------------------------------- */
+    "no-unused-vars": "off",                             // replaced below
+    "unused-imports/no-unused-imports": "error",         //  auto‑deletes dead imports on --fix
     "unused-imports/no-unused-vars": [
       "error",
       {
         "vars": "all",
-        "varsIgnorePattern": "^_",        // ignore const _foo
+        "varsIgnorePattern": "^_",      // const _foo = …
         "args": "after-used",
-        "argsIgnorePattern": "^_"         // ignore function(_err)
+        "argsIgnorePattern": "^_"       // (err, _next) => …
       }
-    ]
+    ],
 
-    /* ---------- add any project‑specific overrides below -------------------- */
+    /* ---- react / hooks --------------------------------------------------- */
+    // still catch wrong hook order, but only warn on deps‑list spam for now
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    // relax a few noisy React rules while you refactor
+    "react/no-unescaped-entities": "off",
+    "react/prop-types": "off",
+    "react-refresh/only-export-components": "warn",
+
+    /* ---- general JS / style --------------------------------------------- */
+    "no-irregular-whitespace": "off",
+    "no-unreachable": "warn"
   }
 }

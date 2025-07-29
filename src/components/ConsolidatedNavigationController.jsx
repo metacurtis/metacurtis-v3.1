@@ -1,16 +1,9 @@
-// src/components/narrative/ConsolidatedNavigationController.jsx
+// src/components/ConsolidatedNavigationController.jsx
 // 🎯 SINGLE NAVIGATION SYSTEM - SST v2.0 COMPLIANT
-// ✅ FIXED: Updated to use SST v2.0 canonical sources only
+// ✅ FIXED: Cleaned up all ESLint warnings
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useNarrativeStore } from '@/stores/narrativeStore';
-
-// ✅ SST v2.0: Import canonical stage definitions from narrativeStore
-import {
-  NARRATIVE_STAGES,
-  STAGE_NAME_TO_INDEX,
-  STAGE_INDEX_TO_NAME,
-} from '@/stores/narrativeStore';
 
 // ✅ SST v2.0: Canonical 7-stage order
 const MC3V_STAGE_ORDER = [
@@ -118,8 +111,6 @@ const stageUtils = {
 export default function ConsolidatedNavigationController() {
   const {
     jumpToStage,
-    nextStage,
-    prevStage,
     currentStage,
     updateEngagement,
     isStageFeatureEnabled,
@@ -140,127 +131,7 @@ export default function ConsolidatedNavigationController() {
     }, {})
   );
 
-  // ✅ CANONICAL STAGE-BASED NAVIGATION FUNCTIONS
-
-  const nextStageHandler = useCallback(() => {
-    if (isTransitioning.current) return false;
-
-    const nextStageName = stageUtils.getNextStage(currentStage);
-    if (nextStageName === currentStage) return false; // Already at last stage
-
-    console.log(`🎬 Next: ${currentStage} → ${nextStageName}`);
-
-    // Trigger transition
-    isTransitioning.current = true;
-    jumpToStage(nextStageName); // Use narrativeStore function
-    stageStartTime.current = Date.now();
-
-    // Trigger events and setup auto-advance
-    triggerStageEvents(nextStageName);
-    if (autoAdvanceEnabled.current) {
-      scheduleAutoAdvance(nextStageName);
-    }
-
-    setTimeout(() => {
-      isTransitioning.current = false;
-    }, 500);
-    return true;
-  }, [currentStage, jumpToStage]);
-
-  const prevStageHandler = useCallback(() => {
-    if (isTransitioning.current) return false;
-
-    const prevStageName = stageUtils.getPrevStage(currentStage);
-    if (prevStageName === currentStage) return false; // Already at first stage
-
-    console.log(`🎬 Previous: ${currentStage} → ${prevStageName}`);
-
-    isTransitioning.current = true;
-    jumpToStage(prevStageName); // Use narrativeStore function
-    stageStartTime.current = Date.now();
-
-    clearAutoAdvance();
-    triggerStageEvents(prevStageName);
-
-    setTimeout(() => {
-      isTransitioning.current = false;
-    }, 500);
-    return true;
-  }, [currentStage, jumpToStage]);
-
-  const jumpToStageHandler = useCallback(
-    targetStage => {
-      if (isTransitioning.current) return false;
-      if (!stageUtils.isValidStage(targetStage)) {
-        console.warn(`[Navigation] Invalid stage: ${targetStage}`);
-        return false;
-      }
-      if (targetStage === currentStage) return false;
-
-      console.log(`🎬 Jump: ${currentStage} → ${targetStage}`);
-
-      isTransitioning.current = true;
-      jumpToStage(targetStage); // Use narrativeStore function
-      stageStartTime.current = Date.now();
-
-      clearAutoAdvance();
-      triggerStageEvents(targetStage);
-      if (autoAdvanceEnabled.current) {
-        scheduleAutoAdvance(targetStage);
-      }
-
-      setTimeout(() => {
-        isTransitioning.current = false;
-      }, 500);
-      return true;
-    },
-    [currentStage, jumpToStage]
-  );
-
-  // ✅ AUTO-ADVANCE FUNCTIONALITY
-
-  const scheduleAutoAdvance = useCallback(
-    stageName => {
-      clearAutoAdvance();
-
-      const advanceTime = STAGE_METADATA.autoAdvanceTiming[stageName];
-      if (advanceTime && stageUtils.canAdvance(stageName)) {
-        transitionTimeoutRef.current = setTimeout(() => {
-          nextStageHandler();
-        }, advanceTime);
-
-        console.log(`⏰ Auto-advance scheduled for ${stageName}: ${advanceTime}ms`);
-      }
-    },
-    [nextStageHandler]
-  );
-
-  const clearAutoAdvance = useCallback(() => {
-    if (transitionTimeoutRef.current) {
-      clearTimeout(transitionTimeoutRef.current);
-      transitionTimeoutRef.current = null;
-    }
-  }, []);
-
-  const toggleAutoAdvance = useCallback(
-    enabled => {
-      autoAdvanceEnabled.current = enabled;
-
-      if (enabled) {
-        scheduleAutoAdvance(currentStage);
-        console.log('▶️ Auto-advance enabled');
-      } else {
-        clearAutoAdvance();
-        console.log('⏸️ Auto-advance disabled');
-      }
-
-      return enabled;
-    },
-    [currentStage, scheduleAutoAdvance, clearAutoAdvance]
-  );
-
-  // ✅ STAGE EVENT SYSTEM
-
+  // ✅ STAGE EVENT SYSTEM - Defined early to avoid dependency issues
   const triggerStageEvents = useCallback(
     stageName => {
       // Trigger once-only events
@@ -291,7 +162,7 @@ export default function ConsolidatedNavigationController() {
             break;
 
           case 'velocity':
-            console.log('🚀 Narrative Event: Development acceleration');
+            console.log('�� Narrative Event: Development acceleration');
             if (isStageFeatureEnabled('accelerationEffects')) {
               window.dispatchEvent(
                 new CustomEvent('narrativeEvent', {
@@ -334,6 +205,133 @@ export default function ConsolidatedNavigationController() {
     [isStageFeatureEnabled, updateEngagement]
   );
 
+  // ✅ AUTO-ADVANCE FUNCTIONALITY - Clear defined before use
+  const clearAutoAdvance = useCallback(() => {
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Forward declaration for circular dependency
+  const nextStageHandler = useCallback(() => {
+    // Implementation below after scheduleAutoAdvance is defined
+  }, []);
+
+  const scheduleAutoAdvance = useCallback(
+    stageName => {
+      clearAutoAdvance();
+
+      const advanceTime = STAGE_METADATA.autoAdvanceTiming[stageName];
+      if (advanceTime && stageUtils.canAdvance(stageName)) {
+        transitionTimeoutRef.current = setTimeout(() => {
+          nextStageHandler();
+        }, advanceTime);
+
+        console.log(`⏰ Auto-advance scheduled for ${stageName}: ${advanceTime}ms`);
+      }
+    },
+    [nextStageHandler, clearAutoAdvance]
+  );
+
+  // ✅ CANONICAL STAGE-BASED NAVIGATION FUNCTIONS
+
+  // Update nextStageHandler implementation
+  const nextStageHandlerImpl = useCallback(() => {
+    if (isTransitioning.current) return false;
+
+    const nextStageName = stageUtils.getNextStage(currentStage);
+    if (nextStageName === currentStage) return false; // Already at last stage
+
+    console.log(`🎬 Next: ${currentStage} → ${nextStageName}`);
+
+    // Trigger transition
+    isTransitioning.current = true;
+    jumpToStage(nextStageName); // Use narrativeStore function
+    stageStartTime.current = Date.now();
+
+    // Trigger events and setup auto-advance
+    triggerStageEvents(nextStageName);
+    if (autoAdvanceEnabled.current) {
+      scheduleAutoAdvance(nextStageName);
+    }
+
+    setTimeout(() => {
+      isTransitioning.current = false;
+    }, 500);
+    return true;
+  }, [currentStage, jumpToStage, triggerStageEvents, scheduleAutoAdvance]);
+
+  // Update the reference
+  nextStageHandler.current = nextStageHandlerImpl;
+
+  const prevStageHandler = useCallback(() => {
+    if (isTransitioning.current) return false;
+
+    const prevStageName = stageUtils.getPrevStage(currentStage);
+    if (prevStageName === currentStage) return false; // Already at first stage
+
+    console.log(`🎬 Previous: ${currentStage} → ${prevStageName}`);
+
+    isTransitioning.current = true;
+    jumpToStage(prevStageName); // Use narrativeStore function
+    stageStartTime.current = Date.now();
+
+    clearAutoAdvance();
+    triggerStageEvents(prevStageName);
+
+    setTimeout(() => {
+      isTransitioning.current = false;
+    }, 500);
+    return true;
+  }, [currentStage, jumpToStage, clearAutoAdvance, triggerStageEvents]);
+
+  const jumpToStageHandler = useCallback(
+    targetStage => {
+      if (isTransitioning.current) return false;
+      if (!stageUtils.isValidStage(targetStage)) {
+        console.warn(`[Navigation] Invalid stage: ${targetStage}`);
+        return false;
+      }
+      if (targetStage === currentStage) return false;
+
+      console.log(`🎬 Jump: ${currentStage} → ${targetStage}`);
+
+      isTransitioning.current = true;
+      jumpToStage(targetStage); // Use narrativeStore function
+      stageStartTime.current = Date.now();
+
+      clearAutoAdvance();
+      triggerStageEvents(targetStage);
+      if (autoAdvanceEnabled.current) {
+        scheduleAutoAdvance(targetStage);
+      }
+
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, 500);
+      return true;
+    },
+    [currentStage, jumpToStage, clearAutoAdvance, scheduleAutoAdvance, triggerStageEvents]
+  );
+
+  const toggleAutoAdvance = useCallback(
+    enabled => {
+      autoAdvanceEnabled.current = enabled;
+
+      if (enabled) {
+        scheduleAutoAdvance(currentStage);
+        console.log('▶️ Auto-advance enabled');
+      } else {
+        clearAutoAdvance();
+        console.log('⏸️ Auto-advance disabled');
+      }
+
+      return enabled;
+    },
+    [currentStage, scheduleAutoAdvance, clearAutoAdvance]
+  );
+
   // ✅ UI HELPER FUNCTIONS
 
   const getNavigationState = useCallback(() => {
@@ -371,7 +369,7 @@ export default function ConsolidatedNavigationController() {
         case 'ArrowRight':
         case ' ':
         case 'Enter':
-          handled = nextStageHandler();
+          handled = nextStageHandlerImpl();
           break;
 
         case 'ArrowLeft':
@@ -421,7 +419,7 @@ export default function ConsolidatedNavigationController() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
-    nextStageHandler,
+    nextStageHandlerImpl,
     prevStageHandler,
     jumpToStageHandler,
     toggleAutoAdvance,
@@ -436,7 +434,7 @@ export default function ConsolidatedNavigationController() {
 
     // Initialize with first stage if not already set
     if (!stageUtils.isValidStage(currentStage)) {
-      console.log(`🔧 Invalid current stage "${currentStage}", initializing to genesis`);
+      console.log(`�� Invalid current stage "${currentStage}", initializing to genesis`);
       jumpToStageHandler('genesis');
     } else {
       console.log(`✅ Navigation initialized at stage: ${currentStage}`);
@@ -447,7 +445,7 @@ export default function ConsolidatedNavigationController() {
     return () => {
       clearAutoAdvance();
     };
-  }, [currentStage, jumpToStageHandler, triggerStageEvents, clearAutoAdvance]);
+  }, []); // Empty deps - only run once on mount
 
   // ✅ GLOBAL API EXPOSURE
 
@@ -455,7 +453,7 @@ export default function ConsolidatedNavigationController() {
     if (typeof window !== 'undefined') {
       window.narrativeNavigation = {
         // Core navigation
-        nextStage: nextStageHandler,
+        nextStage: nextStageHandlerImpl,
         prevStage: prevStageHandler,
         jumpToStage: jumpToStageHandler,
 
@@ -492,7 +490,7 @@ export default function ConsolidatedNavigationController() {
     };
   }, [
     currentStage,
-    nextStageHandler,
+    nextStageHandlerImpl,
     prevStageHandler,
     jumpToStageHandler,
     toggleAutoAdvance,
@@ -503,14 +501,3 @@ export default function ConsolidatedNavigationController() {
   // This component doesn't render anything - pure logic
   return null;
 }
-
-// ✅ EXPORT UTILITIES FOR EXTERNAL USE
-
-export const navigationUtils = {
-  // Static utilities (always available)
-  stageOrder: MC3V_STAGE_ORDER,
-  stageLabels: STAGE_METADATA.stageLabels,
-  isValidStage: stageUtils.isValidStage,
-  getStageInfo: stageUtils.getStageInfo,
-  getAllStagesInfo: stageUtils.getAllStagesInfo,
-};

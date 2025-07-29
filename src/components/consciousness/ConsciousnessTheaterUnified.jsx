@@ -1,32 +1,38 @@
 // src/components/consciousness/ConsciousnessTheaterUnified.jsx
-// -------------------------------------------------------------
-// Unified Theater: opening‑sequence + stage‑clock timeline
-// -------------------------------------------------------------
+// SST v3.0 UNIFIED THEATER - Complete opening sequence, narrative, and WebGL integration
+// CRITICAL: This is the ONLY theater component - handles ALL theater functionality
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority';
-import { stageClock } from '@/core/CentralStageClock';
-import { beatBus, Events } from '@/orchestration/BeatBus';
+import { MEMORY_FRAGMENTS } from '@/config/sst3/memory-fragments.js';
 import { stageAtom } from '@/stores/atoms/stageAtom';
 import { qualityAtom } from '@/stores/atoms/qualityAtom';
-import { integrateUnifiedTimeline } from '@/bootstrap/integrateUnifiedTimeline';
-
-import UnifiedNarrativeDisplay from './UnifiedNarrativeDisplay';
+import { useMemoryFragments } from '@/hooks/useMemoryFragments.js';
 import WebGLCanvas from '@/components/webgl/WebGLCanvas';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
-
 import styles from './ConsciousnessTheater.module.css';
 
-/* ------------------------------------------------------------------
-   Opening‑sequence constants & hook  (same as legacy component)
------------------------------------------------------------------- */
-const OPEN = {
-  BLACK_MS: 2000,
-  CURSOR_BLINK_MS: 500,
-  TYPE_SPEED_MS: 50,
-  FILL_LINE_DELAY: 50,
-  MAX_FILL_LINES: 30,
+// ===== CONSTANTS =====
+const THEATER_CONSTANTS = {
+  // Timing
+  OPENING_BLACK_DURATION: 2000,
+  CURSOR_BLINK_DELAY: 500,
+  TERMINAL_TYPE_SPEED: 50,
+  SCREEN_FILL_DELAY: 50,
+  NARRATIVE_UPDATE_INTERVAL: 100,
+  SCREEN_FILL_COMPLETE_DELAY: 500,
+
+  // Interaction
+  MORPH_STEP: 0.1,
+  SCROLL_MORPH_MULTIPLIER: 2,
+  SCROLL_DEBOUNCE_MS: 16,
+
+  // Visual
+  MAX_SCREEN_FILL_LINES: 30,
+  STAGE_HUD_OPACITY: 0.7,
+  SCROLL_CONTAINER_HEIGHT: '700vh',
+
+  // Terminal text
   TERMINAL_LINES: [
     { text: 'READY.', delay: 500 },
     { text: '10 PRINT "HELLO CURTIS"', delay: 1000 },
@@ -35,157 +41,340 @@ const OPEN = {
   ],
 };
 
-const withTimeouts = steps => {
-  const ids = steps.map(({ d, fn }) => setTimeout(fn, d));
-  return () => ids.forEach(clearTimeout);
+if (import.meta.env.DEV) console.log('🎭 LOADED: ConsciousnessTheaterUnified v3.0');
+
+// ===== UTILITY =====
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 };
 
-function useOpeningSequence(onDone) {
+// ===== OPENING SEQUENCE HOOK =====
+const useOpeningSequence = onComplete => {
   const [phase, setPhase] = useState('black');
   const [showCursor, setShowCursor] = useState(false);
-  const [termLines, setTermLines] = useState([]);
-  const [fillActive, setFillActive] = useState(false);
+  const [terminalLines, setTerminalLines] = useState([]);
+  const [screenFillActive, setScreenFillActive] = useState(false);
 
   useEffect(() => {
-    let t = 0;
-    const seq = [];
+    if (import.meta.env.DEV) console.log('🎬 Starting opening sequence');
+    const sequence = [];
+    let currentTime = THEATER_CONSTANTS.OPENING_BLACK_DURATION;
 
-    // 0 – black screen
-    t += OPEN.BLACK_MS;
-
-    // 1 – cursor blink
-    seq.push({
-      d: t,
-      fn: () => {
-        setPhase('cursor');
-      },
+    // Cursor phase
+    sequence.push({ delay: currentTime, action: () => setPhase('cursor') });
+    sequence.push({
+      delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY,
+      action: () => setShowCursor(true),
     });
-    seq.push({
-      d: t,
-      fn: () => {
-        setShowCursor(true);
-      },
+    sequence.push({
+      delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 2,
+      action: () => setShowCursor(false),
     });
-    seq.push({ d: (t += OPEN.CURSOR_BLINK_MS), fn: () => setShowCursor(false) });
-    seq.push({ d: (t += OPEN.CURSOR_BLINK_MS), fn: () => setShowCursor(true) });
+    sequence.push({
+      delay: currentTime + THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 2.4,
+      action: () => setShowCursor(true),
+    });
 
-    // 2 – terminal typing lines
-    t += OPEN.CURSOR_BLINK_MS;
-    seq.push({
-      d: t,
-      fn: () => {
+    // Terminal phase
+    currentTime += THEATER_CONSTANTS.CURSOR_BLINK_DELAY * 3;
+    sequence.push({
+      delay: currentTime,
+      action: () => {
         setPhase('terminal');
         setShowCursor(false);
       },
     });
 
-    OPEN.TERMINAL_LINES.forEach(line => {
-      t += line.delay;
-      seq.push({
-        d: t,
-        fn: () => setTermLines(prev => [...prev, line]),
+    // Terminal lines
+    THEATER_CONSTANTS.TERMINAL_LINES.forEach(line => {
+      currentTime += line.delay;
+      sequence.push({
+        delay: currentTime,
+        action: () =>
+          setTerminalLines(prev => [
+            ...prev,
+            {
+              text: line.text,
+              typeSpeed: THEATER_CONSTANTS.TERMINAL_TYPE_SPEED,
+            },
+          ]),
       });
     });
 
-    // 3 – fill
-    t += 1000;
-    seq.push({
-      d: t,
-      fn: () => {
+    // Screen fill
+    currentTime += 1000;
+    sequence.push({
+      delay: currentTime,
+      action: () => {
         setPhase('fill');
-        setFillActive(true);
+        setScreenFillActive(true);
       },
     });
 
-    // 4 – complete
-    t += 2000;
-    seq.push({
-      d: t,
-      fn: () => {
+    // Complete
+    currentTime += 2000;
+    sequence.push({
+      delay: currentTime,
+      action: () => {
         setPhase('complete');
-        onDone?.();
+        onComplete?.();
+        if (import.meta.env.DEV) console.log('🎬 Opening sequence complete');
       },
     });
 
-    return withTimeouts(seq);
-  }, [onDone]);
+    const timeouts = sequence.map(({ delay, action }) => setTimeout(action, delay));
+    return () => timeouts.forEach(clearTimeout);
+  }, [onComplete]);
 
-  return { phase, showCursor, termLines, fillActive };
-}
+  return {
+    phase,
+    showCursor,
+    terminalLines,
+    screenFillActive,
+    isComplete: phase === 'complete',
+  };
+};
 
-/* ------------------------------------------------------------------ */
-/* Tiny presentational pieces for the opening screen                  */
-/* ------------------------------------------------------------------ */
+// ===== OPENING COMPONENTS =====
 const C64Cursor = ({ visible }) => (
   <span className={`${styles.cursor} ${visible ? styles.visible : ''}`}>_</span>
 );
 
-const TerminalText = ({ text, typeSpeed = 50 }) => {
-  const [display, setDisplay] = useState('');
+const TerminalText = ({ text, typeSpeed = 50, style = {} }) => {
+  const [displayText, setDisplayText] = useState('');
   useEffect(() => {
-    let i = 0;
-    const id = setInterval(() => {
-      if (i <= text.length) {
-        setDisplay(text.slice(0, i));
-        i++;
-      } else clearInterval(id);
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex <= text.length) {
+        setDisplayText(text.slice(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+      }
     }, typeSpeed);
-    return () => clearInterval(id);
+    return () => clearInterval(interval);
   }, [text, typeSpeed]);
 
-  return <div className={styles.terminalText}>{display}</div>;
+  return (
+    <div className={styles.terminalText} style={style}>
+      {displayText}
+    </div>
+  );
 };
 
 const ScreenFill = ({ active }) => {
   const [lines, setLines] = useState([]);
   useEffect(() => {
     if (!active) return;
-    let count = 0;
-    const id = setInterval(() => {
-      if (count < OPEN.MAX_FILL_LINES) {
-        setLines(p => [...p, 'HELLO CURTIS ']);
-        count++;
-      } else clearInterval(id);
-    }, OPEN.FILL_LINE_DELAY);
-    return () => clearInterval(id);
+    let lineCount = 0;
+    const interval = setInterval(() => {
+      if (lineCount < THEATER_CONSTANTS.MAX_SCREEN_FILL_LINES) {
+        setLines(prev => [...prev, `HELLO CURTIS `]);
+        lineCount++;
+      } else {
+        clearInterval(interval);
+      }
+    }, THEATER_CONSTANTS.SCREEN_FILL_DELAY);
+    return () => clearInterval(interval);
   }, [active]);
 
   if (!active) return null;
+
   return (
     <div className={styles.screenFill}>
-      {lines.map((l, i) => (
+      {lines.map((line, i) => (
         <div key={i} className={styles.screenFillLine}>
-          {l.repeat(10)}
+          {line.repeat(10)}
         </div>
       ))}
     </div>
   );
 };
 
-/* ================================================================== */
-/* MAIN COMPONENT                                                     */
-/* ================================================================== */
+// ===== NARRATIVE DISPLAY =====
+const NarrativeDisplay = ({ stage, isActive, onMemoryTrigger }) => {
+  const [activeSegment, setActiveSegment] = useState(null);
+  const startTimeRef = useRef(Date.now());
+  const rafRef = useRef();
+  const lastTickRef = useRef(0);
+  const currentSegmentIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!isActive) {
+      setActiveSegment(null);
+      currentSegmentIdRef.current = null;
+      return;
+    }
+
+    startTimeRef.current = Date.now();
+    currentSegmentIdRef.current = null;
+    if (import.meta.env.DEV) console.log(`🎭 Starting narrative for stage: ${stage}`);
+
+    const loop = t => {
+      if (t - lastTickRef.current < THEATER_CONSTANTS.NARRATIVE_UPDATE_INTERVAL) {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+      lastTickRef.current = t;
+
+      const elapsed = Date.now() - startTimeRef.current;
+      const narrative = Canonical.dialogue?.[stage];
+
+      if (!narrative?.segments || !Array.isArray(narrative.segments)) {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      const seg = narrative.segments.find(
+        s => elapsed >= s.start && elapsed < s.start + s.duration
+      );
+
+      if (seg) {
+        if (seg.id !== currentSegmentIdRef.current) {
+          currentSegmentIdRef.current = seg.id;
+          setActiveSegment(seg);
+
+          if (seg.memoryTrigger && typeof onMemoryTrigger === 'function') {
+            try {
+              onMemoryTrigger(seg.memoryTrigger);
+            } catch (e) {
+              if (import.meta.env.DEV) console.warn('Memory trigger failed:', seg.memoryTrigger, e);
+            }
+          }
+
+          if (import.meta.env.DEV) {
+            console.log(
+              `🎭 Segment ${seg.id}: "${(seg.text || '').slice(0, 80)}" (${seg.start}-${seg.start + seg.duration}ms)`
+            );
+          }
+        }
+      } else {
+        if (currentSegmentIdRef.current !== null) {
+          currentSegmentIdRef.current = null;
+          setActiveSegment(null);
+          if (import.meta.env.DEV) console.log('🎭 No active segment');
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [stage, isActive, onMemoryTrigger]);
+
+  if (!activeSegment) return null;
+
+  return (
+    <div className={styles.narrativeOverlay}>
+      <p className={styles.narrativeText}>{activeSegment.text}</p>
+      {activeSegment.note && <p className={styles.narrativeNote}>{activeSegment.note}</p>}
+    </div>
+  );
+};
+
+// ===== MEMORY FRAGMENT RENDERER =====
+const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
+  if (!fragment) return null;
+
+  const renderContent = () => {
+    switch (fragment.type) {
+      case 'terminal':
+        return (
+          <div className={styles.terminalContent}>
+            READY.
+            <br />
+            10 PRINT &quot;HELLO CURTIS&quot;
+            <br />
+            20 GOTO 10
+            <br />
+            RUN
+            <br />
+            <div className={styles.terminalOutput}>
+              {Array(5).fill('HELLO CURTIS ').join('')}...
+            </div>
+          </div>
+        );
+      case 'emblem':
+        return <div className={styles.emblemContent}>🦅 Adapt and Overcome</div>;
+      case 'chat':
+        return (
+          <div className={styles.chatContent}>
+            <div className={styles.chatMessage}>You: Hello</div>
+            <div className={styles.chatMessage}>AI: Hello! How can I help you today?</div>
+          </div>
+        );
+      case 'graph':
+        return <div className={styles.graphContent}>📈 Velocity increasing...</div>;
+      case 'metrics':
+        return (
+          <div className={styles.metricsContent}>
+            <div>FPS: 15 → 84</div>
+            <div className={styles.metricsImprovement}>+460% Performance</div>
+          </div>
+        );
+      case 'code_flow':
+        return <div className={styles.codeFlowContent}>✨ Code flows like water...</div>;
+      case 'counter':
+        return (
+          <div className={styles.counterContent}>
+            <div className={styles.counterNumber}>15,000</div>
+            <div className={styles.counterLabel}>Conscious Moments</div>
+          </div>
+        );
+      default:
+        return <div>Memory Fragment</div>;
+    }
+  };
+
+  return (
+    <div className={styles.memoryFragment}>
+      <h3 className={styles.fragmentTitle}>
+        {fragment.stage.charAt(0).toUpperCase() + fragment.stage.slice(1)} Memory
+      </h3>
+      <div className={styles.fragmentContent}>{renderContent()}</div>
+      <button className={styles.fragmentClose} onClick={onDismiss}>
+        Close
+      </button>
+    </div>
+  );
+};
+
+// ===== MAIN COMPONENT =====
 export default function ConsciousnessTheaterUnified() {
-  /* ---------------- core state ---------------- */
+  // Core state
   const [currentStage, setCurrentStage] = useState('genesis');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [morphProgress, setMorphProgress] = useState(0);
-
-  const [isInit, setIsInit] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
-  const [fragments, setFragments] = useState([]);
 
-  const cleanRef = useRef(null);
+  // Refs
+  const startTimeRef = useRef(Date.now());
+  const scrollHandlerRef = useRef();
 
-  /* ---------- bootstrap unified timeline once ---------- */
+  // Expose for debugging
   useEffect(() => {
-    cleanRef.current = integrateUnifiedTimeline();
-    return () => cleanRef.current?.();
+    if (import.meta.env.DEV) {
+      window.CANONICAL = Canonical;
+      window.NARRATIVE_DIALOGUE = Canonical.dialogue;
+      window.MEMORY_FRAGMENTS = MEMORY_FRAGMENTS;
+    }
   }, []);
 
-  /* ---------- opening sequence ---------- */
-  const openingDone = useCallback(() => {
-    setIsInit(true);
+  // Opening sequence
+  const openingComplete = useCallback(() => {
+    setIsInitialized(true);
     setShowCanvas(true);
     document.body.style.overflow = '';
   }, []);
@@ -193,54 +382,136 @@ export default function ConsciousnessTheaterUnified() {
   const {
     phase: openingPhase,
     showCursor,
-    termLines,
-    fillActive,
-  } = useOpeningSequence(openingDone);
+    terminalLines,
+    screenFillActive,
+  } = useOpeningSequence(openingComplete);
 
-  /* ---------- memory fragment event tap ---------- */
+  // Memory fragments
+  const { activeFragments, fragmentStates, triggerFragment, dismissFragment } = useMemoryFragments(
+    currentStage,
+    scrollProgress * 100
+  );
+
+  // Lock scrolling during opening
   useEffect(() => {
-    const h = e => {
-      const { fragmentId } = e.detail;
-      setFragments(p => [...p, fragmentId]);
-      setTimeout(() => setFragments(p => p.filter(id => id !== fragmentId)), 10000);
+    document.body.style.overflow = openingPhase === 'complete' ? '' : 'hidden';
+    return () => {
+      document.body.style.overflow = '';
     };
-    window.addEventListener('memoryFragment:trigger', h);
-    return () => window.removeEventListener('memoryFragment:trigger', h);
-  }, []);
+  }, [openingPhase]);
 
-  /* ---------- subscribe stage atom ---------- */
+  // Keyboard navigation
   useEffect(() => {
-    const unsub = stageAtom.subscribe(state => {
+    if (!isInitialized || openingPhase !== 'complete') return;
+
+    const handleKeyPress = e => {
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+          e.preventDefault();
+          stageAtom.nextStage();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          stageAtom.prevStage();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setMorphProgress(prev => Math.min(prev + THEATER_CONSTANTS.MORPH_STEP, 1));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setMorphProgress(prev => Math.max(prev - THEATER_CONSTANTS.MORPH_STEP, 0));
+          break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7': {
+          const index = parseInt(e.key) - 1;
+          const stages = Object.keys(Canonical.stages);
+          if (stages[index]) stageAtom.jumpToStage(stages[index]);
+          break;
+        }
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isInitialized, openingPhase]);
+
+  // Stage subscription
+  useEffect(() => {
+    const unsubscribe = stageAtom.subscribe(state => {
       if (state.currentStage !== currentStage) {
         setCurrentStage(state.currentStage);
         qualityAtom.updateParticleBudget(state.currentStage);
+        startTimeRef.current = Date.now();
       }
     });
-    return unsub;
+    return unsubscribe;
   }, [currentStage]);
 
-  /* ---------- opening render ---------- */
+  // Scroll handling
+  useEffect(() => {
+    if (!isInitialized || openingPhase !== 'complete') return;
+
+    scrollHandlerRef.current = debounce(() => {
+      const scrollTop = window.scrollY;
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1
+      );
+      const progress = Math.min(scrollTop / scrollHeight, 1);
+
+      setScrollProgress(progress);
+      setMorphProgress(Math.min(progress * THEATER_CONSTANTS.SCROLL_MORPH_MULTIPLIER, 1));
+
+      const stageProgress = progress * 100;
+      const newStageCfg = Canonical.getStageByScroll?.(stageProgress);
+      if (newStageCfg && newStageCfg.name !== currentStage) {
+        stageAtom.jumpToStage(newStageCfg.name);
+      }
+    }, THEATER_CONSTANTS.SCROLL_DEBOUNCE_MS);
+
+    const handleScroll = scrollHandlerRef.current;
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isInitialized, openingPhase, currentStage]);
+
+  // Opening render
   if (openingPhase !== 'complete') {
     return (
       <div className={styles.openingContainer}>
         {openingPhase === 'cursor' && <C64Cursor visible={showCursor} />}
+
         {openingPhase === 'terminal' && (
           <div className={styles.terminalContainer}>
-            {termLines.map((l, i) => (
-              <TerminalText key={i} text={l.text} typeSpeed={OPEN.TYPE_SPEED_MS} />
+            {terminalLines.map((line, i) => (
+              <TerminalText key={i} text={line.text} typeSpeed={line.typeSpeed} />
             ))}
           </div>
         )}
-        {openingPhase === 'fill' && <ScreenFill active={fillActive} />}
+
+        {openingPhase === 'fill' && <ScreenFill active={screenFillActive} />}
       </div>
     );
   }
 
-  /* ---------- main theater ---------- */
+  // Main theater render
   return (
     <div className={styles.theater}>
-      <div className={styles.scrollContainer} />
+      {/* Scroll container for height */}
+      <div className={styles.scrollContainer} style={{ height: THEATER_CONSTANTS.SCROLL_CONTAINER_HEIGHT }} />
 
+      {/* WebGL Canvas */}
       {showCanvas && (
         <WebGLCanvas
           stage={currentStage}
@@ -249,34 +520,47 @@ export default function ConsciousnessTheaterUnified() {
         />
       )}
 
-      <UnifiedNarrativeDisplay />
+      {/* Narrative */}
+      <NarrativeDisplay
+        stage={currentStage}
+        isActive={isInitialized && openingPhase === 'complete'}
+        onMemoryTrigger={triggerFragment}
+      />
 
-      {/* Memory fragments (placeholder visual) */}
-      {fragments.map(id => (
-        <div key={id} className={styles.memoryFragment}>
-          Fragment: {id}
-        </div>
-      ))}
+      {/* Memory Fragments */}
+      {activeFragments.map(fragment => {
+        const state = fragmentStates[fragment.id];
+        if (state?.state === 'active') {
+          return (
+            <MemoryFragmentRenderer
+              key={fragment.id}
+              fragment={MEMORY_FRAGMENTS[fragment.id]}
+              onDismiss={() => dismissFragment(fragment.id)}
+            />
+          );
+        }
+        return null;
+      })}
 
-      <div className={styles.stageHud}>
-        {Canonical.stages[currentStage]?.title} | {Math.round(scrollProgress * 100)}% | Morph:{' '}
-        {Math.round(morphProgress * 100)}%
+      {/* Stage HUD */}
+      <div className={styles.stageHud} style={{ opacity: THEATER_CONSTANTS.STAGE_HUD_OPACITY }}>
+        {Canonical.stages[currentStage]?.title} | {Math.round(scrollProgress * 100)}% | Morph: {Math.round(morphProgress * 100)}%
       </div>
 
+      {/* Dev Performance Monitor */}
       <DevPerformanceMonitor />
 
+      {/* Dev controls */}
       {import.meta.env.DEV && (
         <div className={styles.devControls}>
-          <div className={styles.devTitle}>🎮 SST Timeline Controls</div>
-          <div>← → Navigate stages</div>
-          <div>↑ ↓ Manual morph</div>
-          <div>1‑7 Jump to stage</div>
-          <div>P Pause/Resume timeline</div>
-          <button onClick={() => window.timelineTools.nudge(-2)}>-2 s</button>
-          <button onClick={() => window.timelineTools.nudge(2)}>+2 s</button>
-          <button onClick={() => (stageClock.isPaused ? stageClock.resume() : stageClock.pause())}>
-            {stageClock.isPaused ? 'Resume' : 'Pause'}
-          </button>
+          <div className={styles.devTitle}>🎮 SST v3.0 Controls</div>
+          <div>← → Navigate stages</div>
+          <div>↑ ↓ Manual morph</div>
+          <div>1-7 Jump to stage</div>
+          <div>Scroll for progression</div>
+          <div className={styles.devStatus}>
+            {morphProgress < 0.5 ? '☁️ Atmospheric' : '🧠 Brain'} Mode
+          </div>
         </div>
       )}
     </div>
