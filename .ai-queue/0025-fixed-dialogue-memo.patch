@@ -1,0 +1,18 @@
+--- a/src/config/canonical/canonicalAuthority.js
++++ b/src/config/canonical/canonicalAuthority.js
+@@
+-import { NARRATIVE_DIALOGUE } from '@/config/sst3/narrative-dialogue.js';
+-…
+-const BEHAV…  
++import { NARRATIVE_DIALOGUE } from '@/config/sst3/narrative-dialogue.js';
++…
++const DIALOGUE_RUNTIME = normalizeDialogue(NARRATIVE_DIALOGUE);
+@@
+-dialogue: normalizeDialogue(NARRATIVE_DIALOGUE),
++dialogue: DIALOGUE_RUNTIME,
+@@ normalizeDialogue
+-  return {
+-    …,
+-    id: seg.id.replace(/[^a-z0-9-]/gi, '_'),
+-  }
++  return { …, id: seg.id };
