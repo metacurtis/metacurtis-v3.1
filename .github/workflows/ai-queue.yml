@@ -1,27 +1,39 @@
 name: AI Patch Queue
 
-
+# ----‑‑‑‑‑ permissions so the bot can push & open PRs ‑‑‑‑‑----
 permissions:
-  contents: write        # allow push / branch delete
-  pull-requests: write
-  
+  contents: write         # push, branch delete
+  pull-requests: write    # create / label PRs
+
+# ----‑‑‑‑‑ triggers ‑‑‑‑‑----
 on:
+  # run whenever a *.patch file is pushed into .ai‑queue/
   push:
     paths:
-      - ".ai-queue/**/*.patch"
+      - '.ai-queue/**/*.patch'
+  # allow manual rerun from the Actions UI
+  workflow_dispatch: {}
 
+# ----‑‑‑‑‑ job definition ‑‑‑‑‑----
 jobs:
-  apply:
+  apply-patch:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+      # 1. checkout full repo history (needed for 3‑way apply)
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Node 20.x ⇢ required by eslint 9 / vite‑plugin‑glsl
-      - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'npm' }
+      # 2. set up Node 20 (matches vite‑plugin‑glsl engine)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-      # the script itself installs deps inside the work‑tree
-      - run: node scripts/apply-ai-patch.cjs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 3. run the patch‑queue script
+      - name: Run AI Patch Queue
+        run: |
+          node scripts/apply-ai-patch.cjs
