@@ -1,0 +1,37 @@
+From d1057f953c1edf8df6ddc8585d48eef45221f18c Mon Sep 17 00:00:00 2001
+From: Your Name <your-email@example.com>
+Date: Tue, 29 Jul 2025 20:55:39 -0500
+Subject: [PATCH] chore: remove empty patch 0025
+
+---
+ .ai-queue/0025-fixed-dialogue-memo.patch | 18 ------------------
+ 1 file changed, 18 deletions(-)
+ delete mode 100644 .ai-queue/0025-fixed-dialogue-memo.patch
+
+diff --git a/.ai-queue/0025-fixed-dialogue-memo.patch b/.ai-queue/0025-fixed-dialogue-memo.patch
+deleted file mode 100644
+index 3ab3630..0000000
+--- a/.ai-queue/0025-fixed-dialogue-memo.patch
++++ /dev/null
+@@ -1,18 +0,0 @@
+---- a/src/config/canonical/canonicalAuthority.js
+-+++ b/src/config/canonical/canonicalAuthority.js
+-@@
+--import { NARRATIVE_DIALOGUE } from '@/config/sst3/narrative-dialogue.js';
+--…
+--const BEHAV…  
+-+import { NARRATIVE_DIALOGUE } from '@/config/sst3/narrative-dialogue.js';
+-+…
+-+const DIALOGUE_RUNTIME = normalizeDialogue(NARRATIVE_DIALOGUE);
+-@@
+--dialogue: normalizeDialogue(NARRATIVE_DIALOGUE),
+-+dialogue: DIALOGUE_RUNTIME,
+-@@ normalizeDialogue
+--  return {
+--    …,
+--    id: seg.id.replace(/[^a-z0-9-]/gi, '_'),
+--  }
+-+  return { …, id: seg.id };
+-- 
+2.34.1
+
