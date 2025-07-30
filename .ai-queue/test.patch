@@ -1,58 +1,174 @@
 diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
-index b13eff1..e69de29 100644
+index ba10049..e69de29 100644
 --- a/.ai-queue/test.patch
 +++ b/.ai-queue/test.patch
-@@ -1,1593 +0,0 @@
+@@ -1,1850 +0,0 @@
 -diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
--index fa66267..e69de29 100644
+-index b13eff1..e69de29 100644
 ---- a/.ai-queue/test.patch
 -+++ b/.ai-queue/test.patch
--@@ -1,1364 +0,0 @@
+-@@ -1,1593 +0,0 @@
 --diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
---index b29548d..e69de29 100644
+--index fa66267..e69de29 100644
 ----- a/.ai-queue/test.patch
 --+++ b/.ai-queue/test.patch
---@@ -1,1110 +0,0 @@
+--@@ -1,1364 +0,0 @@
 ---diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
----index 3df754b..e69de29 100644
+---index b29548d..e69de29 100644
 ------ a/.ai-queue/test.patch
 ---+++ b/.ai-queue/test.patch
----@@ -1,865 +0,0 @@
+---@@ -1,1110 +0,0 @@
 ----diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
-----index 2bb7c64..e69de29 100644
+----index 3df754b..e69de29 100644
 ------- a/.ai-queue/test.patch
 ----+++ b/.ai-queue/test.patch
-----@@ -1,717 +0,0 @@
+----@@ -1,865 +0,0 @@
 -----diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
------index 59e77dc..e69de29 100644
+-----index 2bb7c64..e69de29 100644
 -------- a/.ai-queue/test.patch
 -----+++ b/.ai-queue/test.patch
------@@ -1,578 +0,0 @@
+-----@@ -1,717 +0,0 @@
 ------diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
-------index 5d557e1..e69de29 100644
+------index 59e77dc..e69de29 100644
 --------- a/.ai-queue/test.patch
 ------+++ b/.ai-queue/test.patch
-------@@ -1,464 +0,0 @@
+------@@ -1,578 +0,0 @@
 -------diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
--------index 86b24d7..e69de29 100644
+-------index 5d557e1..e69de29 100644
 ---------- a/.ai-queue/test.patch
 -------+++ b/.ai-queue/test.patch
--------@@ -1,350 +0,0 @@
+-------@@ -1,464 +0,0 @@
 --------diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
---------index fdb62b7..e69de29 100644
+--------index 86b24d7..e69de29 100644
 ----------- a/.ai-queue/test.patch
 --------+++ b/.ai-queue/test.patch
---------@@ -1,238 +0,0 @@
+--------@@ -1,350 +0,0 @@
 ---------diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
----------index 979e5ec..e69de29 100644
+---------index fdb62b7..e69de29 100644
 ------------ a/.ai-queue/test.patch
 ---------+++ b/.ai-queue/test.patch
----------@@ -1,125 +0,0 @@
+---------@@ -1,238 +0,0 @@
 ----------diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
-----------index 687e26e..e69de29 100644
+----------index 979e5ec..e69de29 100644
 ------------- a/.ai-queue/test.patch
 ----------+++ b/.ai-queue/test.patch
-----------@@ -1,9 +0,0 @@
+----------@@ -1,125 +0,0 @@
+-----------diff --git a/.ai-queue/test.patch b/.ai-queue/test.patch
+-----------index 687e26e..e69de29 100644
+-------------- a/.ai-queue/test.patch
+-----------+++ b/.ai-queue/test.patch
+-----------@@ -1,9 +0,0 @@
+------------diff --git a/src/App.jsx b/src/App.jsx
+------------index a7baa41..8d066d1 100644
+--------------- a/src/App.jsx
+------------+++ b/src/App.jsx
+------------@@ -21,3 +21,4 @@ export default function App() {
+------------ 
+------------   return <ConsciousnessTheater />;
+------------ }
+------------+// test
+-----------diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
+-----------index 045f750..ce03ec8 100644
+-------------- a/scripts/apply-ai-patch.cjs
+-----------+++ b/scripts/apply-ai-patch.cjs
+-----------@@ -1,68 +1,62 @@
+----------- 'use strict';
+----------- 
+------------const { execSync }   = require('node:child_process');
+-----------+const { execSync } = require('node:child_process');
+----------- const { readdirSync, mkdtempSync, rmSync, statSync } = require('node:fs');
+------------const { join, resolve } = require('node:path');
+-----------+const { join, dirname, resolve } = require('node:path');
+----------- const { tmpdir } = require('node:os');
+----------- 
+----------- const queueDir = '.ai-queue';
+------------const patches  = readdirSync(queueDir)
+------------  .filter(f => f.endsWith('.patch'))
+------------  .sort();                 // FIFO
+-----------+const patches  = readdirSync(queueDir).filter(f => f.endsWith('.patch')).sort();
+----------- 
+----------- if (!patches.length) {
+-----------   console.log('✅  No patches in queue – nothing to do.');
+-----------   process.exit(0);
+----------- }
+----------- 
+------------const patch    = patches[0];
+------------const patchAbs = resolve(queueDir, patch);
+------------const branch   = `ai/${patch.replace('.patch', '')}`;
+-----------+const patch     = patches[0];
+-----------+const patchAbs  = resolve(queueDir, patch);
+-----------+const branch    = `ai/${patch.replace('.patch', '')}`;
+----------- 
+----------- const run = (cmd, opts = {}) => {
+-----------   console.log(`$ ${cmd}`);
+------------  execSync(cmd, { stdio: 'inherit',
+------------                  env: { ...process.env, HUSKY: '0' },
+------------                  ...opts });
+-----------+  execSync(cmd, { stdio: 'inherit', env: { ...process.env, HUSKY: '0' }, ...opts });
+----------- };
+----------- 
+-----------+/* ───────────────────────────────────────────────────────────── */
+-----------+
+----------- try {
+------------  /* 0 — bail early on empty patch */
+-----------+  /* 0  Skip empty patch files */
+-----------   if (statSync(patchAbs).size === 0) {
+------------    throw new Error(`${patch} is empty – remove or regenerate`);
+-----------+    throw new Error(`${patch} is empty`);
+-----------   }
+----------- 
+------------  /* 1 — clean stale branches (ignore failures) */
+------------  try { run(`git branch -D ${branch}`);           } catch {}
+------------  try { run(`git push origin --delete ${branch}`); } catch {}
+-----------+  /* 1  Delete stale branch/PR refs (ignore errors) */
+-----------+  try { run(`git branch -D ${branch}`);           } catch {} // local
+-----------+  try { run(`git push origin --delete ${branch}`); } catch {} // remote
+----------- 
+------------  /* 2 — isolated work‑tree */
+-----------+  /* 2  Isolated work‑tree */
+-----------   const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
+-----------   run(`git worktree add -b ${branch} ${workDir}`);
+----------- 
+------------  /* 2a — set author so git commit works */
+------------  run(`git -C ${workDir} config user.name  "github-actions[bot]"`);
+------------  run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
+------------
+------------  /* 3 — dependencies */
+-----------+  /* 3  Dependencies */
+-----------   run('npm ci --ignore-scripts', { cwd: workDir });
+----------- 
+------------  /* 4 — apply patch (3‑way merge fallback) */
+-----------+  /* 4  Apply patch (3‑way merge if context shifted) */
+-----------   run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
+----------- 
+------------  /* 5 — project gates */
+------------  run('npm run lint',                 { cwd: workDir }); // warnings allowed
+------------  run('npm test --silent',            { cwd: workDir });
+------------  run('node scripts/validate-sst.js',  { cwd: workDir });
+-----------+  /* 5  Project gates */
+-----------+  run('npm run lint',            { cwd: workDir });        // warnings allowed
+-----------+  run('npm test --silent',       { cwd: workDir });
+-----------+  run('node scripts/validate-sst.js', { cwd: workDir });
+----------- 
+------------  /* 6 — commit & push PR branch */
+-----------+  /* 6  Commit & push PR branch */
+-----------   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
+-----------   run(`git -C ${workDir} push -u origin ${branch}`);
+----------- 
+------------  /* 7 — open PR */
+-----------+  /* 7  Open PR (labelled “ai‑patch”) */
+-----------   run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
+----------- 
+------------  /* 8 — remove patch from queue */
+-----------+  /* 8  Remove patch from queue on success */
+-----------   rmSync(patchAbs);
+-----------   console.log('🎉  Patch applied & PR opened.');
+----------- } catch (err) {
+-----------@@ -70,3 +64,4 @@ try {
+-----------   console.error(err.message || err);
+-----------   process.exit(1);
+----------- }
+-----------+
 -----------diff --git a/src/App.jsx b/src/App.jsx
 -----------index a7baa41..8d066d1 100644
 -------------- a/src/App.jsx
@@ -63,17 +179,16 @@ index b13eff1..e69de29 100644
 ----------- }
 -----------+// test
 ----------diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
-----------index 045f750..ce03ec8 100644
+----------index 045f750..dcdae94 100644
 ------------- a/scripts/apply-ai-patch.cjs
 ----------+++ b/scripts/apply-ai-patch.cjs
-----------@@ -1,68 +1,62 @@
+----------@@ -1,70 +1,61 @@
 ---------- 'use strict';
 ---------- 
 -----------const { execSync }   = require('node:child_process');
 ----------+const { execSync } = require('node:child_process');
 ---------- const { readdirSync, mkdtempSync, rmSync, statSync } = require('node:fs');
------------const { join, resolve } = require('node:path');
-----------+const { join, dirname, resolve } = require('node:path');
+---------- const { join, resolve } = require('node:path');
 ---------- const { tmpdir } = require('node:os');
 ---------- 
 ---------- const queueDir = '.ai-queue';
@@ -106,7 +221,7 @@ index b13eff1..e69de29 100644
 ----------+
 ---------- try {
 -----------  /* 0 — bail early on empty patch */
-----------+  /* 0  Skip empty patch files */
+----------+  // 0. Skip empty patch files
 ----------   if (statSync(patchAbs).size === 0) {
 -----------    throw new Error(`${patch} is empty – remove or regenerate`);
 ----------+    throw new Error(`${patch} is empty`);
@@ -115,12 +230,12 @@ index b13eff1..e69de29 100644
 -----------  /* 1 — clean stale branches (ignore failures) */
 -----------  try { run(`git branch -D ${branch}`);           } catch {}
 -----------  try { run(`git push origin --delete ${branch}`); } catch {}
-----------+  /* 1  Delete stale branch/PR refs (ignore errors) */
+----------+  // 1. Delete stale branch/PR refs (ignore errors)
 ----------+  try { run(`git branch -D ${branch}`);           } catch {} // local
 ----------+  try { run(`git push origin --delete ${branch}`); } catch {} // remote
 ---------- 
 -----------  /* 2 — isolated work‑tree */
-----------+  /* 2  Isolated work‑tree */
+----------+  // 2. Isolated work‑tree
 ----------   const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
 ----------   run(`git worktree add -b ${branch} ${workDir}`);
 ---------- 
@@ -129,41 +244,39 @@ index b13eff1..e69de29 100644
 -----------  run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
 -----------
 -----------  /* 3 — dependencies */
-----------+  /* 3  Dependencies */
+----------+  // 3. Dependencies
 ----------   run('npm ci --ignore-scripts', { cwd: workDir });
 ---------- 
 -----------  /* 4 — apply patch (3‑way merge fallback) */
-----------+  /* 4  Apply patch (3‑way merge if context shifted) */
+----------+  // 4. Apply patch (3‑way merge if context shifted)
 ----------   run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
 ---------- 
 -----------  /* 5 — project gates */
 -----------  run('npm run lint',                 { cwd: workDir }); // warnings allowed
 -----------  run('npm test --silent',            { cwd: workDir });
 -----------  run('node scripts/validate-sst.js',  { cwd: workDir });
-----------+  /* 5  Project gates */
+----------+  // 5. Project gates
 ----------+  run('npm run lint',            { cwd: workDir });        // warnings allowed
 ----------+  run('npm test --silent',       { cwd: workDir });
 ----------+  run('node scripts/validate-sst.js', { cwd: workDir });
 ---------- 
 -----------  /* 6 — commit & push PR branch */
-----------+  /* 6  Commit & push PR branch */
+----------+  // 6. Commit & force-push PR branch
 ----------   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
-----------   run(`git -C ${workDir} push -u origin ${branch}`);
----------- 
+-----------  run(`git -C ${workDir} push -u origin ${branch}`);
+-----------
 -----------  /* 7 — open PR */
-----------+  /* 7  Open PR (labelled “ai‑patch”) */
-----------   run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
+-----------  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
+----------+  run(`git -C ${workDir} push -u --force origin ${branch}`);
 ---------- 
 -----------  /* 8 — remove patch from queue */
-----------+  /* 8  Remove patch from queue on success */
+----------+  // 7. Remove patch from queue on success
 ----------   rmSync(patchAbs);
-----------   console.log('🎉  Patch applied & PR opened.');
+-----------  console.log('🎉  Patch applied & PR opened.');
+----------+  console.log('🎉  Patch applied & branch pushed.');
 ---------- } catch (err) {
-----------@@ -70,3 +64,4 @@ try {
+----------   console.error('🛑  Patch failed – left in queue.');
 ----------   console.error(err.message || err);
-----------   process.exit(1);
----------- }
-----------+
 ----------diff --git a/src/App.jsx b/src/App.jsx
 ----------index a7baa41..8d066d1 100644
 ------------- a/src/App.jsx
@@ -174,10 +287,10 @@ index b13eff1..e69de29 100644
 ---------- }
 ----------+// test
 ---------diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
----------index 045f750..dcdae94 100644
+---------index 045f750..1c80648 100644
 ------------ a/scripts/apply-ai-patch.cjs
 ---------+++ b/scripts/apply-ai-patch.cjs
----------@@ -1,70 +1,61 @@
+---------@@ -1,70 +1,60 @@
 --------- 'use strict';
 --------- 
 ----------const { execSync }   = require('node:child_process');
@@ -225,12 +338,11 @@ index b13eff1..e69de29 100644
 ----------  /* 1 — clean stale branches (ignore failures) */
 ----------  try { run(`git branch -D ${branch}`);           } catch {}
 ----------  try { run(`git push origin --delete ${branch}`); } catch {}
----------+  // 1. Delete stale branch/PR refs (ignore errors)
----------+  try { run(`git branch -D ${branch}`);           } catch {} // local
----------+  try { run(`git push origin --delete ${branch}`); } catch {} // remote
+---------+  // --- kill any stale branch locally -------
+---------+  try { run(`git branch -D ${branch}`); } catch {}
 --------- 
 ----------  /* 2 — isolated work‑tree */
----------+  // 2. Isolated work‑tree
+---------+  // --- add work‑tree, commit, etc. ---
 ---------   const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
 ---------   run(`git worktree add -b ${branch} ${workDir}`);
 --------- 
@@ -256,13 +368,13 @@ index b13eff1..e69de29 100644
 ---------+  run('node scripts/validate-sst.js', { cwd: workDir });
 --------- 
 ----------  /* 6 — commit & push PR branch */
----------+  // 6. Commit & force-push PR branch
+---------+  // 6. Commit & always safely overwrite the branch on GitHub
 ---------   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 ----------  run(`git -C ${workDir} push -u origin ${branch}`);
 ----------
 ----------  /* 7 — open PR */
 ----------  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
----------+  run(`git -C ${workDir} push -u --force origin ${branch}`);
+---------+  run(`git -C ${workDir} push --force-with-lease -u origin ${branch}`);
 --------- 
 ----------  /* 8 — remove patch from queue */
 ---------+  // 7. Remove patch from queue on success
@@ -282,10 +394,10 @@ index b13eff1..e69de29 100644
 --------- }
 ---------+// test
 --------diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
---------index 045f750..1c80648 100644
+--------index 045f750..1ce0468 100644
 ----------- a/scripts/apply-ai-patch.cjs
 --------+++ b/scripts/apply-ai-patch.cjs
---------@@ -1,70 +1,60 @@
+--------@@ -1,70 +1,63 @@
 -------- 'use strict';
 -------- 
 ---------const { execSync }   = require('node:child_process');
@@ -366,10 +478,12 @@ index b13eff1..e69de29 100644
 --------+  // 6. Commit & always safely overwrite the branch on GitHub
 --------   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 ---------  run(`git -C ${workDir} push -u origin ${branch}`);
----------
+--------+  run(`git -C ${workDir} push --force-with-lease -u origin ${branch}`);
+-------- 
 ---------  /* 7 — open PR */
 ---------  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
---------+  run(`git -C ${workDir} push --force-with-lease -u origin ${branch}`);
+--------+  // (optional) create PR with gh CLI – disabled to avoid 401
+--------+  // run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
 -------- 
 ---------  /* 8 — remove patch from queue */
 --------+  // 7. Remove patch from queue on success
@@ -498,17 +612,28 @@ index b13eff1..e69de29 100644
 ------- }
 -------+// test
 ------diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
-------index 045f750..1ce0468 100644
+------index 045f750..a2a98ab 100644
 --------- a/scripts/apply-ai-patch.cjs
 ------+++ b/scripts/apply-ai-patch.cjs
-------@@ -1,70 +1,63 @@
------- 'use strict';
+------@@ -1,70 +1,87 @@
+-------'use strict';
+------+#!/usr/bin/env node
+------+/* scripts/apply-ai-patch.cjs
+------+ * Apply the next .patch from .ai-queue/ in an isolated work‑tree,
+------+ * run gates, commit, push, and (optionally) open a PR.
+------+ *
+------+ * v2 – 2025‑07‑30
+------+ *   • push now uses `--force-with-lease` to avoid “fetch first” errors
+------+ *   • still skips PR creation if GH_TOKEN / GITHUB_TOKEN is absent
+------+ */
 ------ 
--------const { execSync }   = require('node:child_process');
-------+const { execSync } = require('node:child_process');
------- const { readdirSync, mkdtempSync, rmSync, statSync } = require('node:fs');
+------+'use strict';
+------ const { execSync }   = require('node:child_process');
+-------const { readdirSync, mkdtempSync, rmSync, statSync } = require('node:fs');
+------+const { readdirSync, mkdtempSync, rmSync } = require('node:fs');
 ------ const { join, resolve } = require('node:path');
------- const { tmpdir } = require('node:os');
+-------const { tmpdir } = require('node:os');
+------+const { tmpdir }     = require('node:os');
 ------ 
 ------ const queueDir = '.ai-queue';
 -------const patches  = readdirSync(queueDir)
@@ -536,64 +661,78 @@ index b13eff1..e69de29 100644
 ------+  execSync(cmd, { stdio: 'inherit', env: { ...process.env, HUSKY: '0' }, ...opts });
 ------ };
 ------ 
-------+/* ───────────────────────────────────────────────────────────── */
-------+
 ------ try {
 -------  /* 0 — bail early on empty patch */
-------+  // 0. Skip empty patch files
-------   if (statSync(patchAbs).size === 0) {
+-------  if (statSync(patchAbs).size === 0) {
 -------    throw new Error(`${patch} is empty – remove or regenerate`);
-------+    throw new Error(`${patch} is empty`);
-------   }
------- 
+-------  }
+-------
 -------  /* 1 — clean stale branches (ignore failures) */
 -------  try { run(`git branch -D ${branch}`);           } catch {}
--------  try { run(`git push origin --delete ${branch}`); } catch {}
-------+  // --- kill any stale branch locally -------
-------+  try { run(`git branch -D ${branch}`); } catch {}
+------+  /* ------------------------------------------------------------------- */
+------+  /*  Clean out any stale refs                                           */
+------+  /* ------------------------------------------------------------------- */
+------+  try { run(`git branch -D ${branch}`); }          catch {}
+------   try { run(`git push origin --delete ${branch}`); } catch {}
 ------ 
 -------  /* 2 — isolated work‑tree */
-------+  // --- add work‑tree, commit, etc. ---
+------+  /* ------------------------------------------------------------------- */
+------+  /*  Isolated work‑tree                                                 */
+------+  /* ------------------------------------------------------------------- */
 ------   const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
 ------   run(`git worktree add -b ${branch} ${workDir}`);
 ------ 
 -------  /* 2a — set author so git commit works */
--------  run(`git -C ${workDir} config user.name  "github-actions[bot]"`);
--------  run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
--------
+------   run(`git -C ${workDir} config user.name  "github-actions[bot]"`);
+------   run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
+------ 
 -------  /* 3 — dependencies */
-------+  // 3. Dependencies
 ------   run('npm ci --ignore-scripts', { cwd: workDir });
 ------ 
 -------  /* 4 — apply patch (3‑way merge fallback) */
-------+  // 4. Apply patch (3‑way merge if context shifted)
+------+  /* ------------------------------------------------------------------- */
+------+  /*  Apply patch & run project gates                                    */
+------+  /* ------------------------------------------------------------------- */
 ------   run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
 ------ 
 -------  /* 5 — project gates */
 -------  run('npm run lint',                 { cwd: workDir }); // warnings allowed
 -------  run('npm test --silent',            { cwd: workDir });
 -------  run('node scripts/validate-sst.js',  { cwd: workDir });
-------+  // 5. Project gates
-------+  run('npm run lint',            { cwd: workDir });        // warnings allowed
-------+  run('npm test --silent',       { cwd: workDir });
+------+  run('npm run lint',              { cwd: workDir });
+------+  run('npm test',                  { cwd: workDir });
 ------+  run('node scripts/validate-sst.js', { cwd: workDir });
 ------ 
 -------  /* 6 — commit & push PR branch */
-------+  // 6. Commit & always safely overwrite the branch on GitHub
+------+  /* ------------------------------------------------------------------- */
+------+  /*  Commit & push ( force‑with‑lease )                                 */
+------+  /* ------------------------------------------------------------------- */
 ------   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 -------  run(`git -C ${workDir} push -u origin ${branch}`);
-------+  run(`git -C ${workDir} push --force-with-lease -u origin ${branch}`);
+------+  run(`git -C ${workDir} push -u origin ${branch} --force-with-lease`);
 ------ 
 -------  /* 7 — open PR */
 -------  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
-------+  // (optional) create PR with gh CLI – disabled to avoid 401
-------+  // run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
+------+  /* ------------------------------------------------------------------- */
+------+  /*  Optional PR creation                                               */
+------+  /* ------------------------------------------------------------------- */
+------+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+------+  if (token) {
+------+    try {
+------+      run(`echo "${token}" | gh auth login --with-token`);
+------+      run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
+------+      console.log('🎉  Patch applied & PR opened.');
+------+    } catch (err) {
+------+      console.warn('⚠️  PR creation failed (gh). Branch is pushed; open PR manually if needed.');
+------+    }
+------+  } else {
+------+    console.log('ℹ️  GH_TOKEN not set – skipped automatic PR creation.');
+------+  }
 ------ 
 -------  /* 8 — remove patch from queue */
-------+  // 7. Remove patch from queue on success
+------+  /*  House‑keeping */
 ------   rmSync(patchAbs);
 -------  console.log('🎉  Patch applied & PR opened.');
-------+  console.log('🎉  Patch applied & branch pushed.');
 ------ } catch (err) {
 ------   console.error('🛑  Patch failed – left in queue.');
 ------   console.error(err.message || err);
@@ -607,130 +746,139 @@ index b13eff1..e69de29 100644
 ------ }
 ------+// test
 -----diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
------index 045f750..a2a98ab 100644
+-----index 045f750..670191b 100644
 -------- a/scripts/apply-ai-patch.cjs
 -----+++ b/scripts/apply-ai-patch.cjs
------@@ -1,70 +1,87 @@
+-----@@ -1,72 +1,83 @@
 ------'use strict';
------+#!/usr/bin/env node
------+/* scripts/apply-ai-patch.cjs
------+ * Apply the next .patch from .ai-queue/ in an isolated work‑tree,
------+ * run gates, commit, push, and (optionally) open a PR.
------+ *
------+ * v2 – 2025‑07‑30
------+ *   • push now uses `--force-with-lease` to avoid “fetch first” errors
------+ *   • still skips PR creation if GH_TOKEN / GITHUB_TOKEN is absent
+-----+\#!/usr/bin/env node
+-----+/*  scripts/apply‑ai‑patch.cjs
+-----+ *  Apply the next .patch from .ai‑queue/ in an isolated work‑tree,
+-----+ *  run gates (lint / tests / validator), commit, push, and optionally
+-----+ *  open a PR. 2025‑07‑30 (v3 – “bullet‑proof push”)
 -----+ */
 ----- 
------+'use strict';
------ const { execSync }   = require('node:child_process');
+------const { execSync }   = require('node:child_process');
 ------const { readdirSync, mkdtempSync, rmSync, statSync } = require('node:fs');
------+const { readdirSync, mkdtempSync, rmSync } = require('node:fs');
------ const { join, resolve } = require('node:path');
+------const { join, resolve } = require('node:path');
 ------const { tmpdir } = require('node:os');
------+const { tmpdir }     = require('node:os');
+-----+'use strict';
+-----+const { execSync }                    = require('node:child_process');
+-----+const { readdirSync, mkdtempSync, rmSync } = require('node:fs');
+-----+const { join, resolve }              = require('node:path');
+-----+const { tmpdir }                      = require('node:os');
 ----- 
------ const queueDir = '.ai-queue';
+------const queueDir = '.ai-queue';
 ------const patches  = readdirSync(queueDir)
 ------  .filter(f => f.endsWith('.patch'))
 ------  .sort();                 // FIFO
------+const patches  = readdirSync(queueDir).filter(f => f.endsWith('.patch')).sort();
+-----+/* ════════════════════════════════════════════════════════════════ */
+-----+/*  Helpers                                                        */
+-----+/* ════════════════════════════════════════════════════════════════ */
+-----+const run = (cmd, opts = {}) => {
+-----+  console.log(`$ ${cmd}`);
+-----+  execSync(cmd, { stdio: 'inherit', env: { ...process.env, HUSKY: '0' }, ...opts });
+-----+};
 ----- 
+-----+/* ════════════════════════════════════════════════════════════════ */
+-----+/*  Queue handling                                                 */
+-----+/* ════════════════════════════════════════════════════════════════ */
+-----+const queueDir  = '.ai-queue';
+-----+const patches   = readdirSync(queueDir).filter(f => f.endsWith('.patch')).sort();
 ----- if (!patches.length) {
------   console.log('✅  No patches in queue – nothing to do.');
------   process.exit(0);
+------  console.log('✅  No patches in queue – nothing to do.');
+------  process.exit(0);
+-----+  console.log('✅  No patches in queue – nothing to do.'); process.exit(0);
 ----- }
 ----- 
 ------const patch    = patches[0];
 ------const patchAbs = resolve(queueDir, patch);
 ------const branch   = `ai/${patch.replace('.patch', '')}`;
+------
+------const run = (cmd, opts = {}) => {
+------  console.log(`$ ${cmd}`);
+------  execSync(cmd, { stdio: 'inherit',
+------                  env: { ...process.env, HUSKY: '0' },
+------                  ...opts });
+------};
 -----+const patch     = patches[0];
 -----+const patchAbs  = resolve(queueDir, patch);
 -----+const branch    = `ai/${patch.replace('.patch', '')}`;
 ----- 
------ const run = (cmd, opts = {}) => {
------   console.log(`$ ${cmd}`);
-------  execSync(cmd, { stdio: 'inherit',
-------                  env: { ...process.env, HUSKY: '0' },
-------                  ...opts });
------+  execSync(cmd, { stdio: 'inherit', env: { ...process.env, HUSKY: '0' }, ...opts });
------ };
------ 
+-----+/* ════════════════════════════════════════════════════════════════ */
+-----+/*  Main flow                                                      */
+-----+/* ════════════════════════════════════════════════════════════════ */
 ----- try {
 ------  /* 0 — bail early on empty patch */
 ------  if (statSync(patchAbs).size === 0) {
 ------    throw new Error(`${patch} is empty – remove or regenerate`);
 ------  }
-------
+-----+  /* 1. Remove any existing local & remote refs (ignore errors) */
+-----+  try { run(`git branch -D ${branch}`); }                 catch {}
+-----+  try { run(`git push origin --delete ${branch}`); }      catch {}
+----- 
 ------  /* 1 — clean stale branches (ignore failures) */
 ------  try { run(`git branch -D ${branch}`);           } catch {}
------+  /* ------------------------------------------------------------------- */
------+  /*  Clean out any stale refs                                           */
------+  /* ------------------------------------------------------------------- */
------+  try { run(`git branch -D ${branch}`); }          catch {}
------   try { run(`git push origin --delete ${branch}`); } catch {}
------ 
+------  try { run(`git push origin --delete ${branch}`); } catch {}
+------
 ------  /* 2 — isolated work‑tree */
------+  /* ------------------------------------------------------------------- */
------+  /*  Isolated work‑tree                                                 */
------+  /* ------------------------------------------------------------------- */
+-----+  /* 2. Create isolated work‑tree */
 -----   const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
 -----   run(`git worktree add -b ${branch} ${workDir}`);
------ 
+------
 ------  /* 2a — set author so git commit works */
 -----   run(`git -C ${workDir} config user.name  "github-actions[bot]"`);
 -----   run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
 ----- 
 ------  /* 3 — dependencies */
+-----+  /* 3. Restore deps once (no post‑install scripts) */
 -----   run('npm ci --ignore-scripts', { cwd: workDir });
 ----- 
 ------  /* 4 — apply patch (3‑way merge fallback) */
------+  /* ------------------------------------------------------------------- */
------+  /*  Apply patch & run project gates                                    */
------+  /* ------------------------------------------------------------------- */
+-----+  /* 4. Apply patch (3‑way, keep index) */
 -----   run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
 ----- 
 ------  /* 5 — project gates */
 ------  run('npm run lint',                 { cwd: workDir }); // warnings allowed
 ------  run('npm test --silent',            { cwd: workDir });
 ------  run('node scripts/validate-sst.js',  { cwd: workDir });
------+  run('npm run lint',              { cwd: workDir });
------+  run('npm test',                  { cwd: workDir });
+-----+  /* 5. Project “gates” */
+-----+  run('npm run lint',             { cwd: workDir });
+-----+  run('npm test',                 { cwd: workDir });
 -----+  run('node scripts/validate-sst.js', { cwd: workDir });
 ----- 
 ------  /* 6 — commit & push PR branch */
------+  /* ------------------------------------------------------------------- */
------+  /*  Commit & push ( force‑with‑lease )                                 */
------+  /* ------------------------------------------------------------------- */
+-----+  /* 6. Commit & push (force) */
 -----   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 ------  run(`git -C ${workDir} push -u origin ${branch}`);
------+  run(`git -C ${workDir} push -u origin ${branch} --force-with-lease`);
+-----+  run(`git -C ${workDir} push -u origin ${branch} --force`);
 ----- 
 ------  /* 7 — open PR */
 ------  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
------+  /* ------------------------------------------------------------------- */
------+  /*  Optional PR creation                                               */
------+  /* ------------------------------------------------------------------- */
+-----+  /* 7. Optional PR creation (if token present) */
 -----+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
 -----+  if (token) {
 -----+    try {
 -----+      run(`echo "${token}" | gh auth login --with-token`);
 -----+      run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
 -----+      console.log('🎉  Patch applied & PR opened.');
------+    } catch (err) {
------+      console.warn('⚠️  PR creation failed (gh). Branch is pushed; open PR manually if needed.');
+-----+    } catch {
+-----+      console.log('⚠️  Branch pushed – create PR manually (gh auth failed).');
 -----+    }
 -----+  } else {
------+    console.log('ℹ️  GH_TOKEN not set – skipped automatic PR creation.');
+-----+    console.log('ℹ️  Branch pushed – no GH token, so PR creation skipped.');
 -----+  }
 ----- 
 ------  /* 8 — remove patch from queue */
------+  /*  House‑keeping */
+-----+  /* 8. House‑keeping – delete processed patch */
 -----   rmSync(patchAbs);
 ------  console.log('🎉  Patch applied & PR opened.');
 ----- } catch (err) {
 -----   console.error('🛑  Patch failed – left in queue.');
------   console.error(err.message || err);
+------  console.error(err.message || err);
+------  process.exit(1);
+-----+  console.error(err.message || err); process.exit(1);
+----- }
 -----diff --git a/src/App.jsx b/src/App.jsx
 -----index a7baa41..8d066d1 100644
 -------- a/src/App.jsx
@@ -741,27 +889,25 @@ index b13eff1..e69de29 100644
 ----- }
 -----+// test
 ----diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
-----index 045f750..670191b 100644
+----index 045f750..082c4cd 100644
 ------- a/scripts/apply-ai-patch.cjs
 ----+++ b/scripts/apply-ai-patch.cjs
-----@@ -1,72 +1,83 @@
+----@@ -1,72 +1,173 @@
 -----'use strict';
-----+\#!/usr/bin/env node
-----+/*  scripts/apply‑ai‑patch.cjs
-----+ *  Apply the next .patch from .ai‑queue/ in an isolated work‑tree,
+----+#!/usr/bin/env node
+----+/*  scripts/apply-ai-patch.cjs
+----+ *  Apply the next .patch from .ai-queue/ in an isolated work-tree,
 ----+ *  run gates (lint / tests / validator), commit, push, and optionally
-----+ *  open a PR. 2025‑07‑30 (v3 – “bullet‑proof push”)
+----+ *  open a PR. 2025-07-30 (v4 – "force-push with retry")
 ----+ */
 ---- 
 -----const { execSync }   = require('node:child_process');
 -----const { readdirSync, mkdtempSync, rmSync, statSync } = require('node:fs');
------const { join, resolve } = require('node:path');
------const { tmpdir } = require('node:os');
 ----+'use strict';
-----+const { execSync }                    = require('node:child_process');
+----+const { execSync } = require('node:child_process');
 ----+const { readdirSync, mkdtempSync, rmSync } = require('node:fs');
-----+const { join, resolve }              = require('node:path');
-----+const { tmpdir }                      = require('node:os');
+---- const { join, resolve } = require('node:path');
+---- const { tmpdir } = require('node:os');
 ---- 
 -----const queueDir = '.ai-queue';
 -----const patches  = readdirSync(queueDir)
@@ -774,20 +920,32 @@ index b13eff1..e69de29 100644
 ----+  console.log(`$ ${cmd}`);
 ----+  execSync(cmd, { stdio: 'inherit', env: { ...process.env, HUSKY: '0' }, ...opts });
 ----+};
+----+
+----+const runSafe = (cmd, opts = {}) => {
+----+  try {
+----+    run(cmd, opts);
+----+    return true;
+----+  } catch {
+----+    return false;
+----+  }
+----+};
+----+
+----+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 ---- 
 ----+/* ════════════════════════════════════════════════════════════════ */
 ----+/*  Queue handling                                                 */
 ----+/* ════════════════════════════════════════════════════════════════ */
-----+const queueDir  = '.ai-queue';
-----+const patches   = readdirSync(queueDir).filter(f => f.endsWith('.patch')).sort();
+----+const queueDir = '.ai-queue';
+----+const patches = readdirSync(queueDir).filter(f => f.endsWith('.patch')).sort();
 ---- if (!patches.length) {
 -----  console.log('✅  No patches in queue – nothing to do.');
------  process.exit(0);
-----+  console.log('✅  No patches in queue – nothing to do.'); process.exit(0);
+----+  console.log('✅  No patches in queue – nothing to do.'); 
+----   process.exit(0);
 ---- }
 ---- 
 -----const patch    = patches[0];
------const patchAbs = resolve(queueDir, patch);
+----+const patch = patches[0];
+---- const patchAbs = resolve(queueDir, patch);
 -----const branch   = `ai/${patch.replace('.patch', '')}`;
 -----
 -----const run = (cmd, opts = {}) => {
@@ -796,84 +954,171 @@ index b13eff1..e69de29 100644
 -----                  env: { ...process.env, HUSKY: '0' },
 -----                  ...opts });
 -----};
-----+const patch     = patches[0];
-----+const patchAbs  = resolve(queueDir, patch);
-----+const branch    = `ai/${patch.replace('.patch', '')}`;
+----+const branch = `ai/${patch.replace('.patch', '')}`;
 ---- 
-----+/* ════════════════════════════════════════════════════════════════ */
-----+/*  Main flow                                                      */
-----+/* ════════════════════════════════════════════════════════════════ */
----- try {
+-----try {
 -----  /* 0 — bail early on empty patch */
 -----  if (statSync(patchAbs).size === 0) {
 -----    throw new Error(`${patch} is empty – remove or regenerate`);
 -----  }
-----+  /* 1. Remove any existing local & remote refs (ignore errors) */
-----+  try { run(`git branch -D ${branch}`); }                 catch {}
-----+  try { run(`git push origin --delete ${branch}`); }      catch {}
----- 
+-----
 -----  /* 1 — clean stale branches (ignore failures) */
 -----  try { run(`git branch -D ${branch}`);           } catch {}
 -----  try { run(`git push origin --delete ${branch}`); } catch {}
------
+----+/* ════════════════════════════════════════════════════════════════ */
+----+/*  Main flow                                                      */
+----+/* ════════════════════════════════════════════════════════════════ */
+----+async function main() {
+----+  let workDir;
+----+  
+----+  try {
+----+    /* 1. Clean up any existing local & remote refs */
+----+    console.log('🧹 Cleaning up existing refs...');
+----+    runSafe(`git branch -D ${branch}`);
+----+    
+----+    // Try to delete remote branch, wait a bit for GitHub to process
+----+    if (runSafe(`git push origin --delete ${branch}`)) {
+----+      console.log('⏳ Waiting for GitHub to process branch deletion...');
+----+      await sleep(2000); // 2 second delay
+----+    }
+---- 
 -----  /* 2 — isolated work‑tree */
-----+  /* 2. Create isolated work‑tree */
-----   const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
-----   run(`git worktree add -b ${branch} ${workDir}`);
------
+-----  const workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
+-----  run(`git worktree add -b ${branch} ${workDir}`);
+----+    /* 2. Create isolated work-tree */
+----+    console.log('🔨 Creating isolated work-tree...');
+----+    workDir = mkdtempSync(join(tmpdir(), 'ai-patch-'));
+----+    run(`git worktree add -b ${branch} ${workDir}`);
+----+    run(`git -C ${workDir} config user.name "github-actions[bot]"`);
+----+    run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
+---- 
 -----  /* 2a — set author so git commit works */
-----   run(`git -C ${workDir} config user.name  "github-actions[bot]"`);
-----   run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
+-----  run(`git -C ${workDir} config user.name  "github-actions[bot]"`);
+-----  run(`git -C ${workDir} config user.email "41898282+github-actions[bot]@users.noreply.github.com"`);
+----+    /* 3. Restore deps once (no post-install scripts) */
+----+    console.log('📦 Installing dependencies...');
+----+    run('npm ci --ignore-scripts', { cwd: workDir });
 ---- 
 -----  /* 3 — dependencies */
-----+  /* 3. Restore deps once (no post‑install scripts) */
-----   run('npm ci --ignore-scripts', { cwd: workDir });
+-----  run('npm ci --ignore-scripts', { cwd: workDir });
+----+    /* 4. Apply patch (3-way, keep index) */
+----+    console.log('🩹 Applying patch...');
+----+    run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
 ---- 
 -----  /* 4 — apply patch (3‑way merge fallback) */
-----+  /* 4. Apply patch (3‑way, keep index) */
-----   run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
+-----  run(`git -C ${workDir} apply --index --whitespace=nowarn --3way "${patchAbs}"`);
+----+    /* 5. Project "gates" */
+----+    console.log('🧪 Running validation gates...');
+----+    run('npm run lint', { cwd: workDir });
+----+    run('npm test --silent', { cwd: workDir });
+----+    run('node scripts/validate-sst.js', { cwd: workDir });
 ---- 
 -----  /* 5 — project gates */
 -----  run('npm run lint',                 { cwd: workDir }); // warnings allowed
 -----  run('npm test --silent',            { cwd: workDir });
 -----  run('node scripts/validate-sst.js',  { cwd: workDir });
-----+  /* 5. Project “gates” */
-----+  run('npm run lint',             { cwd: workDir });
-----+  run('npm test',                 { cwd: workDir });
-----+  run('node scripts/validate-sst.js', { cwd: workDir });
+----+    /* 6. Commit & push with retry logic */
+----+    console.log('💾 Committing changes...');
+----+    run(`git -C ${workDir} commit -am "ai: ${patch}"`);
+----+    
+----+    console.log('🚀 Pushing to remote...');
+----+    let pushAttempts = 0;
+----+    const maxAttempts = 3;
+----+    
+----+    while (pushAttempts < maxAttempts) {
+----+      try {
+----+        // Always use --force to overwrite any potential remote state
+----+        run(`git -C ${workDir} push -u origin ${branch} --force`);
+----+        console.log('✅ Push successful!');
+----+        break;
+----+      } catch (err) {
+----+        pushAttempts++;
+----+        if (pushAttempts < maxAttempts) {
+----+          console.log(`⚠️  Push failed (attempt ${pushAttempts}/${maxAttempts}), retrying in 3s...`);
+----+          await sleep(3000);
+----+          
+----+          // Try to delete remote again in case it's a stale ref
+----+          runSafe(`git push origin --delete ${branch}`);
+----+          await sleep(1000);
+----+        } else {
+----+          throw new Error('Failed to push after multiple attempts');
+----+        }
+----+      }
+----+    }
 ---- 
 -----  /* 6 — commit & push PR branch */
-----+  /* 6. Commit & push (force) */
-----   run(`git -C ${workDir} commit -am "ai: ${patch}"`);
+-----  run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 -----  run(`git -C ${workDir} push -u origin ${branch}`);
-----+  run(`git -C ${workDir} push -u origin ${branch} --force`);
+----+    /* 7. Optional PR creation (if token present) */
+----+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+----+    if (token) {
+----+      try {
+----+        run(`echo "${token}" | gh auth login --with-token`);
+----+        
+----+        // Check if PR already exists before creating
+----+        const prExists = runSafe(`gh pr view ${branch} --json state`);
+----+        if (!prExists) {
+----+          run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
+----+          console.log('🎉 Patch applied & PR opened.');
+----+        } else {
+----+          console.log('ℹ️  PR already exists for this branch.');
+----+        }
+----+      } catch {
+----+        console.log('⚠️  Branch pushed – create PR manually (gh auth/creation failed).');
+----+      }
+----+    } else {
+----+      console.log('ℹ️  Branch pushed – no GH token, so PR creation skipped.');
+----+    }
 ---- 
 -----  /* 7 — open PR */
 -----  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
-----+  /* 7. Optional PR creation (if token present) */
-----+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
-----+  if (token) {
-----+    try {
-----+      run(`echo "${token}" | gh auth login --with-token`);
-----+      run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
-----+      console.log('🎉  Patch applied & PR opened.');
-----+    } catch {
-----+      console.log('⚠️  Branch pushed – create PR manually (gh auth failed).');
+----+    /* 8. House-keeping – delete processed patch and cleanup worktree */
+----+    console.log('🧹 Cleaning up...');
+----+    
+----+    // Remove worktree
+----+    if (workDir) {
+----+      try {
+----+        run(`git worktree remove ${workDir} --force`);
+----+      } catch {
+----+        // Fallback to manual removal if git worktree remove fails
+----+        rmSync(workDir, { recursive: true, force: true });
+----+      }
 ----+    }
-----+  } else {
-----+    console.log('ℹ️  Branch pushed – no GH token, so PR creation skipped.');
+----+    
+----+    // Delete the patch file
+----+    rmSync(patchAbs);
+----+    console.log('✅ Patch successfully processed and removed from queue.');
+----+    
+----+  } catch (err) {
+----+    console.error('🛑 Patch failed – left in queue.');
+----+    console.error(err.message || err);
+----+    
+----+    // Cleanup worktree even on failure
+----+    if (workDir) {
+----+      try {
+----+        run(`git worktree remove ${workDir} --force`);
+----+      } catch {
+----+        rmSync(workDir, { recursive: true, force: true });
+----+      }
+----+    }
+----+    
+----+    process.exit(1);
 ----+  }
+----+}
 ---- 
 -----  /* 8 — remove patch from queue */
-----+  /* 8. House‑keeping – delete processed patch */
-----   rmSync(patchAbs);
+-----  rmSync(patchAbs);
 -----  console.log('🎉  Patch applied & PR opened.');
----- } catch (err) {
-----   console.error('🛑  Patch failed – left in queue.');
+-----} catch (err) {
+-----  console.error('🛑  Patch failed – left in queue.');
 -----  console.error(err.message || err);
------  process.exit(1);
-----+  console.error(err.message || err); process.exit(1);
----- }
+----+// Run the async main function
+----+main().catch(err => {
+----+  console.error('Unexpected error:', err);
+----   process.exit(1);
+-----}
+----+});
+----\ No newline at end of file
 ----diff --git a/src/App.jsx b/src/App.jsx
 ----index a7baa41..8d066d1 100644
 ------- a/src/App.jsx
@@ -884,10 +1129,10 @@ index b13eff1..e69de29 100644
 ---- }
 ----+// test
 ---diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
----index 045f750..082c4cd 100644
+---index 045f750..df78512 100644
 ------ a/scripts/apply-ai-patch.cjs
 ---+++ b/scripts/apply-ai-patch.cjs
----@@ -1,72 +1,173 @@
+---@@ -1,72 +1,182 @@
 ----'use strict';
 ---+#!/usr/bin/env node
 ---+/*  scripts/apply-ai-patch.cjs
@@ -1046,6 +1291,8 @@ index b13eff1..e69de29 100644
 ----  run(`git -C ${workDir} push -u origin ${branch}`);
 ---+    /* 7. Optional PR creation (if token present) */
 ---+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+---+    let prCreated = false;
+---+    
 ---+    if (token) {
 ---+      try {
 ---+        run(`echo "${token}" | gh auth login --with-token`);
@@ -1055,14 +1302,21 @@ index b13eff1..e69de29 100644
 ---+        if (!prExists) {
 ---+          run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
 ---+          console.log('🎉 Patch applied & PR opened.');
+---+          prCreated = true;
 ---+        } else {
 ---+          console.log('ℹ️  PR already exists for this branch.');
+---+          prCreated = true;
 ---+        }
----+      } catch {
----+        console.log('⚠️  Branch pushed – create PR manually (gh auth/creation failed).');
+---+      } catch (err) {
+---+        console.log('⚠️  Branch pushed successfully but PR creation failed.');
+---+        console.log('📎 Create PR manually at:');
+---+        console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
+---+        // Don't throw - branch push was successful
 ---+      }
 ---+    } else {
 ---+      console.log('ℹ️  Branch pushed – no GH token, so PR creation skipped.');
+---+      console.log('📎 Create PR manually at:');
+---+      console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
 ---+    }
 --- 
 ----  /* 7 — open PR */
@@ -1124,10 +1378,10 @@ index b13eff1..e69de29 100644
 --- }
 ---+// test
 --diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
---index 045f750..df78512 100644
+--index 045f750..f4d5015 100644
 ----- a/scripts/apply-ai-patch.cjs
 --+++ b/scripts/apply-ai-patch.cjs
---@@ -1,72 +1,182 @@
+--@@ -1,72 +1,157 @@
 ---'use strict';
 --+#!/usr/bin/env node
 --+/*  scripts/apply-ai-patch.cjs
@@ -1284,35 +1538,10 @@ index b13eff1..e69de29 100644
 ---  /* 6 — commit & push PR branch */
 ---  run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 ---  run(`git -C ${workDir} push -u origin ${branch}`);
---+    /* 7. Optional PR creation (if token present) */
---+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
---+    let prCreated = false;
---+    
---+    if (token) {
---+      try {
---+        run(`echo "${token}" | gh auth login --with-token`);
---+        
---+        // Check if PR already exists before creating
---+        const prExists = runSafe(`gh pr view ${branch} --json state`);
---+        if (!prExists) {
---+          run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
---+          console.log('🎉 Patch applied & PR opened.');
---+          prCreated = true;
---+        } else {
---+          console.log('ℹ️  PR already exists for this branch.');
---+          prCreated = true;
---+        }
---+      } catch (err) {
---+        console.log('⚠️  Branch pushed successfully but PR creation failed.');
---+        console.log('📎 Create PR manually at:');
---+        console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
---+        // Don't throw - branch push was successful
---+      }
---+    } else {
---+      console.log('ℹ️  Branch pushed – no GH token, so PR creation skipped.');
---+      console.log('📎 Create PR manually at:');
---+      console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
---+    }
+--+    /* 7. Success! Provide manual PR link */
+--+    console.log('✅ Patch successfully applied and pushed!');
+--+    console.log('📎 Create PR manually at:');
+--+    console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
 -- 
 ---  /* 7 — open PR */
 ---  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
@@ -1373,10 +1602,10 @@ index b13eff1..e69de29 100644
 -- }
 --+// test
 -diff --git a/scripts/apply-ai-patch.cjs b/scripts/apply-ai-patch.cjs
--index 045f750..f4d5015 100644
+-index 045f750..21396bc 100644
 ---- a/scripts/apply-ai-patch.cjs
 -+++ b/scripts/apply-ai-patch.cjs
--@@ -1,72 +1,157 @@
+-@@ -1,72 +1,185 @@
 --'use strict';
 -+#!/usr/bin/env node
 -+/*  scripts/apply-ai-patch.cjs
@@ -1533,10 +1762,38 @@ index b13eff1..e69de29 100644
 --  /* 6 — commit & push PR branch */
 --  run(`git -C ${workDir} commit -am "ai: ${patch}"`);
 --  run(`git -C ${workDir} push -u origin ${branch}`);
--+    /* 7. Success! Provide manual PR link */
--+    console.log('✅ Patch successfully applied and pushed!');
--+    console.log('📎 Create PR manually at:');
--+    console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
+-+    /* 7. Auto-merge to main if all tests passed */
+-+    console.log('✅ All validations passed! Auto-merging to main...');
+-+    
+-+    try {
+-+      // Fetch latest main to ensure we're up to date
+-+      run(`git -C ${workDir} fetch origin main`);
+-+      
+-+      // Merge main into our branch first (to handle any conflicts)
+-+      run(`git -C ${workDir} merge origin/main --no-edit`);
+-+      
+-+      // Push the merged branch
+-+      run(`git -C ${workDir} push origin ${branch} --force`);
+-+      
+-+      // Now merge our branch into main
+-+      run(`git checkout main`);
+-+      run(`git pull origin main`);
+-+      run(`git merge ${branch} --no-ff -m "AI/CD: Auto-merge ${patch}"`);
+-+      run(`git push origin main`);
+-+      
+-+      console.log('🎉 Patch successfully merged to main!');
+-+      
+-+      // Optional: Delete the feature branch
+-+      runSafe(`git push origin --delete ${branch}`);
+-+      runSafe(`git branch -d ${branch}`);
+-+      
+-+    } catch (err) {
+-+      console.error('⚠️  Auto-merge failed. Branch is pushed and ready for manual merge.');
+-+      console.error(err.message);
+-+      console.log('📎 Create PR manually at:');
+-+      console.log(`   https://github.com/metacurtis/metacurtis-v3.1/pull/new/${branch}`);
+-+      // Don't throw - the patch was successfully applied and pushed
+-+    }
 - 
 --  /* 7 — open PR */
 --  run(`gh pr create -f -l ai-patch -t "${patch}" -b "Automated AI patch"`);
