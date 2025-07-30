@@ -1,0 +1,22 @@
+From 97ca400077d06b651f5706f4225defa4c706cf98 Mon Sep 17 00:00:00 2001
+From: "github-actions[bot]"
+ <41898282+github-actions[bot]@users.noreply.github.com>
+Date: Tue, 29 Jul 2025 23:59:10 -0500
+Subject: [PATCH] test: verify AICD pipeline works
+
+---
+ src/config/sst3/narrative-dialogue.js | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/config/sst3/narrative-dialogue.js b/src/config/sst3/narrative-dialogue.js
+index c760d45..d1e2f72 100644
+--- a/src/config/sst3/narrative-dialogue.js
++++ b/src/config/sst3/narrative-dialogue.js
+@@ -261,3 +261,4 @@ export const getParticleCuesForStage = stage =>
+   NARRATIVE_DIALOGUE[stage]?.narration?.segments
+     ?.filter(s => s.particleCue)
+     ?.map(s => ({ timing: s.timing.start, cue: s.particleCue, id: s.id })) || [];
++// AICD Success Test - Tue Jul 29 23:59:10 CDT 2025
+-- 
+2.34.1
+
