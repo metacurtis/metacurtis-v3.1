@@ -18,6 +18,8 @@ on:
 jobs:
   apply-patch:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: \${{ github.token }}  # Fix for gh pr create
 
     steps:
       # 1. checkout full repo history (needed for 3‑way apply)
