@@ -1,4 +1,10 @@
 name: AI Patch Queue
+
+
+permissions:
+  contents: write        # allow push / branch delete
+  pull-requests: write
+  
 on:
   push:
     paths:
