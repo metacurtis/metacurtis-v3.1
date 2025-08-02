@@ -1,5 +1,5 @@
 // src/components/ui/NarrativeUIControls.jsx
-// 🎯 REPLACES StageNavigation.jsx - Uses ConsolidatedNavigationController API
+// 🎯 Navigation UI Controls - Uses narrativeAtom
 
 import { useState, useEffect } from 'react';
 
@@ -206,7 +206,7 @@ export default function NarrativeUIControls() {
 🎯 CONSOLIDATION COMPLETE
 
 ✅ REPLACES: StageNavigation.jsx
-✅ USES: ConsolidatedNavigationController API
+✅ USES: narrativeAtom directly
 ✅ FEATURES:
   - Stage timeline buttons (original functionality)
   - Prev/Next navigation controls

@@ -1,0 +1,300 @@
+========== FILE TREE ==========
+.
+├── **Assumptions:**
+├── 2025-07-24_19-55.txt
+├── README.md
+├── SSTv3.0_patch_snapshot_2025-07-24_19-58.txt
+├── _debug
+│   └── atomic-snapshot-2025-07-07_0834.js
+├── archive_dups_20250724_1412
+│   ├── sst-v3.0-config.js
+│   └── tier-behaviors.js
+├── backup_sst_cleanup_20250706_224237
+│   ├── StageNavigation.jsx
+│   ├── narrativeStageOrder.js
+│   └── stageMappingUtils.js
+├── backups
+│   ├── memory-fragments.js.1753386582.bak
+│   ├── memory-fragments.js.bak.1753383520.1753386582.bak
+│   ├── memory-fragments.js.messy.1753386582.bak
+│   ├── narrative-dialogue.js.1753386582.bak
+│   ├── sst-v3.0-config.js.1753386582.bak
+│   └── tier-behaviors.js.1753386582.bak
+├── central_clock_backup_20250706_215239
+│   ├── AdaptiveQualitySystem.jsx
+│   ├── App.jsx
+│   ├── performanceStore.js
+│   └── rollback.sh
+├── eslint.config.js
+├── fix_all_import_paths.sh
+├── index.html
+├── jsconfig.json
+├── lighthouserc.json
+├── mc3v_core_architecture_review.txt
+├── mc3v_snapshot_2025-08-02_11-29_OgDodrvW.txt
+├── metacurtis_complete_context_2025-07-16_18-25.txt
+├── metacurtis_particle_debug_2025-07-16_18-29.txt
+├── migrate_to_sst3.sh
+├── migrate_to_sst_v3.sh
+├── migration_backup_20250706_194010
+│   └── src
+│       ├── components
+│       │   └── ui
+│       │       ├── NarrativeUIControls.jsx
+│       │       └── navigation
+│       │           └── StageNavigation.jsx
+│       ├── config
+│       │   ├── consciousness
+│       │   │   └── consciousnessStages.js
+│       │   └── narrativeStageOrder.js
+│       ├── stores
+│       │   └── narrativeStore.js
+│       └── utils
+│           └── narrative
+│               └── stageMappingUtils.js
+├── nav_perf_stage_review.txt
+├── package-lock.json
+├── package.json
+├── particle_authority_debug_20250711.txt
+├── particle_debug_context_20250721_230227.txt
+├── particle_debug_merge_20250711.txt
+├── particle_positioning_debug_20250718_184538.txt
+├── phase2_merge_20250711.txt
+├── phase2_optimization_context_2025-07-17_15-33.txt
+├── phase2_optimization_context_2025-07-17_15-35.txt
+├── project-tree.txt
+├── quick_case_fix.sh
+├── scripts
+│   ├── create-sst-v3-engine-part1.sh
+│   ├── create-sst-v3-engine-part2.sh
+│   ├── migrate_stages.sh
+│   ├── purge-sst-v2.sh
+│   ├── validate-atomic-stores.js
+│   ├── validate-sst-integration.js
+│   ├── validate-sst.js
+│   └── validate-sst3.js
+├── shader_bundle_20250711.txt
+├── shader_fix_context_20250723_215244.txt
+├── shader_fix_context_20250723_215351.txt
+├── sprint_context_2025-01-24_consciousness_wiring.txt
+├── sprint_context_2025-01-25_SST_v3_migration_phase2.txt
+├── sprint_context_2025-07-16_18-09.txt
+├── sprint_context_2025-07-16_18-12.txt
+├── sprint_context_2025-07-16_20-42.txt
+├── sprint_context_2025-07-16_20-44.txt
+├── sprint_context_2025-07-17_10-04.txt
+├── sprint_context_2025-07-17_15-30.txt
+├── sprint_context_2025-07-20_18-40.txt
+├── sprint_context_2025-07-20_19-02.txt
+├── src
+│   ├── App.jsx
+│   ├── App.jsx.bak
+│   ├── __tests__
+│   │   └── smoke.test.js
+│   ├── bootstrap
+│   │   └── wireSSTv3.js
+│   ├── components
+│   │   ├── ConsolidatedNavigationController.jsx
+│   │   ├── common
+│   │   │   └── ErrorBoundary.jsx
+│   │   ├── consciousness
+│   │   │   ├── ConsciousnessTheater.jsx
+│   │   │   ├── ConsciousnessTheater.jsx.bak
+│   │   │   └── ConsciousnessTheater.jsx.v2backup
+│   │   ├── debug
+│   │   │   └── EventQueueTest.jsx
+│   │   ├── dev
+│   │   │   ├── DebugExpose.jsx
+│   │   │   └── DevPerformanceMonitor.jsx
+│   │   ├── graphics
+│   │   │   └── SimpleAnimatedCube.jsx
+│   │   ├── layout
+│   │   │   └── Navbar.jsx
+│   │   ├── sections
+│   │   │   └── NarrativeSection.disable
+│   │   ├── ui
+│   │   │   ├── AdvancedContactPortal.jsx
+│   │   │   ├── CanvasErrorBoundary.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Layout.jsx
+│   │   │   ├── NarrativeUIControls.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── ResourceMonitor.jsx
+│   │   │   ├── Typewriter.jsx
+│   │   │   ├── narrative
+│   │   │   │   ├── MemoryFragments.jsx
+│   │   │   │   └── StageNavigation.jsx
+│   │   │   └── navigation
+│   │   │       └── StageController.jsx
+│   │   └── webgl
+│   │       ├── AdaptiveRenderer..disable
+│   │       ├── MinimalTestCanvas.disable
+│   │       ├── ParticleEngine.disable
+│   │       ├── ParticleField.disable
+│   │       ├── WebGLBackground.jsx
+│   │       ├── WebGLBackground.jsx.bak
+│   │       ├── WebGLBackground.jsx.v2backup
+│   │       ├── WebGLCanvas.jsx
+│   │       ├── consciousness
+│   │       │   ├── ConsciousnessPatterns.js
+│   │       │   └── PointSpriteAtlas.js
+│   │       └── narrative
+│   │           └── SimpleStageController.jsx
+│   ├── config
+│   │   ├── canonical
+│   │   │   ├── canonicalAuthority.js
+│   │   │   ├── contaminationScan.js
+│   │   │   ├── sstV2Quality.js.bak
+│   │   │   ├── sstV2Quality.js.v2backup
+│   │   │   ├── sstV2Stages.jsx.bak
+│   │   │   └── sstV2Stages.jsx.v2backup
+│   │   └── sst3
+│   │       ├── memory-fragments.js
+│   │       ├── narrative-dialogue.js
+│   │       ├── sst-v3.0-config.js
+│   │       └── tier-behaviors.js
+│   ├── console-shim.js
+│   ├── core
+│   │   ├── CentralEventClock.js
+│   │   └── index.js
+│   ├── engine
+│   │   ├── ConsciousnessEngine.js
+│   │   ├── ConsciousnessEngine.js.bak
+│   │   ├── MemoryFragmentController.js
+│   │   ├── NarrativeController.js
+│   │   └── TierSystem.js
+│   ├── hooks
+│   │   ├── useAdaptiveQuality.js
+│   │   ├── useCentralClock.js
+│   │   ├── useIdle.js
+│   │   ├── useMemoryFragments.js
+│   │   └── useResourceTracker.js
+│   ├── main.jsx
+│   ├── sections
+│   │   ├── About.jsx
+│   │   ├── Contact.jsx
+│   │   └── Features.jsx
+│   ├── shaders
+│   │   ├── includes
+│   │   │   ├── uniforms.glsl
+│   │   │   └── utils.glsl
+│   │   ├── modules
+│   │   │   ├── brain-morphing.glsl
+│   │   │   ├── consciousness-stages.glsl
+│   │   │   └── performance-adaptive.glsl
+│   │   └── templates
+│   │       ├── consciousness-fragment.glsl
+│   │       └── consciousness-vertex.glsl
+│   ├── stores
+│   │   ├── atoms
+│   │   │   ├── clockAtom.js
+│   │   │   ├── createAtom.js
+│   │   │   ├── qualityAtom.js
+│   │   │   ├── qualityAtom.js.bak
+│   │   │   ├── qualityAtom.js.v2backup
+│   │   │   └── stageAtom.js
+│   │   └── narrativeStore.legacy.backup
+│   ├── styles
+│   │   └── index.css
+│   └── utils
+│       ├── featureFlags.js
+│       ├── performance
+│       │   ├── AdaptiveQualitySystem.js
+│       │   ├── DeviceCapabilities.js
+│       │   ├── PerformanceMetrics.js
+│       │   └── ResourceMetrics.js
+│       ├── shaderUtils.js
+│       └── webgl
+│           ├── FrustumAwareParticleGenerator.js
+│           ├── ResourceRegistry.js
+│           ├── ResourceTracker.js
+│           └── ShaderDebugSystem.js
+├── sst_atoms_merge_20250711.txt
+├── sst_version_comparison_20250724_125740.txt
+├── stage_code_review.txt
+├── stage_review.txt
+├── tailwind.config.js
+├── targeted_merge_20250711.txt
+├── transition_merge_review.txt
+├── update-vscode-settings.sh
+├── urgent_core_review.txt
+├── verify_migration.sh
+├── verify_v3.sh
+├── vite.config.js
+└── webgl_debug_bundle_20250711.txt
+
+50 directories, 172 files
+
+========== DEPENDENCY GRAPH (Markdown) ==========
+
+========== RELEVANT CODE FILES ==========
+src/App.jsx
+src/__tests__/smoke.test.js
+src/bootstrap/wireSSTv3.js
+src/components/ConsolidatedNavigationController.jsx
+src/components/common/ErrorBoundary.jsx
+src/components/consciousness/ConsciousnessTheater.jsx
+src/components/debug/EventQueueTest.jsx
+src/components/dev/DebugExpose.jsx
+src/components/dev/DevPerformanceMonitor.jsx
+src/components/graphics/SimpleAnimatedCube.jsx
+src/components/layout/Navbar.jsx
+src/components/ui/AdvancedContactPortal.jsx
+src/components/ui/CanvasErrorBoundary.jsx
+src/components/ui/Footer.jsx
+src/components/ui/Layout.jsx
+src/components/ui/NarrativeUIControls.jsx
+src/components/ui/Navbar.jsx
+src/components/ui/ResourceMonitor.jsx
+src/components/ui/Typewriter.jsx
+src/components/ui/narrative/MemoryFragments.jsx
+src/components/ui/narrative/StageNavigation.jsx
+src/components/ui/navigation/StageController.jsx
+src/components/webgl/WebGLBackground.jsx
+src/components/webgl/WebGLCanvas.jsx
+src/components/webgl/consciousness/ConsciousnessPatterns.js
+src/components/webgl/consciousness/PointSpriteAtlas.js
+src/components/webgl/narrative/SimpleStageController.jsx
+src/config/canonical/canonicalAuthority.js
+src/config/canonical/contaminationScan.js
+src/config/sst3/memory-fragments.js
+src/config/sst3/narrative-dialogue.js
+src/config/sst3/sst-v3.0-config.js
+src/config/sst3/tier-behaviors.js
+src/console-shim.js
+src/core/CentralEventClock.js
+src/core/index.js
+src/engine/ConsciousnessEngine.js
+src/engine/MemoryFragmentController.js
+src/engine/NarrativeController.js
+src/engine/TierSystem.js
+src/hooks/useAdaptiveQuality.js
+src/hooks/useCentralClock.js
+src/hooks/useIdle.js
+src/hooks/useMemoryFragments.js
+src/hooks/useResourceTracker.js
+src/main.jsx
+src/sections/About.jsx
+src/sections/Contact.jsx
+src/sections/Features.jsx
+src/shaders/includes/uniforms.glsl
+src/shaders/includes/utils.glsl
+src/shaders/modules/brain-morphing.glsl
+src/shaders/modules/consciousness-stages.glsl
+src/shaders/modules/performance-adaptive.glsl
+src/shaders/templates/consciousness-fragment.glsl
+src/shaders/templates/consciousness-vertex.glsl
+src/stores/atoms/clockAtom.js
+src/stores/atoms/createAtom.js
+src/stores/atoms/qualityAtom.js
+src/stores/atoms/stageAtom.js
+src/utils/featureFlags.js
+src/utils/performance/AdaptiveQualitySystem.js
+src/utils/performance/DeviceCapabilities.js
+src/utils/performance/PerformanceMetrics.js
+src/utils/performance/ResourceMetrics.js
+src/utils/shaderUtils.js
+src/utils/webgl/FrustumAwareParticleGenerator.js
+src/utils/webgl/ResourceRegistry.js
+src/utils/webgl/ResourceTracker.js
+src/utils/webgl/ShaderDebugSystem.js
