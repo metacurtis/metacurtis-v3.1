@@ -7,28 +7,28 @@
 - [x] Create `StateController.js` - single point for atom writes
 - [x] Create `StateReader.js` - read-only access patterns
 - [x] Create `StateValidator.js` - ensure state integrity
-- [ ] Create `AtomicToBeatBus.js` - auto-sync bridge
-- [ ] Create `StateDebugger.js` - dev tools
-- [ ] Test state flow with example
+- [x] Create `AtomicToBeatBus.js` - auto-sync bridge
+- [x] Create `StateDebugger.js` - dev tools
+- [x] Test state flow with example
 
 ### Morning Session 2: BeatBus Implementation (2 hours)
 
-- [ ] Create `BeatBus.js` - central event system
-- [ ] Create `EventCatalog.js` - all event definitions
-- [ ] Create `EventValidator.js` - runtime validation
-- [ ] Create `EventDebugger.js` - visual event flow
-- [x] Create `AtomicIntegration.js` - receive from bridge *(merged into AtomicToBeatBus.js)*
-- [x] Create `ModuleRegistry.js` - track subscribers *(built into BeatBus.js)*
+- [x] Create `BeatBus.js` - central event system
+- [x] Create `EventCatalog.js` - all event definitions
+- [x] Create `EventValidator.js` - runtime validation
+- [x] Create `EventDebugger.js` - visual event flow
+- [x] Create `AtomicIntegration.js` - _(merged into AtomicToBeatBus.js)_
+- [x] Create `ModuleRegistry.js` - _(built into BeatBus.js - tracks all listeners)_
 
-### Afternoon: WebGL Module Refactor (4 hours)
+### Afternoon: ConsciousnessEngine Integration (4 hours)
 
-- [ ] Refactor `WebGLBackground.jsx` to `WebGLRenderer.js`
-- [ ] Extract shader logic to `ShaderManager.js`
-- [ ] Create `RenderController.js` - manage render state
-- [ ] Create `UniformBridge.js` - BeatBus to uniforms
-- [ ] Create `RenderState.js` - local render state
-- [ ] Remove all direct Canonical access
-- [ ] Test full viewport rendering
+- [ ] Enhance `ConsciousnessEngine.js` to listen to BeatBus events
+- [ ] Add intelligent blueprint caching based on state changes
+- [ ] Implement blueprint pre-generation for smooth transitions
+- [ ] Create `BlueprintBridge.js` - emit blueprints via BeatBus
+- [ ] Update `WebGLBackground.jsx` to subscribe to BLUEPRINT_READY events
+- [ ] Remove direct blueprint passing, use BeatBus instead
+- [ ] Test performance improvements with new event flow
 
 ## Day 2: Theater State Machine & Integration
 
@@ -45,7 +45,7 @@
 
 - [ ] Create `SystemOrchestrator.js` - master coordinator
 - [ ] Create `StateFlowValidator.js` - ensure clean flow
-- [ ] Create `EngineToRenderer.js` - blueprint flow
+- [ ] Wire `ConsciousnessEngine` blueprint events to renderer
 - [ ] Create `UserInputBridge.js` - input to StateController
 - [ ] Verify no direct atom access outside controllers
 - [ ] Run full integration test
@@ -54,7 +54,17 @@
 
 - [ ] All modules communicate through BeatBus
 - [ ] StateController is only atom writer
-- [ ] WebGL renders full viewport
+- [ ] ConsciousnessEngine responds to state via BeatBus
+- [ ] WebGLBackground receives blueprints via events
 - [ ] Opening sequence transitions smoothly
 - [ ] Zero console errors
 - [ ] 60+ FPS maintained
+
+## Architectural Notes
+
+- **Change**: Instead of refactoring WebGLBackground into modules, we're keeping it as a "dumb renderer"
+- **Rationale**: ConsciousnessEngine is the brain - it should handle state logic and optimization
+- **Benefits**:
+  - Cleaner separation of concerns
+  - Engine can pre-generate blueprints for smooth transitions
+  - WebGL component stays simple and maintainable
