@@ -4,9 +4,9 @@
 
 ### Morning Session 1: Atomic State Architecture (2 hours)
 
-- [ ] Create `StateController.js` - single point for atom writes
-- [ ] Create `StateReader.js` - read-only access patterns
-- [ ] Create `StateValidator.js` - ensure state integrity
+- [x] Create `StateController.js` - single point for atom writes
+- [x] Create `StateReader.js` - read-only access patterns
+- [x] Create `StateValidator.js` - ensure state integrity
 - [ ] Create `AtomicToBeatBus.js` - auto-sync bridge
 - [ ] Create `StateDebugger.js` - dev tools
 - [ ] Test state flow with example
@@ -17,8 +17,8 @@
 - [ ] Create `EventCatalog.js` - all event definitions
 - [ ] Create `EventValidator.js` - runtime validation
 - [ ] Create `EventDebugger.js` - visual event flow
-- [ ] Create `AtomicIntegration.js` - receive from bridge
-- [ ] Create `ModuleRegistry.js` - track subscribers
+- [x] Create `AtomicIntegration.js` - receive from bridge *(merged into AtomicToBeatBus.js)*
+- [x] Create `ModuleRegistry.js` - track subscribers *(built into BeatBus.js)*
 
 ### Afternoon: WebGL Module Refactor (4 hours)
 
