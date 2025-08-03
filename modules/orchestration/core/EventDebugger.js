@@ -3,7 +3,7 @@
 // Shows real-time event flow, listeners, and performance
 
 import BeatBus from './BeatBus';
-import { Events, getEventCategory } from './EventCatalog';
+import { getEventCategory } from './EventCatalog';
 
 class EventDebugger {
   constructor() {
@@ -15,20 +15,20 @@ class EventDebugger {
     this.debugPanel = null;
     this.isVisible = false;
     this.isPaused = false;
-    
+
     // Event tracking
     this.eventLog = [];
     this.maxLogSize = 100;
     this.filters = {
       categories: new Set(),
-      searchTerm: ''
+      searchTerm: '',
     };
-    
+
     // Performance tracking
     this.eventRate = 0;
     this.lastRateCheck = Date.now();
     this.eventCount = 0;
-    
+
     EventDebugger.instance = this;
   }
 
@@ -36,14 +36,11 @@ class EventDebugger {
    * Initialize debugger
    */
   initialize(options = {}) {
-    const {
-      autoShow = false,
-      position = 'bottom-right'
-    } = options;
+    const { autoShow = false, position = 'bottom-right' } = options;
 
     // Set up middleware for event logging
     this._setupMiddleware();
-    
+
     // Create UI
     if (typeof window !== 'undefined') {
       this.createDebugUI(position);
@@ -61,16 +58,16 @@ class EventDebugger {
    * Set up event logging middleware
    */
   _setupMiddleware() {
-    const loggingMiddleware = (next) => (eventName, data, metadata) => {
+    const loggingMiddleware = next => (eventName, data, metadata) => {
       // Log event if not paused
       if (!this.isPaused) {
         this._logEvent(eventName, data, metadata);
       }
-      
+
       // Call next middleware
       return next(eventName, data, metadata);
     };
-    
+
     // Add middleware to BeatBus
     this.beatBus.use(loggingMiddleware);
   }
@@ -85,11 +82,11 @@ class EventDebugger {
       metadata,
       timestamp: Date.now(),
       category: getEventCategory(eventName),
-      listeners: this.beatBus.getListenerCount(eventName)
+      listeners: this.beatBus.getListenerCount(eventName),
     };
 
     this.eventLog.unshift(event);
-    
+
     // Limit log size
     if (this.eventLog.length > this.maxLogSize) {
       this.eventLog.pop();
@@ -323,7 +320,7 @@ class EventDebugger {
     `;
 
     document.body.appendChild(this.debugPanel);
-    
+
     // Update categories
     this._updateCategoryFilter();
   }
@@ -340,14 +337,18 @@ class EventDebugger {
       if (event.category) categories.add(event.category);
     });
 
-    container.innerHTML = Array.from(categories).map(cat => `
+    container.innerHTML = Array.from(categories)
+      .map(
+        cat => `
       <span 
         class="category-tag ${this.filters.categories.has(cat) ? 'active' : ''}"
         onclick="window.eventDebugger.toggleCategory('${cat}')"
       >
         ${cat}
       </span>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   /**
@@ -368,19 +369,24 @@ class EventDebugger {
       if (this.filters.categories.size > 0 && !this.filters.categories.has(event.category)) {
         return false;
       }
-      
+
       // Search filter
       if (this.filters.searchTerm) {
         const searchLower = this.filters.searchTerm.toLowerCase();
-        return event.name.toLowerCase().includes(searchLower) ||
-               JSON.stringify(event.data).toLowerCase().includes(searchLower);
+        return (
+          event.name.toLowerCase().includes(searchLower) ||
+          JSON.stringify(event.data).toLowerCase().includes(searchLower)
+        );
       }
-      
+
       return true;
     });
 
     // Render events
-    list.innerHTML = filteredEvents.slice(0, 50).map((event, index) => `
+    list.innerHTML = filteredEvents
+      .slice(0, 50)
+      .map(
+        (event, index) => `
       <div class="event" onclick="window.eventDebugger.toggleEvent(${index})">
         <div class="event-header">
           <span class="event-name">${event.name}</span>
@@ -396,7 +402,9 @@ Metadata:
 ${JSON.stringify(event.metadata, null, 2)}
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   /**
@@ -458,7 +466,7 @@ ${JSON.stringify(event.metadata, null, 2)}
     const data = {
       timestamp: Date.now(),
       events: this.eventLog,
-      metrics: this.beatBus.getMetrics()
+      metrics: this.beatBus.getMetrics(),
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -521,7 +529,7 @@ export default EventDebugger.getInstance();
 if (import.meta.env.DEV) {
   window.EventDebugger = EventDebugger;
   window.eventDebugger = EventDebugger.getInstance();
-  
+
   // DO NOT auto-initialize - let the main initialization handle it
   console.log('🎵 EventDebugger available at window.eventDebugger');
 }
