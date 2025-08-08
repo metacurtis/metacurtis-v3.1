@@ -1,6 +1,8 @@
 // src/theater/TheaterDirector.js
 // SST v3.0 Compliant Theater Director - Complete timing orchestration
 
+// src/theater/TheaterDirector.js
+// This one should already be correct:
 import BeatBus from '../../modules/orchestration/core/BeatBus.js';
 import { EVENTS, FRAGMENT_TRIGGERS, STAGE_AUDIO } from './events.js';
 
