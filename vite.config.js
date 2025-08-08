@@ -1,68 +1,96 @@
 // vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import glsl from 'vite-plugin-glsl'; // Your existing plugin
-import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
+import glsl from 'vite-plugin-glsl';
+import tailwind from '@tailwindcss/vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  /* ─────────────────────────────── plugins */
   plugins: [
-    react(),
-    glsl(), // Your existing plugin
-    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
+    react(), // React 19 / Fast-Refresh
+    glsl(), // .glsl -> JavaScript strings
+    tailwind(), // Tailwind v4 plug-in – zero extra PostCSS config needed
   ],
+
+  /* ─────────────────────────────── resolver */
   resolve: {
-    // Your existing resolve aliases
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@webgl': path.resolve(__dirname, './src/components/webgl'),
-      '@stores': path.resolve(__dirname, './src/stores'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@assets': path.resolve(__dirname, './src/assets'),
+      /* src/  */
+      '@': path.resolve(__dirname, 'src'),
+      '@components': path.resolve(__dirname, 'src/components'),
+      '@webgl': path.resolve(__dirname, 'src/components/webgl'),
+      '@stores': path.resolve(__dirname, 'src/stores'),
+      '@atoms': path.resolve(__dirname, 'src/stores/atoms'), // Added for atomic stores
+      '@utils': path.resolve(__dirname, 'src/utils'),
+      '@hooks': path.resolve(__dirname, 'src/hooks'),
+      '@assets': path.resolve(__dirname, 'src/assets'),
+      '@config': path.resolve(__dirname, 'src/config'),
+      '@engine': path.resolve(__dirname, 'src/engine'),
+      '@shaders': path.resolve(__dirname, 'src/shaders'),
+      '@core': path.resolve(__dirname, 'src/core'),
+
+      /* modules/  (external to src/) */
+      '@modules': path.resolve(__dirname, 'modules'),
+      '@state': path.resolve(__dirname, 'modules/state'),
+      '@orchestration': path.resolve(__dirname, 'modules/orchestration/core'),
+
+      /* Event System - Direct file aliases for clean imports */
+      '@events': path.resolve(__dirname, 'modules/orchestration/core/EventCatalog.js'),
+      '@beatbus': path.resolve(__dirname, 'modules/orchestration/core/BeatBus.js'),
+
+      /* Theater & other module systems */
+      '@theater': path.resolve(__dirname, 'modules/theater'),
+      '@memory': path.resolve(__dirname, 'modules/memory'),
+      '@narrative': path.resolve(__dirname, 'modules/narrative'),
+      '@audio': path.resolve(__dirname, 'modules/audio'),
+      '@camera': path.resolve(__dirname, 'modules/camera'),
+      '@effects': path.resolve(__dirname, 'modules/effects'),
+      '@integration': path.resolve(__dirname, 'modules/integration'),
+      '@optimization': path.resolve(__dirname, 'modules/optimization'),
     },
+    // If you rely on extra extensions (e.g. .glsl) list them here
+    extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx', '.glsl'],
   },
-  // Remove or comment out the explicit css.postcss configuration
-  // if your postcss.config.js was mainly for Tailwind.
-  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
-  // css: {
-  //   postcss: './postcss.config.js',
-  // },
+
+  /* ─────────────────────────────── dev server */
+  server: {
+    host: true,
+    open: true,
+    strictPort: true, // fail instead of auto-bump
+    hmr: { overlay: true },
+  },
+
+  /* ─────────────────────────────── build */
   build: {
-    // Your existing build configurations
     target: 'esnext',
     minify: 'terser',
-    terserOptions: { compress: { drop_console: false, drop_debugger: true } },
+    sourcemap: true,
+    cssCodeSplit: true,
+    assetsInlineLimit: 4 * 1024,
+    terserOptions: {
+      compress: { drop_console: false, drop_debugger: true },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('three')) return 'three-vendor';
-            if (id.includes('gsap')) return 'gsap-vendor';
-            if (id.includes('@react-three')) return 'drei-vendor';
-            if (id.includes('zustand')) return 'zustand-vendor';
-            if (id.includes('react')) return 'react-vendor';
-            return 'vendor';
-          }
+          if (!id.includes('node_modules')) return;
+          if (id.includes('three')) return 'three';
+          if (id.includes('gsap')) return 'gsap';
+          if (id.includes('@react-three')) return 'react-three';
+          if (id.includes('zustand')) return 'zustand';
+          if (id.includes('react')) return 'react';
+          return 'vendor';
         },
       },
     },
-    sourcemap: true,
-    cssCodeSplit: true,
-    assetsInlineLimit: 4096,
   },
-  server: {
-    // Your existing server configurations
-    host: true,
-    open: true,
-    hmr: { overlay: true },
-  },
+
+  /* ─────────────────────────────── optimise deps */
   optimizeDeps: {
-    // Your existing optimizeDeps
     include: [
       'react',
       'react-dom',
@@ -73,16 +101,21 @@ export default defineConfig({
       'zustand',
     ],
   },
+
+  /* ─────────────────────────────── vitest */
   test: {
-    // Your existing test configurations
-    passWithNoTests: true,
     environment: 'jsdom',
     globals: true,
-    include: ['src/**/*.test.{js,jsx}', 'src/**/*.spec.{js,jsx}'],
+    passWithNoTests: true,
+    include: ['src/**/*.{spec,test}.{js,jsx,ts,tsx}'],
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: ['node_modules/', 'src/assets/'],
     },
-    deps: { optimizer: { web: { include: ['@react-three/fiber', '@react-three/drei'] } } },
+    deps: {
+      optimizer: {
+        web: { include: ['@react-three/fiber', '@react-three/drei'] },
+      },
+    },
   },
 });

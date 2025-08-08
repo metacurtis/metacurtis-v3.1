@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
 import { clockAtom } from './stores/atoms/clockAtom';
-
+import consciousnessEngine from './engine/ConsciousnessEngine'; // Import to initialize
 
 export default function App() {
   useEffect(() => {
@@ -12,7 +12,10 @@ export default function App() {
     if (!clock.isRunning) {
       clockAtom.start?.();
     }
-    
+
+    // Engine initializes itself on import
+    console.log('🚀 App initialized with ConsciousnessEngine');
+
     return () => {
       if (clockAtom.getState().isRunning) {
         clockAtom.stop?.();
