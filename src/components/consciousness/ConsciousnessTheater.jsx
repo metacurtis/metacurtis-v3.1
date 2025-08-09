@@ -151,7 +151,7 @@ export default function ConsciousnessTheater() {
   const currentStageRef = useRef('genesis');
 
   // Get configuration
-  const stageConfig = Canonical.stages[currentStage];
+  const _stageConfig = Canonical.stages[currentStage]; // Prefix with _ to satisfy linter
   const narrative = Canonical.dialogue?.[currentStage];
 
   // Memory fragments
@@ -247,6 +247,12 @@ export default function ConsciousnessTheater() {
           }
           break;
         }
+        case 'h':
+        case 'H':
+          // Toggle Director Console visibility
+          window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR;
+          window.location.reload();
+          break;
       }
     };
 
@@ -372,75 +378,147 @@ export default function ConsciousnessTheater() {
         return null;
       })}
 
-      {/* Stage HUD */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '20px',
-          left: '20px',
-          color: '#00FF00',
-          fontFamily: 'Courier New, monospace',
-          fontSize: '0.9rem',
-          opacity: 0.7,
-          zIndex: 50,
-        }}
-      >
-        {stageConfig?.title} | {Math.round(scrollProgress * 100)}% | Morph:{' '}
-        {Math.round(morphProgress * 100)}%
-      </div>
-
-      {/* Director Status (Dev only) */}
-      {import.meta.env.DEV && (
+      {/* ENHANCED DIRECTOR CONSOLE - Single consolidated debug panel */}
+      {import.meta.env.DEV && window.SHOW_DIRECTOR !== false && (
         <div
           style={{
             position: 'fixed',
-            top: '60px',
+            top: '20px',
             left: '20px',
-            background: 'rgba(0, 0, 0, 0.8)',
+            background: 'rgba(0, 0, 0, 0.9)',
             color: '#00FF00',
             fontFamily: 'Courier New, monospace',
             fontSize: '0.8rem',
-            padding: '10px',
-            borderRadius: '5px',
+            padding: '12px',
+            borderRadius: '8px',
             border: '1px solid #00FF00',
-            zIndex: 100,
+            boxShadow: '0 0 20px rgba(0, 255, 0, 0.3)',
+            backdropFilter: 'blur(10px)',
+            minWidth: '240px',
+            zIndex: 10000,
           }}
         >
-          <div>🎬 Director: {window.theaterDirector?.phase || 'idle'}</div>
-          <div>📜 Scroll: {scrollEnabled ? '✅' : '🔒'}</div>
-          <div>🎭 Narrative: {narrativeEnabled ? '✅' : '⏳'}</div>
-          <div>🎨 Particles: {showCanvas ? '✅' : '⏳'}</div>
-        </div>
-      )}
-
-      {/* Dev Performance Monitor */}
-      <DevPerformanceMonitor />
-
-      {/* Dev controls */}
-      {import.meta.env.DEV && scrollEnabled && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: '#00FF00',
-            fontFamily: 'Courier New, monospace',
-            fontSize: '0.8rem',
-            padding: '15px',
-            borderRadius: '5px',
-            border: '1px solid #00FF00',
-            maxWidth: '300px',
-            zIndex: 100,
-          }}
-        >
-          <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>🎮 SST v3.0 Controls</div>
-          <div>← → Navigate stages</div>
-          <div>↑ ↓ Manual morph</div>
-          <div>1-7 Jump to stage</div>
-          <div>Scroll for progression</div>
-          <div style={{ marginTop: '5px', color: '#ffff00' }}>
-            {morphProgress < 0.5 ? '☁️ Atmospheric' : '🧠 Brain'} Mode
+          {/* Header */}
+          <div style={{
+            borderBottom: '1px solid #00FF00',
+            paddingBottom: '6px',
+            marginBottom: '8px',
+            fontWeight: 'bold',
+            fontSize: '0.9rem',
+            display: 'flex',
+            justifyContent: 'space-between'
+          }}>
+            <span>🎬 DIRECTOR CONSOLE</span>
+            <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>v3.0</span>
+          </div>
+          
+          {/* Director Info */}
+          <div style={{ marginBottom: '8px' }}>
+            <div>Phase: <span style={{ color: '#00FFCC' }}>
+              {window.theaterDirector?.phase || 'idle'}
+            </span></div>
+            <div>Time: <span style={{ color: '#00FFCC' }}>
+              {window.theaterDirector?.startTime ? 
+                Math.round((Date.now() - window.theaterDirector.startTime) / 1000) + 's' : 
+                '0s'}
+            </span></div>
+          </div>
+          
+          {/* System Status */}
+          <div style={{ 
+            borderTop: '1px solid rgba(0, 255, 0, 0.3)',
+            paddingTop: '6px',
+            marginBottom: '8px'
+          }}>
+            <div>Stage: <span style={{ color: '#FFD700' }}>
+              {currentStage} ({Math.round(scrollProgress * 100)}%)
+            </span></div>
+            <div>Morph: <span style={{ color: morphProgress > 0.5 ? '#FF00FF' : '#00FFCC' }}>
+              {Math.round(morphProgress * 100)}% {morphProgress > 0.5 ? '🧠' : '☁️'}
+            </span></div>
+            <div>Scroll: {scrollEnabled ? '✅ Enabled' : '🔒 Locked'}</div>
+            <div>Narrative: {narrativeEnabled ? '✅ Active' : '⏳ Waiting'}</div>
+            <div>Canvas: {showCanvas ? '✅ Rendering' : '⏳ Loading'}</div>
+          </div>
+          
+          {/* Quick Actions */}
+          <div style={{
+            borderTop: '1px solid rgba(0, 255, 0, 0.3)',
+            paddingTop: '6px',
+            display: 'flex',
+            gap: '8px',
+            fontSize: '0.7rem'
+          }}>
+            <button
+              onClick={() => {
+                window.theaterDirector.isRunning = false;
+                window.theaterDirector.cancelled = false;
+                window.theaterDirector.start();
+              }}
+              style={{
+                background: '#00FF00',
+                color: '#000',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: '0.7rem'
+              }}
+            >
+              🔄 Restart
+            </button>
+            <button
+              onClick={() => {
+                window.ENABLE_PERFORMANCE_MONITOR = !window.ENABLE_PERFORMANCE_MONITOR;
+                window.location.reload();
+              }}
+              style={{
+                background: '#FFD700',
+                color: '#000',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: '0.7rem'
+              }}
+            >
+              📊 Perf
+            </button>
+            <button
+              onClick={() => {
+                console.log('=== MC3V System State ===');
+                console.log('Director:', window.theaterDirector.getStatus());
+                console.log('Stage:', currentStage, 'Progress:', scrollProgress);
+                console.log('Engine:', window.engineDebug?.getCacheStats());
+                console.log('Quality:', window.qualityControls?.getCacheStats());
+              }}
+              style={{
+                background: '#00CCFF',
+                color: '#000',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '3px 8px',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: '0.7rem'
+              }}
+            >
+              📋 Log
+            </button>
+          </div>
+          
+          {/* Keyboard Hints */}
+          <div style={{
+            marginTop: '8px',
+            fontSize: '0.65rem',
+            opacity: 0.6,
+            textAlign: 'center',
+            borderTop: '1px solid rgba(0, 255, 0, 0.2)',
+            paddingTop: '6px'
+          }}>
+            H: Hide | 1-7: Jump | ←→: Nav | ↑↓: Morph
           </div>
         </div>
       )}

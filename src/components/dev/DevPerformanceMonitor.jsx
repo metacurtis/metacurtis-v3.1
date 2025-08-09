@@ -91,6 +91,9 @@ function DevPerformanceMonitor() {
     };
   }, []);
 
+  // Master disable switch - AFTER hooks
+  if (!window.ENABLE_PERFORMANCE_MONITOR) return null;
+
   // ✅ ATOMIC STATE EXTRACTION: Enhanced performance metrics
   const fps = clockState.fps || 0;
   const avgFrameTime = clockState.averageFrameTime || 0;
@@ -263,39 +266,3 @@ function DevPerformanceMonitor() {
 }
 
 export default memo(DevPerformanceMonitor);
-
-/*
-✅ COMPLETE CUSTOM ATOMIC INTEGRATION ✅
-
-🔥 ARCHITECTURAL ALIGNMENT:
-- ✅ Zero legacy store dependencies eliminated
-- ✅ Direct custom atomic pattern with subscriptions
-- ✅ SST v2.1 compliance with stage-aware monitoring
-- ✅ MC3V engine integration with particle efficiency tracking
-
-⚛️ ENHANCED ATOMIC FEATURES:
-- Real-time particle budget calculation via qualityAtom.getParticleBudget()
-- Cache status monitoring from atomic state
-- Stage synchronization tracking with transition awareness
-- Quality tier efficiency metrics with color coding
-
-💎 PERFORMANCE OPTIMIZATIONS:
-- Color-coded performance indicators (green/yellow/red)
-- Enhanced jank calculation with percentage display
-- Device type and performance class awareness
-- Particle efficiency tracking (actual vs expected)
-
-🎯 SST v2.1 INTEGRATION:
-- Stage-aware particle monitoring
-- Quality tier optimization display
-- Atomic state synchronization status
-- MC3V engine compatibility verification
-
-🚀 PRODUCTION FEATURES:
-- Graceful WebGL disabled state handling
-- Enhanced visual hierarchy with sections
-- Atomic branding and SST version display
-- Zero external dependencies beyond atomic stores
-
-This monitor provides complete visibility into your custom atomic architecture! 🎯⚛️
-*/

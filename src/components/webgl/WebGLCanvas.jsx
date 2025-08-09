@@ -383,7 +383,7 @@ export default function WebGLCanvas({
       <DevPerformanceMonitor />
 
       {/* Debug overlay */}
-      {import.meta.env.DEV && (
+      {false &&import.meta.env.DEV && (
         <div
           style={{
             position: 'fixed',
