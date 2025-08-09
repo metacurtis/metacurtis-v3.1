@@ -23,7 +23,8 @@
     "validate:sst": "node ./scripts/validate-sst-integration.js",
     "predev": "npm run validate",
     "prebuild": "npm run validate",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "fix": "node scripts/apply-fix.js"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

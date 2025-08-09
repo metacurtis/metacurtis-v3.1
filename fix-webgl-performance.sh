@@ -1,3 +1,7 @@
+#!/bin/bash
+# Fix WebGLBackground performance issues - stop recreating materials/geometry
+
+cat > src/components/webgl/WebGLBackground.jsx << 'EOFILE'
 // src/components/webgl/WebGLBackground.jsx
 // SST v3.0 COMPLIANT - Pure event-driven renderer
 // OPTIMIZED: No unnecessary re-renders or material recreations
@@ -7,7 +11,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { getPointSpriteAtlasSingleton } from "./consciousness/PointSpriteAtlas.js";
 import { Canonical } from "../../config/canonical/canonicalAuthority.js";
-import BeatBus from '@modules/orchestration/core/BeatBus';
+import BeatBus from "../../../modules/orchestration/core/BeatBus.js";
 import { EVENTS } from "../../theater/events.js";
 
 // Shaders
@@ -297,3 +301,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 }
 
 export default React.memo(WebGLBackground);
+EOFILE
+
+echo "✅ Fixed WebGLBackground performance issues:"
+echo "   - Material only recreates on blueprint/stage change"
+echo "   - Geometry only recreates on blueprint change"
+echo "   - Duplicate BLUEPRINT_READY events ignored"
+echo "   - Draw range updated separately"
+echo "   - Uniforms updated in useFrame"

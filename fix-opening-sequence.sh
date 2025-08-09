@@ -1,11 +1,15 @@
+#!/bin/bash
+# Fix OpeningSequence.jsx ESLint errors
+
+cat > src/components/theater/OpeningSequence.jsx << 'EOFILE'
 // src/components/theater/OpeningSequence.jsx
 // SST v3.0 100% Compliant Opening Sequence - Exact specifications
 
-import { useEffect, useRef, useState } from 'react';
-import BeatBus from '@modules/orchestration/core/BeatBus';
-import { EVENTS } from '@theater/events.js';
+import { useEffect, useRef, useState } from "react";
+import BeatBus from "../../../modules/orchestration/core/BeatBus.js";
+import { EVENTS } from "../../theater/events.js";
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(false);
@@ -14,11 +18,11 @@ export default function OpeningSequence() {
   const [lines, setLines] = useState([]);
   const [currentTypingLine, setCurrentTypingLine] = useState(-1);
   const [screenFillLines, setScreenFillLines] = useState([]);
-
+  
   // Audio refs
   const humAudioRef = useRef(null);
   const keyClickAudioRef = useRef(null);
-
+  
   // Cleanup tracking
   const timers = useRef(new Set());
   const intervals = useRef(new Set());
@@ -60,7 +64,7 @@ export default function OpeningSequence() {
       // ========== CURSOR BLINK (Must blink TWICE per SST v3.0) ==========
       BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
         console.log(`   OpeningSequence: CURSOR_BLINK received (${count} times)`);
-
+        
         // Blink exactly N times
         for (let i = 0; i < count && mounted.current; i++) {
           setCursorVisible(false);
@@ -69,93 +73,90 @@ export default function OpeningSequence() {
           setCursorVisible(true);
           await sleep(interval);
         }
-
+        
         setCursorVisible(false); // Hide cursor after blinking
       }),
 
       // ========== TERMINAL TYPE (SST v3.0 exact text) ==========
-      BeatBus.on(
-        EVENTS.TERMINAL_TYPE,
-        async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
-          console.log('   OpeningSequence: TERMINAL_TYPE received');
-          setPhase('typing');
-          setCursorVisible(false);
-          typingToken.current += 1;
-          const token = typingToken.current;
-
-          // Clear previous content
-          setLines([]);
-
-          // Type each line character by character
-          for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
+      BeatBus.on(EVENTS.TERMINAL_TYPE, async ({ 
+        lines: toType = [], 
+        typeSpeed = 50, 
+        lineDelay = 300 
+      } = {}) => {
+        console.log('   OpeningSequence: TERMINAL_TYPE received');
+        setPhase('typing');
+        setCursorVisible(false);
+        typingToken.current += 1;
+        const token = typingToken.current;
+        
+        // Clear previous content
+        setLines([]);
+        
+        // Type each line character by character
+        for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
+          if (!mounted.current || token !== typingToken.current) return;
+          
+          const line = toType[lineIdx];
+          setCurrentTypingLine(lineIdx);
+          let currentText = "";
+          
+          // Add empty line first
+          setLines(prev => [...prev, ""]);
+          
+          // Type character by character
+          for (let charIdx = 0; charIdx < line.length; charIdx++) {
             if (!mounted.current || token !== typingToken.current) return;
-
-            const line = toType[lineIdx];
-            setCurrentTypingLine(lineIdx);
-            let currentText = '';
-
-            // Add empty line first
-            setLines(prev => [...prev, '']);
-
-            // Type character by character
-            for (let charIdx = 0; charIdx < line.length; charIdx++) {
-              if (!mounted.current || token !== typingToken.current) return;
-
-              currentText += line[charIdx];
-
-              // Trigger key click sound for each character
-              if (keyClickAudioRef.current) {
-                keyClickAudioRef.current.currentTime = 0;
-                keyClickAudioRef.current.play().catch(() => {});
-              }
-
-              // Update the current line
-              setLines(prev => {
-                const updated = [...prev];
-                updated[lineIdx] = currentText;
-                return updated;
-              });
-
-              await sleep(typeSpeed);
+            
+            currentText += line[charIdx];
+            
+            // Trigger key click sound for each character
+            if (keyClickAudioRef.current) {
+              keyClickAudioRef.current.currentTime = 0;
+              keyClickAudioRef.current.play().catch(() => {});
             }
-
-            // Pause between lines
-            if (lineIdx < toType.length - 1) {
-              await sleep(lineDelay);
-            }
+            
+            // Update the current line
+            setLines(prev => {
+              const updated = [...prev];
+              updated[lineIdx] = currentText;
+              return updated;
+            });
+            
+            await sleep(typeSpeed);
           }
-
-          setCurrentTypingLine(-1);
+          
+          // Pause between lines
+          if (lineIdx < toType.length - 1) {
+            await sleep(lineDelay);
+          }
         }
-      ),
+        
+        setCurrentTypingLine(-1);
+      }),
 
       // ========== SCREEN FILL (Scrolling "HELLO CURTIS") ==========
-      BeatBus.on(
-        EVENTS.SCREEN_FILL,
-        ({
-          text = 'HELLO CURTIS ', // FIXED: Correct spelling
-          scrollSpeed = 50,
-        } = {}) => {
-          console.log('   OpeningSequence: SCREEN_FILL received');
-          setPhase('fill');
-
-          // Fill screen with scrolling text
-          const fillText = text.repeat(10); // Repeat across width
-          setScreenFillLines([fillText]);
-
-          // Add new lines progressively
-          addInterval(() => {
-            setScreenFillLines(prev => {
-              if (prev.length >= 30) {
-                // Screen is full
-                // Scroll effect: remove first, add new at bottom
-                return [...prev.slice(1), fillText];
-              }
-              return [...prev, fillText];
-            });
-          }, scrollSpeed);
-        }
-      ),
+      BeatBus.on(EVENTS.SCREEN_FILL, ({ 
+        text = "HELLO CURTIS ", // FIXED: Correct spelling
+        scrollSpeed = 50 
+      } = {}) => {
+        console.log('   OpeningSequence: SCREEN_FILL received');
+        setPhase('fill');
+        
+        // Fill screen with scrolling text
+        const fillText = text.repeat(10); // Repeat across width
+        setScreenFillLines([fillText]);
+        
+        // Add new lines progressively
+        addInterval(() => {
+          setScreenFillLines(prev => {
+            if (prev.length >= 30) { // Screen is full
+              // Scroll effect: remove first, add new at bottom
+              return [...prev.slice(1), fillText];
+            }
+            return [...prev, fillText];
+          });
+        }, scrollSpeed);
+      }),
 
       // ========== AUDIO: COMPUTER HUM ==========
       BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {
@@ -165,9 +166,9 @@ export default function OpeningSequence() {
           humAudioRef.current.loop = true;
           humAudioRef.current.volume = volume;
         }
-        humAudioRef.current
-          .play()
-          .catch(e => console.log('Audio playback requires user interaction:', e));
+        humAudioRef.current.play().catch(e => 
+          console.log('Audio playback requires user interaction:', e)
+        );
       }),
 
       // ========== AUDIO: KEY CLICKS ==========
@@ -183,16 +184,16 @@ export default function OpeningSequence() {
       // ========== PARTICLES EMERGING (Fade out) ==========
       BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
         console.log('   OpeningSequence: Particles emerging, fading out');
-
+        
         // Fade out gracefully
         addTimeout(() => {
           setVisible(false);
-
+          
           // Cleanup after fade
           addTimeout(() => {
             setPhase('complete');
             clearAllTimers();
-
+            
             // Stop audio
             if (humAudioRef.current) {
               humAudioRef.current.pause();
@@ -208,7 +209,7 @@ export default function OpeningSequence() {
         setVisible(false);
         setPhase('complete');
         clearAllTimers();
-
+        
         // Stop all audio
         if (humAudioRef.current) {
           humAudioRef.current.pause();
@@ -226,7 +227,7 @@ export default function OpeningSequence() {
       mounted.current = false;
       clearAllTimers();
       eventHandlers.forEach(off => off && off());
-
+      
       // Stop audio on unmount
       if (humAudioRef.current) {
         humAudioRef.current.pause();
@@ -243,7 +244,7 @@ export default function OpeningSequence() {
   }
 
   return (
-    <div
+    <div 
       style={{
         position: 'fixed',
         top: 0,
@@ -258,7 +259,7 @@ export default function OpeningSequence() {
         zIndex: 9999,
         overflow: 'hidden',
         transition: 'opacity 0.7s',
-        opacity: visible ? 1 : 0,
+        opacity: visible ? 1 : 0
       }}
     >
       {/* BLACK SCREEN PHASE */}
@@ -268,24 +269,20 @@ export default function OpeningSequence() {
 
       {/* CURSOR PHASE - Blinks exactly twice */}
       {phase === 'cursor' && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            padding: '2rem',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '2rem',
-              color: '#00FF00',
-              opacity: cursorVisible ? 1 : 0,
-              textShadow: cursorVisible ? '0 0 10px #00FF00' : 'none',
-              transition: 'opacity 100ms',
-            }}
-          >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          padding: '2rem'
+        }}>
+          <span style={{
+            fontSize: '2rem',
+            color: '#00FF00',
+            opacity: cursorVisible ? 1 : 0,
+            textShadow: cursorVisible ? '0 0 10px #00FF00' : 'none',
+            transition: 'opacity 100ms'
+          }}>
             _
           </span>
         </div>
@@ -293,38 +290,30 @@ export default function OpeningSequence() {
 
       {/* TERMINAL TYPING PHASE - SST v3.0 exact text */}
       {phase === 'typing' && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            padding: '2rem',
-          }}
-        >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          padding: '2rem'
+        }}>
           <div style={{ maxWidth: '800px', width: '100%' }}>
-            <pre
-              style={{
-                color: '#00FF00',
-                fontFamily: "'Courier New', monospace",
-                fontSize: '1.5rem',
-                lineHeight: 1.6,
-                textShadow: '0 0 5px #00FF00',
-                whiteSpace: 'pre-wrap',
-              }}
-            >
+            <pre style={{
+              color: '#00FF00',
+              fontFamily: "'Courier New', monospace",
+              fontSize: '1.5rem',
+              lineHeight: 1.6,
+              textShadow: '0 0 5px #00FF00',
+              whiteSpace: 'pre-wrap'
+            }}>
               {lines.map((line, idx) => (
                 <div key={idx}>
                   {line}
                   {idx === currentTypingLine && (
-                    <span
-                      style={{
-                        animation: 'blink 1s step-end infinite',
-                        textShadow: '0 0 10px #00FF00',
-                      }}
-                    >
-                      _
-                    </span>
+                    <span style={{
+                      animation: 'blink 1s step-end infinite',
+                      textShadow: '0 0 10px #00FF00'
+                    }}>_</span>
                   )}
                 </div>
               ))}
@@ -335,33 +324,27 @@ export default function OpeningSequence() {
 
       {/* SCREEN FILL PHASE - Scrolling "HELLO CURTIS" */}
       {phase === 'fill' && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            padding: '1rem',
-            overflow: 'hidden',
-            background: 'linear-gradient(180deg, rgba(0,255,0,0.1) 0%, rgba(0,0,0,0.9) 100%)',
-          }}
-        >
-          <pre
-            style={{
-              color: '#00FF00',
-              fontFamily: "'Courier New', monospace",
-              fontSize: '1.2rem',
-              lineHeight: 1.2,
-              opacity: 0.8,
-              textShadow: '0 0 3px #00FF00',
-              whiteSpace: 'pre',
-            }}
-          >
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          padding: '1rem',
+          overflow: 'hidden',
+          background: 'linear-gradient(180deg, rgba(0,255,0,0.1) 0%, rgba(0,0,0,0.9) 100%)'
+        }}>
+          <pre style={{
+            color: '#00FF00',
+            fontFamily: "'Courier New', monospace",
+            fontSize: '1.2rem',
+            lineHeight: 1.2,
+            opacity: 0.8,
+            textShadow: '0 0 3px #00FF00',
+            whiteSpace: 'pre'
+          }}>
             {screenFillLines.map((line, idx) => (
-              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
-                {line}
-              </div>
+              <div key={idx} style={{ whiteSpace: 'nowrap' }}>{line}</div>
             ))}
           </pre>
         </div>
@@ -376,3 +359,9 @@ export default function OpeningSequence() {
     </div>
   );
 }
+EOFILE
+
+echo "✅ Fixed OpeningSequence.jsx"
+echo "   - Removed unused React import"
+echo "   - Removed unused cursorBlinking variable"
+echo "   - Removed unused fillInterval assignment"

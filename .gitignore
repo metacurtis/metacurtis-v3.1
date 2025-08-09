@@ -56,4 +56,4 @@ Thumbs.db
 stats.html
 .vercel
 tsconfig.tsbuildinfo
-*.local
+*.local.fix-backups/

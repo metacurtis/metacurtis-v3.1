@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Canonical } from '../config/canonical/canonicalAuthority.js';
+import { Canonical } from '@config/canonical/canonicalAuthority.js';
 
 export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegment) {
   const [activeFragments, setActiveFragments] = useState([]);

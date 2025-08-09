@@ -165,7 +165,6 @@ export default function ConsciousnessTheater() {
   const triggerFragmentRef = useRef(triggerFragment);
   triggerFragmentRef.current = triggerFragment;
 
-
   // ===== DIRECTOR INTEGRATION =====
   useEffect(() => {
     console.log('🎭 ConsciousnessTheater: Starting Director-controlled experience');
@@ -328,7 +327,7 @@ export default function ConsciousnessTheater() {
         if (segment.memoryFragmentTrigger) {
           const fragment = Canonical.fragments[segment.memoryFragmentTrigger];
           if (fragment) {
-            triggerFragmentRef.current(fragment.id);
+            triggerFragment(fragment.id);
           }
         }
       } else if (!segment && activeNarrative) {

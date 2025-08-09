@@ -1,7 +1,11 @@
+#!/bin/bash
+# Fix Director not actually starting
+
+cat > src/theater/TheaterDirector.js << 'EOFILE'
 // src/theater/TheaterDirector.js
 // SST v3.0 Compliant Theater Director - Fixed singleton pattern
 
-import BeatBus from '@modules/orchestration/core/BeatBus';
+import BeatBus from '../../modules/orchestration/core/BeatBus.js';
 import { EVENTS } from './events.js';
 
 class TheaterDirector {
@@ -36,7 +40,7 @@ class TheaterDirector {
       // Phase 1: Black screen (2 seconds)
       this.phase = 'black';
       console.log('   Phase: Black screen (2s)');
-      await this.sleep(3000);
+      await this.sleep(2000);
       if (this.cancelled) return;
 
       // Phase 2: Cursor appears and blinks twice
@@ -58,8 +62,8 @@ class TheaterDirector {
           '20 GOTO 10',
           'RUN'
         ],
-        typeSpeed: 100,
-        lineDelay: 500
+        typeSpeed: 50,
+        lineDelay: 300
       });
       
       // Emit key clicks during typing
@@ -68,7 +72,7 @@ class TheaterDirector {
         BeatBus.emit(EVENTS.AUDIO_KEY_CLICK);
       }
       
-      await this.sleep(3000);
+      await this.sleep(2000);
       if (this.cancelled) return;
 
       // Phase 4: Screen fills with "HELLO CURTIS"
@@ -78,7 +82,7 @@ class TheaterDirector {
         text: 'HELLO CURTIS ',
         scrollSpeed: 50
       });
-      await this.sleep(3000);
+      await this.sleep(2000);
       if (this.cancelled) return;
 
       // Phase 5: Particles emerge from text
@@ -207,3 +211,9 @@ if (typeof window !== 'undefined') {
 }
 
 export default director;
+EOFILE
+
+echo "✅ Fixed Director start logic"
+echo "   - Removed blocking on hasRun"
+echo "   - Proper state management"
+echo "   - Clear phase transitions"
