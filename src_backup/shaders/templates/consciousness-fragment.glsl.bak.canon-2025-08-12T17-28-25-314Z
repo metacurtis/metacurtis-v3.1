@@ -1,0 +1,46 @@
+// src/shaders/templates/consciousness-fragment.glsl
+// Simple fragment that works with the vertex
+
+precision mediump float;
+
+uniform sampler2D uAtlasTexture;
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform float uMorphProgress;
+
+varying float vAlpha;
+varying float vTierID;
+varying vec2 vAtlasUVOffset;
+
+void main() {
+  // Sample from atlas texture
+  vec2 spriteUV = vAtlasUVOffset + gl_PointCoord * 0.25;
+  vec4 textureColor = texture2D(uAtlasTexture, spriteUV);
+  
+  // Discard transparent pixels
+  if (textureColor.a < 0.01) discard;
+  
+  // Blend stage colors
+  vec3 finalColor = mix(uColorCurrent, uColorNext, uMorphProgress);
+  
+  // Apply tier-based tinting
+  if (vTierID > 2.5) {
+    finalColor *= 1.2; // Tier 3: Brighter
+  } else if (vTierID > 1.5) {
+    finalColor *= 1.1; // Tier 2: Slightly bright
+  } else if (vTierID > 0.5) {
+    finalColor *= 0.9; // Tier 1: Normal
+  } else {
+    finalColor *= 0.7; // Tier 0: Dimmer
+  }
+  
+  // Apply texture and alpha
+  finalColor *= textureColor.rgb;
+  float finalAlpha = vAlpha * textureColor.a;
+  
+  // Simple center glow
+  float distFromCenter = length(gl_PointCoord - 0.5) * 2.0;
+  finalAlpha *= 1.0 - distFromCenter * 0.3;
+  
+  gl_FragColor = vec4(finalColor, finalAlpha);
+}

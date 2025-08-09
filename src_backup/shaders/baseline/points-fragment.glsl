@@ -1,0 +1,49 @@
+// === CANON AUTO INSERT — DO NOT EDIT (BEGIN) ===
+uniform vec3 uColor;
+uniform float uTierHighlight[4];
+float canonGaussian(float r, float sigma) {
+  float a = r / max(0.0001, sigma);
+  return exp(-0.5 * a * a);
+}
+// === CANON AUTO INSERT — DO NOT EDIT (END) ===
+
+// src/shaders/baseline/points-fragment.glsl
+// Canon Guard Baseline Fragment Shader - Ultra-safe fallback
+
+precision mediump float;
+
+// Uniforms expected by schema
+uniform sampler2D uAtlasTexture;
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform float uMorphProgress;
+uniform float uStageProgress;
+uniform float uGaussianSigma; // Optional, unused in baseline
+
+// Varyings from vertex
+varying float vTierData;
+varying float vOpacity;
+varying float vAtlasIndex;
+varying vec3 vColor;
+
+void main() {
+  // Soft circular point sprite
+  vec2 p = gl_PointCoord - 0.5;
+  float d2 = dot(p, p);
+  
+  // Soft edge falloff
+  float edge = 0.24;
+  float alpha = smoothstep(0.25 + edge, 0.25 - edge, d2);
+
+  // Simple color morphing
+  float m = (uMorphProgress + uStageProgress) * 0.5;
+  vec3 baseColor = mix(uColorCurrent, uColorNext, clamp(m, 0.0, 1.0));
+  
+  // Final color
+  vec4 outCol = vec4(baseColor * vColor, alpha * vOpacity);
+
+  // Discard fully transparent
+  if (outCol.a <= 0.001) discard;
+  
+  gl_FragColor = outCol;
+}

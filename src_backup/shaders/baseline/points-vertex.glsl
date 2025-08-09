@@ -1,0 +1,69 @@
+// === CANON AUTO INSERT — DO NOT EDIT (BEGIN) ===
+attribute vec3 position;
+uniform float uStageBlend;
+// NOTE: Ensure inside main(): gl_PointSize = uPointSize;
+#ifndef CANON_POINTSIZE_CLAMP
+#define CANON_POINTSIZE_CLAMP(ps, minV, maxV) clamp(ps, minV, maxV)
+#endif
+// === CANON AUTO INSERT — DO NOT EDIT (END) ===
+
+// src/shaders/baseline/points-vertex.glsl
+// Canon Guard Baseline Vertex Shader - Ultra-safe fallback
+
+precision highp float;
+
+// Three.js provides these automatically
+// attribute vec3 position; // DON'T declare - Three.js provides
+
+// Our custom attributes
+attribute vec3 atmosphericPosition;
+attribute vec3 allenAtlasPosition;
+attribute float particleIndex;
+
+// Uniforms (aliased for compatibility)
+uniform float uMorphProgress;
+uniform float uStageProgress;
+uniform float uPointSize;
+uniform float uDevicePixelRatio;
+uniform vec2 uResolution;
+uniform float uActiveCount;
+
+// Varyings to fragment
+varying float vTierData;
+varying float vOpacity;
+varying float vAtlasIndex;
+varying vec3 vColor;
+
+float resolveMorph() {
+  // Use whichever morph uniform is provided
+  float a = uMorphProgress;
+  float b = uStageProgress;
+  return (a > 0.0 || b == 0.0) ? a : b;
+}
+
+void main() {
+  // Simple morph between positions
+  float m = clamp(resolveMorph(), 0.0, 1.0);
+  vec3 pos = mix(atmosphericPosition, allenAtlasPosition, m);
+
+  // Basic transformation
+  vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+  gl_Position = projectionMatrix * mvPosition;
+  
+  // Safe point size
+  float baseSize = max(1.0, uPointSize * uDevicePixelRatio);
+  
+  // Hide inactive particles
+  if (particleIndex >= uActiveCount) {
+    gl_PointSize = 0.0;
+    vOpacity = 0.0;
+  } else {
+    gl_PointSize = baseSize;
+    vOpacity = 1.0;
+  }
+
+  // Baseline defaults for varyings
+  vTierData = 0.0;
+  vAtlasIndex = 0.0;
+  vColor = vec3(1.0);
+}

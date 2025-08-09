@@ -1,0 +1,28 @@
+precision highp float;
+
+// Uniforms - MUST match vertex shader precision
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform float uMorphProgress;
+
+// Varyings
+varying float vTierData;
+varying float vOpacity;
+
+void main() {
+  vec2 center = gl_PointCoord - 0.5;
+  float dist = length(center);
+  
+  vec3 color = mix(uColorCurrent, uColorNext, uMorphProgress);
+  float alpha = smoothstep(0.5, 0.0, dist) * vOpacity;
+  
+  // Tier coloring
+  if (vTierData < 0.5) {
+    alpha *= 0.6;
+  } else if (vTierData > 2.5) {
+    color = mix(color, vec3(1.0), 0.3);
+  }
+  
+  gl_FragColor = vec4(color, alpha);
+  if (gl_FragColor.a < 0.01) discard;
+}

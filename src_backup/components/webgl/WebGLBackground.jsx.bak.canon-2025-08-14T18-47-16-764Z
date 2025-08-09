@@ -1,0 +1,272 @@
+// src/components/webgl/WebGLBackground.jsx
+// DUMB RENDERER with CANON GUARD PROTECTION - No logic, just safe rendering!
+
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events';
+
+// Canon Guard Protection - CORRECT PATHS
+import { blueprintGuard } from '../../runtime/RuntimeBlueprintGuard.js';
+import { createPointsMaterial } from '../../runtime/materialFactory.js';
+import { attachGuardToMaterial } from '../../runtime/canonGuardRuntime.js';
+
+// Helper: Convert various formats to THREE.Color
+const toThreeColor = (input, fallback = "#00ff00") => {
+  if (input instanceof THREE.Color) return input;
+  if (!input) return new THREE.Color(fallback);
+  if (input.hex) return new THREE.Color(input.hex);
+  if (typeof input === "string") return new THREE.Color(input);
+  if (input.r !== undefined) return new THREE.Color(input.r, input.g, input.b);
+  return new THREE.Color(fallback);
+};
+
+function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
+  const meshRef = useRef();
+  const guardDetachRef = useRef(null);
+  const { size, gl } = useThree();
+  
+  // Simple state - just what we're rendering
+  const [blueprint, setBlueprint] = useState(null);
+  const [material, setMaterial] = useState(null);
+  const [currentStage, setCurrentStage] = useState('genesis');
+  const [atlasTexture, setAtlasTexture] = useState(null);
+
+  // Initialize atlas
+  useEffect(() => {
+    const atlas = getPointSpriteAtlasSingleton();
+    setAtlasTexture(atlas.createWebGLTexture());
+  }, []);
+
+  // Listen for blueprints - WITH CANON GUARD PROTECTION
+  useEffect(() => {
+    const handleBlueprint = ({ blueprint: rawBp }) => {
+      if (!rawBp) {
+        console.warn('Renderer: Received null blueprint');
+        return;
+      }
+      
+      // CANON GUARD PROTECTION - Fix any blueprint issues automatically
+      console.log('🛡️ Canon Guard: Checking blueprint...');
+      const bp = blueprintGuard.guard(rawBp, 'WebGLBackground.BLUEPRINT_READY');
+      
+      if (!bp || !bp.ready) {
+        console.warn('Renderer: Blueprint not ready after guard');
+        return;
+      }
+      
+      // Log what we're rendering
+      console.log(`🎨 Renderer: Stage changed to ${bp.stageName}`);
+      console.log(`✅ Renderer: Displaying ${bp.particleCount} particles for ${bp.stageName}`);
+      setBlueprint(bp);
+    };
+
+    const unsubscribe = BeatBus.on(EVENTS.BLUEPRINT_READY, handleBlueprint);
+    return () => unsubscribe && unsubscribe();
+  }, []);
+
+  // Create geometry from PROTECTED blueprint - WITH SAFETY CHECKS
+  const geometry = useMemo(() => {
+    if (!blueprint?.ready) return null;
+
+    const geo = new THREE.BufferGeometry();
+    
+    // Safely attach arrays with presence checks
+    if (blueprint.atmosphericPositions) {
+      geo.setAttribute('position', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+      geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    }
+    
+    if (blueprint.allenAtlasPositions) {
+      geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(blueprint.allenAtlasPositions, 3));
+    }
+    
+    // Add optional attributes with safety checks
+    if (blueprint.animationSeeds) {
+      geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
+    }
+    if (blueprint.sizeMultipliers) {
+      geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
+    }
+    if (blueprint.opacityData) {
+      geo.setAttribute('opacityData', new THREE.BufferAttribute(blueprint.opacityData, 1));
+    }
+    if (blueprint.atlasIndices) {
+      geo.setAttribute('atlasIndex', new THREE.BufferAttribute(blueprint.atlasIndices, 1));
+    }
+    if (blueprint.tierData) {
+      geo.setAttribute('tierData', new THREE.BufferAttribute(blueprint.tierData, 1));
+    }
+    if (blueprint.particleIndices) {
+      geo.setAttribute('particleIndex', new THREE.BufferAttribute(blueprint.particleIndices, 1));
+    }
+
+    geo.setDrawRange(0, blueprint.activeCount);
+    
+    return geo;
+  }, [blueprint]);
+
+  
+      // Create material only when colors change
+      const materialRef = useRef(null);
+      const materialKey = `${currentStage || blueprint?.stage || "genesis"}|${blueprint?.colors?.primary}|${blueprint?.colors?.secondary}`;
+      
+      useEffect(() => {
+        if (!blueprint?.colors) return;
+        
+        // Dispose previous material
+        if (materialRef.current) {
+          materialRef.current.dispose();
+        }
+        
+        console.log(`🎨 Creating material with colors: ${blueprint.colors.primary} → ${blueprint.colors.secondary}`);
+        
+        materialRef.current = materialFactory.createCanonGuardMaterial({
+          variant: 'primary',
+          colors: blueprint.colors,
+          gpu: gpuProfile.profile,
+          pointSize: gpuProfile.pointSizeRange[1] * 0.8,
+          transparency: true,
+          depthTest: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending
+        });
+        
+        console.log(`🎨 Material created: primary variant for stage: ${currentStage}`);
+        setMaterial(materialRef.current);
+        
+        return () => {
+          if (materialRef.current) {
+            materialRef.current.dispose();
+          }
+        };
+      }, [materialKey]); // Only recreate when key changes // Key on version/stage
+
+  // Attach runtime guard to material
+  useEffect(() => {
+    if (!material || !blueprint) return;
+
+    // Clean up previous guard
+    if (guardDetachRef.current) {
+      guardDetachRef.current();
+    }
+
+    // Attach new guard
+    const detach = attachGuardToMaterial(material, {
+      getActiveCount: () => blueprint?.activeCount || 0,
+      getMorphProgress: () => morphProgress,
+      getScrollProgress: () => scrollProgress,
+      getStageIndex: () => blueprint?.stageIndex || 0,
+      getSize: () => ({ width: size.width, height: size.height }),
+      gl
+    });
+
+    guardDetachRef.current = detach;
+
+    return () => {
+      if (guardDetachRef.current) {
+        guardDetachRef.current();
+        guardDetachRef.current = null;
+      }
+    };
+  }, [material, blueprint, morphProgress, scrollProgress, size, gl]);
+
+  // Update colors when blueprint changes (moved out of animation loop for performance)
+  useEffect(() => {
+    if (!material || !material.uniforms || !blueprint) return;
+    
+    // Update colors once when blueprint changes
+    if (blueprint.colorCurrent && material.uniforms.uColorCurrent) {
+      material.uniforms.uColorCurrent.value = toThreeColor(blueprint.colorCurrent);
+    }
+    
+    if (blueprint.colorNext && material.uniforms.uColorNext) {
+      material.uniforms.uColorNext.value = toThreeColor(blueprint.colorNext);
+    }
+  }, [blueprint, material]);
+
+  
+  // Animate - UPDATE MORPH AND SCROLL
+  useFrame((state) => {
+    if (!material || !material.uniforms) return;
+    
+    // Update time
+    if (material.uniforms.uTime) {
+      material.uniforms.uTime.value = state.clock.elapsedTime;
+    }
+    
+    // Update morph and scroll if they exist
+    if (material.uniforms.uMorphProgress) {
+      material.uniforms.uMorphProgress.value = morphProgress || 0;
+    }
+    if (material.uniforms.uScrollProgress) {
+      material.uniforms.uScrollProgress.value = scrollProgress || 0;
+    }
+    
+    // Update tier phases for animations
+    const t = state.clock.elapsedTime;
+    if (material.uniforms.uTier1Phase) {
+      material.uniforms.uTier1Phase.value = t * 0.2;
+    }
+    if (material.uniforms.uTier2Phase) {
+      material.uniforms.uTier2Phase.value = t * 0.5;
+    }
+    if (material.uniforms.uTier3Phase) {
+      material.uniforms.uTier3Phase.value = t * 2.0;
+    }
+    if (material.uniforms.uTier4Phase) {
+      material.uniforms.uTier4Phase.value = t * 0.5;
+    }
+    
+    // Mark uniforms as needing update
+    material.uniformsNeedUpdate = true;
+    
+    // Gentle rotation if mesh exists
+    if (meshRef.current) {
+      meshRef.current.rotation.y = t * 0.02;
+    }
+  });
+
+  // Force attribute updates when geometry changes
+  useEffect(() => {
+    if (!geometry) return;
+    Object.values(geometry.attributes).forEach(attr => {
+      attr.needsUpdate = true;
+    });
+  }, [geometry]);
+
+  // Create unique key for mesh
+  const pointsKey = blueprint ? `${blueprint.stageName}-${blueprint.version || Date.now()}` : 'initial';
+
+  // Clean up on unmount or key change
+  useEffect(() => {
+    return () => {
+      if (geometry) {
+        geometry.dispose();
+      }
+      if (material) {
+        Object.values(material.uniforms || {}).forEach(u => {
+          if (u?.value?.dispose) u.value.dispose();
+        });
+        material.dispose();
+      }
+    };
+  }, [pointsKey]);
+
+  if (!geometry || !material || !blueprint) return null;
+
+  // ONLY RETURN THREE.JS OBJECTS - NO HTML!
+  return (
+    <points
+      key={pointsKey}
+      ref={meshRef}
+      geometry={geometry}
+      material={material}
+      frustumCulled={false}
+    />
+  );
+}
+
+export default React.memo(WebGLBackground);

@@ -1,0 +1,191 @@
+// consciousness-vertex.glsl
+// SST v3.0 COMPLIANT - Complete vertex shader for MetaCurtis v3.1
+
+// === ATTRIBUTES (Must match WebGLBackground.jsx) ===
+attribute vec3 position;  // REQUIRED - standard Three.js attribute
+attribute vec3 atmosphericPosition;
+attribute vec3 allenAtlasPosition;
+attribute float particleIndex;
+attribute float tierData;
+attribute vec3 animationSeed;
+attribute float sizeMultiplier;
+attribute float opacityData;
+attribute float atlasIndex;
+
+// === UNIFORMS (From WebGLBackground.jsx material definition) ===
+// Three.js built-ins
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec3 cameraPosition;
+
+// Time & morph
+uniform float uTime;
+uniform float uMorphProgress;
+uniform float uScrollProgress;
+uniform float uStageProgress;  // Alias for uMorphProgress
+uniform float uStageBlend;     // Alias for uScrollProgress
+
+// Display
+uniform float uPointSize;
+uniform float uDevicePixelRatio;
+uniform vec2 uResolution;
+
+// Tier & fade
+uniform float uActiveCount;
+uniform float uTierCutoff;
+uniform float uFadeProgress;
+uniform float uGaussianSigma;
+uniform float uTierHighlight[4];
+
+// Feature toggles
+uniform float uGaussianFalloff;
+uniform float uCenterWeighting;
+
+// Stage meta
+uniform float uStageIndex;
+uniform float uBrainRegion;
+
+// === VARYINGS (To fragment shader) ===
+varying float vBlend;
+varying float vAlpha;
+varying vec2 vAtlasUVOffset;
+varying float vTierID;
+varying float vSizeMultiplier;
+varying float vParticleIndex;
+
+// === HELPER FUNCTIONS ===
+float easeInOutCubic(float t) {
+    return t < 0.5 ? 4.0 * t * t * t : 1.0 - pow(-2.0 * t + 2.0, 3.0) / 2.0;
+}
+
+float oscillate(float time, float frequency, float amplitude) {
+    return sin(time * frequency) * amplitude;
+}
+
+vec2 getAtlasUVOffset(float index) {
+    // 4x4 grid (16 sprites)
+    float gridSize = 4.0;
+    float spriteSize = 0.25;
+    
+    float col = mod(index, gridSize);
+    float row = floor(index / gridSize);
+    
+    return vec2(col * spriteSize, row * spriteSize);
+}
+
+// === MAIN ===
+void main() {
+    // Pass through to fragment shader
+    vTierID = tierData;
+    vSizeMultiplier = sizeMultiplier;
+    vParticleIndex = particleIndex;
+    vAlpha = opacityData;
+    vBlend = uMorphProgress;  // Stage blend progress
+    vAtlasUVOffset = getAtlasUVOffset(atlasIndex);
+    
+    // Morph between atmospheric and brain positions
+    float morphT = clamp(uMorphProgress, 0.0, 1.0);
+    float easedMorph = easeInOutCubic(morphT);
+    
+    // Base position interpolation
+    vec3 morphedPosition = mix(atmosphericPosition, allenAtlasPosition, easedMorph);
+    
+    // Apply tier-specific behaviors
+    vec3 animatedPosition = morphedPosition;
+    
+    // Tier 0: Atmospheric drift (50% of particles)
+    if (tierData < 0.5) {
+        float driftX = oscillate(uTime + animationSeed.x * 10.0, 0.5, 2.0);
+        float driftY = oscillate(uTime + animationSeed.y * 10.0, 0.3, 1.5);
+        float driftZ = oscillate(uTime + animationSeed.z * 10.0, 0.4, 1.0);
+        
+        // Reduce drift as we morph to brain
+        float driftAmount = 1.0 - morphT;
+        animatedPosition.x += driftX * driftAmount;
+        animatedPosition.y += driftY * driftAmount;
+        animatedPosition.z += driftZ * driftAmount * 0.5;
+    }
+    // Tier 1: Orbital motion (20% of particles)
+    else if (tierData < 1.5) {
+        float orbitSpeed = 0.2 + animationSeed.x * 0.1;
+        float orbitRadius = 5.0 * (1.0 - morphT * 0.5);
+        float angle = uTime * orbitSpeed;
+        
+        animatedPosition.x += cos(angle) * orbitRadius;
+        animatedPosition.y += sin(angle) * orbitRadius * 0.7;
+        animatedPosition.z += sin(angle * 2.0) * orbitRadius * 0.3;
+    }
+    // Tier 2: Twinkle/pulse (15% of particles)
+    else if (tierData < 2.5) {
+        float pulseFreq = 2.0 + animationSeed.z * 2.0;
+        float pulse = 1.0 + oscillate(uTime * pulseFreq, 1.0, 0.2);
+        animatedPosition *= pulse;
+        
+        // Add slight rotation
+        float rotSpeed = 0.1 + animationSeed.x * 0.05;
+        mat2 rotation = mat2(cos(uTime * rotSpeed), -sin(uTime * rotSpeed),
+                            sin(uTime * rotSpeed), cos(uTime * rotSpeed));
+        animatedPosition.xy = rotation * animatedPosition.xy;
+    }
+    // Tier 3: Prominent/stable (15% of particles)
+    else {
+        // Minimal animation for anchor points
+        float gentleBob = oscillate(uTime * 0.5 + animationSeed.y * 5.0, 1.0, 0.5);
+        animatedPosition.y += gentleBob;
+        
+        // Slight scale pulse for prominence
+        float prominence = 1.0 + sin(uTime + animationSeed.x * 10.0) * 0.05;
+        animatedPosition *= prominence;
+    }
+    
+    // Stage-specific rotation (creates unique look per stage)
+    float stageRotation = uStageIndex * 0.1 + uTime * 0.01;
+    mat2 stageRot = mat2(cos(stageRotation), -sin(stageRotation),
+                         sin(stageRotation), cos(stageRotation));
+    animatedPosition.xy = stageRot * animatedPosition.xy;
+    
+    // Transform to view space
+    vec4 mvPosition = modelViewMatrix * vec4(animatedPosition, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    
+    // Calculate point size with multiple factors
+    float baseSize = uPointSize;
+    float tierScale = sizeMultiplier;
+    
+    // Distance attenuation (particles get smaller with distance)
+    float distanceAttenuation = 300.0 / -mvPosition.z;
+    distanceAttenuation = clamp(distanceAttenuation, 0.5, 2.0);
+    
+    // Fade out particles beyond active count
+    float fadeOut = 1.0;
+    if (particleIndex >= uActiveCount) {
+        fadeOut = 0.0;
+    } else if (particleIndex > uActiveCount - 500.0) {
+        // Smooth fade for last 500 particles
+        fadeOut = (uActiveCount - particleIndex) / 500.0;
+    }
+    
+    // Tier prominence boost
+    float tierBoost = 1.0;
+    if (tierData >= 2.5) {
+        tierBoost = 1.2;  // Tier 3 particles are 20% larger
+    } else if (tierData >= 1.5) {
+        tierBoost = 1.1;  // Tier 2 particles are 10% larger
+    }
+    
+    // Final point size calculation
+    gl_PointSize = baseSize * tierScale * tierBoost * distanceAttenuation * uDevicePixelRatio * fadeOut;
+    
+    // Clamp to GPU limits (most GPUs support 1-64)
+    gl_PointSize = clamp(gl_PointSize, 1.0, 64.0);
+    
+    // Pass fade amount to fragment shader through alpha
+    vAlpha *= fadeOut;
+    
+    // Reduce alpha for particles far from center when in brain mode
+    if (morphT > 0.5) {
+        float distFromCenter = length(animatedPosition.xy) / 50.0;
+        float centerFade = 1.0 - smoothstep(0.5, 1.5, distFromCenter);
+        vAlpha *= mix(1.0, centerFade, (morphT - 0.5) * 2.0);
+    }
+}

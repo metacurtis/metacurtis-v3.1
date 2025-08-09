@@ -1,7 +1,7 @@
 // src/hooks/atoms/usePerformanceStore.js
 // Compatibility layer for performance store
-import { useAtomValue } from '../../stores/atoms/createAtom';
-import { performanceAtom } from '../../stores/atoms/performanceAtom';
+import { useAtomValue } from '@stores/atoms/createAtom';
+import { performanceAtom } from '@stores/atoms/performanceAtom';
 
 export function usePerformanceStore(selector) {
   const state = useAtomValue(performanceAtom, selector);

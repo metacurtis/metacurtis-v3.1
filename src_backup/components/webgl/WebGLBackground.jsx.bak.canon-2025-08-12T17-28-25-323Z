@@ -1,0 +1,177 @@
+// src/components/webgl/WebGLBackground.jsx
+// DUMB RENDERER with CANON GUARD PROTECTION - No logic, just safe rendering!
+
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events';
+
+// Canon Guard Protection - CORRECT PATHS
+import { blueprintGuard } from '../../runtime/RuntimeBlueprintGuard.js';
+import { createPointsMaterial } from '../../runtime/materialFactory.js';
+import { attachGuardToMaterial } from '../../runtime/canonGuardRuntime.js';
+
+// Keep your original shader imports
+import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
+import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
+
+function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
+  const meshRef = useRef();
+  const guardDetachRef = useRef(null);
+  const { size, gl } = useThree();
+  
+  // Simple state - just what we're rendering
+  const [blueprint, setBlueprint] = useState(null);
+  const [atlasTexture, setAtlasTexture] = useState(null);
+
+  // Initialize atlas
+  useEffect(() => {
+    const atlas = getPointSpriteAtlasSingleton();
+    setAtlasTexture(atlas.createWebGLTexture());
+  }, []);
+
+  // Listen for blueprints - WITH CANON GUARD PROTECTION
+  useEffect(() => {
+    const handleBlueprint = ({ blueprint: rawBp }) => {
+      if (!rawBp) {
+        console.warn('Renderer: Received null blueprint');
+        return;
+      }
+      
+      // CANON GUARD PROTECTION - Fix any blueprint issues automatically
+      console.log('🛡️ Canon Guard: Checking blueprint...');
+      const bp = blueprintGuard.guard(rawBp, 'WebGLBackground.BLUEPRINT_READY');
+      
+      if (!bp || !bp.ready) {
+        console.warn('Renderer: Blueprint not ready after guard');
+        return;
+      }
+      
+      // Log stats to console
+      const report = blueprintGuard.getReport();
+      console.log(`✅ Renderer: Displaying ${bp.particleCount} particles (${report.totalFixed} fixes applied)`);
+      setBlueprint(bp);
+    };
+
+    const unsubscribe = BeatBus.on(EVENTS.BLUEPRINT_READY, handleBlueprint);
+    return () => unsubscribe && unsubscribe();
+  }, []);
+
+  // Create geometry from PROTECTED blueprint - NO LOGIC
+  const geometry = useMemo(() => {
+    if (!blueprint?.ready) return null;
+
+    const geo = new THREE.BufferGeometry();
+    
+    // Just attach the arrays we received (now guaranteed to be correct types by Canon Guard)
+    geo.setAttribute('position', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(blueprint.allenAtlasPositions, 3));
+    
+    // Add all the attributes that exist
+    if (blueprint.animationSeeds) {
+      geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
+    }
+    if (blueprint.sizeMultipliers) {
+      geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
+    }
+    if (blueprint.opacityData) {
+      geo.setAttribute('opacityData', new THREE.BufferAttribute(blueprint.opacityData, 1));
+    }
+    if (blueprint.atlasIndices) {
+      geo.setAttribute('atlasIndex', new THREE.BufferAttribute(blueprint.atlasIndices, 1));
+    }
+    if (blueprint.tierData) {
+      geo.setAttribute('tierData', new THREE.BufferAttribute(blueprint.tierData, 1));
+    }
+    if (blueprint.particleIndices) {
+      geo.setAttribute('particleIndex', new THREE.BufferAttribute(blueprint.particleIndices, 1));
+    }
+
+    geo.setDrawRange(0, blueprint.activeCount);
+    
+    return geo;
+  }, [blueprint]);
+
+  // Create material - SIMPLE with Canon Guard protection
+  const material = useMemo(() => {
+    if (!atlasTexture || !blueprint) return null;
+
+    // Use Canon Guard's material factory with fallback protection
+    const { material: mat, variant } = createPointsMaterial({
+      gl,
+      size,
+      atlasTexture,
+      uniformsBase: {
+        uMorphProgress: { value: morphProgress },
+        uScrollProgress: { value: scrollProgress },
+        uActiveCount: { value: blueprint.activeCount },
+      }
+    });
+
+    console.log(`🎨 Material created: ${variant} variant`);
+
+    return mat;
+  }, [atlasTexture, blueprint, gl, size, morphProgress, scrollProgress]);
+
+  // Attach runtime guard to material
+  useEffect(() => {
+    if (!material || !blueprint) return;
+
+    // Clean up previous guard
+    if (guardDetachRef.current) {
+      guardDetachRef.current();
+    }
+
+    // Attach new guard
+    const detach = attachGuardToMaterial(material, {
+      getActiveCount: () => blueprint?.activeCount || 0,
+      getMorphProgress: () => morphProgress,
+      getScrollProgress: () => scrollProgress,
+      getStageIndex: () => 0,
+      getSize: () => ({ width: size.width, height: size.height }),
+      gl
+    });
+
+    guardDetachRef.current = detach;
+
+    return () => {
+      if (guardDetachRef.current) {
+        guardDetachRef.current();
+        guardDetachRef.current = null;
+      }
+    };
+  }, [material, blueprint, morphProgress, scrollProgress, size, gl]);
+
+  // Animate - JUST UPDATE TIME
+  useFrame((state) => {
+    if (!material) return;
+    
+    material.uniforms.uTime.value = state.clock.elapsedTime;
+    material.uniforms.uMorphProgress.value = morphProgress;
+    material.uniforms.uScrollProgress.value = scrollProgress;
+    material.uniforms.uActiveCount.value = blueprint?.activeCount || 0;
+    material.uniformsNeedUpdate = true;
+
+    // Simple rotation
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+    }
+  });
+
+  if (!geometry || !material || !blueprint) return null;
+
+  // ONLY RETURN THREE.JS OBJECTS - NO HTML!
+  return (
+    <points
+      ref={meshRef}
+      geometry={geometry}
+      material={material}
+      frustumCulled={false}
+    />
+  );
+}
+
+export default React.memo(WebGLBackground);

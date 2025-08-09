@@ -2,18 +2,18 @@
 // SST v3.0 Director-Integrated Consciousness Theater
 
 import { useEffect, useState, useRef } from 'react';
-import { Canonical } from '../../config/canonical/canonicalAuthority';
-import { stageAtom } from '../../stores/atoms/stageAtom';
-import { qualityAtom } from '../../stores/atoms/qualityAtom';
-import { useMemoryFragments } from '../../hooks/useMemoryFragments.js';
-import WebGLCanvas from '../webgl/WebGLCanvas';
-import DevPerformanceMonitor from '../dev/DevPerformanceMonitor';
+import { Canonical } from '@config/canonical/canonicalAuthority';
+import { stageAtom } from '@stores/atoms/stageAtom';
+import { qualityAtom } from '@stores/atoms/qualityAtom';
+import { useMemoryFragments } from '@hooks/useMemoryFragments.js';
+import WebGLCanvas from '@components/webgl/WebGLCanvas';
+import DevPerformanceMonitor from '@components/dev/DevPerformanceMonitor';
 
 // Director-based imports
-import director from '../../theater/TheaterDirector.js';
-import OpeningSequence from '../theater/OpeningSequence.jsx';
-import BeatBus from '../../../modules/orchestration/core/BeatBus.js';
-import { EVENTS } from '../../theater/events.js';
+import director from '@theater/TheaterDirector.js';
+import OpeningSequence from '@components/theater/OpeningSequence.jsx';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events.js';
 
 console.log('🧬 LOADED: ConsciousnessTheater v3.0 - Director Integration');
 
@@ -161,6 +161,11 @@ export default function ConsciousnessTheater() {
     activeNarrative?.id
   );
 
+  // Store triggerFragment in a ref to avoid dependency issues
+  const triggerFragmentRef = useRef(triggerFragment);
+  triggerFragmentRef.current = triggerFragment;
+
+
   // ===== DIRECTOR INTEGRATION =====
   useEffect(() => {
     console.log('🎭 ConsciousnessTheater: Starting Director-controlled experience');
@@ -192,7 +197,7 @@ export default function ConsciousnessTheater() {
         console.log(`   Theater: Triggering ${stage} fragment at ${percent}%`);
         const fragment = Canonical.fragments[stage];
         if (fragment) {
-          triggerFragment(fragment.id);
+          triggerFragmentRef.current(fragment.id);
         }
       }),
     ];
@@ -206,7 +211,7 @@ export default function ConsciousnessTheater() {
       handlers.forEach(off => off && off());
       document.body.style.overflow = '';
     };
-  }, [directorStarted, triggerFragment]);
+  }, []); // Empty dependency array - only run once on mount
 
   // ===== KEYBOARD NAVIGATION (Only after Director hands off) =====
   useEffect(() => {
@@ -323,7 +328,7 @@ export default function ConsciousnessTheater() {
         if (segment.memoryFragmentTrigger) {
           const fragment = Canonical.fragments[segment.memoryFragmentTrigger];
           if (fragment) {
-            triggerFragment(fragment.id);
+            triggerFragmentRef.current(fragment.id);
           }
         }
       } else if (!segment && activeNarrative) {

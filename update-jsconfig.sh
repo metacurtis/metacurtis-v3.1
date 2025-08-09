@@ -1,0 +1,31 @@
+#!/bin/bash
+
+echo "🔧 Updating jsconfig.json for IDE support..."
+
+cat > jsconfig.json << 'EOFILE'
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@stores/*": ["src/stores/*"],
+      "@config/*": ["src/config/*"],
+      "@engine/*": ["src/engine/*"],
+      "@theater/*": ["src/theater/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@styles/*": ["src/styles/*"],
+      "@modules/*": ["modules/*"]
+    },
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*", "modules/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+EOFILE
+
+echo "✅ jsconfig.json updated"

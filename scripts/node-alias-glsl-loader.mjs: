@@ -1,0 +1,66 @@
+// scripts/node-alias-glsl-loader.mjs
+import fs from "node:fs";
+import fsp from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL, fileURLToPath } from "node:url";
+
+// project root and /src
+const projectRoot = path.dirname(fileURLToPath(new URL("../package.json", import.meta.url)));
+const srcDir = path.join(projectRoot, "src");
+
+// Try common file extensions + folder indexes (Vite-like)
+const CANDIDATE_EXTS = [
+  "", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".json", ".glsl",
+  "/index.js", "/index.mjs", "/index.cjs", "/index.jsx", "/index.ts", "/index.tsx"
+];
+
+function tryResolve(absBase) {
+  for (const ext of CANDIDATE_EXTS) {
+    const p = absBase + ext;
+    if (fs.existsSync(p) && fs.statSync(p).isFile()) return p;
+  }
+  if (fs.existsSync(absBase) && fs.statSync(absBase).isDirectory()) {
+    for (const ext of ["/index.js", "/index.mjs", "/index.ts", "/index.jsx", "/index.tsx"]) {
+      const p = absBase + ext;
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return null;
+}
+
+// Map "@/..." to "<project>/src/..." and let Node load it
+export function resolve(specifier, context, nextResolve) {
+  // alias: "@/..."
+  if (specifier.startsWith("@/")) {
+    const withoutQuery = specifier.replace(/\?raw$/, "");
+    const absBase = path.join(srcDir, withoutQuery.slice(2)); // strip "@/"
+
+    const file = tryResolve(absBase) ?? absBase;
+    const url = pathToFileURL(file).href + (specifier.endsWith("?raw") ? "?raw" : "");
+    return { url };
+  }
+
+  // allow direct ".glsl" or ".glsl?raw" relative imports, turn them into file URLs
+  if (specifier.endsWith(".glsl") || specifier.endsWith(".glsl?raw")) {
+    const base = specifier.replace(/\?raw$/, "");
+    if (base.startsWith("file:")) return { url: specifier };
+
+    const parentDir = context.parentURL ? path.dirname(fileURLToPath(context.parentURL)) : projectRoot;
+    const abs = path.resolve(parentDir, base);
+    const url = pathToFileURL(abs).href + (specifier.endsWith("?raw") ? "?raw" : "");
+    return { url };
+  }
+
+  return nextResolve(specifier, context);
+}
+
+// Turn GLSL (and "?raw") into string modules: `export default "<file contents>"`
+export async function load(url, context, nextLoad) {
+  if (url.endsWith(".glsl") || url.includes(".glsl?") || url.endsWith("?raw")) {
+    const clean = url.replace(/\?raw$/, "");
+    const filePath = fileURLToPath(clean);
+    const text = await fsp.readFile(filePath, "utf8");
+    return { format: "module", source: `export default ${JSON.stringify(text)};` };
+  }
+  return nextLoad(url, context);
+}

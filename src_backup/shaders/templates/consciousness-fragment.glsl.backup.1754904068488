@@ -1,0 +1,113 @@
+// consciousness-fragment.glsl
+// SST v3.0 COMPLIANT - Complete fragment shader for MetaCurtis v3.1
+
+precision mediump float;
+
+// === UNIFORMS (Must match WebGLBackground.jsx) ===
+// Atlas
+uniform sampler2D uAtlasTexture;
+uniform float uTotalSprites;
+
+// Time & morph
+uniform float uTime;
+uniform float uMorphProgress;
+uniform float uScrollProgress;
+uniform float uStageProgress;
+uniform float uStageBlend;
+
+// Colors
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform vec3 uColorAccent1;
+uniform vec3 uColorAccent2;
+
+// Tier & fade
+uniform float uActiveCount;
+uniform float uTierCutoff;
+uniform float uFadeProgress;
+uniform float uGaussianSigma;
+uniform float uTierHighlight[4];
+
+// Feature toggles
+uniform float uGaussianFalloff;
+uniform float uCenterWeighting;
+
+// Stage meta
+uniform float uStageIndex;
+uniform float uBrainRegion;
+
+// === VARYINGS (From vertex shader) ===
+varying float vBlend;
+varying float vAlpha;
+varying vec2 vAtlasUVOffset;
+varying float vTierID;
+varying float vSizeMultiplier;
+varying float vParticleIndex;
+
+// === HELPER FUNCTIONS ===
+float gaussianFalloff(vec2 coord, float sigma) {
+    vec2 c = coord - 0.5;
+    float d = dot(c, c);
+    return exp(-d * sigma * sigma * 4.0);
+}
+
+vec4 sampleAtlasTexture(vec2 uvOffset, vec2 pointCoord) {
+    float spriteSize = 0.25;
+    vec2 uv = uvOffset + pointCoord * spriteSize;
+    return texture2D(uAtlasTexture, uv);
+}
+
+// === MAIN ===
+void main() {
+    vec2 particleCoord = gl_PointCoord;
+    
+    // Fade-out beyond active count
+    float cutoffFade = 1.0;
+    if (vParticleIndex >= uActiveCount) {
+        discard;
+    } else if (vParticleIndex > uActiveCount - 500.0) {
+        float fadeDistance = vParticleIndex - (uActiveCount - 500.0);
+        cutoffFade = 1.0 - (fadeDistance / 500.0);
+    }
+    
+    // Sample sprite from atlas
+    vec4 atlasColor = sampleAtlasTexture(vAtlasUVOffset, particleCoord);
+    if (atlasColor.a < 0.01) discard;
+    
+    // Get stage-based color
+    vec3 baseColor = mix(uColorCurrent, uColorNext, vBlend);
+    
+    // Apply tier-specific highlight
+    float tierHighlight = 1.0;
+    if (vTierID < 0.5) {
+        tierHighlight = uTierHighlight[0];
+    } else if (vTierID < 1.5) {
+        tierHighlight = uTierHighlight[1];
+    } else if (vTierID < 2.5) {
+        tierHighlight = uTierHighlight[2];
+    } else {
+        tierHighlight = uTierHighlight[3];
+    }
+    
+    // Mix color with atlas texture
+    vec3 finalColor = baseColor * atlasColor.rgb * tierHighlight;
+    
+    // Calculate alpha with multiple factors
+    float alpha = vAlpha * atlasColor.a * cutoffFade * uFadeProgress;
+    
+    // Apply Gaussian falloff for soft edges
+    if (uGaussianFalloff > 0.5) {
+        float sigma = max(uGaussianSigma, 2.0);
+        alpha *= gaussianFalloff(particleCoord, sigma);
+    }
+    
+    // Center weighting for tier 3 particles
+    if (uCenterWeighting > 0.5 && vTierID >= 2.5) {
+        float centerDist = length(particleCoord - 0.5) * 2.0;
+        float centerBoost = 1.0 - smoothstep(0.0, 1.0, centerDist);
+        alpha *= mix(1.0, 1.0 + centerBoost * 0.5, uCenterWeighting);
+    }
+    
+    // Final color output
+    gl_FragColor = vec4(finalColor, alpha);
+}

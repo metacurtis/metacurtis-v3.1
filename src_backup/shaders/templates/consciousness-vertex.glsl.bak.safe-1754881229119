@@ -1,0 +1,50 @@
+precision mediump float;
+
+// Attributes (fed by BufferGeometry in WebGLBackground)
+attribute vec3 position;
+attribute vec3 atmosphericPosition;
+attribute vec3 allenAtlasPosition;
+attribute float particleIndex;
+attribute vec3 animationSeed;
+attribute float sizeMultiplier;
+attribute float opacityData;
+attribute float atlasIndex;
+attribute float tierData;
+
+// Uniforms
+uniform float uTime;
+uniform float uMorphProgress;
+uniform float uStageProgress;     // provided by material as alias
+uniform float uScrollProgress;
+uniform float uStageBlend;        // provided by material as alias
+uniform float uPointSize;
+uniform float uDevicePixelRatio;
+uniform vec2  uResolution;
+uniform float uActiveCount;
+
+// Varyings to fragment
+varying float vOpacity;
+varying float vAtlasIndex;
+varying float vTier;
+
+void main() {
+  // Prefer uStageProgress if app supplies it; both are set the same value anyway
+  float morph = uStageProgress;
+
+  // Interpolate between atmospheric cloud and "allen atlas" target
+  vec3 pos = mix(atmosphericPosition, allenAtlasPosition, clamp(morph, 0.0, 1.0));
+
+  // Optional tiny idle: disabled for determinism
+  // pos += (animationSeed - 0.5) * 0.0;
+
+  gl_Position = vec4(pos, 1.0);
+
+  // Point size with device pixel ratio compensation
+  float ps = uPointSize * max(0.001, sizeMultiplier) * max(1.0, uDevicePixelRatio);
+  gl_PointSize = ps;
+
+  // Pass-through per-particle data
+  vOpacity    = opacityData;
+  vAtlasIndex = atlasIndex;
+  vTier       = tierData;
+}

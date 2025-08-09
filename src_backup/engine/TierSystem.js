@@ -1,20 +1,9 @@
-#!/bin/bash
-# SST v3.0 Engine Creation - Part 1
-# Creates engine directory and TierSystem.js
-
-echo "🚀 Creating SST v3.0 Engine - Part 1"
-
-# Create engine directory
-mkdir -p src/engine
-echo "✅ Created src/engine directory"
-
-# Create TierSystem.js
-cat > src/engine/TierSystem.js << 'EOF'
 // engine/TierSystem.js 
 // Tier distribution and behavior application engine
 // Version: 3.0.0 | Date: 2025-07-23
 
 import { SST_V3_CONFIG, isFeatureEnabled } from "@/config/sst3/sst-v3.0-config.js";
+import { ensureCanonGeometry, createCanonMaterial } from '@/renderer/materialFactory';
 import { 
   TIER_BEHAVIORS, 
   TIER_BEHAVIOR_SETS, 
@@ -319,17 +308,3 @@ if (typeof window !== "undefined" && import.meta.env.DEV) {
   window.tierSystem = tierSystem;
   window.debugTiers = (stage) => tierSystem.debugTierDistribution(stage);
 }
-EOF
-
-echo "✅ Created TierSystem.js"
-
-# Create placeholder files
-echo "// Placeholder - Run part 2 to add implementation" > src/engine/ConsciousnessEngine.js
-echo "// Placeholder - Paste from paste-2.txt" > src/engine/NarrativeController.js
-echo "// Placeholder - Paste from paste-2.txt" > src/engine/MemoryFragmentController.js
-
-echo "✅ Created placeholder files"
-
-echo ""
-echo "Part 1 Complete! Now run part 2."
-

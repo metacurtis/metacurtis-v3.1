@@ -1,0 +1,11 @@
+--- /dev/null
++++ /dev/null
+@@ -1,6 +1,8 @@
+ class TheaterDirector {
+   constructor() {
+     this.phase = 'idle';
+     this.cancelled = false;
++    this.isRunning = false;
++    this.startPromise = null;
+   }
+   

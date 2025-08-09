@@ -2,8 +2,8 @@
 // SST v3.0 100% Compliant Opening Sequence - Exact specifications
 
 import { useEffect, useRef, useState } from 'react';
-import BeatBus from '../../../modules/orchestration/core/BeatBus.js';
-import { EVENTS } from '../../theater/events.js';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events.js';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
