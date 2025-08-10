@@ -1,3 +1,8 @@
+#!/bin/bash
+
+echo "🔧 Updating jsconfig.json for IDE support..."
+
+cat > jsconfig.json << 'EOFILE'
 {
   "compilerOptions": {
     "baseUrl": ".",
@@ -21,3 +26,6 @@
   "include": ["src/**/*", "modules/**/*"],
   "exclude": ["node_modules", "dist"]
 }
+EOFILE
+
+echo "✅ jsconfig.json updated"

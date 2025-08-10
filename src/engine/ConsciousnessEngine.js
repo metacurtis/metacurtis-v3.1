@@ -1,11 +1,10 @@
 // src/engine/ConsciousnessEngine.js
 // SST v3.0 COMPLIANT - Integrated Stage/Quality + Emergence blueprint generation
 
-import * as THREE from 'three';
-import { Canonical } from '../config/canonical/canonicalAuthority.js';
+import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from '../../modules/orchestration/core/BeatBus.js'; // FIXED: Correct path
-import { EVENTS } from '../theater/events.js';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events.js';
 
 class ConsciousnessEngine {
   constructor() {
@@ -90,7 +89,7 @@ class ConsciousnessEngine {
     setTimeout(() => {
       console.log('🧠 Engine: Requesting initial state...');
       this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
-    }, 100);
+    }, 500); // Give renderer time to mount
   }
 
   _emergenceKey(text, count) {
@@ -404,7 +403,7 @@ class ConsciousnessEngine {
       const idx1 = startIndex + i;
 
       // Atmospheric positions (cloud-like)
-      const r = rnd() * 60 + 20;
+      const r = rnd() * 80 + 40;
       const theta = rnd() * Math.PI * 2;
       const phi = Math.acos(2 * rnd() - 1);
 
@@ -413,7 +412,7 @@ class ConsciousnessEngine {
       atmosphericPositions[idx + 2] = r * Math.cos(phi);
 
       // Allen Atlas positions (brain structure)
-      const brainR = 15 + rnd() * 10;
+      const brainR = 20 + rnd() * 15;
       allenAtlasPositions[idx] = brainR * Math.sin(phi) * Math.cos(theta);
       allenAtlasPositions[idx + 1] = brainR * Math.sin(phi) * Math.sin(theta);
       allenAtlasPositions[idx + 2] = brainR * Math.cos(phi);

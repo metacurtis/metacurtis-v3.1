@@ -1,3 +1,8 @@
+#!/bin/bash
+
+echo "🔧 Setting up absolute imports in Vite..."
+
+cat > vite.config.js << 'EOFILE'
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -24,3 +29,6 @@ export default defineConfig({
     open: true,
   },
 });
+EOFILE
+
+echo "✅ Vite config updated with absolute imports"
