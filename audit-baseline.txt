@@ -1,0 +1,63 @@
+🔎 Auditing SST v3 pipeline...
+Root: /home/curtis/projects/metacurtis-v3.1
+
+——————————————————————————————————————————————————————————————————————
+Files discovered
+——————————————————————————————————————————————————————————————————————
+✅ PASS  engine      → /home/curtis/projects/metacurtis-v3.1/src/engine/ConsciousnessEngine.js
+✅ PASS  background  → /home/curtis/projects/metacurtis-v3.1/src/components/webgl/WebGLBackground.jsx
+✅ PASS  canvas      → /home/curtis/projects/metacurtis-v3.1/src/components/webgl/WebGLCanvas.jsx
+✅ PASS  opening     → /home/curtis/projects/metacurtis-v3.1/src/components/theater/OpeningSequence.jsx
+✅ PASS  director    → /home/curtis/projects/metacurtis-v3.1/src/theater/TheaterDirector.js
+✅ PASS  events      → /home/curtis/projects/metacurtis-v3.1/src/theater/events.js
+✅ PASS  vertex      → /home/curtis/projects/metacurtis-v3.1/src/shaders/templates/consciousness-vertex.glsl
+✅ PASS  fragment    → /home/curtis/projects/metacurtis-v3.1/src/shaders/templates/consciousness-fragment.glsl
+✅ PASS  canonical   → /home/curtis/projects/metacurtis-v3.1/src/config/canonical/canonicalAuthority.js
+✅ PASS  atlas       → /home/curtis/projects/metacurtis-v3.1/src/components/webgl/consciousness/PointSpriteAtlas.js
+
+——————————————————————————————————————————————————————————————————————
+Engine contracts
+——————————————————————————————————————————————————————————————————————
+✅ PASS  Engine: listeners/builders/emits
+
+——————————————————————————————————————————————————————————————————————
+Renderer contracts (WebGLBackground)
+——————————————————————————————————————————————————————————————————————
+✅ PASS  Geometry + subscription + drawRange
+✅ PASS  Uniform bridge present
+✅ PASS  Canonical usage → uses Canonical: false, has CANON shim: true, import present: true
+
+——————————————————————————————————————————————————————————————————————
+Vertex shader contract
+——————————————————————————————————————————————————————————————————————
+❌ FAIL  Required attributes
+   → Missing attribute: /attribute\s+vec3\s+position/
+✅ PASS  Required uniforms + gl_PointSize
+
+——————————————————————————————————————————————————————————————————————
+Fragment shader contract
+——————————————————————————————————————————————————————————————————————
+✅ PASS  Tier/gaussian/color/atlas uniforms
+
+——————————————————————————————————————————————————————————————————————
+Viewport & Canvas checks
+——————————————————————————————————————————————————————————————————————
+✅ PASS  Full-viewport styles present
+
+——————————————————————————————————————————————————————————————————————
+BeatBus EVENTS enumeration
+——————————————————————————————————————————————————————————————————————
+✅ PASS  Events present
+
+——————————————————————————————————————————————————————————————————————
+PointSpriteAtlas presence
+——————————————————————————————————————————————————————————————————————
+✅ PASS  PointSpriteAtlas found
+
+——————————————————————————————————————————————————————————————————————
+Likely blockers based on audit
+——————————————————————————————————————————————————————————————————————
+❌ FAIL  Potential blockers detected:
+   → uActiveCount not updated per frame; morph rules relying on it may no-op.
+
+✅ Audit complete. If you want, I can generate an auto-fix pass for Canon resolver + uniform aliases (`scripts/patch-sst-v3-safe.js`).
