@@ -199,14 +199,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const { current, next, acc1, acc2 } = pickStageColors(stageName);
     const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
 
-    // SST v3.0: hardware-safe point size
-    const glctx = gl.getContext?.();
-    const range = glctx?.getParameter?.(glctx.ALIASED_POINT_SIZE_RANGE);
-    const hwMax = Array.isArray(range) ? range[1] : (range?.[1] ?? 64);
-    const basePS = blueprint?.mode === 'emergence' ? 60.0 : 36.0;
-    const safePS = Math.min(basePS, hwMax * 0.9);
-
-const mat = new THREE.ShaderMaterial({
+    const mat = new THREE.ShaderMaterial({
       uniforms: { uStageProgress: { value: 0 }, uStageBlend: { value: 0 }, uTierCutoff: { value: 1e9 },
         // Time & morph - will be updated in useFrame
         uTime: { value: 0 },
@@ -224,7 +217,7 @@ const mat = new THREE.ShaderMaterial({
         uTotalSprites: { value: 16 },
 
         // Display
-        uPointSize: { value: safePS },
+        uPointSize: { value: 30.0 },
         uDevicePixelRatio: { value: gl.getPixelRatio() },
         uResolution: { value: new THREE.Vector2(size.width, size.height) },
 
@@ -275,10 +268,6 @@ const mat = new THREE.ShaderMaterial({
 
     // Update uniforms that change frequently
     mat.uniforms.uTime.value = state.clock.elapsedTime;
-    // sync shader-expected names
-    if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = morphProgress;
-    if (mat.uniforms.uStageBlend)    mat.uniforms.uStageBlend.value    = scrollProgress;
-    if (mat.uniforms.uTierCutoff)    mat.uniforms.uTierCutoff.value    = activeCount;
     mat.uniforms.uMorphProgress.value = morphProgress;
     mat.uniforms.uScrollProgress.value = scrollProgress;
     mat.uniforms.uActiveCount.value = activeCount;

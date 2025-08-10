@@ -36,7 +36,7 @@ class TheaterDirector {
       // Phase 1: Black screen (2 seconds)
       this.phase = 'black';
       console.log('   Phase: Black screen (2s)');
-      await this.sleep(2000);
+      await this.sleep(3000);
       if (this.cancelled) return;
 
       // Phase 2: Cursor appears and blinks twice
@@ -68,7 +68,7 @@ class TheaterDirector {
         BeatBus.emit(EVENTS.AUDIO_KEY_CLICK);
       }
       
-      await this.sleep(3800);
+      await this.sleep(3000);
       if (this.cancelled) return;
 
       // Phase 4: Screen fills with "HELLO CURTIS"
@@ -131,14 +131,14 @@ class TheaterDirector {
     BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: 0.3 });
     
     // Wait for prewarm or timeout
-    await this.once(EVENTS.PREWARM_COMPLETE, 2000);
+    await this.once(EVENTS.PREWARM_COMPLETE, 1000);
   }
 
   monitorFragments() {
     console.log('📍 Director: Monitoring for memory fragments');
     
     // Set up fragment triggers based on scroll percentage
-    const _fragmentTriggers = [
+    const fragmentTriggers = [
       { stage: 'genesis', percent: 5 },
       { stage: 'discipline', percent: 20 },
       { stage: 'neural', percent: 35 },

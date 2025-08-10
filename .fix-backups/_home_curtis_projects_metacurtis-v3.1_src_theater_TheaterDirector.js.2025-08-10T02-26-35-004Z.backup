@@ -68,7 +68,7 @@ class TheaterDirector {
         BeatBus.emit(EVENTS.AUDIO_KEY_CLICK);
       }
       
-      await this.sleep(3800);
+      await this.sleep(3000);
       if (this.cancelled) return;
 
       // Phase 4: Screen fills with "HELLO CURTIS"

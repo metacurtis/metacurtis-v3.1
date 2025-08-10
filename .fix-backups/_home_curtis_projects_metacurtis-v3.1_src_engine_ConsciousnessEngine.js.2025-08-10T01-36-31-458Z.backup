@@ -134,24 +134,14 @@ class ConsciousnessEngine {
   buildBlueprint(stageName, options = {}) {
     const startTime = performance.now();
 
-    const stageConfig = (Canonical?.stages?.[stageName]) || {};
-    // SST v3.0 absolute stage particle counts (fallback)
-    const SPEC_COUNTS = {
-      genesis: 2000,
-      discipline: 3000,
-      neural: 5000,
-      velocity: 12000,
-      architecture: 8000,
-      harmony: 12000,
-      transcendence: 15000,
-    };
+    const stageConfig = Canonical.stages[stageName];
     if (!stageConfig) {
       console.error(`Stage ${stageName} not found in canonical config`);
       return null;
     }
 
     const quality = options.quality || this.currentQuality;
-    const baseParticleCount = Number.isFinite(stageConfig.particleCount) ? stageConfig.particleCount : (SPEC_COUNTS[stageName] ?? 5000);
+    const baseParticleCount = stageConfig.particleCount;
     const particleCount = this.getParticleCountForQuality(baseParticleCount, quality);
 
     console.log(
@@ -355,10 +345,10 @@ class ConsciousnessEngine {
     const positions = new Float32Array(count * 3);
 
     // Text dimensions in world space
-    const charWidth = 10.0; // enlarged for emergence visibility
-    const _textWidth = text.length * charWidth;
-    const textHeight = 12.0; // taller for emergence
-    const _centerX = 0;
+    const charWidth = 1.2;
+    const textWidth = text.length * charWidth;
+    const textHeight = 2.0;
+    const centerX = 0;
     const centerY = 0;
 
     for (let i = 0; i < count; i++) {
@@ -369,7 +359,7 @@ class ConsciousnessEngine {
       // Add variation within character bounds
       const x = baseX + (Math.random() - 0.5) * charWidth * 0.8;
       const y = centerY + (Math.random() - 0.5) * textHeight;
-      const z = (Math.random() - 0.5) * 2.0; // More depth so highlights pop
+      const z = (Math.random() - 0.5) * 0.5; // Slight depth
 
       positions[i * 3] = x;
       positions[i * 3 + 1] = y;

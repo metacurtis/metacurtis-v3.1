@@ -306,8 +306,8 @@ export default function WebGLCanvas({
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, width:'100vw', height:'100vh', zIndex:0 }}>
-      <Canvas style={{ display:'block', width:'100%', height:'100%' }}
+    <div className="fixed inset-0 w-full h-full">
+      <Canvas
         ref={canvasRef}
         {...canvasConfig}
         onCreated={({ gl, scene, camera, size }) => {

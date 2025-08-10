@@ -7,7 +7,7 @@ import { stageAtom } from '@stores/atoms/stageAtom';
 import { qualityAtom } from '@stores/atoms/qualityAtom';
 import { useMemoryFragments } from '@hooks/useMemoryFragments.js';
 import WebGLCanvas from '@components/webgl/WebGLCanvas';
-import _DevPerformanceMonitor from '@components/dev/DevPerformanceMonitor';
+import DevPerformanceMonitor from '@components/dev/DevPerformanceMonitor';
 
 // Director-based imports
 import director from '@theater/TheaterDirector.js';

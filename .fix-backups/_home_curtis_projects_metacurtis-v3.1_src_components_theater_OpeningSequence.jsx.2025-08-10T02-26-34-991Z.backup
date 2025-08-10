@@ -238,12 +238,12 @@ export default function OpeningSequence() {
   }, []);
 
   // Don't render if complete
-  if (phase === 'complete') {
+  if (phase === 'complete' || !visible) {
     return null;
   }
 
   return (
-    <div className="opening-sequence"
+    <div
       style={{
         position: 'fixed',
         top: 0,
