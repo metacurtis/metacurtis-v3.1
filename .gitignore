@@ -58,3 +58,4 @@ stats.html
 tsconfig.tsbuildinfo
 *.local.fix-backups/
 canon-console/agent/node_modules/
+canon-console/agent/node_modules/
