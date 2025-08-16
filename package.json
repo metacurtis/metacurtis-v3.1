@@ -25,7 +25,9 @@
     "prebuild": "npm run validate",
     "prepare": "husky install",
     "fix": "node scripts/apply-fix.js",
-    "fix:sst": "node scripts/apply-sst-v3-fixes.js"
+    "fix:sst": "node scripts/apply-sst-v3-fixes.js",
+    "dep:check": "depcruise --config .dependency-cruiser.js src",
+    "dep:map": "depcruise --config .dependency-cruiser.js --output-type json src > reports/arch/depmap.json"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -44,6 +46,7 @@
     "@tailwindcss/vite": "^4.1.7",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
+    "dependency-cruiser": "^17.0.1",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-react": "^7.37.5",
