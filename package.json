@@ -26,8 +26,9 @@
     "prepare": "husky install",
     "fix": "node scripts/apply-fix.js",
     "fix:sst": "node scripts/apply-sst-v3-fixes.js",
-    "dep:check": "depcruise --config .dependency-cruiser.js src",
-    "dep:map": "depcruise --config .dependency-cruiser.js --output-type json src > reports/arch/depmap.json"
+    "dep:check": "depcruise --config .dependency-cruiser.cjs src",
+    "dep:map": "depcruise --config .dependency-cruiser.js --output-type json src > reports/arch/depmap.json",
+    "dep:graph": "depcruise --config .dependency-cruiser.cjs --output-type json src > reports/arch/depmap_latest.json"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

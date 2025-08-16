@@ -57,3 +57,10 @@ stats.html
 .vercel
 tsconfig.tsbuildinfo
 *.local.fix-backups/
+
+# Canon Console
+yarn.lock
+canon-console/node_modules/
+
+# Reports (generated)
+reports/
