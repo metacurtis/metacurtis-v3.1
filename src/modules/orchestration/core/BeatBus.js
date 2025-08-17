@@ -1,0 +1,7 @@
+// Auto-generated BeatBus stub (replace with real implementation)
+export default class BeatBus {
+  constructor(){ this._t = new Map(); }
+  on(type, fn){ const a=this._t.get(type)||[]; a.push(fn); this._t.set(type,a); return ()=>this.off(type,fn); }
+  off(type, fn){ const a=this._t.get(type)||[]; const i=a.indexOf(fn); if(i>-1){a.splice(i,1);} this._t.set(type,a); }
+  emit(type, payload){ (this._t.get(type)||[]).forEach(fn=>{ try{ fn(payload);}catch(e){ console.error('[BeatBus stub]', e);} }); }
+}

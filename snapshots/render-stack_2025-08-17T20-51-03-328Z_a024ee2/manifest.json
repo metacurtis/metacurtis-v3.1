@@ -1,0 +1,112 @@
+{
+  "createdAt": "2025-08-17T20:51:03.347Z",
+  "commit": "a024ee2",
+  "count": 21,
+  "files": [
+    {
+      "rel": "src/components/webgl/WebGLCanvas.jsx",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__components__webgl__WebGLCanvas.jsx.txt",
+      "size": 17396
+    },
+    {
+      "rel": "src/components/webgl/WebGLBackground.jsx",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__components__webgl__WebGLBackground.jsx.txt",
+      "size": 14696
+    },
+    {
+      "rel": "src/engine/ConsciousnessEngine.js",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__engine__ConsciousnessEngine.js.txt",
+      "size": 17814
+    },
+    {
+      "rel": "src/modules/orchestration/core/BeatBus.js",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__modules__orchestration__core__BeatBus.js.txt",
+      "size": 502
+    },
+    {
+      "rel": "src/theater/events.js",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__theater__events.js.txt",
+      "size": 2286
+    },
+    {
+      "rel": "src/config/canonical/canonicalAuthority.js",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__config__canonical__canonicalAuthority.js.txt",
+      "size": 2168
+    },
+    {
+      "rel": "src/components/webgl/consciousness/PointSpriteAtlas.js",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__components__webgl__consciousness__PointSpriteAtlas.js.txt",
+      "size": 16539
+    },
+    {
+      "rel": "src/shaders/templates/consciousness-vertex.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__templates__consciousness-vertex.glsl.txt",
+      "size": 7214
+    },
+    {
+      "rel": "src/shaders/templates/consciousness-fragment.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__templates__consciousness-fragment.glsl.txt",
+      "size": 3752
+    },
+    {
+      "rel": "src/main.jsx",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__main.jsx.txt",
+      "size": 2061
+    },
+    {
+      "rel": "src/App.jsx",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__App.jsx.txt",
+      "size": 746
+    },
+    {
+      "rel": "vite.config.js",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/vite.config.js.txt",
+      "size": 1009
+    },
+    {
+      "rel": "jsconfig.json",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/jsconfig.json.txt",
+      "size": 621
+    },
+    {
+      "rel": "package.json",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/package.json.txt",
+      "size": 3568
+    },
+    {
+      "rel": "src/shaders/includes/uniforms.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__includes__uniforms.glsl.txt",
+      "size": 0
+    },
+    {
+      "rel": "src/shaders/includes/utils.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__includes__utils.glsl.txt",
+      "size": 0
+    },
+    {
+      "rel": "src/shaders/modules/brain-morphing.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__modules__brain-morphing.glsl.txt",
+      "size": 0
+    },
+    {
+      "rel": "src/shaders/modules/consciousness-stages.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__modules__consciousness-stages.glsl.txt",
+      "size": 0
+    },
+    {
+      "rel": "src/shaders/modules/performance-adaptive.glsl",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__shaders__modules__performance-adaptive.glsl.txt",
+      "size": 0
+    },
+    {
+      "rel": "src/components/dev/DevPerformanceMonitor.jsx",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__components__dev__DevPerformanceMonitor.jsx.txt",
+      "size": 8739
+    },
+    {
+      "rel": "src/components/dev/DebugExpose.jsx",
+      "txt": "snapshots/render-stack_2025-08-17T20-51-03-328Z_a024ee2/src__components__dev__DebugExpose.jsx.txt",
+      "size": 316
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "baseline",
+  "integrated": false,
+  "baselineVariant": false,
+  "maxPointSize": 64,
+  "degradeOrder": ["particleCount.tier1","particleCount.tier2","pointSize","atlasRes"],
+  "neverSacrifice": ["tier4Prominence","colorPhilosophy","morphSmoothness"],
+  "targetFpsP95": 55
+}

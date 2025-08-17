@@ -1,91 +1,70 @@
-import incidentStore from '../store/incidentStore.js';
-import ConsoleSink from '../sinks/consoleSink.js';
-
-const CC_DEBUG = typeof window !== 'undefined' && window.__CANON_CONSOLE_DEBUG;
-
-class CanonConsole {
-  constructor() {
-    this.ws = null;
-    this.consoleSink = new ConsoleSink(incidentStore);
-    this.connected = false;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
+/* Canon Console L2 - noise gate + BeatBus spy (dev only) */
+(function(){
+  if (typeof window==='undefined' || window.CANON_CONSOLE) return;
+  const state = { level: 'info', muted: [], counts: new Map(), samples: new Map(), beat:{emit:0,on:0,off:0}, maxBurst:50 };
+  const levels = { error:0, warn:1, info:2, log:3 };
+  const orig = { log:console.log, info:console.info, warn:console.warn, error:console.error };
+  function shouldPrint(type,msg){ if((levels[type]??3) > (levels[state.level]??2)) return false; return !state.muted.some(p=> (''+msg).includes(p)); }
+  function coalesce(type,args){
+    const key = type+':'+(args && args[0]? String(args[0]).slice(0,200) : '');
+    const c = (state.counts.get(key)||0)+1; state.counts.set(key,c);
+    if (c===1 || c%state.maxBurst===0){ orig[type].apply(console, args); if(c%state.maxBurst===0) orig[type]('…x'+c); }
   }
-  
-  init() {
-    if (CC_DEBUG) if (CC_DEBUG) console.log('[Canon Console] Initializing...');
-    
-    this.consoleSink.install();
-    this.connect();
-    
-    incidentStore.on('new', (incident) => this.sendIncident(incident));
-    incidentStore.on('duplicate', (incident) => this.sendIncident(incident));
-    
-    window.__canonConsole = this;
-    window.__canonIncidents = incidentStore;
-    
-    if (CC_DEBUG) if (CC_DEBUG) console.log('[Canon Console] Ready');
-  }
-  
-  connect() {
-    try {
-      this.ws = new WebSocket('ws://localhost:6998');
-      
-      this.ws.onopen = () => {
-        if (CC_DEBUG) if (CC_DEBUG) console.log('[Canon Console] Connected');
-        this.connected = true;
-        this.reconnectAttempts = 0;
-      };
-      
-      this.ws.onclose = () => {
-        this.connected = false;
-        this.scheduleReconnect();
-      };
-      
-      this.ws.onerror = () => {
-        if (CC_DEBUG) if (CC_DEBUG) console.log('[Canon Console] Connection error');
-      };
-    } catch (err) {
-      this.scheduleReconnect();
+  ['log','info','warn','error'].forEach(type=>{
+    console[type] = function(...args){
+      try {
+        if(!shouldPrint(type,args[0])) return;
+        coalesce(type,args);
+      } catch(_) { orig[type](...args); }
+    };
+  });
+  const api = {
+    setLevel(l){ state.level=l; return state.level; },
+    mute(pat){ state.muted.push(pat); return state.muted.slice(); },
+    unmute(){ state.muted=[]; return []; },
+    stats(){ return { bursts:[...state.counts.entries()].slice(-10), beat:state.beat }; }
+  };
+  window.CANON_CONSOLE = api;
+
+  // BeatBus spy (best-effort)
+  try {
+    const mod = window.BeatBus || (window.modules && window.modules.BeatBus);
+    if (mod && !mod.__canonConsolePatched){
+      const oEmit = mod.emit?.bind(mod), oOn = mod.on?.bind(mod), oOff = mod.off?.bind(mod);
+      if (oEmit){
+        mod.emit = (ev, payload)=>{ state.beat.emit++; if((state.beat.emit%200)===0) console.info('[BeatBus] emits', state.beat.emit); return oEmit(ev,payload); };
+      }
+      if (oOn){
+        mod.on = (ev, cb)=>{ state.beat.on++; return oOn(ev,cb); };
+      }
+      if (oOff){
+        mod.off = (ev, cb)=>{ state.beat.off++; return oOff(ev,cb); };
+      }
+      mod.__canonConsolePatched = true;
     }
-  }
-  
-    scheduleReconnect() {
-    // Give up quietly after max attempts
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      if (CC_DEBUG) console.log('[Canon Console] Max reconnect attempts reached, going quiet');
-      return;
-    }
-    
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
-    this.reconnectAttempts++;
-    
-    if (CC_DEBUG) console.log(`[Canon Console] Reconnecting in ${delay}ms... (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-    setTimeout(() => this.connect(), delay);
-  }
-  
-  sendIncident(incident) {
-    if (!this.connected || !this.ws) return;
-    try {
-      this.ws.send(JSON.stringify({
-        type: 'incident',
-        data: incident.toJSON()
-      }));
-    } catch {}
-  }
-  
-  getStats() { return incidentStore.getStats(); }
-  getIncidents() { return incidentStore.getAll(); }
-}
+  } catch (_) { /* noop */ }
+  console.info('✅ Canon Console L2 active'); 
+})();
 
-if (typeof window !== 'undefined') {
-  const canonConsole = new CanonConsole();
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => canonConsole.init());
-  } else {
-    canonConsole.init();
-  }
-  window.CanonConsole = canonConsole;
+/* <pilot-loader> */
+if (import.meta?.env?.DEV){
+  import('../runtime/bridge-guard.js').catch(()=>{});
+  import('../agent/policy.js').catch(()=>{});
+  import('../agent/pilot.js').then(m=>m.startPilot?.({ auto: JSON.parse(localStorage.getItem('canon:auto')||'true'), deliberation:true })).catch(()=>{});
+  import('../runtime/pilot-ui-mini.js').catch(()=>{});
+  console.info('🧩 Canon Pilot loader attached');
 }
+/* </pilot-loader> */
 
-export default CanonConsole;
+
+// CanonConsole:load-extras
+(async () => {
+  try {
+    const { ExtraSteps } = await import('../runtime/steps-extra.js');
+    window.CANON_CONSOLE?.registerSteps?.(ExtraSteps);
+  } catch (e) { /* noop */ }
+  try {
+    const { ExtraPlaybooks } = await import('../runtime/playbooks-extra.js');
+    window.CANON_CONSOLE?.registerPlaybooks?.(ExtraPlaybooks);
+  } catch (e) { /* noop */ }
+})();

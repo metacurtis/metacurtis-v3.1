@@ -1,0 +1,41 @@
+// Auto-generated BeatBusAdapter: always export a singleton instance.
+// - Default export: instance with .on/.off/.emit
+// - Named: { bus } same instance, { BeatBusClass } original class if available
+// Uses a global to avoid duplicate instances across dynamic imports.
+import DefaultMaybeClass, * as All from './BeatBus.js';
+
+function makeFallback(){
+  class Fallback {
+    constructor(){ this._t = new Map(); }
+    on(t, fn){ const a=this._t.get(t)||[]; a.push(fn); this._t.set(t,a); return ()=>this.off(t,fn); }
+    off(t, fn){ const a=this._t.get(t)||[]; const i=a.indexOf(fn); if(i>-1){a.splice(i,1);} this._t.set(t,a); }
+    emit(t, payload){ (this._t.get(t)||[]).forEach(fn=>{ try{ fn(payload);}catch(e){ console.error('[BeatBus]', e);} }); }
+  }
+  return new Fallback();
+}
+
+let instance;
+let BeatBusClass = null;
+
+try {
+  if (DefaultMaybeClass && typeof DefaultMaybeClass === 'function') {
+    // default export is a class/constructor
+    BeatBusClass = DefaultMaybeClass;
+    instance = globalThis.__CANON_BEATBUS__ || new DefaultMaybeClass();
+  } else if (DefaultMaybeClass && typeof DefaultMaybeClass.on === 'function') {
+    // default export is already an instance
+    instance = DefaultMaybeClass;
+  } else if (All && All.default && typeof All.default.on === 'function') {
+    instance = All.default;
+  } else {
+    instance = makeFallback();
+  }
+} catch {
+  instance = makeFallback();
+}
+
+globalThis.__CANON_BEATBUS__ = instance;
+
+export const bus = instance;
+export const BeatBusClass = BeatBusClass;
+export default instance;

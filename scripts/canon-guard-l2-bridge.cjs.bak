@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+/* Canon L2 ↔ Guard L2 Bridge (idempotent)
+ * - Adds a guard→console incident bridge
+ * - Extends Steps with set_draw_range_from_uniforms (safety)
+ * - Updates playbook to include the new step
+ * - Patches inject.js to lazy-load the bridge
+ */
+const fs = require('fs'); const path = require('path'); const root = process.cwd();
+const P = (...x)=>path.join(root, ...x);
+const R = p => fs.existsSync(p) ? fs.readFileSync(p,'utf8') : null;
+const W = (p, s) => { if (!fs.existsSync(path.dirname(p))) fs.mkdirSync(path.dirname(p), {recursive:true});
+  if (fs.existsSync(p)) { const cur = fs.readFileSync(p,'utf8'); if (cur===s) { console.log('✓ up-to-date', path.relative(root,p)); return; }
+    if (!fs.existsSync(p+'.bak')) fs.writeFileSync(p+'.bak', cur); }
+  fs.writeFileSync(p, s); console.log('✍️  wrote', path.relative(root,p));
+};
+
+/* 1) Guard→Console incident bridge (uses window.CANON_PILOT.create) */
+const bridgeJs = `// console/runtime/bridge-guard.js
+(function(){
+  if (typeof window==='undefined') return;
+  const gpuInfo = ()=>{
+    try{ const c=document.createElement('canvas'); const gl=c.getContext('webgl2')||c.getContext('webgl');
+      const dbg = gl && gl.getExtension && gl.getExtension('WEBGL_debug_renderer_info');
+      const vendor = dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL):undefined;
+      const renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):undefined;
+      return { webgl2: !!c.getContext('webgl2'), vendor, renderer, integrated:/Intel|Iris|UHD/i.test(renderer||'') };
+    }catch(_){ return {}; }
+  };
+  const push = (code, message, detail={})=>{
+    try{
+      window.CANON_PILOT?.create({
+        code, severity:(detail.severity||'info'), message: String(message||code),
+        evidence: { logs: detail.logs, glLog: detail.glLog, linkLog: detail.linkLog, file: detail.file, line: detail.line, column: detail.column },
+        context: { stage: detail.stage, particleCount: detail.particleCount, gpu: gpuInfo(), shader: detail.shader },
+        tags: ['CanonGuard'].concat(detail.tags||[])
+      });
+    } catch(e){ /* noop */ }
+  };
+
+  // If Canon Guard emits structured events, lift them into Console incidents.
+  window.addEventListener('canon:blueprint:guarded', (e)=>{
+    const d = e.detail || {};
+    const fixes = Array.isArray(d.fixes)? d.fixes.join(', '): (d.fixes||'');
+    push('BLUEPRINT_GUARDED', \`Blueprint guarded \${fixes||'(no-op)'}\`, d);
+  });
+
+  window.addEventListener('canon:guard:action', (e)=>{
+    const d = e.detail || {};
+    push(d.code || 'GUARD_ACTION', d.message || 'Guard action', d);
+  });
+
+  // Optional: pick up Guard console breadcrumbs
+  const origError = console.error, origWarn = console.warn;
+  console.error = (...args)=>{ try{ if (String(args[0]).includes('Canon Guard')) push('GUARD_ERROR', args.map(String).join(' '), {severity:'error'});}catch(_){}; origError(...args); };
+  console.warn  = (...args)=>{ try{ if (String(args[0]).includes('Canon Guard')) push('GUARD_WARN',  args.map(String).join(' '), {severity:'warn'});}catch(_){};  origWarn(...args);  };
+
+  console.info('�� Canon L2↔Guard bridge listening');
+})();
+`;
+W(P('console/runtime/bridge-guard.js'), bridgeJs);
+
+/* 2) Patch inject.js to lazy-load the bridge (idempotent) */
+const injPath = P('console/runtime/inject.js');
+let inj = R(injPath);
+if (!inj) {
+  console.warn('⚠️ console/runtime/inject.js not found. Did you run the Level 2 installer?');
+} else if (!/bridge-guard\.js/.test(inj)) {
+  inj = inj.replace(/deps\(\)\.catch\(\s*=>\s*\{\}\s*\);/m,
+    `deps().catch(()=>{});
+  import('./bridge-guard.js')
+    .then(()=>console.info('✅ Canon L2 bridge loaded'))
+    .catch(()=>console.warn('Canon L2 bridge not found (optional)'));`);
+  W(injPath, inj);
+} else {
+  console.log('✓ inject.js already loads the bridge');
+}
+
+/* 3) Extend Steps with set_draw_range_from_uniforms (safe draw count) */
+const stepsPath = P('console/runtime/steps.js');
+let steps = R(stepsPath);
+if (steps && !/set_draw_range_from_uniforms/.test(steps)) {
+  steps = steps.replace(/export const Steps = \{\n/, `export const Steps = {\n  async set_draw_range_from_uniforms(ctx){\n    const live = window.scene; if (!live) return { ok:false, error:'no live scene' };\n    let points=null; live.traverse(o=>{ if(!points && o.isPoints && o.geometry) points=o; });\n    if (!points) return { ok:false, error:'no Points geometry' };\n    const geo = points.geometry; const attr = geo.getAttribute('position');\n    const max = attr? attr.count : 0;\n    const active = Math.min(max, Math.floor(points.material?.uniforms?.uActiveCount?.value ?? max));\n    if (Number.isFinite(active) && active>0){ geo.setDrawRange(0, active); }\n    return { ok:true, active };\n  },\n`);
+  W(stepsPath, steps);
+} else if (!steps) {
+  console.warn('⚠️ steps.js not found (Level 2 not installed?)');
+} else {
+  console.log('✓ Steps already include drawRange safety');
+}
+
+/* 4) Ensure the GL_VALIDATE playbook calls the new step */
+const pbPath = P('console/runtime/playbooks.js');
+let pb = R(pbPath);
+const wantPlan = `plan: [
+      { step: 'compile_variant', args: { defines: { BASELINE_VARIANT: 1 }, target: 'shadow' } },
+      { step: 'assert',          args: { shaderCompileOk: true, linkOk: true, validateOk: true } },
+      { step: 'hotswap_material', args: {} },
+      { step: 'set_draw_range_from_uniforms', args: {} },
+      { step: 'verify_metrics',   args: { fpsMin: 55, glErrors: 0, probeMs: 240 } }
+    ]`;
+if (pb) {
+  if (!/set_draw_range_from_uniforms/.test(pb)) {
+    pb = pb.replace(/GL_VALIDATE_FAIL_BASELINE:[\s\S]*?plan:\s*\[[\s\S]*?\]\s*\n\s*\}/m,
+      `GL_VALIDATE_FAIL_BASELINE: {
+    id: 'GL_VALIDATE_FAIL_BASELINE',
+    when: { code: 'GL_VALIDATE_STATUS_FALSE', gpu: { integrated: true } },
+    ${wantPlan}
+  }`);
+    W(pbPath, pb);
+  } else {
+    console.log('✓ Playbook already includes drawRange step');
+  }
+} else {
+  console.warn('⚠️ playbooks.js not found (Level 2 not installed?)');
+}
+
+/* 5) Add scripts */
+const pkgPath = P('package.json');
+const pkg = JSON.parse(R(pkgPath) || '{}');
+pkg.scripts = pkg.scripts || {};
+if (!pkg.scripts['canon:bridge:l2']) pkg.scripts['canon:bridge:l2'] = 'node scripts/canon-guard-l2-bridge.cjs';
+if (!pkg.scripts['canon:bridge:l2:verify']) pkg.scripts['canon:bridge:l2:verify'] =
+  'node -e "const fs=require(\'fs\');[[\'console/runtime/bridge-guard.js\'],[\'console/runtime/inject.js\'],[\'console/runtime/steps.js\'],[\'console/runtime/playbooks.js\']].forEach(([f])=>console.log((fs.existsSync(f)?\'✓ \':\'✗ \')+f))"';
+W(pkgPath, JSON.stringify(pkg,null,2));
+
+console.log('\\n🎯 Bridge ready.');
+console.log('   npm run canon:bridge:l2:verify');
+console.log('   npm run dev  # look for “Canon L2↔Guard bridge listening”');
