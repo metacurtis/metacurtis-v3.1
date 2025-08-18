@@ -15,7 +15,6 @@ if (!rootEl) {
 }
 
 if (import.meta.env.DEV) {
-  import('./theater/EmergenceEventShims.js');
   import('./modules/state/StateController.js');
   import('./engine/EngineStateBridge.js');
   import('./dev/stateVerify.js');

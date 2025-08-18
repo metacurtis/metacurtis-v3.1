@@ -1,0 +1,57 @@
+// StateController — single source of truth (stage/quality/clock)
+// Emits canonical events onto BeatBus; no React or WebGL imports here.
+import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
+
+export const EVENTS = {
+  STAGE_CHANGE: 'STAGE_CHANGE',
+  QUALITY_CHANGE: 'QUALITY_CHANGE',
+  STATE_CHANGED: 'STATE_CHANGED',
+  BLUEPRINT_READY: 'BLUEPRINT_READY',   // pass-through convenience
+  OPENING_COMPLETE: 'OPENING_COMPLETE', // for completeness
+};
+
+let _stage = 'opening';
+let _quality = 'HIGH';
+let _clockId = null;
+let _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
+
+const _ring = [];
+function _log(e,p){ _ring.push({ t: Date.now(), e, p }); if (_ring.length>120) _ring.shift(); }
+function _emit(e,p){ _log(e,p); try { BeatBus.emit(e,p); } catch(err){ console.error('[StateController.emit]', err); } }
+
+function setStage(name){
+  if (!name || name===_stage) return;
+  _stage = name;
+  _emit(EVENTS.STAGE_CHANGE, { stage:_stage, quality:_quality });
+}
+function setQuality(tier){
+  if (!tier || tier===_quality) return;
+  _quality = tier;
+  _emit(EVENTS.QUALITY_CHANGE, { stage:_stage, quality:_quality });
+}
+function startClock(){
+  if (_clockId) return;
+  _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
+  _clockId = setInterval(()=> {
+    const now = (typeof performance!=='undefined'?performance.now():Date.now());
+    _emit(EVENTS.STATE_CHANGED, { now, since: now-_t0, stage:_stage, quality:_quality });
+  }, 500);
+}
+function stopClock(){ if (_clockId){ clearInterval(_clockId); _clockId=null; } }
+
+const api = {
+  getStage: ()=>_stage,
+  getQuality: ()=>_quality,
+  getClock: ()=>({ running: !!_clockId, startedAt:_t0 }),
+  setStage, setQuality, startClock, stopClock,
+  batch(fn){ try{ fn && fn(api); _emit(EVENTS.STATE_CHANGED, { stage:_stage, quality:_quality, batched:true }); }catch(e){ console.error('[StateController.batch]', e); } }
+};
+
+if (typeof window !== 'undefined') {
+  window.stateControls = {
+    ...api, EVENTS,
+    debug:{ getLog(){ return _ring.slice(); } }
+  };
+}
+
+export default api;
