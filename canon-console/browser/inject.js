@@ -68,3 +68,10 @@ if (import.meta?.env?.DEV){
     window.CANON_CONSOLE?.registerPlaybooks?.(ExtraPlaybooks);
   } catch (e) { /* noop */ }
 })();
+
+
+if (import.meta.env.DEV) {
+  try { await import("@/theater/EmergenceEventShims.js"); } catch(e) { console.warn('dev import failed', "@/theater/EmergenceEventShims.js", e); }
+  try { await import("../runtime/debug-sequencer.js"); } catch(e) { console.warn('dev import failed', "../runtime/debug-sequencer.js", e); }
+  try { await import("../runtime/pilot-dev-toggle.js"); } catch(e) { console.warn('dev import failed', "../runtime/pilot-dev-toggle.js", e); }
+}

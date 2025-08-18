@@ -15,7 +15,9 @@ if (!rootEl) {
 }
 
 if (import.meta.env.DEV) {
-  import('./theater/EmergenceEventShims.js');
+      import("/src/theater/EmergenceEventShims.js").catch(()=>{});
+import("/canon-console/runtime/debug-sequencer.js").catch(()=>{});
+import('./theater/EmergenceEventShims.js');
   import('./modules/state/StateController.js');
   import('./engine/EngineStateBridge.js');
   import('./dev/stateVerify.js');
