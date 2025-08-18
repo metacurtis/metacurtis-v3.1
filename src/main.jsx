@@ -15,7 +15,9 @@ if (!rootEl) {
 }
 
 if (import.meta.env.DEV) {
-      import("/src/theater/EmergenceEventShims.js").catch(()=>{});
+          import("/canon-console/runtime/pilot-open-guard.js").catch(()=>{});
+import("/src/theater/OpeningDoneFlag.js").catch(()=>{});
+import("/src/theater/EmergenceEventShims.js").catch(()=>{});
 import("/canon-console/runtime/debug-sequencer.js").catch(()=>{});
 import('./theater/EmergenceEventShims.js');
   import('./modules/state/StateController.js');

@@ -71,6 +71,8 @@ if (import.meta?.env?.DEV){
 
 
 if (import.meta.env.DEV) {
+  try { await import("@/theater/OpeningDoneFlag.js"); } catch(e) { console.warn('dev import failed', "@/theater/OpeningDoneFlag.js", e); }
+  try { await import("../runtime/pilot-open-guard.js"); } catch(e) { console.warn('dev import failed', "../runtime/pilot-open-guard.js", e); }
   try { await import("@/theater/EmergenceEventShims.js"); } catch(e) { console.warn('dev import failed', "@/theater/EmergenceEventShims.js", e); }
   try { await import("../runtime/debug-sequencer.js"); } catch(e) { console.warn('dev import failed', "../runtime/debug-sequencer.js", e); }
   try { await import("../runtime/pilot-dev-toggle.js"); } catch(e) { console.warn('dev import failed', "../runtime/pilot-dev-toggle.js", e); }
