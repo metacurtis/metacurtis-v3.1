@@ -1,28 +1,25 @@
-// stateVerify — tiny DevTools smoke for state→engine path
-import State from '@/modules/state/StateController.js';
-import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
-import { EVENTS as THEATER_EVENTS } from '@/theater/events.js';
+// stateVerify — drives & checks prewarm→emergence in DEV
+export const stateVerify = {
+  async smoke(timeoutMs=6000){
+    const BeatBus = (await import('@/modules/orchestration/core/BeatBusAdapter.js')).default;
+    const { EVENTS:E } = await import('@/theater/events.js');
 
-function waitOnce(event, timeout=3000){
-  return new Promise((resolve)=>{
-    let done=false; const off = BeatBus.on(event, (p)=>{ if(done) return; done=true; try{ off&&off(); }catch(_){} resolve({event,p}); });
-    setTimeout(()=>{ if(done) return; done=true; try{ off&&off(); }catch(_){} resolve(null); }, timeout);
-  });
-}
+    // Re-trigger both flows every run
+    try { BeatBus.emit(E.PREWARM_GENESIS_BLUEPRINT); } catch {}
+    try { BeatBus.emit(E.BUILD_EMERGENCE_BLUEPRINT, { sourceText:'HELLO CURTIS', count:2000 }); } catch {}
 
-async function smoke(){
-  const t0 = (typeof performance!=='undefined'?performance.now():Date.now());
-  const pWarm = waitOnce(THEATER_EVENTS.PREWARM_COMPLETE, 2500);
-  const pEmerge = waitOnce(THEATER_EVENTS.PARTICLES_EMERGED, 6000);
-  State.setStage('genesis');
-  const warm = await pWarm;
-  const emerge = await pEmerge;
-  const dt = (typeof performance!=='undefined'?performance.now():Date.now()) - t0;
-  const res = { prewarm: !!warm, emerged: !!emerge, ms: Math.round(dt) };
-  try { console.log('🧪 stateVerify:', res); } catch(_){}
-  return res;
-}
+    const wait = (ev, ms)=> new Promise(res=>{
+      let t=setTimeout(()=>{ off?.(); res(false); }, ms);
+      const off = BeatBus.on(ev, ()=>{ clearTimeout(t); off&&off(); res(true); });
+    });
 
-globalThis.stateVerify = { smoke, waitOnce };
-globalThis.stateCoreSmoke = smoke;
-try { console.log('🧪 stateVerify loaded → run stateVerify.smoke()'); } catch(_){}
+    const t0=performance.now();
+    const prewarm = await wait(E.PREWARM_COMPLETE, Math.min(2000, timeoutMs/3));
+    const emerged = await wait(E.PARTICLES_EMERGED, timeoutMs);
+    const ms = Math.round(performance.now()-t0);
+    const out = { prewarm, emerged, ms };
+    console.log('🧪 stateVerify:', out);
+    return out;
+  }
+};
+if (typeof window!=='undefined') window.stateVerify = stateVerify;

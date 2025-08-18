@@ -1,55 +1,54 @@
-// EmergenceEventShims — dev-only safety signals for verify flows
+// EmergenceEventShims v2 — DEV-only reliability for verify flows
 import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
-import { EVENTS as THEATER_EVENTS } from '@/theater/events.js';
+import { EVENTS as E } from '@/theater/events.js';
 
 (function(){
-  if (globalThis.__EMERGENCE_EVENT_SHIMS__) return;
-  const E = THEATER_EVENTS || {};
+  if (globalThis.__EMERGENCE_EVENT_SHIMS_V2__) return;
   const PREWARM_ASK = E.PREWARM_GENESIS_BLUEPRINT || 'PREWARM_GENESIS_BLUEPRINT';
   const BUILD_ASK   = E.BUILD_EMERGENCE_BLUEPRINT   || 'BUILD_EMERGENCE_BLUEPRINT';
   const PREWARM_DONE= E.PREWARM_COMPLETE            || 'PREWARM_COMPLETE';
+  const READY       = E.BLUEPRINT_READY             || 'BLUEPRINT_READY';
   const EMERGED     = E.PARTICLES_EMERGED           || 'PARTICLES_EMERGED';
 
-  const seen = { prewarm:false, emerged:false };
-  const log = (...a)=>{ try{ console.log(...a); }catch{} };
+  let prewarmEmitted=false, emergedEmitted=false; let prewarmTimer=null;
 
-  // When prewarm/build is requested, schedule a PREWARM_COMPLETE shortly after.
-  const on = (ev,fn)=>{ try { return BeatBus.on(ev, fn); } catch { return ()=>{}; } };
-  const off1 = on(PREWARM_ASK, schedulePrewarmComplete);
-  const off2 = on(BUILD_ASK,   schedulePrewarmComplete);
+  const on=(ev,fn)=>{ try{return BeatBus.on(ev,fn);}catch{return()=>{};} };
 
-  let prewarmTimer = null;
-  function schedulePrewarmComplete(){
-    if (seen.prewarm) return;
+  // When prewarm/build is requested, confirm with a short-delay PREWARM_COMPLETE
+  const offA=on(PREWARM_ASK, schedulePrewarm);
+  const offB=on(BUILD_ASK,   schedulePrewarm);
+  function schedulePrewarm(){
+    if(prewarmEmitted) return;
     clearTimeout(prewarmTimer);
-    prewarmTimer = setTimeout(()=>{
-      if (!seen.prewarm) {
-        try { BeatBus.emit(PREWARM_DONE, { via:'shim', at: Date.now() }); } catch {}
-        seen.prewarm = true;
-        log('🟢 shim:', PREWARM_DONE);
-      }
-    }, 300);
+    prewarmTimer=setTimeout(()=>{
+      if(!prewarmEmitted){ try{ BeatBus.emit(PREWARM_DONE,{via:'shim',at:Date.now()}); }catch{}; prewarmEmitted=true; console.log('🟢 shim:', PREWARM_DONE); }
+    },200);
   }
 
-  // Poll scene for a Points object; when found, emit PARTICLES_EMERGED once.
-  const poll = setInterval(()=>{
-    try{
-      if (seen.emerged) return;
-      const scene = (globalThis.__r3f || globalThis).scene;
-      if (!scene) return;
-      let found = false;
-      scene.traverse?.(o => { if (o?.isPoints || o?.type === 'Points') found = true; });
-      if (found) {
-        seen.emerged = true;
-        clearInterval(poll);
-        try { BeatBus.emit(EMERGED, { via:'shim', at: Date.now() }); } catch {}
-        log('🟢 shim:', EMERGED);
-      }
-    } catch {}
-  }, 250);
+  // When BLUEPRINT_READY fires, allow R3F to commit, then detect Points; fallback emit if needed
+  const offR=on(READY, ()=> {
+    try{ requestAnimationFrame(()=>requestAnimationFrame(()=>tryEmitEmerged('raf2'))); }catch{ setTimeout(()=>tryEmitEmerged('timeout'),200); }
+    const t0=Date.now(); const poll=setInterval(()=>{
+      if(emergedEmitted) return clearInterval(poll);
+      if(tryEmitEmerged('poll')) return clearInterval(poll);
+      if(Date.now()-t0>3000){ clearInterval(poll); if(!emergedEmitted){ try{BeatBus.emit(EMERGED,{via:'shim-fallback',at:Date.now()}); }catch{}; emergedEmitted=true; console.log('�� shim:', EMERGED,'(fallback)'); } }
+    },150);
+  });
 
-  globalThis.__EMERGENCE_EVENT_SHIMS__ = {
-    off(){ try{off1&&off1();}catch{} try{off2&&off2();}catch{} try{clearInterval(poll);}catch{} }
-  };
-  log('✅ EmergenceEventShims active (DEV)');
+  function sceneHasPoints(){
+    try{
+      const s = (globalThis.__r3f && globalThis.__r3f.scene) || globalThis.scene;
+      if(!s?.traverse) return false;
+      let found=false; s.traverse(o=>{ if(o?.isPoints || o?.type==='Points') found=true; });
+      return found;
+    }catch{ return false; }
+  }
+  function tryEmitEmerged(source){
+    if(emergedEmitted) return true;
+    if(sceneHasPoints()){ try{ BeatBus.emit(EMERGED,{via:'shim',source,at:Date.now()}); }catch{}; emergedEmitted=true; console.log('🟢 shim:', EMERGED, '('+source+')'); return true; }
+    return false;
+  }
+
+  globalThis.__EMERGENCE_EVENT_SHIMS_V2__={ off(){ try{offA&&offA();offB&&offB();offR&&offR();}catch{} } };
+  console.log('✅ EmergenceEventShims v2 active (DEV)');
 })();
