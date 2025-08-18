@@ -106,7 +106,16 @@ export default function OpeningSequence() {
               // Trigger key click sound for each character
               if (keyClickAudioRef.current) {
                 keyClickAudioRef.current.currentTime = 0;
-                keyClickAudioRef.current.play().catch(() => {});
+                keyClickAudioRef.current.play().catch(() => {
+          // doctor: audio unlock (once) for Chrome autoplay policy
+          const unlock = () => {
+            try { humAudioRef.current?.play().catch(()=>{}); } catch {}
+            window.removeEventListener('pointerdown', unlock);
+            window.removeEventListener('keydown', unlock);
+          };
+          window.addEventListener('pointerdown', unlock, { once: true });
+          window.addEventListener('keydown', unlock, { once: true });
+        });=> {});
               }
 
               // Update the current line
