@@ -15,9 +15,6 @@ if (!rootEl) {
 }
 
 if (import.meta.env.DEV) {
-  import('./modules/state/StateController.js');
-  import('./engine/EngineStateBridge.js');
-  import('./dev/stateVerify.js');
   // Canon Console L2 (dev runtime)
   import(/* @vite-ignore */ '../console/runtime/inject.js')
     .then(()=>console.log('✅ Canon L2 injected'))

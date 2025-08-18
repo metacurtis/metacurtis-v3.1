@@ -37,8 +37,7 @@
     "guard:finish": "node scripts/finish-guard-console.cjs",
     "console:l2:finish": "node scripts/finish-guard-console.cjs",
     "state:sync": "node scripts/state-core-sync.cjs",
-    "state:verify": "node scripts/state-core-sync.cjs --verify",
-    "state:doctor": "node scripts/doctor-state-engine-bridge.cjs"
+    "state:verify": "node scripts/state-core-sync.cjs --verify"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

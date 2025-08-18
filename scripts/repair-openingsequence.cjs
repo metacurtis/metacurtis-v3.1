@@ -1,4 +1,20 @@
-// SST v3.0 Opening Sequence — stable, with audio unlock fallback
+#!/usr/bin/env node
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+const file = path.join(process.cwd(), 'src/components/theater/OpeningSequence.jsx');
+const dir  = path.dirname(file);
+
+if (!fs.existsSync(dir)) {
+  console.error('✖ Missing directory:', dir);
+  process.exit(1);
+}
+if (!fs.existsSync(file + '.bak')) {
+  try { if (fs.existsSync(file)) fs.copyFileSync(file, file + '.bak'); } catch {}
+}
+
+const clean = `// SST v3.0 Opening Sequence — stable, with audio unlock fallback
 import { useEffect, useRef, useState } from 'react';
 import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
 import { EVENTS } from '@/theater/events.js';
@@ -53,6 +69,8 @@ export default function OpeningSequence() {
       addTimeout(() => {
         setPhase('complete');
         clearAllTimers();
+
+        // stop audio
         try { humAudioRef.current?.pause(); } catch {}
         try { keyClickAudioRef.current?.pause(); } catch {}
         humAudioRef.current = null;
@@ -61,7 +79,7 @@ export default function OpeningSequence() {
     }, 100);
   };
 
-  // Auto hand-off when Points appear (or after max timeout)
+  // ========== BELT & SUSPENDERS: auto hand-off when Points appear ==========
   useEffect(() => {
     const checkForPoints = setInterval(() => {
       const scene = (window.__r3f || window).scene;
@@ -86,6 +104,8 @@ export default function OpeningSequence() {
     };
   }, []);
 
+
+
   useEffect(() => {
     mounted.current = true;
     console.log('🎬 OpeningSequence: Ready for Director signals');
@@ -97,17 +117,19 @@ export default function OpeningSequence() {
         setCursorVisible(true);
       }),
 
-      // CURSOR BLINK
+      // CURSOR BLINK (exact N blinks)
       BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
         for (let i = 0; i < count && mounted.current; i++) {
-          setCursorVisible(false); await sleep(interval);
+          setCursorVisible(false);
+          await sleep(interval);
           if (!mounted.current) break;
-          setCursorVisible(true); await sleep(interval);
+          setCursorVisible(true);
+          await sleep(interval);
         }
         setCursorVisible(false);
       }),
 
-      // TERMINAL TYPE
+      // TERMINAL TYPE (exact text)
       BeatBus.on(
         EVENTS.TERMINAL_TYPE,
         async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
@@ -139,11 +161,12 @@ export default function OpeningSequence() {
               if (keyClickAudioRef.current) {
                 try {
                   keyClickAudioRef.current.currentTime = 0;
+                  // fire-and-forget, ignore NotAllowedError
                   keyClickAudioRef.current.play().catch(() => {});
                 } catch {}
               }
 
-              // update current line
+              // update the current line
               setLines(prev => {
                 const updated = [...prev];
                 updated[lineIdx] = currentText;
@@ -154,7 +177,9 @@ export default function OpeningSequence() {
             }
 
             // pause between lines
-            if (lineIdx < toType.length - 1) await sleep(lineDelay);
+            if (lineIdx < toType.length - 1) {
+              await sleep(lineDelay);
+            }
           }
 
           setCurrentTypingLine(-1);
@@ -195,7 +220,7 @@ export default function OpeningSequence() {
         });
       }),
 
-      // AUDIO KEY CLICK
+      // AUDIO KEY CLICK (preload on first)
       BeatBus.on(EVENTS.AUDIO_KEY_CLICK, () => {
         if (!keyClickAudioRef.current) {
           keyClickAudioRef.current = new Audio('/audio/key-click.mp3');
@@ -327,8 +352,18 @@ export default function OpeningSequence() {
         </div>
       )}
 
-      {/* Avoid backticks here to keep build tools happy */}
-      <style>{'@keyframes blink { 50% { opacity: 0; } }'}</style>
+      <style>{`@keyframes blink { 50% { opacity: 0; } }`}</style>
     </div>
   );
+}
+`;
+
+try {
+  fs.writeFileSync(file, clean, 'utf8');
+  console.log('✍️  Rewrote', path.relative(process.cwd(), file));
+  console.log('   • Backup:', path.relative(process.cwd(), file + '.bak'));
+  console.log('✅ OpeningSequence.jsx repaired.');
+} catch (e) {
+  console.error('✖ Failed to write OpeningSequence.jsx:', e.message);
+  process.exit(1);
 }
