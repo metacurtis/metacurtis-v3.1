@@ -35,15 +35,11 @@ function setStage(name){
   _stage = name;
   _emit(EVENTS.STAGE_CHANGE, { from:_prev, to:_stage });
 }
-
-
 function setQuality(tier){
   if (!tier || tier===_quality) return;
   _quality = tier;
   _emit(EVENTS.QUALITY_CHANGE, { tier });
 }
-
-
 function startClock(){
   if (_clockId) return;
   _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -70,5 +66,24 @@ if (typeof window !== 'undefined') {
 }
 
 
-
+/* >>> DEV BUS TAP (statecontroller) — guarded */
+if (import.meta.env.DEV && (globalThis.localStorage?.canonDevTools === '1')) {
+  try {
+    const __bus = BeatBus; // same instance this module uses
+    if (__bus?.on && __bus?.emit) {
+      if (!globalThis.BeatBus) globalThis.BeatBus = __bus;
+      globalThis.busTap = (evt, fn) => {
+        if (!evt || typeof fn !== 'function') return () => {};
+        const off = __bus.on(evt, fn);
+        console.log('✅ BeatBus tap active (StateController)');
+        return typeof off === 'function'
+          ? off
+          : () => { try { __bus.off?.(evt, fn); } catch(_){} };
+      };
+    }
+  } catch (e) {
+    console.warn('BeatBus tap failed (StateController):', e);
+  }
+}
+/* <<< DEV BUS TAP (statecontroller) */
 export default api;
