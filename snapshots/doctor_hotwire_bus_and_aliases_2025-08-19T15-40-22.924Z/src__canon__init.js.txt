@@ -1,0 +1,34 @@
+// [CANON:INIT]
+import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import { CanonContracts } from './contracts/index.js';
+import { CanonGuardL1 } from './guard/L1.js';
+import { CanonGuardL2 } from './guard/L2.js';
+import { CanonConsoleL1 } from './console/L1.js';
+import { CanonConsoleL2 } from './console/L2.js';
+
+export function attachCanonL2(){
+  const guard = new CanonGuardL2(CanonContracts);
+  const panel = new CanonConsoleL2();
+  if (typeof window!=='undefined'){
+    window.canon = { guard, panel, contracts:CanonContracts };
+    window.__CANON_GUARD_ACTIVE = true;
+    window.__CANON_CONSOLE_ACTIVE = true;
+    // Example BeatBus guard taps
+    const EVT = (n)=>(p)=>guard.validate(n,p);
+    BeatBus.on('STAGE_CHANGE', EVT('STAGE_CHANGE'));
+    BeatBus.on('QUALITY_CHANGE', EVT('QUALITY_CHANGE'));
+    BeatBus.on('BLUEPRINT_READY', EVT('BLUEPRINT_READY'));
+    console.info('🛡️  Canon L2 attached');
+  }
+  return { guard, panel };
+}
+
+if (import.meta?.env?.DEV) attachCanonL2();
+
+import '@/engine/ConsciousnessEngine.js';
+
+if (import.meta.env.DEV) {
+  if (!globalThis.BeatBus) globalThis.BeatBus = BeatBus;
+  if (!globalThis.busTap) globalThis.busTap = (evt, fn) => BeatBus.on(evt, fn);
+  console.log('✅ Canon init: BeatBus DEV tap ready');
+}

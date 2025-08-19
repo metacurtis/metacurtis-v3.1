@@ -5,15 +5,3 @@ export default class BeatBus {
   off(type, fn){ const a=this._t.get(type)||[]; const i=a.indexOf(fn); if(i>-1){a.splice(i,1);} this._t.set(type,a); }
   emit(type, payload){ (this._t.get(type)||[]).forEach(fn=>{ try{ fn(payload);}catch(e){ console.error('[BeatBus stub]', e);} }); }
 }
-
-export default beatBus;
-export { BeatBus };
-
-
-// DEV global tap
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
-  try {
-    window.BeatBus = beatBus;
-    if (!window.busTap) window.busTap = (evt, fn) => beatBus.on(evt, fn);
-  } catch (e) { /* noop */ }
-}
