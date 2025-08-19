@@ -1,96 +1,125 @@
 // src/engine/ConsciousnessEngine.js
 // SST v3.0 COMPLIANT - Integrated Stage/Quality + Emergence blueprint generation
 
-import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
-import { EVENTS } from '@/theater/events.js';
+import BeatBus from "@/modules/orchestration/core/BeatBusAdapter.js";
+import { EVENTS } from '@theater/events.js';
 
 class ConsciousnessEngine {
+  _putCache(key, bp){
+    this.blueprintCache.set(key, bp);
+    // tiny LRU-ish cap
+    if (this.blueprintCache.size > (this._cacheMax||16)) {
+      const first = this.blueprintCache.keys().next().value;
+      this.blueprintCache.delete(first);
+    }
+  }
+
   constructor() {
-    this.blueprintCache = new Map();
+  this.blueprintCache = new Map();
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this.isInitialized = false;
 
-    this.initializeBeatBusListeners();
-    console.log('🧠 ConsciousnessEngine initialized with BeatBus integration (SST v3.0 compliant)');
+    initializeBeatBusListeners() {
+  // Stage changes from UI/scroll — accept { from, to } and legacy { stage }
+  BeatBus.on(EVENTS.STAGE_CHANGE, ({ from, to, stage }) => {
+    const next = to || stage;
+    if (!next) return;
+    console.log(`🧠 Engine: Stage change to ${next}`);
+    this.currentStage = next;
+    buildAndEmitBlueprint(stage, quality) {
+  const token = ++this._buildToken;
+
+  const cacheKey = `${stage}|${quality}`;
+  if (this.blueprintCache.has(cacheKey)) {
+    console.log(`🔨 Engine: Using cached blueprint for ${stage}|${quality}`);
+    const cachedBlueprint = this.blueprintCache.get(cacheKey);
+    if (token !== this._buildToken) return; // abort stale
+    BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+      blueprint: cachedBlueprint,
+      stage, quality, cached: true,
+      // forward-compat for morph driver
+      count: cachedBlueprint.activeCount ?? cachedBlueprint.particleCount ?? ((cachedBlueprint?.allenAtlasPositions?.length||0)/3)|0,
+      fromPositions: cachedBlueprint.atmosphericPositions,
+      toPositions:   cachedBlueprint.allenAtlasPositions,
+    });
+    return;
   }
 
-  // ————————————————————————————————————————————————————————————————
-  // BeatBus Event Listeners
-  // ————————————————————————————————————————————————————————————————
-  initializeBeatBusListeners() {
-    // Stage changes from UI/scroll
-    BeatBus.on(EVENTS.STAGE_CHANGE, ({ stage }) => {
-      if (!stage) return;
-      console.log(`🧠 Engine: Stage change to ${stage}`);
-      this.currentStage = stage;
-      this.buildAndEmitBlueprint(stage, this.currentQuality);
+  console.log(`🔨 Engine: Building new blueprint for ${stage}|${quality}`);
+  const blueprint = this.buildBlueprint(stage, { quality });
+  if (!blueprint) return;
+
+  this.blueprintCache.set(cacheKey, blueprint);
+  if (token !== this._buildToken) return; // abort stale
+
+  BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+    blueprint, stage, quality, cached: false,
+    count: blueprint.activeCount ?? blueprint.particleCount ?? ((blueprint?.allenAtlasPositions?.length||0)/3)|0,
+    fromPositions: blueprint.atmosphericPositions,
+    toPositions:   blueprint.allenAtlasPositions,
+  });
+}
+ catch (_) {}
+  });
+
+  // Quality changes from TAQS — accept { tier } and legacy { quality }
+  BeatBus.on(EVENTS.QUALITY_CHANGE, ({ tier, quality }) => {
+    const q = quality || tier;
+    if (!q) return;
+    console.log(`🧠 Engine: Quality change to ${q}`);
+    this.currentQuality = q;
+    this.buildAndEmitBlueprint(this.currentStage, q);
+  });
+
+  // Director: Prewarm genesis for emergence (SST v3.0 opening)
+  BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
+    console.log('🧠 Engine: Prewarming genesis blueprint for emergence');
+    const key = this._emergenceKey('HELLO CURTIS', 2000);
+    if (!this.blueprintCache.has(key)) {
+      const bp = this.buildEmergenceBlueprint({ text: 'HELLO CURTIS', count: 2000 });
+      this.blueprintCache.set(key, bp);
+    }
+    BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
+  });
+
+  // Director: Build emergence blueprint (particles from text)
+  BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
+    console.log('🧠 Engine: Building emergence blueprint');
+    const text = opts.sourceText || 'HELLO CURTIS';
+    const count = opts.count || 2000;
+    const tierBehaviors = opts.tierBehaviors || {
+      tier1: { behavior: 'drift', ratio: 0.5 },
+      tier2: { behavior: 'orbital', ratio: 0.2 },
+      tier3: { behavior: 'twinkle', ratio: 0.15 },
+      tier4: { behavior: 'prominent', ratio: 0.15 },
+    };
+    const key = this._emergenceKey(text, count);
+    let bp = this.blueprintCache.get(key);
+    const cached = !!bp;
+    if (!bp) {
+      bp = this.buildEmergenceBlueprint({ text, count, tierBehaviors });
+      this.blueprintCache.set(key, bp);
+    }
+    BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+      blueprint: bp,
+      stage: 'genesis',
+      quality: this.currentQuality,
+      cached,
     });
+  });
 
-    // Quality changes from TAQS
-    BeatBus.on(EVENTS.QUALITY_CHANGE, ({ tier }) => {
-      if (!tier) return;
-      console.log(`🧠 Engine: Quality change to ${tier}`);
-      this.currentQuality = tier;
-      this.buildAndEmitBlueprint(this.currentStage, tier);
-    });
+  // Initial blueprint request after components mount
+  setTimeout(() => {
+    console.log('🧠 Engine: Requesting initial state...');
+    this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
+  }, 500);
+}
 
-    // Director: Prewarm genesis for emergence (SST v3.0 opening)
-    BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
-      console.log('🧠 Engine: Prewarming genesis blueprint for emergence');
-      const key = this._emergenceKey('HELLO CURTIS', 2000);
 
-      if (!this.blueprintCache.has(key)) {
-        const bp = this.buildEmergenceBlueprint({
-          text: 'HELLO CURTIS',
-          count: 2000, // SST v3.0: Genesis has 2000 particles
-        });
-        this.blueprintCache.set(key, bp);
-      }
 
-      // Notify Director that prewarm is complete
-      BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
-    });
-
-    // Director: Build emergence blueprint (particles from text)
-    BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
-      console.log('🧠 Engine: Building emergence blueprint');
-
-      const text = opts.sourceText || 'HELLO CURTIS';
-      const count = opts.count || 2000; // SST v3.0 Genesis particle count
-      const tierBehaviors = opts.tierBehaviors || {
-        tier1: { behavior: 'drift', ratio: 0.5 },
-        tier2: { behavior: 'orbital', ratio: 0.2 },
-        tier3: { behavior: 'twinkle', ratio: 0.15 },
-        tier4: { behavior: 'prominent', ratio: 0.15 },
-      };
-
-      const key = this._emergenceKey(text, count);
-      let bp = this.blueprintCache.get(key);
-      const cached = !!bp;
-
-      if (!bp) {
-        bp = this.buildEmergenceBlueprint({ text, count, tierBehaviors });
-        this.blueprintCache.set(key, bp);
-      }
-
-      // Emit blueprint - WebGLBackground expects this format
-      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-        blueprint: bp,
-        stage: 'genesis',
-        quality: this.currentQuality,
-        cached,
-      });
-    });
-
-    // Initial blueprint request after components mount
-    setTimeout(() => {
-      console.log('🧠 Engine: Requesting initial state...');
-      this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
-    }, 500); // Give renderer time to mount
-  }
 
   _emergenceKey(text, count) {
     return `emergence|${text}|${count}`;
@@ -99,18 +128,44 @@ class ConsciousnessEngine {
   // ————————————————————————————————————————————————————————————————
   // Build and emit stage blueprints
   // ————————————————————————————————————————————————————————————————
-  buildAndEmitBlueprint(stage, quality) {
-    const cacheKey = `${stage}|${quality}`;
+  buildAndEmitBlueprint(stage, quality){
+  const token = ++this._buildToken;
+  const cacheKey = `${stage}|${quality}`;
 
-    if (this.blueprintCache.has(cacheKey)) {
-      console.log(`🔨 Engine: Using cached blueprint for ${stage}|${quality}`);
-      const cachedBlueprint = this.blueprintCache.get(cacheKey);
-      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-        blueprint: cachedBlueprint,
-        stage,
-        quality,
-        cached: true,
-      });
+  // Try cache first
+  if (this.blueprintCache.has(cacheKey)) {
+    const cachedBlueprint = this.blueprintCache.get(cacheKey);
+    // emit once per change (guard stale)
+    if (token !== this._buildToken) return;
+    __BUS__.emit(EVENTS.BLUEPRINT_READY, {
+      blueprint: cachedBlueprint,
+      stage,
+      quality,
+      cached: true,
+      // forward-compat for dumb renderer + morph driver
+      count: cachedBlueprint.activeCount ?? cachedBlueprint.particleCount ?? ((cachedBlueprint?.allenAtlasPositions?.length||0)/3)|0,
+      fromPositions: cachedBlueprint.atmosphericPositions,
+      toPositions:   cachedBlueprint.allenAtlasPositions
+    });
+    return;
+  }
+
+  // Build new
+  const blueprint = this.buildBlueprint(stage, { quality });
+  if (!blueprint) return;
+  this._putCache(cacheKey, blueprint);
+
+  if (token !== this._buildToken) return; // abort stale
+  __BUS__.emit(EVENTS.BLUEPRINT_READY, {
+    blueprint,
+    stage,
+    quality,
+    cached: false,
+    count: blueprint.activeCount ?? blueprint.particleCount ?? ((blueprint?.allenAtlasPositions?.length||0)/3)|0,
+    fromPositions: blueprint.atmosphericPositions,
+    toPositions:   blueprint.allenAtlasPositions
+  });
+});
       return;
     }
 

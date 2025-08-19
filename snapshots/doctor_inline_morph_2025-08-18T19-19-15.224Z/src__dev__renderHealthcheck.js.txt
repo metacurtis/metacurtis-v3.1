@@ -1,4 +1,3 @@
-import { getBeatBus } from '@/modules/orchestration/core/BeatBusAdapter.js';
 // src/dev/renderHealthcheck.js
 (function(){
   if (typeof window==='undefined' || window.__RENDER_HEALTHCHECK__) return;
@@ -41,23 +40,3 @@ if (import.meta.env.DEV) { try { import('./InputDoctor.js'); } catch(e){ console
 if (import.meta.env.DEV) { try { import('./MorphDoctor.js'); } catch(e){ console.warn('MorphDoctor inject failed', e); } }
 
 if (import.meta.env.DEV) console.log('🎚️ TransitionService (inline) visible via WebGLBackground'); // doctor-inline-ts:healthcheck-log
-
-
-// ─── DEV bus tap (guarded) ───────────────────────────────────────────────────
-if (import.meta.env.DEV && (globalThis.localStorage?.canonDevTools === '1')) {
-  try {
-    const __bus = (typeof getBeatBus === 'function' ? getBeatBus() : getBeatBus);
-    if (__bus) {
-      globalThis.BeatBus = __bus;
-      globalThis.busTap = (evt, fn) => {
-        const off = __bus.on(evt, fn);
-        console.log('🔌 busTap', evt);
-        return off;
-      };
-      console.log('✅ BeatBus tap active');
-    }
-  } catch (e) {
-    console.warn('BeatBus tap failed:', e);
-  }
-}
-// ─────────────────────────────────────────────────────────────────────────────

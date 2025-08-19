@@ -13,38 +13,27 @@ export const EVENTS = {
 let _stage = 'opening';
 let _quality = 'HIGH';
 let _clockId = null;
-let _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+let _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
 
 const _ring = [];
-function _log(e, p) {
-  _ring.push({ t: Date.now(), e, p });
-  if (_ring.length > 120) _ring.shift();
-}
-function _emit(e, p) {
-  _log(e, p);
-  try {
-    BeatBus.emit(e, p);
-  } catch (err) {
-    console.error('[StateController.emit]', err);
-  }
-}
+function _log(e,p){ _ring.push({ t: Date.now(), e, p }); if (_ring.length>120) _ring.shift(); }
+function _emit(e,p){ _log(e,p); try { BeatBus.emit(e,p); } catch(err){ console.error('[StateController.emit]', err); } }
 
 function setStage(name){
   if (!name || name===_stage) return;
-  const _prev = _stage;
   _stage = name;
-  _emit(EVENTS.STAGE_CHANGE, { from:_prev, to:_stage });
+  _emit(EVENTS.STAGE_CHANGE, { stage:_stage, quality:_quality });
 }
 function setQuality(tier){
   if (!tier || tier===_quality) return;
   _quality = tier;
-  _emit(EVENTS.QUALITY_CHANGE, { tier });
+  _emit(EVENTS.QUALITY_CHANGE, { stage:_stage, quality:_quality });
 }
 function startClock(){
   if (_clockId) return;
-  _t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  _clockId = setInterval(() => {
-    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
+  _clockId = setInterval(()=> {
+    const now = (typeof performance!=='undefined'?performance.now():Date.now());
     _emit(EVENTS.STATE_CHANGED, { now, since: now-_t0, stage:_stage, quality:_quality });
   }, 500);
 }

@@ -1,0 +1,37 @@
+{
+  "genesis": {
+    "primary": "#26ff6a",
+    "accent": "#0cffc4",
+    "bg": "#021b0f"
+  },
+  "discipline": {
+    "primary": "#2ad4ff",
+    "accent": "#75b7ff",
+    "bg": "#061421"
+  },
+  "neural": {
+    "primary": "#b07cff",
+    "accent": "#7a9dff",
+    "bg": "#0c0a1a"
+  },
+  "velocity": {
+    "primary": "#ffb300",
+    "accent": "#ffd166",
+    "bg": "#1a1005"
+  },
+  "architecture": {
+    "primary": "#ff6f91",
+    "accent": "#ffc2d1",
+    "bg": "#1a0b10"
+  },
+  "harmony": {
+    "primary": "#a6ff00",
+    "accent": "#eaff8f",
+    "bg": "#0c1304"
+  },
+  "transcendence": {
+    "primary": "#00ffe9",
+    "accent": "#b3fff7",
+    "bg": "#031716"
+  }
+}

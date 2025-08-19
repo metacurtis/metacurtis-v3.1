@@ -237,100 +237,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => off && off();
   }, [camera]);
 
-// DOCTOR_INLINE_TS_START
-useEffect(() => {
-  // inline, single RAF owner for morph/fade
-  let raf = 0;
-  const cancel = () => { if (raf) cancelAnimationFrame(raf); raf = 0; };
-
-  const onBlueprint = (payload) => {
-    try {
-      const { bp: raw } = normalizePayload(payload);
-      if (!raw) return;
-
-      let from = null, to = null, count = 0;
-
-      if (raw.atmosphericPositions && raw.allenAtlasPositions) {
-        // Full stage blueprint
-        from = raw.atmosphericPositions;
-        to   = raw.allenAtlasPositions;
-        count = raw.activeCount || raw.particleCount || raw.maxParticles || ((to?.length||0)/3)|0;
-        lastFullStageRef.current = raw;
-      } else if (raw.positions) {
-        // Emergence payload → synthesize arrays (reusing your helpers)
-        let bp = ensureArraysFromEmergence(raw);
-        const c = bp.activeCount || bp.particleCount || bp.maxParticles || ((bp.positions?.length||0)/3)|0;
-
-        // Scale text to be visible (same as your handler)
-        const fovRad = ((camera?.fov ?? 75) * Math.PI) / 180;
-        const z = camera?.position?.z ?? 80;
-        const viewH = 2 * z * Math.tan(fovRad / 2);
-        const desiredH = viewH * 0.65;
-        const assumedTextH = 10.0;
-        const textScale = desiredH / assumedTextH;
-
-        const atmos = bp.atmosphericPositions.slice ? bp.atmosphericPositions.slice() : new Float32Array(bp.atmosphericPositions);
-        for (let i = 0; i < atmos.length; i += 3) { atmos[i] *= textScale; atmos[i+1] *= textScale; }
-
-        let targetAllen = lastFullStageRef.current?.allenAtlasPositions;
-        const allen = new Float32Array(c * 3);
-        if (targetAllen && targetAllen.length >= 3) {
-          const srcCount = targetAllen.length / 3;
-          for (let i = 0; i < c; i++) {
-            const si = (i % srcCount) * 3, di = i * 3;
-            allen[di]   = targetAllen[si];
-            allen[di+1] = targetAllen[si+1];
-            allen[di+2] = targetAllen[si+2];
-          }
-        } else {
-          for (let i = 0; i < c; i++) {
-            const di = i*3, theta = Math.random()*Math.PI*2, u = Math.random()*2-1, phi = Math.acos(u);
-            const r = 22 + Math.random()*10;
-            allen[di]   = r*Math.sin(phi)*Math.cos(theta);
-            allen[di+1] = r*Math.sin(phi)*Math.sin(theta);
-            allen[di+2] = r*Math.cos(phi);
-          }
-        }
-
-        from = atmos; to = allen; count = c;
-      } else {
-        return; // unknown payload shape
-      }
-
-      const g = geometryRef.current, m = materialRef.current;
-      if (!g || !m) return;
-
-      g.setAttribute('aFromPosition', new THREE.BufferAttribute(from, 3));
-      g.setAttribute('aToPosition',   new THREE.BufferAttribute(to,   3));
-      g.setDrawRange(0, count);
-      g.attributes.aFromPosition.needsUpdate = true;
-      g.attributes.aToPosition.needsUpdate   = true;
-
-      // animate uniforms (single owner)
-      cancel();
-      const start = performance.now();
-      const dur = 1200;
-      const step = (t) => {
-        const k = Math.max(0, Math.min(1, (t - start) / dur));
-        if (!materialRef.current) { cancel(); return; }
-        m.uniforms.uMorphProgress.value = k;
-        m.uniforms.uStageProgress.value = k; // compatibility
-        m.uniforms.uFadeProgress.value  = k;
-        if (k < 1) raf = requestAnimationFrame(step);
-      };
-      raf = requestAnimationFrame(step);
-    } catch (e) {
-      console.error('doctor-inline-ts error:', e);
-    }
-  };
-
-  const off = BeatBus.on(EVENTS.BLUEPRINT_READY, onBlueprint);
-  if (import.meta.env.DEV) console.log('🎚️ TransitionService (inline) active');
-  return () => { off && off(); cancel(); };
-}, [camera]);
-// DOCTOR_INLINE_TS_END
-
-
   // Geometry
   const geometry = useMemo(() => {
     if (!blueprint) return null;
@@ -352,10 +258,6 @@ useEffect(() => {
     geo.setAttribute('position', new THREE.BufferAttribute(atmos, 3));
     geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(atmos, 3));
     geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(allen, 3));
-// doctor-inline-ts:aFromTo
-geo.setAttribute('aFromPosition', new THREE.BufferAttribute(atmos, 3));
-geo.setAttribute('aToPosition',   new THREE.BufferAttribute(allen, 3)); // doctor-inline-ts:end
-
 
     if (blueprint.animationSeeds)
       geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
@@ -474,11 +376,9 @@ geo.setAttribute('aToPosition',   new THREE.BufferAttribute(allen, 3)); // docto
 
     // Update all uniforms
     mat.uniforms.uTime.value = state.clock.elapsedTime;
-// doctor-inline-ts:disable-morph
-//     mat.uniforms.uMorphProgress.value = mp;
+    mat.uniforms.uMorphProgress.value = mp;
     mat.uniforms.uScrollProgress.value = sp;
-// doctor-inline-ts:disable-stage-progress
-//     mat.uniforms.uStageProgress.value = mp;
+    mat.uniforms.uStageProgress.value = mp;
     mat.uniforms.uStageBlend.value = sp;
     mat.uniforms.uActiveCount.value = activeCount;
     mat.uniforms.uTierCutoff.value = activeCount;

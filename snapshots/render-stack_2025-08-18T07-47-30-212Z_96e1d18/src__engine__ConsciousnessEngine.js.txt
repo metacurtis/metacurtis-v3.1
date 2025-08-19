@@ -1,10 +1,10 @@
 // src/engine/ConsciousnessEngine.js
 // SST v3.0 COMPLIANT - Integrated Stage/Quality + Emergence blueprint generation
 
-import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
-import { EVENTS } from '@/theater/events.js';
+import BeatBus from "@/modules/orchestration/core/BeatBusAdapter.js";
+import { EVENTS } from '@theater/events.js';
 
 class ConsciousnessEngine {
   constructor() {

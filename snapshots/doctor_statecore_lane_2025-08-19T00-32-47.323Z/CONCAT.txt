@@ -1,96 +1,114 @@
+===== src/engine/ConsciousnessEngine.js =====
 // src/engine/ConsciousnessEngine.js
 // SST v3.0 COMPLIANT - Integrated Stage/Quality + Emergence blueprint generation
 
-import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
-import { EVENTS } from '@/theater/events.js';
+import BeatBus from "@/modules/orchestration/core/BeatBusAdapter.js";
+import { EVENTS } from '@theater/events.js';
 
 class ConsciousnessEngine {
+  _putCache(key, bp){
+    this.blueprintCache.set(key, bp);
+    // tiny LRU-ish cap
+    if (this.blueprintCache.size > (this._cacheMax||16)) {
+      const first = this.blueprintCache.keys().next().value;
+      this.blueprintCache.delete(first);
+    }
+  }
+
   constructor() {
-    this.blueprintCache = new Map();
+  this.blueprintCache = new Map();
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this.isInitialized = false;
 
-    this.initializeBeatBusListeners();
-    console.log('🧠 ConsciousnessEngine initialized with BeatBus integration (SST v3.0 compliant)');
+    initializeBeatBusListeners() {
+  const BUS = (typeof getBeatBus === 'function' ? getBeatBus() : (typeof BeatBus !== 'undefined' ? BeatBus : null));
+  if (!BUS || !BUS.on) { console.error('BeatBus unavailable'); return; }
+
+  // Stage changes: accept { from, to } and legacy { stage }
+  BUS.on(EVENTS.STAGE_CHANGE, ({ from, to, stage }) => {
+    const next = to || stage;
+    if (!next) return;
+    console.log(`🧠 Engine: Stage change to ${next}`);
+    this.currentStage = next;
+    buildAndEmitBlueprint(stage, quality) {
+  if (typeof this._buildToken !== 'number') this._buildToken = 0;
+  const token = ++this._buildToken;
+
+  const BUS = (typeof getBeatBus === 'function' ? getBeatBus() : (typeof BeatBus !== 'undefined' ? BeatBus : null));
+  if (!BUS || !BUS.emit) return;
+
+  const cacheKey = `${stage}|${quality}`;
+  if (this.blueprintCache.has(cacheKey)) {
+    const cachedBlueprint = this.blueprintCache.get(cacheKey);
+    if (token !== this._buildToken) return; // abort stale
+    BUS.emit(EVENTS.BLUEPRINT_READY, {
+      blueprint: cachedBlueprint,
+      stage, quality, cached: true,
+      count: cachedBlueprint.activeCount ?? cachedBlueprint.particleCount ?? ((cachedBlueprint?.allenAtlasPositions?.length||0)/3)|0,
+      fromPositions: cachedBlueprint.atmosphericPositions,
+      toPositions:   cachedBlueprint.allenAtlasPositions
+    });
+    return;
   }
 
-  // ————————————————————————————————————————————————————————————————
-  // BeatBus Event Listeners
-  // ————————————————————————————————————————————————————————————————
-  initializeBeatBusListeners() {
-    // Stage changes from UI/scroll
-    BeatBus.on(EVENTS.STAGE_CHANGE, ({ stage }) => {
-      if (!stage) return;
-      console.log(`🧠 Engine: Stage change to ${stage}`);
-      this.currentStage = stage;
-      this.buildAndEmitBlueprint(stage, this.currentQuality);
-    });
+  const blueprint = this.buildBlueprint(stage, { quality });
+  if (!blueprint) return;
+  this.blueprintCache.set(cacheKey, blueprint);
 
-    // Quality changes from TAQS
-    BeatBus.on(EVENTS.QUALITY_CHANGE, ({ tier }) => {
-      if (!tier) return;
-      console.log(`🧠 Engine: Quality change to ${tier}`);
-      this.currentQuality = tier;
-      this.buildAndEmitBlueprint(this.currentStage, tier);
-    });
+  if (token !== this._buildToken) return; // abort stale
+  BUS.emit(EVENTS.BLUEPRINT_READY, {
+    blueprint, stage, quality, cached: false,
+    count: blueprint.activeCount ?? blueprint.particleCount ?? ((blueprint?.allenAtlasPositions?.length||0)/3)|0,
+    fromPositions: blueprint.atmosphericPositions,
+    toPositions:   blueprint.allenAtlasPositions
+  });
+}
+ catch(_) {}
+  });
 
-    // Director: Prewarm genesis for emergence (SST v3.0 opening)
-    BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
-      console.log('🧠 Engine: Prewarming genesis blueprint for emergence');
-      const key = this._emergenceKey('HELLO CURTIS', 2000);
+  // Quality changes: accept { tier } and legacy { quality }
+  BUS.on(EVENTS.QUALITY_CHANGE, ({ tier, quality }) => {
+    const q = quality || tier;
+    if (!q) return;
+    console.log(`🧠 Engine: Quality change to ${q}`);
+    this.currentQuality = q;
+    this.buildAndEmitBlueprint(this.currentStage, q);
+  });
 
-      if (!this.blueprintCache.has(key)) {
-        const bp = this.buildEmergenceBlueprint({
-          text: 'HELLO CURTIS',
-          count: 2000, // SST v3.0: Genesis has 2000 particles
-        });
-        this.blueprintCache.set(key, bp);
-      }
+  // Director: Prewarm genesis for emergence
+  BUS.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
+    console.log('🧠 Engine: Prewarming genesis blueprint for emergence');
+    const key = this._emergenceKey('HELLO CURTIS', 2000);
+    if (!this.blueprintCache.has(key)) {
+      const bp = this.buildEmergenceBlueprint({ text:'HELLO CURTIS', count:2000 });
+      this.blueprintCache.set(key, bp);
+    }
+    BUS.emit(EVENTS.PREWARM_COMPLETE, { key });
+  });
 
-      // Notify Director that prewarm is complete
-      BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
-    });
+  // Director: Build emergence blueprint
+  BUS.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts={}) => {
+    console.log('🧠 Engine: Building emergence blueprint');
+    const text = opts.sourceText || 'HELLO CURTIS';
+    const count = opts.count || 2000;
+    const key = this._emergenceKey(text, count);
+    let bp = this.blueprintCache.get(key);
+    const cached = !!bp;
+    if (!bp) { bp = this.buildEmergenceBlueprint({ text, count, tierBehaviors: opts.tierBehaviors }); this.blueprintCache.set(key, bp); }
+    BUS.emit(EVENTS.BLUEPRINT_READY, { blueprint: bp, stage:'genesis', quality:this.currentQuality, cached });
+  });
 
-    // Director: Build emergence blueprint (particles from text)
-    BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
-      console.log('🧠 Engine: Building emergence blueprint');
+  // initial blueprint after mount
+  setTimeout(() => {
+    console.log('🧠 Engine: Requesting initial state...');
+    this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
+  }, 500);
+}
 
-      const text = opts.sourceText || 'HELLO CURTIS';
-      const count = opts.count || 2000; // SST v3.0 Genesis particle count
-      const tierBehaviors = opts.tierBehaviors || {
-        tier1: { behavior: 'drift', ratio: 0.5 },
-        tier2: { behavior: 'orbital', ratio: 0.2 },
-        tier3: { behavior: 'twinkle', ratio: 0.15 },
-        tier4: { behavior: 'prominent', ratio: 0.15 },
-      };
 
-      const key = this._emergenceKey(text, count);
-      let bp = this.blueprintCache.get(key);
-      const cached = !!bp;
-
-      if (!bp) {
-        bp = this.buildEmergenceBlueprint({ text, count, tierBehaviors });
-        this.blueprintCache.set(key, bp);
-      }
-
-      // Emit blueprint - WebGLBackground expects this format
-      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-        blueprint: bp,
-        stage: 'genesis',
-        quality: this.currentQuality,
-        cached,
-      });
-    });
-
-    // Initial blueprint request after components mount
-    setTimeout(() => {
-      console.log('🧠 Engine: Requesting initial state...');
-      this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
-    }, 500); // Give renderer time to mount
-  }
 
   _emergenceKey(text, count) {
     return `emergence|${text}|${count}`;
@@ -99,18 +117,44 @@ class ConsciousnessEngine {
   // ————————————————————————————————————————————————————————————————
   // Build and emit stage blueprints
   // ————————————————————————————————————————————————————————————————
-  buildAndEmitBlueprint(stage, quality) {
-    const cacheKey = `${stage}|${quality}`;
+  buildAndEmitBlueprint(stage, quality){
+  const token = ++this._buildToken;
+  const cacheKey = `${stage}|${quality}`;
 
-    if (this.blueprintCache.has(cacheKey)) {
-      console.log(`🔨 Engine: Using cached blueprint for ${stage}|${quality}`);
-      const cachedBlueprint = this.blueprintCache.get(cacheKey);
-      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-        blueprint: cachedBlueprint,
-        stage,
-        quality,
-        cached: true,
-      });
+  // Try cache first
+  if (this.blueprintCache.has(cacheKey)) {
+    const cachedBlueprint = this.blueprintCache.get(cacheKey);
+    // emit once per change (guard stale)
+    if (token !== this._buildToken) return;
+    __BUS__.emit(EVENTS.BLUEPRINT_READY, {
+      blueprint: cachedBlueprint,
+      stage,
+      quality,
+      cached: true,
+      // forward-compat for dumb renderer + morph driver
+      count: cachedBlueprint.activeCount ?? cachedBlueprint.particleCount ?? ((cachedBlueprint?.allenAtlasPositions?.length||0)/3)|0,
+      fromPositions: cachedBlueprint.atmosphericPositions,
+      toPositions:   cachedBlueprint.allenAtlasPositions
+    });
+    return;
+  }
+
+  // Build new
+  const blueprint = this.buildBlueprint(stage, { quality });
+  if (!blueprint) return;
+  this._putCache(cacheKey, blueprint);
+
+  if (token !== this._buildToken) return; // abort stale
+  __BUS__.emit(EVENTS.BLUEPRINT_READY, {
+    blueprint,
+    stage,
+    quality,
+    cached: false,
+    count: blueprint.activeCount ?? blueprint.particleCount ?? ((blueprint?.allenAtlasPositions?.length||0)/3)|0,
+    fromPositions: blueprint.atmosphericPositions,
+    toPositions:   blueprint.allenAtlasPositions
+  });
+});
       return;
     }
 
@@ -508,3 +552,119 @@ if (typeof window !== 'undefined') {
 }
 
 export default engine;
+
+
+===== src/state/StateController.js =====
+// StateController — single source of truth (stage/quality/clock)
+// Emits canonical events onto BeatBus; no React or WebGL imports here.
+import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
+
+export const EVENTS = {
+  STAGE_CHANGE: 'STAGE_CHANGE',
+  QUALITY_CHANGE: 'QUALITY_CHANGE',
+  STATE_CHANGED: 'STATE_CHANGED',
+  BLUEPRINT_READY: 'BLUEPRINT_READY',   // pass-through convenience
+  OPENING_COMPLETE: 'OPENING_COMPLETE', // for completeness
+};
+
+let _stage = 'opening';
+let _quality = 'HIGH';
+let _clockId = null;
+let _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
+
+const _ring = [];
+function _log(e,p){ _ring.push({ t: Date.now(), e, p }); if (_ring.length>120) _ring.shift(); }
+function _emit(e,p){ _log(e,p); try { BeatBus.emit(e,p); } catch(err){ console.error('[StateController.emit]', err); } }
+
+function setStage(name){
+  if (!name || name===_stage) return;
+  const _prev = _stage;
+  _stage = name;
+  _emit(EVENTS.STAGE_CHANGE, { from:_prev, to:_stage });
+});
+}
+function setQuality(tier){
+  if (!tier || tier===_quality) return;
+  _quality = tier;
+  _emit(EVENTS.QUALITY_CHANGE, { tier });
+});
+}
+function startClock(){
+  if (_clockId) return;
+  _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
+  _clockId = setInterval(()=> {
+    const now = (typeof performance!=='undefined'?performance.now():Date.now());
+    _emit(EVENTS.STATE_CHANGED, { now, since: now-_t0, stage:_stage, quality:_quality });
+  }, 500);
+}
+function stopClock(){ if (_clockId){ clearInterval(_clockId); _clockId=null; } }
+
+const api = {
+  getStage: ()=>_stage,
+  getQuality: ()=>_quality,
+  getClock: ()=>({ running: !!_clockId, startedAt:_t0 }),
+  setStage, setQuality, startClock, stopClock,
+  batch(fn){ try{ fn && fn(api); _emit(EVENTS.STATE_CHANGED, { stage:_stage, quality:_quality, batched:true }); }catch(e){ console.error('[StateController.batch]', e); } }
+};
+
+if (typeof window !== 'undefined') {
+  window.stateControls = {
+    ...api, EVENTS,
+    debug:{ getLog(){ return _ring.slice(); } }
+  };
+}
+
+export default api;
+
+
+===== src/modules/state/StateController.js =====
+// StateController — single-writer facade over stage/quality (dev-safe)
+// Emits STAGE_CHANGE / QUALITY_CHANGE onto BeatBus; mirrors to existing *Controls if present.
+import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
+
+export const EVENTS = {
+  STAGE_CHANGE: 'STAGE_CHANGE',
+  QUALITY_CHANGE: 'QUALITY_CHANGE',
+  STATE_CHANGED: 'STATE_CHANGED',
+  OPENING_COMPLETE: 'OPENING_COMPLETE',
+};
+
+const existing = globalThis.__STATE_CONTROLLER__;
+let api = existing;
+
+if (!api) {
+  let _stage = 'opening';
+  let _quality = 'HIGH';
+  let _clockStart = null;
+
+  const emit = (code, payload) => { try { BeatBus && BeatBus.emit && BeatBus.emit(code, payload); } catch(_){} };
+
+  api = {
+    getStage(){ return _stage; },
+    getQuality(){ return _quality; },
+    startClock(){ _clockStart = (typeof performance!=='undefined'?performance.now():Date.now()); return _clockStart; },
+    stopClock(){ const t = (typeof performance!=='undefined'?performance.now():Date.now()); const d = _clockStart? (t - _clockStart) : 0; _clockStart=null; return d; },
+    setStage(name){
+      if (name && name !== _stage) {
+        _stage = name;
+        emit(EVENTS.STAGE_CHANGE, { stage: name, at: Date.now() });
+        emit(EVENTS.STATE_CHANGED, { stage:_stage, quality:_quality });
+        try { globalThis.stageControls && globalThis.stageControls.setStage && globalThis.stageControls.setStage(name); } catch(_){}
+      }
+      return _stage;
+    },
+    setQuality(tier){
+      if (tier && tier !== _quality) {
+        _quality = tier;
+        emit(EVENTS.QUALITY_CHANGE, { tier, at: Date.now() });
+        emit(EVENTS.STATE_CHANGED, { stage:_stage, quality:_quality });
+        try { globalThis.qualityControls && globalThis.qualityControls.setQuality && globalThis.qualityControls.setQuality(tier); } catch(_){}
+      }
+      return _quality;
+    },
+  };
+  globalThis.__STATE_CONTROLLER__ = api;
+  globalThis.stateControls = api; // convenience
+}
+
+export default api;
