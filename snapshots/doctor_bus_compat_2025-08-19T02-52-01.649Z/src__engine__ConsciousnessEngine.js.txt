@@ -4,7 +4,7 @@ import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
 
 import { EVENTS } from '@theater/events.js';
-import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
+import * as BeatBusAdapter from '@/modules/orchestration/core/BeatBusAdapter.js';
 
 const BeatBus = (typeof getBeatBus === 'function' ? getBeatBus() : getBeatBus);
 
@@ -20,7 +20,7 @@ class ConsciousnessEngine {
 
   initializeBeatBusListeners() {
     // Stage changes
-    BeatBus.on(EVENTS.STAGE_CHANGE, (payload = {}) => { const stage = payload?.stage ?? payload?.to; if (!stage) return;  const stage = payload?.stage ?? payload?.to; if (!stage) return; 
+    BeatBus.on(EVENTS.STAGE_CHANGE, (payload = {}) => {
       const stage = payload.stage ?? payload.to;
       if (!stage) return;
       console.log('[Engine] Stage change ->', stage);
@@ -29,7 +29,7 @@ class ConsciousnessEngine {
     });
 
     // Quality changes
-    BeatBus.on(EVENTS.QUALITY_CHANGE, (payload = {}) => { const tier = payload?.tier ?? payload?.quality; if (!tier) return;  const tier = payload?.tier ?? payload?.quality; if (!tier) return; 
+    BeatBus.on(EVENTS.QUALITY_CHANGE, (payload = {}) => {
       const tier = payload.tier ?? payload.quality;
       if (!tier) return;
       console.log('[Engine] Quality change ->', tier);

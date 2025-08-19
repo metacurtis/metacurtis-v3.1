@@ -1,4 +1,4 @@
-import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
+import * as BeatBusAdapter from '@/modules/orchestration/core/BeatBusAdapter.js';
 
 const BeatBus = (typeof getBeatBus === 'function' ? getBeatBus() : getBeatBus);
 // StateController — single source of truth (stage/quality/clock)
