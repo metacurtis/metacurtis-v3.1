@@ -1,10 +1,10 @@
+import './canon/init-amplified.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/index.css';
 
 // Import Canon L2 (now it exists!)
-import '@/canon/init.js';
 
 const rootEl = document.getElementById('root');
 
@@ -23,12 +23,12 @@ if (import.meta.env.DEV) {
   console.log('  Guard:', !!window.__CANON_GUARD_ACTIVE);
   console.log('  Console:', !!window.__CANON_CONSOLE_ACTIVE);
   console.log('  BeatBus:', !!window.BeatBus);
-  
+
   // Global debug helpers
   window.canonDebug = {
     guard: () => window.canon?.guard?.getViolations(),
     console: () => window.canon?.panel?.patterns,
     bus: () => window.BeatBus?.getDebugInfo(),
-    emit: (evt, data) => window.BeatBus?.emit(evt, data)
+    emit: (evt, data) => window.BeatBus?.emit(evt, data),
   };
 }

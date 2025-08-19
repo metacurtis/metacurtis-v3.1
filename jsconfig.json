@@ -1,52 +1,24 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"], "@/modules/*":["src/modules/*"],
-      "@/*": [
-        "src/*"
-      ],
-      "@components/*": [
-        "src/components/*"
-      ],
-      "@stores/*": [
-        "src/stores/*"
-      ],
-      "@config/*": [
-        "src/config/*"
-      ],
-      "@engine/*": [
-        "src/engine/*"
-      ],
-      "@theater/*": [
-        "src/theater/*"
-      ],
-      "@hooks/*": [
-        "src/hooks/*"
-      ],
-      "@utils/*": [
-        "src/utils/*"
-      ],
-      "@styles/*": [
-        "src/styles/*"
-      ],
-      "@modules/*": [
-        "modules/*"
-      ],
-      "@/modules/*": [
-        "src/modules/*"
-      ]
+    "paths": {
+      "@/*": ["src/*"],
+      "@/modules/*": ["src/modules/*"],
+      "@components/*": ["src/components/*"],
+      "@stores/*": ["src/stores/*"],
+      "@config/*": ["src/config/*"],
+      "@engine/*": ["src/engine/*"],
+      "@theater/*": ["src/theater/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@styles/*": ["src/styles/*"],
+      "@modules/*": ["modules/*"]
     },
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx"
   },
-  "include": [
-    "src/**/*",
-    "modules/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "modules/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
