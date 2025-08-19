@@ -274,18 +274,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     geo.setAttribute('position', new THREE.BufferAttribute(atmos, 3));
     geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(atmos, 3));
     
-    
     // mirror for alt shader naming
-    geo.setAttribute('aFromPosition', new THREE.BufferAttribute(atmos, 3));
-// mirror for alt shader naming
     geo.setAttribute('aFromPosition', new THREE.BufferAttribute(atmos, 3));
 geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(allen, 3));
 
     
-    
     // mirror for alt shader naming
-    geo.setAttribute('aToPosition', new THREE.BufferAttribute(allen, 3));
-// mirror for alt shader naming
     geo.setAttribute('aToPosition', new THREE.BufferAttribute(allen, 3));
 if (blueprint.animationSeeds)
       geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
@@ -405,8 +399,6 @@ if (blueprint.animationSeeds)
     // Update all uniforms
     mat.uniforms.uTime.value = state.clock.elapsedTime;
     mat.uniforms.uMorphProgress.value = mp;
-    if (mat.uniforms.uFadeProgress) mat.uniforms.uFadeProgress.value = mp;
-    mat.uniforms.uFadeProgress && (mat.uniforms.uFadeProgress.value = mp);
     if (mat.uniforms.uFadeProgress) mat.uniforms.uFadeProgress.value = mp;
     mat.uniforms.uFadeProgress && (mat.uniforms.uFadeProgress.value = mp);
     mat.uniforms.uScrollProgress.value = sp;
