@@ -27,13 +27,11 @@ function setStage(name){
   _emit(EVENTS.STAGE_CHANGE, { from:_prev, to:_stage, stage:_stage });
 }
 
-
 function setQuality(tier){
   if (!tier || tier===_quality) return;
   _quality = tier;
   _emit(EVENTS.QUALITY_CHANGE, { tier, quality:_quality, stage:_stage });
 }
-
 
 function startClock(){
   if (_clockId) return;

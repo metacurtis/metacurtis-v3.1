@@ -1,7 +1,6 @@
-import { getBeatBus } from '@/modules/orchestration/core/BeatBusAdapter.js';
-const BeatBus = (typeof getBeatBus === 'function' ? getBeatBus() : getBeatBus);
 // StateController — single source of truth (stage/quality/clock)
 // Emits canonical events onto BeatBus; no React or WebGL imports here.
+import BeatBus from '@/modules/orchestration/core/BeatBusAdapter.js';
 
 export const EVENTS = {
   STAGE_CHANGE: 'STAGE_CHANGE',
@@ -22,19 +21,14 @@ function _emit(e,p){ _log(e,p); try { BeatBus.emit(e,p); } catch(err){ console.e
 
 function setStage(name){
   if (!name || name===_stage) return;
-  const _prev = _stage;
   _stage = name;
-  _emit(EVENTS.STAGE_CHANGE, { from:_prev, to:_stage, stage:_stage });
+  _emit(EVENTS.STAGE_CHANGE, { stage:_stage, quality:_quality });
 }
-
-
 function setQuality(tier){
   if (!tier || tier===_quality) return;
   _quality = tier;
-  _emit(EVENTS.QUALITY_CHANGE, { tier, quality:_quality, stage:_stage });
+  _emit(EVENTS.QUALITY_CHANGE, { stage:_stage, quality:_quality });
 }
-
-
 function startClock(){
   if (_clockId) return;
   _t0 = (typeof performance!=='undefined'?performance.now():Date.now());
