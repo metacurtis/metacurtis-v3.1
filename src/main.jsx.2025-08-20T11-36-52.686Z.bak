@@ -1,0 +1,37 @@
+// src/main.jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './styles/index.css';
+
+// ✅ Use the amplified Canon init we generated (no alias needed)
+import './canon/init-amplified.js';
+
+const rootEl = document.getElementById('root');
+
+if (!rootEl) {
+  console.error('❌ Could not find #root element');
+} else {
+  const root = ReactDOM.createRoot(rootEl);
+  // No StrictMode to avoid dev double-mount & duplicate events
+  root.render(<App />);
+}
+
+// ---- DEV-only optional helpers (won’t break if missing) ----
+if (import.meta.env.DEV) {
+  // Gate optional tools behind a flag so your dev console doesn’t get noisy:
+  const devToolsOn = localStorage.canonDevTools === '1';
+
+  const tryLoad = (path, label) =>
+    import(/* @vite-ignore */ path)
+      .then(() => console.log(`✅ ${label} loaded`))
+      .catch(() => console.log(`ℹ️ ${label} not found (optional)`));
+
+  if (devToolsOn) {
+    // Use absolute-from-root or relative paths; both are fine with @vite-ignore
+    tryLoad('/src/dev/renderHealthcheck.js', 'Render Healthcheck');
+    tryLoad('/src/canon-guard/blueprintGuard.js', 'Canon Guard (dev)');
+    tryLoad('/src/canon-console/browser/inject.js', 'Canon Console HUD');
+    tryLoad('/src/canon-guard/runtime/GuardRuntimeInject.js', 'Guard Runtime');
+  }
+}

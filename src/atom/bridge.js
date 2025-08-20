@@ -1,0 +1,57 @@
+// src/atom/bridge.js
+const MAX_PARTICLES = 15000;
+
+const HIGH = {
+  genesis: 2000,
+  discipline: 3000,
+  neural: 5000,
+  velocity: 12000,
+  architecture: 8000,
+  harmony: 12000,
+  transcendence: 15000,
+};
+
+const MULTIPLIER = { LOW: 0.6, MEDIUM: 0.85, HIGH: 1.0, ULTRA: 1.5 };
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
+export function getBudget(stage, tier = 'HIGH') {
+  const qc = globalThis.qualityControls;
+  if (qc?.getBudget) {
+    try { return clamp(qc.getBudget(stage, tier), 0, MAX_PARTICLES); }
+    catch {}
+  }
+  const base = HIGH[stage] ?? 3000;
+  const mult = MULTIPLIER[tier] ?? 1.0;
+  return clamp(Math.round(base * mult), 0, MAX_PARTICLES);
+}
+
+export function applyBudget(engine, stage, tier) {
+  const count = getBudget(stage, tier);
+  if (engine?.buildBlueprint) engine.buildBlueprint(stage, count, tier);
+  return count;
+}
+
+export function syncFromStateCore(StateCore, engine, opts = {}) {
+  const onMorph = opts.onMorph || (()=> { /* no-op */ void 0; });
+  let last = StateCore.get?.() || {};
+
+  // initial
+  applyBudget(engine, last.stage, last.quality);
+  onMorph(last.morph);
+
+  // subscribe
+  StateCore.on?.('change', (s) => {
+    if (s.stage !== last.stage || s.quality !== last.quality) {
+      applyBudget(engine, s.stage, s.quality);
+    }
+    if (s.morph !== last.morph) onMorph(s.morph);
+    last = s;
+  });
+
+  if (typeof window !== 'undefined') {
+    window.__atom = {
+      getBudget,
+      apply: (stage, tier) => applyBudget(engine, stage, tier),
+    };
+  }
+}

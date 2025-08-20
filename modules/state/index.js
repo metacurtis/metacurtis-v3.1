@@ -170,4 +170,4 @@ if (import.meta.env.DEV) {
     console.log('💡 Dev mode: State management auto-initialized');
     console.log('💡 Cleanup available at window.__stateCleanup()');
   });
-}
+}   
