@@ -1,7 +1,7 @@
-// src/utils/webgl/ResourceTracker.js
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/utils/webgl/ResourceTracker.js
 // This file defines the ResourceTracker CLASS.
 // It should be default exported.
-
 export default class ResourceTracker {
   constructor() {
     this.resources = new Set();
@@ -16,14 +16,14 @@ export default class ResourceTracker {
     // console.log('ResourceTracker: Tracking', resource.constructor.name, resource.uuid);
 
     if (resource.isObject3D && typeof resource.traverse === 'function') {
-      resource.traverse(child => {
+      resource.traverse((child) => {
         if (child.isMesh || child.isPoints || child.isLine) {
           if (child.geometry && !this.resources.has(child.geometry)) {
             this.resources.add(child.geometry);
           }
           if (child.material) {
             const materials = Array.isArray(child.material) ? child.material : [child.material];
-            materials.forEach(material => {
+            materials.forEach((material) => {
               if (material && !this.resources.has(material)) {
                 this.resources.add(material);
                 this._trackMaterialTextures(material);
@@ -66,4 +66,5 @@ export default class ResourceTracker {
     this.resources.clear();
     console.log(`ResourceTracker Class: Successfully disposed of ${disposedCount} resources.`);
   }
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

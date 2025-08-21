@@ -1,5 +1,5 @@
-/** Canon Deprecation Protocol (phased) */
-export class DeprecationManager {
+// @doctor:4b-disposers
+const __doctorDisposers = []; /** Canon Deprecation Protocol (phased) */export class DeprecationManager {
   constructor() {
     this.schedule = new Map();
     this.telemetry = new Map();
@@ -42,10 +42,11 @@ export class DeprecationManager {
     this.schedule.forEach((dep, id) => {
       active.push({ id, phase: dep.currentPhase, violators: dep.violators.size });
       tel[id] = this.telemetry.get(id) || 0;
-      if (dep.violators.size) blockers.push({ id, violators: Array.from(dep.violators) });
-      else ready.push(id);
+      if (dep.violators.size) blockers.push({ id, violators: Array.from(dep.violators) });else
+      ready.push(id);
     });
     return { active, telemetry: tel, readyForNextPhase: ready, blockers };
   }
 }
-export default DeprecationManager;
+export default DeprecationManager; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

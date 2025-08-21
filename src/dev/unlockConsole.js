@@ -1,7 +1,7 @@
-// src/dev/unlockConsole.js
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/dev/unlockConsole.js
 // Minimal, safe dev helper: expose SC/BUS, taps, and keep boundary enforced.
-(() => {
-  const log = (...a) => console.log('[UnlockConsole]', ...a);
+(() => {const log = (...a) => console.log('[UnlockConsole]', ...a);
 
   // Re-expose StateCore handles (lazy import so Vite dev path works)
   async function rebindSC() {
@@ -15,13 +15,24 @@
           get: core.get?.bind(core),
           set: core.set?.bind(core),
           snapshot: core.getSnapshot?.bind(core),
-          atoms: core.atoms || {},
+          atoms: core.atoms || {}
         };
         log('SC rebound', Object.keys(window.SC.atoms));
       }
     } catch (e) {
       console.warn('[UnlockConsole] StateCore import failed:', e);
     }
+
+    // @doctor:phase4b-hmr-dbdff18d - Component listener cleanup
+    const __componentDisposers = [];
+
+    // Store original methods if component uses them directly
+    const __captureUnsub = (unsub) => {
+      if (typeof unsub === 'function') {
+        __componentDisposers.push(unsub);
+      }
+      return unsub;
+    };
   }
 
   function enforceBoundary() {
@@ -32,8 +43,8 @@
         log('Boundary enforced');
       }
     } catch (e) {
-      /* ignore */
-    }
+
+      /* ignore */}
   }
 
   function wrapBus() {
@@ -50,7 +61,7 @@
     };
     BUS.getDebugInfo = () => {
       const listeners = {};
-      if (BUS.listeners?.forEach) BUS.listeners.forEach((set, key) => (listeners[key] = set.size));
+      if (BUS.listeners?.forEach) BUS.listeners.forEach((set, key) => listeners[key] = set.size);
       return { listeners, lastEmit: BUS.lastEmit, logSize: BUS.eventLog?.length || 0 };
     };
     BUS.__emitWrapped = true;
@@ -61,14 +72,14 @@
     const BUS = window.BeatBus;
     if (!BUS) return;
     window.busTap =
-      window.busTap || ((evt, fn = p => console.log('[tap]', evt, p)) => BUS.on?.(evt, fn));
+    window.busTap || ((evt, fn = (p) => console.log('[tap]', evt, p)) => BUS.on?.(evt, fn));
     [
-      'STAGE_CHANGE',
-      'QUALITY_CHANGE',
-      'BLUEPRINT_READY',
-      'STATE_STAGE_UPDATED',
-      'STATE_QUALITY_UPDATED',
-    ].forEach(ev => window.busTap(ev));
+    'STAGE_CHANGE',
+    'QUALITY_CHANGE',
+    'BLUEPRINT_READY',
+    'STATE_STAGE_UPDATED',
+    'STATE_QUALITY_UPDATED'].
+    forEach((ev) => window.busTap(ev));
     log('Taps installed');
   }
 
@@ -83,13 +94,29 @@
       status: () => ({
         boundary: window.canon?.boundary?.getReport?.(),
         bus: window.BeatBus?.getDebugInfo?.(),
-        scAtoms: Object.keys(window.SC?.atoms || {}),
-      }),
+        scAtoms: Object.keys(window.SC?.atoms || {})
+      })
     };
     log('Ready. Shortcuts: window.SC, window.BeatBus, window.__UNLOCK');
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
+  if (document.readyState === 'loading') {__doctorDisposers.push(() => {
+      document.removeEventListener('DOMContentLoaded', boot);});document.addEventListener('DOMContentLoaded', boot);
   } else boot();
 })();
+
+
+// @doctor:phase4b-hmr-dbdff18d - HMR dispose
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    __componentDisposers.forEach((d) => {
+      try {d();} catch (e) {console.warn('Dispose error:', e);}
+    });
+    __componentDisposers.length = 0;"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});
+  });
+}
+
+/* TODO: Wrap listener calls with __captureUnsub:
+   const unsub = __captureUnsub(bus.on('EVENT', handler));
+   Lines with uncaptured listeners: 
+*/

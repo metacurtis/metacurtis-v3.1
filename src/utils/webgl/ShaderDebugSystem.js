@@ -4,26 +4,26 @@
 import * as THREE from 'three';
 
 // Debug mode configuration
-const DEBUG_CONFIG = {
-  enabled: process.env.NODE_ENV === 'development',
+// @doctor:4b-disposers
+const __doctorDisposers = [];const DEBUG_CONFIG = { enabled: process.env.NODE_ENV === 'development',
   visualizations: {
     stageColors: true,
     gridOverlay: true,
     particleFlashing: true,
     uniformValues: true,
-    performanceMetrics: true,
+    performanceMetrics: true
   },
   logging: {
     uniformUpdates: false,
     shaderCompilation: true,
     performanceWarnings: true,
-    stageTransitions: true,
+    stageTransitions: true
   },
   controls: {
     keyboardShortcuts: true,
     onScreenOverlay: true,
-    realTimeEditing: false, // Future: Live shader editing
-  },
+    realTimeEditing: false // Future: Live shader editing
+  }
 };
 
 // Debug visualization modes
@@ -34,7 +34,7 @@ const DEBUG_MODES = {
   ANIMATION_SEEDS: { name: 'Animation Seeds', value: 3 },
   PERFORMANCE_HEAT: { name: 'Performance Heatmap', value: 4 },
   UNIFORM_VALUES: { name: 'Uniform Visualization', value: 5 },
-  PARTICLE_IDS: { name: 'Particle IDs', value: 6 },
+  PARTICLE_IDS: { name: 'Particle IDs', value: 6 }
 };
 
 // Debug shader extensions
@@ -156,7 +156,7 @@ class ShaderDebugSystem {
 
   // Setup keyboard shortcuts
   setupKeyboardShortcuts() {
-    const handleKeyDown = event => {
+    const handleKeyDown = (event) => {
       if (!event.altKey) return; // Alt + key combinations
 
       switch (event.code) {
@@ -188,9 +188,9 @@ class ShaderDebugSystem {
           event.preventDefault();
           break;
       }
-    };
+    };__doctorDisposers.push(() => {
 
-    window.addEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);});window.addEventListener('keydown', handleKeyDown);
     this.keyboardListeners.push(() => window.removeEventListener('keydown', handleKeyDown));
   }
 
@@ -224,7 +224,7 @@ class ShaderDebugSystem {
     if (!this.overlayElement) return;
 
     const currentModeName =
-      Object.values(DEBUG_MODES).find(m => m.value === this.currentMode.value)?.name || 'Unknown';
+    Object.values(DEBUG_MODES).find((m) => m.value === this.currentMode.value)?.name || 'Unknown';
 
     this.overlayElement.innerHTML = `
       <h3 style="margin: 0 0 10px 0; color: #00ff00;">🔍 Shader Debug</h3>
@@ -273,7 +273,7 @@ class ShaderDebugSystem {
       uDebugMode: { value: this.currentMode.value },
       uDebugIntensity: { value: this.debugIntensity },
       uDebugColor: { value: this.getStageDebugColor(stage) },
-      uShowDebugOverlay: { value: this.showOverlay },
+      uShowDebugOverlay: { value: this.showOverlay }
     };
 
     // Enhance shaders with debug code
@@ -315,8 +315,8 @@ class ShaderDebugSystem {
                applyDebugModifications(pos, debugColor);
                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
                `
-        )
-      );
+        ));
+
     } else {
       // Fragment shader
       const uniformsEnd = shader.lastIndexOf('varying');
@@ -332,27 +332,27 @@ class ShaderDebugSystem {
                color = applyDebugVisualization(color, alpha);
                gl_FragColor = vec4(color * circle, alpha * circle);
                `
-        )
-      );
+        ));
+
     }
   }
 
   // Get debug color for stage
   getStageDebugColor(stage) {
     const colors = [
-      new THREE.Color(1, 0, 0), // Red - Genesis
-      new THREE.Color(1, 0.5, 0), // Orange - Awakening
-      new THREE.Color(1, 1, 0), // Yellow - Structure
-      new THREE.Color(0, 1, 0), // Green - Learning
-      new THREE.Color(0, 0, 1), // Blue - Building
-      new THREE.Color(1, 0, 1), // Magenta - Mastery
+    new THREE.Color(1, 0, 0), // Red - Genesis
+    new THREE.Color(1, 0.5, 0), // Orange - Awakening
+    new THREE.Color(1, 1, 0), // Yellow - Structure
+    new THREE.Color(0, 1, 0), // Green - Learning
+    new THREE.Color(0, 0, 1), // Blue - Building
+    new THREE.Color(1, 0, 1) // Magenta - Mastery
     ];
     return colors[stage] || colors[0];
   }
 
   // Debug mode controls
   setDebugMode(mode) {
-    const modeObj = Object.values(DEBUG_MODES).find(m => m.value === mode);
+    const modeObj = Object.values(DEBUG_MODES).find((m) => m.value === mode);
     if (modeObj) {
       this.currentMode = modeObj;
       this.updateOverlay();
@@ -362,7 +362,7 @@ class ShaderDebugSystem {
 
   toggleDebugMode() {
     const modes = Object.values(DEBUG_MODES);
-    const currentIndex = modes.findIndex(m => m.value === this.currentMode.value);
+    const currentIndex = modes.findIndex((m) => m.value === this.currentMode.value);
     const nextIndex = (currentIndex + 1) % modes.length;
     this.setDebugMode(modes[nextIndex].value);
   }
@@ -389,7 +389,7 @@ class ShaderDebugSystem {
       timestamp: performance.now(),
       uniform: uniformName,
       value: typeof value === 'object' ? JSON.stringify(value) : value,
-      stage,
+      stage
     });
 
     // Keep only last 100 entries
@@ -404,7 +404,7 @@ class ShaderDebugSystem {
       fps,
       particleCount,
       stage,
-      memoryUsage,
+      memoryUsage
     });
 
     if (this.performanceLog.length > 50) {
@@ -426,16 +426,16 @@ class ShaderDebugSystem {
       debugMode: this.currentMode,
       intensity: this.debugIntensity,
       recentPerformance: this.performanceLog.slice(-5),
-      recentUniforms: this.uniformLog.slice(-10),
+      recentUniforms: this.uniformLog.slice(-10)
     };
 
     console.log('🔍 Current Debug State:', state);
 
     // Copy to clipboard if possible
     if (navigator.clipboard) {
-      navigator.clipboard
-        .writeText(JSON.stringify(state, null, 2))
-        .then(() => console.log('📋 Debug state copied to clipboard'));
+      navigator.clipboard.
+      writeText(JSON.stringify(state, null, 2)).
+      then(() => console.log('📋 Debug state copied to clipboard'));
     }
   }
 
@@ -446,7 +446,7 @@ class ShaderDebugSystem {
       currentMode: this.currentMode,
       intensity: this.debugIntensity,
       performanceMetrics: this.getPerformanceMetrics(),
-      recommendations: this.getDebugRecommendations(),
+      recommendations: this.getDebugRecommendations()
     };
   }
 
@@ -455,8 +455,8 @@ class ShaderDebugSystem {
     if (recent.length === 0) return null;
 
     const avgFps = recent.reduce((sum, log) => sum + log.fps, 0) / recent.length;
-    const minFps = Math.min(...recent.map(log => log.fps));
-    const maxFps = Math.max(...recent.map(log => log.fps));
+    const minFps = Math.min(...recent.map((log) => log.fps));
+    const maxFps = Math.max(...recent.map((log) => log.fps));
 
     return { avgFps, minFps, maxFps, sampleCount: recent.length };
   }
@@ -480,7 +480,7 @@ class ShaderDebugSystem {
 
   // Cleanup
   destroy() {
-    this.keyboardListeners.forEach(cleanup => cleanup());
+    this.keyboardListeners.forEach((cleanup) => cleanup());
     if (this.overlayElement) {
       document.body.removeChild(this.overlayElement);
     }
@@ -507,4 +507,5 @@ export { DEBUG_CONFIG, DEBUG_MODES, ShaderDebugSystem };
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   window.shaderDebugSystem = shaderDebugSystem;
   window.DEBUG_MODES = DEBUG_MODES;
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

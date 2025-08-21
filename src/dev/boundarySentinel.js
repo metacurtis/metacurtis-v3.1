@@ -1,3 +1,14 @@
+// @doctor:4b-disposers
+const __doctorDisposers = []; // @doctor:phase4b-hmr-dbdff18d - Component listener cleanup
+const __componentDisposers = [];
+
+// Store original methods if component uses them directly
+const __captureUnsub = (unsub) => {
+  if (typeof unsub === 'function') {
+    __componentDisposers.push(unsub);
+  }
+  return unsub;
+};
 // DEV-only Boundary Sentinel (minimal)
 // Late-binds boundary enforcement and small dev helpers.
 (() => {
@@ -49,12 +60,28 @@
     if (!('BUS' in window)) Object.defineProperty(window, 'BUS', { get: () => window.BeatBus });
     window.busTap = window.busTap || ((evt, fn) => window.BeatBus?.on?.(evt, fn));
     window.tap =
-      window.tap || ((evt, fn = p => console.log('[tap]', evt, p)) => window.busTap(evt, fn));
+    window.tap || ((evt, fn = (p) => console.log('[tap]', evt, p)) => window.busTap(evt, fn));
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
+  if (document.readyState === 'loading') {__doctorDisposers.push(() => {
+      document.removeEventListener('DOMContentLoaded', start);});document.addEventListener('DOMContentLoaded', start);
   } else {
     start();
   }
 })();
+
+
+// @doctor:phase4b-hmr-dbdff18d - HMR dispose
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    __componentDisposers.forEach((d) => {
+      try {d();} catch (e) {console.warn('Dispose error:', e);}
+    });
+    __componentDisposers.length = 0;"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});
+  });
+}
+
+/* TODO: Wrap listener calls with __captureUnsub:
+   const unsub = __captureUnsub(bus.on('EVENT', handler));
+   Lines with uncaptured listeners: 
+*/

@@ -7,8 +7,8 @@ import ResourceTrackerClass from '@/utils/webgl/ResourceTracker.js';
  * Custom React hook to manage an instance of the ResourceTracker class.
  * It creates a tracker instance on mount and disposes of it on unmount.
  * @returns {ResourceTrackerClass} The instance of the ResourceTracker.
- */
-export default function useResourceTracker() {
+ */ // @doctor:4b-disposers
+const __doctorDisposers = [];export default function useResourceTracker() {
   // useRef to hold the tracker instance across renders without causing re-renders
   const trackerInstanceRef = useRef(null);
 
@@ -33,4 +33,5 @@ export default function useResourceTracker() {
 
   // Return the stable tracker instance
   return trackerInstanceRef.current;
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

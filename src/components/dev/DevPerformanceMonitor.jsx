@@ -8,8 +8,8 @@ import { clockAtom } from '@/stores/atoms/clockAtom';
 import { stageAtom } from '@/stores/atoms/stageAtom';
 
 // ✅ ENHANCED DASHBOARD STYLES: Atomic-themed design
-const dashboardStyle = {
-  position: 'fixed',
+// @doctor:4b-disposers
+const __doctorDisposers = [];const dashboardStyle = { position: 'fixed',
   bottom: '10px',
   left: '10px',
   background: 'rgba(0,0,0,0.9)',
@@ -24,7 +24,7 @@ const dashboardStyle = {
   minWidth: '320px',
   border: '1px solid #00ff88',
   boxShadow: '0 0 15px rgba(0,255,136,0.3), inset 0 0 20px rgba(0,255,136,0.05)',
-  backdropFilter: 'blur(8px)',
+  backdropFilter: 'blur(8px)'
 };
 
 const headerStyle = {
@@ -36,20 +36,20 @@ const headerStyle = {
   marginBottom: '10px',
   fontSize: '14px',
   fontWeight: 'bold',
-  color: '#00ffcc',
+  color: '#00ffcc'
 };
 
 const statRowStyle = {
   display: 'flex',
   justifyContent: 'space-between',
   marginBottom: '4px',
-  fontSize: '12px',
+  fontSize: '12px'
 };
 
 const sectionStyle = {
   borderTop: '1px solid rgba(0,255,136,0.3)',
   paddingTop: '6px',
-  marginTop: '8px',
+  marginTop: '8px'
 };
 
 // ✅ UTILITY FUNCTIONS
@@ -75,7 +75,7 @@ function DevPerformanceMonitor() {
     const unsubscribeQuality = qualityAtom.subscribe(() => {
       setQualityState(qualityAtom.getState());
     });
-    
+
     const unsubscribeClock = clockAtom.subscribe(() => {
       setClockState(clockAtom.getState());
     });
@@ -100,17 +100,17 @@ function DevPerformanceMonitor() {
   const deltaMs = clockState.deltaMs || 0;
   const jankCount = clockState.jankCount || 0;
   const performanceGrade = clockState.performanceGrade || 'A';
-  
+
   // Enhanced jank calculation
   const jankRatio = jankCount > 0 ? Math.min(jankCount / 100, 1) : 0;
-  
+
   // Quality metrics
   const currentTier = qualityState.currentQualityTier || 'HIGH';
   const particleCount = qualityState.particleCount || 0;
   const webglEnabled = qualityState.webglEnabled;
   const deviceType = qualityState.deviceType || 'unknown';
   const performanceClass = qualityState.performanceClass || 'high';
-  
+
   // Stage metrics
   const currentStage = stageState.currentStage || 'genesis';
   const stageProgress = Math.round((stageState.stageProgress || 0) * 100);
@@ -118,20 +118,20 @@ function DevPerformanceMonitor() {
 
   // ✅ ENHANCED PARTICLE BUDGET: Real-time calculation
   const expectedParticles = qualityAtom.getParticleBudget(currentStage);
-  const particleEfficiency = particleCount > 0 ? ((expectedParticles / particleCount) * 100) : 100;
+  const particleEfficiency = particleCount > 0 ? expectedParticles / particleCount * 100 : 100;
 
   // ✅ QUALITY FLAG: Enhanced visibility check
   if (!webglEnabled) {
     return (
-      <div style={{...dashboardStyle, border: '1px solid #ffaa00', color: '#ffaa00'}}>
-        <div style={{textAlign: 'center', fontSize: '14px', fontWeight: 'bold'}}>
+      <div style={{ ...dashboardStyle, border: '1px solid #ffaa00', color: '#ffaa00' }}>
+        <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>
           ⚠️ WebGL DISABLED
         </div>
-        <div style={{textAlign: 'center', fontSize: '11px', marginTop: '8px', opacity: 0.8}}>
+        <div style={{ textAlign: 'center', fontSize: '11px', marginTop: '8px', opacity: 0.8 }}>
           Enable WebGL for performance monitoring
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -139,7 +139,7 @@ function DevPerformanceMonitor() {
       {/* ✅ ENHANCED HEADER: Atomic branding with stage info */}
       <div style={headerStyle}>
         <span>⚛️ ATOMIC MONITOR</span>
-        <span style={{fontSize: '11px', color: '#00ff88'}}>
+        <span style={{ fontSize: '11px', color: '#00ff88' }}>
           {currentStage.toUpperCase()} ({stageProgress}%)
         </span>
       </div>
@@ -148,21 +148,21 @@ function DevPerformanceMonitor() {
       <div>
         <div style={statRowStyle}>
           <span>FPS (avg):</span> 
-          <span style={{ color: getPerformanceColor(fps, {good: 55, warning: 30}) }}>
+          <span style={{ color: getPerformanceColor(fps, { good: 55, warning: 30 }) }}>
             {safeToFixed(fps)} {performanceGrade}
           </span>
         </div>
         
         <div style={statRowStyle}>
           <span>Frame (avg):</span> 
-          <span style={{ color: getPerformanceColor(60 - avgFrameTime, {good: 44, warning: 30}) }}>
+          <span style={{ color: getPerformanceColor(60 - avgFrameTime, { good: 44, warning: 30 }) }}>
             {safeToFixed(avgFrameTime)} ms
           </span>
         </div>
         
         <div style={statRowStyle}>
           <span>Frame (last):</span> 
-          <span style={{ color: getPerformanceColor(60 - deltaMs, {good: 44, warning: 30}) }}>
+          <span style={{ color: getPerformanceColor(60 - deltaMs, { good: 44, warning: 30 }) }}>
             {safeToFixed(deltaMs)} ms
           </span>
         </div>
@@ -179,10 +179,10 @@ function DevPerformanceMonitor() {
       <div style={sectionStyle}>
         <div style={statRowStyle}>
           <span>Quality Tier:</span> 
-          <span style={{ 
-            color: currentTier === 'ULTRA' ? '#00ffcc' : 
-                  currentTier === 'HIGH' ? '#00ff88' : 
-                  currentTier === 'MEDIUM' ? '#ffaa00' : '#ff8888'
+          <span style={{
+            color: currentTier === 'ULTRA' ? '#00ffcc' :
+            currentTier === 'HIGH' ? '#00ff88' :
+            currentTier === 'MEDIUM' ? '#ffaa00' : '#ff8888'
           }}>
             {currentTier}
           </span>
@@ -197,7 +197,7 @@ function DevPerformanceMonitor() {
         
         <div style={statRowStyle}>
           <span>Efficiency:</span> 
-          <span style={{ color: getPerformanceColor(particleEfficiency, {good: 95, warning: 80}) }}>
+          <span style={{ color: getPerformanceColor(particleEfficiency, { good: 95, warning: 80 }) }}>
             {safeToFixed(particleEfficiency)}%
           </span>
         </div>
@@ -261,8 +261,9 @@ function DevPerformanceMonitor() {
       }}>
         SST v2.1 • Custom Atomic • MC3V Engine • Zero Legacy
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
-export default memo(DevPerformanceMonitor);
+export default memo(DevPerformanceMonitor); // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

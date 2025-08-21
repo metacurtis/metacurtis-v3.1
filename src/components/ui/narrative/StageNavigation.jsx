@@ -5,19 +5,19 @@
 import { useNarrativeStore } from '@/stores/narrativeStore';
 
 // ✅ SST v2.0: Canonical 7-stage system with correct labels
-const STAGES = [
-  { id: 'genesis', label: '1983' },
-  { id: 'discipline', label: '1983-2022' },
-  { id: 'neural', label: '2022' },
-  { id: 'velocity', label: 'Feb 2025' },
-  { id: 'architecture', label: 'Mar 2025' },
-  { id: 'harmony', label: 'Mar 2025' },
-  { id: 'transcendence', label: 'Present' },
-];
+// @doctor:4b-disposers
+const __doctorDisposers = [];const STAGES = [{ id: 'genesis', label: '1983' },
+{ id: 'discipline', label: '1983-2022' },
+{ id: 'neural', label: '2022' },
+{ id: 'velocity', label: 'Feb 2025' },
+{ id: 'architecture', label: 'Mar 2025' },
+{ id: 'harmony', label: 'Mar 2025' },
+{ id: 'transcendence', label: 'Present' }];
+
 
 export default function StageNavigation() {
-  const currentStage = useNarrativeStore(s => s.currentStage);
-  const jumpToStage = useNarrativeStore(s => s.jumpToStage);
+  const currentStage = useNarrativeStore((s) => s.currentStage);
+  const jumpToStage = useNarrativeStore((s) => s.jumpToStage);
 
   return (
     <ul
@@ -29,27 +29,28 @@ export default function StageNavigation() {
         zIndex: 22,
         listStyle: 'none',
         padding: 0,
-        margin: 0,
-      }}
-    >
-      {STAGES.map(({ id, label }) => (
-        <li key={id} style={{ margin: '.5rem 0' }}>
+        margin: 0
+      }}>
+
+      {STAGES.map(({ id, label }) =>
+      <li key={id} style={{ margin: '.5rem 0' }}>
           <button
-            onClick={() => jumpToStage(id)}
-            style={{
-              background: id === currentStage ? '#0D9488' : 'transparent',
-              border: '1px solid #0D9488',
-              color: id === currentStage ? '#fff' : '#0D9488',
-              padding: '.25rem .5rem',
-              fontSize: '.75rem',
-              cursor: 'pointer',
-              transition: 'all .2s',
-            }}
-          >
+          onClick={() => jumpToStage(id)}
+          style={{
+            background: id === currentStage ? '#0D9488' : 'transparent',
+            border: '1px solid #0D9488',
+            color: id === currentStage ? '#fff' : '#0D9488',
+            padding: '.25rem .5rem',
+            fontSize: '.75rem',
+            cursor: 'pointer',
+            transition: 'all .2s'
+          }}>
+
             {label}
           </button>
         </li>
-      ))}
-    </ul>
-  );
-}
+      )}
+    </ul>);
+
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

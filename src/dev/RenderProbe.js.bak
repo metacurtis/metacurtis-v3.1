@@ -1,0 +1,67 @@
+// @doctor:4r RenderProbe (DEV-only)
+// Overlay + optional canvas heartbeat. Receives payload via AppRenderer.applyBlueprint
+if (import.meta?.env?.DEV && typeof window !== 'undefined') {
+  (function attachProbe(){
+    if (window.__doctor_render_probe__) return;
+    const root = document.createElement('div');
+    root.id = 'render-probe';
+    root.style.cssText = [
+      'position:fixed','right:12px','bottom:12px','z-index:99999',
+      'font:12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+      'color:#0f0','background:rgba(0,0,0,0.65)',
+      'padding:8px 10px','border-radius:8px','box-shadow:0 2px 8px rgba(0,0,0,0.35)',
+      'pointer-events:none'
+    ].join(';');
+    root.textContent = 'RenderProbe: waiting...';
+    document.body.appendChild(root);
+
+    // Optional canvas micro-viz (does not interfere with your renderer)
+    const c = document.createElement('canvas');
+    c.id = 'render-probe-canvas';
+    c.width = 300; c.height = 150;
+    c.style.cssText = 'position:fixed; right:12px; bottom:48px; z-index:99998; opacity:0.9; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.35)';
+    document.body.appendChild(c);
+    const ctx = c.getContext('2d');
+
+    function microViz(payload){
+      const count = payload?.blueprint?.particleCount ?? payload?.particleCount ?? 0;
+      ctx.clearRect(0,0,c.width,c.height);
+      if (!count) return;
+      const n = Math.min(count, 400);
+      for (let i=0;i<n;i++){
+        const x = Math.random()*c.width;
+        const y = Math.random()*c.height;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    function update(payload){
+      const p = payload || {};
+      const stage = p.stage ?? p.to ?? p.name ?? 'unknown';
+      const quality = p.quality ?? p.tier ?? 'n/a';
+      const pc = p.blueprint?.particleCount ?? p.particleCount ?? '?';
+      root.textContent = `RenderProbe ✓ stage=${stage} quality=${quality} particles=${pc}`;
+      microViz(p);
+    }
+
+    window.AppRenderer = window.AppRenderer || {};
+    window.AppRenderer.applyBlueprint = (payload) => {
+      try { update(payload); } catch (e) { console.error('[RenderProbe] error', e); }
+    };
+
+    window.__doctor_render_probe__ = { root, canvas:c };
+    console.log('🩺 RenderProbe attached');
+  })();
+
+  if (import.meta?.hot) {
+    import.meta.hot.dispose(() => {
+      try {
+        const el = window.__doctor_render_probe__?.root;
+        const cv = window.__doctor_render_probe__?.canvas;
+        if (el?.parentNode) el.parentNode.removeChild(el);
+        if (cv?.parentNode) cv.parentNode.removeChild(cv);
+      } catch {}
+      delete window.__doctor_render_probe__;
+    });
+  }
+}

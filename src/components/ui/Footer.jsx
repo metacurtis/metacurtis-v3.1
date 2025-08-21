@@ -1,5 +1,5 @@
-// src/components/layout/Footer.jsx
-
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/components/layout/Footer.jsx
 /**
  * Application Footer component.
  */
@@ -12,8 +12,9 @@ function Footer() {
         &copy; {new Date().getFullYear()} MetaCurtis Project. All Rights Reserved.
         {/* Add other footer links or info later */}
       </div>
-    </footer>
-  );
+    </footer>);
+
 }
 
-export default Footer;
+export default Footer; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

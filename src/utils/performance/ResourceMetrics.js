@@ -7,8 +7,8 @@ import Registry from '@/utils/webgl/ResourceRegistry.js';
  * - total count per type
  * - delta since last sample
  * - leak detection flag
- */
-export default class ResourceMetrics {
+ */ // @doctor:4b-disposers
+const __doctorDisposers = [];export default class ResourceMetrics {
   constructor() {
     this.lastCounts = {};
   }
@@ -32,7 +32,8 @@ export default class ResourceMetrics {
     return {
       counts,
       delta,
-      leakWarning: leak,
+      leakWarning: leak
     };
   }
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

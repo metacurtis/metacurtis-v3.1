@@ -1,7 +1,7 @@
-/**
+// @doctor:4b-disposers
+const __doctorDisposers = []; /**
  * Canon HUD - minimal trust signals (DEV only).
- */
-export class CanonHUD {
+ */export class CanonHUD {
   constructor() {
     this.element = null;
     this.stats = { fps: 0 };
@@ -31,7 +31,7 @@ export class CanonHUD {
       const now = performance.now();
       this._frames++;
       if (now - this._last >= 1000) {
-        this.stats.fps = Math.round((this._frames * 1000) / (now - this._last));
+        this.stats.fps = Math.round(this._frames * 1000 / (now - this._last));
         this._frames = 0;
         this._last = now;
         this.update();
@@ -45,33 +45,34 @@ export class CanonHUD {
   update() {
     if (!this.element || !window.canon) return;
     const b =
-      window.canon.boundary && window.canon.boundary.getReport
-        ? window.canon.boundary.getReport()
-        : {};
+    window.canon.boundary && window.canon.boundary.getReport ?
+    window.canon.boundary.getReport() :
+    {};
     const t = b.telemetry || {};
     const vio = (b.violations || []).length;
     const fpsColor = this.stats.fps < 30 ? '#f00' : '#0f0';
     this.element.innerHTML =
-      '' +
-      '<div style="margin-bottom:5px;border-bottom:1px solid #0f0;padding-bottom:5px;"><b>CANON HUD</b></div>' +
-      '<div>FPS: <span style="color:' +
-      fpsColor +
-      '">' +
-      this.stats.fps +
-      '</span></div>' +
-      '<div>Mode: ' +
-      (b.mode || 'WARN') +
-      '</div>' +
-      '<div>Events: ' +
-      (t.total || 0) +
-      '</div>' +
-      '<div>Valid: ' +
-      (t.valid || 0) +
-      '</div>' +
-      '<div>Violations (last 10): ' +
-      (vio || 0) +
-      '</div>';
+    '' +
+    '<div style="margin-bottom:5px;border-bottom:1px solid #0f0;padding-bottom:5px;"><b>CANON HUD</b></div>' +
+    '<div>FPS: <span style="color:' +
+    fpsColor +
+    '">' +
+    this.stats.fps +
+    '</span></div>' +
+    '<div>Mode: ' + (
+    b.mode || 'WARN') +
+    '</div>' +
+    '<div>Events: ' + (
+    t.total || 0) +
+    '</div>' +
+    '<div>Valid: ' + (
+    t.valid || 0) +
+    '</div>' +
+    '<div>Violations (last 10): ' + (
+    vio || 0) +
+    '</div>';
   }
 }
 
-export default CanonHUD;
+export default CanonHUD; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

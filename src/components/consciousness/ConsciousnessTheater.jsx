@@ -1,5 +1,5 @@
 // src/components/consciousness/ConsciousnessTheater.jsx
-// SST v3.0 Director-Integrated Consciousness Theater
+// SST v3.0 Director-Integrated Consciousness Theater - Zero Listener Debt
 
 import { useEffect, useState, useRef } from 'react';
 import { Canonical } from '@config/canonical/canonicalAuthority';
@@ -7,7 +7,6 @@ import { stageAtom } from '@stores/atoms/stageAtom';
 import { qualityAtom } from '@stores/atoms/qualityAtom';
 import { useMemoryFragments } from '@hooks/useMemoryFragments.js';
 import WebGLCanvas from '@components/webgl/WebGLCanvas';
-import _DevPerformanceMonitor from '@components/dev/DevPerformanceMonitor';
 
 // Director-based imports
 import director from '@theater/TheaterDirector.js';
@@ -17,7 +16,7 @@ import { EVENTS } from '@theater/events.js';
 
 console.log('🧬 LOADED: ConsciousnessTheater v3.0 - Director Integration');
 
-// ===== NARRATION OVERLAY (Kept from original) =====
+// Narration Overlay Component
 const NarrationOverlay = ({ segment }) => {
   if (!segment) return null;
 
@@ -34,9 +33,8 @@ const NarrationOverlay = ({ segment }) => {
         padding: '20px 30px',
         borderRadius: '10px',
         border: '1px solid rgba(0, 255, 0, 0.3)',
-        zIndex: 40,
-      }}
-    >
+        zIndex: 40
+      }}>
       <p
         style={{
           color: '#ffffff',
@@ -44,16 +42,15 @@ const NarrationOverlay = ({ segment }) => {
           fontSize: '1.1rem',
           lineHeight: '1.6',
           margin: 0,
-          textAlign: 'center',
-        }}
-      >
+          textAlign: 'center'
+        }}>
         {segment.text}
       </p>
     </div>
   );
 };
 
-// ===== MEMORY FRAGMENT RENDERER (Kept from original) =====
+// Memory Fragment Renderer Component
 const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
   if (!fragment) return null;
 
@@ -70,43 +67,40 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
         padding: '30px',
         zIndex: 100,
         minWidth: '400px',
-        maxWidth: '600px',
-      }}
-    >
+        maxWidth: '600px'
+      }}>
       <h3
         style={{
           color: '#00FF00',
           marginTop: 0,
-          fontFamily: 'Courier New, monospace',
-        }}
-      >
+          fontFamily: 'Courier New, monospace'
+        }}>
         {fragment.name}
       </h3>
       <div style={{ color: '#ffffff', marginBottom: '20px' }}>
         {fragment.content.type === 'interactive' &&
-          fragment.content.element === 'commodore_terminal' && (
-            <div
-              style={{
-                background: '#000',
-                padding: '20px',
-                fontFamily: 'Courier New, monospace',
-                color: '#00FF00',
-                border: '1px solid #00FF00',
-              }}
-            >
-              READY.
-              <br />
-              10 PRINT &quot;HELLO CURTIS&quot;
-              <br />
-              20 GOTO 10
-              <br />
-              RUN
-              <br />
-              <div style={{ marginTop: '10px', opacity: 0.7 }}>
-                {Array(5).fill('HELLO CURTIS ').join('')}...
-              </div>
+        fragment.content.element === 'commodore_terminal' && (
+          <div
+            style={{
+              background: '#000',
+              padding: '20px',
+              fontFamily: 'Courier New, monospace',
+              color: '#00FF00',
+              border: '1px solid #00FF00'
+            }}>
+            READY.
+            <br />
+            10 PRINT &quot;HELLO CURTIS&quot;
+            <br />
+            20 GOTO 10
+            <br />
+            RUN
+            <br />
+            <div style={{ marginTop: '10px', opacity: 0.7 }}>
+              {Array(5).fill('HELLO CURTIS ').join('')}...
             </div>
-          )}
+          </div>
+        )}
       </div>
       <button
         onClick={onDismiss}
@@ -118,16 +112,15 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
           borderRadius: '5px',
           cursor: 'pointer',
           fontFamily: 'Courier New, monospace',
-          fontWeight: 'bold',
-        }}
-      >
+          fontWeight: 'bold'
+        }}>
         Close
       </button>
     </div>
   );
 };
 
-// ===== MAIN CONSCIOUSNESS THEATER (Director-Integrated) =====
+// Main Consciousness Theater Component
 export default function ConsciousnessTheater() {
   // Core state
   const [currentStage, setCurrentStage] = useState('genesis');
@@ -144,14 +137,15 @@ export default function ConsciousnessTheater() {
   const [narrativeEnabled, setNarrativeEnabled] = useState(false);
 
   // Canvas state
-  const [showCanvas] = useState(true); // Show canvas immediately
+  const [showCanvas] = useState(true);
 
   // Refs
   const startTimeRef = useRef(Date.now());
   const currentStageRef = useRef('genesis');
+  const eventCleanup = useRef([]);
+  const domCleanup = useRef([]);
 
   // Get configuration
-  const _stageConfig = Canonical.stages[currentStage]; // Prefix with _ to satisfy linter
   const narrative = Canonical.dialogue?.[currentStage];
 
   // Memory fragments
@@ -165,8 +159,23 @@ export default function ConsciousnessTheater() {
   const triggerFragmentRef = useRef(triggerFragment);
   triggerFragmentRef.current = triggerFragment;
 
+  // Clean up all event listeners
+  const cleanupEvents = () => {
+    eventCleanup.current.forEach(off => {
+      try { off(); } catch (e) { console.warn('Event cleanup error:', e); }
+    });
+    eventCleanup.current = [];
+  };
 
-  // ===== DIRECTOR INTEGRATION =====
+  // Clean up DOM listeners
+  const cleanupDOM = () => {
+    domCleanup.current.forEach(cleanup => {
+      try { cleanup(); } catch (e) { console.warn('DOM cleanup error:', e); }
+    });
+    domCleanup.current = [];
+  };
+
+  // Director Integration
   useEffect(() => {
     console.log('🎭 ConsciousnessTheater: Starting Director-controlled experience');
 
@@ -176,31 +185,29 @@ export default function ConsciousnessTheater() {
       setDirectorStarted(true);
     }
 
-    // Listen for Director events
-    const handlers = [
-      // Enable scroll when Director says so
-      BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
-        console.log('   Theater: Scroll enabled by Director');
-        setScrollEnabled(true);
-        document.body.style.overflow = '';
-      }),
+    // Register event handlers
+    const offEnableScroll = BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+      console.log('   Theater: Scroll enabled by Director');
+      setScrollEnabled(true);
+      document.body.style.overflow = '';
+    });
+    eventCleanup.current.push(offEnableScroll);
 
-      // Start narrative when Director says so
-      BeatBus.on(EVENTS.START_NARRATIVE, ({ stage, _text }) => {
-        console.log(`   Theater: Starting ${stage} narrative`);
-        setNarrativeEnabled(true);
-        setIsInitialized(true);
-      }),
+    const offStartNarrative = BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {
+      console.log(`   Theater: Starting ${stage} narrative`);
+      setNarrativeEnabled(true);
+      setIsInitialized(true);
+    });
+    eventCleanup.current.push(offStartNarrative);
 
-      // Handle memory fragment triggers
-      BeatBus.on(EVENTS.TRIGGER_FRAGMENT, ({ stage, percent }) => {
-        console.log(`   Theater: Triggering ${stage} fragment at ${percent}%`);
-        const fragment = Canonical.fragments[stage];
-        if (fragment) {
-          triggerFragmentRef.current(fragment.id);
-        }
-      }),
-    ];
+    const offTriggerFragment = BeatBus.on(EVENTS.TRIGGER_FRAGMENT, ({ stage, percent }) => {
+      console.log(`   Theater: Triggering ${stage} fragment at ${percent}%`);
+      const fragment = Canonical.fragments[stage];
+      if (fragment) {
+        triggerFragmentRef.current(fragment.id);
+      }
+    });
+    eventCleanup.current.push(offTriggerFragment);
 
     // Initially lock scrolling
     document.body.style.overflow = 'hidden';
@@ -208,16 +215,16 @@ export default function ConsciousnessTheater() {
     return () => {
       director.cancel();
       setDirectorStarted(false);
-      handlers.forEach(off => off && off());
+      cleanupEvents();
       document.body.style.overflow = '';
     };
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
-  // ===== KEYBOARD NAVIGATION (Only after Director hands off) =====
+  // Keyboard Navigation (Only after Director hands off)
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
 
-    const handleKeyPress = e => {
+    const handleKeyPress = (e) => {
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
       switch (e.key) {
@@ -232,11 +239,11 @@ export default function ConsciousnessTheater() {
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setMorphProgress(prev => Math.min(prev + 0.1, 1));
+          setMorphProgress((prev) => Math.min(prev + 0.1, 1));
           break;
         case 'ArrowDown':
           e.preventDefault();
-          setMorphProgress(prev => Math.max(prev - 0.1, 0));
+          setMorphProgress((prev) => Math.max(prev - 0.1, 0));
           break;
         case '1':
         case '2':
@@ -254,7 +261,6 @@ export default function ConsciousnessTheater() {
         }
         case 'h':
         case 'H':
-          // Toggle Director Console visibility
           window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR;
           window.location.reload();
           break;
@@ -262,12 +268,15 @@ export default function ConsciousnessTheater() {
     };
 
     window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    const cleanup = () => window.removeEventListener('keydown', handleKeyPress);
+    domCleanup.current.push(cleanup);
+
+    return cleanup;
   }, [isInitialized, scrollEnabled]);
 
-  // ===== STAGE SUBSCRIPTION =====
+  // Stage Subscription
   useEffect(() => {
-    const unsubscribe = stageAtom.subscribe(state => {
+    const unsubscribe = stageAtom.subscribe((state) => {
       if (state.currentStage !== currentStageRef.current) {
         currentStageRef.current = state.currentStage;
         setCurrentStage(state.currentStage);
@@ -278,7 +287,7 @@ export default function ConsciousnessTheater() {
     return unsubscribe;
   }, []);
 
-  // ===== SCROLL HANDLING (Only when enabled by Director) =====
+  // Scroll Handling (Only when enabled by Director)
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
 
@@ -304,19 +313,22 @@ export default function ConsciousnessTheater() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    const cleanup = () => window.removeEventListener('scroll', handleScroll);
+    domCleanup.current.push(cleanup);
+    
     handleScroll();
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return cleanup;
   }, [isInitialized, scrollEnabled]);
 
-  // ===== NARRATIVE TIMING (Only when enabled by Director) =====
+  // Narrative Timing (Only when enabled by Director)
   useEffect(() => {
     if (!narrative?.narration?.segments || !isInitialized || !narrativeEnabled) return;
 
     const timer = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
 
-      const segment = narrative.narration.segments.find(seg => {
+      const segment = narrative.narration.segments.find((seg) => {
         const start = seg.timing.start;
         const end = seg.timing.start + seg.timing.duration;
         return elapsed >= start && elapsed < end;
@@ -337,9 +349,18 @@ export default function ConsciousnessTheater() {
     }, 100);
 
     return () => clearInterval(timer);
-  }, [narrative, isInitialized, narrativeEnabled, activeNarrative, triggerFragment]);
+  }, [narrative, isInitialized, narrativeEnabled, activeNarrative]);
 
-  // ===== RENDER =====
+  // HMR cleanup
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      cleanupEvents();
+      cleanupDOM();
+      document.body.style.overflow = '';
+    });
+  }
+
+  // Render
   return (
     <div className="consciousness-theater-v3">
       {/* Director-controlled Opening Sequence */}
@@ -352,38 +373,35 @@ export default function ConsciousnessTheater() {
           width: '1px',
           height: '700vh',
           pointerEvents: 'none',
-          zIndex: -1,
-        }}
-      />
+          zIndex: -1
+        }} />
 
-      {/* WebGL Canvas - Always visible, particles appear after opening */}
+      {/* WebGL Canvas */}
       {showCanvas && (
         <WebGLCanvas
           stage={currentStage}
           morphProgress={morphProgress}
-          scrollProgress={scrollProgress}
-        />
+          scrollProgress={scrollProgress} />
       )}
 
-      {/* Narrative Overlay - Only when enabled by Director */}
+      {/* Narrative Overlay */}
       {narrativeEnabled && activeNarrative && <NarrationOverlay segment={activeNarrative} />}
 
       {/* Memory Fragments */}
-      {activeFragments.map(fragment => {
+      {activeFragments.map((fragment) => {
         const state = fragmentStates[fragment.id];
         if (state?.state === 'active') {
           return (
             <MemoryFragmentRenderer
               key={fragment.id}
               fragment={fragment}
-              onDismiss={() => dismissFragment(fragment.id)}
-            />
+              onDismiss={() => dismissFragment(fragment.id)} />
           );
         }
         return null;
       })}
 
-      {/* ENHANCED DIRECTOR CONSOLE - Single consolidated debug panel */}
+      {/* Director Console */}
       {import.meta.env.DEV && window.SHOW_DIRECTOR !== false && (
         <div
           style={{
@@ -400,10 +418,8 @@ export default function ConsciousnessTheater() {
             boxShadow: '0 0 20px rgba(0, 255, 0, 0.3)',
             backdropFilter: 'blur(10px)',
             minWidth: '240px',
-            zIndex: 10000,
-          }}
-        >
-          {/* Header */}
+            zIndex: 10000
+          }}>
           <div style={{
             borderBottom: '1px solid #00FF00',
             paddingBottom: '6px',
@@ -417,20 +433,18 @@ export default function ConsciousnessTheater() {
             <span style={{ fontSize: '0.7rem', opacity: 0.7 }}>v3.0</span>
           </div>
           
-          {/* Director Info */}
           <div style={{ marginBottom: '8px' }}>
             <div>Phase: <span style={{ color: '#00FFCC' }}>
               {window.theaterDirector?.phase || 'idle'}
             </span></div>
             <div>Time: <span style={{ color: '#00FFCC' }}>
-              {window.theaterDirector?.startTime ? 
-                Math.round((Date.now() - window.theaterDirector.startTime) / 1000) + 's' : 
-                '0s'}
+              {window.theaterDirector?.startTime ?
+              Math.round((Date.now() - window.theaterDirector.startTime) / 1000) + 's' :
+              '0s'}
             </span></div>
           </div>
           
-          {/* System Status */}
-          <div style={{ 
+          <div style={{
             borderTop: '1px solid rgba(0, 255, 0, 0.3)',
             paddingTop: '6px',
             marginBottom: '8px'
@@ -443,10 +457,8 @@ export default function ConsciousnessTheater() {
             </span></div>
             <div>Scroll: {scrollEnabled ? '✅ Enabled' : '🔒 Locked'}</div>
             <div>Narrative: {narrativeEnabled ? '✅ Active' : '⏳ Waiting'}</div>
-            <div>Canvas: {showCanvas ? '✅ Rendering' : '⏳ Loading'}</div>
           </div>
           
-          {/* Quick Actions */}
           <div style={{
             borderTop: '1px solid rgba(0, 255, 0, 0.3)',
             paddingTop: '6px',
@@ -469,35 +481,14 @@ export default function ConsciousnessTheater() {
                 cursor: 'pointer',
                 fontFamily: 'monospace',
                 fontSize: '0.7rem'
-              }}
-            >
+              }}>
               🔄 Restart
             </button>
             <button
               onClick={() => {
-                window.ENABLE_PERFORMANCE_MONITOR = !window.ENABLE_PERFORMANCE_MONITOR;
-                window.location.reload();
-              }}
-              style={{
-                background: '#FFD700',
-                color: '#000',
-                border: 'none',
-                borderRadius: '3px',
-                padding: '3px 8px',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                fontSize: '0.7rem'
-              }}
-            >
-              📊 Perf
-            </button>
-            <button
-              onClick={() => {
                 console.log('=== MC3V System State ===');
-                console.log('Director:', window.theaterDirector.getStatus());
                 console.log('Stage:', currentStage, 'Progress:', scrollProgress);
                 console.log('Engine:', window.engineDebug?.getCacheStats());
-                console.log('Quality:', window.qualityControls?.getCacheStats());
               }}
               style={{
                 background: '#00CCFF',
@@ -508,13 +499,11 @@ export default function ConsciousnessTheater() {
                 cursor: 'pointer',
                 fontFamily: 'monospace',
                 fontSize: '0.7rem'
-              }}
-            >
+              }}>
               📋 Log
             </button>
           </div>
           
-          {/* Keyboard Hints */}
           <div style={{
             marginTop: '8px',
             fontSize: '0.65rem',

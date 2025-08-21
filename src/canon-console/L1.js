@@ -1,8 +1,8 @@
-/**
+// @doctor:4b-disposers
+const __doctorDisposers = []; /**
  * Canon Console L1 - Silent Monitor
  * Basic noise reduction and pattern detection
- */
-export class CanonConsoleL1 {
+ */export class CanonConsoleL1 {
   constructor() {
     this.patterns = new Map();
     this.messageCount = 0;
@@ -19,14 +19,14 @@ export class CanonConsoleL1 {
       warn: 2,
       log: 1,
       info: 0,
-      debug: -1,
+      debug: -1
     };
 
     const threshold = {
       critical: 3,
       important: 2,
       verbose: 0,
-      debug: -1,
+      debug: -1
     };
 
     return priority[level] >= threshold[this.verbosity];
@@ -41,7 +41,7 @@ export class CanonConsoleL1 {
       count: 0,
       first: Date.now(),
       last: null,
-      suppressed: false,
+      suppressed: false
     };
 
     pattern.count++;
@@ -67,22 +67,22 @@ export class CanonConsoleL1 {
 
   getStats() {
     const runtime = Math.floor((Date.now() - this.startTime) / 1000);
-    const topPatterns = Array.from(this.patterns.entries())
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 5)
-      .map(([msg, data]) => ({
-        message: msg,
-        count: data.count,
-        suppressed: data.suppressed,
-      }));
+    const topPatterns = Array.from(this.patterns.entries()).
+    sort((a, b) => b[1].count - a[1].count).
+    slice(0, 5).
+    map(([msg, data]) => ({
+      message: msg,
+      count: data.count,
+      suppressed: data.suppressed
+    }));
 
     return {
       runtime,
       messagesTotal: this.messageCount,
       patternsDetected: this.patterns.size,
-      suppressedPatterns: Array.from(this.patterns.values()).filter(p => p.suppressed).length,
+      suppressedPatterns: Array.from(this.patterns.values()).filter((p) => p.suppressed).length,
       verbosity: this.verbosity,
-      topPatterns,
+      topPatterns
     };
   }
 
@@ -92,4 +92,5 @@ export class CanonConsoleL1 {
   }
 }
 
-export default CanonConsoleL1;
+export default CanonConsoleL1; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

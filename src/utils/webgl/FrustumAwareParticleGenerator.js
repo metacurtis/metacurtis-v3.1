@@ -4,13 +4,13 @@
 import * as THREE from 'three';
 
 // Frustum culling configuration
-const CULLING_CONFIG = {
-  enabled: true,
+// @doctor:4b-disposers
+const __doctorDisposers = [];const CULLING_CONFIG = { enabled: true,
   margin: 1.2, // 20% margin around visible area
   minParticles: 1000, // Minimum particles regardless of culling
   maxCullingRatio: 0.7, // Maximum 70% of particles can be culled
   dynamicLOD: true, // Enable dynamic level-of-detail
-  debugVisualization: false,
+  debugVisualization: false
 };
 
 // Performance tier culling settings
@@ -18,7 +18,7 @@ const CULLING_TIERS = {
   ULTRA: { enabled: false, margin: 1.0 }, // No culling on ULTRA
   HIGH: { enabled: true, margin: 1.2 },
   MEDIUM: { enabled: true, margin: 1.4 },
-  LOW: { enabled: true, margin: 1.6 },
+  LOW: { enabled: true, margin: 1.6 }
 };
 
 class FrustumAwareParticleGenerator {
@@ -32,13 +32,13 @@ class FrustumAwareParticleGenerator {
 
   // Enhanced grid calculation with frustum culling
   calculateOptimalGridWithCulling(
-    visibleWidth,
-    visibleHeight,
-    stage,
-    qualityLevel,
-    camera,
-    frustum
-  ) {
+  visibleWidth,
+  visibleHeight,
+  stage,
+  qualityLevel,
+  camera,
+  frustum)
+  {
     const config = CULLING_TIERS[qualityLevel] || CULLING_TIERS.HIGH;
 
     if (!config.enabled || !CULLING_CONFIG.enabled) {
@@ -70,7 +70,7 @@ class FrustumAwareParticleGenerator {
       2: { particles: 6000 },
       3: { particles: 8000 },
       4: { particles: 12000 },
-      5: { particles: 16000 },
+      5: { particles: 16000 }
     };
 
     const stageConfig = NARRATIVE_STAGES[stage] || NARRATIVE_STAGES[0];
@@ -89,7 +89,7 @@ class FrustumAwareParticleGenerator {
       totalParticles: cols * rows,
       visibleWidth,
       visibleHeight,
-      cullingApplied: false,
+      cullingApplied: false
     };
   }
 
@@ -147,24 +147,24 @@ class FrustumAwareParticleGenerator {
       visibleIndices,
       cullingApplied: true,
       culledCount,
-      cullRatio: culledCount / this.totalGenerated,
+      cullRatio: culledCount / this.totalGenerated
     };
   }
 
   // Simple frustum test (can be enhanced with proper frustum object)
   isPointInExpandedFrustum(point, visibleWidth, visibleHeight) {
     const margin = CULLING_CONFIG.margin;
-    const halfWidth = (visibleWidth * margin) / 2;
-    const halfHeight = (visibleHeight * margin) / 2;
+    const halfWidth = visibleWidth * margin / 2;
+    const halfHeight = visibleHeight * margin / 2;
 
     return Math.abs(point.x) <= halfWidth && Math.abs(point.y) <= halfHeight;
   }
 
   // Generate particle data with culling applied
   generateParticleDataWithCulling(gridConfig, stage) {
-    const totalParticles = gridConfig.cullingApplied
-      ? gridConfig.visibleIndices.length
-      : gridConfig.totalParticles;
+    const totalParticles = gridConfig.cullingApplied ?
+    gridConfig.visibleIndices.length :
+    gridConfig.totalParticles;
 
     const positions = new Float32Array(totalParticles * 3);
     const colors = new Float32Array(totalParticles * 3);
@@ -178,7 +178,7 @@ class FrustumAwareParticleGenerator {
       2: '#059669',
       3: '#0EA5E9',
       4: '#7C3AED',
-      5: '#F59E0B',
+      5: '#F59E0B'
     };
     const stageColor = new THREE.Color(stageColors[stage] || stageColors[0]);
 
@@ -225,16 +225,16 @@ class FrustumAwareParticleGenerator {
 
   // Generate single particle data
   generateSingleParticle(
-    index,
-    x,
-    y,
-    gridConfig,
-    stageColor,
-    positions,
-    colors,
-    animationSeeds,
-    gridCoords
-  ) {
+  index,
+  x,
+  y,
+  gridConfig,
+  stageColor,
+  positions,
+  colors,
+  animationSeeds,
+  gridCoords)
+  {
     // Position
     const posX = (x / gridConfig.width - 0.5) * gridConfig.visibleWidth;
     const posY = (y / gridConfig.height - 0.5) * gridConfig.visibleHeight;
@@ -279,7 +279,7 @@ class FrustumAwareParticleGenerator {
       visibleCount: this.totalGenerated - this.culledCount,
       cullRatio: this.totalGenerated > 0 ? this.culledCount / this.totalGenerated : 0,
       memoryReduction: this.culledCount * 32, // Estimated bytes saved (8 floats * 4 bytes)
-      lastCullTime: this.lastCullTime,
+      lastCullTime: this.lastCullTime
     };
   }
 
@@ -310,7 +310,7 @@ class FrustumAwareParticleGenerator {
       color: 0x00ff00,
       wireframe: true,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.3
     });
 
     const debugBox = new THREE.Mesh(geometry, material);
@@ -329,4 +329,5 @@ export { CULLING_CONFIG, CULLING_TIERS, FrustumAwareParticleGenerator };
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   window.frustumAwareGenerator = frustumAwareGenerator;
   window.CULLING_CONFIG = CULLING_CONFIG;
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

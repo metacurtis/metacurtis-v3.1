@@ -1,7 +1,7 @@
 // src/stores/atoms/narrativeAtom.js
 // SST v3.0 - Complete narrative state management
-import { createAtom } from './createAtom';
-
+import { createAtom } from './createAtom'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 const initialState = {
   // Core narrative state
   currentStage: 'genesis',
@@ -28,7 +28,7 @@ const initialState = {
     stagesVisited: ['genesis'],
     fragmentsExplored: [],
     interactions: 0,
-    completionRate: 0,
+    completionRate: 0
   },
 
   // Feature flags (stage-based unlocking)
@@ -39,7 +39,7 @@ const initialState = {
     velocity: ['accelerationEffects', 'velocityParticles'],
     architecture: ['architectureVisualization', 'blueprintMode'],
     harmony: ['harmonyEffects', 'flowState'],
-    transcendence: ['contactPortal', 'fullAIInteraction', 'galaxyEffect'],
+    transcendence: ['contactPortal', 'fullAIInteraction', 'galaxyEffect']
   },
 
   // Narrative events (once-only triggers)
@@ -49,24 +49,24 @@ const initialState = {
     metacurtisVoiceActivated: false,
     fullConsciousness: false,
     contactPortalActivated: false,
-    servicesTransition: false,
-  },
+    servicesTransition: false
+  }
 };
 
 // SST v3.0 stage order
 const STAGE_ORDER = [
-  'genesis',
-  'discipline',
-  'neural',
-  'velocity',
-  'architecture',
-  'harmony',
-  'transcendence',
-];
+'genesis',
+'discipline',
+'neural',
+'velocity',
+'architecture',
+'harmony',
+'transcendence'];
+
 
 export const narrativeAtom = createAtom(initialState, (get, set) => ({
   // ===== STAGE NAVIGATION =====
-  jumpToStage: stage => {
+  jumpToStage: (stage) => {
     if (!STAGE_ORDER.includes(stage)) {
       console.warn(`Invalid stage: ${stage}`);
       return;
@@ -75,7 +75,7 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
     const currentState = get();
     if (stage === currentState.currentStage) return;
 
-    set(state => ({
+    set((state) => ({
       ...state,
       currentStage: stage,
       isTransitioning: true,
@@ -84,19 +84,19 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
       stagesVisited: [...new Set([...state.stagesVisited, stage])],
       userEngagement: {
         ...state.userEngagement,
-        stagesVisited: [...new Set([...state.userEngagement.stagesVisited, stage])],
-      },
+        stagesVisited: [...new Set([...state.userEngagement.stagesVisited, stage])]
+      }
     }));
 
     // Clear transition flag after animation
     setTimeout(() => {
-      set(state => ({ ...state, isTransitioning: false }));
+      set((state) => ({ ...state, isTransitioning: false }));
     }, 500);
 
     // Dispatch stage change event
     window.dispatchEvent(
       new CustomEvent('sst:stageChange', {
-        detail: { stage, previousStage: currentState.currentStage },
+        detail: { stage, previousStage: currentState.currentStage }
       })
     );
   },
@@ -117,58 +117,58 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
     }
   },
 
-  setStage: stageIndex => {
+  setStage: (stageIndex) => {
     const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];
     narrativeAtom.jumpToStage(stage);
   },
 
   // ===== PROGRESS MANAGEMENT =====
-  setGlobalProgress: progress => {
-    set(state => ({
+  setGlobalProgress: (progress) => {
+    set((state) => ({
       ...state,
-      globalProgress: Math.max(0, Math.min(1, progress)),
+      globalProgress: Math.max(0, Math.min(1, progress))
     }));
   },
 
-  setScrollProgress: progress => {
-    set(state => ({
+  setScrollProgress: (progress) => {
+    set((state) => ({
       ...state,
-      scrollProgress: Math.max(0, Math.min(1, progress)),
+      scrollProgress: Math.max(0, Math.min(1, progress))
     }));
   },
 
-  setMorphProgress: progress => {
-    set(state => ({
+  setMorphProgress: (progress) => {
+    set((state) => ({
       ...state,
-      morphProgress: Math.max(0, Math.min(1, progress)),
+      morphProgress: Math.max(0, Math.min(1, progress))
     }));
   },
 
-  setNarrativeProgress: progress => {
+  setNarrativeProgress: (progress) => {
     // Convenience method that sets all progress values
     narrativeAtom.setGlobalProgress(progress);
     narrativeAtom.setScrollProgress(progress);
   },
 
   // ===== MEMORY FRAGMENTS =====
-  activateMemoryFragment: fragmentId => {
-    set(state => ({
+  activateMemoryFragment: (fragmentId) => {
+    set((state) => ({
       ...state,
       activeMemoryFragment: fragmentId,
       fragmentStates: {
         ...state.fragmentStates,
-        [fragmentId]: { state: 'active', timestamp: Date.now() },
+        [fragmentId]: { state: 'active', timestamp: Date.now() }
       },
       userEngagement: {
         ...state.userEngagement,
-        fragmentsExplored: [...new Set([...state.userEngagement.fragmentsExplored, fragmentId])],
-      },
+        fragmentsExplored: [...new Set([...state.userEngagement.fragmentsExplored, fragmentId])]
+      }
     }));
 
     // Dispatch fragment event
     window.dispatchEvent(
       new CustomEvent('sst:fragmentActivated', {
-        detail: { fragmentId },
+        detail: { fragmentId }
       })
     );
   },
@@ -176,19 +176,19 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
   dismissMemoryFragment: () => {
     const activeId = get().activeMemoryFragment;
     if (activeId) {
-      set(state => ({
+      set((state) => ({
         ...state,
         activeMemoryFragment: null,
         fragmentStates: {
           ...state.fragmentStates,
-          [activeId]: { ...state.fragmentStates[activeId], state: 'dismissed' },
-        },
+          [activeId]: { ...state.fragmentStates[activeId], state: 'dismissed' }
+        }
       }));
     }
   },
 
   // ===== FEATURE FLAGS =====
-  isStageFeatureEnabled: feature => {
+  isStageFeatureEnabled: (feature) => {
     const state = get();
     const currentFeatures = state.stageFeatures[state.currentStage] || [];
     return currentFeatures.includes(feature);
@@ -200,21 +200,21 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
   },
 
   // ===== NARRATIVE EVENTS =====
-  triggerNarrativeEvent: eventName => {
+  triggerNarrativeEvent: (eventName) => {
     const state = get();
     if (state.narrativeEvents[eventName] !== undefined && !state.narrativeEvents[eventName]) {
-      set(state => ({
+      set((state) => ({
         ...state,
         narrativeEvents: {
           ...state.narrativeEvents,
-          [eventName]: true,
-        },
+          [eventName]: true
+        }
       }));
 
       // Dispatch custom event
       window.dispatchEvent(
         new CustomEvent('narrativeEvent', {
-          detail: { type: eventName, stage: state.currentStage },
+          detail: { type: eventName, stage: state.currentStage }
         })
       );
 
@@ -223,25 +223,25 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
     return false;
   },
 
-  hasNarrativeEventFired: eventName => {
+  hasNarrativeEventFired: (eventName) => {
     return get().narrativeEvents[eventName] || false;
   },
 
   // ===== USER ENGAGEMENT =====
-  updateEngagement: updates => {
-    set(state => ({
+  updateEngagement: (updates) => {
+    set((state) => ({
       ...state,
-      userEngagement: { ...state.userEngagement, ...updates },
+      userEngagement: { ...state.userEngagement, ...updates }
     }));
   },
 
   trackUserEngagement: (action, data) => {
-    set(state => ({
+    set((state) => ({
       ...state,
       userEngagement: {
         ...state.userEngagement,
-        interactions: state.userEngagement.interactions + 1,
-      },
+        interactions: state.userEngagement.interactions + 1
+      }
     }));
 
     // Could dispatch to analytics here
@@ -252,7 +252,7 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
   updateTimeInStage: () => {
     const state = get();
     const timeInStage = Date.now() - state.stageStartTime;
-    set(state => ({ ...state, timeInStage }));
+    set((state) => ({ ...state, timeInStage }));
   },
 
   // ===== UTILITIES =====
@@ -263,11 +263,11 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
       progress: {
         global: state.globalProgress,
         scroll: state.scrollProgress,
-        morph: state.morphProgress,
+        morph: state.morphProgress
       },
       engagement: state.userEngagement,
       features: state.stageFeatures[state.currentStage] || [],
-      events: state.narrativeEvents,
+      events: state.narrativeEvents
     };
   },
 
@@ -279,11 +279,11 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
 
   reset: () => {
     set(initialState);
-  },
+  }
 }));
 
 // Development helpers
 if (import.meta.env.DEV) {
   window.narrativeAtom = narrativeAtom;
-  console.log('🎭 narrativeAtom available at window.narrativeAtom');
+  console.log('🎭 narrativeAtom available at window.narrativeAtom');import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
 }

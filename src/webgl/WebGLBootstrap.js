@@ -1,6 +1,6 @@
 // Auto-generated WebGL Bootstrap
-import * as THREE from 'three';
-
+import * as THREE from 'three'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 class WebGLBootstrap {
   constructor() {
     this.renderer = null;
@@ -16,7 +16,7 @@ class WebGLBootstrap {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
-      powerPreference: 'high-performance',
+      powerPreference: 'high-performance'
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -41,7 +41,7 @@ class WebGLBootstrap {
     window.camera = this.camera;
 
     // Handle resize
-    window.addEventListener('resize', this.handleResize.bind(this));
+    "@doctor:4b-todo-dom: non-identifier handler; manual cleanup required";window.addEventListener('resize', this.handleResize.bind(this));
 
     // Render loop exists elsewhere
 
@@ -80,7 +80,7 @@ class WebGLBootstrap {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
       color: 0x00ff00,
-      wireframe: true,
+      wireframe: true
     });
     this.testCube = new THREE.Mesh(geometry, material);
     this.scene.add(this.testCube);
@@ -106,12 +106,12 @@ export { bootstrap, WebGLBootstrap };
 
 // Initialize on DOM ready if not already initialized
 if (typeof window !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {// @doctor:4b-handler-dom
+    const __doctor_handler_1 = () => {
       if (!window.renderer) {
         bootstrap.init();
       }
-    });
+    };__doctorDisposers.push(() => {document.removeEventListener('DOMContentLoaded', __doctor_handler_1);});document.addEventListener('DOMContentLoaded', __doctor_handler_1);
   } else {
     // DOM already loaded
     setTimeout(() => {
@@ -120,4 +120,5 @@ if (typeof window !== 'undefined') {
       }
     }, 100);
   }
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

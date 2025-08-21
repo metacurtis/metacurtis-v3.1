@@ -2,8 +2,8 @@
  * Canon Bus Boundary Enforcement
  * Validates all BeatBus.emit payloads against ContractRegistry.
  */
-import ContractRegistry from './contracts/registry.js';
-
+import ContractRegistry from './contracts/registry.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export const BoundaryModes = { TELEMETRY: 'TELEMETRY', WARN: 'WARN', STRICT: 'STRICT' };
 
 export class BusBoundary {
@@ -27,7 +27,7 @@ export class BusBoundary {
           event,
           payload: validation.payload,
           violations: validation.violations,
-          ts: Date.now(),
+          ts: Date.now()
         });
         if (boundary.mode === BoundaryModes.WARN) {
           console.warn('Canon Boundary: contract violation', event, validation.violations);
@@ -61,9 +61,10 @@ export class BusBoundary {
       mode: this.mode,
       telemetry: t,
       violations: this.violations.slice(-10),
-      violationRate: t.total ? ((t.invalid / t.total) * 100).toFixed(1) + '%' : '0%',
+      violationRate: t.total ? (t.invalid / t.total * 100).toFixed(1) + '%' : '0%'
     };
   }
 }
 
-export default BusBoundary;
+export default BusBoundary; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

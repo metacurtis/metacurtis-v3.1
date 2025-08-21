@@ -1,0 +1,66 @@
+// @doctor:4r blueprint forwarder (append-only, idempotent)
+// Forwards BLUEPRINT_READY → rendererBridge.applyBlueprint OR AppRenderer.applyBlueprint
+(function(){
+  const G = (typeof globalThis !== 'undefined') ? globalThis : window;
+
+  function getBus(){
+    return G.BeatBus || G.CANON_BEATBUS;
+  }
+
+  function forward(payload){
+    let did = false;
+    try {
+      if (G.rendererBridge?.applyBlueprint) {
+        G.rendererBridge.applyBlueprint(payload);
+        did = true;
+      }
+    } catch (e) { console.warn('[4r] forward to rendererBridge failed', e); }
+    try {
+      // Always also update DEV probe if present
+      if (G.AppRenderer?.applyBlueprint) {
+        G.AppRenderer.applyBlueprint(payload);
+        did = true;
+      }
+    } catch (e) { console.warn('[4r] forward to AppRenderer failed', e); }
+    if (!did) console.warn('[4r] No applyBlueprint target available (yet).');
+  }
+
+  function subscribe(){
+    if (G.__doctor_bp_subscribed__) return;
+    const bus = getBus();
+    if (!bus?.on) return false;
+    const handler = (payload) => {
+      try { forward(payload); }
+      catch (e){ console.error('[4r] blueprint handler error', e); }
+    };
+    const off = bus.on('BLUEPRINT_READY', handler);
+    G.__doctor_bp_subscribed__ = { off };
+    console.log('🧩 [4r] Adapter wired: BLUEPRINT_READY → applyBlueprint');
+    return true;
+  }
+
+  function ready(fn){
+    if (typeof document === 'undefined') return fn();
+    if (document.readyState !== 'loading') return fn();
+    const h = () => { document.removeEventListener('DOMContentLoaded', h); fn(); };
+    document.addEventListener('DOMContentLoaded', h, { once:true });
+  }
+
+  ready(() => {
+    // Try immediately, then poll briefly for late BeatBus
+    if (!subscribe()){
+      let tries = 0;
+      const t = setInterval(() => {
+        tries++;
+        if (subscribe() || tries > 50) clearInterval(t);
+      }, 200);
+    }
+  });
+
+  if (import.meta?.hot) {
+    import.meta.hot.dispose(() => {
+      try { G.__doctor_bp_subscribed__?.off?.(); } catch {}
+      delete G.__doctor_bp_subscribed__;
+    });
+  }
+})();

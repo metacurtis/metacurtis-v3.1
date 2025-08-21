@@ -1,26 +1,126 @@
-// [CANON:INIT]
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
-import { CanonContracts } from './contracts/index.js';
-import { CanonGuardL1 } from './guard/L1.js';
-import { CanonGuardL2 } from './guard/L2.js';
-import { CanonConsoleL1 } from './console/L1.js';
-import { CanonConsoleL2 } from './console/L2.js';
+/**
+ * Canon Suite Initialization
+ * Integrates Guard + Console with BeatBus
+ */
+import CanonGuardL2 from '../canon-guard/L2.js';
+import CanonConsoleL2 from '../canon-console/L2.js';
 
-export function attachCanonL2(){
-  const guard = new CanonGuardL2(CanonContracts);
-  const panel = new CanonConsoleL2();
-  if (typeof window!=='undefined'){
-    window.canon = { guard, panel, contracts:CanonContracts };
-    window.__CANON_GUARD_ACTIVE = true;
-    window.__CANON_CONSOLE_ACTIVE = true;
-    // Example BeatBus guard taps
-    const EVT = (n)=>(p)=>guard.validate(n,p);
-    BeatBus.on('STAGE_CHANGE', EVT('STAGE_CHANGE'));
-    BeatBus.on('QUALITY_CHANGE', EVT('QUALITY_CHANGE'));
-    BeatBus.on('BLUEPRINT_READY', EVT('BLUEPRINT_READY'));
-    console.info('🛡️  Canon L2 attached');
+export function initCanon() {
+  if (window.__CANON_INITIALIZED) return;
+  window.__CANON_INITIALIZED = Date.now();
+
+  console.log('🚀 Canon Suite: Initializing...');
+
+  // Initialize components
+  const guard = new CanonGuardL2();
+  const consoleTool = new CanonConsoleL2();
+
+  // Get BeatBus if available
+  const BeatBus = window.BeatBus;
+
+  if (BeatBus) {
+    // Add debug method if missing
+    if (!BeatBus.getDebugInfo) {
+      BeatBus.getDebugInfo = function () {
+        const listeners = {};
+        if (this.listeners) {
+          this.listeners.forEach((set, key) => {
+            listeners[key] = set.size;
+          });
+        }
+        return {
+          listeners,
+          eventLog: this.eventLog || [],
+          lastEmit: this.lastEmit || null,
+        };
+      };
+    }
+
+    // Add event logging
+    if (!BeatBus.__canonPatched) {
+      const originalEmit = BeatBus.emit.bind(BeatBus);
+      BeatBus.emit = function (event, data) {
+        // Log event
+        this.lastEmit = { event, data, timestamp: Date.now() };
+        if (!this.eventLog) this.eventLog = [];
+        this.eventLog.push(this.lastEmit);
+        if (this.eventLog.length > 100) this.eventLog.shift();
+
+        // Validate
+        guard.validate(event, data);
+
+        // Call original
+        return originalEmit(event, data);
+      };
+      BeatBus.__canonPatched = true;
+    }
+
+    // Auto-protect events
+    guard.autoProtect(BeatBus);
+
+    // Add global tap helper
+    if (!window.busTap) {
+      window.busTap = (event, fn) => BeatBus.on(event, fn);
+    }
+
+    console.log('✅ Canon Suite: BeatBus integration complete');
+  } else {
+    console.warn('⚠️ Canon Suite: BeatBus not found, running standalone');
   }
-  return { guard, panel };
+
+  // Expose Canon API
+  window.canon = {
+    guard,
+    console: consoleTool,
+
+    // Quick access methods
+    validate: (type, data) => guard.validate(type, data),
+    violations: () => guard.getViolations(),
+    patterns: () => guard.getPatterns(),
+    analyze: () => ({
+      guard: guard.analyze(),
+      console: consoleTool.analyze(),
+    }),
+
+    // Console control
+    setVerbosity: level => consoleTool.setVerbosity(level),
+    setContext: ctx => consoleTool.setContext(ctx),
+
+    // Status
+    status: () => ({
+      initialized: window.__CANON_INITIALIZED,
+      guard: {
+        active: true,
+        stats: guard.getStats(),
+      },
+      console: {
+        active: true,
+        stats: consoleTool.getStats(),
+      },
+      beatbus: BeatBus ? BeatBus.getDebugInfo() : null,
+    }),
+  };
+
+  // Set flags
+  window.__CANON_GUARD_ACTIVE = true;
+  window.__CANON_CONSOLE_ACTIVE = true;
+
+  // Show status
+  console.log('✅ Canon Suite L1/L2: FULLY ACTIVE');
+  console.log('📊 Status:', window.canon.status());
+  console.log('🎮 Commands:');
+  console.log('  canon.status()         - System status');
+  console.log('  canon.violations()     - Contract violations');
+  console.log('  canon.analyze()        - Full analysis');
+  console.log('  canon.setContext(ctx)  - Filter by context');
+  console.log('  canon.setVerbosity(v)  - Set log level');
+
+  return { guard, console: consoleTool };
 }
 
-if (import.meta?.env?.DEV) attachCanonL2();
+// Auto-initialize in DEV
+if (import.meta.env.DEV) {
+  initCanon();
+}
+
+export default initCanon;

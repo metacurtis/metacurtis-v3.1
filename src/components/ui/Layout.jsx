@@ -2,8 +2,8 @@
 import PropTypes from 'prop-types';
 
 // --- OPTIMIZED Navbar for Full-Viewport Design ---
-const Navbar = () => {
-  return (
+// @doctor:4b-disposers
+const __doctorDisposers = [];const Navbar = () => {return (
     <header className="fixed top-0 left-0 right-0 bg-transparent/70 backdrop-blur-md text-white shadow-lg z-50">
       <nav className="w-full px-6 py-3 flex justify-between items-center">
         <div className="text-xl font-bold hover:text-primary transition-colors">
@@ -24,8 +24,8 @@ const Navbar = () => {
           </a>
         </div>
       </nav>
-    </header>
-  );
+    </header>);
+
 };
 
 // --- OPTIMIZED Footer ---
@@ -35,8 +35,8 @@ const Footer = () => {
       <div className="w-full text-center text-sm px-6">
         &copy; {new Date().getFullYear()} MetaCurtis Project. All Rights Reserved.
       </div>
-    </footer>
-  );
+    </footer>);
+
 };
 
 // --- OPTIMIZED Layout Component for Full-Viewport Hero ---
@@ -49,12 +49,13 @@ function Layout({ children }) {
       <main className="flex-grow relative">{children}</main>
 
       <Footer />
-    </div>
-  );
+    </div>);
+
 }
 
 Layout.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node.isRequired
 };
 
-export default Layout;
+export default Layout; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

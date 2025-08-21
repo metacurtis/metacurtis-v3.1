@@ -4,8 +4,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNarrativeStore } from '@/stores/narrativeStore';
-import { getPreset } from '@/config/canonical/narrativeParticleConfig';
-
+import { getPreset } from '@/config/canonical/narrativeParticleConfig'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 function MemoryFragments() {
   const [activeFragment, setActiveFragment] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -16,7 +16,7 @@ function MemoryFragments() {
     isStageFeatureEnabled,
     activateMemoryFragment,
     activeMemoryFragment,
-    userEngagement,
+    userEngagement
   } = useNarrativeStore();
 
   // ✅ INTEGRATED: Feature gate check
@@ -35,24 +35,24 @@ function MemoryFragments() {
       content: fragment,
       stageOrigin: currentStage,
       index,
-      isExplored: userEngagement.fragmentsExplored.includes(`${currentStage}-fragment-${index}`),
+      isExplored: userEngagement.fragmentsExplored.includes(`${currentStage}-fragment-${index}`)
     }));
   }, [currentStage, memoryFragmentsEnabled, userEngagement.fragmentsExplored]);
 
   // ✅ ENHANCED: Mouse tracking for tooltip positioning
   useEffect(() => {
-    const handleMouseMove = e => {
+    const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
 
-    if (memoryFragmentsEnabled && stageFragments.length > 0) {
-      window.addEventListener('mousemove', handleMouseMove);
+    if (memoryFragmentsEnabled && stageFragments.length > 0) {__doctorDisposers.push(() => {
+        window.removeEventListener('mousemove', handleMouseMove);});window.addEventListener('mousemove', handleMouseMove);
       return () => window.removeEventListener('mousemove', handleMouseMove);
     }
   }, [memoryFragmentsEnabled, stageFragments.length]);
 
   // ✅ NEW: Fragment interaction handlers
-  const handleFragmentHover = fragment => {
+  const handleFragmentHover = (fragment) => {
     setActiveFragment(fragment);
   };
 
@@ -60,7 +60,7 @@ function MemoryFragments() {
     setActiveFragment(null);
   };
 
-  const handleFragmentClick = fragment => {
+  const handleFragmentClick = (fragment) => {
     // ✅ INTEGRATED: Use store's fragment management
     activateMemoryFragment(fragment.id);
 
@@ -81,30 +81,30 @@ function MemoryFragments() {
   const getFragmentPosition = (fragment, index) => {
     const basePositions = {
       genesis: [
-        { left: '15%', top: '25%' },
-        { left: '85%', top: '30%' },
-        { left: '50%', top: '70%' },
-      ],
+      { left: '15%', top: '25%' },
+      { left: '85%', top: '30%' },
+      { left: '50%', top: '70%' }],
+
       silent: [
-        { left: '20%', top: '40%' },
-        { left: '80%', top: '20%' },
-        { left: '60%', top: '75%' },
-      ],
+      { left: '20%', top: '40%' },
+      { left: '80%', top: '20%' },
+      { left: '60%', top: '75%' }],
+
       awakening: [
-        { left: '25%', top: '20%' },
-        { left: '75%', top: '35%' },
-        { left: '45%', top: '65%' },
-      ],
+      { left: '25%', top: '20%' },
+      { left: '75%', top: '35%' },
+      { left: '45%', top: '65%' }],
+
       acceleration: [
-        { left: '30%', top: '30%' },
-        { left: '70%', top: '25%' },
-        { left: '50%', top: '60%' },
-      ],
+      { left: '30%', top: '30%' },
+      { left: '70%', top: '25%' },
+      { left: '50%', top: '60%' }],
+
       transcendence: [
-        { left: '35%', top: '15%' },
-        { left: '65%', top: '40%' },
-        { left: '50%', top: '75%' },
-      ],
+      { left: '35%', top: '15%' },
+      { left: '65%', top: '40%' },
+      { left: '50%', top: '75%' }]
+
     };
 
     const positions = basePositions[currentStage] || basePositions.genesis;
@@ -114,7 +114,7 @@ function MemoryFragments() {
   return (
     <>
       {/* ✅ ENHANCED: Memory Fragment Triggers */}
-      {stageFragments.map(fragment => {
+      {stageFragments.map((fragment) => {
         const position = getFragmentPosition(fragment, fragment.index);
         const isExplored = fragment.isExplored;
         const isActive = activeMemoryFragment === fragment.id;
@@ -127,9 +127,9 @@ function MemoryFragments() {
               position: 'fixed',
               width: '14px',
               height: '14px',
-              background: isExplored
-                ? 'radial-gradient(circle, rgba(13, 148, 136, 0.8) 0%, rgba(13, 148, 136, 0.3) 70%, transparent 100%)'
-                : 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)',
+              background: isExplored ?
+              'radial-gradient(circle, rgba(13, 148, 136, 0.8) 0%, rgba(13, 148, 136, 0.3) 70%, transparent 100%)' :
+              'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)',
               borderRadius: '50%',
               zIndex: 15,
               cursor: 'pointer',
@@ -138,80 +138,80 @@ function MemoryFragments() {
               animation: `memory-pulse-${fragment.index} ${2 + fragment.index * 0.5}s ease-in-out infinite`,
               transition: 'all 0.3s ease',
               border: isActive ? '2px solid rgba(13, 148, 136, 0.8)' : 'none',
-              boxShadow: isExplored
-                ? '0 0 10px rgba(13, 148, 136, 0.4)'
-                : '0 0 8px rgba(255, 255, 255, 0.2)',
+              boxShadow: isExplored ?
+              '0 0 10px rgba(13, 148, 136, 0.4)' :
+              '0 0 8px rgba(255, 255, 255, 0.2)'
             }}
             onMouseEnter={() => handleFragmentHover(fragment)}
             onMouseLeave={handleFragmentLeave}
             onClick={() => handleFragmentClick(fragment)}
-            onMouseMove={e => e.stopPropagation()}
-            title={`Memory Fragment: ${fragment.content.substring(0, 50)}...`}
-          />
-        );
+            onMouseMove={(e) => e.stopPropagation()}
+            title={`Memory Fragment: ${fragment.content.substring(0, 50)}...`} />);
+
+
       })}
 
       {/* ✅ ENHANCED: Active Memory Fragment Tooltip */}
-      {activeFragment && (
-        <div
-          className="memory-fragment-tooltip"
-          style={{
-            position: 'fixed',
-            left: Math.min(mousePosition.x + 15, window.innerWidth - 280),
-            top: Math.max(mousePosition.y - 10, 10),
-            background: 'rgba(0, 0, 0, 0.95)',
-            color: 'white',
-            padding: '1rem 1.25rem',
-            borderRadius: '8px',
-            fontSize: '0.875rem',
-            lineHeight: '1.5',
-            maxWidth: '280px',
-            zIndex: 25,
-            border: activeFragment.isExplored
-              ? '1px solid rgba(13, 148, 136, 0.5)'
-              : '1px solid rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(15px)',
-            fontFamily: '"Courier New", monospace',
-            pointerEvents: 'none',
-            animation: 'memory-fade-in 0.3s ease-out',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          }}
-        >
+      {activeFragment &&
+      <div
+        className="memory-fragment-tooltip"
+        style={{
+          position: 'fixed',
+          left: Math.min(mousePosition.x + 15, window.innerWidth - 280),
+          top: Math.max(mousePosition.y - 10, 10),
+          background: 'rgba(0, 0, 0, 0.95)',
+          color: 'white',
+          padding: '1rem 1.25rem',
+          borderRadius: '8px',
+          fontSize: '0.875rem',
+          lineHeight: '1.5',
+          maxWidth: '280px',
+          zIndex: 25,
+          border: activeFragment.isExplored ?
+          '1px solid rgba(13, 148, 136, 0.5)' :
+          '1px solid rgba(255, 255, 255, 0.2)',
+          backdropFilter: 'blur(15px)',
+          fontFamily: '"Courier New", monospace',
+          pointerEvents: 'none',
+          animation: 'memory-fade-in 0.3s ease-out',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+        }}>
+
           <div
-            style={{
-              marginBottom: '0.5rem',
-              fontSize: '0.75rem',
-              opacity: 0.7,
-              color: activeFragment.isExplored ? '#0D9488' : '#999',
-            }}
-          >
+          style={{
+            marginBottom: '0.5rem',
+            fontSize: '0.75rem',
+            opacity: 0.7,
+            color: activeFragment.isExplored ? '#0D9488' : '#999'
+          }}>
+
             {activeFragment.isExplored ? '✓ Explored' : 'Click to explore'} • Stage: {currentStage}
           </div>
           <div>{activeFragment.content}</div>
         </div>
-      )}
+      }
 
       {/* ✅ ENHANCED: Stage-specific notification */}
-      {memoryFragmentsEnabled && stageFragments.length > 0 && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '2rem',
-            right: '2rem',
-            background: 'rgba(13, 148, 136, 0.9)',
-            color: 'white',
-            padding: '0.5rem 1rem',
-            borderRadius: '6px',
-            fontSize: '0.75rem',
-            zIndex: 20,
-            animation: 'memory-notification-pulse 3s ease-in-out',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
+      {memoryFragmentsEnabled && stageFragments.length > 0 &&
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '2rem',
+          right: '2rem',
+          background: 'rgba(13, 148, 136, 0.9)',
+          color: 'white',
+          padding: '0.5rem 1rem',
+          borderRadius: '6px',
+          fontSize: '0.75rem',
+          zIndex: 20,
+          animation: 'memory-notification-pulse 3s ease-in-out',
+          backdropFilter: 'blur(10px)'
+        }}>
+
           💭 {stageFragments.length} memory fragment{stageFragments.length !== 1 ? 's' : ''}{' '}
           available
         </div>
-      )}
+      }
 
       {/* ✅ ENHANCED: CSS Animations with stage awareness */}
       {/* eslint-disable-next-line react/no-unknown-property */}
@@ -343,8 +343,8 @@ function MemoryFragments() {
           }
         }
       `}</style>
-    </>
-  );
+    </>);
+
 }
 
 export default MemoryFragments;
@@ -381,4 +381,5 @@ export default MemoryFragments;
 - Tracks user engagement in store
 - Provides fragment exploration analytics
 - Seamless integration with existing UI
-*/
+*/ // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

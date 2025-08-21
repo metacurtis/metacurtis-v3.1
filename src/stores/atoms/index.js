@@ -10,8 +10,8 @@ import { interactionAtom } from './interactionAtom';
 import { resourceAtom } from './resourceAtom';
 
 // Export individually
-export { narrativeAtom } from './narrativeAtom';
-export { performanceAtom } from './performanceAtom';
+// @doctor:4b-disposers
+const __doctorDisposers = [];export { narrativeAtom } from './narrativeAtom';export { performanceAtom } from './performanceAtom';
 export { interactionAtom } from './interactionAtom';
 export { resourceAtom } from './resourceAtom';
 
@@ -48,11 +48,11 @@ export const atoms = {
   // Only include if they exist
   ...(stageAtom ? { stage: stageAtom } : {}),
   ...(qualityAtom ? { quality: qualityAtom } : {}),
-  ...(clockAtom ? { clock: clockAtom } : {}),
+  ...(clockAtom ? { clock: clockAtom } : {})
 };
 
 // Development access
 if (import.meta.env.DEV) {
   window.atoms = atoms;
-  console.log('⚛️ Available atoms:', Object.keys(atoms));
+  console.log('⚛️ Available atoms:', Object.keys(atoms));import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
 }

@@ -1,3 +1,9 @@
+// @doctor:4r-entry
+if (import.meta?.env?.DEV) {
+  import('/src/dev/RenderProbe.js');
+  import('/src/modules/state/_doctor/renderer_forwarder.js');
+}
+// @doctor:4r-entry:end
 import './canon/init-amplified.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -10,8 +16,8 @@ import './styles/index.css';
 import '@/modules/state/StateCore.js';
 import '@/modules/state/BeatBusBridge.js';
 // Import Canon L2 (now it exists!)
-
-const rootEl = document.getElementById('root');
+// @doctor:4b-disposers
+const __doctorDisposers = [];const rootEl = document.getElementById('root');
 
 if (!rootEl) {
   console.error('❌ Could not find #root element');
@@ -35,6 +41,11 @@ if (import.meta.env.DEV) {
     guard: () => window.canon?.guard?.getViolations(),
     console: () => window.canon?.panel?.patterns,
     bus: () => window.BeatBus?.getDebugInfo(),
-    emit: (evt, data) => window.BeatBus?.emit(evt, data),
-  };
+    emit: (evt, data) => window.BeatBus?.emit(evt, data)
+  };import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
 }
+// @doctor:4r-import-forwarder
+import './modules/state/_doctor/renderer_forwarder.js';
+
+// @doctor:4r-import-probe
+if (import.meta?.env?.DEV) import('./dev/RenderProbe.js');

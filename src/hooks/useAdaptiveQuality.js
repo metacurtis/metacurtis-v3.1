@@ -14,13 +14,13 @@ import { clockAtom } from '@/stores/atoms/clockAtom';
  * - Direct atomic state integration
  * - Enhanced performance monitoring
  * - SST v2.1 compliance
- */
-export function useAdaptiveQuality({
+ */ // @doctor:4b-disposers
+const __doctorDisposers = [];export function useAdaptiveQuality({
   windowSize = 60,
   ultraFps = 65,
   highFps = 55,
   mediumFps = 45,
-  initial = QualityLevels.HIGH,
+  initial = QualityLevels.HIGH
 } = {}) {
   // ✅ ATOMIC STATE: Direct atom access
   const [qualityState, setQualityState] = useState(qualityAtom.getState());
@@ -31,7 +31,7 @@ export function useAdaptiveQuality({
     const unsubscribeQuality = qualityAtom.subscribe(() => {
       setQualityState(qualityAtom.getState());
     });
-    
+
     const unsubscribeClock = clockAtom.subscribe(() => {
       setClockState(clockAtom.getState());
     });
@@ -54,13 +54,13 @@ export function useAdaptiveQuality({
       ultraFps,
       highFps,
       mediumFps,
-      initial,
+      initial
     });
-    
+
     if (import.meta.env.DEV) {
       console.log('🔧 useAdaptiveQuality: Initialized with atomic integration', {
         windowSize, ultraFps, highFps, mediumFps, initial
-      });
+      });import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
     }
   }
 
@@ -68,7 +68,7 @@ export function useAdaptiveQuality({
   const calculateThrottleInterval = () => {
     // Get target FPS from clock atom or fallback
     const targetFps = clockState.targetFps || 60;
-    
+
     // Sample at ~10 Hz relative to display refresh rate
     return 1000 / Math.min(targetFps / 6, 15); // Max 15 Hz, min based on target FPS
   };
@@ -89,7 +89,7 @@ export function useAdaptiveQuality({
     const jankRatio = jankInfo?.ratio || 0;
     qualityAtom.updateScalingCapability(fps, jankRatio);
 
-    if (import.meta.env.DEV && Math.random() < 0.1) { // Throttled logging
+    if (import.meta.env.DEV && Math.random() < 0.1) {// Throttled logging
       console.debug(`🎯 Atomic Performance: FPS=${fps.toFixed(1)}, Frame=${frameTime.toFixed(1)}ms, Jank=${jankRatio.toFixed(3)}`);
     }
   };
@@ -102,37 +102,37 @@ export function useAdaptiveQuality({
     const throttleInterval = calculateThrottleInterval();
     if (frameTime - lastUpdateTime.current < throttleInterval) return;
     lastUpdateTime.current = frameTime;
-    
+
     // ✅ ATOMIC FPS SOURCE: Primary source from clock atom
     let currentFps = clockState.fps || 0;
-    
+
     // ✅ FALLBACK: Calculate FPS if not available
     if (currentFps <= 0) {
       const deltaMs = clockState.deltaMs || 16.67;
       currentFps = deltaMs > 0 ? 1000 / deltaMs : 60;
     }
-    
+
     // ✅ QUALITY UPDATE: Only update AQS if we have valid FPS data
     if (currentFps > 0 && aqsRef.current) {
       const aqs = aqsRef.current;
-      
+
       // ✅ FIXED: Capture previous level before update
       const prevLevel = aqs.currentLevel;
       const nextLevel = aqs.updateWithExternalFps(currentFps);
-      
+
       // ✅ ATOMIC QUALITY UPDATE: Direct atom method call
       if (prevLevel !== nextLevel) {
         qualityAtom.setCurrentQualityTier(nextLevel);
-        
+
         if (import.meta.env.DEV) {
-          console.log(`🎯 Quality updated: ${prevLevel} → ${nextLevel} (FPS: ${currentFps.toFixed(1)})`);
+          console.log(`🎯 Quality updated: ${prevLevel} → ${nextLevel} (FPS: ${currentFps.toFixed(1)})`);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
         }
       }
 
       // ✅ ATOMIC PERFORMANCE STATE: Update performance metrics
       const jankCount = clockState.jankCount || 0;
       const jankRatio = jankCount > 0 ? jankCount / 100 : 0;
-      
+
       updateAtomicPerformanceState(currentFps, clockState.averageFrameTime || 16.67, {
         count: jankCount,
         ratio: jankRatio
@@ -146,11 +146,11 @@ export function useAdaptiveQuality({
 
     // ✅ CENTRAL CLOCK SUBSCRIPTION: Integrate with existing clock system
     const unsubscribe = useCentralClock('tick', handleClockTick, [clockState, qualityState]);
-    
+
     if (import.meta.env.DEV) {
-      console.log('🔗 useAdaptiveQuality: Central Clock subscription established with atomic integration');
+      console.log('🔗 useAdaptiveQuality: Central Clock subscription established with atomic integration');import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
     }
-    
+
     // ✅ PROPER CLEANUP: Clean subscription on unmount
     return () => {
       if (typeof unsubscribe === 'function') {
@@ -163,14 +163,14 @@ export function useAdaptiveQuality({
   useEffect(() => {
     if (aqsRef.current && !isUnmounted.current) {
       const initialTier = qualityState.currentQualityTier || initial;
-      
+
       // Ensure AQS is synchronized with atomic state
       if (aqsRef.current.currentLevel !== initialTier) {
         aqsRef.current.currentLevel = initialTier;
       }
 
       if (import.meta.env.DEV) {
-        console.log(`🎯 useAdaptiveQuality: Initialized with atomic tier: ${initialTier}`);
+        console.log(`🎯 useAdaptiveQuality: Initialized with atomic tier: ${initialTier}`);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     }
   }, []); // Run once after mount
@@ -179,7 +179,7 @@ export function useAdaptiveQuality({
   useEffect(() => {
     return () => {
       isUnmounted.current = true;
-      
+
       // Cleanup AQS if needed
       if (aqsRef.current?.destroy) {
         aqsRef.current.destroy();
@@ -212,7 +212,7 @@ export function useAdaptiveQualityDebug() {
         clock: clockState,
         atomsAvailable: true
       }),
-      
+
       getCurrentConfig: () => ({
         source: 'Custom Atomic Integration',
         throttling: 'Dynamic based on target FPS',
@@ -220,7 +220,7 @@ export function useAdaptiveQualityDebug() {
         fps: clockState.fps,
         performanceGrade: clockState.performanceGrade
       }),
-      
+
       testQualityChange: (tier) => {
         qualityAtom.setCurrentQualityTier(tier);
         console.log(`🧪 Test: Quality tier changed to ${tier}`);
@@ -238,7 +238,7 @@ export function useAdaptiveQualityDebug() {
           efficiency: 100
         };
       }
-    };
+    };import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
   }
   return null;
 }
@@ -266,11 +266,11 @@ export function initializeAdaptiveQualityForDevice(deviceInfo) {
   try {
     // Initialize quality atom for device
     qualityAtom.initializeForDevice(deviceInfo);
-    
+
     if (import.meta.env.DEV) {
-      console.log('🎯 useAdaptiveQuality: Device initialization complete', deviceInfo);
+      console.log('🎯 useAdaptiveQuality: Device initialization complete', deviceInfo);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
     }
-    
+
     return true;
   } catch (error) {
     console.error('useAdaptiveQuality: Device initialization failed', error);
@@ -283,11 +283,11 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.useAdaptiveQualityDebug = useAdaptiveQualityDebug;
   window.isAdaptiveQualityAvailable = isAdaptiveQualityAvailable;
   window.initializeAdaptiveQualityForDevice = initializeAdaptiveQualityForDevice;
-  
+
   // ✅ ATOMIC INTEGRATION TEST
   window.testAtomicQuality = () => {
     console.log('🧪 Testing atomic quality integration...');
-    
+
     if (!isAdaptiveQualityAvailable()) {
       console.error('❌ Atomic system not available');
       return false;
@@ -296,23 +296,23 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     try {
       const qualityState = qualityAtom.getState();
       const clockState = clockAtom.getState();
-      
+
       console.log('✅ Quality Atom State:', qualityState);
       console.log('✅ Clock Atom State:', clockState);
-      
+
       // Test quality tier change
       const currentTier = qualityState.currentQualityTier;
       const testTier = currentTier === 'HIGH' ? 'ULTRA' : 'HIGH';
-      
+
       qualityAtom.setCurrentQualityTier(testTier);
       console.log(`✅ Quality tier changed: ${currentTier} → ${testTier}`);
-      
+
       // Restore original tier
       setTimeout(() => {
         qualityAtom.setCurrentQualityTier(currentTier);
         console.log(`✅ Quality tier restored: ${testTier} → ${currentTier}`);
       }, 2000);
-      
+
       return true;
     } catch (error) {
       console.error('❌ Atomic integration test failed:', error);

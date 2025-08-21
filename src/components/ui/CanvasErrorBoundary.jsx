@@ -1,6 +1,6 @@
 // src/components/ui/CanvasErrorBoundary.jsx
-import React from 'react';
-
+import React from 'react'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export default class CanvasErrorBoundary extends React.Component {
   state = { hasError: false, error: null, info: null };
 
@@ -29,9 +29,9 @@ export default class CanvasErrorBoundary extends React.Component {
           padding: 20,
           fontFamily: 'monospace',
           whiteSpace: 'pre-wrap',
-          zIndex: 9999,
-        }}
-      >
+          zIndex: 9999
+        }}>
+
         <h2>Something went wrong in the 3D scene.</h2>
         <details>
           <summary>JS error & stack</summary>
@@ -41,7 +41,8 @@ export default class CanvasErrorBoundary extends React.Component {
           <summary>React component trace</summary>
           <pre>{this.state.info?.componentStack}</pre>
         </details>
-      </div>
-    );
+      </div>);
+
   }
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

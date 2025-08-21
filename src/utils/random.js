@@ -1,13 +1,13 @@
-// src/utils/random.js
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/utils/random.js
 // --------------------------------------------------------------
 // Deterministic RNG (≈ 60 ns / call) – good enough for visuals.
 // createSeededRandom('genesis|tier1') → fn() // 0 ≤ x < 1
 // --------------------------------------------------------------
-
 export function createSeededRandom(seed = '42') {
   let state = hash32(seed) || 1; // never 0 – LCG requirement
   return () => {
-    state = (state * 16807) % 2147483647; // Park–Miller LCG
+    state = state * 16807 % 2147483647; // Park–Miller LCG
     return (state - 1) / 2147483646; // → float in [0,1)
   };
 }
@@ -23,4 +23,5 @@ function hash32(str) {
 }
 
 // Default export for `import rnd from '@/utils/random.js'`
-export default createSeededRandom;
+export default createSeededRandom; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

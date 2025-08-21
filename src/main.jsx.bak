@@ -1,36 +1,45 @@
-// src/main.jsx
+import './canon/init-amplified.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import '@/modules/state/StateCore';
+import '@/modules/state/BeatBusBridge';
+
 import './styles/index.css';
 
-const rootEl = document.getElementById('root');
+import '@/modules/state/StateCore.js';
+import '@/modules/state/BeatBusBridge.js';
+// Import Canon L2 (now it exists!)
+// @doctor:4b-disposers
+const __doctorDisposers = [];const rootEl = document.getElementById('root');
 
 if (!rootEl) {
   console.error('❌ Could not find #root element');
 } else {
   const root = ReactDOM.createRoot(rootEl);
-  // 🔥 No React.StrictMode wrapper here to avoid double-mount in DEV
   root.render(<App />);
+  console.log('✅ React app mounted');
 }
 
+// DEV helpers
 if (import.meta.env.DEV) {
-  // Optionally load Canon Console in development.
-  // Using /* @vite-ignore */ keeps this optional — if the file doesn't exist,
-  // Vite won't fail the build; the dynamic import will just reject.
-  const injectPath = '../canon-console/browser/inject.js';
-  import(/* @vite-ignore */ injectPath)
-    .then(() => console.log('✅ Canon Console loaded'))
-    .catch((err) => {
-      const msg = String(err?.message || err);
-      if (
-        msg.includes('Failed to fetch dynamically imported module') ||
-        msg.includes('ERR_MODULE_NOT_FOUND') ||
-        msg.includes('404')
-      ) {
-        console.warn('ℹ️ Canon Console not found (optional). Skipping.');
-      } else {
-        console.error('❌ Canon Console failed to load:', err);
-      }
-    });
+  import('./dev/unlockConsole.js').then(() => console.log('UnlockConsole active'));
+  // Canon is already attached via init.js
+  console.log('📦 Canon Status:');
+  console.log('  Guard:', !!window.__CANON_GUARD_ACTIVE);
+  console.log('  Console:', !!window.__CANON_CONSOLE_ACTIVE);
+  console.log('  BeatBus:', !!window.BeatBus);
+
+  // Global debug helpers
+  window.canonDebug = {
+    guard: () => window.canon?.guard?.getViolations(),
+    console: () => window.canon?.panel?.patterns,
+    bus: () => window.BeatBus?.getDebugInfo(),
+    emit: (evt, data) => window.BeatBus?.emit(evt, data)
+  };import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
 }
+// @doctor:4r-import-forwarder
+import './modules/state/_doctor/renderer_forwarder.js';
+
+// @doctor:4r-import-probe
+if (import.meta?.env?.DEV) import('./dev/RenderProbe.js');

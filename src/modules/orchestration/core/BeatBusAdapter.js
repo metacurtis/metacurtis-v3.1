@@ -1,11 +1,11 @@
-// TDZ-safe, cycle-resilient BeatBus adapter (singleton)
+// @doctor:4b-disposers
+const __doctorDisposers = []; // TDZ-safe, cycle-resilient BeatBus adapter (singleton)
 // Exports a working bus immediately; upgrades to the real BeatBus (if present) after module init.
-
 class FallbackBus {
-  constructor(){ this._t = new Map(); }
-  on(type, fn){ const a = this._t.get(type)||[]; a.push(fn); this._t.set(type,a); return () => this.off(type, fn); }
-  off(type, fn){ const a = this._t.get(type)||[]; const i = a.indexOf(fn); if (i > -1) a.splice(i,1); this._t.set(type,a); }
-  emit(type, payload){ (this._t.get(type)||[]).forEach(fn => { try { fn(payload); } catch (e) { console.error('[BeatBus]', e); } }); }
+  constructor() {this._t = new Map();}
+  on(type, fn) {const a = this._t.get(type) || [];a.push(fn);this._t.set(type, a);return () => this.off(type, fn);}
+  off(type, fn) {const a = this._t.get(type) || [];const i = a.indexOf(fn);if (i > -1) a.splice(i, 1);this._t.set(type, a);}
+  emit(type, payload) {(this._t.get(type) || []).forEach((fn) => {try {fn(payload);} catch (e) {console.error('[BeatBus]', e);}});}
 }
 
 let instance = globalThis.__CANON_BEATBUS__ || new FallbackBus();
@@ -36,7 +36,7 @@ queueMicrotask(async () => {
       // migrate listeners so early subscriptions keep working
       const topics = Array.from(instance._t?.keys?.() || []);
       for (const t of topics) {
-        for (const fn of (instance._t.get(t) || [])) {
+        for (const fn of instance._t.get(t) || []) {
           next.on?.(t, fn);
         }
       }
@@ -45,6 +45,7 @@ queueMicrotask(async () => {
       instance = next;
     }
   } catch (_e) {
+
     // No real BeatBus available (or still loading); fallback is fine.
-  }
-});
+  }}); // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

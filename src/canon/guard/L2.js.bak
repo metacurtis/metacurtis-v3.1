@@ -1,12 +1,30 @@
-// [CANON:GUARD:L2]
-import { CanonGuardL1 } from './L1.js';
-export class CanonGuardL2 extends CanonGuardL1 {
-  suggestFix(violation){
-    const m = violation?.message||'';
-    if (m.includes('STAGE_CHANGE')) return { script:'doctor_state_events.cjs', suggestion:'Emit {from,to}' };
-    if (m.includes('QUALITY_CHANGE')) return { script:'doctor_quality_event.cjs', suggestion:'Emit {tier}' };
-    if (m.includes('BLUEPRINT_READY')) return { script:'doctor_blueprint_shape.cjs', suggestion:'Emit {blueprint,stage,quality,cached}' };
-    return null;
+// __CANON_INSTALLED__
+import CANON_CONTRACTS from '@/canon/contracts/events.js';
+import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+
+class CanonGuardL2 {
+  constructor(){
+    this.violations = [];
+    this.version = CANON_CONTRACTS.version;
+    this.events = CANON_CONTRACTS.events;
+    this._wire();
   }
-  analyze(){ return this.getViolations().map(v => ({ v, fix:this.suggestFix(v) })); }
+  _wire(){
+    Object.keys(this.events).forEach(evt=>{
+      BeatBus.on(evt, (p)=>{
+        // post-emit validation (should already be canonical)
+        const spec = this.events[evt]; const req = spec.required||[];
+        const missing = req.filter(k=> !(k in (p||{})));
+        if (missing.length){
+          const v = { evt, missing, payload: p, t: Date.now() };
+          this.violations.push(v);
+          console.warn('🛡️ CanonGuard violation (post)', v);
+        }
+      });
+    });
+  }
+  getViolations(){ return this.violations.slice(); }
+  clear(){ this.violations.length = 0; }
 }
+
+export default CanonGuardL2;

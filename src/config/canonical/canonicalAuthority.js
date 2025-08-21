@@ -5,8 +5,8 @@ import {
   SST_V3_CONFIG,
   getStageByName,
   getStageByScroll,
-  isFeatureEnabled
-} from '../sst3/sst-v3.0-config.js';
+  isFeatureEnabled } from
+'../sst3/sst-v3.0-config.js';
 
 import {
   TIER_BEHAVIORS,
@@ -14,22 +14,22 @@ import {
   applyBehavior,
   getBehaviorUniforms,
   STAGE_BEHAVIOR_OVERRIDES,
-  FUSION_BEHAVIORS
-} from '../sst3/tier-behaviors.js';
+  FUSION_BEHAVIORS } from
+'../sst3/tier-behaviors.js';
 
 import {
   NARRATIVE_DIALOGUE,
   getDialogueSegment,
-  getParticleCuesForStage
-} from '../sst3/narrative-dialogue.js';
+  getParticleCuesForStage } from
+'../sst3/narrative-dialogue.js';
 
 import {
   MEMORY_FRAGMENTS,
   FRAGMENT_INTERACTIONS,
   getFragmentsForStage,
-  getActiveFragments
-} from '../sst3/memory-fragments.js';
-
+  getActiveFragments } from
+'../sst3/memory-fragments.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 const Canonical = {
   // Version info
   version: '3.0.0',
@@ -93,4 +93,5 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 }
 
 export { Canonical };
-export default Canonical;
+export default Canonical; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

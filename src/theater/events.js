@@ -1,6 +1,6 @@
-// src/theater/events.js
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/theater/events.js
 // SST v3.0 Complete Event Catalog - All requirements included
-
 export const EVENTS = {
   // Opening phases (SST v3.0 compliant)
   CURSOR_SHOW: 'CURSOR_SHOW',
@@ -42,7 +42,7 @@ export const EVENTS = {
   PREWARM_COMPLETE: 'PREWARM_COMPLETE',
 
   // Director control
-  DIRECTOR_CANCEL: 'DIRECTOR_CANCEL',
+  DIRECTOR_CANCEL: 'DIRECTOR_CANCEL'
 };
 
 // SST v3.0 Memory Fragment trigger points
@@ -53,7 +53,7 @@ export const FRAGMENT_TRIGGERS = {
   velocity: 49, // GitHub graph at 49%
   architecture: 63, // FPS counter at 63%
   harmony: 77, // Live code at 77%
-  transcendence: 92, // Particle count at 92%
+  transcendence: 92 // Particle count at 92%
 };
 
 // SST v3.0 Stage audio mappings
@@ -64,7 +64,8 @@ export const STAGE_AUDIO = {
   velocity: 'velocity-thunder.mp3', // Electronic acceleration
   architecture: 'architecture-build.mp3', // Construction sounds
   harmony: 'harmony-flow.mp3', // Flow state tones
-  transcendence: 'transcendence-cosmos.mp3', // Cosmic harmony
+  transcendence: 'transcendence-cosmos.mp3' // Cosmic harmony
 };
 
-export default EVENTS;
+export default EVENTS; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

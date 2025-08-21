@@ -1,6 +1,6 @@
 // src/components/ErrorBoundary.jsx
-import React from 'react';
-
+import React from 'react'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -26,9 +26,10 @@ export default class ErrorBoundary extends React.Component {
             {'\n'}
             {this.state.info?.componentStack}
           </pre>
-        </div>
-      );
+        </div>);
+
     }
     return this.props.children;
   }
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

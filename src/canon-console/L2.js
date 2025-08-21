@@ -2,8 +2,8 @@
  * Canon Console L2 - Active Assistant
  * Context-aware filtering and fix suggestions
  */
-import CanonConsoleL1 from './L1.js';
-
+import CanonConsoleL1 from './L1.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export class CanonConsoleL2 extends CanonConsoleL1 {
   constructor() {
     super();
@@ -20,20 +20,20 @@ export class CanonConsoleL2 extends CanonConsoleL1 {
     const contextFilters = {
       morphing: {
         show: ['morph', 'scroll', 'uniform', 'progress', 'stage'],
-        hide: ['particle', 'audio', 'network', 'mouse'],
+        hide: ['particle', 'audio', 'network', 'mouse']
       },
       rendering: {
         show: ['blueprint', 'shader', 'webgl', 'fps', 'particle', 'draw'],
-        hide: ['event', 'state', 'audio'],
+        hide: ['event', 'state', 'audio']
       },
       performance: {
         show: ['fps', 'memory', 'cache', 'quality', 'render', 'frame'],
-        hide: ['debug', 'verbose', 'trace'],
+        hide: ['debug', 'verbose', 'trace']
       },
       events: {
         show: ['emit', 'event', 'stage', 'quality', 'blueprint'],
-        hide: ['render', 'particle', 'shader'],
-      },
+        hide: ['render', 'particle', 'shader']
+      }
     };
 
     this.filters = contextFilters[context] || { show: [], hide: [] };
@@ -100,28 +100,28 @@ export class CanonConsoleL2 extends CanonConsoleL1 {
       uniform: {
         brief: 'Uniform issue detected',
         fix: 'Check shader uniforms match material uniforms',
-        doctorScript: 'doctor-fix-uniforms.cjs',
+        doctorScript: 'doctor-fix-uniforms.cjs'
       },
       null: {
         brief: 'Null reference detected',
         fix: 'Add null checks before accessing properties',
-        doctorScript: 'doctor-add-null-checks.cjs',
+        doctorScript: 'doctor-add-null-checks.cjs'
       },
       undefined: {
         brief: 'Undefined value detected',
         fix: 'Ensure all variables are initialized',
-        doctorScript: 'doctor-fix-undefined.cjs',
+        doctorScript: 'doctor-fix-undefined.cjs'
       },
       failed: {
         brief: 'Operation failure detected',
         fix: 'Check error details and stack trace',
-        doctorScript: null,
+        doctorScript: null
       },
       deprecated: {
         brief: 'Deprecated API usage',
         fix: 'Update to modern API',
-        doctorScript: 'doctor-fix-deprecated.cjs',
-      },
+        doctorScript: 'doctor-fix-deprecated.cjs'
+      }
     };
 
     for (const [key, suggestion] of Object.entries(suggestionMap)) {
@@ -136,7 +136,7 @@ export class CanonConsoleL2 extends CanonConsoleL1 {
   getSuggestions() {
     return Array.from(this.suggestions.entries()).map(([message, suggestion]) => ({
       message: message.slice(0, 50) + '...',
-      ...suggestion,
+      ...suggestion
     }));
   }
 
@@ -147,9 +147,10 @@ export class CanonConsoleL2 extends CanonConsoleL1 {
       ...stats,
       context: this.context,
       filters: this.filters,
-      suggestions: this.getSuggestions(),
+      suggestions: this.getSuggestions()
     };
   }
 }
 
-export default CanonConsoleL2;
+export default CanonConsoleL2; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

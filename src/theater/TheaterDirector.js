@@ -4,6 +4,17 @@
 import BeatBus from "@/modules/orchestration/core/BeatBus.js";
 import { EVENTS } from './events.js';
 
+
+// @doctor:phase4b-hmr-dbdff18d - Component listener cleanup
+// @doctor:4b-disposers
+const __doctorDisposers = [];const __componentDisposers = [];
+// Store original methods if component uses them directly
+const __captureUnsub = (unsub) => {
+  if (typeof unsub === 'function') {
+    __componentDisposers.push(unsub);
+  }
+  return unsub;
+};
 class TheaterDirector {
   constructor() {
     this.phase = 'idle';
@@ -26,13 +37,13 @@ class TheaterDirector {
     this.cancelled = false;
     this.phase = 'starting';
     this.startTime = Date.now();
-    
+
     console.log('🎬 Director: Starting SST v3.0 compliant show');
 
     try {
       // Prewarm assets
       await this.prewarm();
-      
+
       // Phase 1: Black screen (2 seconds)
       this.phase = 'black';
       console.log('   Phase: Black screen (2s)');
@@ -53,21 +64,21 @@ class TheaterDirector {
       console.log('   Phase: Terminal typing');
       BeatBus.emit(EVENTS.TERMINAL_TYPE, {
         lines: [
-          'READY.',
-          '10 PRINT "HELLO CURTIS"',
-          '20 GOTO 10',
-          'RUN'
-        ],
+        'READY.',
+        '10 PRINT "HELLO CURTIS"',
+        '20 GOTO 10',
+        'RUN'],
+
         typeSpeed: 100,
         lineDelay: 500
       });
-      
+
       // Emit key clicks during typing
       for (let i = 0; i < 4; i++) {
         await this.sleep(500);
         BeatBus.emit(EVENTS.AUDIO_KEY_CLICK);
       }
-      
+
       await this.sleep(3800);
       if (this.cancelled) return;
 
@@ -88,11 +99,11 @@ class TheaterDirector {
         sourceText: 'HELLO CURTIS',
         count: 2000
       });
-      
+
       // Tell opening sequence to start fading
       await this.sleep(500);
       BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
-      
+
       // Wait for particles to emerge
       await this.once(EVENTS.PARTICLES_EMERGED, 4000);
       if (this.cancelled) return;
@@ -112,7 +123,7 @@ class TheaterDirector {
       const elapsed = Date.now() - this.startTime;
       console.log('🎬 Director: Hand-off complete → user-driven experience');
       console.log(`   Total opening time: ${elapsed}ms`);
-      
+
       this.hasRun = true;
       this.isRunning = false;
 
@@ -126,35 +137,35 @@ class TheaterDirector {
   async prewarm() {
     console.log('🔥 Director: Prewarming assets...');
     BeatBus.emit(EVENTS.PREWARM_GENESIS_BLUEPRINT);
-    
+
     // Start audio
     BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: 0.3 });
-    
+
     // Wait for prewarm or timeout
     await this.once(EVENTS.PREWARM_COMPLETE, 2000);
   }
 
   monitorFragments() {
     console.log('📍 Director: Monitoring for memory fragments');
-    
+
     // Set up fragment triggers based on scroll percentage
     const _fragmentTriggers = [
-      { stage: 'genesis', percent: 5 },
-      { stage: 'discipline', percent: 20 },
-      { stage: 'neural', percent: 35 },
-      { stage: 'velocity', percent: 49 },
-      { stage: 'architecture', percent: 63 },
-      { stage: 'harmony', percent: 77 },
-      { stage: 'transcendence', percent: 92 }
-    ];
-    
+    { stage: 'genesis', percent: 5 },
+    { stage: 'discipline', percent: 20 },
+    { stage: 'neural', percent: 35 },
+    { stage: 'velocity', percent: 49 },
+    { stage: 'architecture', percent: 63 },
+    { stage: 'harmony', percent: 77 },
+    { stage: 'transcendence', percent: 92 }];
+
+
     // Note: Actual implementation would monitor scroll and trigger fragments
     // For now, this is a placeholder
   }
 
   cancel() {
     if (!this.isRunning) return;
-    
+
     console.log('🎬 Director: Cancelling show');
     this.cancelled = true;
     this.isRunning = false;
@@ -163,21 +174,21 @@ class TheaterDirector {
   }
 
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   once(event, timeout = 5000) {
     return new Promise((resolve) => {
       let timeoutId;
-      
+
       const handler = (data) => {
         clearTimeout(timeoutId);
         unsubscribe();
         resolve(data);
       };
-      
+
       const unsubscribe = BeatBus.on(event, handler);
-      
+
       timeoutId = setTimeout(() => {
         console.warn(`⚠️ Director: ${event} timed out after ${timeout}ms`);
         unsubscribe();
@@ -207,3 +218,19 @@ if (typeof window !== 'undefined') {
 }
 
 export default director;
+
+
+// @doctor:phase4b-hmr-dbdff18d - HMR dispose
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    __componentDisposers.forEach((d) => {
+      try {d();} catch (e) {console.warn('Dispose error:', e);}
+    });
+    __componentDisposers.length = 0;"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});
+  });
+}
+
+/* TODO: Wrap listener calls with __captureUnsub:
+   const unsub = __captureUnsub(bus.on('EVENT', handler));
+   Lines with uncaptured listeners: 97, 134
+*/

@@ -1,11 +1,11 @@
-// src/modules/state/sstV3Config.js
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/modules/state/sstV3Config.js
 /**
  * SST v3.0 Complete Stage Configurations
  * Based on Consciousness Theater specification
  *
  * @sst-version 3.0
  */
-
 export const SST_V3_CONFIG = {
   // Stage 0: Genesis Spark
   genesis: {
@@ -16,7 +16,7 @@ export const SST_V3_CONFIG = {
     narrative: {
       time: '1983, Age 8',
       location: 'Dallas, Texas',
-      moment: 'First encounter with programming on Commodore 64',
+      moment: 'First encounter with programming on Commodore 64'
     },
     tiers: {
       tier1: {
@@ -28,8 +28,8 @@ export const SST_V3_CONFIG = {
         config: {
           speed: 0.2,
           pattern: 'perlin',
-          frequency: 0.1,
-        },
+          frequency: 0.1
+        }
       },
       tier2: {
         ratio: 0.2, // 400 particles
@@ -39,8 +39,8 @@ export const SST_V3_CONFIG = {
         behavior: 'orbital',
         config: {
           radius: 5.0,
-          speed: 0.05,
-        },
+          speed: 0.05
+        }
       },
       tier3: {
         ratio: 0.1, // 200 particles
@@ -50,8 +50,8 @@ export const SST_V3_CONFIG = {
         behavior: 'twinkle',
         config: {
           frequency: 2.0,
-          intensity: 0.3,
-        },
+          intensity: 0.3
+        }
       },
       tier4: {
         ratio: 0.1, // 200 particles
@@ -59,22 +59,22 @@ export const SST_V3_CONFIG = {
         sizeMultiplier: 1.5,
         opacity: [0.8, 1.0],
         behavior: 'pulse',
-        position: 'hippocampus_seeds',
-      },
+        position: 'hippocampus_seeds'
+      }
     },
     brainTarget: 'hippocampus',
     colors: ['#00FF00', '#22c55e', '#15803d'], // Commodore 64 green
     camera: {
       type: 'dolly',
       angle: 5,
-      duration: 30,
+      duration: 30
     },
     memoryFragment: {
       trigger: 5, // scroll %
       content: 'Commodore 64 Terminal',
       interaction: 'type_enabled',
-      duration: 10000,
-    },
+      duration: 10000
+    }
   },
 
   // Stage 1: Discipline Forge
@@ -86,7 +86,7 @@ export const SST_V3_CONFIG = {
     narrative: {
       time: '1983-2022',
       theme: 'Structure emerging from chaos',
-      transformation: 'Marine Corps discipline',
+      transformation: 'Marine Corps discipline'
     },
     tiers: {
       tier1: {
@@ -98,8 +98,8 @@ export const SST_V3_CONFIG = {
         config: {
           pattern: 'grid_drift',
           spacing: 2.0,
-          wobble: 0.1,
-        },
+          wobble: 0.1
+        }
       },
       tier2: {
         ratio: 0.25, // 750 particles
@@ -109,8 +109,8 @@ export const SST_V3_CONFIG = {
         behavior: 'column',
         config: {
           alignment: 'vertical',
-          stability: 0.9,
-        },
+          stability: 0.9
+        }
       },
       tier3: {
         ratio: 0.1, // 300 particles
@@ -120,8 +120,8 @@ export const SST_V3_CONFIG = {
         behavior: 'anchor',
         config: {
           rhythm: 'military_cadence',
-          bpm: 120,
-        },
+          bpm: 120
+        }
       },
       tier4: {
         ratio: 0.1, // 300 particles
@@ -129,28 +129,28 @@ export const SST_V3_CONFIG = {
         sizeMultiplier: 1.6,
         opacity: [0.85, 1.0],
         behavior: 'authority',
-        position: 'brainstem_formation',
-      },
+        position: 'brainstem_formation'
+      }
     },
     brainTarget: 'brainstem',
     colors: ['#1e40af', '#3b82f6', '#1d4ed8'], // Military blues
     camera: {
       type: 'authority',
       angle: 10,
-      orbit: 'structured',
+      orbit: 'structured'
     },
     memoryFragment: {
       trigger: 20,
       content: 'Marine Corps Eagle, Globe, and Anchor',
-      interaction: 'hover_motto',
-    },
-  },
+      interaction: 'hover_motto'
+    }
+  }
 
   // Remaining stages continue...
   // [Include all 7 stages as in the artifact]
 };
 
-export const getStageConfig = stageName => {
+export const getStageConfig = (stageName) => {
   return SST_V3_CONFIG[stageName] || SST_V3_CONFIG.genesis;
 };
 
@@ -158,4 +158,5 @@ export const getStageNames = () => {
   return Object.keys(SST_V3_CONFIG);
 };
 
-export default SST_V3_CONFIG;
+export default SST_V3_CONFIG; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

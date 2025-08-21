@@ -1,5 +1,5 @@
-// src/utils/performance/DeviceCapabilities.js
-
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/utils/performance/DeviceCapabilities.js
 /**
  * DeviceCapabilities
  *
@@ -26,13 +26,13 @@ export default class DeviceCapabilities {
       // Ensure navigator.deviceMemory exists before trying to access it
       deviceMemory: typeof navigator.deviceMemory !== 'undefined' ? navigator.deviceMemory : null,
       coreCount:
-        typeof navigator.hardwareConcurrency !== 'undefined' ? navigator.hardwareConcurrency : null,
+      typeof navigator.hardwareConcurrency !== 'undefined' ? navigator.hardwareConcurrency : null,
       deviceType: null,
       screen: {
         width: window.screen.width,
         height: window.screen.height,
-        pixelRatio: window.devicePixelRatio || 1,
-      },
+        pixelRatio: window.devicePixelRatio || 1
+      }
     };
 
     // Determine device type by user agent or screen size heuristic
@@ -108,4 +108,5 @@ export default class DeviceCapabilities {
     console.log('DeviceCapabilities: Gathered info:', info);
     return info;
   }
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

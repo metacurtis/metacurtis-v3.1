@@ -5,6 +5,17 @@
 import CanonGuardL2 from '../canon-guard/L2.js';
 import CanonConsoleL2 from '../canon-console/L2.js';
 
+
+// @doctor:phase4b-hmr-dbdff18d - Component listener cleanup
+// @doctor:4b-disposers
+const __doctorDisposers = [];const __componentDisposers = [];
+// Store original methods if component uses them directly
+const __captureUnsub = (unsub) => {
+  if (typeof unsub === 'function') {
+    __componentDisposers.push(unsub);
+  }
+  return unsub;
+};
 export function initCanon() {
   if (window.__CANON_INITIALIZED) return;
   window.__CANON_INITIALIZED = Date.now();
@@ -31,7 +42,7 @@ export function initCanon() {
         return {
           listeners,
           eventLog: this.eventLog || [],
-          lastEmit: this.lastEmit || null,
+          lastEmit: this.lastEmit || null
         };
       };
     }
@@ -59,8 +70,8 @@ export function initCanon() {
     guard.autoProtect(BeatBus);
 
     // Add global tap helper
-    if (!window.busTap) {
-      window.busTap = (event, fn) => BeatBus.on(event, fn);
+    if (!window.busTap) {"@doctor:4b-todo-capture: capture unsubscribe for on()"; // @doctor:4b-capture
+      const __doctor_unsub_1 = window.busTap = (event, fn) => BeatBus.on(event, fn);__doctorDisposers.push(__doctor_unsub_1);
     }
 
     console.log('✅ Canon Suite: BeatBus integration complete');
@@ -79,26 +90,26 @@ export function initCanon() {
     patterns: () => guard.getPatterns(),
     analyze: () => ({
       guard: guard.analyze(),
-      console: consoleTool.analyze(),
+      console: consoleTool.analyze()
     }),
 
     // Console control
-    setVerbosity: level => consoleTool.setVerbosity(level),
-    setContext: ctx => consoleTool.setContext(ctx),
+    setVerbosity: (level) => consoleTool.setVerbosity(level),
+    setContext: (ctx) => consoleTool.setContext(ctx),
 
     // Status
     status: () => ({
       initialized: window.__CANON_INITIALIZED,
       guard: {
         active: true,
-        stats: guard.getStats(),
+        stats: guard.getStats()
       },
       console: {
         active: true,
-        stats: consoleTool.getStats(),
+        stats: consoleTool.getStats()
       },
-      beatbus: BeatBus ? BeatBus.getDebugInfo() : null,
-    }),
+      beatbus: BeatBus ? BeatBus.getDebugInfo() : null
+    })
   };
 
   // Set flags
@@ -120,7 +131,23 @@ export function initCanon() {
 
 // Auto-initialize in DEV
 if (import.meta.env.DEV) {
-  initCanon();
+  initCanon();import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
 }
 
 export default initCanon;
+
+
+// @doctor:phase4b-hmr-dbdff18d - HMR dispose
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    __componentDisposers.forEach((d) => {
+      try {d();} catch (e) {console.warn('Dispose error:', e);}
+    });
+    __componentDisposers.length = 0;"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});
+  });
+}
+
+/* TODO: Wrap listener calls with __captureUnsub:
+   const unsub = __captureUnsub(bus.on('EVENT', handler));
+   Lines with uncaptured listeners: 63
+*/

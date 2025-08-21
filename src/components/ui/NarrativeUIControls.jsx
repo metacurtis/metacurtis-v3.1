@@ -1,8 +1,8 @@
 // src/components/ui/NarrativeUIControls.jsx
 // 🎯 Navigation UI Controls - Uses narrativeAtom
 
-import { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export default function NarrativeUIControls() {
   const [navState, setNavState] = useState(null);
   const [stageButtons, setStageButtons] = useState([]);
@@ -34,12 +34,12 @@ export default function NarrativeUIControls() {
           right: '1rem',
           color: '#666',
           fontSize: '0.75rem',
-          zIndex: 22,
-        }}
-      >
+          zIndex: 22
+        }}>
+
         Navigation loading...
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -51,9 +51,9 @@ export default function NarrativeUIControls() {
             color: 'white',
             fontSize: '0.75rem',
             marginBottom: '0.5rem',
-            opacity: 0.7,
-          }}
-        >
+            opacity: 0.7
+          }}>
+
           Digital Awakening Timeline
         </div>
         <ul
@@ -63,41 +63,41 @@ export default function NarrativeUIControls() {
             margin: 0,
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.25rem',
-          }}
-        >
-          {stageButtons.map(({ id, label, isActive, onClick }) => (
-            <li key={id}>
+            gap: '0.25rem'
+          }}>
+
+          {stageButtons.map(({ id, label, isActive, onClick }) =>
+          <li key={id}>
               <button
-                onClick={onClick}
-                disabled={navState.isTransitioning}
-                style={{
-                  background: isActive ? '#0D9488' : 'transparent',
-                  border: '1px solid #0D9488',
-                  color: isActive ? '#fff' : '#0D9488',
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.75rem',
-                  cursor: navState.isTransitioning ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: navState.isTransitioning ? 0.5 : 1,
-                  width: '100%',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={e => {
-                  if (!isActive && !navState.isTransitioning) {
-                    e.target.style.background = 'rgba(13, 148, 136, 0.1)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    e.target.style.background = 'transparent';
-                  }
-                }}
-              >
+              onClick={onClick}
+              disabled={navState.isTransitioning}
+              style={{
+                background: isActive ? '#0D9488' : 'transparent',
+                border: '1px solid #0D9488',
+                color: isActive ? '#fff' : '#0D9488',
+                padding: '0.25rem 0.5rem',
+                fontSize: '0.75rem',
+                cursor: navState.isTransitioning ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                opacity: navState.isTransitioning ? 0.5 : 1,
+                width: '100%',
+                textAlign: 'left'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive && !navState.isTransitioning) {
+                  e.target.style.background = 'rgba(13, 148, 136, 0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.target.style.background = 'transparent';
+                }
+              }}>
+
                 {label}
               </button>
             </li>
-          ))}
+          )}
         </ul>
       </div>
 
@@ -107,15 +107,15 @@ export default function NarrativeUIControls() {
           display: 'flex',
           flexDirection: 'column',
           gap: '0.5rem',
-          marginBottom: '1rem',
-        }}
-      >
+          marginBottom: '1rem'
+        }}>
+
         <div
           style={{
             display: 'flex',
-            gap: '0.25rem',
-          }}
-        >
+            gap: '0.25rem'
+          }}>
+
           <button
             onClick={() => window.narrativeNavigation?.prevStage()}
             disabled={!navState.canGoPrev || navState.isTransitioning}
@@ -126,9 +126,9 @@ export default function NarrativeUIControls() {
               padding: '0.25rem 0.5rem',
               fontSize: '0.75rem',
               cursor: navState.canGoPrev && !navState.isTransitioning ? 'pointer' : 'not-allowed',
-              opacity: navState.canGoPrev && !navState.isTransitioning ? 1 : 0.3,
-            }}
-          >
+              opacity: navState.canGoPrev && !navState.isTransitioning ? 1 : 0.3
+            }}>
+
             ← Prev
           </button>
 
@@ -142,16 +142,16 @@ export default function NarrativeUIControls() {
               padding: '0.25rem 0.5rem',
               fontSize: '0.75rem',
               cursor: navState.canGoNext && !navState.isTransitioning ? 'pointer' : 'not-allowed',
-              opacity: navState.canGoNext && !navState.isTransitioning ? 1 : 0.3,
-            }}
-          >
+              opacity: navState.canGoNext && !navState.isTransitioning ? 1 : 0.3
+            }}>
+
             Next →
           </button>
         </div>
 
         <button
           onClick={() =>
-            window.narrativeNavigation?.toggleAutoAdvance(!navState.autoAdvanceEnabled)
+          window.narrativeNavigation?.toggleAutoAdvance(!navState.autoAdvanceEnabled)
           }
           style={{
             background: navState.autoAdvanceEnabled ? '#0D9488' : 'transparent',
@@ -160,9 +160,9 @@ export default function NarrativeUIControls() {
             padding: '0.25rem 0.5rem',
             fontSize: '0.75rem',
             cursor: 'pointer',
-            transition: 'all 0.2s',
-          }}
-        >
+            transition: 'all 0.2s'
+          }}>
+
           {navState.autoAdvanceEnabled ? '⏸️ Auto' : '▶️ Auto'}
         </button>
       </div>
@@ -172,9 +172,9 @@ export default function NarrativeUIControls() {
         style={{
           color: 'rgba(255, 255, 255, 0.7)',
           fontSize: '0.625rem',
-          textAlign: 'right',
-        }}
-      >
+          textAlign: 'right'
+        }}>
+
         Stage {navState.currentIndex + 1} of {navState.allStages.length}
         <br />
         {navState.isTransitioning && 'Transitioning...'}
@@ -189,17 +189,17 @@ export default function NarrativeUIControls() {
           borderRadius: '4px',
           fontSize: '0.625rem',
           color: 'rgba(255, 255, 255, 0.5)',
-          lineHeight: 1.3,
-        }}
-      >
+          lineHeight: 1.3
+        }}>
+
         <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Keyboard:</div>
         <div>→ / Space: Next</div>
         <div>← : Previous</div>
         <div>Ctrl+P: Auto-advance</div>
         <div>Home/End: First/Last</div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 /*
@@ -224,4 +224,5 @@ export default function NarrativeUIControls() {
 
 This completely replaces StageNavigation with a richer UI that uses
 the consolidated navigation system underneath.
-*/
+*/ // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

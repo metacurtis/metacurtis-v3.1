@@ -1,6 +1,6 @@
-// DEV Render Probe — minimal, non-intrusive
-(() => {
-  if (typeof window === 'undefined') return;
+// @doctor:4b-disposers
+const __doctorDisposers = []; // DEV Render Probe — minimal, non-intrusive
+(() => {if (typeof window === 'undefined') return;
   if (window.__RENDER_PROBE_ACTIVE__) return;
   window.__RENDER_PROBE_ACTIVE__ = true;
 
@@ -11,7 +11,7 @@
     draws: 0,
     lastDraws: 0,
     canvases: () => Array.from(document.getElementsByTagName('canvas')),
-    dpr: () => window.devicePixelRatio || 1,
+    dpr: () => window.devicePixelRatio || 1
   };
 
   // Late bind boundary once (so BeatBus is protected)
@@ -25,8 +25,8 @@
         log('boundary enforced (late)');
       }
     } catch (e) {
-      /* noop */
-    }
+
+      /* noop */}
   }
 
   // Wrap WebGL drawing
@@ -65,7 +65,7 @@
     borderRadius: '6px',
     fontSize: '12px',
     pointerEvents: 'none',
-    whiteSpace: 'pre',
+    whiteSpace: 'pre'
   });
   const line = (k, v) => `${k.padEnd(14)} ${v}`;
   const btnBar = document.createElement('div');
@@ -73,7 +73,7 @@
     marginTop: '6px',
     display: 'flex',
     gap: '6px',
-    pointerEvents: 'auto',
+    pointerEvents: 'auto'
   });
   const mkBtn = (txt, on) => {
     const b = document.createElement('button');
@@ -83,12 +83,12 @@
       color: '#000',
       border: 'none',
       padding: '3px 6px',
-      cursor: 'pointer',
+      cursor: 'pointer'
     });
     b.onclick = on;
     return b;
   };
-  const setMode = m => () => {
+  const setMode = (m) => () => {
     window.canon?.setMode?.(m);
     log('mode→', m);
   };
@@ -114,7 +114,7 @@
 
   // CSS sanity for canvas/root
   function cssGuards() {
-    const ensureRule = css => {
+    const ensureRule = (css) => {
       const id = btoa(css).slice(0, 8);
       if (document.getElementById('rp-' + id)) return;
       const s = document.createElement('style');
@@ -139,29 +139,29 @@
       S.raf = 0;
       S.lastTick = now;
       const cvs = S.canvases();
-      const size = cvs[0]
-        ? `${cvs[0].width}x${cvs[0].height} (css ${cvs[0].clientWidth}x${cvs[0].clientHeight})`
-        : '—';
+      const size = cvs[0] ?
+      `${cvs[0].width}x${cvs[0].height} (css ${cvs[0].clientWidth}x${cvs[0].clientHeight})` :
+      '—';
       const mode = window.canon?.boundary?.mode || '—';
       const tele = window.canon?.boundary?.getReport?.()?.telemetry || {
         total: 0,
         valid: 0,
         invalid: 0,
-        rejected: 0,
+        rejected: 0
       };
       const drawDelta = S.draws - S.lastDraws;
       S.lastDraws = S.draws;
       root.firstChild?.remove?.(); // remove button bar for clean re-render at top
       root.innerHTML = [
-        line('FPS', String(S.fps)),
-        line('Draws/s', String(drawDelta)),
-        line('Total draws', String(S.draws)),
-        line('Canvas', String(size)),
-        line('DPR', String(S.dpr())),
-        line('Boundary', String(mode)),
-        line('Emits total', String(tele.total || 0)),
-        line('Valid/Invalid', `${tele.valid || 0}/${tele.invalid || 0}`),
-      ].join('\n');
+      line('FPS', String(S.fps)),
+      line('Draws/s', String(drawDelta)),
+      line('Total draws', String(S.draws)),
+      line('Canvas', String(size)),
+      line('DPR', String(S.dpr())),
+      line('Boundary', String(mode)),
+      line('Emits total', String(tele.total || 0)),
+      line('Valid/Invalid', `${tele.valid || 0}/${tele.invalid || 0}`)].
+      join('\n');
       root.appendChild(btnBar);
 
       // Hints
@@ -171,17 +171,17 @@
       const suggestions = [];
       if (!hasCanvas) suggestions.push('No <canvas> found → ensure WebGLBackground mounts.');
       if (hasCanvas && drawDelta === 0 && S.fps > 0)
-        suggestions.push('RAF is ticking but 0 draw calls → check shader compile / render loop.');
+      suggestions.push('RAF is ticking but 0 draw calls → check shader compile / render loop.');
       if (
-        hasCanvas &&
-        S.canvases()[0] &&
-        (S.canvases()[0].clientWidth === 0 || S.canvases()[0].clientHeight === 0)
-      )
-        suggestions.push('Canvas size is 0 → sizing CSS or setSize().');
+      hasCanvas &&
+      S.canvases()[0] && (
+      S.canvases()[0].clientWidth === 0 || S.canvases()[0].clientHeight === 0))
+
+      suggestions.push('Canvas size is 0 → sizing CSS or setSize().');
       if ((tele.total || 0) === 0)
-        suggestions.push(
-          'No events emitted → emit STAGE_CHANGE/QUALITY_CHANGE with buttons above.'
-        );
+      suggestions.push(
+        'No events emitted → emit STAGE_CHANGE/QUALITY_CHANGE with buttons above.'
+      );
       hint.textContent = suggestions.length ? 'Hints: ' + suggestions.join(' | ') : 'OK';
       root.appendChild(hint);
     }
@@ -191,4 +191,5 @@
   cssGuards();
   wrapWebGL();
   requestAnimationFrame(tick);
-})();
+})(); // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

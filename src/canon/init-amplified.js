@@ -6,8 +6,8 @@ import ContractTester from './tests/contracts.test.js';
 import DeprecationManager from './deprecation.js';
 
 import CanonGuardL2 from '../canon-guard/L2.js';
-import CanonConsoleL2 from '../canon-console/L2.js';
-
+import CanonConsoleL2 from '../canon-console/L2.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export function initCanonAmplified() {
   if (typeof window === 'undefined') return;
   if (window.__CANON_AMPLIFIED) return;
@@ -26,7 +26,7 @@ export function initCanonAmplified() {
     old: 'quality',
     new: 'tier',
     since: '0.9.0',
-    phases: { telemetry: 't1', warn: 't2', strict: 't3' },
+    phases: { telemetry: 't1', warn: 't2', strict: 't3' }
   });
   const guard = new CanonGuardL2();
   const consoleTool = new CanonConsoleL2();
@@ -61,11 +61,11 @@ export function initCanonAmplified() {
         boundary: boundary.getReport(),
         guard: guard.getStats(),
         console: consoleTool.getStats(),
-        deprecations: deprecation.getReport(),
-      },
+        deprecations: deprecation.getReport()
+      }
     }),
-    setMode: m => boundary.setMode(m),
-    getDriftReport: () => contracts.getDriftReport(),
+    setMode: (m) => boundary.setMode(m),
+    getDriftReport: () => contracts.getDriftReport()
   };
   window.__CANON_GUARD_ACTIVE = true;
   window.__CANON_CONSOLE_ACTIVE = true;
@@ -78,4 +78,5 @@ if (typeof window !== 'undefined') {
   if (!window.__CANON_AMPLIFIED) initCanonAmplified();
 }
 
-export default initCanonAmplified;
+export default initCanonAmplified; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

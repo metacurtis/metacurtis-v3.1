@@ -1,7 +1,7 @@
 // src/runtime/materialFactory.js
 import * as THREE from 'three';
-import { getGPUProfile } from './gpuProfile.js';
-
+import { getGPUProfile } from './gpuProfile.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export async function createPointsMaterial({
   vertexShader,
   fragmentShader,
@@ -10,7 +10,7 @@ export async function createPointsMaterial({
   transparent = true,
   depthWrite = false,
   depthTest = true,
-  blending = THREE.AdditiveBlending,
+  blending = THREE.AdditiveBlending
 } = {}) {
   const profile = await getGPUProfile();
 
@@ -31,16 +31,16 @@ export async function createPointsMaterial({
       uPointSize: { value: 48.0 },
       uDevicePixelRatio: { value: Math.min(2.5, window.devicePixelRatio || 1) },
       uTierHighlight: { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
-      ...uniforms,
+      ...uniforms
     },
     defines: {
       BASELINE_VARIANT: profile.baselineVariant ? 1 : 0,
-      ...defines,
+      ...defines
     },
     transparent,
     depthWrite,
     depthTest,
-    blending,
+    blending
   });
 
   // Clamp point-size to profile limit (safety)
@@ -55,4 +55,5 @@ export async function createPointsMaterial({
   }
 
   return { material: mat, profile };
-}
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

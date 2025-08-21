@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Canonical } from '@config/canonical/canonicalAuthority.js';
-
+import { Canonical } from '@config/canonical/canonicalAuthority.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegment) {
   const [activeFragments, setActiveFragments] = useState([]);
   const [fragmentStates, setFragmentStates] = useState({});
@@ -8,11 +8,11 @@ export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegm
   useEffect(() => {
     const active = Canonical.getActiveFragments(stageName, scrollPercent, activeNarrativeSegment);
     setActiveFragments(active);
-    
+
     // Initialize states for new fragments
-    active.forEach(frag => {
+    active.forEach((frag) => {
       if (!fragmentStates[frag.id]) {
-        setFragmentStates(prev => ({
+        setFragmentStates((prev) => ({
           ...prev,
           [frag.id]: { state: 'pending', startTime: null }
         }));
@@ -21,11 +21,11 @@ export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegm
   }, [stageName, scrollPercent, activeNarrativeSegment]);
 
   const triggerFragment = useCallback((fragmentId) => {
-    const fragment = activeFragments.find(f => f.id === fragmentId);
+    const fragment = activeFragments.find((f) => f.id === fragmentId);
     if (!fragment) return;
 
     // Update state
-    setFragmentStates(prev => ({
+    setFragmentStates((prev) => ({
       ...prev,
       [fragmentId]: { state: 'triggering', startTime: Date.now() }
     }));
@@ -49,7 +49,7 @@ export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegm
 
     // Transition to active
     setTimeout(() => {
-      setFragmentStates(prev => ({
+      setFragmentStates((prev) => ({
         ...prev,
         [fragmentId]: { ...prev[fragmentId], state: 'active' }
       }));
@@ -57,9 +57,9 @@ export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegm
   }, [activeFragments, stageName]);
 
   const dismissFragment = useCallback((fragmentId) => {
-    const fragment = activeFragments.find(f => f.id === fragmentId);
-    
-    setFragmentStates(prev => ({
+    const fragment = activeFragments.find((f) => f.id === fragmentId);
+
+    setFragmentStates((prev) => ({
       ...prev,
       [fragmentId]: { ...prev[fragmentId], state: 'dismissing' }
     }));
@@ -76,7 +76,7 @@ export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegm
     }
 
     setTimeout(() => {
-      setFragmentStates(prev => ({
+      setFragmentStates((prev) => ({
         ...prev,
         [fragmentId]: { ...prev[fragmentId], state: 'completed' }
       }));
@@ -91,4 +91,5 @@ export function useMemoryFragments(stageName, scrollPercent, activeNarrativeSegm
   };
 }
 
-export default useMemoryFragments;
+export default useMemoryFragments; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

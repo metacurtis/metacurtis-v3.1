@@ -3,7 +3,7 @@
 
 import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from '@modules/orchestration/core/BeatBus';
+import BeatBus from "@/modules/orchestration/core/BeatBus.js";
 import { EVENTS } from '@theater/events.js';
 
 class ConsciousnessEngine {
@@ -22,20 +22,22 @@ class ConsciousnessEngine {
   // ————————————————————————————————————————————————————————————————
   initializeBeatBusListeners() {
     // Stage changes from UI/scroll
-    BeatBus.on(EVENTS.STAGE_CHANGE, ({ stage }) => {
-      if (!stage) return;
-      console.log(`🧠 Engine: Stage change to ${stage}`);
-      this.currentStage = stage;
-      this.buildAndEmitBlueprint(stage, this.currentQuality);
-    });
+    BeatBus.on(EVENTS.STAGE_CHANGE, (payload = {}) => {
+  const stage = payload.stage ?? payload.to;
+  if (!stage) return;
+  console.log(`🧠 Engine: Stage -> ${stage}`);
+  this.currentStage = stage;
+  this.buildAndEmitBlueprint(stage, this.currentQuality);
+});
 
     // Quality changes from TAQS
-    BeatBus.on(EVENTS.QUALITY_CHANGE, ({ tier }) => {
-      if (!tier) return;
-      console.log(`🧠 Engine: Quality change to ${tier}`);
-      this.currentQuality = tier;
-      this.buildAndEmitBlueprint(this.currentStage, tier);
-    });
+    BeatBus.on(EVENTS.QUALITY_CHANGE, (payload = {}) => {
+  const tier = payload.tier ?? payload.quality;
+  if (!tier) return;
+  console.log(`🧠 Engine: Quality -> ${tier}`);
+  this.currentQuality = tier;
+  this.buildAndEmitBlueprint(this.currentStage, tier);
+});
 
     // Director: Prewarm genesis for emergence (SST v3.0 opening)
     BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {

@@ -1,8 +1,8 @@
 /**
  * Contract Tester - emitter + blueprint + morph helpers.
  */
-import ContractRegistry from '../contracts/registry.js';
-
+import ContractRegistry from '../contracts/registry.js'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 export class ContractTester {
   constructor() {
     this.results = [];
@@ -32,7 +32,7 @@ export class ContractTester {
   testBlueprint(bp) {
     const c = ContractRegistry.blueprints;
     const res = { type: 'blueprint', passed: true, violations: [] };
-    (c.required || []).forEach(f => {
+    (c.required || []).forEach((f) => {
       if (!(f in (bp || {}))) {
         res.passed = false;
         res.violations.push({ type: 'missing_field', field: f });
@@ -54,20 +54,21 @@ export class ContractTester {
     return {
       total,
       tested,
-      percentage: total ? ((tested / total) * 100).toFixed(1) + '%' : '0%',
-      missing: Object.keys(ContractRegistry.events).filter(e => !this.covered.has(e)),
+      percentage: total ? (tested / total * 100).toFixed(1) + '%' : '0%',
+      missing: Object.keys(ContractRegistry.events).filter((e) => !this.covered.has(e))
     };
   }
   getReport() {
-    const failures = this.results.filter(r => !r.passed);
+    const failures = this.results.filter((r) => !r.passed);
     return {
       total: this.results.length,
       passed: this.results.length - failures.length,
       failed: failures.length,
       coverage: this.getCoverage(),
-      failures: failures.slice(0, 5),
+      failures: failures.slice(0, 5)
     };
   }
 }
 
-export default ContractTester;
+export default ContractTester; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

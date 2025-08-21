@@ -1,8 +1,8 @@
-/**
+// @doctor:4b-disposers
+const __doctorDisposers = []; /**
  * Canon Guard L1 - Passive Validator
  * Full contract validation against SST
- */
-export class CanonGuardL1 {
+ */export class CanonGuardL1 {
   constructor(contracts) {
     this.violations = [];
     this.validations = 0;
@@ -15,30 +15,30 @@ export class CanonGuardL1 {
         outputs: ['uMorphProgress', 'uFadeProgress'],
         validation: {
           range: [0, 1],
-          updateFrequency: 60,
-        },
+          updateFrequency: 60
+        }
       },
       blueprint: {
         required: ['particleCount', 'atmosphericPositions', 'allenAtlasPositions'],
         constraints: {
           particleCount: { min: 0, max: 15000 },
-          tierDistribution: { sum: 1.0 },
-        },
+          tierDistribution: { sum: 1.0 }
+        }
       },
       events: {
         STAGE_CHANGE: {
           required: ['from', 'to'],
-          optional: ['duration', 'reason'],
+          optional: ['duration', 'reason']
         },
         QUALITY_CHANGE: {
           required: ['tier'],
-          valid: ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'],
+          valid: ['LOW', 'MEDIUM', 'HIGH', 'ULTRA']
         },
         BLUEPRINT_READY: {
           required: ['stage', 'quality', 'blueprint'],
-          optional: ['cached', 'buildTime'],
-        },
-      },
+          optional: ['cached', 'buildTime']
+        }
+      }
     };
 
     console.log('🛡️ Canon Guard L1: Initialized with contracts');
@@ -71,12 +71,12 @@ export class CanonGuardL1 {
 
     // Check required fields
     if (contract.required) {
-      const missing = contract.required.filter(field => !(field in (data || {})));
+      const missing = contract.required.filter((field) => !(field in (data || {})));
       if (missing.length > 0) {
         violations.push({
           type: 'missing_required',
           fields: missing,
-          message: `Event ${type} missing required fields: ${missing.join(', ')}`,
+          message: `Event ${type} missing required fields: ${missing.join(', ')}`
         });
       }
     }
@@ -88,7 +88,7 @@ export class CanonGuardL1 {
           type: 'invalid_value',
           field: 'tier',
           value: data.tier,
-          message: `Invalid tier: ${data.tier}. Must be one of: ${contract.valid.join(', ')}`,
+          message: `Invalid tier: ${data.tier}. Must be one of: ${contract.valid.join(', ')}`
         });
       }
     }
@@ -115,7 +115,7 @@ export class CanonGuardL1 {
         violations.push({
           type: 'missing_field',
           field,
-          message: `Blueprint missing required field: ${field}`,
+          message: `Blueprint missing required field: ${field}`
         });
       }
     }
@@ -128,7 +128,7 @@ export class CanonGuardL1 {
           type: 'constraint_violation',
           field: 'particleCount',
           value: blueprint.particleCount,
-          message: `Particle count ${blueprint.particleCount} outside range [${min}, ${max}]`,
+          message: `Particle count ${blueprint.particleCount} outside range [${min}, ${max}]`
         });
       }
     }
@@ -153,7 +153,7 @@ export class CanonGuardL1 {
           type: 'range_violation',
           field: 'morphProgress',
           value: data.morphProgress,
-          message: `morphProgress ${data.morphProgress} outside range [${min}, ${max}]`,
+          message: `morphProgress ${data.morphProgress} outside range [${min}, ${max}]`
         });
       }
     }
@@ -171,7 +171,7 @@ export class CanonGuardL1 {
       type,
       data,
       violations,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     };
 
     this.violations.push(entry);
@@ -195,11 +195,12 @@ export class CanonGuardL1 {
       validations: this.validations,
       violations: this.violations.length,
       violationRate:
-        this.validations > 0
-          ? ((this.violations.length / this.validations) * 100).toFixed(2) + '%'
-          : '0%',
+      this.validations > 0 ?
+      (this.violations.length / this.validations * 100).toFixed(2) + '%' :
+      '0%'
     };
   }
 }
 
-export default CanonGuardL1;
+export default CanonGuardL1; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

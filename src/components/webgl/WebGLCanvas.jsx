@@ -8,8 +8,8 @@ import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 import DebugExpose from '@/components/dev/DebugExpose';
 
 // Lazy load WebGL components
-const WebGLBackground = lazy(() => import('./WebGLBackground'));
-
+// @doctor:4b-disposers
+const __doctorDisposers = [];const WebGLBackground = lazy(() => import('./WebGLBackground'));
 // WebGL context pool class
 class WebGLContextPool {
   constructor() {
@@ -20,7 +20,7 @@ class WebGLContextPool {
       created: 0,
       reused: 0,
       disposed: 0,
-      maxConcurrent: 0,
+      maxConcurrent: 0
     };
     this.stateCache = new Map();
   }
@@ -35,14 +35,14 @@ class WebGLContextPool {
       premultipliedAlpha: false,
       stencil: false,
       depth: true,
-      ...contextAttributes,
+      ...contextAttributes
     };
 
     let context = null;
     try {
       context =
-        canvas.getContext('webgl2', optimizedAttributes) ||
-        canvas.getContext('webgl', optimizedAttributes);
+      canvas.getContext('webgl2', optimizedAttributes) ||
+      canvas.getContext('webgl', optimizedAttributes);
     } catch (error) {
       console.error('WebGLContextPool: Context creation failed:', error);
     }
@@ -58,7 +58,7 @@ class WebGLContextPool {
   cacheWebGLState(context) {
     if (!context) return;
     this.stateCache.set(context, {
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
   }
 
@@ -79,7 +79,7 @@ class CanvasPerformanceMonitor {
       frameRate: 0,
       renderTime: 0,
       memoryUsage: 0,
-      lastUpdate: 0,
+      lastUpdate: 0
     };
   }
 
@@ -105,13 +105,13 @@ const detectAdvancedExtensionInterference = () => {
 
     return {
       interference,
-      type: interference ? 'webgl_blocked' : 'none',
+      type: interference ? 'webgl_blocked' : 'none'
     };
   } catch (error) {
     return {
       interference: true,
       type: 'detection_failed',
-      error: error.message,
+      error: error.message
     };
   }
 };
@@ -125,7 +125,7 @@ export default function WebGLCanvas({
   particleCount = 5000,
   webglEnabled = true,
   fps = 60,
-  frameTime = 16.67,
+  frameTime = 16.67
 }) {
   // Canvas reference
   const canvasRef = useRef(null);
@@ -144,7 +144,7 @@ export default function WebGLCanvas({
   useEffect(() => {
     performanceMonitor.updateMetrics({
       frameRate: fps,
-      renderTime: frameTime,
+      renderTime: frameTime
     });
   }, [fps, frameTime, performanceMonitor]);
 
@@ -154,11 +154,11 @@ export default function WebGLCanvas({
       performanceMonitor.updateMetrics({
         lastEvent: eventName,
         eventTimestamp: Date.now(),
-        ...payload,
+        ...payload
       });
 
       if (import.meta.env.DEV) {
-        console.log(`🎯 Canvas Event: ${eventName}`, payload);
+        console.log(`🎯 Canvas Event: ${eventName}`, payload);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     },
     [performanceMonitor]
@@ -176,13 +176,13 @@ export default function WebGLCanvas({
 
   // Canvas error handler
   const handleCanvasError = useCallback(
-    error => {
+    (error) => {
       console.error('[WebGLCanvas] Canvas creation failed:', error);
       addEventLog('webgl_canvas_error', {
         error: error.message,
         strategy: canvasStrategy,
         extensionInterference: extensionInterference?.interference,
-        contextPoolStats: contextPool.getStats(),
+        contextPoolStats: contextPool.getStats()
       });
 
       if (canvasStrategy < 2) {
@@ -202,14 +202,14 @@ export default function WebGLCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const handleContextLost = event => {
+    const handleContextLost = (event) => {
       event.preventDefault();
       setContextLost(true);
       console.warn('[WebGLCanvas] WebGL context lost, initiating recovery...');
       addEventLog('webgl_context_lost', {
         recovery: 'initiated',
         extensionInterference: extensionInterference?.interference,
-        contextPoolStats: contextPool.getStats(),
+        contextPoolStats: contextPool.getStats()
       });
     };
 
@@ -219,12 +219,12 @@ export default function WebGLCanvas({
       addEventLog('webgl_context_restored', {
         status: 'success',
         strategy: canvasStrategy,
-        contextPoolStats: contextPool.getStats(),
+        contextPoolStats: contextPool.getStats()
       });
-    };
+    };__doctorDisposers.push(() => {
 
-    canvas.addEventListener('webglcontextlost', handleContextLost);
-    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);});canvas.addEventListener('webglcontextlost', handleContextLost);__doctorDisposers.push(() => {
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);});canvas.addEventListener('webglcontextrestored', handleContextRestored);
 
     return () => {
       canvas.removeEventListener('webglcontextlost', handleContextLost);
@@ -237,13 +237,13 @@ export default function WebGLCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const resizeObserver = new ResizeObserver(entries => {
+    const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
         performanceMonitor.updateMetrics({
           canvasWidth: width,
           canvasHeight: height,
-          pixelCount: width * height,
+          pixelCount: width * height
         });
       }
     });
@@ -261,8 +261,8 @@ export default function WebGLCanvas({
         alpha: true,
         preserveDrawingBuffer: false,
         powerPreference: 'high-performance',
-        failIfMajorPerformanceCaveat: false,
-      },
+        failIfMajorPerformanceCaveat: false
+      }
     };
 
     switch (canvasStrategy) {
@@ -290,8 +290,8 @@ export default function WebGLCanvas({
           <div>Stage: {stage}</div>
           <div>Progress: {Math.round(scrollProgress * 100)}%</div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   if (contextLost) {
@@ -301,63 +301,63 @@ export default function WebGLCanvas({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
           <p className="text-green-400 text-lg font-mono">Restoring WebGL context...</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, width:'100vw', height:'100vh', zIndex:0 }}>
-      <Canvas style={{ display:'block', width:'100%', height:'100%' }}
-        ref={canvasRef}
-        {...canvasConfig}
-        onCreated={({ gl, scene, camera, size }) => {
-          const startTime = performance.now();
+    <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', zIndex: 0 }}>
+      <Canvas style={{ display: 'block', width: '100%', height: '100%' }}
+      ref={canvasRef}
+      {...canvasConfig}
+      onCreated={({ gl, scene, camera, size }) => {
+        const startTime = performance.now();
 
-          // Access canvas element
-          const canvasElement = canvasRef.current;
-          if (canvasElement) {
-            canvasElement.setAttribute('data-webgl-version', gl.capabilities.isWebGL2 ? '2' : '1');
-            canvasElement.setAttribute('data-quality-tier', quality);
-            canvasElement.setAttribute('data-particle-count', particleCount.toString());
-          }
+        // Access canvas element
+        const canvasElement = canvasRef.current;
+        if (canvasElement) {
+          canvasElement.setAttribute('data-webgl-version', gl.capabilities.isWebGL2 ? '2' : '1');
+          canvasElement.setAttribute('data-quality-tier', quality);
+          canvasElement.setAttribute('data-particle-count', particleCount.toString());
+        }
 
-          // Context optimization
-          const context = gl.getContext();
-          contextPool.cacheWebGLState(context);
+        // Context optimization
+        const context = gl.getContext();
+        contextPool.cacheWebGLState(context);
 
-          // Optimal WebGL settings
-          gl.setClearColor('#000000', 1);
-          gl.shadowMap.enabled = false;
-          scene.fog = null;
+        // Optimal WebGL settings
+        gl.setClearColor('#000000', 1);
+        gl.shadowMap.enabled = false;
+        scene.fog = null;
 
-          // Check point size range
-          const glContext = gl.getContext();
-          const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
+        // Check point size range
+        const glContext = gl.getContext();
+        const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
 
-          const setupTime = performance.now() - startTime;
+        const setupTime = performance.now() - startTime;
 
-          console.log('[WebGLCanvas] Canvas created with constellation optimization', {
-            renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
-            maxTextures: gl.capabilities.maxTextures,
-            maxVertexAttributes: gl.capabilities.maxVertexAttributes,
-            pointSizeRange: pointSizeRange,
-            canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
-            setupTime: setupTime.toFixed(2) + 'ms',
-            contextPoolStats: contextPool.getStats(),
-            quality: quality,
-            particles: particleCount,
-            stage: stage,
-            strategy: canvasStrategy,
-          });
+        console.log('[WebGLCanvas] Canvas created with constellation optimization', {
+          renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
+          maxTextures: gl.capabilities.maxTextures,
+          maxVertexAttributes: gl.capabilities.maxVertexAttributes,
+          pointSizeRange: pointSizeRange,
+          canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
+          setupTime: setupTime.toFixed(2) + 'ms',
+          contextPoolStats: contextPool.getStats(),
+          quality: quality,
+          particles: particleCount,
+          stage: stage,
+          strategy: canvasStrategy
+        });
 
-          addEventLog('webgl_canvas_created', {
-            webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
-            point_size_range: pointSizeRange,
-            setup_time: setupTime,
-          });
-        }}
-        onError={handleCanvasError}
-      >
+        addEventLog('webgl_canvas_created', {
+          webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
+          point_size_range: pointSizeRange,
+          setup_time: setupTime
+        });
+      }}
+      onError={handleCanvasError}>
+
         {/* Optimal camera for constellation viewing */}
         <PerspectiveCamera makeDefault position={[0, 0, 80]} fov={75} near={0.1} far={200} />
 
@@ -369,13 +369,13 @@ export default function WebGLCanvas({
 
         {/* Main particle system WITH PROPS */}
         <Suspense fallback={null}>
-          {webglEnabled && (
-            <WebGLBackground
-              stage={stage}
-              morphProgress={morphProgress}
-              scrollProgress={scrollProgress}
-            />
-          )}
+          {webglEnabled &&
+          <WebGLBackground
+            stage={stage}
+            morphProgress={morphProgress}
+            scrollProgress={scrollProgress} />
+
+          }
         </Suspense>
       </Canvas>
 
@@ -383,23 +383,23 @@ export default function WebGLCanvas({
       <DevPerformanceMonitor />
 
       {/* Debug overlay */}
-      {false &&import.meta.env.DEV && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            background: 'rgba(0,0,0,0.9)',
-            color: '#00ff88',
-            padding: '16px',
-            borderRadius: '8px',
-            fontFamily: 'Courier New, monospace',
-            fontSize: '12px',
-            border: '1px solid #00ff88',
-            zIndex: 1000,
-            minWidth: '300px',
-          }}
-        >
+      {false && import.meta.env.DEV &&
+      <div
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(0,0,0,0.9)',
+          color: '#00ff88',
+          padding: '16px',
+          borderRadius: '8px',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '12px',
+          border: '1px solid #00ff88',
+          zIndex: 1000,
+          minWidth: '300px'
+        }}>
+
           <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#00ffcc' }}>
             🌌 CONSTELLATION STATUS
           </div>
@@ -413,12 +413,12 @@ export default function WebGLCanvas({
           <div>Context: {contextLost ? '✗' : '✓'}</div>
 
           <div
-            style={{
-              marginTop: '8px',
-              paddingTop: '8px',
-              borderTop: '1px solid rgba(255,255,255,0.2)',
-            }}
-          >
+          style={{
+            marginTop: '8px',
+            paddingTop: '8px',
+            borderTop: '1px solid rgba(255,255,255,0.2)'
+          }}>
+
             <div style={{ color: '#00ccff', fontWeight: 'bold', marginBottom: '4px' }}>
               Performance:
             </div>
@@ -429,12 +429,12 @@ export default function WebGLCanvas({
 
           {/* SST v3.0 Props */}
           <div
-            style={{
-              marginTop: '8px',
-              paddingTop: '8px',
-              borderTop: '1px solid rgba(255,255,255,0.2)',
-            }}
-          >
+          style={{
+            marginTop: '8px',
+            paddingTop: '8px',
+            borderTop: '1px solid rgba(255,255,255,0.2)'
+          }}>
+
             <div style={{ color: '#ffff00', fontWeight: 'bold', marginBottom: '4px' }}>
               SST v3.0 Props:
             </div>
@@ -445,54 +445,54 @@ export default function WebGLCanvas({
 
           {/* Debug controls */}
           <div
-            style={{
-              marginTop: '8px',
-              paddingTop: '8px',
-              borderTop: '1px solid rgba(255,255,255,0.2)',
-            }}
-          >
+          style={{
+            marginTop: '8px',
+            paddingTop: '8px',
+            borderTop: '1px solid rgba(255,255,255,0.2)'
+          }}>
+
             <button
-              onClick={() => {
-                window.location.hash = '#debug-particles';
-                window.location.reload();
-              }}
-              style={{
-                background: '#00ff88',
-                color: '#000',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '11px',
-                marginRight: '8px',
-              }}
-            >
+            onClick={() => {
+              window.location.hash = '#debug-particles';
+              window.location.reload();
+            }}
+            style={{
+              background: '#00ff88',
+              color: '#000',
+              border: 'none',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '11px',
+              marginRight: '8px'
+            }}>
+
               Debug Mode
             </button>
             <button
-              onClick={() => {
-                const event = new CustomEvent('webgl-force-init', {
-                  detail: { stage: stage, reason: 'manual_test' },
-                });
-                window.dispatchEvent(event);
-              }}
-              style={{
-                background: '#00ccff',
-                color: '#000',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
-            >
+            onClick={() => {
+              const event = new CustomEvent('webgl-force-init', {
+                detail: { stage: stage, reason: 'manual_test' }
+              });
+              window.dispatchEvent(event);
+            }}
+            style={{
+              background: '#00ccff',
+              color: '#000',
+              border: 'none',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '11px'
+            }}>
+
               Force Render
             </button>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 // Global debug access
@@ -511,7 +511,7 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
         clientHeight: canvas.clientHeight,
         webglVersion: canvas.getAttribute('data-webgl-version'),
         qualityTier: canvas.getAttribute('data-quality-tier'),
-        particleCount: canvas.getAttribute('data-particle-count'),
+        particleCount: canvas.getAttribute('data-particle-count')
       };
     },
 
@@ -535,17 +535,17 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
       const support = {
         webgl2: !!webgl2,
         webgl1: !!webgl1,
-        pointSizeRange: webgl2
-          ? webgl2.getParameter(webgl2.ALIASED_POINT_SIZE_RANGE)
-          : webgl1
-            ? webgl1.getParameter(webgl1.ALIASED_POINT_SIZE_RANGE)
-            : null,
+        pointSizeRange: webgl2 ?
+        webgl2.getParameter(webgl2.ALIASED_POINT_SIZE_RANGE) :
+        webgl1 ?
+        webgl1.getParameter(webgl1.ALIASED_POINT_SIZE_RANGE) :
+        null
       };
 
       canvas.remove();
       console.log('🧪 WebGL Support Test:', support);
       return support;
-    },
+    }
   };
 
   console.log('🎯 Enhanced Canvas Debug Tools Available:');

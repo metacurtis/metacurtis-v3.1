@@ -13,24 +13,24 @@ import vertexShaderSource from '../../shaders/templates/consciousness-vertex.gls
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 
 // ───────────────── helpers ─────────────────
-
-function pickStageColors(stageName) {
+// @doctor:4b-disposers
+const __doctorDisposers = [];function pickStageColors(stageName) {
   const s = Canonical?.stages?.[stageName] || {};
   const colors = s.colors || ['#00ffcc', '#f59e0b', '#ffffff'];
   return {
     current: new THREE.Color(colors[0]),
     next: new THREE.Color(
       (Canonical?.stages?.[
-        (Canonical?.stageOrder || [])[
-          Math.min(
-            (Canonical?.stageOrder || []).indexOf(stageName) + 1,
-            (Canonical?.stageOrder || []).length - 1
-          )
-        ]
-      ]?.colors || [colors[0]])[0]
+      (Canonical?.stageOrder || [])[
+      Math.min(
+        (Canonical?.stageOrder || []).indexOf(stageName) + 1,
+        (Canonical?.stageOrder || []).length - 1
+      )]]?.
+
+      colors || [colors[0]])[0]
     ),
     acc1: new THREE.Color(colors[1] || colors[0]),
-    acc2: new THREE.Color(colors[2] || colors[0]),
+    acc2: new THREE.Color(colors[2] || colors[0])
   };
 }
 
@@ -48,7 +48,7 @@ function ensureArraysFromEmergence(bp) {
   const positions = bp.positions;
   if (!positions) return bp;
 
-  const count = bp.count ?? (positions.length / 3) | 0;
+  const count = bp.count ?? positions.length / 3 | 0;
   const tiersU8 = bp.tiers || new Uint8Array(count);
 
   const sizeByTier = [0.6, 0.8, 1.2, 1.5];
@@ -88,7 +88,7 @@ function ensureArraysFromEmergence(bp) {
     sizeMultipliers,
     opacityData,
     atlasIndices,
-    tierData,
+    tierData
   };
 }
 
@@ -127,8 +127,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const doc = document.documentElement;
       const denom = Math.max(1, doc.scrollHeight - doc.clientHeight);
       fallbackScrollRef.current = doc.scrollTop / denom;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
+    };__doctorDisposers.push(() => {
+      window.removeEventListener('scroll', onScroll, { passive: true });});window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -137,7 +137,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const off = BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
       const start = performance.now();
       const dur = 1400;
-      const tick = t0 => {
+      const tick = (t0) => {
         const k = Math.min(1, (t0 - start) / dur);
         fallbackMorphRef.current = k * k * (3 - 2 * k);
         if (k < 1) requestAnimationFrame(tick);
@@ -149,7 +149,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // Blueprint subscription
   useEffect(() => {
-    const handleBlueprint = payload => {
+    const handleBlueprint = (payload) => {
       const { bp: raw, stageName: st, quality, cached } = normalizePayload(payload);
 
       // Skip duplicate blueprints
@@ -178,7 +178,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const count = bp.activeCount || bp.particleCount || bp.maxParticles || 0;
 
       // Scale text to be visible
-      const fovRad = ((camera?.fov ?? 75) * Math.PI) / 180;
+      const fovRad = (camera?.fov ?? 75) * Math.PI / 180;
       const z = camera?.position?.z ?? 80;
       const viewH = 2 * z * Math.tan(fovRad / 2);
       const desiredH = viewH * 0.65;
@@ -196,7 +196,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         const srcCount = targetAllen.length / 3;
         const allen = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
-          const si = (i % srcCount) * 3;
+          const si = i % srcCount * 3;
           const di = i * 3;
           allen[di + 0] = targetAllen[si + 0];
           allen[di + 1] = targetAllen[si + 1];
@@ -242,10 +242,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (!blueprint) return null;
 
     const count =
-      blueprint.maxParticles ||
-      blueprint.particleCount ||
-      blueprint.activeCount ||
-      (blueprint.positions ? (blueprint.positions.length / 3) | 0 : 0);
+    blueprint.maxParticles ||
+    blueprint.particleCount ||
+    blueprint.activeCount || (
+    blueprint.positions ? blueprint.positions.length / 3 | 0 : 0);
 
     if (!count) return null;
 
@@ -260,15 +260,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(allen, 3));
 
     if (blueprint.animationSeeds)
-      geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
+    geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
     if (blueprint.sizeMultipliers)
-      geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
+    geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
     if (blueprint.opacityData)
-      geo.setAttribute('opacityData', new THREE.BufferAttribute(blueprint.opacityData, 1));
+    geo.setAttribute('opacityData', new THREE.BufferAttribute(blueprint.opacityData, 1));
     if (blueprint.atlasIndices)
-      geo.setAttribute('atlasIndex', new THREE.BufferAttribute(blueprint.atlasIndices, 1));
+    geo.setAttribute('atlasIndex', new THREE.BufferAttribute(blueprint.atlasIndices, 1));
     if (blueprint.tierData)
-      geo.setAttribute('tierData', new THREE.BufferAttribute(blueprint.tierData, 1));
+    geo.setAttribute('tierData', new THREE.BufferAttribute(blueprint.tierData, 1));
 
     const idx = new Float32Array(count);
     for (let i = 0; i < count; i++) idx[i] = i;
@@ -342,14 +342,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
         // Stage meta
         uStageIndex: { value: stageIndex },
-        uBrainRegion: { value: stageIndex },
+        uBrainRegion: { value: stageIndex }
       },
       vertexShader: vertexShaderSource,
       fragmentShader: fragmentShaderSource,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      depthTest: true,
+      depthTest: true
     });
 
     mat.uniformsNeedUpdate = true;
@@ -366,7 +366,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   }, [size, gl]);
 
   // Animation frame
-  useFrame(state => {
+  useFrame((state) => {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !blueprint) return;
 
@@ -409,9 +409,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       geometry={geometry}
       material={material}
       frustumCulled={false}
-      scale={[1.6, 1.6, 1.6]}
-    />
-  );
+      scale={[1.6, 1.6, 1.6]} />);
+
+
 }
 
-export default React.memo(WebGLBackground);
+export default React.memo(WebGLBackground); // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

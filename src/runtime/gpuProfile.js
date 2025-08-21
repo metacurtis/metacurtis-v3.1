@@ -1,6 +1,6 @@
 // src/runtime/gpuProfile.js
-import * as THREE from 'three';
-
+import * as THREE from 'three'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 const cache = { profile: null };
 
 function detectGLStrings() {
@@ -11,7 +11,7 @@ function detectGLStrings() {
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
     const vendor = dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR);
     const renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
-    return { vendor: String(vendor||''), renderer: String(renderer||''), webgl2: !!canvas.getContext('webgl2') };
+    return { vendor: String(vendor || ''), renderer: String(renderer || ''), webgl2: !!canvas.getContext('webgl2') };
   } catch (e) {
     return {};
   }
@@ -21,7 +21,7 @@ async function loadProfile(name) {
   try {
     const mod = await import(`/profiles/gpu/${name}.json`, { assert: { type: 'json' } });
     return mod.default || mod;
-  } catch { return null; }
+  } catch {return null;}
 }
 
 export async function getGPUProfile() {
@@ -34,7 +34,7 @@ export async function getGPUProfile() {
 
   cache.profile = { ...profile, vendor, renderer };
   if (import.meta.env.DEV) {
-    console.log('🧭 GPU Profile', cache.profile);
+    console.log('🧭 GPU Profile', cache.profile);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
   }
   return cache.profile;
 }

@@ -1,11 +1,11 @@
-// src/utils/webgl/ResourceRegistry.js
-
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/utils/webgl/ResourceRegistry.js
 class ResourceRegistry {
   constructor() {
     this._resources = {
       geometry: new Set(),
       material: new Set(),
-      texture: new Set(),
+      texture: new Set()
     };
     this._listeners = new Set();
   }
@@ -38,7 +38,7 @@ class ResourceRegistry {
     return {
       geometry: this._resources.geometry.size,
       material: this._resources.material.size,
-      texture: this._resources.texture.size,
+      texture: this._resources.texture.size
     };
   }
 
@@ -65,4 +65,5 @@ class ResourceRegistry {
 }
 
 // Export a singleton instance:
-export default new ResourceRegistry();
+export default new ResourceRegistry(); // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

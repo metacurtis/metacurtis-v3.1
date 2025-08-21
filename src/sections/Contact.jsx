@@ -4,8 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger'; // Import ScrollTrigger
 
 // Register ScrollTrigger plugin with GSAP
-gsap.registerPlugin(ScrollTrigger);
-
+// @doctor:4b-disposers
+const __doctorDisposers = [];gsap.registerPlugin(ScrollTrigger);
 /**
  * Component for the Contact section with scroll-triggered animations.
  */
@@ -34,8 +34,8 @@ function Contact() {
           start: 'top bottom-=150px', // Start animation earlier
           end: 'bottom top+=150px',
           // markers: process.env.NODE_ENV === 'development', // Uncomment for debugging
-          toggleActions: 'play none none reverse', // Play on enter, reverse on leave back up
-        },
+          toggleActions: 'play none none reverse' // Play on enter, reverse on leave back up
+        }
       });
 
       // Add staggered animations to the timeline
@@ -44,7 +44,7 @@ function Contact() {
         y: 0, // Slide up
         duration: 0.8,
         ease: 'power3.out',
-        stagger: 0.2, // Stagger heading and content block
+        stagger: 0.2 // Stagger heading and content block
       });
     } else {
       console.warn('Contact Section: Refs not available for ScrollTrigger setup.');
@@ -52,7 +52,7 @@ function Contact() {
 
     // --- Cleanup Function ---
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => {
+      ScrollTrigger.getAll().forEach((trigger) => {
         if (trigger.vars.trigger === sectionElement) {
           console.log('Killing Contact Section ScrollTrigger');
           trigger.kill();
@@ -65,8 +65,8 @@ function Contact() {
     <section
       id="contact" // ID for scroll navigation
       ref={sectionRef}
-      className="min-h-screen flex flex-col justify-center items-center text-center py-20 md:py-28 lg:py-36 bg-gradient-to-b from-rose-200/70 via-rose-100/50 to-transparent relative overflow-hidden px-4"
-    >
+      className="min-h-screen flex flex-col justify-center items-center text-center py-20 md:py-28 lg:py-36 bg-gradient-to-b from-rose-200/70 via-rose-100/50 to-transparent relative overflow-hidden px-4">
+
       {/* Content wrapper */}
       <div className="relative z-10 max-w-3xl w-full">
         {' '}
@@ -75,16 +75,16 @@ function Contact() {
         <h2
           ref={headingRef}
           className="text-4xl md:text-5xl font-bold text-slate-800 mb-8 opacity-0"
-          style={{ visibility: 'hidden' }}
-        >
+          style={{ visibility: 'hidden' }}>
+
           Get In Touch {/* Placeholder Heading */}
         </h2>
         {/* Content Area - Set initial hidden state */}
         <div
           ref={contentRef}
           className="space-y-6 text-lg md:text-xl text-slate-700 opacity-0"
-          style={{ visibility: 'hidden' }}
-        >
+          style={{ visibility: 'hidden' }}>
+
           <p>
             Interested in collaborating or have a question? Feel free to reach out.
             {/* Placeholder intro text */}
@@ -97,18 +97,18 @@ function Contact() {
               <input
                 type="text"
                 placeholder="Your Name"
-                className="w-full p-2 border border-slate-300 rounded text-sm"
-              />
+                className="w-full p-2 border border-slate-300 rounded text-sm" />
+
               <input
                 type="email"
                 placeholder="Your Email"
-                className="w-full p-2 border border-slate-300 rounded text-sm"
-              />
+                className="w-full p-2 border border-slate-300 rounded text-sm" />
+
               <textarea
                 placeholder="Your Message"
                 rows="4"
-                className="w-full p-2 border border-slate-300 rounded text-sm"
-              ></textarea>
+                className="w-full p-2 border border-slate-300 rounded text-sm">
+              </textarea>
               <button className="px-6 py-2 bg-primary text-white rounded hover:bg-emerald-600 transition-colors duration-200">
                 Send
               </button>
@@ -116,7 +116,8 @@ function Contact() {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
-export default Contact;
+export default Contact; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

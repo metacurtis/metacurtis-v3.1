@@ -2,8 +2,8 @@
 import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Typewriter from '@/components/ui/Typewriter';
-
+import Typewriter from '@/components/ui/Typewriter'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 gsap.registerPlugin(ScrollTrigger);
 
 export default function About() {
@@ -16,7 +16,7 @@ export default function About() {
       ScrollTrigger.create({
         trigger: sectionRef.current,
         start: 'top center',
-        onEnter: () => setStarted(true),
+        onEnter: () => setStarted(true)
       });
     });
     return () => ctx.revert();
@@ -26,18 +26,18 @@ export default function About() {
     <section
       ref={sectionRef}
       id="about"
-      style={{ padding: '4rem 2rem', color: '#fff', position: 'relative' }}
-    >
-      {started && (
-        <Typewriter text="Beyond code and design lies a journey of transformation." speed={50} />
-      )}
+      style={{ padding: '4rem 2rem', color: '#fff', position: 'relative' }}>
 
-      {started && (
-        <p style={{ opacity: 0, marginTop: '1rem' }} className="about-copy">
+      {started &&
+      <Typewriter text="Beyond code and design lies a journey of transformation." speed={50} />
+      }
+
+      {started &&
+      <p style={{ opacity: 0, marginTop: '1rem' }} className="about-copy">
           I served nine years in the United States Marine Corps, where I learned that systems only
           work when they&apos;re built on a strong foundation...
         </p>
-      )}
+      }
 
       <style>
         {`
@@ -51,6 +51,7 @@ export default function About() {
           }
         `}
       </style>
-    </section>
-  );
-}
+    </section>);
+
+} // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

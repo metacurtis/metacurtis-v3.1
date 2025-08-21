@@ -3,8 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNarrativeStore } from '@/stores/narrativeStore';
-
+import { useNarrativeStore } from '@/stores/narrativeStore'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence' }) {
   const [isVisible, setIsVisible] = useState(false);
   const [_isAnimating, setIsAnimating] = useState(false);
@@ -15,7 +15,7 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
 
   // ✅ CONSOLIDATED ARCHITECTURE: Use single source of truth
   const { jumpToStage, isStageFeatureEnabled, currentStage, trackUserEngagement } =
-    useNarrativeStore();
+  useNarrativeStore();
 
   // ✅ FEATURE GATE: Only render if contact portal is unlocked
   const isContactPortalEnabled = isStageFeatureEnabled('contactPortal');
@@ -61,13 +61,13 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       trackUserEngagement('contact_portal_opened', {
         triggerStage,
         currentStage,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       });
 
       // ✅ PARTICLE INTEGRATION: Dispatch custom event for WebGL response
       window.dispatchEvent(
         new CustomEvent('contact-portal-open', {
-          detail: { triggerStage, currentStage },
+          detail: { triggerStage, currentStage }
         })
       );
 
@@ -96,22 +96,22 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       }, 300);
     }
   }, [
-    isOpen,
-    isContactPortalEnabled,
-    triggerStage,
-    jumpToStage,
-    trackUserEngagement,
-    currentStage,
-  ]);
+  isOpen,
+  isContactPortalEnabled,
+  triggerStage,
+  jumpToStage,
+  trackUserEngagement,
+  currentStage]
+  );
 
   // Keyboard escape handling + basic tab management
   useEffect(() => {
-    const handleKeyDown = e => {
+    const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
         // ✅ ANALYTICS: Track escape usage
         trackUserEngagement('contact_portal_escaped', {
           currentStage,
-          timestamp: Date.now(),
+          timestamp: Date.now()
         });
         onClose();
         return;
@@ -135,8 +135,8 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       }
     };
 
-    if (isOpen && isContactPortalEnabled) {
-      document.addEventListener('keydown', handleKeyDown);
+    if (isOpen && isContactPortalEnabled) {__doctorDisposers.push(() => {
+        document.removeEventListener('keydown', handleKeyDown);});document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     }
 
@@ -147,7 +147,7 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
   }, [isOpen, isContactPortalEnabled, onClose, trackUserEngagement, currentStage]);
 
   // Form submission
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitStatus('submitting');
 
@@ -155,8 +155,8 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
     trackUserEngagement('contact_form_submitted', {
       project: formData.project,
       currentStage,
-      formFields: Object.keys(formData).filter(key => formData[key]),
-      timestamp: Date.now(),
+      formFields: Object.keys(formData).filter((key) => formData[key]),
+      timestamp: Date.now()
     });
 
     // Simulate API call (replace with actual endpoint)
@@ -166,12 +166,12 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       // ✅ PARTICLE INTEGRATION: Success burst event
       window.dispatchEvent(
         new CustomEvent('contact-success', {
-          detail: { formData, currentStage },
+          detail: { formData, currentStage }
         })
       );
 
       // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       setSubmitStatus('success');
 
@@ -179,7 +179,7 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       trackUserEngagement('contact_form_success', {
         project: formData.project,
         currentStage,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       });
 
       // Auto-close after success
@@ -196,7 +196,7 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       trackUserEngagement('contact_form_error', {
         error: error.message,
         currentStage,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       });
 
       setTimeout(() => setSubmitStatus('idle'), 3000);
@@ -205,181 +205,117 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
 
   // Input change handler
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // ✅ FEATURE GATE: Don't render if portal not enabled
   if (!isContactPortalEnabled || !portalRef.current || !isVisible) return null;
 
-  const modalContent = (
-    <div
-      className={`contact-portal ${isOpen ? 'open' : 'closed'}`}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: 'rgba(0, 0, 0, 0.9)',
-        backdropFilter: 'blur(20px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: isOpen ? 1 : 0,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        pointerEvents: isOpen ? 'auto' : 'none',
-      }}
-      onClick={e => {
-        if (e.target === e.currentTarget) {
-          // ✅ ANALYTICS: Track backdrop clicks
-          trackUserEngagement('contact_portal_backdrop_click', {
-            currentStage,
-            timestamp: Date.now(),
-          });
-          onClose();
-        }
-      }}
-    >
+  const modalContent =
+  <div
+    className={`contact-portal ${isOpen ? 'open' : 'closed'}`}
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0, 0, 0, 0.9)',
+      backdropFilter: 'blur(20px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      opacity: isOpen ? 1 : 0,
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      pointerEvents: isOpen ? 'auto' : 'none'
+    }}
+    onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        // ✅ ANALYTICS: Track backdrop clicks
+        trackUserEngagement('contact_portal_backdrop_click', {
+          currentStage,
+          timestamp: Date.now()
+        });
+        onClose();
+      }
+    }}>
+
       <div
-        ref={modalRef}
-        className="contact-modal"
-        style={{
-          background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(124, 58, 237, 0.1))',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          borderRadius: '16px',
-          padding: '2rem',
-          maxWidth: '600px',
-          width: '90vw',
-          maxHeight: '80vh',
-          overflow: 'auto',
-          transform: isOpen ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(20px)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-        }}
-      >
+      ref={modalRef}
+      className="contact-modal"
+      style={{
+        background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(124, 58, 237, 0.1))',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '16px',
+        padding: '2rem',
+        maxWidth: '600px',
+        width: '90vw',
+        maxHeight: '80vh',
+        overflow: 'auto',
+        transform: isOpen ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(20px)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)'
+      }}>
+
         {/* Header */}
         <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h2
-            style={{
-              color: 'white',
-              fontSize: '1.875rem',
-              fontWeight: 'bold',
-              marginBottom: '0.5rem',
-              background: 'linear-gradient(135deg, #0D9488, #7C3AED)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          style={{
+            color: 'white',
+            fontSize: '1.875rem',
+            fontWeight: 'bold',
+            marginBottom: '0.5rem',
+            background: 'linear-gradient(135deg, #0D9488, #7C3AED)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+
             Connect with MetaCurtis
           </h2>
           <p
-            style={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontSize: '1rem',
-            }}
-          >
+          style={{
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '1rem'
+          }}>
+
             Ready to push the boundaries of what&apos;s possible?
           </p>
           {/* ✅ STAGE CONTEXT: Show current narrative stage */}
           <p
-            style={{
-              color: 'rgba(255, 255, 255, 0.5)',
-              fontSize: '0.875rem',
-              marginTop: '0.5rem',
-            }}
-          >
+          style={{
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '0.875rem',
+            marginTop: '0.5rem'
+          }}>
+
             Current Stage: {currentStage}
           </p>
         </div>
 
         {/* Form */}
         <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-        >
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
           {/* Name & Email Row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label
-                style={{
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  marginBottom: '0.5rem',
-                  display: 'block',
-                }}
-              >
-                Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={e => handleChange('name', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  transition: 'border-color 0.2s ease',
-                }}
-                onFocus={e => (e.target.style.borderColor = '#0D9488')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
-              />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  marginBottom: '0.5rem',
-                  display: 'block',
-                }}
-              >
-                Email *
-              </label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={e => handleChange('email', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  transition: 'border-color 0.2s ease',
-                }}
-                onFocus={e => (e.target.style.borderColor = '#7C3AED')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)')}
-              />
-            </div>
-          </div>
-
-          {/* Project Type */}
-          <div>
-            <label
               style={{
                 color: 'white',
                 fontSize: '0.875rem',
                 marginBottom: '0.5rem',
-                display: 'block',
-              }}
-            >
-              Project Type
-            </label>
-            <select
-              value={formData.project}
-              onChange={e => handleChange('project', e.target.value)}
+                display: 'block'
+              }}>
+
+                Name *
+              </label>
+              <input
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -389,8 +325,72 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
                 color: 'white',
                 fontSize: '1rem',
                 outline: 'none',
+                transition: 'border-color 0.2s ease'
               }}
-            >
+              onFocus={(e) => e.target.style.borderColor = '#0D9488'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'} />
+
+            </div>
+
+            <div>
+              <label
+              style={{
+                color: 'white',
+                fontSize: '0.875rem',
+                marginBottom: '0.5rem',
+                display: 'block'
+              }}>
+
+                Email *
+              </label>
+              <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '1rem',
+                outline: 'none',
+                transition: 'border-color 0.2s ease'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#7C3AED'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)'} />
+
+            </div>
+          </div>
+
+          {/* Project Type */}
+          <div>
+            <label
+            style={{
+              color: 'white',
+              fontSize: '0.875rem',
+              marginBottom: '0.5rem',
+              display: 'block'
+            }}>
+
+              Project Type
+            </label>
+            <select
+            value={formData.project}
+            onChange={(e) => handleChange('project', e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '1rem',
+              outline: 'none'
+            }}>
+
               <option value="" style={{ background: '#1f2937', color: 'white' }}>
                 Select project type...
               </option>
@@ -415,58 +415,58 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
           {/* Message */}
           <div>
             <label
-              style={{
-                color: 'white',
-                fontSize: '0.875rem',
-                marginBottom: '0.5rem',
-                display: 'block',
-              }}
-            >
+            style={{
+              color: 'white',
+              fontSize: '0.875rem',
+              marginBottom: '0.5rem',
+              display: 'block'
+            }}>
+
               Message *
             </label>
             <textarea
-              required
-              rows={4}
-              value={formData.message}
-              onChange={e => handleChange('message', e.target.value)}
-              placeholder="Tell me about your vision..."
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '1rem',
-                outline: 'none',
-                resize: 'vertical',
-                minHeight: '100px',
-              }}
-            />
+            required
+            rows={4}
+            value={formData.message}
+            onChange={(e) => handleChange('message', e.target.value)}
+            placeholder="Tell me about your vision..."
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '1rem',
+              outline: 'none',
+              resize: 'vertical',
+              minHeight: '100px'
+            }} />
+
           </div>
 
           {/* Submit Button */}
           <button
-            type="submit"
-            disabled={submitStatus === 'submitting'}
-            style={{
-              background:
-                submitStatus === 'success'
-                  ? 'linear-gradient(135deg, #059669, #0D9488)'
-                  : submitStatus === 'error'
-                    ? 'linear-gradient(135deg, #DC2626, #EF4444)'
-                    : 'linear-gradient(135deg, #0D9488, #7C3AED)',
-              color: 'white',
-              border: 'none',
-              padding: '1rem 2rem',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              fontWeight: '600',
-              cursor: submitStatus === 'submitting' ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: submitStatus === 'submitting' ? 0.7 : 1,
-            }}
-          >
+          type="submit"
+          disabled={submitStatus === 'submitting'}
+          style={{
+            background:
+            submitStatus === 'success' ?
+            'linear-gradient(135deg, #059669, #0D9488)' :
+            submitStatus === 'error' ?
+            'linear-gradient(135deg, #DC2626, #EF4444)' :
+            'linear-gradient(135deg, #0D9488, #7C3AED)',
+            color: 'white',
+            border: 'none',
+            padding: '1rem 2rem',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            fontWeight: '600',
+            cursor: submitStatus === 'submitting' ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            opacity: submitStatus === 'submitting' ? 0.7 : 1
+          }}>
+
             {submitStatus === 'submitting' && '⚡ Sending...'}
             {submitStatus === 'success' && '✅ Message Sent!'}
             {submitStatus === 'error' && '❌ Error - Try Again'}
@@ -476,39 +476,39 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
 
         {/* Close Button */}
         <button
-          onClick={() => {
-            // ✅ ANALYTICS: Track manual close
-            trackUserEngagement('contact_portal_manual_close', {
-              currentStage,
-              timestamp: Date.now(),
-            });
-            onClose();
-          }}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: 'none',
-            color: 'white',
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.25rem',
-            transition: 'background 0.2s ease',
-          }}
-          onMouseEnter={e => (e.target.style.background = 'rgba(255, 255, 255, 0.2)')}
-          onMouseLeave={e => (e.target.style.background = 'rgba(255, 255, 255, 0.1)')}
-        >
+        onClick={() => {
+          // ✅ ANALYTICS: Track manual close
+          trackUserEngagement('contact_portal_manual_close', {
+            currentStage,
+            timestamp: Date.now()
+          });
+          onClose();
+        }}
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '1rem',
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: 'none',
+          color: 'white',
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.25rem',
+          transition: 'background 0.2s ease'
+        }}
+        onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+        onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}>
+
           ×
         </button>
       </div>
-    </div>
-  );
+    </div>;
+
 
   return createPortal(modalContent, portalRef.current);
 }
@@ -548,4 +548,5 @@ export default AdvancedContactPortal;
 - Conditional rendering with feature gates
 - Proper portal lifecycle management
 - Event listener cleanup and memory safety
-*/
+*/ // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

@@ -5,8 +5,8 @@
 import { createAtom } from './createAtom.js';
 
 // ✅ SST v2.1 STAGE DEFINITIONS
-const STAGE_NAMES = ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'];
-const STAGE_COUNT = STAGE_NAMES.length;
+// @doctor:4b-disposers
+const __doctorDisposers = [];const STAGE_NAMES = ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'];const STAGE_COUNT = STAGE_NAMES.length;
 
 // ✅ ENHANCED: Transition batching configuration
 const TRANSITION_CONFIG = {
@@ -14,7 +14,7 @@ const TRANSITION_CONFIG = {
   maxBatchSize: 5, // Maximum transitions in one batch
   smoothingFactor: 0.8, // Smooth progress updates
   autoAdvanceInterval: 3000, // 3 seconds between auto advances
-  debounceTimeout: 100, // Debounce rapid stage changes
+  debounceTimeout: 100 // Debounce rapid stage changes
 };
 
 // ✅ INITIAL STATE
@@ -29,7 +29,7 @@ const initialState = {
   metacurtisVoiceLevel: 0.5,
   lastTransition: 0,
   autoAdvanceEnabled: false,
-  
+
   // ✅ ENHANCED: Transition batching state
   transitionBatch: [],
   batchTimeout: null,
@@ -51,14 +51,14 @@ class TransitionBatcher {
     this.isProcessing = false;
     this.lastFlush = 0;
   }
-  
+
   addTransition(transition) {
     this.batch.push({
       ...transition,
       timestamp: performance.now(),
       id: Math.random().toString(36).substr(2, 9)
     });
-    
+
     // Auto-flush if batch is full
     if (this.batch.length >= TRANSITION_CONFIG.maxBatchSize) {
       this.flush();
@@ -66,35 +66,35 @@ class TransitionBatcher {
       this.scheduleFlush();
     }
   }
-  
+
   scheduleFlush() {
     if (this.timeout) clearTimeout(this.timeout);
-    
+
     this.timeout = setTimeout(() => {
       this.flush();
     }, TRANSITION_CONFIG.batchDelay);
   }
-  
+
   flush() {
     if (this.isProcessing || this.batch.length === 0) return;
-    
+
     this.isProcessing = true;
     const batchToProcess = [...this.batch];
     this.batch = [];
-    
+
     if (this.timeout) {
       clearTimeout(this.timeout);
       this.timeout = null;
     }
-    
+
     return batchToProcess;
   }
-  
+
   finishProcessing() {
     this.isProcessing = false;
     this.lastFlush = performance.now();
   }
-  
+
   clear() {
     this.batch = [];
     if (this.timeout) {
@@ -103,7 +103,7 @@ class TransitionBatcher {
     }
     this.isProcessing = false;
   }
-  
+
   getStats() {
     return {
       batchSize: this.batch.length,
@@ -122,40 +122,40 @@ class ProgressSmoother {
     this.lastUpdate = 0;
     this.animationFrame = null;
   }
-  
+
   setTarget(progress) {
     this.targetProgress = Math.max(0, Math.min(1, progress));
-    
+
     if (!this.animationFrame) {
       this.startSmoothing();
     }
   }
-  
+
   startSmoothing() {
     const animate = () => {
       const now = performance.now();
       const deltaTime = now - this.lastUpdate;
       this.lastUpdate = now;
-      
+
       if (Math.abs(this.targetProgress - this.currentProgress) > 0.001) {
         const smoothingRate = 1 - Math.pow(this.smoothingFactor, deltaTime / 16);
         this.currentProgress += (this.targetProgress - this.currentProgress) * smoothingRate;
-        
+
         this.animationFrame = requestAnimationFrame(animate);
       } else {
         this.currentProgress = this.targetProgress;
         this.animationFrame = null;
       }
     };
-    
+
     this.lastUpdate = performance.now();
     this.animationFrame = requestAnimationFrame(animate);
   }
-  
+
   getCurrentProgress() {
     return this.currentProgress;
   }
-  
+
   dispose() {
     if (this.animationFrame) {
       cancelAnimationFrame(this.animationFrame);
@@ -172,39 +172,39 @@ class AutoAdvanceController {
     this.isPaused = false;
     this.lastAdvance = 0;
   }
-  
+
   start() {
     if (this.interval) return;
-    
+
     this.interval = setInterval(() => {
       if (this.isPaused) return;
-      
+
       const state = this.stageAtom.getState();
       if (!state.autoAdvanceEnabled) return;
-      
+
       const now = performance.now();
       if (now - this.lastAdvance < TRANSITION_CONFIG.autoAdvanceInterval) return;
-      
+
       this.lastAdvance = now;
       this.stageAtom.nextStage();
-      
+
       if (import.meta.env.DEV) {
-        console.debug('🎭 Auto-advance: Moving to next stage');
+        console.debug('🎭 Auto-advance: Moving to next stage');import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     }, TRANSITION_CONFIG.autoAdvanceInterval);
   }
-  
+
   stop() {
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = null;
     }
   }
-  
+
   pause() {
     this.isPaused = true;
   }
-  
+
   resume() {
     this.isPaused = false;
   }
@@ -221,35 +221,35 @@ class TransitionPerformanceMonitor {
       maxRecentTransitions: 10
     };
   }
-  
+
   recordTransition(startTime, endTime) {
     const duration = endTime - startTime;
     this.metrics.totalTransitions++;
-    
+
     this.metrics.recentTransitions.push({
       duration,
       timestamp: endTime
     });
-    
+
     // Keep only recent transitions
     if (this.metrics.recentTransitions.length > this.metrics.maxRecentTransitions) {
       this.metrics.recentTransitions.shift();
     }
-    
+
     // Calculate averages
     const recent = this.metrics.recentTransitions;
     this.metrics.averageTransitionTime = recent.reduce((sum, t) => sum + t.duration, 0) / recent.length;
-    
+
     // Calculate transitions per second (last 5 seconds)
     const fiveSecondsAgo = endTime - 5000;
-    const recentCount = recent.filter(t => t.timestamp > fiveSecondsAgo).length;
+    const recentCount = recent.filter((t) => t.timestamp > fiveSecondsAgo).length;
     this.metrics.transitionsPerSecond = recentCount / 5;
   }
-  
+
   getMetrics() {
     return { ...this.metrics };
   }
-  
+
   reset() {
     this.metrics = {
       transitionsPerSecond: 0,
@@ -267,95 +267,95 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
   const progressSmoother = new ProgressSmoother();
   const performanceMonitor = new TransitionPerformanceMonitor();
   const autoAdvanceController = new AutoAdvanceController({ getState: get, nextStage: null }); // Will be set later
-  
+
   // ✅ ENHANCED: Batched state updates
   const batchedSetState = (updates, transitionType = 'direct') => {
     const startTime = performance.now();
-    
+
     transitionBatcher.addTransition({
       updates,
       transitionType,
       timestamp: startTime
     });
-    
+
     // Process batch
     const batch = transitionBatcher.flush();
     if (batch && batch.length > 0) {
       const state = get();
-      
+
       // Merge all updates in batch
       const mergedUpdates = batch.reduce((merged, transition) => {
         return { ...merged, ...transition.updates };
       }, {});
-      
+
       // Apply merged updates
       const newState = {
         ...state,
         ...mergedUpdates,
         lastTransition: performance.now(),
         transitionHistory: [
-          ...state.transitionHistory.slice(-9), // Keep last 10
-          {
-            batch: batch.map(t => t.transitionType),
-            timestamp: performance.now(),
-            duration: performance.now() - startTime
-          }
-        ],
+        ...state.transitionHistory.slice(-9), // Keep last 10
+        {
+          batch: batch.map((t) => t.transitionType),
+          timestamp: performance.now(),
+          duration: performance.now() - startTime
+        }],
+
         performanceMetrics: performanceMonitor.getMetrics()
       };
-      
+
       setState(newState, 'batched');
-      
+
       transitionBatcher.finishProcessing();
-      
+
       const endTime = performance.now();
       performanceMonitor.recordTransition(startTime, endTime);
-      
+
       if (import.meta.env.DEV && batch.length > 1) {
         console.debug(`🎭 Batched ${batch.length} transitions in ${(endTime - startTime).toFixed(2)}ms`);
       }
     }
   };
-  
+
   // ✅ STAGE NAVIGATION - Enhanced with batching
   const actions = {
     setStage: (stageName) => {
       const state = get();
       const stageIndex = STAGE_NAMES.indexOf(stageName);
-      
+
       if (stageIndex === -1) {
         console.warn(`[stageAtom] Invalid stage: ${stageName}`);
         return;
       }
-      
+
       const updates = {
         currentStage: stageName,
         stageIndex,
         globalProgress: stageIndex / (STAGE_COUNT - 1),
         isTransitioning: true
       };
-      
+
       batchedSetState(updates, 'setStage');
-      
+
       // Clear transition flag after delay
       setTimeout(() => {
         batchedSetState({ isTransitioning: false }, 'clearTransition');
       }, 200);
-      
+
       if (import.meta.env.DEV) {
-        console.log(`🎭 stageAtom: Stage set to ${stageName} (${stageIndex})`);
+        console.log(`🎭 stageAtom: Stage set to ${stageName} (${stageIndex})`);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     },
-    
+
     jumpToStage: (stageName) => {
       const state = get();
       const stageIndex = STAGE_NAMES.indexOf(stageName);
-      
+
       if (stageIndex === -1) {
         console.warn(`[stageAtom] Invalid stage: ${stageName}`);
         return;
       }
-      
+
       const updates = {
         currentStage: stageName,
         stageIndex,
@@ -363,112 +363,112 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         stageProgress: 0.0,
         isTransitioning: false
       };
-      
+
       batchedSetState(updates, 'jumpToStage');
-      
+
       if (import.meta.env.DEV) {
-        console.log(`🎭 stageAtom: Jumped to stage ${stageName} (${stageIndex})`);
+        console.log(`🎭 stageAtom: Jumped to stage ${stageName} (${stageIndex})`);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     },
-    
+
     nextStage: () => {
       const state = get();
       const nextIndex = Math.min(state.stageIndex + 1, STAGE_COUNT - 1);
       const nextStageName = STAGE_NAMES[nextIndex];
-      
+
       if (nextIndex !== state.stageIndex) {
         actions.setStage(nextStageName);
       }
     },
-    
+
     prevStage: () => {
       const state = get();
       const prevIndex = Math.max(state.stageIndex - 1, 0);
       const prevStageName = STAGE_NAMES[prevIndex];
-      
+
       if (prevIndex !== state.stageIndex) {
         actions.setStage(prevStageName);
       }
     },
-    
+
     // ✅ ENHANCED: Progress management with smoothing
     setStageProgress: (progress) => {
       const state = get();
       const clampedProgress = Math.max(0, Math.min(1, progress));
-      
+
       // Use smoother for better UX
       progressSmoother.setTarget(clampedProgress);
-      
+
       // Throttle updates to avoid excessive re-renders
       const now = performance.now();
       if (now - state.lastProgressUpdate < 16) return; // ~60fps
-      
+
       const updates = {
         stageProgress: clampedProgress,
         smoothedProgress: progressSmoother.getCurrentProgress(),
         lastProgressUpdate: now
       };
-      
+
       batchedSetState(updates, 'setProgress');
     },
-    
+
     setGlobalProgress: (progress) => {
       const state = get();
       const clampedProgress = Math.max(0, Math.min(1, progress));
       const stageIndex = Math.floor(clampedProgress * (STAGE_COUNT - 1));
       const stageName = STAGE_NAMES[stageIndex];
-      
+
       const updates = {
         globalProgress: clampedProgress,
         currentStage: stageName,
         stageIndex
       };
-      
+
       batchedSetState(updates, 'setGlobalProgress');
     },
-    
+
     // ✅ ENHANCED: Transition management with batching
     setTransitioning: (isTransitioning) => {
       batchedSetState({ isTransitioning }, 'setTransitioning');
     },
-    
+
     // ✅ ENHANCED: Auto advance with intelligent controller
     setAutoAdvanceEnabled: (enabled) => {
       const state = get();
-      
+
       batchedSetState({ autoAdvanceEnabled: enabled }, 'setAutoAdvance');
-      
+
       if (enabled) {
         autoAdvanceController.start();
       } else {
         autoAdvanceController.stop();
       }
-      
+
       if (import.meta.env.DEV) {
-        console.log(`🎭 stageAtom: Auto advance ${enabled ? 'enabled' : 'disabled'}`);
+        console.log(`🎭 stageAtom: Auto advance ${enabled ? 'enabled' : 'disabled'}`);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     },
-    
+
     // ✅ ENHANCED: Memory fragments with batching
     unlockMemoryFragment: (fragmentId) => {
       const state = get();
       const newFragments = [...state.memoryFragmentsUnlocked, fragmentId];
-      
+
       batchedSetState({
         memoryFragmentsUnlocked: newFragments
       }, 'unlockFragment');
     },
-    
+
     // ✅ ENHANCED: MetaCurtis activation
     setMetacurtisActive: (active) => {
       batchedSetState({ metacurtisActive: active }, 'setMetacurtisActive');
     },
-    
+
     setMetacurtisVoiceLevel: (level) => {
       const clampedLevel = Math.max(0, Math.min(1, level));
       batchedSetState({ metacurtisVoiceLevel: clampedLevel }, 'setVoiceLevel');
     },
-    
+
     // ✅ ENHANCED: Reset with cleanup
     resetStage: () => {
       // Clean up systems
@@ -476,20 +476,20 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
       progressSmoother.dispose();
       autoAdvanceController.stop();
       performanceMonitor.reset();
-      
+
       setState(initialState, 'reset');
-      
+
       if (import.meta.env.DEV) {
-        console.log('🎭 stageAtom: Reset to initial state with cleanup');
+        console.log('🎭 stageAtom: Reset to initial state with cleanup');import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     },
-    
+
     // ✅ UTILITIES
     getStageNames: () => STAGE_NAMES,
     getStageCount: () => STAGE_COUNT,
-    
+
     isValidStage: (stageName) => STAGE_NAMES.includes(stageName),
-    
+
     getStageInfo: () => {
       const state = get();
       return {
@@ -505,12 +505,12 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         transitionHistory: state.transitionHistory
       };
     },
-    
+
     // ✅ ENHANCED: Performance and diagnostics
     getPerformanceMetrics: () => {
       return performanceMonitor.getMetrics();
     },
-    
+
     getBatchingStats: () => {
       return {
         batcher: transitionBatcher.getStats(),
@@ -525,7 +525,7 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         }
       };
     },
-    
+
     // ✅ ENHANCED: Force flush batched transitions
     flushTransitions: () => {
       const batch = transitionBatcher.flush();
@@ -535,36 +535,36 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
       }
       return batch?.length || 0;
     },
-    
+
     // ✅ ENHANCED: Development utilities
     devJumpToIndex: (index) => {
       if (import.meta.env.DEV) {
         const clampedIndex = Math.max(0, Math.min(index, STAGE_COUNT - 1));
         const stageName = STAGE_NAMES[clampedIndex];
-        actions.jumpToStage(stageName);
+        actions.jumpToStage(stageName);import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
       }
     },
-    
+
     // ✅ ENHANCED: Pause/resume auto-advance
     pauseAutoAdvance: () => {
       autoAdvanceController.pause();
     },
-    
+
     resumeAutoAdvance: () => {
       autoAdvanceController.resume();
     }
   };
-  
+
   // Set reference for auto-advance controller
   autoAdvanceController.stageAtom = { getState: get, nextStage: actions.nextStage };
-  
+
   return actions;
 });
 
 // ✅ ENHANCED: Development access with advanced features
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
   window.stageAtom = stageAtom;
-  
+
   window.stageControls = {
     // Basic controls
     getCurrentStage: () => stageAtom.getState().currentStage,
@@ -574,7 +574,7 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
     setProgress: (progress) => stageAtom.setStageProgress(progress),
     getInfo: () => stageAtom.getStageInfo(),
     reset: () => stageAtom.resetStage(),
-    
+
     // ✅ ENHANCED: Auto-advance controls
     toggleAuto: () => {
       const current = stageAtom.getState().autoAdvanceEnabled;
@@ -582,56 +582,56 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
     },
     pauseAuto: () => stageAtom.pauseAutoAdvance(),
     resumeAuto: () => stageAtom.resumeAutoAdvance(),
-    
+
     // ✅ ENHANCED: Performance and diagnostics
     getPerformanceMetrics: () => stageAtom.getPerformanceMetrics(),
     getBatchingStats: () => stageAtom.getBatchingStats(),
     flushTransitions: () => stageAtom.flushTransitions(),
-    
+
     // ✅ ENHANCED: Advanced testing
     stressTest: (iterations = 100) => {
       console.log(`🧪 Running stage transition stress test (${iterations} iterations)...`);
       const startTime = performance.now();
-      
+
       for (let i = 0; i < iterations; i++) {
         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
         stageAtom.jumpToStage(randomStage);
         stageAtom.setStageProgress(Math.random());
       }
-      
+
       const endTime = performance.now();
       const metrics = stageAtom.getPerformanceMetrics();
-      
+
       console.log(`✅ Stress test completed in ${(endTime - startTime).toFixed(2)}ms`);
       console.log('📊 Performance metrics:', metrics);
-      
+
       return {
         duration: endTime - startTime,
         iterationsPerMs: iterations / (endTime - startTime),
         finalMetrics: metrics
       };
     },
-    
+
     // ✅ ENHANCED: Batch testing
     testBatching: () => {
       console.log('🧪 Testing transition batching...');
-      
+
       // Rapid transitions to test batching
       for (let i = 0; i < 10; i++) {
         setTimeout(() => {
           stageAtom.setStageProgress(i / 10);
         }, i * 5); // 5ms intervals
       }
-      
+
       setTimeout(() => {
         const stats = stageAtom.getBatchingStats();
         console.log('📊 Batching stats after rapid updates:', stats);
       }, 100);
-      
+
       return 'Batching test initiated - check console in 100ms';
     }
   };
-  
+
   console.log('🎭 stageAtom: Enhanced with transition batching and performance optimization');
   console.log('🎮 Available: window.stageControls');
   console.log('🧪 Test batching: window.stageControls.testBatching()');

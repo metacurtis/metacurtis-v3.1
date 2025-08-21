@@ -1,9 +1,9 @@
-// src/modules/state/StateCoreCanonValidator.js
+// @doctor:4b-disposers
+const __doctorDisposers = []; // src/modules/state/StateCoreCanonValidator.js
 /**
  * Canon Suite Validator for StateCore
  * Ensures architectural compliance and SST v3.0 alignment
  */
-
 export class StateCoreCanonValidator {
   constructor(stateCore) {
     this.stateCore = stateCore;
@@ -38,7 +38,7 @@ export class StateCoreCanonValidator {
     return {
       passed: this.violations.length === 0,
       validations: this.validations,
-      violations: this.violations,
+      violations: this.violations
     };
   }
 
@@ -55,26 +55,26 @@ export class StateCoreCanonValidator {
       this.validations.push({
         test: 'initialization',
         passed: true,
-        message: 'StateCore initialized successfully',
+        message: 'StateCore initialized successfully'
       });
     } catch (error) {
       this.violations.push({
         test: 'initialization',
-        error: error.message,
+        error: error.message
       });
     }
   }
 
   async validateAtomAccess() {
     const atoms = [
-      'narrative',
-      'performance',
-      'interaction',
-      'resource',
-      'stage',
-      'quality',
-      'clock',
-    ];
+    'narrative',
+    'performance',
+    'interaction',
+    'resource',
+    'stage',
+    'quality',
+    'clock'];
+
 
     for (const atomName of atoms) {
       try {
@@ -87,12 +87,12 @@ export class StateCoreCanonValidator {
         this.validations.push({
           test: `atom-access-${atomName}`,
           passed: true,
-          message: `Atom ${atomName} accessible`,
+          message: `Atom ${atomName} accessible`
         });
       } catch (error) {
         this.violations.push({
           test: `atom-access-${atomName}`,
-          error: error.message,
+          error: error.message
         });
       }
     }
@@ -101,26 +101,26 @@ export class StateCoreCanonValidator {
   async validateStateOperations() {
     try {
       // Test get with selector
-      const currentStage = this.stateCore.get('narrative', s => s?.currentStage);
+      const currentStage = this.stateCore.get('narrative', (s) => s?.currentStage);
 
       // Test set with test value
       const testKey = 'testValue_' + Date.now();
       const testValue = 'test-' + Date.now();
 
-      this.stateCore.set('interaction', state => ({
+      this.stateCore.set('interaction', (state) => ({
         ...state,
-        [testKey]: testValue,
+        [testKey]: testValue
       }));
 
       // Verify set worked
-      const retrieved = this.stateCore.get('interaction', s => s[testKey]);
+      const retrieved = this.stateCore.get('interaction', (s) => s[testKey]);
 
       if (retrieved !== testValue) {
         throw new Error('Set/Get operation failed');
       }
 
       // Clean up test value
-      this.stateCore.set('interaction', state => {
+      this.stateCore.set('interaction', (state) => {
         const newState = { ...state };
         delete newState[testKey];
         return newState;
@@ -129,12 +129,12 @@ export class StateCoreCanonValidator {
       this.validations.push({
         test: 'state-operations',
         passed: true,
-        message: 'State operations working correctly',
+        message: 'State operations working correctly'
       });
     } catch (error) {
       this.violations.push({
         test: 'state-operations',
-        error: error.message,
+        error: error.message
       });
     }
   }
@@ -143,14 +143,14 @@ export class StateCoreCanonValidator {
     try {
       // Check SST v3.0 stages
       const stages = [
-        'genesis',
-        'discipline',
-        'neural',
-        'velocity',
-        'architecture',
-        'harmony',
-        'transcendence',
-      ];
+      'genesis',
+      'discipline',
+      'neural',
+      'velocity',
+      'architecture',
+      'harmony',
+      'transcendence'];
+
       const narrativeState = this.stateCore.get('narrative');
       const currentStage = narrativeState?.currentStage;
 
@@ -170,12 +170,12 @@ export class StateCoreCanonValidator {
       this.validations.push({
         test: 'sst-compliance',
         passed: true,
-        message: 'SST v3.0 compliance verified',
+        message: 'SST v3.0 compliance verified'
       });
     } catch (error) {
       this.violations.push({
         test: 'sst-compliance',
-        error: error.message,
+        error: error.message
       });
     }
   }
@@ -195,15 +195,16 @@ export class StateCoreCanonValidator {
       this.validations.push({
         test: 'canon-integration',
         passed: true,
-        message: 'Canon Suite integration verified',
+        message: 'Canon Suite integration verified'
       });
     } catch (error) {
       this.violations.push({
         test: 'canon-integration',
-        error: error.message,
+        error: error.message
       });
     }
   }
 }
 
-export default StateCoreCanonValidator;
+export default StateCoreCanonValidator; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

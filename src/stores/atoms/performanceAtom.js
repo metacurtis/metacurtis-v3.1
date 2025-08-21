@@ -1,7 +1,7 @@
 // src/stores/atoms/performanceAtom.js
 // Performance monitoring and adaptive quality state
-import { createAtom } from './createAtom';
-
+import { createAtom } from './createAtom'; // @doctor:4b-disposers
+const __doctorDisposers = [];
 const initialState = {
   // Core metrics
   fps: 60,
@@ -32,14 +32,14 @@ const initialState = {
   narrative: {
     currentStage: 'genesis',
     progress: 0,
-    transitionActive: false,
-  },
+    transitionActive: false
+  }
 };
 
 export const performanceAtom = createAtom(initialState, (get, set) => ({
   // Metric updates
-  updateMetrics: metrics => {
-    set(state => {
+  updateMetrics: (metrics) => {
+    set((state) => {
       const newState = { ...state, ...metrics };
 
       // Update history arrays (keep last 60 frames)
@@ -55,28 +55,28 @@ export const performanceAtom = createAtom(initialState, (get, set) => ({
   },
 
   // Quality management
-  setTier: tier => {
-    set(state => ({ ...state, currentTier: tier }));
+  setTier: (tier) => {
+    set((state) => ({ ...state, currentTier: tier }));
 
     // Dispatch tier change event
     window.dispatchEvent(
       new CustomEvent('sst:qualityChange', {
-        detail: { tier },
+        detail: { tier }
       })
     );
   },
 
-  setAutoQuality: enabled => {
-    set(state => ({ ...state, autoQuality: enabled }));
+  setAutoQuality: (enabled) => {
+    set((state) => ({ ...state, autoQuality: enabled }));
   },
 
   // Device detection
-  setDeviceCapabilities: capabilities => {
-    set(state => ({
+  setDeviceCapabilities: (capabilities) => {
+    set((state) => ({
       ...state,
       deviceTier: capabilities.tier || state.deviceTier,
       gpuTier: capabilities.gpuTier || state.gpuTier,
-      isMobile: capabilities.isMobile !== undefined ? capabilities.isMobile : state.isMobile,
+      isMobile: capabilities.isMobile !== undefined ? capabilities.isMobile : state.isMobile
     }));
   },
 
@@ -92,38 +92,38 @@ export const performanceAtom = createAtom(initialState, (get, set) => ({
     const avgFPS = performanceAtom.getAverageFPS();
     const targetFPS = state.targetFPS;
 
-    return Math.min(100, (avgFPS / targetFPS) * 100);
+    return Math.min(100, avgFPS / targetFPS * 100);
   },
 
   // Legacy narrative support (for SimpleStageController compatibility)
-  setCurrentStage: stage => {
-    set(state => ({
+  setCurrentStage: (stage) => {
+    set((state) => ({
       ...state,
-      narrative: { ...state.narrative, currentStage: stage },
+      narrative: { ...state.narrative, currentStage: stage }
     }));
   },
 
-  setNarrativeProgress: progress => {
-    set(state => ({
+  setNarrativeProgress: (progress) => {
+    set((state) => ({
       ...state,
-      narrative: { ...state.narrative, progress },
+      narrative: { ...state.narrative, progress }
     }));
   },
 
-  setTransitionActive: active => {
-    set(state => ({
+  setTransitionActive: (active) => {
+    set((state) => ({
       ...state,
-      narrative: { ...state.narrative, transitionActive: active },
+      narrative: { ...state.narrative, transitionActive: active }
     }));
   },
 
   // Reset
   reset: () => {
     set(initialState);
-  },
+  }
 }));
 
 // Development helpers
 if (import.meta.env.DEV) {
-  window.performanceAtom = performanceAtom;
+  window.performanceAtom = performanceAtom;import.meta.hot.dispose(() => {"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});});
 }

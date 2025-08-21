@@ -4,8 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger'; // Import ScrollTrigger
 
 // Register ScrollTrigger plugin with GSAP
-gsap.registerPlugin(ScrollTrigger);
-
+// @doctor:4b-disposers
+const __doctorDisposers = [];gsap.registerPlugin(ScrollTrigger);
 /**
  * Component for the Features section with scroll-triggered animations.
  */
@@ -34,8 +34,8 @@ function Features() {
           start: 'top bottom-=150px', // Start animation earlier
           end: 'bottom top+=150px',
           // markers: process.env.NODE_ENV === 'development', // Uncomment for debugging
-          toggleActions: 'play none none reverse', // Play on enter, reverse on leave back up
-        },
+          toggleActions: 'play none none reverse' // Play on enter, reverse on leave back up
+        }
       });
 
       // Add staggered animations to the timeline
@@ -44,7 +44,7 @@ function Features() {
         y: 0, // Slide up
         duration: 0.8,
         ease: 'power3.out',
-        stagger: 0.15, // Stagger animation for heading and each grid item
+        stagger: 0.15 // Stagger animation for heading and each grid item
       });
     } else {
       console.warn('Features Section: Refs not available for ScrollTrigger setup.');
@@ -52,7 +52,7 @@ function Features() {
 
     // --- Cleanup Function ---
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => {
+      ScrollTrigger.getAll().forEach((trigger) => {
         if (trigger.vars.trigger === sectionElement) {
           console.log('Killing Features Section ScrollTrigger');
           trigger.kill();
@@ -65,8 +65,8 @@ function Features() {
     <section
       id="features" // ID for scroll navigation
       ref={sectionRef}
-      className="min-h-screen flex flex-col justify-center items-center text-center py-20 md:py-28 lg:py-36 bg-gradient-to-b from-indigo-200/70 via-indigo-100/50 to-transparent relative overflow-hidden px-4"
-    >
+      className="min-h-screen flex flex-col justify-center items-center text-center py-20 md:py-28 lg:py-36 bg-gradient-to-b from-indigo-200/70 via-indigo-100/50 to-transparent relative overflow-hidden px-4">
+
       {/* Content wrapper */}
       <div className="relative z-10 max-w-5xl w-full">
         {' '}
@@ -75,20 +75,20 @@ function Features() {
         <h2
           ref={headingRef}
           className="text-4xl md:text-5xl font-bold text-slate-800 mb-12 md:mb-16 opacity-0"
-          style={{ visibility: 'hidden' }}
-        >
+          style={{ visibility: 'hidden' }}>
+
           Core Features {/* Placeholder Heading */}
         </h2>
         {/* Features Grid - Set initial hidden state via children */}
         <div
           ref={gridRef}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12"
-        >
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+
           {/* Placeholder Feature Item 1 */}
           <div
             className="feature-item bg-white/30 backdrop-blur-sm p-6 rounded-lg shadow-md opacity-0"
-            style={{ visibility: 'hidden' }}
-          >
+            style={{ visibility: 'hidden' }}>
+
             <h3 className="text-xl font-semibold text-slate-700 mb-3">Feature One</h3>
             <p className="text-slate-600 text-sm">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
@@ -98,8 +98,8 @@ function Features() {
           {/* Placeholder Feature Item 2 */}
           <div
             className="feature-item bg-white/30 backdrop-blur-sm p-6 rounded-lg shadow-md opacity-0"
-            style={{ visibility: 'hidden' }}
-          >
+            style={{ visibility: 'hidden' }}>
+
             <h3 className="text-xl font-semibold text-slate-700 mb-3">Feature Two</h3>
             <p className="text-slate-600 text-sm">
               Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
@@ -109,8 +109,8 @@ function Features() {
           {/* Placeholder Feature Item 3 */}
           <div
             className="feature-item bg-white/30 backdrop-blur-sm p-6 rounded-lg shadow-md opacity-0"
-            style={{ visibility: 'hidden' }}
-          >
+            style={{ visibility: 'hidden' }}>
+
             <h3 className="text-xl font-semibold text-slate-700 mb-3">Feature Three</h3>
             <p className="text-slate-600 text-sm">
               Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
@@ -121,7 +121,8 @@ function Features() {
           {/* TODO: Replace with actual content */}
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 }
-export default Features;
+export default Features; // @doctor:4b-hmr
+if (import.meta?.hot) {import.meta.hot.accept?.();import.meta.hot.dispose?.(() => {'@doctor:4b-drain';__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error('@doctor:4b dispose error', e);}});});}

@@ -1,15 +1,15 @@
 // src/components/theater/OpeningSequence.jsx
-// SST v3.0 100% Compliant Opening Sequence - Exact specifications
+// SST v3.0 100% Compliant Opening Sequence - Zero Listener Debt
 
 import { useEffect, useRef, useState } from 'react';
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@modules/orchestration/core/BeatBus';
 import { EVENTS } from '@theater/events.js';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(false);
-  const [phase, setPhase] = useState('black'); // black | cursor | typing | fill
+  const [phase, setPhase] = useState('black');
   const [cursorVisible, setCursorVisible] = useState(false);
   const [lines, setLines] = useState([]);
   const [currentTypingLine, setCurrentTypingLine] = useState(-1);
@@ -24,6 +24,10 @@ export default function OpeningSequence() {
   const intervals = useRef(new Set());
   const typingToken = useRef(0);
   const mounted = useRef(true);
+  const handedOff = useRef(false);
+  
+  // Store all event unsubscribers
+  const eventCleanup = useRef([]);
 
   const addTimeout = (fn, ms) => {
     const id = setTimeout(fn, ms);
@@ -44,171 +48,28 @@ export default function OpeningSequence() {
     intervals.current.clear();
   };
 
-  useEffect(() => {
-    mounted.current = true;
-    setVisible(true); // Show overlay when component mounts
-    console.log('🎬 OpeningSequence: Ready for Director signals');
+  // Clean up all event listeners
+  const cleanupEvents = () => {
+    eventCleanup.current.forEach(off => {
+      try { off(); } catch (e) { console.warn('Event cleanup error:', e); }
+    });
+    eventCleanup.current = [];
+  };
 
-    const eventHandlers = [
-      // ========== CURSOR SHOW ==========
-      BeatBus.on(EVENTS.CURSOR_SHOW, () => {
-        console.log('   OpeningSequence: CURSOR_SHOW received');
-        setPhase('cursor');
-        setCursorVisible(true);
-      }),
-
-      // ========== CURSOR BLINK (Must blink TWICE per SST v3.0) ==========
-      BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
-        console.log(`   OpeningSequence: CURSOR_BLINK received (${count} times)`);
-
-        // Blink exactly N times
-        for (let i = 0; i < count && mounted.current; i++) {
-          setCursorVisible(false);
-          await sleep(interval);
-          if (!mounted.current) break;
-          setCursorVisible(true);
-          await sleep(interval);
-        }
-
-        setCursorVisible(false); // Hide cursor after blinking
-      }),
-
-      // ========== TERMINAL TYPE (SST v3.0 exact text) ==========
-      BeatBus.on(
-        EVENTS.TERMINAL_TYPE,
-        async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
-          console.log('   OpeningSequence: TERMINAL_TYPE received');
-          setPhase('typing');
-          setCursorVisible(false);
-          typingToken.current += 1;
-          const token = typingToken.current;
-
-          // Clear previous content
-          setLines([]);
-
-          // Type each line character by character
-          for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
-            if (!mounted.current || token !== typingToken.current) return;
-
-            const line = toType[lineIdx];
-            setCurrentTypingLine(lineIdx);
-            let currentText = '';
-
-            // Add empty line first
-            setLines(prev => [...prev, '']);
-
-            // Type character by character
-            for (let charIdx = 0; charIdx < line.length; charIdx++) {
-              if (!mounted.current || token !== typingToken.current) return;
-
-              currentText += line[charIdx];
-
-              // Trigger key click sound for each character
-              if (keyClickAudioRef.current) {
-                keyClickAudioRef.current.currentTime = 0;
-                keyClickAudioRef.current.play().catch(() => {});
-              }
-
-              // Update the current line
-              setLines(prev => {
-                const updated = [...prev];
-                updated[lineIdx] = currentText;
-                return updated;
-              });
-
-              await sleep(typeSpeed);
-            }
-
-            // Pause between lines
-            if (lineIdx < toType.length - 1) {
-              await sleep(lineDelay);
-            }
-          }
-
-          setCurrentTypingLine(-1);
-        }
-      ),
-
-      // ========== SCREEN FILL (Scrolling "HELLO CURTIS") ==========
-      BeatBus.on(
-        EVENTS.SCREEN_FILL,
-        ({
-          text = 'HELLO CURTIS ', // FIXED: Correct spelling
-          scrollSpeed = 50,
-        } = {}) => {
-          console.log('   OpeningSequence: SCREEN_FILL received');
-          setPhase('fill');
-
-          // Fill screen with scrolling text
-          const fillText = text.repeat(10); // Repeat across width
-          setScreenFillLines([fillText]);
-
-          // Add new lines progressively
-          addInterval(() => {
-            setScreenFillLines(prev => {
-              if (prev.length >= 30) {
-                // Screen is full
-                // Scroll effect: remove first, add new at bottom
-                return [...prev.slice(1), fillText];
-              }
-              return [...prev, fillText];
-            });
-          }, scrollSpeed);
-        }
-      ),
-
-      // ========== AUDIO: COMPUTER HUM ==========
-      BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {
-        console.log(`   OpeningSequence: Computer hum at volume ${volume}`);
-        if (!humAudioRef.current) {
-          humAudioRef.current = new Audio('/audio/computer-hum.mp3');
-          humAudioRef.current.loop = true;
-          humAudioRef.current.volume = volume;
-        }
-        humAudioRef.current
-          .play()
-          .catch(e => console.log('Audio playback requires user interaction:', e));
-      }),
-
-      // ========== AUDIO: KEY CLICKS ==========
-      BeatBus.on(EVENTS.AUDIO_KEY_CLICK, () => {
-        if (!keyClickAudioRef.current) {
-          keyClickAudioRef.current = new Audio('/audio/key-click.mp3');
-          keyClickAudioRef.current.volume = 0.5;
-        }
-        keyClickAudioRef.current.currentTime = 0;
-        keyClickAudioRef.current.play().catch(() => {});
-      }),
-
-      // ========== PARTICLES EMERGING (Fade out) ==========
-      BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
-        console.log('   OpeningSequence: Particles emerging, fading out');
-
-        // Fade out gracefully
-        addTimeout(() => {
-          setVisible(false);
-
-          // Cleanup after fade
-          addTimeout(() => {
-            setPhase('complete');
-            clearAllTimers();
-
-            // Stop audio
-            if (humAudioRef.current) {
-              humAudioRef.current.pause();
-              humAudioRef.current = null;
-            }
-          }, 700);
-        }, 100);
-      }),
-
-      // ========== DIRECTOR CANCEL ==========
-      BeatBus.on(EVENTS.DIRECTOR_CANCEL, () => {
-        console.log('   OpeningSequence: Director cancelled');
-        setVisible(false);
+  // Hand-off handler
+  const handleHandOff = () => {
+    if (handedOff.current || phase === 'complete') return;
+    handedOff.current = true;
+    
+    console.log('   OpeningSequence: Hand-off → fading overlay');
+    
+    addTimeout(() => {
+      setVisible(false);
+      
+      addTimeout(() => {
         setPhase('complete');
         clearAllTimers();
-
+        
         // Stop all audio
         if (humAudioRef.current) {
           humAudioRef.current.pause();
@@ -218,16 +79,199 @@ export default function OpeningSequence() {
           keyClickAudioRef.current.pause();
           keyClickAudioRef.current = null;
         }
-      }),
-    ];
+      }, 700);
+    }, 100);
+  };
+
+  // Auto hand-off when Points appear
+  useEffect(() => {
+    const checkForPoints = setInterval(() => {
+      const scene = (window.__r3f || window).scene;
+      if (!scene) return;
+      
+      let hasPoints = false;
+      scene.traverse?.(o => {
+        if (o?.isPoints || o?.type === 'Points') hasPoints = true;
+      });
+      
+      if (hasPoints) {
+        console.log('   OpeningSequence: Points detected, auto hand-off');
+        clearInterval(checkForPoints);
+        handleHandOff();
+      }
+    }, 500);
+    
+    const maxTimeout = setTimeout(() => {
+      console.log('   OpeningSequence: Max timeout reached, forcing hand-off');
+      handleHandOff();
+    }, 15000);
+    
+    return () => {
+      clearInterval(checkForPoints);
+      clearTimeout(maxTimeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    mounted.current = true;
+    setVisible(true);
+    console.log('🎬 OpeningSequence: Ready for Director signals');
+
+    // Register all event handlers and store unsubscribers
+    const offCursorShow = BeatBus.on(EVENTS.CURSOR_SHOW, () => {
+      console.log('   OpeningSequence: CURSOR_SHOW received');
+      setPhase('cursor');
+      setCursorVisible(true);
+    });
+    eventCleanup.current.push(offCursorShow);
+
+    const offCursorBlink = BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
+      console.log(`   OpeningSequence: CURSOR_BLINK received (${count} times)`);
+      for (let i = 0; i < count && mounted.current; i++) {
+        setCursorVisible(false);
+        await sleep(interval);
+        if (!mounted.current) break;
+        setCursorVisible(true);
+        await sleep(interval);
+      }
+      setCursorVisible(false);
+    });
+    eventCleanup.current.push(offCursorBlink);
+
+    const offTerminalType = BeatBus.on(
+      EVENTS.TERMINAL_TYPE,
+      async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
+        console.log('   OpeningSequence: TERMINAL_TYPE received');
+        setPhase('typing');
+        setCursorVisible(false);
+        typingToken.current += 1;
+        const token = typingToken.current;
+
+        setLines([]);
+
+        for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
+          if (!mounted.current || token !== typingToken.current) return;
+
+          const line = toType[lineIdx];
+          setCurrentTypingLine(lineIdx);
+          let currentText = '';
+
+          setLines(prev => [...prev, '']);
+
+          for (let charIdx = 0; charIdx < line.length; charIdx++) {
+            if (!mounted.current || token !== typingToken.current) return;
+
+            currentText += line[charIdx];
+
+            if (keyClickAudioRef.current) {
+              keyClickAudioRef.current.currentTime = 0;
+              keyClickAudioRef.current.play().catch(() => {});
+            }
+
+            setLines(prev => {
+              const updated = [...prev];
+              updated[lineIdx] = currentText;
+              return updated;
+            });
+
+            await sleep(typeSpeed);
+          }
+
+          if (lineIdx < toType.length - 1) {
+            await sleep(lineDelay);
+          }
+        }
+
+        setCurrentTypingLine(-1);
+      }
+    );
+    eventCleanup.current.push(offTerminalType);
+
+    const offScreenFill = BeatBus.on(
+      EVENTS.SCREEN_FILL,
+      ({ text = 'HELLO CURTIS ', scrollSpeed = 50 } = {}) => {
+        console.log('   OpeningSequence: SCREEN_FILL received');
+        setPhase('fill');
+
+        const fillText = text.repeat(10);
+        setScreenFillLines([fillText]);
+
+        addInterval(() => {
+          setScreenFillLines(prev => {
+            if (prev.length >= 30) {
+              return [...prev.slice(1), fillText];
+            }
+            return [...prev, fillText];
+          });
+        }, scrollSpeed);
+      }
+    );
+    eventCleanup.current.push(offScreenFill);
+
+    const offComputerHum = BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {
+      console.log(`   OpeningSequence: Computer hum at volume ${volume}`);
+      if (!humAudioRef.current) {
+        humAudioRef.current = new Audio('/audio/computer-hum.mp3');
+        humAudioRef.current.loop = true;
+        humAudioRef.current.volume = volume;
+      }
+      humAudioRef.current
+        .play()
+        .catch(e => console.log('Audio playback requires user interaction:', e));
+    });
+    eventCleanup.current.push(offComputerHum);
+
+    const offKeyClick = BeatBus.on(EVENTS.AUDIO_KEY_CLICK, () => {
+      if (!keyClickAudioRef.current) {
+        keyClickAudioRef.current = new Audio('/audio/key-click.mp3');
+        keyClickAudioRef.current.volume = 0.5;
+      }
+      keyClickAudioRef.current.currentTime = 0;
+      keyClickAudioRef.current.play().catch(() => {});
+    });
+    eventCleanup.current.push(offKeyClick);
+
+    const offParticlesStart = BeatBus.on(EVENTS.PARTICLES_START_EMERGING, handleHandOff);
+    eventCleanup.current.push(offParticlesStart);
+
+    const offParticlesEmerged = BeatBus.on(EVENTS.PARTICLES_EMERGED, handleHandOff);
+    eventCleanup.current.push(offParticlesEmerged);
+
+    const offEnableScroll = BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+      console.log('   OpeningSequence: ENABLE_SCROLL received, hand-off in 300ms');
+      addTimeout(handleHandOff, 300);
+    });
+    eventCleanup.current.push(offEnableScroll);
+
+    const offStartNarrative = BeatBus.on(EVENTS.START_NARRATIVE, () => {
+      console.log('   OpeningSequence: START_NARRATIVE received, hand-off in 300ms');
+      addTimeout(handleHandOff, 300);
+    });
+    eventCleanup.current.push(offStartNarrative);
+
+    const offDirectorCancel = BeatBus.on(EVENTS.DIRECTOR_CANCEL, () => {
+      console.log('   OpeningSequence: Director cancelled');
+      setVisible(false);
+      setPhase('complete');
+      clearAllTimers();
+
+      if (humAudioRef.current) {
+        humAudioRef.current.pause();
+        humAudioRef.current = null;
+      }
+      if (keyClickAudioRef.current) {
+        keyClickAudioRef.current.pause();
+        keyClickAudioRef.current = null;
+      }
+    });
+    eventCleanup.current.push(offDirectorCancel);
 
     // Cleanup
     return () => {
       mounted.current = false;
       clearAllTimers();
-      eventHandlers.forEach(off => off && off());
+      cleanupEvents();
 
-      // Stop audio on unmount
       if (humAudioRef.current) {
         humAudioRef.current.pause();
       }
@@ -237,7 +281,20 @@ export default function OpeningSequence() {
     };
   }, []);
 
-  // Don't render if complete
+  // HMR cleanup
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      clearAllTimers();
+      cleanupEvents();
+      if (humAudioRef.current) {
+        humAudioRef.current.pause();
+      }
+      if (keyClickAudioRef.current) {
+        keyClickAudioRef.current.pause();
+      }
+    });
+  }
+
   if (phase === 'complete') {
     return null;
   }
@@ -251,7 +308,7 @@ export default function OpeningSequence() {
         width: '100vw',
         height: '100vh',
         backgroundColor: '#000000',
-        color: '#00FF00', // SST v3.0 exact green
+        color: '#00FF00',
         fontFamily: "'Courier New', monospace",
         fontSize: '1.5rem',
         lineHeight: 1.4,
@@ -259,14 +316,13 @@ export default function OpeningSequence() {
         overflow: 'hidden',
         transition: 'opacity 0.7s',
         opacity: visible ? 1 : 0,
+        pointerEvents: phase === 'complete' ? 'none' : 'auto',
       }}
     >
-      {/* BLACK SCREEN PHASE */}
       {phase === 'black' && (
         <div style={{ width: '100%', height: '100%', backgroundColor: '#000000' }} />
       )}
 
-      {/* CURSOR PHASE - Blinks exactly twice */}
       {phase === 'cursor' && (
         <div
           style={{
@@ -291,7 +347,6 @@ export default function OpeningSequence() {
         </div>
       )}
 
-      {/* TERMINAL TYPING PHASE - SST v3.0 exact text */}
       {phase === 'typing' && (
         <div
           style={{
@@ -333,7 +388,6 @@ export default function OpeningSequence() {
         </div>
       )}
 
-      {/* SCREEN FILL PHASE - Scrolling "HELLO CURTIS" */}
       {phase === 'fill' && (
         <div
           style={{
@@ -367,7 +421,6 @@ export default function OpeningSequence() {
         </div>
       )}
 
-      {/* Inline styles for animations */}
       <style>{`
         @keyframes blink {
           50% { opacity: 0; }

@@ -1,6 +1,17 @@
 // src/canon-guard/runtime/GuardRuntimeInject.js
 import { decideDegrade } from './DegradePolicy.js';
 
+
+// @doctor:phase4b-hmr-dbdff18d - Component listener cleanup
+// @doctor:4b-disposers
+const __doctorDisposers = [];const __componentDisposers = [];
+// Store original methods if component uses them directly
+const __captureUnsub = (unsub) => {
+  if (typeof unsub === 'function') {
+    __componentDisposers.push(unsub);
+  }
+  return unsub;
+};
 (async function () {
   if (!import.meta.env.DEV) return;
 
@@ -34,7 +45,7 @@ import { decideDegrade } from './DegradePolicy.js';
     }
 
     // Ensure Float32Array for GPU-safe attributes
-    ['atmosphericPositions','allenAtlasPositions','animationSeeds','sizeMultipliers','opacityData','atlasIndices'].forEach(k=>{
+    ['atmosphericPositions', 'allenAtlasPositions', 'animationSeeds', 'sizeMultipliers', 'opacityData', 'atlasIndices'].forEach((k) => {
       if (bp[k] && !(bp[k] instanceof Float32Array)) {
         bp[k] = toF32(bp[k]);
         out.fixes.push(`${k}→Float32Array`);
@@ -76,12 +87,28 @@ import { decideDegrade } from './DegradePolicy.js';
   };
 
   // Expose convenience hook for Consoles/Pilot
-  window.addEventListener('canon:metrics', (e) => {
-    const { fpsP95, profile } = e.detail || {};
+  // @doctor:4b-handler-dom
+  const __doctor_handler_1 = (e) => {const { fpsP95, profile } = e.detail || {};
     const d = decideDegrade({ fpsP95, profile });
     if (d) window.CANON_GUARD_L3.apply(d);
-  });
+  };__doctorDisposers.push(() => {window.removeEventListener('canon:metrics', __doctor_handler_1);});window.addEventListener('canon:metrics', __doctor_handler_1);
 
   // cleanup helper
-  window.addEventListener('beforeunload', () => off && off());
-})();
+  // @doctor:4b-handler-dom
+  const __doctor_handler_2 = () => off && off();__doctorDisposers.push(() => {window.removeEventListener('beforeunload', __doctor_handler_2);});window.addEventListener('beforeunload', __doctor_handler_2);})();
+
+
+// @doctor:phase4b-hmr-dbdff18d - HMR dispose
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    __componentDisposers.forEach((d) => {
+      try {d();} catch (e) {console.warn('Dispose error:', e);}
+    });
+    __componentDisposers.length = 0;"@doctor:4b-drain";__doctorDisposers.splice(0).forEach((fn) => {try {fn?.();} catch (e) {console.error("@doctor:4b dispose error", e);}});
+  });
+}
+
+/* TODO: Wrap listener calls with __captureUnsub:
+   const unsub = __captureUnsub(bus.on('EVENT', handler));
+   Lines with uncaptured listeners: 
+*/
