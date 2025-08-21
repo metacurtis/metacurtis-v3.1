@@ -1,0 +1,60 @@
+// DEV-only Boundary Sentinel (minimal)
+// Late-binds boundary enforcement and small dev helpers.
+(() => {
+  const log = (...a) => console.log('[BoundarySentinel]', ...a);
+
+  function enforce() {
+    try {
+      const bus = window.BeatBus;
+      const canon = window.canon;
+      if (bus && canon?.boundary && !bus.__boundaryEnforced) {
+        canon.boundary.enforce(bus);
+        bus.__boundaryEnforced = true;
+        log('✅ boundary enforced (late-bind)');
+      }
+    } catch (e) {
+      console.warn('[BoundarySentinel] enforce failed', e);
+    }
+  }
+
+  function wrapEmit() {
+    const bus = window.BeatBus;
+    if (!bus || bus.__emitWrapped) return;
+    const orig = bus.emit?.bind(bus);
+    if (typeof orig !== 'function') return;
+    bus.emit = function (evt, payload) {
+      if (!bus.__boundaryEnforced) enforce();
+      try {
+        return orig(evt, payload);
+      } finally {
+        window.__BOUNDARY_EMITS = window.__BOUNDARY_EMITS || [];
+        window.__BOUNDARY_EMITS.push({ evt, t: Date.now() });
+        if (window.__BOUNDARY_EMITS.length > 300) window.__BOUNDARY_EMITS.shift();
+      }
+    };
+    bus.__emitWrapped = true;
+    log('emit() wrapped for telemetry');
+  }
+
+  function start() {
+    enforce();
+    wrapEmit();
+    const id = setInterval(() => {
+      enforce();
+      wrapEmit();
+    }, 250);
+    setTimeout(() => clearInterval(id), 5000);
+
+    // tiny DEV helpers
+    if (!('BUS' in window)) Object.defineProperty(window, 'BUS', { get: () => window.BeatBus });
+    window.busTap = window.busTap || ((evt, fn) => window.BeatBus?.on?.(evt, fn));
+    window.tap =
+      window.tap || ((evt, fn = p => console.log('[tap]', evt, p)) => window.busTap(evt, fn));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();

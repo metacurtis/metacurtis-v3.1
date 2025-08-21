@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNarrativeStore } from '@/stores/narrativeStore';
-import { getPreset } from '@/config/narrativeParticleConfig';
+import { getPreset } from '@/config/canonical/narrativeParticleConfig';
 
 function MemoryFragments() {
   const [activeFragment, setActiveFragment] = useState(null);
