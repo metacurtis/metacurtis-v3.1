@@ -1,0 +1,8 @@
+StateCore Sync Diagnostic — 2025-08-21T15-54-29-004Z
+Files scanned: 111
+HMR: on=28, off=1, disposeBlocks=0
+BeatBus: instances=4, windowExport=false, boundaryCalls=3
+Issues:
+ - [HIGH] MULTI_BUS — Multiple BeatBus-like instantiations (4)
+ - [HIGH] NO_WINDOW_EXPORT — BeatBus exists but not exported as window.BeatBus
+ - [HIGH] HMR_NO_DISPOSE — Found 28 listener registrations but no hot.dispose blocks

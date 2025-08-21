@@ -1,0 +1,186 @@
+{
+  "time": "2025-08-21T15:54:29.013Z",
+  "filesScanned": 111,
+  "hmr": {
+    "listeners": 28,
+    "offs": 1,
+    "disposeBlocks": 0
+  },
+  "bus": {
+    "instances": [
+      {
+        "file": "src/modules/orchestration/core/BeatBus.js",
+        "name": "BeatBus",
+        "loc": {
+          "line": 117,
+          "column": 16,
+          "index": 4029
+        }
+      },
+      {
+        "file": "src/modules/orchestration/core/BeatBusAdapter.js",
+        "name": "BeatBus",
+        "loc": {
+          "line": 29,
+          "column": 13,
+          "index": 1259
+        }
+      },
+      {
+        "file": "src/modules/orchestration/core/BeatBusAdapter.js",
+        "name": "BeatBusClass",
+        "loc": {
+          "line": 32,
+          "column": 13,
+          "index": 1388
+        }
+      },
+      {
+        "file": "src/modules/state/BeatBusBridge.js",
+        "name": "_BeatBusBridge",
+        "loc": {
+          "line": 169,
+          "column": 48,
+          "index": 5589
+        }
+      }
+    ],
+    "windowExport": false,
+    "boundaryCalls": 3
+  },
+  "atoms": [
+    {
+      "file": "src/App.jsx",
+      "from": "./stores/atoms/clockAtom"
+    },
+    {
+      "file": "src/bootstrap/wireSSTv3.js",
+      "from": "@/stores/atoms/narrativeAtom.js"
+    },
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "from": "@stores/atoms/stageAtom"
+    },
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "from": "@stores/atoms/qualityAtom"
+    },
+    {
+      "file": "src/components/dev/DevPerformanceMonitor.jsx",
+      "from": "@/stores/atoms/qualityAtom"
+    },
+    {
+      "file": "src/components/dev/DevPerformanceMonitor.jsx",
+      "from": "@/stores/atoms/clockAtom"
+    },
+    {
+      "file": "src/components/dev/DevPerformanceMonitor.jsx",
+      "from": "@/stores/atoms/stageAtom"
+    },
+    {
+      "file": "src/components/ui/AdvancedContactPortal.jsx",
+      "from": "@/stores/narrativeStore"
+    },
+    {
+      "file": "src/components/ui/ResourceMonitor.jsx",
+      "from": "@/stores/resourceStore.js"
+    },
+    {
+      "file": "src/components/ui/Typewriter.jsx",
+      "from": "../../stores/useInteractionStore"
+    },
+    {
+      "file": "src/components/ui/narrative/MemoryFragments.jsx",
+      "from": "@/stores/narrativeStore"
+    },
+    {
+      "file": "src/components/ui/narrative/StageNavigation.jsx",
+      "from": "@/stores/narrativeStore"
+    },
+    {
+      "file": "src/hooks/atoms/useInteractionStore.js",
+      "from": "@stores/atoms/createAtom"
+    },
+    {
+      "file": "src/hooks/atoms/useInteractionStore.js",
+      "from": "@stores/atoms/interactionAtom"
+    },
+    {
+      "file": "src/hooks/atoms/useNarrativeStore.js",
+      "from": "@stores/atoms/createAtom"
+    },
+    {
+      "file": "src/hooks/atoms/useNarrativeStore.js",
+      "from": "@stores/atoms/narrativeAtom"
+    },
+    {
+      "file": "src/hooks/atoms/usePerformanceStore.js",
+      "from": "@stores/atoms/createAtom"
+    },
+    {
+      "file": "src/hooks/atoms/usePerformanceStore.js",
+      "from": "@stores/atoms/performanceAtom"
+    },
+    {
+      "file": "src/hooks/atoms/useResourceStore.js",
+      "from": "@stores/atoms/createAtom"
+    },
+    {
+      "file": "src/hooks/atoms/useResourceStore.js",
+      "from": "@stores/atoms/resourceAtom"
+    },
+    {
+      "file": "src/hooks/useAdaptiveQuality.js",
+      "from": "@/stores/atoms/qualityAtom"
+    },
+    {
+      "file": "src/hooks/useAdaptiveQuality.js",
+      "from": "@/stores/atoms/clockAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/narrativeAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/performanceAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/interactionAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/resourceAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/stageAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/qualityAtom"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "from": "@/stores/atoms/clockAtom"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "HIGH",
+      "type": "MULTI_BUS",
+      "msg": "Multiple BeatBus-like instantiations (4)"
+    },
+    {
+      "severity": "HIGH",
+      "type": "NO_WINDOW_EXPORT",
+      "msg": "BeatBus exists but not exported as window.BeatBus"
+    },
+    {
+      "severity": "HIGH",
+      "type": "HMR_NO_DISPOSE",
+      "msg": "Found 28 listener registrations but no hot.dispose blocks"
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+// __CANON_INSTALLED__
+// Central event bus with canonical enforcement.
+import CANON_CONTRACTS from '@/canon/contracts/events.js';
+
+class BeatBus {
+  constructor(){
+    this.listeners = new Map();
+    this.eventLog  = [];
+    this.maxLog    = 200;
+    this._last = { stage: 'genesis', quality: 'HIGH' };
+  }
+
+  on(evt, fn){
+    if (!this.listeners.has(evt)) this.listeners.set(evt, new Set());
+    this.listeners.get(evt).add(fn);
+    return () => this.off(evt, fn);
+  }
+  once(evt, fn){
+    const wrap = (p) => { try{ fn(p); } finally { this.off(evt, wrap); } };
+    return this.on(evt, wrap);
+  }
+  off(evt, fn){
+    const set = this.listeners.get(evt); if (!set) return;
+    set.delete(fn); if (set.size===0) this.listeners.delete(evt);
+  }
+
+  _mode(){
+    try {
+      const dev = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV);
+      const ls = (typeof globalThis !== 'undefined' && globalThis.localStorage) ? localStorage.canonBusMode : null;
+      return (ls || (dev ? 'STRICT' : 'TELEMETRY')).toUpperCase();
+    } catch { return 'TELEMETRY'; }
+  }
+
+  _canonicalize(evt, payload = {}){
+    const p = {...payload};
+    // tolerant mapping → canonical, tracked as normalized:true
+    if (evt==='STAGE_CHANGE'){
+      if (p.stage && !p.to) p.to = p.stage;
+      if (!p.from) p.from = this._last.stage || 'unknown';
+      return { ok: !!(p.from && p.to), out: { from:p.from, to:p.to }, normalized: ('stage' in payload) };
+    }
+    if (evt==='QUALITY_CHANGE'){
+      if (p.quality && !p.tier) p.tier = p.quality;
+      return { ok: !!p.tier, out: { tier:p.tier }, normalized: ('quality' in payload) };
+    }
+    if (evt==='BLUEPRINT_READY'){
+      const stage   = p.stage ?? p.to ?? p.name;
+      const quality = p.quality ?? p.tier;
+      const blueprint = p.blueprint;
+      const out = { stage, quality, blueprint, cached: !!p.cached };
+      return { ok: !!(stage && quality && blueprint), out, normalized: ('tier' in p || 'to' in p) };
+    }
+    return { ok: true, out: p, normalized:false };
+  }
+
+  _validate(evt, payload){
+    const spec = CANON_CONTRACTS.events[evt];
+    if (!spec) return { ok:true, missing:[] };
+    const required = spec.required || [];
+    const missing = required.filter(k => !(k in (payload||{})));
+    return { ok: missing.length===0, missing };
+  }
+
+  _log(evt, data){
+    try {
+      this.eventLog.push({ t: Date.now(), evt, data });
+      if (this.eventLog.length>this.maxLog) this.eventLog.shift();
+    } catch {}
+  }
+
+  emit(evt, payload = {}){
+    const mode = this._mode();
+    const { ok:canonOk, out:canonPayload, normalized } = this._canonicalize(evt, payload);
+    const { ok:validOk, missing } = this._validate(evt, canonPayload);
+
+    if (!canonOk || !validOk){
+      const msg = `Canon violation: ${evt} missing ${missing.join(',')}`;
+      if (mode==='STRICT'){
+        console.error('🚫', msg, { payload });
+        this._log('VIOLATION', { evt, payload, missing, mode });
+        return;
+      }
+      if (mode==='TELEMETRY' || mode==='TOLERANT'){
+        console.warn('⚠️', msg, { payload, mode });
+        this._log('VIOLATION', { evt, payload, missing, mode });
+        // proceed only in TELEMETRY/TOLERANT if we can form a best-effort payload
+        if (!canonOk) return;
+      }
+    }
+
+    // maintain last state hints for better "from"
+    if (evt==='STAGE_CHANGE' && canonPayload?.to) this._last.stage = canonPayload.to;
+    if (evt==='QUALITY_CHANGE' && canonPayload?.tier) this._last.quality = canonPayload.tier;
+
+    this._log(evt, { payload: canonPayload, normalized });
+    const set = this.listeners.get(evt); if (!set || set.size===0) return;
+
+    set.forEach(fn => {
+      try { fn(canonPayload); }
+      catch(e){ console.error(`🚌 listener error @ ${evt}`, e); }
+    });
+  }
+
+  getDebugInfo(){
+    const map = {};
+    this.listeners.forEach((s, k)=> map[k] = s.size);
+    return {
+      mode: this._mode(),
+      last: {...this._last},
+      listeners: map,
+      recent: this.eventLog.slice(-10)
+    };
+  }
+}
+
+const beatBus = new BeatBus();
+
+// DEV globals (optional)
+if (typeof window !== 'undefined'){
+  if (import.meta?.env?.DEV){
+    globalThis.BeatBus = beatBus;
+    globalThis.busTap = (evt, fn) => {
+      const off = beatBus.on(evt, fn);
+      console.log('�� busTap', evt);
+      return off;
+    };
+    console.log('🚌 BeatBus ready · mode=', beatBus._mode());
+  }
+}
+
+export default beatBus;
+export { BeatBus };
+// Auto-generated BeatBus stub (replace with real implementation)
+export default class BeatBus {
+  constructor(){ this._t = new Map(); }
+  on(type, fn){ const a=this._t.get(type)||[]; a.push(fn); this._t.set(type,a); return ()=>this.off(type,fn); }
+  off(type, fn){ const a=this._t.get(type)||[]; const i=a.indexOf(fn); if(i>-1){a.splice(i,1);} this._t.set(type,a); }
+  emit(type, payload){ (this._t.get(type)||[]).forEach(fn=>{ try{ fn(payload);}catch(e){ console.error('[BeatBus stub]', e);} }); }
+}
+// TDZ-safe, cycle-resilient BeatBus adapter (singleton)
+// Exports a working bus immediately; upgrades to the real BeatBus (if present) after module init.
+
+class FallbackBus {
+  constructor(){ this._t = new Map(); }
+  on(type, fn){ const a = this._t.get(type)||[]; a.push(fn); this._t.set(type,a); return () => this.off(type, fn); }
+  off(type, fn){ const a = this._t.get(type)||[]; const i = a.indexOf(fn); if (i > -1) a.splice(i,1); this._t.set(type,a); }
+  emit(type, payload){ (this._t.get(type)||[]).forEach(fn => { try { fn(payload); } catch (e) { console.error('[BeatBus]', e); } }); }
+}
+
+let instance = globalThis.__CANON_BEATBUS__ || new FallbackBus();
+globalThis.__CANON_BEATBUS__ = instance;
+globalThis.CANON_BEATBUS = instance;
+
+export default instance;
+export const bus = instance;
+export let BeatBusClass = null;
+
+// Try to upgrade AFTER current tick to avoid TDZ on BeatBus.js default/class exports
+queueMicrotask(async () => {
+  try {
+    const mod = await import('./BeatBus.js'); // resolved once BeatBus.js is fully initialized
+    let next = null;
+
+    if (mod?.default && typeof mod.default.on === 'function') {
+      next = mod.default;
+    } else if (typeof mod?.BeatBus === 'function') {
+      BeatBusClass = mod.BeatBus;
+      next = new mod.BeatBus();
+    } else if (typeof mod?.BeatBusClass === 'function') {
+      BeatBusClass = mod.BeatBusClass;
+      next = new mod.BeatBusClass();
+    }
+
+    if (next && next !== instance) {
+      // migrate listeners so early subscriptions keep working
+      const topics = Array.from(instance._t?.keys?.() || []);
+      for (const t of topics) {
+        for (const fn of (instance._t.get(t) || [])) {
+          next.on?.(t, fn);
+        }
+      }
+      globalThis.__CANON_BEATBUS__ = next;
+      globalThis.CANON_BEATBUS = next;
+      instance = next;
+    }
+  } catch (_e) {
+    // No real BeatBus available (or still loading); fallback is fine.
+  }
+});
+// Auto-generated BeatBusAdapter: always export a singleton instance.
+// - Default export: instance with .on/.off/.emit
+// - Named: { bus } same instance, { BeatBusClass } original class if available
+// Uses a global to avoid duplicate instances across dynamic imports.
+import DefaultMaybeClass, * as All from './BeatBus.js';
+
+function makeFallback(){
+  class Fallback {
+    constructor(){ this._t = new Map(); }
+    on(t, fn){ const a=this._t.get(t)||[]; a.push(fn); this._t.set(t,a); return ()=>this.off(t,fn); }
+    off(t, fn){ const a=this._t.get(t)||[]; const i=a.indexOf(fn); if(i>-1){a.splice(i,1);} this._t.set(t,a); }
+    emit(t, payload){ (this._t.get(t)||[]).forEach(fn=>{ try{ fn(payload);}catch(e){ console.error('[BeatBus]', e);} }); }
+  }
+  return new Fallback();
+}
+
+let instance;
+let BeatBusClass = null;
+
+try {
+  if (DefaultMaybeClass && typeof DefaultMaybeClass === 'function') {
+    // default export is a class/constructor
+    BeatBusClass = DefaultMaybeClass;
+    instance = globalThis.__CANON_BEATBUS__ || new DefaultMaybeClass();
+  } else if (DefaultMaybeClass && typeof DefaultMaybeClass.on === 'function') {
+    // default export is already an instance
+    instance = DefaultMaybeClass;
+  } else if (All && All.default && typeof All.default.on === 'function') {
+    instance = All.default;
+  } else {
+    instance = makeFallback();
+  }
+} catch {
+  instance = makeFallback();
+}
+
+globalThis.__CANON_BEATBUS__ = instance;
+
+export const bus = instance;
+export const BeatBusClass = BeatBusClass;
+export default instance;
+// src/stores/narrativeStore.js
+// Migration wrapper - imports from atomic hooks
+export { useNarrativeStore } from '../hooks/atoms/useNarrativeStore';
+export { default } from '../hooks/atoms/useNarrativeStore';
+
+// Export stage constants for compatibility
+export const NARRATIVE_STAGES = {
+  genesis: 0,
+  discipline: 1,
+  neural: 2,
+  velocity: 3,
+  architecture: 4,
+  harmony: 5,
+  transcendence: 6,
+};
+
+export const STAGE_NAME_TO_INDEX = {
+  genesis: 0,
+  discipline: 1,
+  neural: 2,
+  velocity: 3,
+  architecture: 4,
+  harmony: 5,
+  transcendence: 6,
+};
+
+export const STAGE_INDEX_TO_NAME = [
+  'genesis',
+  'discipline',
+  'neural',
+  'velocity',
+  'architecture',
+  'harmony',
+  'transcendence',
+];
+// src/stores/performanceStore.js
+// Migration wrapper
+export { usePerformanceStore } from '../hooks/atoms/usePerformanceStore';
+export { default } from '../hooks/atoms/usePerformanceStore';
+// src/stores/resourceStore.js
+// Migration wrapper
+export { useResourceStore } from '../hooks/atoms/useResourceStore';
+export { default } from '../hooks/atoms/useResourceStore';
+// src/stores/useInteractionStore.js
+// Migration wrapper
+export { useInteractionStore } from '../hooks/atoms/useInteractionStore';
+export { default } from '../hooks/atoms/useInteractionStore';
