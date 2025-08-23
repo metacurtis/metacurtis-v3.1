@@ -30,7 +30,7 @@ export async function initializeStateManagement(options = {}) {
   
   // Get singleton instances
   const controller = StateController.getInstance();
-  const _reader = StateReader.getInstance();
+  const reader = StateReader.getInstance();
   const validator = StateValidator.getInstance();
   
   // Wire validator to controller for automatic validation
@@ -53,7 +53,7 @@ export async function initializeStateManagement(options = {}) {
     
     // Initialize EventValidator if requested
     if (enableEventValidation) {
-      const validatorModule = await import('../orchestration/core/EventValidator.js');
+      const validatorModule = await import('@/modules/orchestration/core/EventValidator');
       EventValidator = validatorModule.default;
       EventValidator.initialize({
         enabled: true,

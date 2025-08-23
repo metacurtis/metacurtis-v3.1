@@ -2,7 +2,7 @@
 // SST v3.0 - Visual debugger for BeatBus event flow
 // Shows real-time event flow, listeners, and performance
 
-import BeatBus from './BeatBus.js';
+import BeatBus from './BeatBus';
 import { getEventCategory } from './EventCatalog';
 
 class EventDebugger {
