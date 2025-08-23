@@ -13,7 +13,7 @@ const preferred = [
 
   // Engine + bus + events
   'src/engine/ConsciousnessEngine.js',
-  'src/modules/orchestration/core/BeatBus.js',
+  'src/src/modules/orchestration/core/BeatBus.js',
   'src/theater/events.js',
   'src/theatre/events.js', // alt spelling
 

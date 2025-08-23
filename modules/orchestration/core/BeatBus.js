@@ -1,4 +1,4 @@
-// modules/orchestration/core/BeatBus.js
+// src/modules/orchestration/core/BeatBus.js
 // Central event system for the consciousness theater
 
 class BeatBus {

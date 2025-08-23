@@ -1,0 +1,103 @@
+{
+  "issues": [],
+  "actions": [],
+  "instances": [
+    {
+      "file": "src/canon/console/banner.js",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 2
+    },
+    {
+      "file": "src/canon/guard/L2.js",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 3
+    },
+    {
+      "file": "src/canon-guard/blueprintGuard.js",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 2
+    },
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 15
+    },
+    {
+      "file": "src/components/theater/OpeningSequence.jsx",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 5
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 9
+    },
+    {
+      "file": "src/engine/ConsciousnessEngine.js",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 6
+    },
+    {
+      "file": "src/main.jsx",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/state/BeatBusBridge",
+      "line": 6
+    },
+    {
+      "file": "src/main.jsx",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/state/BeatBusBridge.js",
+      "line": 11
+    },
+    {
+      "file": "src/modules/orchestration/core/BeatBus.js",
+      "type": "INSTANTIATION",
+      "line": 117
+    },
+    {
+      "file": "src/theater/TheaterDirector.js",
+      "type": "IMPORT_INSTANCE",
+      "source": "@/modules/orchestration/core/BeatBus.js",
+      "line": 4
+    }
+  ],
+  "stubsAndAdapters": [
+    {
+      "file": "src/modules/orchestration/core/BeatBus.js",
+      "type": "STUB_EXPORT",
+      "line": 132
+    }
+  ],
+  "exports": [
+    {
+      "file": "src/modules/orchestration/core/BeatBus.js",
+      "type": "globalThis",
+      "line": 122
+    }
+  ],
+  "canonCalls": [
+    {
+      "file": "src/dev/boundarySentinel.js",
+      "method": "canon.boundary.enforce",
+      "line": 11
+    },
+    {
+      "file": "src/dev/renderProbe.js",
+      "method": "canon.boundary.enforce",
+      "line": 23
+    },
+    {
+      "file": "src/dev/unlockConsole.js",
+      "method": "window.canon.boundary.enforce",
+      "line": 30
+    }
+  ],
+  "applied": true
+}

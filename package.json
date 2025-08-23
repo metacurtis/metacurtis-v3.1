@@ -35,7 +35,13 @@
     "canon:pilot:install": "node scripts/canon-pilot-install.cjs",
     "canon:pilot:verify": "node -e \"['${baseDir}/agent/policy.js','${baseDir}/agent/pilot.js','${baseDir}/runtime/bridge-guard.js','${baseDir}/runtime/pilot-ui-mini.js'].forEach(f=>console.log((require('fs').existsSync(f)?'✓':'✗'), f))\"",
     "guard:finish": "node scripts/finish-guard-console.cjs",
-    "console:l2:finish": "node scripts/finish-guard-console.cjs"
+    "console:l2:finish": "node scripts/finish-guard-console.cjs",
+    "hot-dors": "node scripts/hot-dors.cjs",
+    "sprint:start": "node scripts/sprintctl.cjs start",
+    "sprint:snapshot": "node scripts/sprintctl.cjs snapshot",
+    "sprint:stop": "node scripts/sprintctl.cjs stop",
+    "sprint:status": "node scripts/sprintctl.cjs status",
+    "sprint:note": "node scripts/sprintctl.cjs note"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

@@ -1,0 +1,9 @@
+{
+  "entry": "src/main.jsx",
+  "patchedEntry": false,
+  "created": [
+    "src/dev/RenderApplyShim.js"
+  ],
+  "usesHook": "__doctor_apply_blueprint__",
+  "timestamp": "2025-08-21T23:26:58.055Z"
+}

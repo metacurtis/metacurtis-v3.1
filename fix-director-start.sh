@@ -5,7 +5,7 @@ cat > src/theater/TheaterDirector.js << 'EOFILE'
 // src/theater/TheaterDirector.js
 // SST v3.0 Compliant Theater Director - Fixed singleton pattern
 
-import BeatBus from '../../modules/orchestration/core/BeatBus.js';
+import BeatBus from '../../src/modules/orchestration/core/BeatBus.js';
 import { EVENTS } from './events.js';
 
 class TheaterDirector {

@@ -6,7 +6,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
-import BeatBus from '../../../modules/orchestration/core/BeatBus.js';
+import BeatBus from '../../../src/modules/orchestration/core/BeatBus.js';
 import { EVENTS } from '../../theater/events.js';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';

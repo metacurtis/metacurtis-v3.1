@@ -3,7 +3,7 @@
 
 // src/theater/TheaterDirector.js
 // This one should already be correct:
-import BeatBus from '../../modules/orchestration/core/BeatBus.js';
+import BeatBus from '../../src/modules/orchestration/core/BeatBus.js';
 import { EVENTS, FRAGMENT_TRIGGERS, STAGE_AUDIO } from './events.js';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));

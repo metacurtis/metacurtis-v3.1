@@ -116,7 +116,7 @@ function patchCanonInit(){
 }
 
 function hardenBeatBus(){
-  const F='src/modules/orchestration/core/BeatBus.js'; if(!ex(F)) return;
+  const F='src/src/modules/orchestration/core/BeatBus.js'; if(!ex(F)) return;
   let s = rd(F), o = s;
 
   // Ensure logEvent exists and emit calls it

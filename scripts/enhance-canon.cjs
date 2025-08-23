@@ -77,7 +77,7 @@ ensure(P('canon-console/browser/inject.js'), consoleInjector);
 // 2) Canon Guard runtime (BLUEPRINT_READY validation)
 // ------------------------------
 const guardRuntime = `// src/canon-guard/blueprintGuard.js
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
 import { EVENTS } from '@/theater/events.js';
 
 (function(){

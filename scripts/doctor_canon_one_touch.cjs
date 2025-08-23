@@ -30,7 +30,7 @@ const NO_VERIFY  = ARGS.has('--no-verify');
 const DO_TAG     = ARGS.has('--tag');
 
 const FILES = {
-  beatbus: 'src/modules/orchestration/core/BeatBus.js',
+  beatbus: 'src/src/modules/orchestration/core/BeatBus.js',
   contracts: 'src/canon/contracts/events.js',
   guardL2: 'src/canon/guard/L2.js',
   consoleBanner: 'src/canon/console/banner.js',
@@ -304,7 +304,7 @@ function installBeatBus(){
  * ------------------------------------------------------------------------------------ */
 const GUARD_L2 = `// __CANON_INSTALLED__
 import CANON_CONTRACTS from '@/canon/contracts/events.js';
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
 
 class CanonGuardL2 {
   constructor(){
@@ -335,7 +335,7 @@ export default CanonGuardL2;
 `;
 
 const CONSOLE_BANNER = `// __CANON_INSTALLED__
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
 let heartbeatTimer;
 
 export function banner(){
