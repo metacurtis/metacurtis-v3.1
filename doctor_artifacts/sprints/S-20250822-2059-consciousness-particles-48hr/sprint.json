@@ -926,9 +926,14 @@
       "when": "2025-08-23T03:12:20.734Z",
       "kind": "manual",
       "note": "Particles rendering + narration overlay fixed"
+    },
+    {
+      "when": "2025-08-23T17:51:16.347Z",
+      "kind": "manual",
+      "note": "Bridge applied; ready to test morph/stage"
     }
   ],
-  "beacons": 9,
+  "beacons": 10,
   "activeMinutes": 0,
   "files": {
     "dorsStart": "doctor_artifacts/sprints/S-20250822-2059-consciousness-particles-48hr/hot-dors-start.json",

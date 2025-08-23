@@ -48,7 +48,6 @@ git rm "src/utils/shaderUtils.js"
 git rm "src/utils/webgl/FrustumAwareParticleGenerator.js"
 git rm "src/utils/webgl/ShaderDebugSystem.js"
 git rm "modules/orchestration/core/EventDebugger.js"
-git rm "modules/orchestration/core/EventValidator.js"
 
 # Commit suggestion:
 # git commit -m "chore: remove true orphans (HOT-DORS)"
