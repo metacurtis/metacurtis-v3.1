@@ -16,7 +16,7 @@ import DevPerformanceMonitor from '../dev/DevPerformanceMonitor';
 // Director-based imports
 import director from '../../theater/TheaterDirector.js';
 import OpeningSequence from '../theater/OpeningSequence.jsx';
-import BeatBus from '../../../src/modules/orchestration/core/BeatBus.js';
+import BeatBus from '../../../src/src/modules/orchestration/core/BeatBus.js';
 import { EVENTS } from '../../theater/events.js';
 
 console.log('🧬 LOADED: ConsciousnessTheater v3.0 - Director Integration');

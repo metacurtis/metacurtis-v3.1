@@ -9,7 +9,7 @@ const backupOnce = f => { const b=f+'.bak'; if (!ex(b) && ex(f)) fs.copyFileSync
 
 // 1) BeatBus: add getDebugInfo + busTap if missing
 (function(){
-  const F = 'src/src/modules/orchestration/core/BeatBus.js';
+  const F = 'src/src/src/modules/orchestration/core/BeatBus.js';
   if (!ex(F)) return;
   let s = rd(F), o = s;
   if (!/getDebugInfo\s*\(/.test(s)) {

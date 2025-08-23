@@ -6,7 +6,7 @@ import { decideDegrade } from './DegradePolicy.js';
 
   let BeatBus, EVENTS;
   try {
-    BeatBus = (await import('@/src/modules/orchestration/core/BeatBus.js')).default;
+    BeatBus = (await import('@/src/src/modules/orchestration/core/BeatBus.js')).default;
     EVENTS = (await import('@/theater/events.js')).EVENTS;
   } catch (e) {
     console.warn('Canon Guard: BeatBus/events not available yet', e);

@@ -1,7 +1,7 @@
 {
   "entry": "src/main.jsx",
   "patchedEntry": true,
-  "canonicalBusPath": "/src/modules/orchestration/core/BeatBus.js",
+  "canonicalBusPath": "/src/src/modules/orchestration/core/BeatBus.js",
   "created": [
     "src/dev/RenderProbe.js",
     "src/modules/state/_doctor/renderer_forwarder.js"

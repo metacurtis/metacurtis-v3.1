@@ -78,7 +78,7 @@ let changed=0;
 
 /* ---- 3) Ensure BeatBus.js exposes a DEV global + busTap ---- */
 (function ensureBusGlobal(){
-  const FILE='src/src/modules/orchestration/core/BeatBus.js';
+  const FILE='src/src/src/modules/orchestration/core/BeatBus.js';
   if (!ex(FILE)) return;
   backupOnce(FILE);
   let s = rd(FILE), o = s;
@@ -114,7 +114,7 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 
   // Ensure imports
   if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(s)){
-    s = `import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';\n` + s;
+    s = `import BeatBus from '@/src/src/modules/orchestration/core/BeatBus.js';\n` + s;
   }
   if (!/['"]@\/engine\/ConsciousnessEngine\.js['"]/.test(s)){
     s += `\nimport '@/engine/ConsciousnessEngine.js';\n`;

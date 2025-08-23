@@ -119,7 +119,7 @@
         },
         "src/canon/console/banner.js": {
           "imports": [
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": []
         },
@@ -127,7 +127,7 @@
           "imports": [],
           "importedBy": [
             "src/canon/guard/L2.js",
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ]
         },
         "src/canon/contracts/index.js": {
@@ -159,7 +159,7 @@
         "src/canon/guard/L2.js": {
           "imports": [
             "src/canon/contracts/events.js",
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": []
         },
@@ -228,7 +228,7 @@
         },
         "src/canon-guard/blueprintGuard.js": {
           "imports": [
-            "src/modules/orchestration/core/BeatBus.js",
+            "src/src/modules/orchestration/core/BeatBus.js",
             "src/theater/events.js"
           ],
           "importedBy": []
@@ -242,7 +242,7 @@
         "src/canon-guard/runtime/GuardRuntimeInject.js": {
           "imports": [
             "src/canon-guard/runtime/DegradePolicy.js",
-            "src/modules/orchestration/core/BeatBus.js",
+            "src/src/modules/orchestration/core/BeatBus.js",
             "src/theater/events.js"
           ],
           "importedBy": []
@@ -253,7 +253,7 @@
         },
         "src/components/consciousness/ConsciousnessTheater.jsx": {
           "imports": [
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": [
             "src/App.jsx"
@@ -277,7 +277,7 @@
         },
         "src/components/theater/OpeningSequence.jsx": {
           "imports": [
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": []
         },
@@ -333,7 +333,7 @@
           "imports": [
             "src/components/webgl/consciousness/PointSpriteAtlas.js",
             "src/config/canonical/canonicalAuthority.js",
-            "src/modules/orchestration/core/BeatBus.js",
+            "src/src/modules/orchestration/core/BeatBus.js",
             "src/theater/events.js"
           ],
           "importedBy": [
@@ -428,7 +428,7 @@
         "src/engine/ConsciousnessEngine.js": {
           "imports": [
             "src/utils/random.js",
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": [
             "src/App.jsx"
@@ -506,7 +506,7 @@
           ],
           "importedBy": []
         },
-        "src/modules/orchestration/core/BeatBus.js": {
+        "src/src/modules/orchestration/core/BeatBus.js": {
           "imports": [
             "src/canon/contracts/events.js"
           ],
@@ -527,7 +527,7 @@
         },
         "src/modules/orchestration/core/BeatBusAdapter.js": {
           "imports": [
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": []
         },
@@ -677,7 +677,7 @@
         },
         "src/theater/TheaterDirector.js": {
           "imports": [
-            "src/modules/orchestration/core/BeatBus.js",
+            "src/src/modules/orchestration/core/BeatBus.js",
             "src/theater/events.js"
           ],
           "importedBy": []
@@ -751,7 +751,7 @@
           "imports": [],
           "importedBy": []
         },
-        "modules/orchestration/core/BeatBus.js": {
+        "src/modules/orchestration/core/BeatBus.js": {
           "imports": [],
           "importedBy": [
             "modules/orchestration/core/EventDebugger.js",
@@ -767,7 +767,7 @@
         },
         "modules/orchestration/core/EventDebugger.js": {
           "imports": [
-            "modules/orchestration/core/BeatBus.js",
+            "src/modules/orchestration/core/BeatBus.js",
             "modules/orchestration/core/EventCatalog.js"
           ],
           "importedBy": []
@@ -775,7 +775,7 @@
         "modules/orchestration/core/EventValidator.js": {
           "imports": [
             "modules/orchestration/core/EventCatalog.js",
-            "modules/orchestration/core/BeatBus.js"
+            "src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": []
         },
@@ -836,8 +836,8 @@
             "modules/state/core/StateValidator.js",
             "modules/state/bridges/AtomicToBeatBus.js",
             "modules/state/bridges/StateDebugger.js",
-            "src/modules/orchestration/core/BeatBus.js",
-            "src/modules/orchestration/core/BeatBus.js"
+            "src/src/modules/orchestration/core/BeatBus.js",
+            "src/src/modules/orchestration/core/BeatBus.js"
           ],
           "importedBy": []
         }
@@ -853,8 +853,8 @@
           "src/components/webgl/WebGLBackground.jsx",
           "src/core/CentralEventClock.js",
           "src/engine/ConsciousnessEngine.js",
+          "src/src/modules/orchestration/core/BeatBus.js",
           "src/modules/orchestration/core/BeatBus.js",
-          "modules/orchestration/core/BeatBus.js",
           "modules/orchestration/core/EventCatalog.js",
           "modules/state/bridges/AtomicToBeatBus.js"
         ]
@@ -877,7 +877,7 @@
           "src/engine/ConsciousnessEngine.js",
           "src/engine/TierSystem.js",
           "src/hooks/useAdaptiveQuality.js",
-          "src/modules/orchestration/core/BeatBus.js",
+          "src/src/modules/orchestration/core/BeatBus.js",
           "src/modules/orchestration/core/BeatBusAdapter.js",
           "src/sections/Contact.jsx",
           "src/sections/Features.jsx",
@@ -887,7 +887,7 @@
           "src/stores/atoms/performanceAtom.js",
           "src/stores/atoms/qualityAtom.js",
           "src/stores/atoms/resourceAtom.js",
-          "modules/orchestration/core/BeatBus.js"
+          "src/modules/orchestration/core/BeatBus.js"
         ]
       },
       "singleMorphDriver": {
@@ -912,7 +912,7 @@
       "fps": 60,
       "hotspots": [
         {
-          "path": "src/modules/orchestration/core/BeatBus.js",
+          "path": "src/src/modules/orchestration/core/BeatBus.js",
           "count": 12
         },
         {

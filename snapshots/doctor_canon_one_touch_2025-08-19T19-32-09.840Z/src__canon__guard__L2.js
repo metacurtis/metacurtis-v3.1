@@ -1,6 +1,6 @@
 // __CANON_INSTALLED__
 import CANON_CONTRACTS from '@/canon/contracts/events.js';
-import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/src/modules/orchestration/core/BeatBus.js';
 
 class CanonGuardL2 {
   constructor(){

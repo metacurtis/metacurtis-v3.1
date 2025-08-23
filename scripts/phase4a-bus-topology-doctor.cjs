@@ -53,7 +53,7 @@ const findings = {
 };
 
 // Canonical bus path (your architecture decision)
-const CANONICAL_BUS = 'src/modules/orchestration/core/BeatBus.js';
+const CANONICAL_BUS = 'src/src/modules/orchestration/core/BeatBus.js';
 
 /**
  * Phase 1: Discovery - Find all bus-related files

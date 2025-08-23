@@ -3,7 +3,7 @@
 
 import { Canonical } from '@config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from "@/src/modules/orchestration/core/BeatBus.js";
+import BeatBus from "@/modules/orchestration/core/BeatBus.js";
 import { EVENTS } from '@theater/events.js';
 
 class ConsciousnessEngine {

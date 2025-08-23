@@ -9,8 +9,8 @@ Generated: 2025-08-23T00:31:54.991Z
   - src/components/webgl/WebGLBackground.jsx
   - src/core/CentralEventClock.js
   - src/engine/ConsciousnessEngine.js
+  - src/src/modules/orchestration/core/BeatBus.js
   - src/modules/orchestration/core/BeatBus.js
-  - modules/orchestration/core/BeatBus.js
   - modules/orchestration/core/EventCatalog.js
   - modules/state/bridges/AtomicToBeatBus.js
 - StateCore-only: FAIL 
@@ -29,7 +29,7 @@ Generated: 2025-08-23T00:31:54.991Z
   - src/engine/ConsciousnessEngine.js
   - src/engine/TierSystem.js
   - src/hooks/useAdaptiveQuality.js
-  - src/modules/orchestration/core/BeatBus.js
+  - src/src/modules/orchestration/core/BeatBus.js
   - src/modules/orchestration/core/BeatBusAdapter.js
   - src/sections/Contact.jsx
   - src/sections/Features.jsx
@@ -39,7 +39,7 @@ Generated: 2025-08-23T00:31:54.991Z
   - src/stores/atoms/performanceAtom.js
   - src/stores/atoms/qualityAtom.js
   - src/stores/atoms/resourceAtom.js
-  - modules/orchestration/core/BeatBus.js
+  - src/modules/orchestration/core/BeatBus.js
 - Single Morph Driver: FAIL 
   - src/canon/contracts/index.js
   - src/canon-guard/L1.js
@@ -52,7 +52,7 @@ Generated: 2025-08-23T00:31:54.991Z
 - Badge: GREEN
 - FPS: 60.0
 - Hotspots:
-  - src/modules/orchestration/core/BeatBus.js (imported by 12)
+  - src/src/modules/orchestration/core/BeatBus.js (imported by 12)
   - src/stores/atoms/createAtom.js (imported by 6)
 
 ## True Orphans (52)

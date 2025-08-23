@@ -1,5 +1,5 @@
 // __CANON_INSTALLED__
-import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/modules/orchestration/core/BeatBus.js';
 let heartbeatTimer;
 
 export function banner(){
@@ -7,7 +7,7 @@ export function banner(){
     const info = BeatBus.getDebugInfo();
     const tag = `Canon v1.0 · mode=${info.mode} · listeners=${Object.keys(info.listeners).length}`;
     console.log('%c🛡️ Canon active','color:#7ef;font-weight:bold;', tag);
-  } catch(e){}
+  } catch (_e) { /* noop */ }
 }
 
 export function heartbeat(periodMs = 45000){

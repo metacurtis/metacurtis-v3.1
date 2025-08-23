@@ -35,7 +35,7 @@ const files = [];
 /* ────────────────────────────────────────────────────────────────── */
 /* 1) BeatBus singleton                                               */
 /* ────────────────────────────────────────────────────────────────── */
-const BEATBUS = 'src/src/modules/orchestration/core/BeatBus.js';
+const BEATBUS = 'src/src/src/modules/orchestration/core/BeatBus.js';
 const BEATBUS_SRC = `// [CANON:BEATBUS]
 class BeatBus {
   constructor(){ this.listeners=new Map(); this.eventLog=[]; this.maxLogSize=100; this.debug=!!(import.meta?.env?.DEV); }
@@ -163,7 +163,7 @@ installOrNormalize(CONSOLE_L2, CONSOLE_L2_SRC);
 /* ────────────────────────────────────────────────────────────────── */
 const INIT = 'src/canon/init.js';
 const INIT_SRC = `// [CANON:INIT]
-import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/src/modules/orchestration/core/BeatBus.js';
 import { CanonContracts } from './contracts/index.js';
 import { CanonGuardL1 } from './guard/L1.js';
 import { CanonGuardL2 } from './guard/L2.js';

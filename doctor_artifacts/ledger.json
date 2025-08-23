@@ -1,7 +1,7 @@
 {
   "phase": "4b",
   "timestamp": "2025-08-21T17:58:24.929Z",
-  "canonicalBus": "src/modules/orchestration/core/BeatBus.js",
+  "canonicalBus": "src/src/modules/orchestration/core/BeatBus.js",
   "instanceCount": 1,
   "hasGlobalExport": true,
   "hasCanonCalls": true,

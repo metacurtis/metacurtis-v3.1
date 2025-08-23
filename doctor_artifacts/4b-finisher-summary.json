@@ -433,7 +433,7 @@
       "backup": "main.jsx.bak"
     },
     {
-      "file": "src/modules/orchestration/core/BeatBus.js",
+      "file": "src/src/modules/orchestration/core/BeatBus.js",
       "edits": 1,
       "written": true,
       "backup": "BeatBus.js.bak"

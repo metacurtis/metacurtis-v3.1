@@ -109,8 +109,8 @@ export default class BeatBus {
   let beatBusPath = findBeatBus();
   if (!beatBusPath) {
     // Create canonical stub
-    beatBusPath = path.join(SRC,'src/modules/orchestration/core/BeatBus.js');
-    if (ensureBeatBusAt(beatBusPath)) actions.push('created BeatBus stub at src/src/modules/orchestration/core/BeatBus.js');
+    beatBusPath = path.join(SRC,'src/src/modules/orchestration/core/BeatBus.js');
+    if (ensureBeatBusAt(beatBusPath)) actions.push('created BeatBus stub at src/src/src/modules/orchestration/core/BeatBus.js');
   }
 
   const alias = toAlias(beatBusPath);

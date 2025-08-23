@@ -1,5 +1,5 @@
 // __CANON_INSTALLED__
-import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/src/modules/orchestration/core/BeatBus.js';
 let heartbeatTimer;
 
 export function banner(){

@@ -513,7 +513,7 @@
       ]
     },
     {
-      "file": "src/modules/orchestration/core/BeatBus.js",
+      "file": "src/src/modules/orchestration/core/BeatBus.js",
       "listeners": [
         {
           "method": "on",
@@ -748,7 +748,7 @@
       ]
     },
     {
-      "file": "src/modules/orchestration/core/BeatBus.js",
+      "file": "src/src/modules/orchestration/core/BeatBus.js",
       "listeners": [
         {
           "method": "on",
@@ -900,7 +900,7 @@
       }
     ],
     [
-      "src/modules/orchestration/core/BeatBus.js",
+      "src/src/modules/orchestration/core/BeatBus.js",
       {
         "listeners": 2,
         "disposes": 2,

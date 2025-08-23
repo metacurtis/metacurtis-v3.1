@@ -51,32 +51,51 @@ function gitHead(){ return safeExec('git rev-parse HEAD') || ''; }
 function gitIsRepo(){ return !!safeExec('git rev-parse --is-inside-work-tree'); }
 
 function commitListSinceUntil(sinceISO, untilISO){
-  const fmtRec = '%H%x1f%ct%x1f%an%x1f%ae%x1f%s%x1e';
-  const raw = safeExec(`git log --since="${sinceISO}" --until="${untilISO}" --pretty=format:${fmtRec} --numstat`);
+  const hdr = '__CM__';
+  const cmd = 'git log --reverse --since="' + sinceISO + '" --until="' + untilISO + '" ' +
+              '--pretty=format:' + hdr + '%n%H%n%ct%n%an%n%ae%n%s --numstat';
+  const raw = safeExec(cmd);
   if(!raw) return [];
-  const recs = raw.split('\x1e').filter(Boolean);
-  const out=[];
-  for(const rec of recs){
-    const lines = rec.trim().split('\n');
-    if(lines.length===0) continue;
-    const header = lines[0].split('\x1f');
-    if(header.length<5) continue;
-    const [sha, ct, an, ae, subj] = header;
-    let added=0, deleted=0, files=[];
-    for(let i=1;i<lines.length;i++){
-      const l = lines[i].trim();
-      if(!l) continue;
-      const parts = l.split('\t');
-      if(parts.length<3) continue; // might be another header chunk
-      const a = parseInt(parts[0],10); const d=parseInt(parts[1],10);
-      if(!Number.isNaN(a)) added += a;
-      if(!Number.isNaN(d)) deleted += d;
-      files.push({ path:parts[2], added: Number.isNaN(a)?0:a, deleted: Number.isNaN(d)?0:d });
+
+  const lines = raw.split('\n');
+  const commits = [];
+  let cur = null;
+  let expect = 0; // next 5 header lines
+
+  for(const line of lines){
+    if(line === hdr){
+      if(cur) commits.push(cur);
+      cur = { sha:'', timestamp:0, authorName:'', authorEmail:'', subject:'', added:0, deleted:0, files:[] };
+      expect = 5;
+      continue;
     }
-    out.push({ sha, timestamp: Number(ct)*1000, authorName:an, authorEmail:ae, subject:subj, added, deleted, files });
+    if(expect > 0){
+      const idx = 5 - expect;
+      if(idx === 0) cur.sha = line.trim();
+      if(idx === 1) cur.timestamp = Number(line.trim())*1000;
+      if(idx === 2) cur.authorName = line;
+      if(idx === 3) cur.authorEmail = line;
+      if(idx === 4) cur.subject = line;
+      expect--;
+      continue;
+    }
+    if(!cur) continue;
+    // numstat: added<TAB>deleted<TAB>path
+    if(!line.trim()) continue;
+    const parts = line.split('\t');
+    if(parts.length === 3){
+      const a = parts[0] === '-' ? 0 : parseInt(parts[0],10);
+      const d = parts[1] === '-' ? 0 : parseInt(parts[1],10);
+      const p = parts[2];
+      if(!Number.isNaN(a)) cur.added += a;
+      if(!Number.isNaN(d)) cur.deleted += d;
+      cur.files.push({ path:p, added: Number.isNaN(a)?0:a, deleted: Number.isNaN(d)?0:d });
+    }
   }
-  return out.sort((a,b)=>a.timestamp-b.timestamp);
+  if(cur) commits.push(cur);
+  return commits;
 }
+
 
 function beaconsFrom(commits, snapshots){
   const ts = [];

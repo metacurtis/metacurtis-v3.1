@@ -22,7 +22,7 @@ const ART = path.join(ROOT, 'doctor_artifacts');
 if (!fs.existsSync(ART)) fs.mkdirSync(ART, { recursive: true });
 
 // Adjust only if your canonical bus path differs (ledger says this is correct)
-const CANONICAL_BUS_PATH = '/src/modules/orchestration/core/BeatBus.js';
+const CANONICAL_BUS_PATH = '/src/src/modules/orchestration/core/BeatBus.js';
 
 // --- helpers ---
 const ok = (...a) => console.log('✅', ...a);

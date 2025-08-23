@@ -277,7 +277,7 @@ console.log('=== /4r verify ===');`;
   const report = {
     entry: path.relative(ROOT, entry),
     patchedEntry: patched,
-    canonicalBusPath: '/src/modules/orchestration/core/BeatBus.js',
+    canonicalBusPath: '/src/src/modules/orchestration/core/BeatBus.js',
     created: [
       fs.existsSync(PROBE_PATH) && path.relative(ROOT, PROBE_PATH),
       fs.existsSync(FORWARDER_PATH) && path.relative(ROOT, FORWARDER_PATH),

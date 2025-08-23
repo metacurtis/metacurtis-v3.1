@@ -10,7 +10,7 @@ if (window.BeatBus) {
   console.log('  Instance location:', window.__BEATBUS_INSTANCE || 'unknown');
   
   // Test imports match global
-  import('src/modules/orchestration/core/BeatBus.js').then(module => {
+  import('src/src/modules/orchestration/core/BeatBus.js').then(module => {
     const imported = module.default;
     console.log('✓ Import matches global:', imported === window.BeatBus);
   }).catch(e => {

@@ -3727,7 +3727,7 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
 
 export { Canonical };
 export default Canonical;
-// src/modules/orchestration/core/BeatBus.js
+// src/src/modules/orchestration/core/BeatBus.js
 // Central event system for the consciousness theater
 
 class BeatBus {

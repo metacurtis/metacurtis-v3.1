@@ -1502,7 +1502,7 @@ if (typeof window !== 'undefined') {
 export default engine;
 
 
-====================[ FILE: src/src/modules/orchestration/core/BeatBus.js ]====================
+====================[ FILE: src/src/src/modules/orchestration/core/BeatBus.js ]====================
 
 // Auto-generated BeatBus stub (replace with real implementation)
 export default class BeatBus {

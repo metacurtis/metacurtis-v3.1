@@ -36,12 +36,13 @@
     "canon:pilot:verify": "node -e \"['${baseDir}/agent/policy.js','${baseDir}/agent/pilot.js','${baseDir}/runtime/bridge-guard.js','${baseDir}/runtime/pilot-ui-mini.js'].forEach(f=>console.log((require('fs').existsSync(f)?'✓':'✗'), f))\"",
     "guard:finish": "node scripts/finish-guard-console.cjs",
     "console:l2:finish": "node scripts/finish-guard-console.cjs",
-    "hot-dors": "node scripts/hot-dors.cjs",
+    "hot-dors": "node scripts/hot-dors.v2.cjs",
     "sprint:start": "node scripts/sprintctl.cjs start",
     "sprint:snapshot": "node scripts/sprintctl.cjs snapshot",
     "sprint:stop": "node scripts/sprintctl.cjs stop",
     "sprint:status": "node scripts/sprintctl.cjs status",
-    "sprint:note": "node scripts/sprintctl.cjs note"
+    "sprint:note": "node scripts/sprintctl.cjs note",
+    "doctor:render": "node scripts/render-doctor.v2.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -78,11 +79,11 @@
     "vitest": "^1.4.0"
   },
   "lint-staged": {
-    "*.{js,jsx}": [
-      "eslint --fix",
+    "*.{css,md,json}": [
       "prettier --write"
     ],
-    "*.{css,md,json}": [
+    "{src,modules,scripts}/**/*.{js,jsx,ts,tsx,cjs,mjs}": [
+      "eslint --fix",
       "prettier --write"
     ]
   }

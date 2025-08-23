@@ -1,5 +1,5 @@
 // [CANON:INIT]
-import BeatBus from '@/src/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/src/src/modules/orchestration/core/BeatBus.js';
 import { CanonContracts } from './contracts/index.js';
 import { CanonGuardL1 } from './guard/L1.js';
 import { CanonGuardL2 } from './guard/L2.js';

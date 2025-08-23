@@ -1,0 +1,1803 @@
+{
+  "id": "S-20250822-1959",
+  "label": "",
+  "branch": "backup-20250820-working",
+  "start": "2025-08-23T00:59:23.230Z",
+  "stop": "2025-08-23T01:12:29.512Z",
+  "user": {
+    "name": "github-actions[bot]",
+    "email": "41898282+github-actions[bot]@users.noreply.github.com"
+  },
+  "startHead": "97299333969ffba160d322d4c12be75d0a765752",
+  "dorsStart": {
+    "timestamp": "2025-08-23T00:59:23.332Z",
+    "version": "1.0.0",
+    "stats": {
+      "filesAnalyzed": 111,
+      "orphans": 52,
+      "duplicates": 0,
+      "specialEntrypoints": 6
+    },
+    "sentinels": {
+      "aliases": {
+        "aliases": {
+          "@": "src"
+        },
+        "specialEntrypoints": [
+          "src/App.jsx",
+          "src/canon/contracts/index.js",
+          "src/core/index.js",
+          "src/main.jsx",
+          "src/stores/atoms/index.js",
+          "modules/state/index.js"
+        ],
+        "trueOrphans": [
+          "src/__tests__/smoke.test.js",
+          "src/bootstrap/wireSSTv3.js",
+          "src/canon/console/L2.js",
+          "src/canon/console/banner.js",
+          "src/canon/doctor/base.js",
+          "src/canon/guard/L1.js",
+          "src/canon/guard/L2.js",
+          "src/canon/init-amplified.js",
+          "src/canon/init.js",
+          "src/canon-guard/blueprintGuard.js",
+          "src/canon-guard/runtime/GuardRuntimeInject.js",
+          "src/components/common/ErrorBoundary.jsx",
+          "src/components/theater/OpeningSequence.jsx",
+          "src/components/ui/AdvancedContactPortal.jsx",
+          "src/components/ui/CanvasErrorBoundary.jsx",
+          "src/components/ui/Footer.jsx",
+          "src/components/ui/Layout.jsx",
+          "src/components/ui/NarrativeUIControls.jsx",
+          "src/components/ui/ResourceMonitor.jsx",
+          "src/components/ui/narrative/MemoryFragments.jsx",
+          "src/components/ui/narrative/StageNavigation.jsx",
+          "src/components/webgl/WebGLCanvas.jsx",
+          "src/components/webgl/consciousness/ConsciousnessPatterns.js",
+          "src/config/canonical/contaminationScan.js",
+          "src/console-shim.js",
+          "src/dev/RenderApplyShim.js",
+          "src/dev/renderHealthcheck.js",
+          "src/engine/TierSystem.js",
+          "src/hooks/atoms/useInteractionStore.js",
+          "src/hooks/atoms/useNarrativeStore.js",
+          "src/hooks/atoms/usePerformanceStore.js",
+          "src/hooks/atoms/useResourceStore.js",
+          "src/hooks/useAdaptiveQuality.js",
+          "src/hooks/useIdle.js",
+          "src/hooks/useMemoryFragments.js",
+          "src/hooks/useResourceTracker.js",
+          "src/modules/orchestration/core/BeatBusAdapter.js",
+          "src/runtime/materialFactory.js",
+          "src/sections/About.jsx",
+          "src/sections/Contact.jsx",
+          "src/sections/Features.jsx",
+          "src/stores/performanceStore.js",
+          "src/theater/TheaterDirector.js",
+          "src/utils/featureFlags.js",
+          "src/utils/performance/DeviceCapabilities.js",
+          "src/utils/performance/PerformanceMetrics.js",
+          "src/utils/performance/ResourceMetrics.js",
+          "src/utils/shaderUtils.js",
+          "src/utils/webgl/FrustumAwareParticleGenerator.js",
+          "src/utils/webgl/ShaderDebugSystem.js",
+          "modules/orchestration/core/EventDebugger.js",
+          "modules/orchestration/core/EventValidator.js"
+        ],
+        "importGraph": {
+          "src/App.jsx": {
+            "imports": [
+              "src/components/consciousness/ConsciousnessTheater.jsx",
+              "src/stores/atoms/clockAtom.js",
+              "src/engine/ConsciousnessEngine.js"
+            ],
+            "importedBy": [
+              "src/main.jsx"
+            ]
+          },
+          "src/__tests__/smoke.test.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/bootstrap/wireSSTv3.js": {
+            "imports": [
+              "src/engine/NarrativeController.js",
+              "src/engine/MemoryFragmentController.js",
+              "src/stores/atoms/narrativeAtom.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/boundary.js": {
+            "imports": [
+              "src/canon/contracts/registry.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon/console/L1.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/console/L2.js"
+            ]
+          },
+          "src/canon/console/L2.js": {
+            "imports": [
+              "src/canon/console/L1.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/console/banner.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/contracts/events.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/guard/L2.js",
+              "src/modules/orchestration/core/BeatBus.js"
+            ]
+          },
+          "src/canon/contracts/index.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/contracts/registry.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/boundary.js",
+              "src/canon/init-amplified.js",
+              "src/canon/tests/contracts.test.js"
+            ]
+          },
+          "src/canon/deprecation.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon/doctor/base.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/guard/L1.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/guard/L2.js": {
+            "imports": [
+              "src/canon/contracts/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/hud.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon/init-amplified.js": {
+            "imports": [
+              "src/canon/contracts/registry.js",
+              "src/canon/boundary.js",
+              "src/canon/hud.js",
+              "src/canon/tests/contracts.test.js",
+              "src/canon/deprecation.js",
+              "src/canon-guard/L2.js",
+              "src/canon-console/L2.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/init.js": {
+            "imports": [
+              "src/canon-guard/L2.js",
+              "src/canon-console/L2.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/tests/contracts.test.js": {
+            "imports": [
+              "src/canon/contracts/registry.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon-console/L1.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-console/L2.js"
+            ]
+          },
+          "src/canon-console/L2.js": {
+            "imports": [
+              "src/canon-console/L1.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js",
+              "src/canon/init.js"
+            ]
+          },
+          "src/canon-guard/L1.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-guard/L2.js"
+            ]
+          },
+          "src/canon-guard/L2.js": {
+            "imports": [
+              "src/canon-guard/L1.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js",
+              "src/canon/init.js"
+            ]
+          },
+          "src/canon-guard/blueprintGuard.js": {
+            "imports": [
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon-guard/runtime/DegradePolicy.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-guard/runtime/GuardRuntimeInject.js"
+            ]
+          },
+          "src/canon-guard/runtime/GuardRuntimeInject.js": {
+            "imports": [
+              "src/canon-guard/runtime/DegradePolicy.js",
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/common/ErrorBoundary.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/consciousness/ConsciousnessTheater.jsx": {
+            "imports": [],
+            "importedBy": [
+              "src/App.jsx"
+            ]
+          },
+          "src/components/dev/DebugExpose.jsx": {
+            "imports": [],
+            "importedBy": [
+              "src/components/webgl/WebGLCanvas.jsx"
+            ]
+          },
+          "src/components/dev/DevPerformanceMonitor.jsx": {
+            "imports": [
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/clockAtom.js",
+              "src/stores/atoms/stageAtom.js"
+            ],
+            "importedBy": [
+              "src/components/webgl/WebGLCanvas.jsx"
+            ]
+          },
+          "src/components/theater/OpeningSequence.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/AdvancedContactPortal.jsx": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/ui/CanvasErrorBoundary.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/Footer.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/Layout.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/NarrativeUIControls.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/ResourceMonitor.jsx": {
+            "imports": [
+              "src/stores/resourceStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/ui/Typewriter.jsx": {
+            "imports": [
+              "src/stores/useInteractionStore.js"
+            ],
+            "importedBy": [
+              "src/sections/About.jsx"
+            ]
+          },
+          "src/components/ui/narrative/MemoryFragments.jsx": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/ui/narrative/StageNavigation.jsx": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/webgl/WebGLBackground.jsx": {
+            "imports": [
+              "src/components/webgl/consciousness/PointSpriteAtlas.js",
+              "src/config/canonical/canonicalAuthority.js",
+              "src/theater/events.js"
+            ],
+            "importedBy": [
+              "src/components/webgl/WebGLCanvas.jsx"
+            ]
+          },
+          "src/components/webgl/WebGLCanvas.jsx": {
+            "imports": [
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "src/components/dev/DebugExpose.jsx",
+              "src/components/webgl/WebGLBackground.jsx"
+            ],
+            "importedBy": []
+          },
+          "src/components/webgl/consciousness/ConsciousnessPatterns.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/webgl/consciousness/PointSpriteAtlas.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/webgl/WebGLBackground.jsx"
+            ]
+          },
+          "src/config/canonical/canonicalAuthority.js": {
+            "imports": [
+              "src/config/sst3/sst-v3.0-config.js",
+              "src/config/sst3/tier-behaviors.js",
+              "src/config/sst3/narrative-dialogue.js",
+              "src/config/sst3/memory-fragments.js"
+            ],
+            "importedBy": [
+              "src/components/webgl/WebGLBackground.jsx",
+              "src/stores/atoms/qualityAtom.js"
+            ]
+          },
+          "src/config/canonical/contaminationScan.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/config/sst3/memory-fragments.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js"
+            ]
+          },
+          "src/config/sst3/narrative-dialogue.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js"
+            ]
+          },
+          "src/config/sst3/sst-v3.0-config.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js",
+              "src/engine/TierSystem.js",
+              "modules/state/core/StateValidator.js"
+            ]
+          },
+          "src/config/sst3/tier-behaviors.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js",
+              "src/engine/TierSystem.js"
+            ]
+          },
+          "src/console-shim.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/core/CentralEventClock.js": {
+            "imports": [],
+            "importedBy": [
+              "src/hooks/useCentralClock.js"
+            ]
+          },
+          "src/core/index.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/dev/RenderApplyShim.js": {
+            "imports": [
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/dev/renderHealthcheck.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/engine/ConsciousnessEngine.js": {
+            "imports": [
+              "src/utils/random.js"
+            ],
+            "importedBy": [
+              "src/App.jsx"
+            ]
+          },
+          "src/engine/MemoryFragmentController.js": {
+            "imports": [],
+            "importedBy": [
+              "src/bootstrap/wireSSTv3.js"
+            ]
+          },
+          "src/engine/NarrativeController.js": {
+            "imports": [],
+            "importedBy": [
+              "src/bootstrap/wireSSTv3.js"
+            ]
+          },
+          "src/engine/TierSystem.js": {
+            "imports": [
+              "src/config/sst3/sst-v3.0-config.js",
+              "src/config/sst3/tier-behaviors.js"
+            ],
+            "importedBy": []
+          },
+          "src/hooks/atoms/useInteractionStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/atoms/useNarrativeStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/atoms/usePerformanceStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/atoms/useResourceStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/useAdaptiveQuality.js": {
+            "imports": [
+              "src/hooks/useCentralClock.js",
+              "src/utils/performance/AdaptiveQualitySystem.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/clockAtom.js"
+            ],
+            "importedBy": []
+          },
+          "src/hooks/useCentralClock.js": {
+            "imports": [
+              "src/core/CentralEventClock.js"
+            ],
+            "importedBy": [
+              "src/hooks/useAdaptiveQuality.js"
+            ]
+          },
+          "src/hooks/useIdle.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/useMemoryFragments.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/useResourceTracker.js": {
+            "imports": [
+              "src/utils/webgl/ResourceTracker.js"
+            ],
+            "importedBy": []
+          },
+          "src/main.jsx": {
+            "imports": [
+              "src/App.jsx"
+            ],
+            "importedBy": []
+          },
+          "src/modules/orchestration/core/BeatBus.js": {
+            "imports": [
+              "src/canon/contracts/events.js"
+            ],
+            "importedBy": [
+              "src/modules/orchestration/core/BeatBusAdapter.js",
+              "modules/state/index.js",
+              "modules/state/index.js"
+            ]
+          },
+          "src/modules/orchestration/core/BeatBusAdapter.js": {
+            "imports": [
+              "src/modules/orchestration/core/BeatBus.js"
+            ],
+            "importedBy": []
+          },
+          "src/runtime/gpuProfile.js": {
+            "imports": [],
+            "importedBy": [
+              "src/runtime/materialFactory.js"
+            ]
+          },
+          "src/runtime/materialFactory.js": {
+            "imports": [
+              "src/runtime/gpuProfile.js"
+            ],
+            "importedBy": []
+          },
+          "src/sections/About.jsx": {
+            "imports": [
+              "src/components/ui/Typewriter.jsx"
+            ],
+            "importedBy": []
+          },
+          "src/sections/Contact.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/sections/Features.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/stores/atoms/clockAtom.js": {
+            "imports": [],
+            "importedBy": [
+              "src/App.jsx",
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "src/hooks/useAdaptiveQuality.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/createAtom.js": {
+            "imports": [],
+            "importedBy": [
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/resourceAtom.js",
+              "src/stores/atoms/stageAtom.js"
+            ]
+          },
+          "src/stores/atoms/index.js": {
+            "imports": [
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/resourceAtom.js"
+            ],
+            "importedBy": []
+          },
+          "src/stores/atoms/interactionAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/narrativeAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/bootstrap/wireSSTv3.js",
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/performanceAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/qualityAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js",
+              "src/config/canonical/canonicalAuthority.js"
+            ],
+            "importedBy": [
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "src/hooks/useAdaptiveQuality.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/resourceAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/stageAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/narrativeStore.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/ui/AdvancedContactPortal.jsx",
+              "src/components/ui/narrative/MemoryFragments.jsx",
+              "src/components/ui/narrative/StageNavigation.jsx",
+              "src/utils/featureFlags.js"
+            ]
+          },
+          "src/stores/performanceStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/stores/resourceStore.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/ui/ResourceMonitor.jsx"
+            ]
+          },
+          "src/stores/useInteractionStore.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/ui/Typewriter.jsx"
+            ]
+          },
+          "src/theater/TheaterDirector.js": {
+            "imports": [
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/theater/events.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-guard/blueprintGuard.js",
+              "src/canon-guard/runtime/GuardRuntimeInject.js",
+              "src/components/webgl/WebGLBackground.jsx",
+              "src/dev/RenderApplyShim.js",
+              "src/theater/TheaterDirector.js"
+            ]
+          },
+          "src/utils/featureFlags.js": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/utils/performance/AdaptiveQualitySystem.js": {
+            "imports": [],
+            "importedBy": [
+              "src/hooks/useAdaptiveQuality.js"
+            ]
+          },
+          "src/utils/performance/DeviceCapabilities.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/performance/PerformanceMetrics.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/performance/ResourceMetrics.js": {
+            "imports": [
+              "src/utils/webgl/ResourceRegistry.js"
+            ],
+            "importedBy": []
+          },
+          "src/utils/random.js": {
+            "imports": [
+              "src/utils/random.js"
+            ],
+            "importedBy": [
+              "src/engine/ConsciousnessEngine.js",
+              "src/utils/random.js"
+            ]
+          },
+          "src/utils/shaderUtils.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/webgl/FrustumAwareParticleGenerator.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/webgl/ResourceRegistry.js": {
+            "imports": [],
+            "importedBy": [
+              "src/utils/performance/ResourceMetrics.js"
+            ]
+          },
+          "src/utils/webgl/ResourceTracker.js": {
+            "imports": [],
+            "importedBy": [
+              "src/hooks/useResourceTracker.js"
+            ]
+          },
+          "src/utils/webgl/ShaderDebugSystem.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "modules/orchestration/core/BeatBus.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/orchestration/core/EventDebugger.js",
+              "modules/orchestration/core/EventValidator.js"
+            ]
+          },
+          "modules/orchestration/core/EventCatalog.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/orchestration/core/EventDebugger.js",
+              "modules/orchestration/core/EventValidator.js"
+            ]
+          },
+          "modules/orchestration/core/EventDebugger.js": {
+            "imports": [
+              "modules/orchestration/core/BeatBus.js",
+              "modules/orchestration/core/EventCatalog.js"
+            ],
+            "importedBy": []
+          },
+          "modules/orchestration/core/EventValidator.js": {
+            "imports": [
+              "modules/orchestration/core/EventCatalog.js",
+              "modules/orchestration/core/BeatBus.js"
+            ],
+            "importedBy": []
+          },
+          "modules/state/bridges/AtomicToBeatBus.js": {
+            "imports": [
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/resourceAtom.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/stageAtom.js",
+              "src/stores/atoms/clockAtom.js"
+            ],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/bridges/StateDebugger.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/core/StateController.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/core/StateReader.js": {
+            "imports": [
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/resourceAtom.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/stageAtom.js",
+              "src/stores/atoms/clockAtom.js"
+            ],
+            "importedBy": [
+              "modules/state/core/StateValidator.js",
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/core/StateValidator.js": {
+            "imports": [
+              "modules/state/core/StateReader.js",
+              "src/config/sst3/sst-v3.0-config.js"
+            ],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/index.js": {
+            "imports": [
+              "modules/state/core/StateController.js",
+              "modules/state/core/StateReader.js",
+              "modules/state/core/StateValidator.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/bridges/StateDebugger.js",
+              "src/modules/orchestration/core/BeatBus.js",
+              "src/modules/orchestration/core/BeatBus.js"
+            ],
+            "importedBy": []
+          }
+        }
+      },
+      "invariants": {
+        "singleBus": {
+          "pass": false,
+          "violations": [
+            "src/canon/boundary.js",
+            "src/canon-guard/L2.js",
+            "src/components/consciousness/ConsciousnessTheater.jsx",
+            "src/components/webgl/WebGLBackground.jsx",
+            "src/core/CentralEventClock.js",
+            "src/engine/ConsciousnessEngine.js",
+            "src/modules/orchestration/core/BeatBus.js",
+            "modules/orchestration/core/BeatBus.js",
+            "modules/orchestration/core/EventCatalog.js",
+            "modules/state/bridges/AtomicToBeatBus.js"
+          ]
+        },
+        "stateCoreOnly": {
+          "pass": false,
+          "violations": [
+            "src/components/common/ErrorBoundary.jsx",
+            "src/components/ui/CanvasErrorBoundary.jsx",
+            "src/hooks/useAdaptiveQuality.js"
+          ]
+        },
+        "singleMorphDriver": {
+          "pass": false,
+          "violations": [
+            "src/canon/contracts/index.js",
+            "src/canon-guard/L1.js",
+            "src/components/consciousness/ConsciousnessTheater.jsx",
+            "src/components/webgl/WebGLBackground.jsx",
+            "src/hooks/atoms/useNarrativeStore.js",
+            "src/stores/atoms/narrativeAtom.js"
+          ]
+        }
+      },
+      "drift": {
+        "orphans": 0,
+        "duplicates": 0,
+        "layers": {}
+      },
+      "performance": {
+        "badge": "green",
+        "fps": 60,
+        "hotspots": [
+          {
+            "path": "src/stores/atoms/createAtom.js",
+            "count": 6
+          }
+        ]
+      }
+    }
+  },
+  "dorsStop": {
+    "timestamp": "2025-08-23T01:12:29.559Z",
+    "version": "1.0.0",
+    "stats": {
+      "filesAnalyzed": 110,
+      "orphans": 52,
+      "duplicates": 0,
+      "specialEntrypoints": 6
+    },
+    "sentinels": {
+      "aliases": {
+        "aliases": {
+          "@": "src"
+        },
+        "specialEntrypoints": [
+          "src/App.jsx",
+          "src/canon/contracts/index.js",
+          "src/core/index.js",
+          "src/main.jsx",
+          "src/stores/atoms/index.js",
+          "modules/state/index.js"
+        ],
+        "trueOrphans": [
+          "src/__tests__/smoke.test.js",
+          "src/bootstrap/wireSSTv3.js",
+          "src/canon/console/L2.js",
+          "src/canon/console/banner.js",
+          "src/canon/doctor/base.js",
+          "src/canon/guard/L1.js",
+          "src/canon/guard/L2.js",
+          "src/canon/init-amplified.js",
+          "src/canon/init.js",
+          "src/canon-guard/blueprintGuard.js",
+          "src/canon-guard/runtime/GuardRuntimeInject.js",
+          "src/components/common/ErrorBoundary.jsx",
+          "src/components/theater/OpeningSequence.jsx",
+          "src/components/ui/AdvancedContactPortal.jsx",
+          "src/components/ui/CanvasErrorBoundary.jsx",
+          "src/components/ui/Footer.jsx",
+          "src/components/ui/Layout.jsx",
+          "src/components/ui/NarrativeUIControls.jsx",
+          "src/components/ui/ResourceMonitor.jsx",
+          "src/components/ui/narrative/MemoryFragments.jsx",
+          "src/components/ui/narrative/StageNavigation.jsx",
+          "src/components/webgl/WebGLCanvas.jsx",
+          "src/components/webgl/consciousness/ConsciousnessPatterns.js",
+          "src/config/canonical/contaminationScan.js",
+          "src/console-shim.js",
+          "src/dev/RenderApplyShim.js",
+          "src/dev/renderHealthcheck.js",
+          "src/engine/TierSystem.js",
+          "src/hooks/atoms/useInteractionStore.js",
+          "src/hooks/atoms/useNarrativeStore.js",
+          "src/hooks/atoms/usePerformanceStore.js",
+          "src/hooks/atoms/useResourceStore.js",
+          "src/hooks/useAdaptiveQuality.js",
+          "src/hooks/useIdle.js",
+          "src/hooks/useMemoryFragments.js",
+          "src/hooks/useResourceTracker.js",
+          "src/modules/orchestration/core/BeatBusAdapter.js",
+          "src/runtime/materialFactory.js",
+          "src/sections/About.jsx",
+          "src/sections/Contact.jsx",
+          "src/sections/Features.jsx",
+          "src/stores/performanceStore.js",
+          "src/theater/TheaterDirector.js",
+          "src/utils/featureFlags.js",
+          "src/utils/performance/DeviceCapabilities.js",
+          "src/utils/performance/PerformanceMetrics.js",
+          "src/utils/performance/ResourceMetrics.js",
+          "src/utils/shaderUtils.js",
+          "src/utils/webgl/FrustumAwareParticleGenerator.js",
+          "src/utils/webgl/ShaderDebugSystem.js",
+          "modules/orchestration/core/EventDebugger.js",
+          "modules/orchestration/core/EventValidator.js"
+        ],
+        "importGraph": {
+          "src/App.jsx": {
+            "imports": [
+              "src/components/consciousness/ConsciousnessTheater.jsx",
+              "src/stores/atoms/clockAtom.js",
+              "src/engine/ConsciousnessEngine.js"
+            ],
+            "importedBy": [
+              "src/main.jsx"
+            ]
+          },
+          "src/__tests__/smoke.test.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/bootstrap/wireSSTv3.js": {
+            "imports": [
+              "src/engine/NarrativeController.js",
+              "src/engine/MemoryFragmentController.js",
+              "src/stores/atoms/narrativeAtom.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/boundary.js": {
+            "imports": [
+              "src/canon/contracts/registry.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon/console/L1.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/console/L2.js"
+            ]
+          },
+          "src/canon/console/L2.js": {
+            "imports": [
+              "src/canon/console/L1.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/console/banner.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/contracts/events.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/guard/L2.js",
+              "src/modules/orchestration/core/BeatBus.js"
+            ]
+          },
+          "src/canon/contracts/index.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/contracts/registry.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/boundary.js",
+              "src/canon/init-amplified.js",
+              "src/canon/tests/contracts.test.js"
+            ]
+          },
+          "src/canon/deprecation.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon/doctor/base.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/guard/L1.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/canon/guard/L2.js": {
+            "imports": [
+              "src/canon/contracts/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/hud.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon/init-amplified.js": {
+            "imports": [
+              "src/canon/contracts/registry.js",
+              "src/canon/boundary.js",
+              "src/canon/hud.js",
+              "src/canon/tests/contracts.test.js",
+              "src/canon/deprecation.js",
+              "src/canon-guard/L2.js",
+              "src/canon-console/L2.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/init.js": {
+            "imports": [
+              "src/canon-guard/L2.js",
+              "src/canon-console/L2.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon/tests/contracts.test.js": {
+            "imports": [
+              "src/canon/contracts/registry.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js"
+            ]
+          },
+          "src/canon-console/L1.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-console/L2.js"
+            ]
+          },
+          "src/canon-console/L2.js": {
+            "imports": [
+              "src/canon-console/L1.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js",
+              "src/canon/init.js"
+            ]
+          },
+          "src/canon-guard/L1.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-guard/L2.js"
+            ]
+          },
+          "src/canon-guard/L2.js": {
+            "imports": [
+              "src/canon-guard/L1.js"
+            ],
+            "importedBy": [
+              "src/canon/init-amplified.js",
+              "src/canon/init.js"
+            ]
+          },
+          "src/canon-guard/blueprintGuard.js": {
+            "imports": [
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/canon-guard/runtime/DegradePolicy.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-guard/runtime/GuardRuntimeInject.js"
+            ]
+          },
+          "src/canon-guard/runtime/GuardRuntimeInject.js": {
+            "imports": [
+              "src/canon-guard/runtime/DegradePolicy.js",
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/common/ErrorBoundary.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/consciousness/ConsciousnessTheater.jsx": {
+            "imports": [],
+            "importedBy": [
+              "src/App.jsx"
+            ]
+          },
+          "src/components/dev/DebugExpose.jsx": {
+            "imports": [],
+            "importedBy": [
+              "src/components/webgl/WebGLCanvas.jsx"
+            ]
+          },
+          "src/components/dev/DevPerformanceMonitor.jsx": {
+            "imports": [
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/clockAtom.js",
+              "src/stores/atoms/stageAtom.js"
+            ],
+            "importedBy": [
+              "src/components/webgl/WebGLCanvas.jsx"
+            ]
+          },
+          "src/components/theater/OpeningSequence.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/AdvancedContactPortal.jsx": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/ui/CanvasErrorBoundary.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/Footer.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/Layout.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/NarrativeUIControls.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/ui/ResourceMonitor.jsx": {
+            "imports": [
+              "src/stores/resourceStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/ui/Typewriter.jsx": {
+            "imports": [
+              "src/stores/useInteractionStore.js"
+            ],
+            "importedBy": [
+              "src/sections/About.jsx"
+            ]
+          },
+          "src/components/ui/narrative/MemoryFragments.jsx": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/ui/narrative/StageNavigation.jsx": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/components/webgl/WebGLBackground.jsx": {
+            "imports": [
+              "src/components/webgl/consciousness/PointSpriteAtlas.js",
+              "src/config/canonical/canonicalAuthority.js",
+              "src/theater/events.js"
+            ],
+            "importedBy": [
+              "src/components/webgl/WebGLCanvas.jsx"
+            ]
+          },
+          "src/components/webgl/WebGLCanvas.jsx": {
+            "imports": [
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "src/components/dev/DebugExpose.jsx",
+              "src/components/webgl/WebGLBackground.jsx"
+            ],
+            "importedBy": []
+          },
+          "src/components/webgl/consciousness/ConsciousnessPatterns.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/components/webgl/consciousness/PointSpriteAtlas.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/webgl/WebGLBackground.jsx"
+            ]
+          },
+          "src/config/canonical/canonicalAuthority.js": {
+            "imports": [
+              "src/config/sst3/sst-v3.0-config.js",
+              "src/config/sst3/tier-behaviors.js",
+              "src/config/sst3/narrative-dialogue.js",
+              "src/config/sst3/memory-fragments.js"
+            ],
+            "importedBy": [
+              "src/components/webgl/WebGLBackground.jsx",
+              "src/stores/atoms/qualityAtom.js"
+            ]
+          },
+          "src/config/canonical/contaminationScan.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/config/sst3/memory-fragments.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js"
+            ]
+          },
+          "src/config/sst3/narrative-dialogue.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js"
+            ]
+          },
+          "src/config/sst3/sst-v3.0-config.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js",
+              "src/engine/TierSystem.js",
+              "modules/state/core/StateValidator.js"
+            ]
+          },
+          "src/config/sst3/tier-behaviors.js": {
+            "imports": [],
+            "importedBy": [
+              "src/config/canonical/canonicalAuthority.js",
+              "src/engine/TierSystem.js"
+            ]
+          },
+          "src/console-shim.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/core/CentralEventClock.js": {
+            "imports": [],
+            "importedBy": [
+              "src/hooks/useCentralClock.js"
+            ]
+          },
+          "src/core/index.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/dev/RenderApplyShim.js": {
+            "imports": [
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/dev/renderHealthcheck.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/engine/ConsciousnessEngine.js": {
+            "imports": [
+              "src/utils/random.js"
+            ],
+            "importedBy": [
+              "src/App.jsx"
+            ]
+          },
+          "src/engine/MemoryFragmentController.js": {
+            "imports": [],
+            "importedBy": [
+              "src/bootstrap/wireSSTv3.js"
+            ]
+          },
+          "src/engine/NarrativeController.js": {
+            "imports": [],
+            "importedBy": [
+              "src/bootstrap/wireSSTv3.js"
+            ]
+          },
+          "src/engine/TierSystem.js": {
+            "imports": [
+              "src/config/sst3/sst-v3.0-config.js",
+              "src/config/sst3/tier-behaviors.js"
+            ],
+            "importedBy": []
+          },
+          "src/hooks/atoms/useInteractionStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/atoms/useNarrativeStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/atoms/usePerformanceStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/atoms/useResourceStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/useAdaptiveQuality.js": {
+            "imports": [
+              "src/hooks/useCentralClock.js",
+              "src/utils/performance/AdaptiveQualitySystem.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/clockAtom.js"
+            ],
+            "importedBy": []
+          },
+          "src/hooks/useCentralClock.js": {
+            "imports": [
+              "src/core/CentralEventClock.js"
+            ],
+            "importedBy": [
+              "src/hooks/useAdaptiveQuality.js"
+            ]
+          },
+          "src/hooks/useIdle.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/useMemoryFragments.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/hooks/useResourceTracker.js": {
+            "imports": [
+              "src/utils/webgl/ResourceTracker.js"
+            ],
+            "importedBy": []
+          },
+          "src/main.jsx": {
+            "imports": [
+              "src/App.jsx"
+            ],
+            "importedBy": []
+          },
+          "src/modules/orchestration/core/BeatBus.js": {
+            "imports": [
+              "src/canon/contracts/events.js"
+            ],
+            "importedBy": [
+              "src/modules/orchestration/core/BeatBusAdapter.js",
+              "modules/state/index.js",
+              "modules/state/index.js"
+            ]
+          },
+          "src/modules/orchestration/core/BeatBusAdapter.js": {
+            "imports": [
+              "src/modules/orchestration/core/BeatBus.js"
+            ],
+            "importedBy": []
+          },
+          "src/runtime/gpuProfile.js": {
+            "imports": [],
+            "importedBy": [
+              "src/runtime/materialFactory.js"
+            ]
+          },
+          "src/runtime/materialFactory.js": {
+            "imports": [
+              "src/runtime/gpuProfile.js"
+            ],
+            "importedBy": []
+          },
+          "src/sections/About.jsx": {
+            "imports": [
+              "src/components/ui/Typewriter.jsx"
+            ],
+            "importedBy": []
+          },
+          "src/sections/Contact.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/sections/Features.jsx": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/stores/atoms/clockAtom.js": {
+            "imports": [],
+            "importedBy": [
+              "src/App.jsx",
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "src/hooks/useAdaptiveQuality.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/createAtom.js": {
+            "imports": [],
+            "importedBy": [
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/resourceAtom.js",
+              "src/stores/atoms/stageAtom.js"
+            ]
+          },
+          "src/stores/atoms/index.js": {
+            "imports": [
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/resourceAtom.js"
+            ],
+            "importedBy": []
+          },
+          "src/stores/atoms/interactionAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/narrativeAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/bootstrap/wireSSTv3.js",
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/performanceAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/qualityAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js",
+              "src/config/canonical/canonicalAuthority.js"
+            ],
+            "importedBy": [
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "src/hooks/useAdaptiveQuality.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/resourceAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/stores/atoms/index.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/atoms/stageAtom.js": {
+            "imports": [
+              "src/stores/atoms/createAtom.js"
+            ],
+            "importedBy": [
+              "src/components/dev/DevPerformanceMonitor.jsx",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/core/StateReader.js"
+            ]
+          },
+          "src/stores/narrativeStore.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/ui/AdvancedContactPortal.jsx",
+              "src/components/ui/narrative/MemoryFragments.jsx",
+              "src/components/ui/narrative/StageNavigation.jsx",
+              "src/utils/featureFlags.js"
+            ]
+          },
+          "src/stores/performanceStore.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/stores/resourceStore.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/ui/ResourceMonitor.jsx"
+            ]
+          },
+          "src/stores/useInteractionStore.js": {
+            "imports": [],
+            "importedBy": [
+              "src/components/ui/Typewriter.jsx"
+            ]
+          },
+          "src/theater/TheaterDirector.js": {
+            "imports": [
+              "src/theater/events.js"
+            ],
+            "importedBy": []
+          },
+          "src/theater/events.js": {
+            "imports": [],
+            "importedBy": [
+              "src/canon-guard/blueprintGuard.js",
+              "src/canon-guard/runtime/GuardRuntimeInject.js",
+              "src/components/webgl/WebGLBackground.jsx",
+              "src/dev/RenderApplyShim.js",
+              "src/theater/TheaterDirector.js"
+            ]
+          },
+          "src/utils/featureFlags.js": {
+            "imports": [
+              "src/stores/narrativeStore.js"
+            ],
+            "importedBy": []
+          },
+          "src/utils/performance/AdaptiveQualitySystem.js": {
+            "imports": [],
+            "importedBy": [
+              "src/hooks/useAdaptiveQuality.js"
+            ]
+          },
+          "src/utils/performance/DeviceCapabilities.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/performance/PerformanceMetrics.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/performance/ResourceMetrics.js": {
+            "imports": [
+              "src/utils/webgl/ResourceRegistry.js"
+            ],
+            "importedBy": []
+          },
+          "src/utils/random.js": {
+            "imports": [
+              "src/utils/random.js"
+            ],
+            "importedBy": [
+              "src/engine/ConsciousnessEngine.js",
+              "src/utils/random.js"
+            ]
+          },
+          "src/utils/shaderUtils.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/webgl/FrustumAwareParticleGenerator.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "src/utils/webgl/ResourceRegistry.js": {
+            "imports": [],
+            "importedBy": [
+              "src/utils/performance/ResourceMetrics.js"
+            ]
+          },
+          "src/utils/webgl/ResourceTracker.js": {
+            "imports": [],
+            "importedBy": [
+              "src/hooks/useResourceTracker.js"
+            ]
+          },
+          "src/utils/webgl/ShaderDebugSystem.js": {
+            "imports": [],
+            "importedBy": []
+          },
+          "modules/orchestration/core/EventCatalog.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/orchestration/core/EventDebugger.js",
+              "modules/orchestration/core/EventValidator.js"
+            ]
+          },
+          "modules/orchestration/core/EventDebugger.js": {
+            "imports": [
+              "modules/orchestration/core/EventCatalog.js"
+            ],
+            "importedBy": []
+          },
+          "modules/orchestration/core/EventValidator.js": {
+            "imports": [
+              "modules/orchestration/core/EventCatalog.js"
+            ],
+            "importedBy": []
+          },
+          "modules/state/bridges/AtomicToBeatBus.js": {
+            "imports": [
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/resourceAtom.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/stageAtom.js",
+              "src/stores/atoms/clockAtom.js"
+            ],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/bridges/StateDebugger.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/core/StateController.js": {
+            "imports": [],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/core/StateReader.js": {
+            "imports": [
+              "src/stores/atoms/narrativeAtom.js",
+              "src/stores/atoms/performanceAtom.js",
+              "src/stores/atoms/interactionAtom.js",
+              "src/stores/atoms/resourceAtom.js",
+              "src/stores/atoms/qualityAtom.js",
+              "src/stores/atoms/stageAtom.js",
+              "src/stores/atoms/clockAtom.js"
+            ],
+            "importedBy": [
+              "modules/state/core/StateValidator.js",
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/core/StateValidator.js": {
+            "imports": [
+              "modules/state/core/StateReader.js",
+              "src/config/sst3/sst-v3.0-config.js"
+            ],
+            "importedBy": [
+              "modules/state/index.js"
+            ]
+          },
+          "modules/state/index.js": {
+            "imports": [
+              "modules/state/core/StateController.js",
+              "modules/state/core/StateReader.js",
+              "modules/state/core/StateValidator.js",
+              "modules/state/bridges/AtomicToBeatBus.js",
+              "modules/state/bridges/StateDebugger.js",
+              "src/modules/orchestration/core/BeatBus.js",
+              "src/modules/orchestration/core/BeatBus.js"
+            ],
+            "importedBy": []
+          }
+        }
+      },
+      "invariants": {
+        "singleBus": {
+          "pass": false,
+          "violations": [
+            "src/canon/boundary.js",
+            "src/canon-guard/L2.js",
+            "src/components/consciousness/ConsciousnessTheater.jsx",
+            "src/components/webgl/WebGLBackground.jsx",
+            "src/core/CentralEventClock.js",
+            "src/engine/ConsciousnessEngine.js",
+            "src/modules/orchestration/core/BeatBus.js",
+            "modules/orchestration/core/EventCatalog.js",
+            "modules/state/bridges/AtomicToBeatBus.js"
+          ]
+        },
+        "stateCoreOnly": {
+          "pass": false,
+          "violations": [
+            "src/components/common/ErrorBoundary.jsx",
+            "src/components/ui/CanvasErrorBoundary.jsx",
+            "src/hooks/useAdaptiveQuality.js"
+          ]
+        },
+        "singleMorphDriver": {
+          "pass": false,
+          "violations": [
+            "src/canon/contracts/index.js",
+            "src/canon-guard/L1.js",
+            "src/components/consciousness/ConsciousnessTheater.jsx",
+            "src/components/webgl/WebGLBackground.jsx",
+            "src/hooks/atoms/useNarrativeStore.js",
+            "src/stores/atoms/narrativeAtom.js"
+          ]
+        }
+      },
+      "drift": {
+        "orphans": 1,
+        "duplicates": 0,
+        "layers": {}
+      },
+      "performance": {
+        "badge": "green",
+        "fps": 60,
+        "hotspots": [
+          {
+            "path": "src/stores/atoms/createAtom.js",
+            "count": 6
+          }
+        ]
+      }
+    }
+  },
+  "commits": [],
+  "stats": {
+    "added": 0,
+    "deleted": 0
+  },
+  "snapshots": [
+    {
+      "when": "2025-08-23T00:59:23.230Z",
+      "kind": "start"
+    },
+    {
+      "when": "2025-08-23T00:59:38.389Z",
+      "kind": "manual",
+      "note": "Bus unified"
+    },
+    {
+      "when": "2025-08-23T00:59:48.062Z",
+      "kind": "manual",
+      "note": "HOT-DORS hardening: reachability + morph driver"
+    },
+    {
+      "when": "2025-08-23T01:03:18.047Z",
+      "kind": "manual",
+      "note": "HOT-DORS tune2: stricter bus, fixed alias, src-only entrypoints"
+    },
+    {
+      "when": "2025-08-23T01:07:09.094Z",
+      "kind": "manual",
+      "note": "HOT-DORS tune3: replaced checkInvariants()"
+    },
+    {
+      "when": "2025-08-23T01:11:46.031Z",
+      "kind": "manual",
+      "note": "HOT-DORS v2: reachability + UI-safe invariants"
+    }
+  ],
+  "beacons": 6,
+  "activeMinutes": 12,
+  "files": {
+    "dorsStart": "doctor_artifacts/sprints/S-20250822-1959/hot-dors-start.json",
+    "dorsStop": "doctor_artifacts/sprints/S-20250822-1959/hot-dors-stop.json",
+    "commits": "doctor_artifacts/sprints/S-20250822-1959/commits.json"
+  },
+  "stopHead": "97299333969ffba160d322d4c12be75d0a765752",
+  "delta": {
+    "orphans": 0
+  }
+}
