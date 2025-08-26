@@ -6,7 +6,7 @@
  * - Morph Driver: ignore UI/atoms; require reachable non-UI rAF or global morph writer
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 const CWD = process.cwd();
 function die(m){ console.error('✖', m); process.exit(1); }
 function ok(m){ console.log('✔', m); }

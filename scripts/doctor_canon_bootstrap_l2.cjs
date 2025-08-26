@@ -10,7 +10,7 @@
  * - Optional git commit/tag via --commit [--no-verify] [--tag] [--push]
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 const cp = require('child_process');
 
 const ROOT = process.cwd();

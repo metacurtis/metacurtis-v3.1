@@ -42,7 +42,11 @@
     "sprint:stop": "node scripts/sprintctl.cjs stop",
     "sprint:status": "node scripts/sprintctl.cjs status",
     "sprint:note": "node scripts/sprintctl.cjs note",
-    "doctor:render": "node scripts/render-doctor.v2.cjs"
+    "doctor:render": "node scripts/render-doctor.v2.cjs",
+    "doctor:perf": "node scripts/doctor-perf.cjs",
+    "doctor:perf:strict": "node scripts/doctor-perf.cjs --strict-perf",
+    "doctor:repo": "npm run validate && npm run doctor:perf",
+    "evidence:rollup": "node scripts/evidence-rollup.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

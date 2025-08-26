@@ -8,7 +8,7 @@
  * - Supports --dry-run to preview changes
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const CWD = process.cwd();
 const ROOTS = ['src','modules'].map(p=>path.join(CWD,p)).filter(fs.existsSync);

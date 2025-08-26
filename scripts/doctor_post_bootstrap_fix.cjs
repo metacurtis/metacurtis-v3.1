@@ -9,7 +9,7 @@
  * - Provide dev busTap if renderHealthcheck is missing
  * Idempotent. Backups (.bak) on first touch. Snapshots saved.
  */
-const fs = require('fs'); const path = require('path'); const cp = require('child_process');
+const fs = require('fs'); const _path = require('path'); const cp = require('child_process');
 
 const ROOT = process.cwd();
 const NOW  = new Date().toISOString().replace(/[:]/g,'-');

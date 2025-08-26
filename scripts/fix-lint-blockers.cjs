@@ -6,7 +6,7 @@
  * - Makes .bak once per file the first time it changes it.
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const ROOT = process.cwd();
 const EXTS = new Set(['.js','.jsx','.mjs','.cjs','.ts','.tsx']);

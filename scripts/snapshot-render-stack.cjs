@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Snapshot the render stack: copies key files to .txt + one concatenated file. */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 const cp = require('child_process');
 
 const root = process.cwd();

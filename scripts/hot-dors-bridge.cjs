@@ -10,7 +10,7 @@
  * - Backups + report under doctor_artifacts/
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 const CWD = process.cwd();
 const OUT_DIR = path.join(CWD, 'doctor_artifacts');
 fs.mkdirSync(OUT_DIR, { recursive: true });

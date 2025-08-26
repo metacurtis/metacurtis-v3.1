@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Canon CI Verification */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 function checkFile(p){ const ok = fs.existsSync(path.join(process.cwd(), p)); console.log('  ' + (ok?'✅':'❌') + ' ' + p); return ok; }
 

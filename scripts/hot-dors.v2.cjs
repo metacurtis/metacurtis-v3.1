@@ -11,7 +11,7 @@
  *   doctor_artifacts/hot-dors-summary.md
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const CWD = process.cwd();
 const ART = p => path.join(CWD, 'doctor_artifacts', p);

@@ -48,7 +48,7 @@ export async function initializeStateManagement(options = {}) {
   
   // Try to import and initialize BeatBus
   try {
-    const beatBusModule = await import('@/modules/orchestration/core/BeatBus');
+    const beatBusModule = await import('@modules/orchestration/core/BeatBus');
     BeatBus = beatBusModule.default;
     
     // Initialize EventValidator if requested
@@ -64,7 +64,7 @@ export async function initializeStateManagement(options = {}) {
     
     // Initialize EventDebugger if requested
     if (enableEventDebugger && import.meta.env.DEV) {
-      const debuggerModule = await import('@/modules/orchestration/core/EventDebugger');
+      const debuggerModule = await import('@modules/orchestration/core/EventDebugger');
       const EventDebugger = debuggerModule.default;
       EventDebugger.initialize({
         autoShow: false,
@@ -147,7 +147,7 @@ function handleEventDebuggerShortcut(e) {
  */
 export async function connectBeatBus() {
   if (!BeatBus) {
-    const beatBusModule = await import('@/modules/orchestration/core/BeatBus');
+    const beatBusModule = await import('@modules/orchestration/core/BeatBus');
     BeatBus = beatBusModule.default;
   }
   

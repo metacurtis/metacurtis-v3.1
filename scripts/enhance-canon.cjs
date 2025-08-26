@@ -7,7 +7,7 @@
  * - Validates shader/material/import contracts
  * - Adds npm scripts: doctor, doctor:verify
  */
-const fs = require('fs'); const path = require('path');
+const fs = require('fs'); const _path = require('path');
 const root = process.cwd();
 const P = (...x)=>path.join(root, ...x);
 const read = p => fs.existsSync(p) ? fs.readFileSync(p,'utf8') : null;

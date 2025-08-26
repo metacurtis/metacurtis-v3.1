@@ -5,7 +5,7 @@
  * - Patch 2: hot-dors.cjs StateCore invariant (narrow heuristic)
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const CWD = process.cwd();
 const TS = () => new Date().toISOString().replace(/[:.]/g,'-');

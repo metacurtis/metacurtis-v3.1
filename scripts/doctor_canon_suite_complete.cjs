@@ -6,7 +6,7 @@
  */
 
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const ROOT = process.cwd();
 const P = (...s) => path.join(ROOT, ...s);

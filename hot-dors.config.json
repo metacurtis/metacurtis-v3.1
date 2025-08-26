@@ -1,0 +1,17 @@
+{
+  "packs": {
+    "enable": [
+      "perf-core",
+      "evidence"
+    ],
+    "disable": [
+      "runtime-bridge",
+      "import-rewriter",
+      "dev-bridge",
+      "stateflow"
+    ]
+  },
+  "perf": {
+    "fpsMin": 55
+  }
+}

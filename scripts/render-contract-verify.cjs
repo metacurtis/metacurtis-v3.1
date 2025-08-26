@@ -5,7 +5,7 @@
  * - With --fix: applies targeted codemods (idempotent) and makes .bak files on first change.
  */
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const root = process.cwd();
 const files = {

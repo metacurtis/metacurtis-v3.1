@@ -5,7 +5,7 @@
  * - Updates playbook to include the new step
  * - Patches inject.js to lazy-load the bridge
  */
-const fs = require('fs'); const path = require('path'); const root = process.cwd();
+const fs = require('fs'); const _path = require('path'); const root = process.cwd();
 const P = (...x)=>path.join(root, ...x);
 const R = p => fs.existsSync(p) ? fs.readFileSync(p,'utf8') : null;
 const W = (p, s) => { if (!fs.existsSync(path.dirname(p))) fs.mkdirSync(path.dirname(p), {recursive:true});

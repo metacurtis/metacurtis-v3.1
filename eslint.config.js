@@ -91,3 +91,24 @@ export default [
   // 4. Prettier Configuration - MUST BE LAST
   prettierConfig,
 ];
+
+// Add Node.js globals for .cjs files
+export default [
+  ...existing,
+  {
+    files: ['scripts/**/*.cjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        global: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly'
+      }
+    }
+  }
+];

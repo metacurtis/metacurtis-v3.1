@@ -9,6 +9,7 @@ import { EVENTS } from '@/theater/events.js';
 class ConsciousnessEngine {
   constructor() {
     this.blueprintCache = new Map();
+    this.emergenceBuilt = false;
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this.isInitialized = false;
@@ -23,6 +24,13 @@ class ConsciousnessEngine {
   initializeBeatBusListeners() {
     // Stage changes from UI/scroll
     BeatBus.on(EVENTS.STAGE_CHANGE, (payload = {}) => {
+
+     // Clear emergence blueprints from cache on stage change
+     this.blueprintCache.forEach((value, key) => {
+       if (key.includes('emergence')) {
+         this.blueprintCache.delete(key);
+       }
+     });
   const stage = payload.stage ?? payload.to;
   if (!stage) return;
   console.log(`🧠 Engine: Stage -> ${stage}`);
@@ -58,6 +66,10 @@ class ConsciousnessEngine {
 
     // Director: Build emergence blueprint (particles from text)
     BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
+
+    // Only build emergence once
+    if (this.emergenceBuilt) return;
+    this.emergenceBuilt = true;
       console.log('🧠 Engine: Building emergence blueprint');
 
       const text = opts.sourceText || 'HELLO CURTIS';

@@ -8,7 +8,7 @@
  * - De-dupe "@/*" alias in jsconfig.json (optional)
  * Idempotent; .bak on first touch.
  */
-const fs = require('fs'); const path = require('path');
+const fs = require('fs'); const _path = require('path');
 const ROOT = process.cwd();
 const P = (...s) => path.join(ROOT, ...s);
 const ex = f => fs.existsSync(P(f));

@@ -449,7 +449,7 @@ class StateValidator {
    */
   static wireToStateController() {
     const validator = StateValidator.getInstance();
-    const StateController = import('@/modules/state/core/StateController').then(module => {
+    const StateController = import('@modules/state/core/StateController').then(module => {
       const controller = module.default;
       
       // Subscribe to after-write events

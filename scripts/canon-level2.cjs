@@ -3,7 +3,7 @@
  * Idempotent installer: creates L2 runtime (incidents, shadow renderer, playbooks, UI),
  * patches src/main.jsx (dev-only import), and adds npm scripts.
  */
-const fs = require('fs'); const path = require('path'); const root = process.cwd();
+const fs = require('fs'); const _path = require('path'); const root = process.cwd();
 const P = (...x)=>path.join(root, ...x);
 const read = p => fs.existsSync(p) ? fs.readFileSync(p,'utf8') : null;
 const write = (p, s) => {

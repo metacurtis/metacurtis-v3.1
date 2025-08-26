@@ -13,7 +13,7 @@
  */
 
 const fs = require('fs');
-const path = require('path');
+const _path = require('path');
 
 const ROOT = process.cwd();
 const SRC = path.join(ROOT, 'src');
