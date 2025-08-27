@@ -1,79 +1,102 @@
 // src/engine/ConsciousnessEngine.js
-// SST v3.0 COMPLIANT - Integrated Stage/Quality + Emergence blueprint generation
+// SST v3.0 COMPLIANT — Stage/Quality blueprints (brain) + emergence
+// Visual North Star: Engine builds typed arrays & emits BLUEPRINT_READY. No GL logic.
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
-import BeatBus from "@/modules/orchestration/core/BeatBus.js";
+import { generateBrainRegionPositions } from '@/components/webgl/consciousness/ConsciousnessPatterns.js';
+import BeatBus from '@/modules/orchestration/core/BeatBus.js';
 import { EVENTS } from '@/theater/events.js';
+import { FormationResolver } from './FormationResolver.js';
 
 class ConsciousnessEngine {
   constructor() {
+    // Caches & state
     this.blueprintCache = new Map();
     this.emergenceBuilt = false;
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
-    this.isInitialized = false;
 
+    // Formation resolver (non-blocking priming)
+    this.resolver = new FormationResolver();
+    this.resolverReady = false;
+    this.resolver
+      .precompute()
+      .then(() => {
+        this.resolverReady = true;
+        console.log('🧠 FormationResolver ready');
+      })
+      .catch((err) => {
+        this.resolverReady = false;
+        console.warn('⚠️ FormationResolver failed:', err);
+      });
+
+    // BeatBus wire-up
     this.initializeBeatBusListeners();
-    console.log('🧠 ConsciousnessEngine initialized with BeatBus integration (SST v3.0 compliant)');
+    console.log('🧠 ConsciousnessEngine initialized (SST v3.0 compliant)');
+  }
+
+  /**
+   * Optional explicit init hook (if you prefer to await readiness elsewhere).
+   */
+  async init() {
+    if (!this.resolverReady) {
+      try {
+        await this.resolver.precompute();
+        this.resolverReady = true;
+        console.log('🧠 Engine.init(): FormationResolver ready');
+      } catch (err) {
+        console.warn('⚠️ Engine.init(): FormationResolver failed:', err);
+      }
+    }
+    // Request initial blueprint after a small delay to allow renderer mount
+    setTimeout(() => this.buildAndEmitBlueprint(this.currentStage, this.currentQuality), 200);
   }
 
   // ————————————————————————————————————————————————————————————————
   // BeatBus Event Listeners
   // ————————————————————————————————————————————————————————————————
   initializeBeatBusListeners() {
-    // Stage changes from UI/scroll
+    // Stage changes (e.g., scroll / UI)
     BeatBus.on(EVENTS.STAGE_CHANGE, (payload = {}) => {
+      // Clear emergence blueprints on stage switch
+      for (const key of Array.from(this.blueprintCache.keys())) {
+        if (key.includes('emergence')) this.blueprintCache.delete(key);
+      }
+      const stage = payload.stage ?? payload.to;
+      if (!stage) return;
+      console.log(`🧠 Engine: Stage -> ${stage}`);
+      this.currentStage = stage;
+      this.buildAndEmitBlueprint(stage, this.currentQuality);
+    });
 
-     // Clear emergence blueprints from cache on stage change
-     this.blueprintCache.forEach((value, key) => {
-       if (key.includes('emergence')) {
-         this.blueprintCache.delete(key);
-       }
-     });
-  const stage = payload.stage ?? payload.to;
-  if (!stage) return;
-  console.log(`🧠 Engine: Stage -> ${stage}`);
-  this.currentStage = stage;
-  this.buildAndEmitBlueprint(stage, this.currentQuality);
-});
-
-    // Quality changes from TAQS
+    // Quality (TAQS tier) changes
     BeatBus.on(EVENTS.QUALITY_CHANGE, (payload = {}) => {
-  const tier = payload.tier ?? payload.quality;
-  if (!tier) return;
-  console.log(`🧠 Engine: Quality -> ${tier}`);
-  this.currentQuality = tier;
-  this.buildAndEmitBlueprint(this.currentStage, tier);
-});
+      const tier = payload.tier ?? payload.quality;
+      if (!tier) return;
+      console.log(`🧠 Engine: Quality -> ${tier}`);
+      this.currentQuality = tier;
+      this.buildAndEmitBlueprint(this.currentStage, tier);
+    });
 
-    // Director: Prewarm genesis for emergence (SST v3.0 opening)
+    // Prewarm for emergence (opening)
     BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
       console.log('🧠 Engine: Prewarming genesis blueprint for emergence');
       const key = this._emergenceKey('HELLO CURTIS', 2000);
-
       if (!this.blueprintCache.has(key)) {
-        const bp = this.buildEmergenceBlueprint({
-          text: 'HELLO CURTIS',
-          count: 2000, // SST v3.0: Genesis has 2000 particles
-        });
+        const bp = this.buildEmergenceBlueprint({ text: 'HELLO CURTIS', count: 2000 });
         this.blueprintCache.set(key, bp);
       }
-
-      // Notify Director that prewarm is complete
       BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
     });
 
-    // Director: Build emergence blueprint (particles from text)
+    // Build emergence on demand (only once)
     BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
-
-    // Only build emergence once
-    if (this.emergenceBuilt) return;
-    this.emergenceBuilt = true;
-      console.log('🧠 Engine: Building emergence blueprint');
+      if (this.emergenceBuilt) return;
+      this.emergenceBuilt = true;
 
       const text = opts.sourceText || 'HELLO CURTIS';
-      const count = opts.count || 2000; // SST v3.0 Genesis particle count
+      const count = opts.count || 2000;
       const tierBehaviors = opts.tierBehaviors || {
         tier1: { behavior: 'drift', ratio: 0.5 },
         tier2: { behavior: 'orbital', ratio: 0.2 },
@@ -81,6 +104,7 @@ class ConsciousnessEngine {
         tier4: { behavior: 'prominent', ratio: 0.15 },
       };
 
+      console.log('🧠 Engine: Building emergence blueprint');
       const key = this._emergenceKey(text, count);
       let bp = this.blueprintCache.get(key);
       const cached = !!bp;
@@ -90,7 +114,6 @@ class ConsciousnessEngine {
         this.blueprintCache.set(key, bp);
       }
 
-      // Emit blueprint - WebGLBackground expects this format
       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
         blueprint: bp,
         stage: 'genesis',
@@ -99,11 +122,11 @@ class ConsciousnessEngine {
       });
     });
 
-    // Initial blueprint request after components mount
+    // Initial request (when components are likely mounted)
     setTimeout(() => {
-      console.log('🧠 Engine: Requesting initial state...');
+      console.log('🧠 Engine: Requesting initial state…');
       this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
-    }, 500); // Give renderer time to mount
+    }, 500);
   }
 
   _emergenceKey(text, count) {
@@ -111,14 +134,13 @@ class ConsciousnessEngine {
   }
 
   // ————————————————————————————————————————————————————————————————
-  // Build and emit stage blueprints
+  // Build + emit
   // ————————————————————————————————————————————————————————————————
   buildAndEmitBlueprint(stage, quality) {
     const cacheKey = `${stage}|${quality}`;
-
     if (this.blueprintCache.has(cacheKey)) {
-      console.log(`🔨 Engine: Using cached blueprint for ${stage}|${quality}`);
       const cachedBlueprint = this.blueprintCache.get(cacheKey);
+      console.log(`🔨 Engine: Using cached blueprint for ${stage}|${quality}`);
       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
         blueprint: cachedBlueprint,
         stage,
@@ -130,7 +152,6 @@ class ConsciousnessEngine {
 
     console.log(`🔨 Engine: Building new blueprint for ${stage}|${quality}`);
     const blueprint = this.buildBlueprint(stage, { quality });
-
     if (blueprint) {
       this.blueprintCache.set(cacheKey, blueprint);
       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
@@ -143,13 +164,12 @@ class ConsciousnessEngine {
   }
 
   // ————————————————————————————————————————————————————————————————
-  // Standard stage blueprint (atmospheric → brain morphing)
+  // Standard stage blueprint (atmospheric → target morph)
   // ————————————————————————————————————————————————————————————————
   buildBlueprint(stageName, options = {}) {
     const startTime = performance.now();
 
-    const stageConfig = (Canonical?.stages?.[stageName]) || {};
-    // SST v3.0 absolute stage particle counts (fallback)
+    const stageConfig = Canonical?.stages?.[stageName] || {};
     const SPEC_COUNTS = {
       genesis: 2000,
       discipline: 3000,
@@ -165,17 +185,17 @@ class ConsciousnessEngine {
     }
 
     const quality = options.quality || this.currentQuality;
-    const baseParticleCount = Number.isFinite(stageConfig.particleCount) ? stageConfig.particleCount : (SPEC_COUNTS[stageName] ?? 5000);
+    const baseParticleCount = Number.isFinite(stageConfig.particleCount)
+      ? stageConfig.particleCount
+      : (SPEC_COUNTS[stageName] ?? 5000);
     const particleCount = this.getParticleCountForQuality(baseParticleCount, quality);
 
-    console.log(
-      `🧠 Building blueprint for ${stageName} with ${particleCount} particles (quality: ${quality})`
-    );
+    console.log(`🧠 Building blueprint for ${stageName} with ${particleCount} particles (quality: ${quality})`);
 
-    // SST v3.0: Maximum 15,000 particles
+    // SST cap
     const maxParticles = 15000;
 
-    // Allocate arrays
+    // Allocate max arrays; renderer will draw activeCount only
     const atmosphericPositions = new Float32Array(maxParticles * 3);
     const allenAtlasPositions = new Float32Array(maxParticles * 3);
     const animationSeeds = new Float32Array(maxParticles * 3);
@@ -184,41 +204,21 @@ class ConsciousnessEngine {
     const atlasIndices = new Float32Array(maxParticles);
     const tierData = new Float32Array(maxParticles);
 
-    // SST v3.0 Tier Distribution
+    // Tier distribution (fallback if not in Canonical)
     const tierConfig = stageConfig.tierDistribution || {
-      tier1: {
-        ratio: 0.5,
-        sizeRange: [0.5, 0.7],
-        opacityRange: [0.3, 0.7],
-        behavior: 'drift',
-      },
-      tier2: {
-        ratio: 0.2,
-        sizeRange: [0.7, 0.9],
-        opacityRange: [0.5, 0.8],
-        behavior: 'orbital',
-      },
-      tier3: {
-        ratio: 0.15,
-        sizeRange: [1.0, 1.3],
-        opacityRange: [0.7, 0.9],
-        behavior: 'twinkle',
-      },
-      tier4: {
-        ratio: 0.15,
-        sizeRange: [1.3, 2.0],
-        opacityRange: [0.8, 1.0],
-        behavior: 'prominent',
-      },
+      tier1: { ratio: 0.5, sizeRange: [0.5, 0.7], opacityRange: [0.3, 0.7], behavior: 'drift' },
+      tier2: { ratio: 0.2, sizeRange: [0.7, 0.9], opacityRange: [0.5, 0.8], behavior: 'orbital' },
+      tier3: { ratio: 0.15, sizeRange: [1.0, 1.3], opacityRange: [0.7, 0.9], behavior: 'twinkle' },
+      tier4: { ratio: 0.15, sizeRange: [1.3, 2.0], opacityRange: [0.8, 1.0], behavior: 'prominent' },
     };
 
-    // Calculate tier particle counts
+    // Compute per-tier counts
     const t1 = Math.floor(particleCount * tierConfig.tier1.ratio);
     const t2 = Math.floor(particleCount * tierConfig.tier2.ratio);
     const t3 = Math.floor(particleCount * tierConfig.tier3.ratio);
     const t4 = particleCount - t1 - t2 - t3;
 
-    // Generate particles for each tier
+    // Generate tier blocks
     let particleIndex = 0;
 
     this._generateTierParticles(
@@ -233,7 +233,8 @@ class ConsciousnessEngine {
       t1,
       0,
       tierConfig.tier1,
-      stageConfig
+      stageConfig,
+      stageName
     );
     particleIndex += t1;
 
@@ -249,7 +250,8 @@ class ConsciousnessEngine {
       t2,
       1,
       tierConfig.tier2,
-      stageConfig
+      stageConfig,
+      stageName
     );
     particleIndex += t2;
 
@@ -265,7 +267,8 @@ class ConsciousnessEngine {
       t3,
       2,
       tierConfig.tier3,
-      stageConfig
+      stageConfig,
+      stageName
     );
     particleIndex += t3;
 
@@ -281,7 +284,8 @@ class ConsciousnessEngine {
       t4,
       3,
       tierConfig.tier4,
-      stageConfig
+      stageConfig,
+      stageName
     );
 
     const buildTime = performance.now() - startTime;
@@ -308,44 +312,35 @@ class ConsciousnessEngine {
   }
 
   // ————————————————————————————————————————————————————————————————
-  // Emergence blueprint (text → particles for SST v3.0 opening)
+  // Emergence (text → particles) minimal blueprint
   // ————————————————————————————————————————————————————————————————
   buildEmergenceBlueprint({ text = 'HELLO CURTIS', count = 2000, tierBehaviors = {} } = {}) {
     console.log(`🌟 Building emergence blueprint: "${text}" with ${count} particles`);
 
-    // Generate positions from text
     const positions = this.textToParticlePositions(text, count);
 
-    // SST v3.0 Genesis tier distribution: 60/20/10/10
     const tiers = new Uint8Array(count);
     const tierCounts = [
-      Math.floor(count * 0.6), // Tier 1: 60% drift
-      Math.floor(count * 0.2), // Tier 2: 20% orbital
-      Math.floor(count * 0.1), // Tier 3: 10% twinkle
-      Math.floor(count * 0.1), // Tier 4: 10% prominent
+      Math.floor(count * 0.6), // T0 drift
+      Math.floor(count * 0.2), // T1 orbital
+      Math.floor(count * 0.1), // T2 twinkle
+      Math.floor(count * 0.1), // T3 prominent
     ];
-
-    // Adjust for rounding
     const totalAssigned = tierCounts.reduce((a, b) => a + b, 0);
-    if (totalAssigned < count) {
-      tierCounts[0] += count - totalAssigned;
-    }
+    if (totalAssigned < count) tierCounts[0] += count - totalAssigned;
 
-    // Fill tier array
-    let idx = 0;
-    for (let tier = 0; tier < 4; tier++) {
-      for (let i = 0; i < tierCounts[tier] && idx < count; i++) {
-        tiers[idx++] = tier;
-      }
+    let write = 0;
+    for (let t = 0; t < 4; t++) {
+      for (let i = 0; i < tierCounts[t] && write < count; i++) tiers[write++] = t;
     }
-
-    // Shuffle for random distribution
+    // Shuffle the tier assignment
     for (let i = count - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [tiers[i], tiers[j]] = [tiers[j], tiers[i]];
+      const j = (Math.random() * (i + 1)) | 0;
+      const tmp = tiers[i];
+      tiers[i] = tiers[j];
+      tiers[j] = tmp;
     }
 
-    // Return minimal blueprint - WebGLBackground will synthesize the rest
     return {
       id: 'emergence-genesis',
       mode: 'emergence',
@@ -354,8 +349,8 @@ class ConsciousnessEngine {
       particleCount: count,
       maxParticles: count,
       activeCount: count,
-      positions, // Start positions (from text)
-      tiers, // Tier assignments
+      positions,
+      tiers,
       metadata: {
         sourceText: text,
         tierBehaviors,
@@ -365,36 +360,27 @@ class ConsciousnessEngine {
   }
 
   textToParticlePositions(text, count) {
-    // Create positions that form text shape
     const positions = new Float32Array(count * 3);
-
-    // Text dimensions in world space
-    const charWidth = 10.0; // enlarged for emergence visibility
-    const _textWidth = text.length * charWidth;
-    const textHeight = 12.0; // taller for emergence
-    const _centerX = 0;
+    const charWidth = 10.0;
+    const textHeight = 12.0;
     const centerY = 0;
 
     for (let i = 0; i < count; i++) {
-      // Distribute particles across text area
       const charIndex = Math.floor(Math.random() * text.length);
       const baseX = (charIndex - text.length / 2) * charWidth;
-
-      // Add variation within character bounds
       const x = baseX + (Math.random() - 0.5) * charWidth * 0.8;
       const y = centerY + (Math.random() - 0.5) * textHeight;
-      const z = (Math.random() - 0.5) * 2.0; // More depth so highlights pop
-
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
+      const z = (Math.random() - 0.5) * 2.0;
+      const k = i * 3;
+      positions[k + 0] = x;
+      positions[k + 1] = y;
+      positions[k + 2] = z;
     }
-
     return positions;
   }
 
   // ————————————————————————————————————————————————————————————————
-  // Helper: Generate tier-specific particles
+  // Tier particle generation with FormationResolver fallback chain
   // ————————————————————————————————————————————————————————————————
   _generateTierParticles(
     atmosphericPositions,
@@ -408,72 +394,108 @@ class ConsciousnessEngine {
     count,
     tierIndex,
     tierCfg,
-    stageCfg
+    stageCfg,
+    stageName
   ) {
-    const rnd = createSeededRandom(`${stageCfg.name}-tier${tierIndex}`);
+    const rnd = createSeededRandom(`${stageName || stageCfg?.name || 'stage'}-tier${tierIndex}`);
 
-    // SST v3.0 sprite assignments per tier
-    const tierSprites = {
-      0: [7], // Tier 1: Soft glow (sprite 7)
-      1: [0, 1], // Tier 2: Basic circle, gradient
-      2: [4], // Tier 3: Diamond
-      3: [1], // Tier 4: Gradient
-    };
+    // —— Atmospheric (full-viewport) cloud
+    for (let i = 0; i < count; i++) {
+      const idx3 = (startIndex + i) * 3;
+      atmosphericPositions[idx3 + 0] = (rnd() - 0.5) * 120;  // width
+      atmosphericPositions[idx3 + 1] = (rnd() - 0.5) * 90;   // height
+      atmosphericPositions[idx3 + 2] = (rnd() - 0.5) * 40 + tierIndex * 5; // layered depth
+    }
 
-    const availableSprites = tierSprites[tierIndex] || [0];
+    // —— Target positions: Formation (genesis) → Brain pattern → sphere
+    let targetPositions = null;
+
+    // Prefer FormationResolver for genesis if ready
+    if (this.resolverReady && (stageName || stageCfg?.name) === 'genesis') {
+      // Use your canonical ID/variant; easy to parameterize via Canonical later
+      // Note: your examples used 'HELLO_CURTIS' (underscore) for formation ID
+      const formation = this.resolver.get('HELLO_CURTIS', 'hi');
+      if (formation && formation.length >= 3) {
+        targetPositions = formation;
+      }
+    }
+
+    // Fallback to anatomically correct brain positions
+    if (!targetPositions) {
+      try {
+        targetPositions = generateBrainRegionPositions(stageName || stageCfg?.name || 'genesis', count);
+      } catch {
+        targetPositions = null;
+      }
+    }
+
+    // Copy into allenAtlasPositions (tile if needed). Scale for visibility.
+    const scale =
+      (stageCfg?.formation && typeof stageCfg.formation.scale === 'number')
+        ? stageCfg.formation.scale
+        : 4.0; // matches your previous visibility scale
 
     for (let i = 0; i < count; i++) {
-      const idx = (startIndex + i) * 3;
-      const idx1 = startIndex + i;
+      const dst = (startIndex + i) * 3;
+      if (targetPositions) {
+        // Tile/loop if source has fewer points than needed
+        const srcBase = (i % Math.floor(targetPositions.length / 3)) * 3;
+        allenAtlasPositions[dst + 0] = targetPositions[srcBase + 0] * scale;
+        allenAtlasPositions[dst + 1] = targetPositions[srcBase + 1] * scale;
+        allenAtlasPositions[dst + 2] = targetPositions[srcBase + 2] * scale;
+      } else {
+        // Ultimate fallback: random sphere
+        const phi = Math.random() * Math.PI * 2;
+        const theta = Math.acos(Math.random() * 2 - 1);
+        const r = 22 + Math.random() * 10;
+        allenAtlasPositions[dst + 0] = r * Math.sin(theta) * Math.cos(phi);
+        allenAtlasPositions[dst + 1] = r * Math.sin(theta) * Math.sin(phi);
+        allenAtlasPositions[dst + 2] = r * Math.cos(theta);
+      }
+    }
 
-      // Atmospheric positions (cloud-like)
-      const r = rnd() * 80 + 40;
-      const theta = rnd() * Math.PI * 2;
-      const phi = Math.acos(2 * rnd() - 1);
+    // —— Animation seeds & per-tier props
+    const [sizeMin, sizeMax] = tierCfg.sizeRange || [1.0, 1.0];
+    const [opacityMin, opacityMax] = tierCfg.opacityRange || [0.8, 1.0];
+    const tierSprites = {
+      0: [7],     // soft glow
+      1: [0, 1],  // circle/gradient
+      2: [4],     // diamond
+      3: [1],     // gradient
+    };
+    const sprites = tierSprites[tierIndex] || [0];
 
-      atmosphericPositions[idx] = r * Math.sin(phi) * Math.cos(theta);
-      atmosphericPositions[idx + 1] = r * Math.sin(phi) * Math.sin(theta);
-      atmosphericPositions[idx + 2] = r * Math.cos(phi);
+    for (let i = 0; i < count; i++) {
+      const idx = (startIndex + i);
+      const k3 = idx * 3;
 
-      // Allen Atlas positions (brain structure)
-      const brainR = 20 + rnd() * 15;
-      allenAtlasPositions[idx] = brainR * Math.sin(phi) * Math.cos(theta);
-      allenAtlasPositions[idx + 1] = brainR * Math.sin(phi) * Math.sin(theta);
-      allenAtlasPositions[idx + 2] = brainR * Math.cos(phi);
+      animationSeeds[k3 + 0] = rnd();
+      animationSeeds[k3 + 1] = rnd();
+      animationSeeds[k3 + 2] = tierIndex; // encode behavior ID
 
-      // Animation seeds
-      animationSeeds[idx] = rnd();
-      animationSeeds[idx + 1] = rnd();
-      animationSeeds[idx + 2] = rnd();
-
-      // Tier-specific properties
-      const [sizeMin, sizeMax] = tierCfg.sizeRange || [1.0, 1.0];
-      const [opacityMin, opacityMax] = tierCfg.opacityRange || [0.8, 1.0];
-
-      sizeMultipliers[idx1] = sizeMin + rnd() * (sizeMax - sizeMin);
-      opacityData[idx1] = opacityMin + rnd() * (opacityMax - opacityMin);
-      atlasIndices[idx1] = availableSprites[Math.floor(rnd() * availableSprites.length)];
-      tierData[idx1] = tierIndex;
+      sizeMultipliers[idx] = sizeMin + rnd() * (sizeMax - sizeMin);
+      opacityData[idx] = opacityMin + rnd() * (opacityMax - opacityMin);
+      atlasIndices[idx] = sprites[Math.floor(rnd() * sprites.length)];
+      tierData[idx] = tierIndex;
     }
   }
 
   // ————————————————————————————————————————————————————————————————
-  // Quality management (SST v3.0 tiers)
+  // Quality tiers → particle counts
   // ————————————————————————————————————————————————————————————————
   getParticleCountForQuality(baseCount, quality) {
     const multipliers = {
-      LOW: 0.3, // 30% of base
-      MEDIUM: 0.6, // 60% of base
-      HIGH: 1.0, // 100% of base
-      ULTRA: 1.5, // 150% of base (up to 15,000 max)
+      LOW: 0.3,
+      MEDIUM: 0.6,
+      HIGH: 1.0,
+      ULTRA: 1.5,
     };
-
     const count = Math.floor(baseCount * (multipliers[quality] || 1.0));
-    return Math.min(count, 15000); // SST v3.0 cap
+    return Math.min(count, 15000);
   }
 
   // ————————————————————————————————————————————————————————————————
-  // Cache management
+  // Cache / debug helpers
   // ————————————————————————————————————————————————————————————————
   clearCache() {
     this.blueprintCache.clear();
@@ -485,9 +507,9 @@ class ConsciousnessEngine {
       size: this.blueprintCache.size,
       keys: Array.from(this.blueprintCache.keys()),
       stages: Array.from(this.blueprintCache.keys())
-        .filter(k => !k.startsWith('emergence'))
-        .map(k => k.split('|')[0]),
-      emergenceKeys: Array.from(this.blueprintCache.keys()).filter(k => k.startsWith('emergence')),
+        .filter((k) => !k.startsWith('emergence'))
+        .map((k) => k.split('|')[0]),
+      emergenceKeys: Array.from(this.blueprintCache.keys()).filter((k) => k.startsWith('emergence')),
     };
   }
 
@@ -499,19 +521,19 @@ class ConsciousnessEngine {
   }
 }
 
-// Create singleton instance
+// Singleton
 const engine = new ConsciousnessEngine();
 
-// Debug interface
+// Dev debug surface
 if (typeof window !== 'undefined') {
   window.engineDebug = {
     getCacheStats: () => engine.getCacheStats(),
     clearCache: () => engine.clearCache(),
     preGenerate: () => {
-      const stages = Object.keys(Canonical.stages);
+      const stages = Object.keys(Canonical.stages || {});
       const qualities = ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
-      stages.forEach(stage => {
-        qualities.forEach(quality => {
+      stages.forEach((stage) => {
+        qualities.forEach((quality) => {
           engine.buildAndEmitBlueprint(stage, quality);
         });
       });

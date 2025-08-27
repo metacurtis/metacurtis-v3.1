@@ -1,5 +1,5 @@
 import './canon/init-amplified.js';
-import React as _React from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/index.css';
