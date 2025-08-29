@@ -1,7 +1,7 @@
 // src/hooks/atoms/useInteractionStore.js
 // Compatibility layer for interaction store
-import { useAtomValue } from '@/stores/atoms/createAtom';
-import { interactionAtom } from '@/stores/atoms/interactionAtom';
+import { useAtomValue } from '@/state/atoms/createAtom';
+import { interactionAtom } from '@/state/atoms/interactionAtom';
 
 export function useInteractionStore(selector) {
   const state = useAtomValue(interactionAtom, selector);

@@ -1,12 +1,11 @@
 import './canon/init-amplified.js';
-import React as _React from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/index.css';
 
 // Initialize state bridge
-import wireAtomicToBeatBus from '../modules/state/bridges/AtomicToBeatBus.js';
-wireAtomicToBeatBus();
+import _StateCommands from "@/state/commands/StateCommands";
 
 // Import Canon L2 (now it exists!)
 

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNarrativeStore } from '@/stores/narrativeStore';
+import { narrativeAtom } from '@/state/atoms';
 
 function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence' }) {
   const [isVisible, setIsVisible] = useState(false);

@@ -1,0 +1,32 @@
+═══════════════════════════════════════════════════════════════
+🔍 FINDING ALL STATE-RELATED FILES
+═══════════════════════════════════════════════════════════════
+
+📁 ALL STATE/ATOM/STORE FILES:
+─────────────────────────────────────────────────────────────
+
+📁 MODULES/STATE DIRECTORY:
+─────────────────────────────────────────────────────────────
+Directory not found
+
+📁 STORES DIRECTORY:
+─────────────────────────────────────────────────────────────
+Directory not found
+
+📁 HOOKS WITH STATE:
+─────────────────────────────────────────────────────────────
+
+📊 STATE IMPORT ANALYSIS:
+─────────────────────────────────────────────────────────────
+
+Files importing from stores/atoms:
+0
+files
+
+Files importing from modules/state:
+0
+files
+
+Files importing StateController:
+
+Files importing StateValidator:

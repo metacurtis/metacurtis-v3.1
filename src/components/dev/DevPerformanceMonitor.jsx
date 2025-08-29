@@ -3,9 +3,9 @@
 // ✅ SST v2.1 COMPLIANCE: Enhanced performance monitoring with atomic state
 
 import { memo, useState, useEffect } from 'react';
-import { qualityAtom } from '@/stores/atoms/qualityAtom';
-import { clockAtom } from '@/stores/atoms/clockAtom';
-import { stageAtom } from '@/stores/atoms/stageAtom';
+import { qualityAtom } from '@/state/atoms/qualityAtom';
+import { clockAtom } from '@/state/atoms/clockAtom';
+import { stageAtom } from '@/state/atoms/stageAtom';
 
 // ✅ ENHANCED DASHBOARD STYLES: Atomic-themed design
 const dashboardStyle = {

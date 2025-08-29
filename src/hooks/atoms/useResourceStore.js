@@ -1,7 +1,7 @@
 // src/hooks/atoms/useResourceStore.js
 // Compatibility layer for resource store
-import { useAtomValue } from '@/stores/atoms/createAtom';
-import { resourceAtom } from '@/stores/atoms/resourceAtom';
+import { useAtomValue } from '@/state/atoms/createAtom';
+import { resourceAtom } from '@/state/atoms/resourceAtom';
 
 export function useResourceStore(selector) {
   const state = useAtomValue(resourceAtom, selector);

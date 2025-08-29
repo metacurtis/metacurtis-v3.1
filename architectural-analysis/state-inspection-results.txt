@@ -1,0 +1,34 @@
+═══════════════════════════════════════════════════════════════
+🔬 DEEP STATE FILE INSPECTION
+═══════════════════════════════════════════════════════════════
+
+❌ FILE NOT FOUND: src/stores/atoms/createAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/stageAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/narrativeAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/qualityAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/clockAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/performanceAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/interactionAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/resourceAtom.js
+
+❌ FILE NOT FOUND: src/stores/atoms/index.js
+
+❌ FILE NOT FOUND: src/stores/narrativeStore.js
+
+❌ FILE NOT FOUND: src/stores/performanceStore.js
+
+❌ FILE NOT FOUND: src/stores/resourceStore.js
+
+❌ FILE NOT FOUND: src/stores/useInteractionStore.js
+
+═══════════════════════════════════════════════════════════
+📄 ATOM INDEX FILE ANALYSIS
+─────────────────────────────────────────────────────────────
+⚠️ No index.js in atoms directory

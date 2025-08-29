@@ -6,8 +6,8 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
-import { stageAtom } from '@/stores/atoms/stageAtom.js';
-import { qualityAtom } from '@/stores/atoms/qualityAtom.js';
+import { stageAtom } from '@/state/atoms/stageAtom.js';
+import { qualityAtom } from '@/state/atoms/qualityAtom.js';
 import { useMemoryFragments } from '@/hooks/useMemoryFragments.js';
 import WebGLCanvas from '@/components/webgl/WebGLCanvas.jsx';
 import _DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor'; // optional; underscore ok
@@ -211,57 +211,72 @@ export default function ConsciousnessTheater() {
     };
   }, []);
 
-  // — Keyboard navigation (after Director handoff)
-  useEffect(() => {
-    if (!isInitialized || !scrollEnabled) return;
+// — Keyboard navigation (after Director handoff)
+useEffect(() => {
+  if (!isInitialized || !scrollEnabled) return;
 
-    const handleKeyPress = e => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+  const handleKeyPress = e => {
+    if (["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
 
-      switch (e.key) {
-        case 'ArrowRight':
-        case ' ':
-          e.preventDefault();
-          stageAtom.nextStage();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          stageAtom.prevStage();
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setMorphProgress(prev => Math.min(prev + 0.1, 1));
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          setMorphProgress(prev => Math.max(prev - 0.1, 0));
-          break;
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7': {
-          const index = parseInt(e.key) - 1;
-          const stages = Object.keys(Canonical.stages);
-          if (stages[index]) stageAtom.jumpToStage(stages[index]);
-          break;
-        }
-        case 'h':
-        case 'H':
-          window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR;
-          window.location.reload();
-          break;
-        default:
-          break;
+    // Prevent default for ALL arrow keys to stop scrolling
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    switch (e.key) {
+      case "ArrowRight":
+        stageAtom.nextStage();
+        break;
+      case "ArrowLeft":
+        stageAtom.prevStage();
+        break;
+      case "ArrowUp":
+        setMorphProgress(prev => Math.min(prev + 0.1, 1));
+        break;
+      case "ArrowDown":
+        setMorphProgress(prev => Math.max(prev - 0.1, 0));
+        break;
+      case " ": // Spacebar
+        e.preventDefault();
+        stageAtom.nextStage();
+        break;
+      case "1":
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "6":
+      case "7": {
+        const index = parseInt(e.key) - 1;
+        const stages = Object.keys(Canonical.stages);
+        if (stages[index]) stageAtom.jumpToStage(stages[index]);
+        break;
       }
-    };
+      case "h":
+      case "H":
+        window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR;
+        window.location.reload();
+        break;
+      case "m":
+      case "M":
+        // Toggle morph between 0 and 1
+        setMorphProgress(prev => prev > 0.5 ? 0 : 1);
+        break;
+      case "r":
+      case "R":
+        // Reset to genesis
+        stageAtom.jumpToStage("genesis");
+        setMorphProgress(0);
+        break;
+      default:
+        break;
+    }
+  };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isInitialized, scrollEnabled]);
-
+  window.addEventListener("keydown", handleKeyPress);
+  return () => window.removeEventListener("keydown", handleKeyPress);
+}, [isInitialized, scrollEnabled]);
   // — Stage subscription
   useEffect(() => {
     const unsubscribe = stageAtom.subscribe(state => {

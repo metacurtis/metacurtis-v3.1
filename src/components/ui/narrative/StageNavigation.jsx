@@ -2,7 +2,7 @@
 // ✅ SST v2.0 COMPLIANT: 7-Stage Consciousness Evolution Navigation
 // Simple sidebar with seven buttons → updates narrativeStore
 
-import { useNarrativeStore } from '@/stores/narrativeStore';
+import { narrativeAtom } from '@/state/atoms';
 
 // ✅ SST v2.0: Canonical 7-stage system with correct labels
 const STAGES = [
@@ -16,8 +16,8 @@ const STAGES = [
 ];
 
 export default function StageNavigation() {
-  const currentStage = useNarrativeStore(s => s.currentStage);
-  const jumpToStage = useNarrativeStore(s => s.jumpToStage);
+  const currentStage = narrativeAtom.getState(s => s.currentStage);
+  const jumpToStage = narrativeAtom.getState(s => s.jumpToStage);
 
   return (
     <ul

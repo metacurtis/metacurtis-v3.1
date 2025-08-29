@@ -3,6 +3,7 @@
 
 import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
+import CTFOverlay from './CTFOverlay';
 import { PerspectiveCamera } from '@react-three/drei';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 import DebugExpose from '@/components/dev/DebugExpose';
@@ -377,6 +378,7 @@ export default function WebGLCanvas({
             />
           )}
         </Suspense>
+         <CTFOverlay />
       </Canvas>
 
       {/* Performance monitoring */}

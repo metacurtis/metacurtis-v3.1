@@ -3,7 +3,7 @@
 // ✅ INTEGRATED: Feature gates, memory fragment management, canonical stages
 
 import { useState, useEffect, useMemo } from 'react';
-import { useNarrativeStore } from '@/stores/narrativeStore';
+import { narrativeAtom } from '@/state/atoms';
 import { getPreset } from '@/config/narrativeParticleConfig';
 
 function MemoryFragments() {

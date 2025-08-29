@@ -1,4 +1,4 @@
-// eslint.config.js (R3F Unknown Property Fix)
+// eslint.config.js - Fixed and optimized
 import js from '@eslint/js';
 import globals from 'globals';
 import reactPlugin from 'eslint-plugin-react';
@@ -18,10 +18,15 @@ export default [
       'node_modules/**',
       'build/**',
       'coverage/**',
-      '.*.cjs',
-      '*.config.js', // Ignore self and other JS configs
-      'lighthouserc.js', // Explicitly ignore lighthouserc if it exists
-      // Add other specific files/dirs to ignore here if needed
+      '*.cjs',
+      '*.config.js',
+      '*.config.mjs',
+      'lighthouserc.js',
+      'architectural-analysis/**',
+      'archive/**',
+      'doctor_artifacts/**',
+      'profiles/**',
+      'snapshots/**'
     ],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -47,7 +52,7 @@ export default [
       },
     },
     rules: {
-      // React rules - directly specify instead of trying to merge configs
+      // React rules
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
@@ -79,57 +84,33 @@ export default [
     },
   },
 
-  // 3. Configuration override specifically for R3F/WebGL components
+  // 3. R3F/WebGL components override
   {
-    files: ['src/components/webgl/**/*.{js,jsx}'], // Target files in the webgl directory
+    files: ['src/components/webgl/**/*.{js,jsx}'],
     rules: {
-      // Disable the rule complaining about R3F props like 'args', 'attach', 'position' etc.
       'react/no-unknown-property': 'off',
     },
   },
 
-  // 4. Prettier Configuration - MUST BE LAST
+  // 4. CJS files configuration
+  {
+    files: ['**/*.cjs', 'scripts/**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        global: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly'
+      }
+    }
+  },
+
+  // 5. Prettier - MUST BE LAST
   prettierConfig,
-];
-
-// Add Node.js globals for .cjs files
-export default [
-  ...existing,
-  {
-    files: ['scripts/**/*.cjs'],
-    languageOptions: {
-      globals: {
-        console: 'readonly',
-        process: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        Buffer: 'readonly',
-        global: 'readonly',
-        require: 'readonly',
-        module: 'readonly',
-        exports: 'readonly'
-      }
-    }
-  }
-];
-
-// Add Node.js globals for .cjs files
-export default [
-  ...existing,
-  {
-    files: ['scripts/**/*.cjs'],
-    languageOptions: {
-      globals: {
-        console: 'readonly',
-        process: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        Buffer: 'readonly',
-        global: 'readonly',
-        require: 'readonly',
-        module: 'readonly',
-        exports: 'readonly'
-      }
-    }
-  }
 ];

@@ -3,18 +3,18 @@
 
 import { narrativeController } from '@/engine/NarrativeController.js';
 import { memoryFragmentController } from '@/engine/MemoryFragmentController.js';
-import { narrativeAtom } from '@/stores/atoms/narrativeAtom.js';
+import { narrativeAtom } from '@/state/atoms/narrativeAtom.js';
 
 // Only import atoms that exist
 let stageAtom, qualityAtom;
 try {
-  stageAtom = require('@/stores/atoms/stageAtom.js').stageAtom;
+  stageAtom = require('@/state/atoms/stageAtom.js').stageAtom;
 } catch (e) {
   console.warn('stageAtom not available');
 }
 
 try {
-  qualityAtom = require('@/stores/atoms/qualityAtom.js').qualityAtom;
+  qualityAtom = require('@/state/atoms/qualityAtom.js').qualityAtom;
 } catch (e) {
   console.warn('qualityAtom not available');
 }

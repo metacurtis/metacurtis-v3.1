@@ -1,7 +1,7 @@
 // src/hooks/atoms/useNarrativeStore.js
 // Compatibility layer for Zustand → Atomic migration
-import { useAtomValue } from '@/stores/atoms/createAtom';
-import { narrativeAtom } from '@/stores/atoms/narrativeAtom';
+import { useAtomValue } from '@/state/atoms/createAtom';
+import { narrativeAtom } from '@/state/atoms/narrativeAtom';
 
 export function useNarrativeStore(selector) {
   // Get the full state or selected portion

@@ -1,10 +1,10 @@
 // src/App.jsx
 // SST v3.0 PRODUCTION - Minimal app shell
 
-import React, { useEffect } from 'react';
+import _React, { useEffect } from 'react';
 import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
-import { clockAtom } from './stores/atoms/clockAtom';
-import consciousnessEngine from './engine/ConsciousnessEngine'; // Import to initialize
+import { clockAtom } from '@/state/atoms';
+import _consciousnessEngine from './engine/ConsciousnessEngine'; // Import to initialize
 
 export default function App() {
   useEffect(() => {

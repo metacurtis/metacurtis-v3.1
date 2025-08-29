@@ -5,8 +5,8 @@
 import { useRef, useEffect, useState } from 'react';
 import { useCentralClock } from '@/hooks/useCentralClock';
 import AdaptiveQualitySystem, { QualityLevels } from '@/utils/performance/AdaptiveQualitySystem.js';
-import { qualityAtom } from '@/stores/atoms/qualityAtom';
-import { clockAtom } from '@/stores/atoms/clockAtom';
+import { qualityAtom } from '@/state/atoms/qualityAtom';
+import { clockAtom } from '@/state/atoms/clockAtom';
 
 /**
  * ✅ CUSTOM ATOMIC ADAPTIVE QUALITY HOOK
@@ -145,7 +145,7 @@ export function useAdaptiveQuality({
     if (isUnmounted.current) return;
 
     // ✅ CENTRAL CLOCK SUBSCRIPTION: Integrate with existing clock system
-    const unsubscribe = useCentralClock('tick', handleClockTick, [clockState, qualityState]);
+    const unsubscribe = // useCentralClock('tick', handleClockTick, [clockState, qualityState]);
     
     if (import.meta.env.DEV) {
       console.log('🔗 useAdaptiveQuality: Central Clock subscription established with atomic integration');
@@ -203,8 +203,6 @@ export function useQualityTier(options) {
  */
 export function useAdaptiveQualityDebug() {
   if (import.meta.env.DEV) {
-    const [qualityState] = useState(qualityAtom.getState());
-    const [clockState] = useState(clockAtom.getState());
 
     return {
       getAtomicState: () => ({
