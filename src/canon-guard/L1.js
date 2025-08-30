@@ -19,7 +19,7 @@ export class CanonGuardL1 {
         },
       },
       blueprint: {
-        required: ['particleCount', 'atmosphericPositions', 'allenAtlasPositions'],
+        required: ['particleCount', 'atmosphericPositions', 'text3DPositions'],
         constraints: {
           particleCount: { min: 0, max: 15000 },
           tierDistribution: { sum: 1.0 },

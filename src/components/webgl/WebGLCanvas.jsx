@@ -3,7 +3,6 @@
 
 import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
-import CTFOverlay from './CTFOverlay';
 import { PerspectiveCamera } from '@react-three/drei';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 import DebugExpose from '@/components/dev/DebugExpose';
@@ -360,7 +359,7 @@ export default function WebGLCanvas({
         onError={handleCanvasError}
       >
         {/* Optimal camera for constellation viewing */}
-        <PerspectiveCamera makeDefault position={[0, 0, 80]} fov={75} near={0.1} far={200} />
+        <PerspectiveCamera makeDefault position={[0, 0, 100]} fov={75} near={0.1} far={200} lookAt={[0, 0, 0]} />
 
         {/* Minimal lighting for particles */}
         <ambientLight intensity={0.4} />
@@ -378,7 +377,6 @@ export default function WebGLCanvas({
             />
           )}
         </Suspense>
-         <CTFOverlay />
       </Canvas>
 
       {/* Performance monitoring */}

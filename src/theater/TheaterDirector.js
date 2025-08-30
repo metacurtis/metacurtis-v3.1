@@ -83,32 +83,21 @@ class TheaterDirector {
 
       // Phase 5: Particles emerge from text
       this.phase = 'emergence';
-      console.log('🌟 Phase: Emergence - CTF particles from text');
-
-      // Build text formation through CTF pathway
-      BeatBus.emit(EVENTS.CTF_BUILD, {
-        text: 'HELLO CURTIS',
-        count: 2000
-      });
-
-      // Wait a moment for CTF to render
-      await this.sleep(500);
-
-      // Tell opening sequence to start fading
-      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
-
-      // Build stage blueprint while CTF is showing
-      // This prepares the stage particles in WebGLBackground
+      console.log('   Phase: Particle emergence');
+      
+      // Build the emergence blueprint
       BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
         sourceText: 'HELLO CURTIS',
         count: 2000
       });
 
+      await this.sleep(500);
+
+      // Tell opening sequence to start fading
+      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
+
       // Wait for emergence animation to complete
       await this.sleep(2000);
-
-      // Hide CTF text particles (fade them out)
-      BeatBus.emit(EVENTS.CTF_HIDE);
 
       // Signal that particles have fully emerged
       BeatBus.emit(EVENTS.PARTICLES_EMERGED);

@@ -7,7 +7,7 @@ export const TIER_BEHAVIORS = {
   twinkle: { type:"shader", params:{ frequency:2.0, intensity:0.3, randomSeed:true }, shaderUniforms:{ uTwinkleFreq:2.0, uTwinkleIntensity:0.3 } },
   pulse: { type:"shader", params:{ frequency:0.5, pattern:"sine", phase:0 }, shaderUniforms:{ uPulseFreq:0.5, uPulsePattern:0 } },
   prominent:{ type:"hybrid", params:{ scaleBoost:1.2, opacityBoost:1.1, haloEffect:true }, shaderUniforms:{ uProminenceScale:1.2, uProminenceGlow:1.1 } },
-  anatomical:{ type:"generation", params:{ brainAccuracy:0.95, centerWeight:0.7, regionDensity:"variable" } }
+  anatomical:{ type:"generation", params:{ textccuracy:0.95, centerWeight:0.7, regionDensity:"variable" } }
 };
 
 export const TIER_BEHAVIOR_SETS = {

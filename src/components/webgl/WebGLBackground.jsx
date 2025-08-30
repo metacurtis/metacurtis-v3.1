@@ -46,7 +46,7 @@ function normalizePayload(payload) {
 }
 
 function ensureArraysFromEmergence(bp) {
-  if (bp?.atmosphericPositions && bp?.allenAtlasPositions) return bp;
+  if (bp?.atmosphericPositions && bp?.text3DPositions) return bp;
 
   const positions = bp?.positions;
   if (!positions) return bp;
@@ -77,7 +77,7 @@ function ensureArraysFromEmergence(bp) {
   }
 
   const atmosphericPositions = positions;
-  const allenAtlasPositions = positions.slice
+  const text3DPositions = positions.slice
     ? positions.slice()
     : new Float32Array(positions);
 
@@ -88,7 +88,7 @@ function ensureArraysFromEmergence(bp) {
     particleCount: count,
     activeCount: count,
     atmosphericPositions,
-    allenAtlasPositions,
+    text3DPositions,
     animationSeeds,
     sizeMultipliers,
     opacityData,
@@ -242,7 +242,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       lastBlueprintIdRef.current = blueprintId;
 
       // Full stage blueprint
-      if (raw?.atmosphericPositions && raw?.allenAtlasPositions) {
+      if (raw?.atmosphericPositions && raw?.text3DPositions) {
         lastFullStageRef.current = raw;
         setBlueprint(raw);
         setStageName(raw.stageName || st || 'genesis');
@@ -253,7 +253,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           const geo = geometryRef.current;
           geo.setAttribute('position', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
           geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
-          geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(raw.allenAtlasPositions, 3));
+          geo.setAttribute('text3DPosition', new THREE.BufferAttribute(raw.text3DPositions, 3));
           if (raw.tierData) geo.setAttribute('tierData', new THREE.BufferAttribute(raw.tierData, 1));
           if (raw.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(raw.sizeMultipliers, 1));
           if (raw.opacityData) geo.setAttribute('opacityData', new THREE.BufferAttribute(raw.opacityData, 1));
@@ -291,7 +291,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       // Target positions: use last full stage target if available; else sphere
-      let targetAllen = lastFullStageRef.current?.allenAtlasPositions;
+      let targetAllen = lastFullStageRef.current?.text3DPositions;
       if (targetAllen && targetAllen.length >= 3) {
         const srcCount = targetAllen.length / 3;
         const allen = new Float32Array(count * 3);
@@ -302,7 +302,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           allen[di + 1] = targetAllen[si + 1];
           allen[di + 2] = targetAllen[si + 2];
         }
-        bp.allenAtlasPositions = allen;
+        bp.text3DPositions = allen;
       } else {
         const allen = new Float32Array(count * 3);
         for (let i = 0; i < count; i++) {
@@ -315,7 +315,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           allen[di + 1] = r * Math.sin(phi) * Math.sin(theta);
           allen[di + 2] = r * Math.cos(phi);
         }
-        bp.allenAtlasPositions = allen;
+        bp.text3DPositions = allen;
       }
 
       setBlueprint(bp);
@@ -327,7 +327,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         const geo = geometryRef.current;
         geo.setAttribute('position', new THREE.BufferAttribute(bp.atmosphericPositions, 3));
         geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(bp.atmosphericPositions, 3));
-        geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(bp.allenAtlasPositions, 3));
+        geo.setAttribute('text3DPosition', new THREE.BufferAttribute(bp.text3DPositions, 3));
         if (bp.tierData) geo.setAttribute('tierData', new THREE.BufferAttribute(bp.tierData, 1));
         if (bp.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(bp.sizeMultipliers, 1));
         if (bp.opacityData) geo.setAttribute('opacityData', new THREE.BufferAttribute(bp.opacityData, 1));
@@ -363,13 +363,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (!count) return null;
 
     const atmos = blueprint.atmosphericPositions;
-    const allen = blueprint.allenAtlasPositions;
+    const allen = blueprint.text3DPositions;
     if (!atmos || !allen) return null;
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(atmos, 3));
     geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(atmos, 3));
-    geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(allen, 3));
+    geo.setAttribute('text3DPosition', new THREE.BufferAttribute(allen, 3));
 
     if (blueprint.animationSeeds)
       geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
@@ -517,7 +517,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       meshRef.current.rotation.y = state.clock.elapsedTime * 0.01;
       meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
     } else {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+   //   meshRef.current.rotation.y = o
     }
   });
 
@@ -529,7 +529,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       geometry={geometry}
       material={material}
       frustumCulled={false}
-      scale={[1.6, 1.6, 1.6]}
+      scale={[1, 1, 1]}
     />
   );
 }

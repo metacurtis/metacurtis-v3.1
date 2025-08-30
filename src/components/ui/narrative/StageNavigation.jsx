@@ -3,6 +3,7 @@
 // Simple sidebar with seven buttons → updates narrativeStore
 
 import { narrativeAtom } from '@/state/atoms';
+import { useAtom } from "@/hooks/useAtom";
 
 // ✅ SST v2.0: Canonical 7-stage system with correct labels
 const STAGES = [

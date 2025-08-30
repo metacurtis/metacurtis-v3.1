@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { narrativeAtom } from '@/state/atoms';
+import { useAtom } from "@/hooks/useAtom";
 import { getPreset } from '@/config/narrativeParticleConfig';
 
 function MemoryFragments() {

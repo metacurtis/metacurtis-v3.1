@@ -6,7 +6,7 @@ export const CanonContracts = {
     validation: { range:[0,1], updateHz:60 }
   },
   blueprint: {
-    required: ['particleCount','atmosphericPositions','allenAtlasPositions'],
+    required: ['particleCount','atmosphericPositions','text3DPositions'],
     constraints: { particleCount:{min:1,max:15000} }
   },
   events: {

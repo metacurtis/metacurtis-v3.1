@@ -12,7 +12,7 @@ import { EVENTS } from '@/theater/events.js';
     const errors=[];
     const count = bp.activeCount || bp.particleCount || bp.maxParticles || (bp.positions? (bp.positions.length/3)|0 : 0);
     if (!count || count<1) errors.push('count<=0');
-    const need3 = ['atmosphericPositions','allenAtlasPositions'];
+    const need3 = ['atmosphericPositions','text3DPositions'];
     need3.forEach(k=>{ if (!bp[k] || !len3(bp[k])) errors.push(k+' missing/len%3'); });
     const need1 = ['sizeMultipliers','opacityData','atlasIndices','tierData'];
     need1.forEach(k=>{ if (bp[k] && !isTyped(bp[k])) errors.push(k+' not typed'); });
@@ -34,7 +34,7 @@ import { EVENTS } from '@/theater/events.js';
       size[i]=1; op[i]=0.8; idx[i]=1; tier[i]=0;
     }
     return { stageName:'genesis', activeCount:n, particleCount:n, maxParticles:n,
-      atmosphericPositions:a, allenAtlasPositions:b, animationSeeds:seeds,
+      atmosphericPositions:a, text3DPositions:b, animationSeeds:seeds,
       sizeMultipliers:size, opacityData:op, atlasIndices:idx, tierData:tier
     };
   }

@@ -19,7 +19,7 @@
     "test:watch": "vitest watch",
     "lighthouse": "lhci autorun --config=./lighthouserc.json",
     "lighthouse:full": "npm run build && npm run lighthouse",
-    "validate": "node scripts/validate-sst.js",
+    "validate": "node scripts/validate-sst-text.js",
     "validate:sst": "node ./scripts/validate-sst-integration.js",
     "predev": "npm run validate",
     "prebuild": "npm run validate",

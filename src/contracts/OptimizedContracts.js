@@ -8,8 +8,6 @@ export class BeatBusContract {
       STAGE_CHANGE: ['stage'],
       QUALITY_CHANGE: ['quality'],
       BLUEPRINT_READY: ['blueprint', 'stage', 'quality'],
-      CTF_BUILD: ['text', 'style', 'worldWidth'],
-      CTF_READY: ['ctf']
     };
     
     const required = contracts[event];

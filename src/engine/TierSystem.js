@@ -134,7 +134,7 @@ export class TierSystem {
     if (tier === 3 && isFeatureEnabled("centerWeightingTier4")) {
       tierConfig.centerWeight = this.applyCenterWeighting(
         particleData.position,
-        stage.brainCoordinates
+        stage.textoordinates
       );
     }
     
@@ -203,13 +203,13 @@ export class TierSystem {
     };
   }
   
-  applyCenterWeighting(position, brainCoordinates) {
-    if (!brainCoordinates || !brainCoordinates.center) {
+  applyCenterWeighting(position, textoordinates) {
+    if (!textoordinates || !textoordinates.center) {
       return { weight: 0, adjustedPosition: position };
     }
     
-    const center = brainCoordinates.center;
-    const radius = brainCoordinates.radius || 20;
+    const center = textoordinates.center;
+    const radius = textoordinates.radius || 20;
     
     const dx = position.x - center[0];
     const dy = position.y - center[1];
@@ -246,8 +246,8 @@ export class TierSystem {
       uEnableClustering: { value: isFeatureEnabled("noiseClusteringTier1") ? 1.0 : 0.0 },
       uEnableCenterWeight: { value: isFeatureEnabled("centerWeightingTier4") ? 1.0 : 0.0 },
       
-      uBrainCenter: { value: stage.brainCoordinates.center || [0, 0, 0] },
-      uBrainRadius: { value: stage.brainCoordinates.radius || 20 }
+      uBrainCenter: { value: stage.textoordinates.center || [0, 0, 0] },
+      uBrainRadius: { value: stage.textoordinates.radius || 20 }
     };
     
     const allBehaviors = new Set();

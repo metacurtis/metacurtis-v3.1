@@ -34,7 +34,7 @@ import { decideDegrade } from './DegradePolicy.js';
     }
 
     // Ensure Float32Array for GPU-safe attributes
-    ['atmosphericPositions','allenAtlasPositions','animationSeeds','sizeMultipliers','opacityData','atlasIndices'].forEach(k=>{
+    ['atmosphericPositions','text3DPositions','animationSeeds','sizeMultipliers','opacityData','atlasIndices'].forEach(k=>{
       if (bp[k] && !(bp[k] instanceof Float32Array)) {
         bp[k] = toF32(bp[k]);
         out.fixes.push(`${k}→Float32Array`);

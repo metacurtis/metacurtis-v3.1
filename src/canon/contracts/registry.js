@@ -36,7 +36,7 @@ export const ContractRegistry = {
 
   blueprints: {
     version: '1.0.0',
-    required: ['particleCount', 'atmosphericPositions', 'allenAtlasPositions'],
+    required: ['particleCount', 'atmosphericPositions', 'text3DPositions'],
     optional: ['tierDistribution', 'behaviorData'],
     constraints: {
       particleCount: { min: 100, max: 15000 },

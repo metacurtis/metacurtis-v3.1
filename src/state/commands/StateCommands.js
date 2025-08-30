@@ -1,4 +1,4 @@
-// State Command Layer - Orchestrates complex state operations
+// State Command Layer with proper cleanup
 import { 
   stageAtom,
   narrativeAtom,
@@ -13,13 +13,14 @@ class StateCommands {
   constructor() {
     this.snapshots = [];
     this.morphState = null;
+    this.subscriptions = []; // Track subscriptions for cleanup
     this.wireAtomsToBeatBus();
   }
 
   wireAtomsToBeatBus() {
     // Stage changes → BeatBus
     let prevStage = stageAtom.getState?.()?.currentStage;
-    stageAtom.subscribe?.((s) => {
+    const stageSub = stageAtom.subscribe?.((s) => {
       const next = s.currentStage;
       if (next !== prevStage) {
         BeatBus.emit(EVENTS.STAGE_CHANGE, { from: prevStage, to: next, reason: 'atom' });
@@ -33,30 +34,29 @@ class StateCommands {
         prevStage = next;
       }
     });
+    if (stageSub) this.subscriptions.push(stageSub);
 
-    // Morph progress from narrativeAtom (where it actually lives)
+    // Morph progress from narrativeAtom
     let lastMorph = narrativeAtom.getState?.()?.morphProgress ?? 0;
-    narrativeAtom.subscribe?.((s) => {
+    const morphSub = narrativeAtom.subscribe?.((s) => {
       const v = Number(s.morphProgress ?? 0);
       if (v !== lastMorph) {
         BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: v });
         lastMorph = v;
       }
     });
+    if (morphSub) this.subscriptions.push(morphSub);
   }
 
   async executeClimaxMorph({ text, duration = 3000 }) {
     this.createSnapshot('pre-morph');
     
-    // Update atoms directly (no batch needed)
     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
     interactionAtom.setState?.(prev => ({ ...prev, locked: true }));
 
     const startTime = performance.now();
     const animate = () => {
       const progress = Math.min((performance.now() - startTime) / duration, 1);
-      
-      // Update morphProgress in narrativeAtom (where it belongs)
       narrativeAtom.setMorphProgress?.(progress);
       
       if (progress < 1) {
@@ -116,9 +116,29 @@ class StateCommands {
       interactionAtom.setState?.(snapshot.state.interaction);
     }
   }
+
+  // Clean up subscriptions
+  dispose() {
+    this.subscriptions.forEach(unsub => {
+      if (typeof unsub === 'function') {
+        unsub();
+      }
+    });
+    this.subscriptions = [];
+    this.snapshots = [];
+    this.morphState = null;
+  }
 }
 
 const stateCommands = new StateCommands();
+
+// Cleanup on window unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    stateCommands.dispose();
+  });
+}
+
 export default stateCommands;
 
 if (import.meta.env.DEV) {
