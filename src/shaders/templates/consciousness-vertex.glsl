@@ -37,34 +37,34 @@ vec3 generateMovement(vec3 basePos, vec3 seeds, float time, float tier) {
   float speed = seeds.y;
   float depth = seeds.z;
   
-  // Tier-based movement
+  // Tier-based movement (reduced amplitude)
   if (tier < 1.5) {
     // Atmospheric drift
     return vec3(
-      sin(time * 0.8 + phase) * 2.0,
-      cos(time * 0.6 + phase * 0.7) * 2.0,
-      sin(time * 0.5 + depth * TWO_PI) * 0.5
+      sin(time * 0.8 + phase) * 1.0,
+      cos(time * 0.6 + phase * 0.7) * 1.0,
+      sin(time * 0.5 + depth * TWO_PI) * 0.3
     );
   } else if (tier < 2.5) {
     // Stable orbital
     return vec3(
-      sin(time * 0.3 + phase) * 0.5,
-      cos(time * 0.3 + phase) * 0.5,
-      sin(time * 0.4 + depth * TWO_PI) * 0.2
+      sin(time * 0.3 + phase) * 0.3,
+      cos(time * 0.3 + phase) * 0.3,
+      sin(time * 0.4 + depth * TWO_PI) * 0.1
     );
   } else if (tier < 3.5) {
     // Twinkling
     float twinkle = sin(time * 3.0 + phase) * 0.5 + 0.5;
     return vec3(
-      sin(time * 0.5 + phase) * twinkle,
-      cos(time * 0.5 + phase) * twinkle,
-      sin(time * 0.6 + depth * TWO_PI) * 0.3
+      sin(time * 0.5 + phase) * twinkle * 0.5,
+      cos(time * 0.5 + phase) * twinkle * 0.5,
+      sin(time * 0.6 + depth * TWO_PI) * 0.2
     );
   } else {
     // Prominent
     return vec3(
-      sin(time * 0.2 + phase) * 0.3,
-      cos(time * 0.2 + phase) * 0.3,
+      sin(time * 0.2 + phase) * 0.2,
+      cos(time * 0.2 + phase) * 0.2,
       sin(time * 0.3 + depth * TWO_PI) * 0.1
     );
   }
@@ -93,15 +93,24 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
   
-  // Point size with distance attenuation
+  // Point size with CONTROLLED attenuation and clamping
   float dist = length(mvPosition.xyz);
-  float attenuation = 300.0 / dist;
-  gl_PointSize = uPointSize * sizeMultiplier * attenuation * uDevicePixelRatio;
-  gl_PointSize = clamp(gl_PointSize, 2.0, 64.0);
+  float attenuation = min(2.0, 200.0 / dist);  // More controlled attenuation
+  float baseSize = uPointSize * sizeMultiplier * attenuation;
+  
+  // Apply device pixel ratio but cap it
+  gl_PointSize = baseSize * min(2.0, uDevicePixelRatio);
+  
+  // Much tighter size constraints
+  gl_PointSize = clamp(gl_PointSize, 1.0, 32.0);
   
   // Pass color blend
   vBlend = uScrollProgress;
   
-  // Calculate alpha
-  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
+  // Calculate alpha with tier-based adjustment
+  float tierAlpha = 1.0;
+  if (tierData < 1.0) tierAlpha = 0.8;
+  else if (tierData < 2.0) tierAlpha = 0.9;
+  
+  vAlpha = opacityData * tierAlpha * (0.5 + 0.5 * uMorphProgress);
 }

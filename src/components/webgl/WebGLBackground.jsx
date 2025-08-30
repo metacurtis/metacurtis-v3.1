@@ -1,18 +1,16 @@
 // src/components/webgl/WebGLBackground.jsx
-// SST v3.0 COMPLIANT — Emergence morphing + stage tint + shader uniform compatibility
+// SST v3.0 COMPLIANT — Fixed particle sizes and spread
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { EVENTS } from '@/theater/events.js';
 import BeatBus from '@modules/orchestration/core/BeatBus.js';
-const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const clamp01 = v => Math.max(0, Math.min(1, Number(v) || 0));
 
 // Atlas / canon
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
-
-// BeatBus + canonical events
 
 // Shaders
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
@@ -51,11 +49,12 @@ function ensureArraysFromEmergence(bp) {
   const positions = bp?.positions;
   if (!positions) return bp;
 
-  const count = bp.count ?? ((positions.length / 3) | 0);
+  const count = bp.count ?? (positions.length / 3) | 0;
   const tiersU8 = bp.tiers || new Uint8Array(count);
 
-  const sizeByTier = [0.6, 0.8, 1.2, 1.5];
-  const opacityByTier = [0.5, 0.6, 0.75, 0.9];
+  // REDUCED SIZES FOR CLEANER PARTICLES
+  const sizeByTier = [0.3, 0.4, 0.6, 0.8]; // Much smaller
+  const opacityByTier = [0.4, 0.5, 0.6, 0.8];
   const atlasByTier = [7, 1, 4, 1];
 
   const sizeMultipliers = new Float32Array(count);
@@ -67,8 +66,8 @@ function ensureArraysFromEmergence(bp) {
   for (let i = 0; i < count; i++) {
     const t = tiersU8[i] | 0;
     tierData[i] = t;
-    sizeMultipliers[i] = sizeByTier[t] ?? 1.0;
-    opacityData[i] = opacityByTier[t] ?? 0.8;
+    sizeMultipliers[i] = sizeByTier[t] ?? 0.5;
+    opacityData[i] = opacityByTier[t] ?? 0.6;
     atlasIndices[i] = atlasByTier[t] ?? 1;
     const j = i * 3;
     animationSeeds[j + 0] = Math.random();
@@ -77,9 +76,7 @@ function ensureArraysFromEmergence(bp) {
   }
 
   const atmosphericPositions = positions;
-  const text3DPositions = positions.slice
-    ? positions.slice()
-    : new Float32Array(positions);
+  const text3DPositions = positions.slice ? positions.slice() : new Float32Array(positions);
 
   return {
     ...bp,
@@ -101,11 +98,14 @@ function ensureArraysFromEmergence(bp) {
 
 function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // MORPH_V2: uniform sink
-  const __applyMorph = (v) => {
+  const __applyMorph = v => {
     try {
-      const mat = (typeof materialRef!=='undefined' && materialRef && materialRef.current) ||
-                  globalThis.__consciousnessMaterial || globalThis.bgMaterial ||
-                  (globalThis.__webglBackground && globalThis.__webglBackground.material) || null;
+      const mat =
+        (typeof materialRef !== 'undefined' && materialRef && materialRef.current) ||
+        globalThis.__consciousnessMaterial ||
+        globalThis.bgMaterial ||
+        (globalThis.__webglBackground && globalThis.__webglBackground.material) ||
+        null;
       if (!mat || !mat.uniforms) return;
       const u = mat.uniforms;
       if (u.uMorphProgress) u.uMorphProgress.value = v;
@@ -113,7 +113,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       else if (u.uMorph) u.uMorph.value = v;
       else if (u.morph) u.morph.value = v;
       mat.needsUpdate = true;
-    } catch { /* no-op */ }
+    } catch {
+      /* no-op */
+    }
   };
 
   const meshRef = useRef();
@@ -135,30 +137,34 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // HOTDORS_MORPH_LISTENER
   useEffect(() => {
-    const off = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (p) => {
-      try { 
+    const off = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, p => {
+      try {
         const v = clamp01(p?.value);
         fallbackMorphRef.current = v;
         __applyMorph(v);
-      } catch { /* no-op */ }
+      } catch {
+        /* no-op */
+      }
     });
     return () => off && off();
   }, []);
 
   // HOTDORS_STAGE_TINT
   useEffect(() => {
-    const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
-      try { 
+    const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, p => {
+      try {
         const st = p?.stage || p?.name || String(p);
         setStageName(st);
         __applyStageTint(st);
-      } catch { /* no-op */ }
+      } catch {
+        /* no-op */
+      }
     });
     return () => off && off();
   }, []);
 
   // Update tint uniforms based on stage
-  const __applyStageTint = (stage) => {
+  const __applyStageTint = stage => {
     try {
       const mat = materialRef.current;
       if (!mat?.uniforms) return;
@@ -208,7 +214,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {
       const start = performance.now();
       const dur = 1400;
-      const tick = (t0) => {
+      const tick = t0 => {
         const k = Math.min(1, (t0 - start) / dur);
         // smoothstep
         const v = k * k * (3 - 2 * k);
@@ -223,18 +229,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // BLUEPRINT_READY → set geometry sources (full or synthesized emergence)
   useEffect(() => {
-    const handleBlueprint = (payload) => {
+    const handleBlueprint = payload => {
       const { bp: raw, stageName: st, quality, cached } = normalizePayload(payload);
 
-  // Skip emergence after initial stage is set
-  if (raw?.mode === 'emergence' && lastFullStageRef.current) {
-    return;
-  }
+      // Skip emergence after initial stage is set
+      if (raw?.mode === 'emergence' && lastFullStageRef.current) {
+        return;
+      }
 
- // Skip cached emergence blueprints when we have real stage data
- if (cached && raw?.mode === 'emergence' && lastFullStageRef.current) {
-   return;
- }
+      // Skip cached emergence blueprints when we have real stage data
+      if (cached && raw?.mode === 'emergence' && lastFullStageRef.current) {
+        return;
+      }
 
       // Skip duplicate blueprints
       const blueprintId = `${st}-${raw?.count || raw?.particleCount || raw?.activeCount || 0}-${raw?.mode || 'default'}`;
@@ -247,21 +253,28 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         setBlueprint(raw);
         setStageName(raw.stageName || st || 'genesis');
         setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
-        
+
         // UPDATE GEOMETRY IF IT EXISTS
         if (geometryRef.current) {
           const geo = geometryRef.current;
           geo.setAttribute('position', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
-          geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
+          geo.setAttribute(
+            'atmosphericPosition',
+            new THREE.BufferAttribute(raw.atmosphericPositions, 3)
+          );
           geo.setAttribute('text3DPosition', new THREE.BufferAttribute(raw.text3DPositions, 3));
-          if (raw.tierData) geo.setAttribute('tierData', new THREE.BufferAttribute(raw.tierData, 1));
-          if (raw.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(raw.sizeMultipliers, 1));
-          if (raw.opacityData) geo.setAttribute('opacityData', new THREE.BufferAttribute(raw.opacityData, 1));
-          if (raw.atlasIndices) geo.setAttribute('atlasIndex', new THREE.BufferAttribute(raw.atlasIndices, 1));
+          if (raw.tierData)
+            geo.setAttribute('tierData', new THREE.BufferAttribute(raw.tierData, 1));
+          if (raw.sizeMultipliers)
+            geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(raw.sizeMultipliers, 1));
+          if (raw.opacityData)
+            geo.setAttribute('opacityData', new THREE.BufferAttribute(raw.opacityData, 1));
+          if (raw.atlasIndices)
+            geo.setAttribute('atlasIndex', new THREE.BufferAttribute(raw.atlasIndices, 1));
           geo.attributes.position.needsUpdate = true;
           geo.setDrawRange(0, raw.activeCount || raw.particleCount);
         }
-        
+
         console.log(
           `✅ Renderer: ${cached ? 'cached' : 'new'} BLUEPRINT_READY (full)`,
           `stage=${raw.stageName || st}, count=${raw.particleCount || raw.activeCount}, quality=${quality}`
@@ -273,18 +286,19 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       let bp = ensureArraysFromEmergence(raw);
       const count = bp.activeCount || bp.particleCount || bp.maxParticles || 0;
 
-      // Scale emergence text so it's clearly visible
+      // Scale emergence text for better spread (MORE SPREAD)
       try {
-        const fovRad = (camera?.fov ?? 75) * Math.PI / 180;
+        const fovRad = ((camera?.fov ?? 75) * Math.PI) / 180;
         const z = camera?.position?.z ?? 80;
         const viewH = 2 * z * Math.tan(fovRad / 2);
-        const desiredH = viewH * 0.65;
+        const desiredH = viewH * 0.8; // Larger spread
         const assumedTextH = 10.0;
         const textScale = desiredH / assumedTextH;
 
         for (let i = 0; i < bp.atmosphericPositions.length; i += 3) {
-          bp.atmosphericPositions[i + 0] *= textScale;
+          bp.atmosphericPositions[i + 0] *= textScale * 1.5; // More horizontal spread
           bp.atmosphericPositions[i + 1] *= textScale;
+          bp.atmosphericPositions[i + 2] *= 0.5; // Keep Z shallow
         }
       } catch {
         /* keep original scale if camera not ready */
@@ -326,12 +340,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (geometryRef.current && bp.atmosphericPositions) {
         const geo = geometryRef.current;
         geo.setAttribute('position', new THREE.BufferAttribute(bp.atmosphericPositions, 3));
-        geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(bp.atmosphericPositions, 3));
+        geo.setAttribute(
+          'atmosphericPosition',
+          new THREE.BufferAttribute(bp.atmosphericPositions, 3)
+        );
         geo.setAttribute('text3DPosition', new THREE.BufferAttribute(bp.text3DPositions, 3));
         if (bp.tierData) geo.setAttribute('tierData', new THREE.BufferAttribute(bp.tierData, 1));
-        if (bp.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(bp.sizeMultipliers, 1));
-        if (bp.opacityData) geo.setAttribute('opacityData', new THREE.BufferAttribute(bp.opacityData, 1));
-        if (bp.atlasIndices) geo.setAttribute('atlasIndex', new THREE.BufferAttribute(bp.atlasIndices, 1));
+        if (bp.sizeMultipliers)
+          geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(bp.sizeMultipliers, 1));
+        if (bp.opacityData)
+          geo.setAttribute('opacityData', new THREE.BufferAttribute(bp.opacityData, 1));
+        if (bp.atlasIndices)
+          geo.setAttribute('atlasIndex', new THREE.BufferAttribute(bp.atlasIndices, 1));
         geo.attributes.position.needsUpdate = true;
         geo.setDrawRange(0, count);
       }
@@ -400,19 +420,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const { current, next, acc1, acc2 } = pickStageColors(stageName);
     const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
 
-    // GPU-safe point size detection
-    const glCtx = gl.getContext?.();
-    let POINT_SIZE_DEFAULT = 48.0;
-    try {
-      if (glCtx) {
-        const range = glCtx.getParameter(glCtx.ALIASED_POINT_SIZE_RANGE);
-        if (range && range.length) {
-          POINT_SIZE_DEFAULT = Math.min(64, range[1] * 0.85);
-        }
-      }
-    } catch {
-      POINT_SIZE_DEFAULT = 48.0;
-    }
+    // REDUCED POINT SIZE FOR CLEANER PARTICLES
+    const POINT_SIZE_DEFAULT = 20.0; // Much smaller base size
 
     const mat = new THREE.ShaderMaterial({
       uniforms: {
@@ -435,9 +444,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         uAtlasTexture: { value: atlasTexture },
         uTotalSprites: { value: 16 },
 
-        // Display
+        // Display - SMALLER SIZE
         uPointSize: { value: POINT_SIZE_DEFAULT },
-        uDevicePixelRatio: { value: gl.getPixelRatio() },
+        uDevicePixelRatio: { value: Math.min(2, gl.getPixelRatio()) }, // Cap DPR
         uResolution: { value: new THREE.Vector2(size.width, size.height) },
 
         // Tier & fade
@@ -445,7 +454,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         uTierCutoff: { value: activeCount || 15000 },
         uFadeProgress: { value: 1.0 },
         uGaussianSigma: { value: 2.5 },
-        uTierHighlight: { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
+        uTierHighlight: { value: new Float32Array([1.0, 1.1, 1.2, 1.3]) }, // Less extreme
 
         // Feature toggles from canon
         uGaussianFalloff: { value: Canonical?.features?.gaussianFalloff ?? 1.0 },
@@ -481,12 +490,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const mat = materialRef.current;
     if (!mat) return;
     mat.uniforms.uResolution.value.set(size.width, size.height);
-    mat.uniforms.uDevicePixelRatio.value = gl.getPixelRatio();
+    mat.uniforms.uDevicePixelRatio.value = Math.min(2, gl.getPixelRatio()); // Cap DPR
     mat.uniformsNeedUpdate = true;
   }, [size, gl]);
 
   // Animation frame (keeps uniforms fresh and drives motion)
-  useFrame((state) => {
+  useFrame(state => {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !blueprint) return;
 
@@ -516,8 +525,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     } else if (camCfg?.movement === 'reverent_orbit') {
       meshRef.current.rotation.y = state.clock.elapsedTime * 0.01;
       meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
-    } else {
-   //   meshRef.current.rotation.y = o
     }
   });
 
