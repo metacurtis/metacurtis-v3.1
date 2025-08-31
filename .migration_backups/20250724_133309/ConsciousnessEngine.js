@@ -102,7 +102,7 @@ class ConsciousnessEngine {
     // Pre-allocate arrays for 17K max
     const maxParticles = 17000;
     const atmosphericPositions = new Float32Array(maxParticles * 3);
-    const allenAtlasPositions = new Float32Array(maxParticles * 3);
+    const text3DPositions = new Float32Array(maxParticles * 3);
     const animationSeeds = new Float32Array(maxParticles * 3);
     const sizeMultipliers = new Float32Array(maxParticles);
     const opacityData = new Float32Array(maxParticles);
@@ -134,7 +134,7 @@ class ConsciousnessEngine {
           rng,
           atlas,
           atmosphericPositions,
-          allenAtlasPositions,
+          text3DPositions,
           animationSeeds,
           sizeMultipliers,
           opacityData,
@@ -152,7 +152,7 @@ class ConsciousnessEngine {
       maxParticles,
       tierCounts,
       atmosphericPositions,
-      allenAtlasPositions,
+      text3DPositions,
       animationSeeds,
       sizeMultipliers,
       opacityData,
@@ -182,7 +182,7 @@ class ConsciousnessEngine {
     rng,
     atlas,
     atmosphericPositions,
-    allenAtlasPositions,
+    text3DPositions,
     animationSeeds,
     sizeMultipliers,
     opacityData,
@@ -205,15 +205,15 @@ class ConsciousnessEngine {
       const point = points[pointIndex];
       const variation = 0.3;
 
-      allenAtlasPositions[i3] = point[0] + (rng() - 0.5) * variation;
-      allenAtlasPositions[i3 + 1] = point[1] + (rng() - 0.5) * variation;
-      allenAtlasPositions[i3 + 2] = point[2] + (rng() - 0.5) * variation;
+      text3DPositions[i3] = point[0] + (rng() - 0.5) * variation;
+      text3DPositions[i3 + 1] = point[1] + (rng() - 0.5) * variation;
+      text3DPositions[i3 + 2] = point[2] + (rng() - 0.5) * variation;
     } else {
       // Other tiers use broader distribution
       const brainSpread = tier === 1 ? 25 : tier === 2 ? 20 : 15;
-      allenAtlasPositions[i3] = (rng() - 0.5) * brainSpread;
-      allenAtlasPositions[i3 + 1] = (rng() - 0.5) * brainSpread;
-      allenAtlasPositions[i3 + 2] = (rng() - 0.5) * brainSpread * 0.5;
+      text3DPositions[i3] = (rng() - 0.5) * brainSpread;
+      text3DPositions[i3 + 1] = (rng() - 0.5) * brainSpread;
+      text3DPositions[i3 + 2] = (rng() - 0.5) * brainSpread * 0.5;
     }
 
     // Animation seeds

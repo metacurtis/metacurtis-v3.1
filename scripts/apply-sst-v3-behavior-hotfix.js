@@ -47,7 +47,7 @@ function replaceOnce(src, pattern, replacement, label) {
     code,
     /function ensureArraysFromEmergence\([\s\S]*?return \{\n[\s\S]*?tierData,\n[\s\S]*?\};\n\}/,
     `function ensureArraysFromEmergence(bp) {
-  if (bp.atmosphericPositions && bp.allenAtlasPositions) return bp;
+  if (bp.atmosphericPositions && bp.text3DPositions) return bp;
   const positions = bp.positions;
   if (!positions) return bp;
 
@@ -56,16 +56,16 @@ function replaceOnce(src, pattern, replacement, label) {
 
   // Text shape stays as atmospheric (start), outward cloud becomes "allen" (end)
   const atmosphericPositions = positions; // text
-  const allenAtlasPositions = new Float32Array(count * 3);
+  const text3DPositions = new Float32Array(count * 3);
 
   // Expand to fill more of the viewport and add slight jitter
   const EXPAND = 3.2;
   for (let i = 0; i < count; i++) {
     const j = i * 3;
     const x = positions[j + 0], y = positions[j + 1], z = positions[j + 2];
-    allenAtlasPositions[j + 0] = x * EXPAND + (Math.random() - 0.5) * 8.0;
-    allenAtlasPositions[j + 1] = y * EXPAND + (Math.random() - 0.5) * 8.0;
-    allenAtlasPositions[j + 2] = (Math.random() - 0.5) * 6.0;
+    text3DPositions[j + 0] = x * EXPAND + (Math.random() - 0.5) * 8.0;
+    text3DPositions[j + 1] = y * EXPAND + (Math.random() - 0.5) * 8.0;
+    text3DPositions[j + 2] = (Math.random() - 0.5) * 6.0;
   }
 
   const sizeByTier = [0.6, 0.8, 1.2, 1.5];
@@ -98,7 +98,7 @@ function replaceOnce(src, pattern, replacement, label) {
     particleCount: count,
     activeCount: count,
     atmosphericPositions,
-    allenAtlasPositions,
+    text3DPositions,
     animationSeeds,
     sizeMultipliers,
     opacityData,

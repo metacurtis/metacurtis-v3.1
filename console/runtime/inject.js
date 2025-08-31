@@ -116,7 +116,7 @@ import { Playbooks } from './playbooks.js';
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position',               new THREE.BufferAttribute(a,3));
       geo.setAttribute('atmosphericPosition',    new THREE.BufferAttribute(a,3));
-      geo.setAttribute('allenAtlasPosition',     new THREE.BufferAttribute(b,3));
+      geo.setAttribute('text3DPosition',     new THREE.BufferAttribute(b,3));
       geo.setAttribute('animationSeed',          new THREE.BufferAttribute(seed,3));
       geo.setAttribute('sizeMultiplier',         new THREE.BufferAttribute(size,1));
       geo.setAttribute('opacityData',            new THREE.BufferAttribute(op,1));

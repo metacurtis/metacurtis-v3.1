@@ -56,37 +56,37 @@ function upsertAfter(hay, anchorRe, insert, presentMarker, label) {
   );
 
   // 1) Make emergence actually morph (text -> outward)
-  // Replace the simple "clone" of allenAtlasPositions with an expanded cloud.
+  // Replace the simple "clone" of text3DPositions with an expanded cloud.
   // We try a few variants of that line.
   const cloneLineRe =
-    /const\s+allenAtlasPositions\s*=\s*positions\.slice\s*\?\s*positions\.slice\(\)\s*:\s*new\s+Float32Array\(positions\)\s*;/;
+    /const\s+text3DPositions\s*=\s*positions\.slice\s*\?\s*positions\.slice\(\)\s*:\s*new\s+Float32Array\(positions\)\s*;/;
 
   if (cloneLineRe.test(src)) {
     src = src.replace(
       cloneLineRe,
-      `const allenAtlasPositions = new Float32Array(count * 3);
+      `const text3DPositions = new Float32Array(count * 3);
   const EXPAND = 3.2;
   for (let i = 0; i < count; i++) {
     const j = i * 3;
     const x = positions[j], y = positions[j + 1], z = positions[j + 2];
-    allenAtlasPositions[j]     = x * EXPAND + (Math.random() - 0.5) * 8.0;
-    allenAtlasPositions[j + 1] = y * EXPAND + (Math.random() - 0.5) * 8.0;
-    allenAtlasPositions[j + 2] = (Math.random() - 0.5) * 6.0;
+    text3DPositions[j]     = x * EXPAND + (Math.random() - 0.5) * 8.0;
+    text3DPositions[j + 1] = y * EXPAND + (Math.random() - 0.5) * 8.0;
+    text3DPositions[j + 2] = (Math.random() - 0.5) * 6.0;
   }`
     );
   } else {
     // If the exact clone line isn’t there, try a broader replacement inside ensureArraysFromEmergence()
     src = replaceOrThrow(
       src,
-      /(\batmosphericPositions\s*=\s*positions\s*;\s*\n\s*const\s+allenAtlasPositions\s*=\s*)([\s\S]*?);/,
+      /(\batmosphericPositions\s*=\s*positions\s*;\s*\n\s*const\s+text3DPositions\s*=\s*)([\s\S]*?);/,
       `$1new Float32Array(count * 3);
   const EXPAND = 3.2;
   for (let i = 0; i < count; i++) {
     const j = i * 3;
     const x = positions[j], y = positions[j + 1], z = positions[j + 2];
-    allenAtlasPositions[j]     = x * EXPAND + (Math.random() - 0.5) * 8.0;
-    allenAtlasPositions[j + 1] = y * EXPAND + (Math.random() - 0.5) * 8.0;
-    allenAtlasPositions[j + 2] = (Math.random() - 0.5) * 6.0;
+    text3DPositions[j]     = x * EXPAND + (Math.random() - 0.5) * 8.0;
+    text3DPositions[j + 1] = y * EXPAND + (Math.random() - 0.5) * 8.0;
+    text3DPositions[j + 2] = (Math.random() - 0.5) * 6.0;
   }`,
       'emergence outward cloud'
     );

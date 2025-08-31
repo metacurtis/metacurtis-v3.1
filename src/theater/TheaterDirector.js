@@ -101,6 +101,9 @@ class TheaterDirector {
 
       // Signal that particles have fully emerged
       BeatBus.emit(EVENTS.PARTICLES_EMERGED);
+      // HOTDORS: tint reapply
+      BeatBus.emit(EVENTS.STAGE_CHANGE, { stage: "genesis" });
+      await this.sleep(150);
       
       // Wait for confirmation or timeout
       await this.once(EVENTS.PARTICLES_EMERGED, 1000);
