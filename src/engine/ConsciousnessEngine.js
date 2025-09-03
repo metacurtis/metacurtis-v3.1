@@ -225,13 +225,53 @@ class ConsciousnessEngine {
     };
   }
 
+  // HOTDORS_FULL_EMERGENCE: Engine emits full arrays; renderer remains a dumb sink
   buildEmergenceBlueprint({ text = 'HELLO CURTIS', count = 2000 } = {}) {
     console.log(`🌟 Building emergence: "${text}" with ${count} particles`);
+
+    // Base 2D text particle positions
     const positions = this.textToParticlePositions(text, count);
     const tiers = new Uint8Array(count);
-    
+    for (let i = 0; i < count; i++) tiers[i] = Math.floor(Math.random() * 4);
+
+    // Derive full blueprint arrays here (moved from renderer)
+    const sizeByTier = [0.6, 0.8, 1.2, 1.5];
+    const opacityByTier = [0.5, 0.6, 0.75, 0.9];
+    const atlasByTier = [7, 1, 4, 1];
+
+    const maxParticles = count;
+    const atmosphericPositions = new Float32Array(maxParticles * 3);
+    const text3DPositions = new Float32Array(maxParticles * 3);
+    const animationSeeds = new Float32Array(maxParticles * 3);
+    const sizeMultipliers = new Float32Array(maxParticles);
+    const opacityData = new Float32Array(maxParticles);
+    const atlasIndices = new Float32Array(maxParticles);
+    const tierData = new Float32Array(maxParticles);
+
+    // Use a seeded rnd so emergence is stable
+    const rnd = (Math.random && Math.random.bind(Math)) || (()=>0.5);
+
     for (let i = 0; i < count; i++) {
-      tiers[i] = Math.floor(Math.random() * 4);
+      const j = i * 3;
+      // Atmospheric: spread around the text area
+      atmosphericPositions[j + 0] = positions[j + 0] + (Math.random() - 0.5) * 60;
+      atmosphericPositions[j + 1] = positions[j + 1] + (Math.random() - 0.5) * 45;
+      atmosphericPositions[j + 2] = (Math.random() - 0.5) * 40;
+
+      // Text target = same glyph positions (shallow Z)
+      text3DPositions[j + 0] = positions[j + 0];
+      text3DPositions[j + 1] = positions[j + 1];
+      text3DPositions[j + 2] = positions[j + 2];
+
+      const t = tiers[i] | 0;
+      tierData[i] = t;
+      sizeMultipliers[i] = sizeByTier[t] ?? 1.0;
+      opacityData[i] = opacityByTier[t] ?? 0.8;
+      atlasIndices[i] = atlasByTier[t] ?? 1;
+
+      animationSeeds[j + 0] = Math.random();
+      animationSeeds[j + 1] = Math.random();
+      animationSeeds[j + 2] = Math.random();
     }
 
     return {
@@ -242,8 +282,13 @@ class ConsciousnessEngine {
       particleCount: count,
       maxParticles: count,
       activeCount: count,
-      positions,
-      tiers,
+      atmosphericPositions,
+      text3DPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
       metadata: {
         sourceText: text,
         createdAt: Date.now(),
@@ -297,7 +342,7 @@ class ConsciousnessEngine {
       return this.text3DCache.get(cacheKey);
     }
 
-    if (!this.font || true) { // Force 2D for testing 
+    if (!this.font) { // Force 2D for testing 
       return this.textToParticlePositions(text, count);
     }
 

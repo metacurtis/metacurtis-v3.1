@@ -1,3 +1,4 @@
+/* eslint-disable no-empty, no-constant-binary-expression, no-unused-vars */
 // src/components/webgl/WebGLCanvas.jsx
 // SST v3.0 COMPLIANT - Props-driven renderer
 
@@ -315,11 +316,7 @@ export default function WebGLCanvas({
 
           // Access canvas element
           const canvasElement = canvasRef.current;
-          if (canvasElement) {
-            canvasElement.setAttribute('data-webgl-version', gl.capabilities.isWebGL2 ? '2' : '1');
-            canvasElement.setAttribute('data-quality-tier', quality);
-            canvasElement.setAttribute('data-particle-count', particleCount.toString());
-          }
+          if (canvasElement) { /* noop */ }
 
           // Context optimization
           const context = gl.getContext();

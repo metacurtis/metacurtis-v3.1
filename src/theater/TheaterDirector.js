@@ -100,10 +100,11 @@ class TheaterDirector {
       await this.sleep(2000);
 
       // Signal that particles have fully emerged
-      BeatBus.emit(EVENTS.PARTICLES_EMERGED);
-      
+/* HOTDORS: Director must not emit PARTICLES_EMERGED (renderer-only). Removed. */
       // Wait for confirmation or timeout
       await this.once(EVENTS.PARTICLES_EMERGED, 1000);
+      // HOTDORS: explicit handoff to genesis stage per v3.3
+      BeatBus.emit(EVENTS.STAGE_CHANGE, { stage: 'genesis' });
       if (this.cancelled) return;
 
       // Phase 6: Start narrative and enable scroll

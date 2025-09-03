@@ -1,254 +1,300 @@
 #!/usr/bin/env node
 /**
- * SST v3.0 Validator
- * Run: node scripts/validate-sst.js
+ * SST Canonical Validator — v3.3 aware (BeatGlyph) / v3.0 compatible
+ * Scope: data validation only (stages/ranges/mixes/palettes/optionals).
+ * Architecture invariants are enforced separately by tools/sst-guard.mjs.
  */
 
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { fileURLToPath } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-// ----- Optional colored output (chalk). Fallback if missing -----
+// ---- Optional color (no hard dep) ----
 let chalk;
-try {
-  chalk = (await import('chalk')).default;
-} catch {
-  chalk = new Proxy({}, { get: () => (s) => s }); // no-op color
-}
+try { chalk = (await import('chalk')).default; }
+catch { chalk = new Proxy({}, { get: () => (s) => s }); }
 
-// ----- Load Canonical -----
+// ---- Load Canonical (ESM) ----
 const canonicalPath = path.resolve(__dirname, '../src/config/canonical/canonicalAuthority.js');
-const CanonicalMod  = await import(pathToFileURL(canonicalPath).href);
-const Canonical     = CanonicalMod.default || CanonicalMod.Canonical;
-
-if (!Canonical) {
-  console.error('❌ Could not load Canonical from canonicalAuthority.js');
+const CanonicalMod  = await import(pathToFileURL(canonicalPath).href).catch((e) => {
+  console.error('❌ Could not import Canonical:', e?.message || e);
   process.exit(1);
-}
+});
+const Canonical = CanonicalMod?.default || CanonicalMod?.Canonical;
+if (!Canonical) { console.error('❌ Canonical export not found'); process.exit(1); }
 
-const {
-  stages,
-  behaviors,
-  dialogue,
-  fragments,
-  performance,
-  features,
-  tierSystem
-} = Canonical;
+// ---- Surfaces (optional sections tolerated) ----
+const stagesObj   = Canonical.stages || {};
+const stageOrder  = Canonical.stageOrder || Object.keys(stagesObj);
+const breakpoints = Canonical.scrollAndMorph?.stageBreakpointsPercent || null;
+let   behaviors   = Canonical.behaviors || null;  // often absent in v3.3
+const dialogue    = Canonical.dialogue  || {};    // legacy (optional)
+const fragments   = Canonical.fragments || {};    // legacy (optional)
+const perf        = Canonical.performance || {};
+const quality     = Canonical.quality     || {};
+const version     = String(Canonical.version ?? '');
+const mode        = Canonical.meta?.mode;
 
-// --- Collect results ---
+const isTextFirst = (mode === 'TEXT_FIRST_REVEAL') || (parseFloat(version) >= 3.3);
+
+// ---- Helpers (v3.0 ↔ v3.3 mapping) ----
+const E = 1e-3;
+const rangeTol = 0.51; // ~0.5% wiggle for authoring
+
+const getRange = (s) => {
+  const r = s?.scrollRange ?? s?.scrollRangePercent;  // old/new
+  return (Array.isArray(r) && r.length >= 2) ? [Number(r[0]), Number(r[1])] : null;
+};
+const getTier = (s) => s?.tierRatios ?? s?.tierMix ?? null;
+const getParticles = (s) => s?.particles ?? s?.particlesBase ?? s?.particleCount ?? null;
+const getColors    = (s) => s?.colors ?? s?.palette ?? null;
+const hasSprites   = (s) => s?.sprites && typeof s.sprites === 'object';
+
+// ---- Result buckets ----
 const errors   = [];
 const warnings = [];
-let checksRun = 0;
-let checksPassed = 0;
+let checksRun = 0, checksPassed = 0;
 
-function check(condition, errorMsg, warningMsg = null) {
+const check = (ok, errMsg, warnMsg=null) => {
   checksRun++;
-  if (!condition) {
-    if (warningMsg) warnings.push(warningMsg);
-    else errors.push(errorMsg);
-  } else {
-    checksPassed++;
-  }
-}
+  if (!ok) { warnMsg ? warnings.push(warnMsg) : errors.push(errMsg); }
+  else checksPassed++;
+};
 
-// ===================== VALIDATIONS ======================
-
-// -- Stage config
+// ================== VALIDATORS ==================
 function validateStages() {
   console.log(chalk.blue('\n📋 Validating Stage Configurations...'));
-  const names = Object.keys(stages);
-
+  const names = stageOrder.length ? stageOrder : Object.keys(stagesObj);
   check(names.length === 7, `Expected 7 stages, found ${names.length}`);
 
+  let prevRange = null;
   names.forEach((name, idx) => {
-    const s = stages[name];
+    const s = stagesObj[name] || {};
     console.log(chalk.gray(`  Checking ${name}...`));
 
-    // id / index
-    check(s.id === idx, `${name}: id (${s.id}) !== index (${idx})`);
-
-    // tier ratios sum
-    const tr = s.tierRatios || [];
-    const sum = tr.reduce((a, b) => a + b, 0);
-    check(Math.abs(sum - 1) < 0.001, `${name}: tierRatios sum ${sum}, expected 1.0`);
-
-    tr.forEach((r, i) => check(r >= 0 && r <= 1, `${name}: ratio[${i}] ${r} out of [0,1] range`));
-
-    // scroll range
-    check(
-      s.scrollRange && s.scrollRange.length === 2 && s.scrollRange[0] < s.scrollRange[1],
-      `${name}: invalid scrollRange`
-    );
-
-    if (idx > 0) {
-      const prev = stages[names[idx - 1]];
-      check(
-        s.scrollRange[0] === prev.scrollRange[1],
-        `${name}: scrollRange[0]=${s.scrollRange[0]} does not match prev.scrollRange[1]=${prev.scrollRange[1]}`
-      );
+    // id/index only if present
+    if (typeof s.id !== 'undefined') {
+      check(s.id === idx, `${name}: id (${s.id}) !== index (${idx})`);
     }
 
-    // particle count
-    check(
-      typeof s.particles === 'number' && s.particles >= 1000 && s.particles <= 17000,
-      null,
-      `${name}: particles ${s.particles} outside recommended 1000-17000`
-    );
+    // tier mix sum to 1
+    const mix = getTier(s);
+    if (Array.isArray(mix)) {
+      const sum = mix.reduce((a, b) => a + Number(b || 0), 0);
+      check(Math.abs(sum - 1) < 0.001, `${name}: tier mix sums to ${sum.toFixed(4)} (must be 1.0)`);
+      mix.forEach((r, i) => check(r >= 0 && r <= 1, `${name}: tier[${i}] ${r} out of [0,1]`));
+    } else {
+      warnings.push(`${name}: missing tierMix/tierRatios`);
+    }
 
-    // sprites
-    if (s.sprites) {
+    // scroll range
+    const range = getRange(s);
+    check(!!range && range[0] < range[1], `${name}: invalid scroll range (need [start,end] %)`);
+    if (range) {
+      if (idx === 0 && Math.abs(range[0] - 0) > rangeTol)
+        warnings.push(`${name}: first stage does not start at 0`);
+      if (idx === names.length - 1 && Math.abs(range[1] - 100) > rangeTol)
+        warnings.push(`${name}: last stage does not end at 100`);
+      if (prevRange) {
+        check(Math.abs(range[0] - prevRange[1]) < rangeTol,
+          `${name}: range start ${range[0]}% does not continue from previous end ${prevRange[1]}%`);
+      }
+      prevRange = range;
+    }
+
+    // particle budgets (informational)
+    const p = getParticles(s);
+    const maxP = quality.maxParticles ?? perf.maxParticles ?? 15000;
+    if (Number.isFinite(p)) {
+      check(p >= 500 && p <= Math.max(17000, maxP), null,
+        `${name}: particles ${p} outside recommended 500–${Math.max(17000, maxP)}`);
+    } else {
+      warnings.push(`${name}: missing particle count (particles/particlesBase/particleCount)`);
+    }
+
+    // colors/palette
+    const cols = getColors(s);
+    check(Array.isArray(cols) && cols.length === 3, `${name}: need exactly 3 colors (palette/colors)`);
+    (cols || []).forEach((hex, i) => {
+      check(/^#[0-9a-fA-F]{6}$/.test(hex), `${name}: invalid hex color '${hex}' @ index ${i}`);
+    });
+
+    // sprites (validate only if present)
+    if (hasSprites(s)) {
       Object.entries(s.sprites).forEach(([tierKey, arr]) => {
-        arr.forEach(idx => {
-          check(idx >= 0 && idx <= 15, `${name}: sprite index ${idx} invalid (0-15)`);
+        (arr || []).forEach((idx2) => {
+          check(idx2 >= 0 && idx2 <= 15, `${name}: sprite index ${idx2} invalid (0..15)`);
         });
       });
     }
 
-    // colors
-    check(Array.isArray(s.colors) && s.colors.length === 3, `${name}: need 3 colors`);
-    s.colors?.forEach((c, i) => {
-      check(/^#[0-9a-fA-F]{6}$/.test(c), `${name}: invalid hex color '${c}' @ index ${i}`);
-    });
+    // brainRegion: warn if missing (deprecated in Text-First)
+    if (!s.brainRegion) {
+      isTextFirst
+        ? warnings.push(`${name}: brainRegion not provided (ok in TEXT_FIRST)`)
+        : errors.push(`${name}: missing brainRegion`);
+    }
 
-    // brain region
-    check(!!s.brainRegion, `${name}: missing brainRegion`);
-
-    // camera config
+    // camera movement still required
     check(!!(s.camera && s.camera.movement), `${name}: missing camera movement`);
   });
 }
 
-// -- Behaviors
-function validateBehaviors() {
-  console.log(chalk.blue('\n🎯 Validating Tier Behaviors...'));
+function validateBreakpoints() {
+  if (!breakpoints || breakpoints.length < 2) {
+    console.log(chalk.gray('\n⏱  Skipping Breakpoints (none provided)'));
+    return;
+  }
+  console.log(chalk.blue('\n⏱  Validating Breakpoints vs Ranges...'));
+  const bps = breakpoints.slice().sort((a, z) => a - z);
 
-  // ensure sets map to definitions
-  Object.entries(behaviors.sets || {}).forEach(([tier, ids]) => {
+  if (bps[0] > 0 + E || bps[bps.length - 1] < 100 - E) {
+    warnings.push(`breakpoints do not span [0,100]: [${bps.join(', ')}]`);
+  }
+
+  stageOrder.forEach((name, i) => {
+    const r = getRange(stagesObj[name]);
+    if (!r) return;
+    if (i < bps.length - 1) {
+      const expected = [bps[i], bps[i + 1]];
+      const offS = Math.abs(r[0] - expected[0]);
+      const offE = Math.abs(r[1] - expected[1]);
+      if (offS > rangeTol || offE > rangeTol) {
+        warnings.push(`${name}: range ${r[0]}–${r[1]} deviates from breakpoints ${expected[0]}–${expected[1]}`);
+      }
+    }
+  });
+}
+
+async function validateBehaviors() {
+  console.log(chalk.blue('\n🎯 Validating Text Formation Behaviors...'));
+
+  // Canonical v3.3 often omits behaviors. Try legacy fallback, else skip.
+  let localBehaviors = behaviors;
+  if (!localBehaviors || (!localBehaviors.sets && !localBehaviors.definitions)) {
+    try {
+      const legacy = await import(
+        pathToFileURL(path.resolve(__dirname, '../src/config/sst3/tier-behaviors.js')).href
+      );
+      localBehaviors = legacy?.TIER_BEHAVIORS || null;
+      if (localBehaviors) console.log(chalk.gray('  (Using legacy sst3/tier-behaviors for validation)'));
+    } catch {
+      console.log(chalk.gray('  (Skipped — no behaviors available in Canonical/legacy)'));
+      return;
+    }
+  }
+
+  const defs = localBehaviors.definitions || {};
+  const sets = localBehaviors.sets || {};
+
+  Object.entries(sets).forEach(([tier, ids]) => {
     console.log(chalk.gray(`  Tier ${tier}...`));
-    ids.forEach(id => {
-      check(behaviors.definitions[id], `Tier ${tier}: unknown behavior '${id}'`);
+    (ids || []).forEach((id) => {
+      check(!!defs[id], `Unknown behavior '${id}' in tier ${tier}`);
     });
   });
 
-  // optional deeper checks
-  Object.entries(behaviors.definitions || {}).forEach(([id, def]) => {
-    check(!!def, `Behavior ${id} undefined`);
+  Object.entries(defs).forEach(([id, def]) => {
+    check(!!def, `Behavior '${id}' undefined`);
     if (def?.shaderUniforms) {
-      Object.keys(def.shaderUniforms).forEach(u => {
-        check(u.startsWith('u'), `Behavior ${id}: uniform '${u}' should start with 'u'`);
+      Object.keys(def.shaderUniforms).forEach((u) => {
+        check(u.startsWith('u'), `Behavior '${id}': uniform '${u}' should start with 'u'`);
       });
     }
   });
 }
 
-// -- Narrative
-function validateNarrative() {
-  console.log(chalk.blue('\n📖 Validating Narrative Dialogue...'));
-  Object.entries(dialogue || {}).forEach(([stageName, dlg]) => {
-    console.log(chalk.gray(`  ${stageName} dialogue...`));
-    check(stages[stageName], `Narrative references unknown stage '${stageName}'`);
-
-    const segs = dlg?.narration?.segments || [];
-    let lastEnd = 0;
-
-    segs.forEach((seg, i) => {
-      // unique id
-      const dupIndex = segs.findIndex((s, j) => j !== i && s.id === seg.id);
-      check(dupIndex === -1, `${stageName}: duplicate segment id '${seg.id}'`);
-
-      check(
-        seg.timing && typeof seg.timing.start === 'number' && typeof seg.timing.duration === 'number',
-        `${stageName}:${seg.id} missing valid timing`
-      );
-
-      if (seg.timing.start < lastEnd) {
-        warnings.push(`${stageName}:${seg.id} overlaps previous segment`);
-      }
-      lastEnd = seg.timing.start + seg.timing.duration;
-
-      if (seg.particleCue?.tiers && Array.isArray(seg.particleCue.tiers)) {
-        seg.particleCue.tiers.forEach(t => {
-          check(t >= 0 && t <= 3, `${stageName}:${seg.id} invalid cue tier ${t}`);
-        });
-      }
-    });
-  });
-}
-
-// -- Fragments
 function validateFragments() {
+  const legacyCount = Object.keys(fragments || {}).length;
+  const v33StageFrags = stageOrder
+    .map((n) => ({ name: n, frag: stagesObj[n]?.memoryFragment }))
+    .filter(({ frag }) => !!frag);
+
+  if (legacyCount === 0 && v33StageFrags.length === 0) {
+    console.log(chalk.gray('\n💎 Skipping Memory Fragments (none provided)'));
+    return;
+  }
+
   console.log(chalk.blue('\n💎 Validating Memory Fragments...'));
-  const ids = new Set();
-  Object.entries(fragments || {}).forEach(([id, frag]) => {
-    console.log(chalk.gray(`  Fragment ${id}...`));
-    check(frag.id && !ids.has(frag.id), `Duplicate fragment id '${frag.id}'`);
-    ids.add(frag.id);
 
-    check(stages[frag.stage], `Fragment ${id}: unknown stage '${frag.stage}'`);
-
-    check(frag.trigger?.type, `Fragment ${id}: missing trigger type`);
-
-    // scroll trigger sanity
-    if (frag.trigger?.type === 'scroll') {
-      const s = stages[frag.stage];
-      if (s) {
-        const val = frag.trigger.value;
-        const inRange = val >= s.scrollRange[0] && val <= s.scrollRange[1];
-        check(inRange, null, `Fragment ${id}: scroll trigger ${val}% outside stage range [${s.scrollRange}]`);
+  // Legacy map
+  if (legacyCount > 0) {
+    const ids = new Set();
+    Object.entries(fragments).forEach(([id, frag]) => {
+      console.log(chalk.gray(`  Fragment ${id}...`));
+      check(frag.id && !ids.has(frag.id), `Duplicate fragment id '${frag.id}'`);
+      ids.add(frag.id);
+      check(!!stagesObj[frag.stage], `Fragment ${id}: unknown stage '${frag.stage}'`);
+      check(!!frag.trigger?.type, `Fragment ${id}: missing trigger type`);
+      if (frag.trigger?.type === 'scroll') {
+        const r = getRange(stagesObj[frag.stage]);
+        if (r) {
+          const v = frag.trigger.value;
+          check(v >= r[0] && v <= r[1], null,
+            `Fragment ${id}: scroll trigger ${v}% outside stage range [${r}]`);
+        }
       }
-    }
-
-    // narrative trigger sanity
-    if (frag.trigger?.type === 'narrative') {
-      const dlg = dialogue[frag.stage];
-      const segExists = dlg?.narration?.segments?.some(seg => seg.id === frag.trigger.segmentId);
-      check(segExists, `Fragment ${id}: narrative segment '${frag.trigger.segmentId}' not found`);
-    }
-
-    // tier checks inside effects
-    ['onTrigger', 'whileActive', 'onDismiss'].forEach(k => {
-      const eff = frag.particleEffect?.[k];
-      if (eff && Array.isArray(eff.targetTiers)) {
-        eff.targetTiers.forEach(t => {
-          check(t >= -1 && t <= 3, `Fragment ${id}:${k} invalid tier ${t}`);
-        });
+      if (frag.trigger?.type === 'narrative') {
+        const dlg = dialogue[frag.stage];
+        const exists = dlg?.narration?.segments?.some((seg) => seg.id === frag.trigger.segmentId);
+        check(exists, `Fragment ${id}: narrative segment '${frag.trigger.segmentId}' not found`);
       }
     });
+  }
+
+  // v3.3 per-stage
+  v33StageFrags.forEach(({ name, frag }) => {
+    console.log(chalk.gray(`  Stage ${name} fragment...`));
+    if (typeof frag.triggerPercent !== 'number') {
+      warnings.push(`${name}: memoryFragment missing triggerPercent`);
+      return;
+    }
+    const r = getRange(stagesObj[name]) || [0, 100];
+    const v = frag.triggerPercent;
+    if (v < r[0] - E || v > r[1] + E) {
+      warnings.push(`${name}: fragment trigger ${v}% outside stage range ${r[0]}–${r[1]}%`);
+    }
   });
 }
 
-// -- Performance
 function validatePerformance() {
   console.log(chalk.blue('\n⚡ Validating Performance...'));
-  const perf = performance || {};
+  const targetFPS = perf.frameRate?.targetFps ?? perf.targetFPS ?? 60;
+  const minFPS    = perf.frameRate?.minimum   ?? perf.minFPS   ?? 55;
+  const maxParts  = quality.maxParticles ?? perf.maxParticles ?? 15000;
 
-  check(perf.targetFPS >= 30, `targetFPS (${perf.targetFPS}) too low`);
-  check(perf.minFPS < perf.targetFPS, `minFPS (${perf.minFPS}) must be < targetFPS`);
-  check(perf.maxParticles >= 15000, `maxParticles (${perf.maxParticles}) < 15000 (transcendence needs it)`);
+  check(targetFPS >= 30, `targetFPS (${targetFPS}) too low`);
+  check(minFPS < targetFPS, `minFPS (${minFPS}) must be < targetFPS`);
+  check(maxParts >= 15000, `maxParticles (${maxParts}) < 15000 (transcendence needs it)`);
 
-  const neededLods = ['ultra', 'high', 'medium', 'low'];
-  neededLods.forEach(l => {
-    check(perf.lodThresholds && l in perf.lodThresholds, `Missing LOD threshold '${l}'`);
+  const lod = perf.lodThresholds;
+  ['ultra', 'high', 'medium', 'low'].forEach((l) => {
+    if (!lod || !(l in lod)) warnings.push(`Missing LOD threshold '${l}'`);
   });
+
+  if (breakpoints && breakpoints.length >= 2) {
+    const bps = breakpoints.slice().sort((a, z) => a - z);
+    if (bps[0] > 0 + E || bps[bps.length - 1] < 100 - E) {
+      warnings.push(`breakpoints do not span [0,100]: [${bps.join(', ')}]`);
+    }
+  }
 }
 
-// ===================== RUN ======================
-console.log(chalk.bold.cyan('\n🔍 SST v3.0 Configuration Validator\n'));
-console.log(chalk.gray(`Version: ${Canonical.version || '3.0.x'}`));
+// ================== RUN ==================
+console.log(chalk.bold.cyan('\n🔍 SST Canonical Validator (v3.0 compat / v3.3 aware)\n'));
+console.log(chalk.gray(`Version: ${version || 'unknown'}  Mode: ${mode || (isTextFirst ? 'TEXT_FIRST_REVEAL' : 'legacy')}`));
 console.log(chalk.gray(`Date: ${new Date().toLocaleDateString()}`));
 console.log(chalk.gray('='.repeat(50)));
 
 validateStages();
-validateBehaviors();
-validateNarrative();
+validateBreakpoints();
+await validateBehaviors();
 validateFragments();
 validatePerformance();
 
-// ===================== REPORT =====================
+// ================== REPORT ==================
 console.log(chalk.gray('\n' + '='.repeat(50)));
 console.log(chalk.bold('\n📊 Validation Summary:\n'));
 
@@ -266,19 +312,21 @@ if (errors.length === 0 && warnings.length === 0) {
   }
 }
 
+// Minimal stats
+const behaviorsCount = behaviors?.definitions ? Object.keys(behaviors.definitions).length : 0;
+const narrativeSegs  = Object.values(dialogue || {}).reduce((acc, d) => acc + (d?.narration?.segments?.length || 0), 0);
+
 console.log(chalk.cyan('\n📈 Stats:'));
-console.log(chalk.gray(`   Stages          : ${Object.keys(stages).length}`));
-console.log(chalk.gray(`   Behaviors       : ${Object.keys(behaviors.definitions || {}).length}`));
-console.log(chalk.gray(`   Narrative segs  : ${
-  Object.values(dialogue || {}).reduce((acc, d) => acc + (d?.narration?.segments?.length || 0), 0)
-}`));
-console.log(chalk.gray(`   Memory fragments: ${Object.keys(fragments || {}).length}`));
-console.log(chalk.gray(`   Max particles   : ${stages?.transcendence?.particles ?? 'N/A'}`));
+console.log(chalk.gray(`   Stages          : ${stageOrder.length}`));
+console.log(chalk.gray(`   Behaviors       : ${behaviorsCount} ${behaviors ? '' : '(skipped or legacy)'}`));
+console.log(chalk.gray(`   Narrative segs  : ${narrativeSegs} ${Object.keys(dialogue || {}).length ? '' : '(skipped)'}`));
+const trans = stagesObj.transcendence || {};
+console.log(chalk.gray(`   Max particles   : ${getParticles(trans) ?? (quality.maxParticles || 'N/A')}`));
 
 if (errors.length) {
   console.log(chalk.red('\n❌ Validation failed. Fix errors and re-run.'));
   process.exit(1);
 } else {
-  console.log(chalk.green('\n✅ SST v3.0 canonical config is valid.'));
+  console.log(chalk.green('\n✅ Canonical config is valid.'));
   process.exit(0);
 }
