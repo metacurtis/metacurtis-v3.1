@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * doctor-scope-trim.cjs
  * Reduce HOT-DORS to: repo-medicine (perf + validate) + sprint recorder.

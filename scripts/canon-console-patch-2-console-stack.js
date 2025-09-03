@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-patch-2-console-stack.js
 // Purpose: Fix console error stack capture to preserve original stacks
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Repo Medicine — Sprint Recorder (sprintctl)
  * Purpose: timeboxed, evidence-based velocity capture for HOT-DORS governed repos.

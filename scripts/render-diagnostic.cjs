@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Render Pipeline Diagnostic
  * Generates a DEV-only diagnostic module that exposes the full render state

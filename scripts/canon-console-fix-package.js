@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-fix-package.js
 // Purpose: Fix the empty/corrupted package.json
 

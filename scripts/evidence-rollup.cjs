@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 const fs=require('fs'), path=require('path'); const CWD=process.cwd();
 const runs=path.join(CWD,'doctor_artifacts','runs.jsonl'); const out=path.join(CWD,'doctor_artifacts','metrics');
 if(!fs.existsSync(runs)){ process.exit(0); }

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* Canon Pilot (Levels 3–4) — Agentic bridge for Console ⇄ Guard
  * Idempotent repo doctor: creates/patches only if needed; backs up once.
  * - Adds policy (Guide-level) + pilot (Pilot-level autopilot with rollback)

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * SST Canonical Validator — v3.3 aware (BeatGlyph) / v3.0 compatible
  * Scope: data validation only (stages/ranges/mixes/palettes/optionals).

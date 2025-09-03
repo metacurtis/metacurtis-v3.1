@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * doctor-v2-structure.cjs
  * Purpose: make V2 load reliably in Vite by enforcing:

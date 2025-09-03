@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * doctor_post_bootstrap_fix.cjs
  * - Fix duplicate @/* alias in jsconfig.json, ensure "@/modules/*"

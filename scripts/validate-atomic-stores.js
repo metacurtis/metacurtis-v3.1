@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/validate-atomic-stores.js
 // ✅ VALIDATION SCRIPT: Atomic store integration testing
 // Revolutionary Implementation Session 2 - Phase 1

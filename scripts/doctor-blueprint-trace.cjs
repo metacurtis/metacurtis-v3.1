@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
 * Doctor: Blueprint Trace
 * Finds all BLUEPRINT_READY emitters and listeners in the codebase

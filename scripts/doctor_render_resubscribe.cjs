@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Render Resubscribe Hotfix Doctor (4r)
  * - Guarantees BeatBus import + global

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* Canon L2 ↔ Guard L2 Bridge (idempotent)
  * - Adds a guard→console incident bridge
  * - Extends Steps with set_draw_range_from_uniforms (safety)

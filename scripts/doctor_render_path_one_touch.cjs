@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Render Path One-Touch Doctor
  * - Idempotent

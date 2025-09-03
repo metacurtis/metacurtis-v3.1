@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* doctor-one-touch.cjs
  * ONE-TOUCH — SST v3 Theater Patch
  * Fixes (idempotent):

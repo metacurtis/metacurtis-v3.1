@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* Canon Console Level 2 – Healer
  * Idempotent installer: creates L2 runtime (incidents, shadow renderer, playbooks, UI),
  * patches src/main.jsx (dev-only import), and adds npm scripts.

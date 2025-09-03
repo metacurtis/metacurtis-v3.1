@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Apply Shim One-Touch Doctor
  * - Adds DEV RenderApplyShim that exposes window.__doctor_apply_blueprint__

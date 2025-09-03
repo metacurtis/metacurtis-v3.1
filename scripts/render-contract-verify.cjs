@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Render Contract Verifier / Doctor
  * - Verifies shader imports (?raw), ShaderMaterial keys, attribute/uniform parity, alias path.

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-complete-setup.js
 // Purpose: Create complete Canon Console Level 1 implementation
 

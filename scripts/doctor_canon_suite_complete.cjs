@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Canon Suite COMPLETE Implementation
  * Based on the Canon Suite Implementation Guide v1.0

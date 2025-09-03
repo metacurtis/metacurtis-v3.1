@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Phase 4b: HMR Hygiene & Listener Discipline Doctor
  * One-touch, AST-based, idempotent HMR leak prevention

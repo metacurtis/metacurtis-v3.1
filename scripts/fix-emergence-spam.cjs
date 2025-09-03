@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 const fs = require('fs');
 
 // The problem: ConsciousnessEngine is building emergence blueprints for every event

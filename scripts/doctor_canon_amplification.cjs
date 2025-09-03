@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Canon Suite Amplification Doctor (Fixed)
  * Closes gaps 1–7 with real, working code.

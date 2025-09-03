@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-patch-4-silent-mode.js
 // Purpose: Add debug flag and quiet reconnect behavior
 

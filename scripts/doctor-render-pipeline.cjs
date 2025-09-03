@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Render Pipeline Doctor (read-only)
  * Purpose: Verify Stage → Engine → BeatBus → Renderer linkage and Morph interpolation.

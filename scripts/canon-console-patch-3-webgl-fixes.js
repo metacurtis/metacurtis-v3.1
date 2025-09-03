@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-patch-3-webgl-fixes.js
 // Purpose: Fix Three.js FPS monitoring, add drawElements, add GL error detection
 

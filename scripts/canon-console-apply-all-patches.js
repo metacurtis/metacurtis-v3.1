@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-apply-all-patches.js
 // Purpose: Apply all Canon Console patches in order
 

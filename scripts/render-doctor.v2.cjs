@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 const fs = require('fs'); const _path = require('path'); const CWD = process.cwd();
 const OUT_JSON = path.join(CWD, 'doctor_artifacts', 'render-doctor-report.json');
 const OUT_MD   = path.join(CWD, 'doctor_artifacts', 'render-doctor-summary.md');

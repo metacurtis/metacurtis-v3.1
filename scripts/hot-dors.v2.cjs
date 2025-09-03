@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS v2 (standalone runner)
  * - Hermetic, read-only

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS Patch Kit
  * - Patch 1: sprintctl.cjs commit parser (proper +/− diffstats)

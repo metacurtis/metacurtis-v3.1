@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* Snapshot the render stack: copies key files to .txt + one concatenated file. */
 const fs = require('fs');
 const _path = require('path');

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 const fs = require('fs'); const _path = require('path');
 const ROOT = process.cwd();
 const P = (...s) => path.join(ROOT, ...s);

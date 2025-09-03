@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * doctor_hotwire_bus_and_aliases.cjs
  * - Ensure BeatBus singleton is globally available in DEV (window.BeatBus + window.busTap)

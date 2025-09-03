@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-patch-1-emitter.js
 // Purpose: Replace Node EventEmitter with browser-safe emitter
 

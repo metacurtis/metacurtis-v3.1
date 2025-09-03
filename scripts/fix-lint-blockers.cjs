@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Fix ESLint "no-empty" blockers across the repo (idempotent).
  * - Inserts /* noop *\/ into empty control-flow blocks (try/catch/finally/if/else/for/while/switch/do-while)

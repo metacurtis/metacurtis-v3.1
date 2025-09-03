@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Phase 4b Finisher Doctor — Automatic HMR cleanup & listener capture
  * Non-destructive, AST-based, idempotent transforms

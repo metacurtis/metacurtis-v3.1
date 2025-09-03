@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * doctor_canon_one_touch.cjs
  * Canon Suite (L1/L2) self-bootstrapping + canonical event enforcement.

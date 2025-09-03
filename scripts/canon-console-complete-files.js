@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // Complete Canon Console Level 1 Implementation
 
 import fs from 'fs/promises';

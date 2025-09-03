@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Unify BeatBus imports to canonical src/modules/... path.
  * - Rewrites any string literal "modules/orchestration/core/BeatBus[.js]"

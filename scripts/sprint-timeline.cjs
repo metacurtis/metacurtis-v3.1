@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // Repo Medicine — Sprint Timeline (pretty printer)
 const fs = require('fs'), path = require('path');
 const CWD = process.cwd(), BASE = path.join(CWD,'doctor_artifacts','sprints');

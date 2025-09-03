@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Canon Suite fix-ups (L1/L2 finish) — v1.1
  * - Fix console shadowing in src/canon/init.js

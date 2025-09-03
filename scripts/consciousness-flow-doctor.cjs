@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Doctor: consciousness-flow
  * Purpose: Verify the three critical flows for consciousness visualization

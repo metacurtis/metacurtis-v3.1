@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* Canon CI Verification */
 const fs = require('fs');
 const _path = require('path');

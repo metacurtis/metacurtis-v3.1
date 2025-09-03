@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /* doctor-morph-v2.cjs — make morph/stage bullet-proof (idempotent)
    - create bus spine (single BeatBus)
    - boot state bridge once at startup

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Canon Suite Bootstrap (L1/L2) — v1.0
  * - BeatBus singleton (canonical)

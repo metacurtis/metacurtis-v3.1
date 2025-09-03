@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * enhance-canon.cjs
  * Idempotent repo doctor + canon guard + console L2 + render healthcheck

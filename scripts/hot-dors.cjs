@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS v1.0 — Hermetic One-Touch Doctor + DORS
  * Single-command, read-only governance pass.

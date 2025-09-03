@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Phase 4a: Bus Topology Stabilization Doctor
  * One-touch, AST-based, idempotent bus consolidation

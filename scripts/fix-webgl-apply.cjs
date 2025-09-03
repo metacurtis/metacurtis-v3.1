@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 const fs = require('fs');
 
 const WGB = 'src/components/webgl/WebGLBackground.jsx';

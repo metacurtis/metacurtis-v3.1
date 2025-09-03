@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 const fs = require('fs');
 
 // Fix 1: WebGLBackground - ignore cached emergence blueprints

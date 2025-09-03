@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS Tune #3 — replace checkInvariants() wholesale, and fix callsite.
  * - Single Bus: only BeatBus impl files reachable from src entrypoints

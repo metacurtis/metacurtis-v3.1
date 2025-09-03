@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * One-Touch Render Recovery Doctor (Phase 4r, self-bootstrapping)
  * - Non-destructive, append-only, no external deps

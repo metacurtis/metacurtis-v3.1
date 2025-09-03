@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * SST v3.0 Text Formation Validator
  * Validates the text-based particle system configuration

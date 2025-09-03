@@ -1,3 +1,4 @@
+/* eslint-env node */
 // scripts/apply-sst-v3-fixes.js
 /* eslint-disable no-console */
 import fs from 'fs/promises';

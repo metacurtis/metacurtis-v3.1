@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS Bridge (redo)
  * - Atomic → BeatBus (stage + morph)

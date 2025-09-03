@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS Hardening Patch
  * - Single Bus: only count implementations reachable from special entrypoints

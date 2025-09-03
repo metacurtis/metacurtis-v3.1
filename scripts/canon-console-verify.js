@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 // scripts/canon-console-verify.js
 // Purpose: Verify Canon Console patches were applied correctly
 

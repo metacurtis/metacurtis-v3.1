@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * HOT-DORS Tune #2
  * - Single Bus: only count real BeatBus impls (file path or class BeatBus)

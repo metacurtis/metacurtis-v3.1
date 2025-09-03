@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-env node */
 /**
  * Doctor: Render Apply
  * Ensures WebGLBackground actually applies blueprint positions to geometry
