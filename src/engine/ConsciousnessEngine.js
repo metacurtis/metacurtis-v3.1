@@ -282,7 +282,11 @@ class ConsciousnessEngine {
 
   // Build standard stages with post-emergence handling
   buildAndEmitBlueprint(stage, quality) {
-    const cacheKey = `${stage}|${quality}`;
+    if (this._openingPhase && stage !== 'genesis') {
+      console.warn('🧠 Engine: blocked non-genesis during opening:', stage);
+      return;
+    }
+const cacheKey = `${stage}|${quality}`;
     let blueprint = this.blueprintCache.get(cacheKey);
 
     // T2: After emergence, rebuild genesis as cloud → constellation
