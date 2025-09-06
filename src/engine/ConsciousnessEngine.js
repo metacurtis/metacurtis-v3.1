@@ -19,14 +19,7 @@ class ConsciousnessEngine {
     this.blueprintCache = new Map();
     this.currentStage   = 'genesis';
     this.currentQuality = 'HIGH';
-    // Opening gates / fences
-    if (this._openingPhase === undefined) this._openingPhase = true;
-    if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
-    if (this._emergenceCount=== undefined) this._emergenceCount= 0;
-    if (this._openingPhase === undefined) this._openingPhase = true;
-    if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
-    if (this._emergenceCount=== undefined) this._emergenceCount= 0;
-    if (this._openingPhase === undefined) this._openingPhase = true;
+    // Opening gates / fences    if (this._openingPhase === undefined) this._openingPhase = true;
     if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
     if (this._emergenceCount=== undefined) this._emergenceCount= 0;
 
