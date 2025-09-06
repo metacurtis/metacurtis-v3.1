@@ -135,11 +135,12 @@ const _stageConfig = Canonical.stages[currentStage];
 
     // 3) Director handoff signals
     const offs = [
-      BeatBus.on(EVENTS.OPENING_COMPLETE, (p={}) => {
-        // reveal main renderer
+      !globalThis.__MC_OPENING_COMPLETE_WIRED__ && (globalThis.__MC_OPENING_COMPLETE_WIRED__ = true, BeatBus.on(EVENTS.OPENING_COMPLETE, (p = {}) => {
+// reveal main renderer
         setShowCanvas(true);
         // set stage-0 constellated and enable scroll
-        BeatBus.emit(EVENTS.STAGE_CHANGE, { stage: 'genesis' });
+        BeatBus.emit(EVENTS.STAGE_CHANGE, { stage: 'genesis' 
+})) ,;
         BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 1 });
         BeatBus.emit(EVENTS.ENABLE_SCROLL);
       }),

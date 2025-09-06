@@ -206,7 +206,7 @@ export default function OpeningSequence() {
       {/* Overlay */}
       <div className="opening-sequence"
         style={{
-          position: 'fixed', inset: 0,
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: phase === 'particles' ? 'transparent' : '#000',
           color: '#00FF00', fontFamily: "'Courier New', monospace",
           zIndex: phase === 'particles' ? 998 : 9999,
@@ -227,7 +227,7 @@ export default function OpeningSequence() {
           </div>
         )}
         {phase === 'fill' && (
-          <div style={{position:'absolute',inset:0,overflow:'hidden'}}>
+          <div style={{position:'absolute',top: 0, left: 0, right: 0, bottom: 0,overflow:'hidden'}}>
             {screenFillLines.map((line, idx) => (
               <div key={idx} style={{whiteSpace:'nowrap',color:'#00FF00',opacity:0.8}}>{line}</div>
             ))}
@@ -237,7 +237,7 @@ export default function OpeningSequence() {
 
       {/* Three.js canvas */}
       <canvas ref={canvasRef}
-        style={{position:'fixed',inset:0,width:'100vw',height:'100vh',zIndex:999,display: phase==='particles'?'block':'none'}}
+        style={{position:'fixed',top: 0, left: 0, right: 0, bottom: 0,width:'100vw',height:'100vh',zIndex:999,display: phase==='particles'?'block':'none'}}
       />
     </>
   );
