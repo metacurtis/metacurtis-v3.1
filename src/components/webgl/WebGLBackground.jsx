@@ -200,6 +200,20 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
 
+      // Ignore any non-genesis full arriving while emergence pending
+      if (!isEmergence && emergencePendingRef.current) {
+        if ((raw.stageName || st) !== 'genesis') {
+          console.warn('🖼️ Renderer: ignoring pre-scroll full for stage=', raw.stageName || st);
+          return;
+        }
+      }
+
+      // Ignore any late emergence after we've already handed off
+      if (isEmergence && emittedEmergedRef.current) {
+        console.warn('🖼️ Renderer: ignoring late emergence after handoff');
+        return;
+      }
+
       // Always bind the incoming arrays
       setBlueprint(raw);
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));

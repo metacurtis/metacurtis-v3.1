@@ -107,6 +107,7 @@ export default function ConsciousnessTheater() {
   const currentStageRef = useRef('genesis');
   const directorStartedRef = useRef(false);
   const viewportReadyRef = useRef(false);
+  const viewportReadyRef = useRef(false);
 
   const _stageConfig = Canonical.stages[currentStage];
   const narrative = Canonical.dialogue?.[currentStage];
