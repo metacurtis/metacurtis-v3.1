@@ -244,7 +244,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             fallbackMorphRef.current = v; __applyMorph(v); if (k<1) requestAnimationFrame(burst); };
           requestAnimationFrame(burst);
         } catch {}
-emergencePendingRef.current = true;  // Set the flag for emergence
+emergencePendingRef.current = true;
+        
+        // Emit PARTICLES_EMERGED after emergence binds
+        setTimeout(() => {
+          if (emergencePendingRef.current && !emittedEmergedRef.current) {
+            BeatBus.emit(EVENTS.PARTICLES_EMERGED);
+            emittedEmergedRef.current = true;
+            emergencePendingRef.current = false;
+            console.log('🎯 Renderer: PARTICLES_EMERGED emitted');
+          }
+        }, 800);
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BLUEPRINT_READY (full)`,
           `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
@@ -291,7 +301,10 @@ emergencePendingRef.current = true;  // Set the flag for emergence
     geo.setAttribute('particleIndex', new THREE.BufferAttribute(idx, 1));
     geo.setDrawRange(0, activeCount || count);
 
-    if (geometryRef.current) geometryRef.current.dispose();
+    if (geometryRef.current) {
+      geometryRef.current.dispose();
+      geometryRef.current = null;
+    }
     geometryRef.current = geo;
     return geo;
   }, [blueprint, activeCount]);

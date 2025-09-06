@@ -1,4 +1,39 @@
-// src/components/theater/OpeningSequence.jsx
+#!/usr/bin/env node
+import fs from 'node:fs';
+
+function patchFile(path, mut) {
+  if (!fs.existsSync(path)) { console.error('❌ Missing', path); process.exitCode = 1; return; }
+  const src = fs.readFileSync(path, 'utf8');
+  const out = mut(src);
+  if (out !== src) {
+    fs.writeFileSync(path + `.bak.monolithic-${Date.now()}`, src, 'utf8');
+    fs.writeFileSync(path, out, 'utf8');
+    console.log('✓ Patched', path);
+  } else {
+    console.log('• No changes needed in', path);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   A) EVENTS — ensure OPENING_COMPLETE exists
+   ────────────────────────────────────────────────────────────────────────── */
+patchFile('src/theater/events.js', (s) => {
+  let t = s;
+  if (!/OPENING_COMPLETE/.test(t)) {
+    t = t.replace(
+      /START_NARRATIVE:\s*'START_NARRATIVE',/,
+      `START_NARRATIVE: 'START_NARRATIVE',
+  OPENING_COMPLETE: 'OPENING_COMPLETE',`
+    );
+  }
+  return t;
+});
+
+/* ──────────────────────────────────────────────────────────────────────────
+   B) OpeningSequence.jsx — monolithic cinematic intro
+   (uses Three.js, drives its own canvas, emits OPENING_COMPLETE)
+   ────────────────────────────────────────────────────────────────────────── */
+const MONOLITH = `// src/components/theater/OpeningSequence.jsx
 // Monolithic opening sequence — owns everything until handoff
 
 import { useEffect, useRef, useState } from 'react';
@@ -242,3 +277,78 @@ export default function OpeningSequence() {
     </>
   );
 }
+`;
+
+patchFile('src/components/theater/OpeningSequence.jsx', () => MONOLITH);
+
+/* ──────────────────────────────────────────────────────────────────────────
+   C) ConsciousnessTheater.jsx — do NOT start Director during opening.
+      Show main canvas after OPENING_COMPLETE and hand off to runtime.
+   ────────────────────────────────────────────────────────────────────────── */
+patchFile('src/components/consciousness/ConsciousnessTheater.jsx', (s) => {
+  let t = s;
+
+  // add showCanvas state default false
+  if (!/const \[showCanvas\]/.test(t)) {
+    t = t.replace(
+      /const \[morphProgress[\s\S]*?\];/,
+      (m)=> m + `\n  const [showCanvas, setShowCanvas] = useState(false);\n`
+    );
+  }
+
+  // remove/disable any auto director.start gates; wait for OPENING_COMPLETE
+  if (/director\.start\(\)/.test(t)) {
+    t = t.replace(/director\.start\(\);/g, '// director.start() (disabled during monolithic opening)');
+  }
+
+  // add OPENING_COMPLETE listener → show canvas + set stage + scroll enable
+  if (!/OPENING_COMPLETE/.test(t)) {
+    t = t.replace(
+      /const offs = \[/,
+      `const offs = [
+      BeatBus.on(EVENTS.OPENING_COMPLETE, (p={}) => {
+        // reveal main renderer
+        setShowCanvas(true);
+        // set stage-0 constellated and enable scroll
+        BeatBus.emit(EVENTS.STAGE_CHANGE, { stage: 'genesis' });
+        BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 1 });
+        BeatBus.emit(EVENTS.ENABLE_SCROLL);
+      }),`
+    );
+  }
+
+  // lock scroll until enable
+  if (!/document\.body\.style\.overflow\s*=\s*'hidden'/.test(t)) {
+    t = t.replace(
+      /useEffect\(\(\)\s*=>\s*\{\s*/,
+      `useEffect(() => {
+    document.body.style.overflow = 'hidden';`
+    );
+    t = t.replace(
+      /return \(\) => \{\s*/,
+      `return () => {
+    document.body.style.overflow = '';`
+    );
+  }
+
+  // Render condition for WebGLCanvas — show only after opening
+  t = t.replace(
+    /\{showCanvas\s*\?\s*.*?\:\s*.*?\}/s, // if there is a ternary, avoid double-applying
+    (m)=> m
+  );
+  if (!/WebGLCanvas[\s\S]*showCanvas/.test(t)) {
+    t = t.replace(
+      /\{showCanvas && \(\s*<WebGLCanvas[\s\S]*?\/>\s*\)\s*\}/m,
+      (m)=> m // already controlled
+    );
+    // if WebGLCanvas is unconditional, wrap it
+    if (/<WebGLCanvas[\s\S]*\/>/.test(t) && !/\{showCanvas &&/.test(t)) {
+      t = t.replace(
+        /(<WebGLCanvas[\s\S]*\/>)/,
+        `{showCanvas && ($1)}`
+      );
+    }
+  }
+
+  return t;
+});

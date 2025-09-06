@@ -17,21 +17,20 @@ class ConsciousnessEngine {
 
     // State / caches
     this.blueprintCache = new Map();
-    this.currentStage   = 'genesis';
+    this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
-    // Opening gates / fences    if (this._openingPhase === undefined) this._openingPhase = true;
-    if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
-    if (this._emergenceCount=== undefined) this._emergenceCount= 0;
+    
+    // Opening control flags
+    this._openingPhase = true;
+    this._openingEpoch = 0;
+    this._emergenceCount = 0;
 
     // Emergence memory (for post-emergence genesis rebuild)
     this._lastEmergenceCloud = null;
-    this._hasBuiltEmergence  = false;
+    this._hasBuiltEmergence = false;
 
     // Viewport hint from renderer
     this._viewportHint = { width: 120, height: 90, aspect: 4/3 };
-
-    // Opening phase gate (until ENABLE_SCROLL)
-    this._openingPhase = true;
 
     // Initialize listeners IMMEDIATELY in constructor
     this.initializeBeatBusListeners();
@@ -47,7 +46,7 @@ class ConsciousnessEngine {
     BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, (hint = {}) => {
       if (hint.width && hint.height) {
         this._viewportHint = {
-          width:  Number(hint.width),
+          width: Number(hint.width),
           height: Number(hint.height),
           aspect: Number(hint.aspect || hint.width / hint.height),
         };
@@ -69,9 +68,9 @@ class ConsciousnessEngine {
       const stage = payload.stage ?? payload.to;
       if (!stage) return;
       
-      // CRITICAL: Block non-genesis stages during opening
-      if (this._openingPhase && stage !== 'genesis') {
-        console.log(`🧠 Engine: Blocking ${stage} during opening phase`);
+      // HARD BLOCK during opening - no exceptions
+      if (this._openingPhase) {
+        console.log(`🚫 Engine: BLOCKED stage change to ${stage} - opening in progress`);
         return;
       }
       
@@ -90,19 +89,19 @@ class ConsciousnessEngine {
     });
 
     // Prewarm emergence - cache but don't emit
-   BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
-  console.log('🧠 Engine: Prewarming emergence blueprint');
-  const key = this._emergenceKey('HELLO CURTIS', 2000);
-  if (!this.blueprintCache.has(key)) {
-    const bp = this.buildEmergenceBlueprint({ text: 'HELLO CURTIS', count: 2000 });
-    this.blueprintCache.set(key, bp);
-  }
-  BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key }); // THIS LINE IS ALREADY THERE
-});
+    BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
+      console.log('🧠 Engine: Prewarming emergence blueprint');
+      const key = this._emergenceKey('HELLO CURTIS', 2000);
+      if (!this.blueprintCache.has(key)) {
+        const bp = this.buildEmergenceBlueprint({ text: 'HELLO CURTIS', count: 2000 });
+        this.blueprintCache.set(key, bp);
+      }
+      BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
+    });
 
     // BUILD EMERGENCE - Critical for T1
     BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
-      const text  = opts.sourceText || 'HELLO CURTIS';
+      const text = opts.sourceText || 'HELLO CURTIS';
       const count = opts.count || 2000;
 
       console.log('🧠 Engine: Building emergence blueprint for', text);
@@ -116,7 +115,7 @@ class ConsciousnessEngine {
 
       // Remember ember cloud for post-emergence Stage-0
       this._lastEmergenceCloud = bp.text3DPositions.slice(0);
-      this._hasBuiltEmergence  = true;
+      this._hasBuiltEmergence = true;
 
       // Emit emergence blueprint with mode flag
       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
@@ -200,75 +199,94 @@ class ConsciousnessEngine {
     return positions;
   }
 
-  // Build emergence: glyph → viewport-scaled ember burst
+  // Build emergence: START BIG with viewport-wide particles
   buildEmergenceBlueprint({ text = 'HELLO CURTIS', count = 2000 } = {}) {
-    console.log(`🌟 BigBang emergence: "${text}" with ${count} particles`);
-    const { width: vw, height: vh } = this._viewportHint || { width:120, height:90 };
+    console.log(`💥 BigBang emergence: "${text}" with ${count} particles`);
+    const { width: vw, height: vh } = this._viewportHint || { width: 120, height: 90 };
 
-    const atmosphericPositions = new Float32Array(count * 3); // SOURCE = gas cloud
-    const text3DPositions      = new Float32Array(count * 3); // TARGET = swirl
+    const atmosphericPositions = new Float32Array(count * 3);
+    const text3DPositions = new Float32Array(count * 3);
+    const sizeMultipliers = new Float32Array(count);
+    const opacityData = new Float32Array(count);
+    const atlasIndices = new Float32Array(count);
+    const tierData = new Float32Array(count);
+    const animationSeeds = new Float32Array(count * 3);
 
-    const sizeMultipliers      = new Float32Array(count);
-    const opacityData          = new Float32Array(count);
-    const atlasIndices         = new Float32Array(count);
-    const tierData             = new Float32Array(count);
-    const animationSeeds       = new Float32Array(count * 3);
-
-    const gasRadius = Math.min(vw, vh) * 0.35;
-    for (let i=0;i<count;i++){
-      const j=i*3;
-      const ang = Math.random() * Math.PI * 2;
-      const r   = Math.random() * gasRadius;
-      atmosphericPositions[j+0] = Math.cos(ang) * r;
-      atmosphericPositions[j+1] = Math.sin(ang) * r;
-      atmosphericPositions[j+2] = (Math.random()-0.5) * 20.0;
+    // START BIG - particles fill 75% of viewport immediately
+    const startRadius = Math.min(vw, vh) * 0.75;
+    for (let i = 0; i < count; i++) {
+      const j = i * 3;
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.random() * startRadius;
+      const z = (Math.random() - 0.5) * 40;
+      
+      atmosphericPositions[j+0] = Math.cos(angle) * r;
+      atmosphericPositions[j+1] = Math.sin(angle) * r;
+      atmosphericPositions[j+2] = z;
     }
 
-    const swirlRadius = Math.min(vw, vh) * 0.40;
-    for (let i=0;i<count;i++){
-      const j=i*3, t = i / count;
-      const ang = t * Math.PI * 8.0; // multi-rotations
-      const r   = t * swirlRadius;
-      text3DPositions[j+0] = Math.cos(ang) * r;
-      text3DPositions[j+1] = Math.sin(ang) * r;
-      text3DPositions[j+2] = Math.sin(ang * 2.0) * 10.0;
+    // TARGET - slightly contracted but still chaotic (different random pattern)
+    const targetRadius = Math.min(vw, vh) * 0.6;
+    for (let i = 0; i < count; i++) {
+      const j = i * 3;
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.random() * targetRadius;
+      const z = (Math.random() - 0.5) * 30;
+      
+      text3DPositions[j+0] = Math.cos(angle) * r;
+      text3DPositions[j+1] = Math.sin(angle) * r;
+      text3DPositions[j+2] = z;
     }
 
-    for (let i=0;i<count;i++){
-      const j=i*3;
-      const t=(tierData[i]=Math.floor(Math.random()*4))|0;
-      sizeMultipliers[i]=0.5+Math.random()*1.5;
-      opacityData[i]=0.3+Math.random()*0.7;
-      atlasIndices[i]=Math.floor(Math.random()*8);
-      animationSeeds[j+0]=Math.random(); animationSeeds[j+1]=Math.random(); animationSeeds[j+2]=Math.random();
+    // Visual properties for dramatic effect
+    for (let i = 0; i < count; i++) {
+      const j = i * 3;
+      tierData[i] = Math.floor(Math.random() * 4);
+      sizeMultipliers[i] = 0.5 + Math.random() * 1.5;
+      opacityData[i] = 0.5 + Math.random() * 0.5;
+      atlasIndices[i] = Math.floor(Math.random() * 8);
+      animationSeeds[j+0] = Math.random();
+      animationSeeds[j+1] = Math.random();
+      animationSeeds[j+2] = Math.random();
     }
 
     return {
-      id:'emergence-genesis',
-      mode:'emergence',
-      stageName:'genesis',
-      count, particleCount:count, maxParticles:count, activeCount:count,
-      atmosphericPositions, text3DPositions, animationSeeds,
-      sizeMultipliers, opacityData, atlasIndices, tierData,
-      metadata:{ sourceText:text, viewport:this._viewportHint }
+      id: 'emergence-genesis',
+      mode: 'emergence',
+      stageName: 'genesis',
+      count,
+      particleCount: count,
+      maxParticles: count,
+      activeCount: count,
+      atmosphericPositions,
+      text3DPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      metadata: { sourceText: text, viewport: this._viewportHint }
     };
-  }// Build standard stages with post-emergence handling
+  }
+
+  // Build standard stages with post-emergence handling
   buildAndEmitBlueprint(stage, quality) {
     if (this._openingPhase && stage !== 'genesis') {
       console.warn('🧠 Engine: blocked non-genesis during opening:', stage);
       return;
     }
-const cacheKey = `${stage}|${quality}`;
+
+    const cacheKey = `${stage}|${quality}`;
     let blueprint = this.blueprintCache.get(cacheKey);
 
     // T2: After emergence, rebuild genesis as cloud → constellation
     if (stage === 'genesis' && this._hasBuiltEmergence && this._lastEmergenceCloud) {
       console.log('🧠 Engine: Rebuilding genesis from emergence cloud → constellation');
 
-      const baseCount     = 2000;
+      const baseCount = 2000;
       const particleCount = this.getParticleCountForQuality(baseCount, quality);
-      const tierRatios    = [0.50, 0.20, 0.15, 0.15];
-      const view          = this._viewportHint || { width: 120, height: 90 };
+      const tierRatios = [0.50, 0.20, 0.15, 0.15];
+      const view = this._viewportHint || { width: 120, height: 90 };
 
       blueprint = this.buildBlueprint(stage, { quality });
 
@@ -330,7 +348,7 @@ const cacheKey = `${stage}|${quality}`;
       Math.floor(count * tierRatios[2]),
       Math.floor(count * tierRatios[3]),
     ];
-    tierCounts[3] += count - (tierCounts[0] + tierCounts[1] + tierCounts[2]);
+    tierCounts[3] += count - (tierCounts[0] + tierCounts[1] + tierCounts[2] + tierCounts[3]);
 
     let k = 0;
     const pushRect = (n, w, h, jitter = 1.0, z = 12.0) => {
@@ -347,8 +365,8 @@ const cacheKey = `${stage}|${quality}`;
     // 4 tiers, each smaller than the last
     pushRect(tierCounts[0], viewport.width * 0.95, viewport.height * 0.95, 2.0, 30);
     pushRect(tierCounts[1], viewport.width * 0.80, viewport.height * 0.80, 1.5, 10);
-    pushRect(tierCounts[2], viewport.width * 0.60, viewport.height * 0.60, 1.0,  6);
-    pushRect(tierCounts[3], viewport.width * 0.45, viewport.height * 0.45, 0.8,  8);
+    pushRect(tierCounts[2], viewport.width * 0.60, viewport.height * 0.60, 1.0, 6);
+    pushRect(tierCounts[3], viewport.width * 0.45, viewport.height * 0.45, 0.8, 8);
 
     return positions;
   }
@@ -387,14 +405,14 @@ const cacheKey = `${stage}|${quality}`;
 
     console.log(`🧠 Building ${stageName}: ${particleCount} particles`);
 
-    const maxParticles         = 15000;
+    const maxParticles = 15000;
     const atmosphericPositions = new Float32Array(maxParticles * 3);
-    const text3DPositions      = new Float32Array(maxParticles * 3);
-    const animationSeeds       = new Float32Array(maxParticles * 3);
-    const sizeMultipliers      = new Float32Array(maxParticles);
-    const opacityData          = new Float32Array(maxParticles);
-    const atlasIndices         = new Float32Array(maxParticles);
-    const tierData             = new Float32Array(maxParticles);
+    const text3DPositions = new Float32Array(maxParticles * 3);
+    const animationSeeds = new Float32Array(maxParticles * 3);
+    const sizeMultipliers = new Float32Array(maxParticles);
+    const opacityData = new Float32Array(maxParticles);
+    const atlasIndices = new Float32Array(maxParticles);
+    const tierData = new Float32Array(maxParticles);
 
     const textFormation = this.generate3DTextFormation(
       STAGE_TEXTS[stageName] || stageName.toUpperCase(), 
@@ -421,10 +439,10 @@ const cacheKey = `${stage}|${quality}`;
       animationSeeds[j+1] = rnd();
       animationSeeds[j+2] = rnd();
       
-      sizeMultipliers[i]  = 0.5 + rnd() * 1.5;
-      opacityData[i]      = 0.3 + rnd() * 0.7;
-      atlasIndices[i]     = Math.floor(rnd() * 8);
-      tierData[i]         = Math.floor(rnd() * 4);
+      sizeMultipliers[i] = 0.5 + rnd() * 1.5;
+      opacityData[i] = 0.3 + rnd() * 0.7;
+      atlasIndices[i] = Math.floor(rnd() * 8);
+      tierData[i] = Math.floor(rnd() * 4);
     }
 
     return {
@@ -511,7 +529,7 @@ const cacheKey = `${stage}|${quality}`;
   clearCache() {
     this.blueprintCache.clear();
     this._lastEmergenceCloud = null;
-    this._hasBuiltEmergence  = false;
+    this._hasBuiltEmergence = false;
     console.log('🧠 Cache cleared');
   }
 

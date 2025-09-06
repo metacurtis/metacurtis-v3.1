@@ -127,7 +127,7 @@ const _stageConfig = Canonical.stages[currentStage];
       if (!directorStartedRef.current && viewportReadyRef.current) {
         // Lock scroll until Director enables it
         document.body.style.overflow = 'hidden';
-        director.start();
+        // director.start() (disabled during monolithic opening)
         directorStartedRef.current = true;
         clearInterval(tick);
       }
@@ -135,6 +135,14 @@ const _stageConfig = Canonical.stages[currentStage];
 
     // 3) Director handoff signals
     const offs = [
+      BeatBus.on(EVENTS.OPENING_COMPLETE, (p={}) => {
+        // reveal main renderer
+        setShowCanvas(true);
+        // set stage-0 constellated and enable scroll
+        BeatBus.emit(EVENTS.STAGE_CHANGE, { stage: 'genesis' });
+        BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 1 });
+        BeatBus.emit(EVENTS.ENABLE_SCROLL);
+      }),
       BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
         console.log('   Theater: Scroll enabled by Director');
         setScrollEnabled(true);
@@ -205,6 +213,7 @@ const _stageConfig = Canonical.stages[currentStage];
     if (!isInitialized || !scrollEnabled) return;
 
     const handleScroll = () => {
+      if (!isInitialized) return; // Block during opening
       const scrollTop = window.scrollY;
       const scrollHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       const progress = Math.min(scrollTop / scrollHeight, 1);
