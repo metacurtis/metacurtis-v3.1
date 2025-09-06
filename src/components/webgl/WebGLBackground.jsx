@@ -222,7 +222,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (isEmergence) {
         console.log('✅ Renderer: emergence BLUEPRINT_READY (bound) stage=genesis',
           `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
-        emergencePendingRef.current = true;  // Set the flag for emergence
+        
+        // HOTDORS_MICRO_BURST: drive morph 0→1 rapidly to show the explosion
+        try {
+          const start = performance.now(); const dur = 700;
+          const burst = (t0)=>{ const k = Math.min(1, (t0 - start)/dur); const v = k*k*(3-2*k);
+            fallbackMorphRef.current = v; __applyMorph(v); if (k<1) requestAnimationFrame(burst); };
+          requestAnimationFrame(burst);
+        } catch {}
+emergencePendingRef.current = true;  // Set the flag for emergence
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BLUEPRINT_READY (full)`,
           `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
