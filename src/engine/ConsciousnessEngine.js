@@ -22,6 +22,9 @@ class ConsciousnessEngine {
     if (this._openingPhase === undefined) this._openingPhase = true;
     if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
     if (this._emergenceCount=== undefined) this._emergenceCount= 0;
+    if (this._openingPhase === undefined) this._openingPhase = true;
+    if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
+    if (this._emergenceCount=== undefined) this._emergenceCount= 0;
 
     // Emergence memory (for post-emergence genesis rebuild)
     this._lastEmergenceCloud = null;
