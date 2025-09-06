@@ -209,78 +209,57 @@ class ConsciousnessEngine {
 
   // Build emergence: glyph → viewport-scaled ember burst
   buildEmergenceBlueprint({ text = 'HELLO CURTIS', count = 2000 } = {}) {
-    console.log(`🌟 Building emergence: "${text}" with ${count} particles`);
+    console.log(`🌟 BigBang emergence: "${text}" with ${count} particles`);
+    const { width: vw, height: vh } = this._viewportHint || { width:120, height:90 };
 
-    // T1: SOURCE = glyph
-    const glyphPositions = this._sampleTextToPositions(text, count, { worldScale: 0.12 });
+    const atmosphericPositions = new Float32Array(count * 3); // SOURCE = gas cloud
+    const text3DPositions      = new Float32Array(count * 3); // TARGET = swirl
 
-    // Get viewport for proper scaling
-    const { width: vw, height: vh } = this._viewportHint || { width: 120, height: 90 };
-    const jitter = Math.min(vw, vh) * 0.45; // 45% of viewport
-    const zDepth = 15.0;
-
-    console.log(`   Emergence scaled to viewport: jitter=${jitter.toFixed(1)}, zDepth=±${zDepth}`);
-
-    // T1: TARGET = ember burst
-    const atmosphericPositions = new Float32Array(count * 3);
-    const text3DPositions      = new Float32Array(count * 3);
     const sizeMultipliers      = new Float32Array(count);
     const opacityData          = new Float32Array(count);
     const atlasIndices         = new Float32Array(count);
     const tierData             = new Float32Array(count);
     const animationSeeds       = new Float32Array(count * 3);
 
-    for (let i = 0; i < count; i++) {
-      const j = i * 3;
-      
-      // SOURCE: glyph positions
-      atmosphericPositions[j+0] = glyphPositions[j+0];
-      atmosphericPositions[j+1] = glyphPositions[j+1];
-      atmosphericPositions[j+2] = glyphPositions[j+2];
-
-      // TARGET: ember burst with viewport-scaled jitter
+    const gasRadius = Math.min(vw, vh) * 0.35;
+    for (let i=0;i<count;i++){
+      const j=i*3;
       const ang = Math.random() * Math.PI * 2;
-      const rad = Math.random() * jitter;
-      text3DPositions[j+0] = glyphPositions[j+0] + Math.cos(ang) * rad;
-      text3DPositions[j+1] = glyphPositions[j+1] + Math.sin(ang) * rad;
-      text3DPositions[j+2] = (Math.random() - 0.5) * (2 * zDepth);
+      const r   = Math.random() * gasRadius;
+      atmosphericPositions[j+0] = Math.cos(ang) * r;
+      atmosphericPositions[j+1] = Math.sin(ang) * r;
+      atmosphericPositions[j+2] = (Math.random()-0.5) * 20.0;
+    }
 
-      // Visual properties
-      tierData[i] = Math.floor(Math.random() * 4);
-      sizeMultipliers[i] = 0.5 + Math.random() * 1.5;
-      opacityData[i]     = 0.3 + Math.random() * 0.7;
-      atlasIndices[i]    = Math.floor(Math.random() * 8);
-      
-      animationSeeds[j+0] = Math.random();
-      animationSeeds[j+1] = Math.random();
-      animationSeeds[j+2] = Math.random();
+    const swirlRadius = Math.min(vw, vh) * 0.40;
+    for (let i=0;i<count;i++){
+      const j=i*3, t = i / count;
+      const ang = t * Math.PI * 8.0; // multi-rotations
+      const r   = t * swirlRadius;
+      text3DPositions[j+0] = Math.cos(ang) * r;
+      text3DPositions[j+1] = Math.sin(ang) * r;
+      text3DPositions[j+2] = Math.sin(ang * 2.0) * 10.0;
+    }
+
+    for (let i=0;i<count;i++){
+      const j=i*3;
+      const t=(tierData[i]=Math.floor(Math.random()*4))|0;
+      sizeMultipliers[i]=0.5+Math.random()*1.5;
+      opacityData[i]=0.3+Math.random()*0.7;
+      atlasIndices[i]=Math.floor(Math.random()*8);
+      animationSeeds[j+0]=Math.random(); animationSeeds[j+1]=Math.random(); animationSeeds[j+2]=Math.random();
     }
 
     return {
-      id: 'emergence-genesis',
-      mode: 'emergence', // CRITICAL identifier
-      stageName: 'genesis',
-      count,
-      particleCount: count,
-      maxParticles: count,
-      activeCount: count,
-      atmosphericPositions, // glyph
-      text3DPositions,      // ember burst
-      animationSeeds,
-      sizeMultipliers,
-      opacityData,
-      atlasIndices,
-      tierData,
-      metadata: { 
-        sourceText: text, 
-        viewport: this._viewportHint,
-        jitter,
-        zDepth
-      }
+      id:'emergence-genesis',
+      mode:'emergence',
+      stageName:'genesis',
+      count, particleCount:count, maxParticles:count, activeCount:count,
+      atmosphericPositions, text3DPositions, animationSeeds,
+      sizeMultipliers, opacityData, atlasIndices, tierData,
+      metadata:{ sourceText:text, viewport:this._viewportHint }
     };
-  }
-
-  // Build standard stages with post-emergence handling
+  }// Build standard stages with post-emergence handling
   buildAndEmitBlueprint(stage, quality) {
     if (this._openingPhase && stage !== 'genesis') {
       console.warn('🧠 Engine: blocked non-genesis during opening:', stage);

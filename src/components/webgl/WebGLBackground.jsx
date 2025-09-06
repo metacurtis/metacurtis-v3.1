@@ -378,6 +378,14 @@ emergencePendingRef.current = true;  // Set the flag for emergence
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !blueprint) return;
 
+    // CHAOS SWIRL: small mesh rotation during opening for additional drama
+    if (emergencePendingRef.current && !emittedEmergedRef.current && meshRef.current) {
+      const chaosT = Math.min(1, (state.clock.elapsedTime % 1.5) / 1.5);
+      meshRef.current.rotation.z += 0.004 + 0.003 * Math.sin(state.clock.elapsedTime*1.7);
+      meshRef.current.rotation.x += 0.0015 * Math.cos(state.clock.elapsedTime*1.1);
+      meshRef.current.rotation.y += 0.0010 * Math.sin(state.clock.elapsedTime*1.3);
+    }
+
     const mp = Math.max(morphProgress, fallbackMorphRef.current);
     const sp = Math.max(0, Math.min(1, Number(scrollProgress) || 0));
 

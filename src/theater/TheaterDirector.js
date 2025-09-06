@@ -68,7 +68,7 @@ class TheaterDirector {
 
       // ───────────────── Phase 5: Emergence (race-free)
       this.phase = "emergence";
-      console.log("   Phase: Particle emergence");
+      console.log("💥 Phase: Big Bang emergence");
 
       // 1) Build emergence now (Engine → emergence blueprint with mode:'emergence')
       BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, { sourceText: "HELLO CURTIS", count: 2000 });
@@ -89,6 +89,14 @@ class TheaterDirector {
       console.log("🧬 Phase: Genesis — narrative begins");
       BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: "genesis" });
       BeatBus.emit(EVENTS.START_NARRATIVE, { stage: "genesis" });
+
+      // Schedule BeatGlyph reveal (~30s into genesis)
+      setTimeout(() => {
+        BeatBus.emit(EVENTS.MORPH_TO_BEATGLYPH, { text: "HELLO CURTIS" });
+        // drive morph 0→1 into glyph
+        BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });
+        this._easeMorphTo(1, 1500);
+      }, 30000);
 
       // Ensure we start at top (avoid immediate stage jumps when orchestrator starts)
       try { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); } catch {}
