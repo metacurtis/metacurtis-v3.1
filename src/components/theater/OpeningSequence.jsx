@@ -2,7 +2,7 @@
 // SST v3.0 100% Compliant Opening Sequence - Exact specifications
 
 import { useEffect, useRef, useState } from 'react';
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -48,6 +48,31 @@ export default function OpeningSequence() {
     mounted.current = true;
     setVisible(true); // Show overlay when component mounts
     console.log('🎬 OpeningSequence: Ready for Director signals');
+
+// HOTDORS: one-time user gesture gate for autoplay audio
+let __gestureOk = false;
+const __unlockAudio = () => {
+  __gestureOk = true;
+  try { humAudioRef.current?.play?.().catch(()=>{}); } catch {}
+  window.removeEventListener('pointerdown', __unlockAudio);
+  window.removeEventListener('touchstart', __unlockAudio);
+  window.removeEventListener('keydown', __unlockAudio);
+};
+window.addEventListener('pointerdown', __unlockAudio, { once: true });
+window.addEventListener('touchstart', __unlockAudio, { once: true });
+window.addEventListener('keydown', __unlockAudio, { once: true });
+// HOTDORS: one-time user gesture gate for audio autoplay
+    let gestureOk = false;
+    const __gesturePlay = () => {
+      gestureOk = true;
+      try { humAudioRef.current && humAudioRef.current.play && humAudioRef.current.play().catch(()=>{}); } catch {}
+      window.removeEventListener('pointerdown', __gesturePlay);
+      window.removeEventListener('touchstart', __gesturePlay);
+      window.removeEventListener('keydown', __gesturePlay);
+    };
+    window.addEventListener('pointerdown', __gesturePlay, { once: true });
+    window.addEventListener('touchstart', __gesturePlay, { once: true });
+    window.addEventListener('keydown', __gesturePlay, { once: true });
 
     const eventHandlers = [
       // ========== CURSOR SHOW ==========

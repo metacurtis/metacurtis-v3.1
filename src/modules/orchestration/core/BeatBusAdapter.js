@@ -19,7 +19,7 @@ export let BeatBusClass = null;
 // Try to upgrade AFTER current tick to avoid TDZ on BeatBus.js default/class exports
 queueMicrotask(async () => {
   try {
-    const mod = await import('./BeatBus.js'); // resolved once BeatBus.js is fully initialized
+    const mod = await import('@/theater/bus'); // resolved once BeatBus.js is fully initialized
     let next = null;
 
     if (mod?.default && typeof mod.default.on === 'function') {

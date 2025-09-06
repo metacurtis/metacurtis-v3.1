@@ -6,7 +6,7 @@ import {
   performanceAtom,
   interactionAtom
 } from '../atoms';
-import BeatBus from '@/modules/orchestration/core/BeatBus';
+import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
 
 class StateCommands {

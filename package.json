@@ -19,9 +19,7 @@
     "test:watch": "vitest watch",
     "lighthouse": "lhci autorun --config=./lighthouserc.json",
     "lighthouse:full": "npm run build && npm run lighthouse",
-
     "validate": "node scripts/validate-sst.js && node tools/sst-guard.mjs",
-
     "validate:sst": "node ./scripts/validate-sst-integration.js",
     "predev": "npm run validate",
     "prebuild": "npm run validate",
@@ -49,7 +47,8 @@
     "doctor:perf:strict": "node scripts/doctor-perf.cjs --strict-perf",
     "doctor:repo": "npm run validate && npm run doctor:perf",
     "evidence:rollup": "node scripts/evidence-rollup.cjs",
-    "sst:verify": "node tools/sst-guard.mjs"
+    "sst:verify": "node tools/sst-guard.mjs",
+    "agent:run": "node scripts/agent/runner.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -96,11 +95,10 @@
     "vitest": "^1.4.0"
   },
   "lint-staged": {
-    "*.{css,md,json}": [
-      "prettier --write"
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
     ],
-    "{src,modules,scripts}/**/*.{js,jsx,ts,tsx,cjs,mjs}": [
-      "eslint --fix",
+    "src/**/*.{css,md,json}": [
       "prettier --write"
     ]
   }

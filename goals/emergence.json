@@ -1,0 +1,14 @@
+{
+  "name": "emergence",
+  "description": "Glyph burst -> green Stage-0 -> settle -> enable scroll",
+  "invariants": [
+    { "id": "engine.glyphSource",          "role": "engine",   "desc": "Emergence SOURCE = Canon.stages.genesis.word glyph pixels" },
+    { "id": "engine.burstParams",          "role": "engine",   "desc": "Ember burst (jitter >= 25, zDepth >= 6)" },
+    { "id": "renderer.bindGlyphAttrs",     "role": "renderer", "desc": "Renderer binds atmosphericPosition + text3DPosition (no allen*)" },
+    { "id": "renderer.emitOnce",           "role": "renderer", "desc": "Emit PARTICLES_EMERGED once after first full bind post-emergence" },
+    { "id": "renderer.stage0TintLock",     "role": "renderer", "desc": "Stage-0: uColorNext=uColorCurrent, uStageBlend=0" },
+    { "id": "director.settleBeforeScroll", "role": "director", "desc": "After PARTICLES_EMERGED → STAGE_CHANGE('genesis'), auto-morph 0→1, then ENABLE_SCROLL" },
+    { "id": "opening.noCTF",               "role": "opening",  "desc": "No CTF path; fade only on PARTICLES_START_EMERGING" },
+    { "id": "opening.audioGate",           "role": "opening",  "desc": "One-time user gesture gate for autoplay audio" }
+  ]
+}

@@ -1,5 +1,5 @@
 // src/canon-guard/blueprintGuard.js
-import BeatBus from "@/modules/orchestration/core/BeatBus.js";
+import BeatBus from "@/theater/bus";
 import { EVENTS } from '@/theater/events.js';
 
 (function(){
