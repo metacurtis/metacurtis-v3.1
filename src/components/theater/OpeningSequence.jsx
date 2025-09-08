@@ -166,7 +166,8 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
 
           // Fill screen with scrolling text
           const fillText = text.repeat(10); // Repeat across width
-          setScreenFillLines([fillText]);
+          try { window.__opening_fill_start_lines = 0; } catch {}
+          setScreenFillLines([]);
 
           // Add new lines progressively
           addInterval(() => {

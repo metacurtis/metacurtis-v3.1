@@ -95,7 +95,20 @@ const lastBlueprintIdRef = useRef(null);
 
   useEffect(() => { emitViewportHint(); }, [emitViewportHint]);
 
-  // ────────────────────────────────────────────────────────────────────────────
+  
+/* Re-emit viewport hint on mount + for 1.5s and on resize — __HINT_REEMIT_PATCH__ */
+useEffect(() => {
+  let stopped=false;
+  const onResize = () => { try { emitViewportHint(); } catch {} };
+  const t0 = performance.now();
+  const iv = setInterval(() => {
+    try { emitViewportHint(); } catch {}
+    if (performance.now() - t0 > 1500) { clearInterval(iv); }
+  }, 250);
+  window.addEventListener('resize', onResize);
+  return () => { clearInterval(iv); window.removeEventListener('resize', onResize); stopped=true; };
+}, [emitViewportHint]);
+// ────────────────────────────────────────────────────────────────────────────
   // 2) Morph sink (idempotent)
   // ────────────────────────────────────────────────────────────────────────────
   const __applyMorph = (v) => {
