@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* eslint-env node */
+import { runOpeningChecks } from './sentinel/openingChecks.mjs';
 import fs from 'node:fs'; import path from 'node:path';
 const args=new Set(process.argv.slice(2)); const checkOpening=args.has('--opening')||!args.size; const checkVision=args.has('--vision')||!args.size;
 const read=(p)=>{ try{return fs.readFileSync(p,'utf8')}catch{return ''} };
@@ -11,31 +12,13 @@ if (checkOpening){
   const engine   = read('src/engine/ConsciousnessEngine.js');
   const renderer = read('src/components/webgl/WebGLBackground.jsx');
   const theater  = read('src/components/consciousness/ConsciousnessTheater.jsx');
-  const rows=[]; const row=(ok,l)=>{ rows.push((ok?'OK ':'X  ')+l); if(!ok) fails++; };
 
-  // baseline fencepost
-  row(/import\s+BeatBus\s+from\s+['"]@\/theater\/bus['"]/.test(opening),'OpeningSequence uses single bus');
-  row(!/CTF_BUILD/.test(opening),'OpeningSequence has no CTF');
-  row(!/(BufferGeometry|useFrame|THREE\.)/.test(opening),'OpeningSequence overlay-only');
-  row(/buildAndEmitBlueprint[^]*?if\s*\(\s*this\._openingPhase\s*&&\s*stage\s*!==\s*['"]genesis['"]\s*\)/.test(engine),'Engine gate at top of buildAndEmitBlueprint');
-  row(/BLUEPRINT_READY[^]*mode\s*:\s*['"]emergence['"]/.test(engine),'Engine emergence emits mode:"emergence"');
-  const spiral=/(swirl|spiral)/.test(engine)||(/ang\s*=\s*(?:i|t)[^;]*\*/.test(engine)&&/\br\s*=\s*(?:i|t)\s*\*/.test(engine));
-  row(!spiral,'Engine emergence random->random (no spiral)');
-  row(/BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/.test(renderer),'Renderer emits PARTICLES_EMERGED fencepost once');
-  row(/ENGINE_VIEWPORT_HINT/.test(theater),'Theater start-after-viewport gate present');
-
-  // Phase-1 static style contracts (OpeningSequence)
-  // Phase-1 static style contracts (OpeningSequence)
-// Accept inline Courier New or ui-monospace OR usage of STRICT_MONO_STACK
-const __mono_literal = /fontFamily\s*:\s*["'][^"']*(Courier New|ui-monospace)[^"']*["']/.test(opening);
-const __mono_const   = /fontFamily\s*:\s*STRICT_MONO_STACK\b/.test(opening);
-row((__mono_literal || __mono_const), 'OpeningSequence strict mono font stack');
-  row(!/textShadow:\s*['"][^'"]+['"]/.test(opening) || /textShadow:\s*['"]none['"]/.test(opening),'OpeningSequence no glow');
-  row(/__opening_fill_start_lines/.test(opening) && /setScreenFillLines\(\s*\[\s*\]\s*\)/.test(opening),'OpeningSequence progressive fill (no flash)');
-
-  console.log('\nOpening checks:'); rows.forEach(l=>console.log(l));
-  console.log('\nOpening sentinel:', rows.some(l=>l.startsWith('X'))?'FAIL':'OK');
+  const { rows, fails: f } = runOpeningChecks({ opening, engine, renderer, theater, debug:false });
+  rows.forEach(r => console.log((r.ok?'OK ':'X  ') + r.label));
+  console.log('\nOpening sentinel:', f ? 'FAIL' : 'OK');
+  fails += f;
 }
+
 
 /* Vision checks (telemetry) — __PHASE1_VISION_CHECKS__ */
 if (checkVision){

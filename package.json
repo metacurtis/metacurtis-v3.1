@@ -55,7 +55,10 @@
     "agent:record": "node scripts/agent/goals/record.mjs",
     "doctor:agents": "node scripts/doctor.catalog-agents-sentinels.mjs --write",
     "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals",
-    "agent:phase1": "node scripts/agent/runner.mjs --goal=opening:phase1"
+    "agent:phase1": "node scripts/agent/runner.mjs --goal=opening:phase1",
+    "sentinel:opening": "node tools/sst-guard.mjs --opening",
+    "sentinel:opening:debug": "node tools/sentinel/debugOpening.mjs",
+    "sentinel:print:opening": "node -e \"const fs=require('fs');const s=fs.readFileSync('src/components/theater/OpeningSequence.jsx','utf8').split(/\\n/);s.forEach((l,i)=>console.log(String(i+1).padStart(4,' ')+': '+l));\""
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
