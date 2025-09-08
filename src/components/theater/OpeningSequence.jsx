@@ -8,7 +8,6 @@ const STRICT_MONO_STACK = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas
 import { EVENTS } from '@/theater/events.js';
 
 
-// sentinel-hint:fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // Strict cross-platform monospace stack (GitHub-style + Liberation/Courier)
 export default function OpeningSequence() {
@@ -198,7 +197,7 @@ export default function OpeningSequence() {
         position: 'fixed', inset: 0,
         background: '#000',
         color: '#00FF00',
-        fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
+         Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
         fontSize: '1.5rem', lineHeight: 1.4,
         zIndex: 9999, overflow: 'hidden',
         transition: 'opacity 0.7s',
