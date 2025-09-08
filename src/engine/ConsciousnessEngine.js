@@ -23,12 +23,6 @@ class ConsciousnessEngine {
     if (this._openingPhase === undefined) this._openingPhase = true;
     if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
     if (this._emergenceCount=== undefined) this._emergenceCount= 0;
-    if (this._openingPhase === undefined) this._openingPhase = true;
-    if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
-    if (this._emergenceCount=== undefined) this._emergenceCount= 0;
-    if (this._openingPhase === undefined) this._openingPhase = true;
-    if (this._openingEpoch  === undefined) this._openingEpoch  = 0;
-    if (this._emergenceCount=== undefined) this._emergenceCount= 0;
 
     // Emergence memory (for post-emergence genesis rebuild)
     this._lastEmergenceCloud = null;
@@ -217,15 +211,18 @@ class ConsciousnessEngine {
     // Get viewport for proper scaling
     const { width: vw, height: vh } = this._viewportHint || { width: 120, height: 90 };
 
-    // Vision: expose cloud factors for telemetry
+        const smin = Math.min(vw, vh);
+    const gasRadius      = smin * 0.38;
+    const expandedRadius = smin * 0.52;
+    const zDepth         = 15.0;
+// Vision: expose cloud factors for telemetry
     try {
-      const smin = Math.min(vw, vh);
-      window.__vc_gasRadiusFactor      = (typeof gasRadius      === 'number' ? gasRadius / smin : 0.38);
-      window.__vc_expandedRadiusFactor = (typeof expandedRadius === 'number' ? expandedRadius / smin : 0.52);
-      window.__vc_zRange               = (typeof zDepth === 'number' ? zDepth : 30);
+      window.__vc_gasRadiusFactor      = gasRadius / smin;
+      window.__vc_expandedRadiusFactor = expandedRadius / smin;
+      window.__vc_zRange               = zDepth;
     } catch {}
-    const jitter = Math.min(vw, vh) * 0.45; // 45% of viewport
-    const zDepth = 15.0;
+const jitter = smin * 0.45; // 45% of viewport
+   /* duplicate zDepth removed */
 
     console.log(`   Emergence scaled to viewport: jitter=${jitter.toFixed(1)}, zDepth=±${zDepth}`);
 

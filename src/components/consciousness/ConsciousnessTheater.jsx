@@ -1,5 +1,5 @@
 // src/components/consciousness/ConsciousnessTheater.jsx
-// Director-integrated Theater — start AFTER viewport hint; race-free opening.
+// Director-integrated Theater — robust, race-free opening (single start after viewport hint)
 
 import { useEffect, useState, useRef } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -101,92 +101,84 @@ export default function ConsciousnessTheater() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [narrativeEnabled, setNarrativeEnabled] = useState(false);
+  const [activeNarrative, setActiveNarrative] = useState(null); // ← was used but not declared earlier
   const [showCanvas] = useState(true);
 
   const startTimeRef = useRef(Date.now());
   const currentStageRef = useRef('genesis');
   const directorStartedRef = useRef(false);
   const viewportReadyRef = useRef(false);
-const _stageConfig = Canonical.stages[currentStage];
+
+  const _stageConfig = Canonical.stages[currentStage];                 // For future tuning
   const narrative = Canonical.dialogue?.[currentStage];
 
   const { activeFragments, fragmentStates, triggerFragment, dismissFragment } =
     useMemoryFragments(currentStage, scrollProgress * 100, null);
+
+  // keep latest trigger function
   const triggerFragmentRef = useRef(triggerFragment);
   triggerFragmentRef.current = triggerFragment;
 
-  // ───────────────── Director start AFTER viewport hint; scroll locked until ENABLE_SCROLL
+  // ───────────────── Race-free Director start (single gate) ─────────────────
   useEffect(() => {
-    // 1) Listen for viewport hint sent by WebGLBackground
-    const offHint = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => {
-      viewportReadyRef.current = true;
-    });
+    let started = false;
+    let gotHint = false;
 
-    // 2) Start Director once, after hint
-    const tick = setInterval(() => {
-      if (!directorStartedRef.current && viewportReadyRef.current) {
-        // Lock scroll until Director enables it
-        document.body.style.overflow = 'hidden';
-        director.start();
-        directorStartedRef.current = true;
-        clearInterval(tick);
-      }
-    }, 50);
-
-    // 3) Director handoff signals
-    const offs = [
-      BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
-        console.log('   Theater: Scroll enabled by Director');
-        setScrollEnabled(true);
-        document.body.style.overflow = '';
-      }),
-      BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {
-        console.log(`   Theater: Starting ${stage} narrative`);
-        setNarrativeEnabled(true);
-        setIsInitialized(true);
-      }),
-    ];
-
-    return () => {
-      clearInterval(tick);
-      offHint && offHint();
-      offs.forEach(off => off && off());
-      document.body.style.overflow = '';
-      director.cancel();
-      directorStartedRef.current = false;
-      viewportReadyRef.current = false;
-    };
-  }, []);
-
-  // --- viewport hint fallback + director start — __VIEWPORT_HINT_FALLBACK__
-  useEffect(() => {
-    let gotHint = false, started = false;
-    const off = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => { gotHint = true; });
     const startDirector = () => {
       if (started) return;
-      try { document.body.style.overflow = 'hidden'; } catch {}
-      try { director?.start?.(); } catch {}
       started = true;
+      directorStartedRef.current = true;
+      try { document.body.style.overflow = 'hidden'; } catch {}
+      try { director.start(); } catch (e) { console.warn('Director.start failed:', e?.message); }
     };
-    // if no hint in 800ms, synthesize one and start
+
+    // 1) real viewport hint
+    const offHint = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => {
+      viewportReadyRef.current = true;
+      gotHint = true;
+      startDirector();
+    });
+
+    // 2) synthetic hint fallback after 800ms if nothing arrived
     const t = setTimeout(() => {
-      if (!gotHint) {
+      if (!gotHint && !directorStartedRef.current) {
         try {
           const w = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
           const h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
           BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width:w, height:h, aspect: w/Math.max(1,h) });
           console.log('📐 Theater: synthetic ENGINE_VIEWPORT_HINT emitted');
         } catch {}
+        startDirector();
       }
-      startDirector();
     }, 800);
-    // also start when the first real hint arrives
-    const offStart = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => startDirector());
-    return () => { clearTimeout(t); off&&off(); offStart&&offStart(); };
+
+    // 3) handoff signals
+    const offs = [
+      BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+        console.log('   Theater: Scroll enabled by Director');
+        setScrollEnabled(true);
+        try { document.body.style.overflow = ''; } catch {}
+      }),
+      BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {
+        console.log(`   Theater: Starting ${stage} narrative`);
+        setNarrativeEnabled(true);
+        setIsInitialized(true);
+        startTimeRef.current = Date.now();
+      }),
+    ];
+
+    return () => {
+      clearTimeout(t);
+      offHint && offHint();
+      offs.forEach(off => off && off());
+      try { document.body.style.overflow = ''; } catch {}
+      try { director.cancel(); } catch {}
+      directorStartedRef.current = false;
+      viewportReadyRef.current = false;
+    };
   }, []);
 
-
-  // ───────────────── Keyboard navigation (after handoff)
+  // ───────────────── Keyboard navigation (after handoff) ────────────────────
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
     const handleKey = (e) => {
@@ -216,7 +208,7 @@ const _stageConfig = Canonical.stages[currentStage];
     return () => window.removeEventListener("keydown", handleKey);
   }, [isInitialized, scrollEnabled]);
 
-  // ───────────────── Stage subscription
+  // ───────────────── Stage subscription ─────────────────────────────────────
   useEffect(() => {
     const unsubscribe = stageAtom.subscribe(state => {
       if (state.currentStage !== currentStageRef.current) {
@@ -228,7 +220,7 @@ const _stageConfig = Canonical.stages[currentStage];
     return unsubscribe;
   }, []);
 
-  // ───────────────── Scroll → morph/stage (after handoff)
+  // ───────────────── Scroll → morph/stage (after handoff) ───────────────────
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
 
@@ -253,7 +245,7 @@ const _stageConfig = Canonical.stages[currentStage];
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isInitialized, scrollEnabled]);
 
-  // ───────────────── Narrative timing
+  // ───────────────── Narrative timing (optional) ─────────────────────────────
   useEffect(() => {
     if (!narrative?.narration?.segments || !isInitialized || !narrativeEnabled) return;
     const timer = setInterval(() => {
@@ -267,23 +259,20 @@ const _stageConfig = Canonical.stages[currentStage];
     return () => clearInterval(timer);
   }, [narrative, isInitialized, narrativeEnabled]);
 
-  // ───────────────── Render
+  // ───────────────── Render ─────────────────────────────────────────────────
   return (
     <div className="consciousness-theater-v3">
       <OpeningSequence />
 
-      {/* a tall spacer to allow scrolling once enabled */}
+      {/* spacer to allow scrolling once enabled */}
       <div style={{ position: 'absolute', width: '1px', height: '700vh', pointerEvents: 'none', zIndex: -1 }} />
 
       {showCanvas && (
         <WebGLCanvas stage={currentStage} morphProgress={morphProgress} scrollProgress={scrollProgress} />
       )}
 
-      {/* Narrative overlay */}
-      {/* Add when you wire Canonical.dialogue for each stage */}
       {/* {narrativeEnabled && activeNarrative && <NarrationOverlay segment={activeNarrative} />} */}
 
-      {/* Memory fragments (kept) */}
       {activeFragments.map(fragment => {
         const state = fragmentStates[fragment.id];
         return state?.state === 'active' ? (

@@ -1,11 +1,82 @@
 {
   "version": "v1",
   "opening": {
-    "terminal": { "fontStack": ["'Courier New'", "Courier", "'Lucida Console'", "'DejaVu Sans Mono'", "monospace"], "colorHex": "#00FF00", "allowGlow": false },
-    "timeline": { "chaosMs": [1200,1800], "coalesceMs": [1200,2000], "settleMs": [800,1400], "minFillVisibleMs": 1200 },
-    "emergenceCloud": { "gasRadiusFactor": [0.35,0.40], "expandedRadiusFactor": [0.50,0.55], "zRange": [25,35] },
-    "chaosSpin": { "zPerSec": [0.45,0.70], "yPerSec": [0.20,0.35] },
+    "terminal": {
+      "fontStack": [
+        "'Courier New'",
+        "Courier",
+        "'Lucida Console'",
+        "'DejaVu Sans Mono'",
+        "monospace"
+      ],
+      "allowGlow": false
+    },
+    "timeline": {
+      "chaosMs": [
+        1200,
+        1800
+      ],
+      "coalesceMs": [
+        1200,
+        2000
+      ],
+      "settleMs": [
+        800,
+        1400
+      ],
+      "minFillVisibleMs": 1200
+    },
+    "emergenceCloud": {
+      "gasRadiusFactor": [
+        0.35,
+        0.4
+      ],
+      "expandedRadiusFactor": [
+        0.5,
+        0.55
+      ],
+      "zRange": [
+        25,
+        35
+      ]
+    },
+    "chaosSpin": {
+      "zPerSec": [
+        0.45,
+        0.7
+      ],
+      "yPerSec": [
+        0.2,
+        0.35
+      ]
+    },
     "noInitialFillFlash": true,
-    "deferFadeUntilMinFill": true
+    "deferFadeUntilMinFill": true,
+    "phase1": {
+      "cursor": {
+        "atMs": 2000,
+        "blinkCount": 2,
+        "blinkIntervalMs": 250,
+        "toleranceMs": 80
+      },
+      "typing": {
+        "atMs": 2250,
+        "typeSpeedMs": 12,
+        "lineDelayMs": 60,
+        "lines": [
+          "READY.",
+          "10 PRINT \"HELLO CURTIS\"",
+          "20 GOTO 10",
+          "RUN"
+        ],
+        "toleranceMs": 120
+      },
+      "fill": {
+        "atMs": 3000,
+        "scrollSpeed": 50,
+        "minVisibleMs": 1200,
+        "toleranceMs": 80
+      }
+    }
   }
 }

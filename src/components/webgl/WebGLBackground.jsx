@@ -509,12 +509,3 @@ useEffect(() => {
 }
 
 export default React.memo(WebGLBackground);
-
-
-/* Vision: expose root for chaos spin sampling (one-shot) */
-useEffect(() => {
-  const id = requestAnimationFrame(() => {
-    try { if (groupRef?.current) window.__webglRoot = groupRef.current; } catch {}
-  });
-  return () => cancelAnimationFrame(id);
-}, []);

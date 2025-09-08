@@ -54,7 +54,8 @@
     "agent:visuals": "node scripts/agent/goals/visuals.mjs",
     "agent:record": "node scripts/agent/goals/record.mjs",
     "doctor:agents": "node scripts/doctor.catalog-agents-sentinels.mjs --write",
-    "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals"
+    "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals",
+    "agent:phase1": "node scripts/agent/runner.mjs --goal=opening:phase1"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
