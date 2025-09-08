@@ -49,7 +49,7 @@ export function runOpeningChecks({ opening, engine, renderer, theater, debug=fal
 
   row(/BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/.test(renderer),
       'Renderer emits PARTICLES_EMERGED fencepost once',
-      { file: 'Renderer', pattern: /BeatBus.emit(s*EVENTS.PARTICLES_EMERGED/ });
+      { file: 'Renderer', pattern: /BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/ });
 
   row(/ENGINE_VIEWPORT_HINT/.test(theater), 'Theater start-after-viewport gate present',
       { file:'Theater' });
