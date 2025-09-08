@@ -49,6 +49,51 @@ export default function OpeningSequence() {
     setVisible(true); // Show overlay when component mounts
     console.log('🎬 OpeningSequence: Ready for Director signals');
 
+
+
+// --- self-boot intro if Director is silent — __SELF_BOOT_FALLBACK__
+useEffect(() => {
+  let sawDirector = false, cancelled = false;
+  const taps = [
+    BeatBus.on(EVENTS.CURSOR_SHOW,   ()=>{ sawDirector=true; }),
+    BeatBus.on(EVENTS.TERMINAL_TYPE, ()=>{ sawDirector=true; }),
+    BeatBus.on(EVENTS.SCREEN_FILL,   ()=>{ sawDirector=true; })
+  ];
+  const boot = async () => {
+    // Black hold
+    setPhase('black'); await sleep(200);
+    // Cursor blink ×2
+    setPhase('cursor'); setCursorVisible(true);
+    for (let i=0;i<2 && !cancelled;i++){ setCursorVisible(false); await sleep(500); setCursorVisible(true); await sleep(500); }
+    setCursorVisible(false);
+    // Type default lines
+    const defaults = ['READY.','10 PRINT "HELLO CURTIS"','20 GOTO 10','RUN'];
+    setPhase('typing'); setLines([]); let token = ++typingToken.current;
+    for (let li=0;li<defaults.length && !cancelled;li++){
+      setCurrentTypingLine(li); setLines(prev=>[...prev,'']); const line = defaults[li];
+      for (let ci=0; ci<line.length && !cancelled; ci++){
+        if (token !== typingToken.current) break;
+        setLines(prev => { const n=[...prev]; n[li]=(n[li]||'')+line[ci]; return n; });
+        await sleep(50);
+      }
+      if (li<defaults.length-1) await sleep(300);
+    }
+    setCurrentTypingLine(-1);
+    // Progressive fill (no flash)
+    try { window.__opening_fill_start_lines = 0; } catch {}
+    setPhase('fill'); setScreenFillLines([]);
+    const fillText = 'HELLO CURTIS '.repeat(10);
+    const iv = setInterval(() => {
+      if (cancelled) return clearInterval(iv);
+      setScreenFillLines(prev => prev.length>=30 ? [...prev.slice(1),fillText] : [...prev, fillText]);
+    }, 50);
+    // autoresolve after a short dwell if Director still silent
+    setTimeout(()=>clearInterval(iv), 4000);
+  };
+  const t = setTimeout(() => { if (!sawDirector) boot(); }, 700);
+  return () => { cancelled = true; clearTimeout(t); taps.forEach(off=>off&&off()); };
+}, []);
+
 // HOTDORS: one-time user gesture gate for autoplay audio
 let __gestureOk = false;
 const __unlockAudio = () => {

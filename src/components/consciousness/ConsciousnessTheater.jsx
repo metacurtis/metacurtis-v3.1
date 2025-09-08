@@ -158,6 +158,34 @@ const _stageConfig = Canonical.stages[currentStage];
     };
   }, []);
 
+  // --- viewport hint fallback + director start — __VIEWPORT_HINT_FALLBACK__
+  useEffect(() => {
+    let gotHint = false, started = false;
+    const off = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => { gotHint = true; });
+    const startDirector = () => {
+      if (started) return;
+      try { document.body.style.overflow = 'hidden'; } catch {}
+      try { director?.start?.(); } catch {}
+      started = true;
+    };
+    // if no hint in 800ms, synthesize one and start
+    const t = setTimeout(() => {
+      if (!gotHint) {
+        try {
+          const w = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
+          const h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+          BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width:w, height:h, aspect: w/Math.max(1,h) });
+          console.log('📐 Theater: synthetic ENGINE_VIEWPORT_HINT emitted');
+        } catch {}
+      }
+      startDirector();
+    }, 800);
+    // also start when the first real hint arrives
+    const offStart = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => startDirector());
+    return () => { clearTimeout(t); off&&off(); offStart&&offStart(); };
+  }, []);
+
+
   // ───────────────── Keyboard navigation (after handoff)
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
