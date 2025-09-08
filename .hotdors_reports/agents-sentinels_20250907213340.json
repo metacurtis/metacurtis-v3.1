@@ -1,0 +1,3214 @@
+{
+  "tool": "repo-doctor:agents-sentinels",
+  "root": "/home/curtis/projects/metacurtis-v3.1",
+  "started_at": "2025-09-07T21:33:40.006Z",
+  "finished_at": "2025-09-07T21:33:40.217Z",
+  "scanned_files": 812,
+  "candidate_files": 82,
+  "summary": {
+    "counts_by_type": {
+      "sentinel": 53,
+      "doctor": 41,
+      "runtime_doctor": 43,
+      "agent": 48,
+      "validator": 64,
+      "unknown": 5
+    },
+    "agents": 48,
+    "sentinels": 53,
+    "duplicates": 3,
+    "errors": 0
+  },
+  "duplicates": [
+    {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": [
+        "hotdors-review.sh",
+        "src/dev/hotdors.visual.helpers.js"
+      ]
+    },
+    {
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "files": [
+        "scripts/doctor-scroll-stage-bridge.cjs",
+        "scripts/hotdors.add-dev-bridge.cjs",
+        "scripts/hotdors.add-mc-alias.cjs",
+        "scripts/hotdors.fix.devguard.cjs",
+        "scripts/hotdors.helpers.rewrite.cjs",
+        "scripts/hotdors.visual-path.selfboot.cjs",
+        "scripts/hotdors.wiring.cleanup.cjs",
+        "scripts/hotdors.wiring.patch.cjs",
+        "scripts/hotdors.wiring.tune.cjs",
+        "scripts/phase4r-render-recovery-doctor.cjs"
+      ]
+    },
+    {
+      "hash": "1713e1543bfcd8e203d1f53026dcf0790ff228b1ca4b7fb750e0a2c257edd078",
+      "files": [
+        "snapshots/doctor_canon_one_touch_2025-08-19T19-32-09.840Z/src__canon__guard__L2.js",
+        "snapshots/doctor_canon_one_touch_2025-08-19T19-32-09.977Z/src__canon__guard__L2.js"
+      ]
+    }
+  ],
+  "merge_candidates": [
+    {
+      "path": ".hotdors_backups/2025-09-02T03-50-06-425Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-17-03-664Z/src/canon-guard/runtime/GuardRuntimeInject.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-17-03-664Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-20-50-898Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-23-38-378Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": ".migration_backups/20250724_133309/canonical/sstV2Quality.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": ".migration_backups/20250724_133309/canonical/sstV2Stages.jsx",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "canon-console/runtime/bridge-guard.js",
+      "type": [
+        "sentinel"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "console/runtime/bridge-guard.js",
+      "type": [
+        "sentinel"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "migrate_to_sst3.sh",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "continuous",
+        "generation"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "migrate_to_sst_v3.sh",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "scripts/agent.goalrunner.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/apply-sst-v3-behavior-hotfix-v2.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/apply-sst-v3-behavior-hotfix-v3.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/apply-sst-v3-behavior-hotfix.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/apply-sst-v3-fixes.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/canon-guard-l2-bridge.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/consciousness-flow-doctor.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-blueprint-trace.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": false,
+      "executes": true
+    },
+    {
+      "path": "scripts/doctor-morph-v2.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-one-touch.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-render-apply.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-render-pipeline.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-scope-trim.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-sequence-unblock.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor-v2-structure.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor.catalog-agents-sentinels.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/doctor_canon_amplification.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor_canon_bootstrap_l2.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/doctor_canon_lock.cjs",
+      "type": [
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor_canon_one_touch.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "guard"
+      ],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/doctor_canon_suite_complete.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor_canon_suite_fixups.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor_hotwire_bus_and_aliases.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/doctor_post_bootstrap_fix.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/doctor_render_apply_shim.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor_render_path_one_touch.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/doctor_render_resubscribe.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/finish-guard-console.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/fix-guard-inject-path.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/hotdors-autofix.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/hotdors-bootstrap.sh",
+      "type": [
+        "sentinel",
+        "doctor",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "scripts/hotdors-validate-fixer.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/hotdors.agent-upgrade.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "emergence",
+        "opening"
+      ],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/hotdors.emergence-from-text.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/hotdors.engine-emergence-one-touch.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/hotdors.finalize-orchestrator-and-emergence.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/hotdors.fix-director-and-renderer.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/hotdors.lint-fixes.mjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/hotdors.scroll-orchestrator.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/one-touch/upgrade-agent-and-sentinel.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [
+        "emergence"
+      ],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/phase4a-bus-topology-doctor.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/phase4b-finisher-doctor.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/phase4b-hmr-hygiene-doctor.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "MEDIUM",
+      "goals": [],
+      "mutates": true,
+      "executes": false
+    },
+    {
+      "path": "scripts/render-doctor.v2.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "HIGH",
+      "goals": [],
+      "mutates": true,
+      "executes": true
+    },
+    {
+      "path": "scripts/sst-v3-theater-doctor.cjs",
+      "type": [
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "scripts/validate-sst-text.js",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "scripts/validate-sst.js",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "snapshots/doctor_canon_one_touch_2025-08-19T19-32-09.840Z/src__canon__guard__L2.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "snapshots/doctor_canon_one_touch_2025-08-19T19-32-09.977Z/src__canon__guard__L2.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "src/canon-guard/blueprintGuard.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "src/canon-guard/runtime/GuardRuntimeInject.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [
+        "ArrowRight",
+        "ArrowLeft",
+        "ArrowUp",
+        "ArrowDown",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "h",
+        "H",
+        "m",
+        "M",
+        "r",
+        "R"
+      ],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "src/config/sst3/sst-v3.0-config.js",
+      "type": [
+        "sentinel"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "src/theater/ScrollOrchestrator.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    },
+    {
+      "path": "tools/sst-guard.mjs",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "risk": "LOW",
+      "goals": [],
+      "mutates": false,
+      "executes": false
+    }
+  ],
+  "findings": [
+    {
+      "path": ".hotdors_backups/2025-09-02T03-50-06-425Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "size_bytes": 5829,
+      "lines": 149,
+      "hash": "f16160de22c5bc47753378d44f2e0454952d5aa5f28380a3f682ff75a2c673d2",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "STAGE_CHANGED",
+        "MORPH_PROGRESS"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-02T03:50:06.433Z",
+      "ctime": "2025-09-02T03:50:06.433Z"
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-17-03-664Z/src/canon-guard/runtime/GuardRuntimeInject.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor"
+      ],
+      "size_bytes": 2726,
+      "lines": 88,
+      "hash": "41b11196f3fb1191a4bb2a55c6aecddc71010d1ec548e3925b9f29bf027c6c41",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "BLUEPRINT_READY"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-02T04:17:03.714Z",
+      "ctime": "2025-09-02T04:17:03.714Z"
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-17-03-664Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "size_bytes": 6508,
+      "lines": 166,
+      "hash": "9f7b4c4888166ccd24425caa2d08b4c6fc186952e8cc76a2f2e76a2c8b852d75",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "STAGE_CHANGED",
+        "MORPH_PROGRESS"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-02T04:17:03.714Z",
+      "ctime": "2025-09-02T04:17:03.714Z"
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-20-50-898Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "size_bytes": 6763,
+      "lines": 169,
+      "hash": "0d3e0f23472fd58f5874b68e27b8b06f4cb83677bedca27fe03af463d0ef1a3a",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "STAGE_CHANGED",
+        "MORPH_PROGRESS"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-02T04:20:50.913Z",
+      "ctime": "2025-09-02T04:20:50.913Z"
+    },
+    {
+      "path": ".hotdors_backups/2025-09-02T04-23-38-378Z/src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "sentinel",
+        "doctor",
+        "runtime_doctor"
+      ],
+      "size_bytes": 6768,
+      "lines": 169,
+      "hash": "70e67fd4ae2ced8747acfb915fe234571b2abfbccfac340317f6b58385dcb2f6",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "STAGE_CHANGED",
+        "MORPH_PROGRESS"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-02T04:23:38.367Z",
+      "ctime": "2025-09-02T04:23:38.367Z"
+    },
+    {
+      "path": ".migration_backups/20250724_133309/canonical/sstV2Quality.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "size_bytes": 10333,
+      "lines": 356,
+      "hash": "14199dd477f0a24b9b7dd8efa60180fa87bd4e63067a326281f8a281abee7a60",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-07-30T05:55:32.746Z",
+      "ctime": "2025-07-30T05:55:32.746Z"
+    },
+    {
+      "path": ".migration_backups/20250724_133309/canonical/sstV2Stages.jsx",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "size_bytes": 7716,
+      "lines": 262,
+      "hash": "b281897799f874c6cab06008ed189f80ffa47b6ac3d1a9e6e367147c91e50cec",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-07-30T05:55:32.746Z",
+      "ctime": "2025-07-30T05:55:32.746Z"
+    },
+    {
+      "path": ".migration_backups/20250724_133309/canonical/sstV2Validation.js",
+      "type": [
+        "unknown"
+      ],
+      "size_bytes": 38,
+      "lines": 2,
+      "hash": "863b921973cadf5cc3c96e37557da580efae40f5f394f743187302e326a96287",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-07-30T05:55:32.756Z",
+      "ctime": "2025-07-30T05:55:32.756Z"
+    },
+    {
+      "path": "archive_dups_20250724_1412/sst-v3.0-config.js",
+      "type": [
+        "unknown"
+      ],
+      "size_bytes": 7,
+      "lines": 2,
+      "hash": "59644f1baa552b014937cf3da3b7b9a1e4ca16ca5b5ee5cdddc0ce0baad42014",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-07-30T05:55:32.766Z",
+      "ctime": "2025-07-30T05:55:32.766Z"
+    },
+    {
+      "path": "canon-console/runtime/bridge-guard.js",
+      "type": [
+        "sentinel"
+      ],
+      "size_bytes": 1439,
+      "lines": 23,
+      "hash": "ab8ea7068bba0f12b703a06ae52edd189becdd91f841f7610977e032a2767ba4",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-17T20:56:40.991Z",
+      "ctime": "2025-08-17T20:56:40.991Z"
+    },
+    {
+      "path": "console/runtime/bridge-guard.js",
+      "type": [
+        "sentinel"
+      ],
+      "size_bytes": 2225,
+      "lines": 42,
+      "hash": "55154ef1b9e2c3d9b2ffaa7637e5f70b0da1637397f8bcef31cb8059efc3eb1c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-17T20:56:40.991Z",
+      "ctime": "2025-08-17T20:56:40.991Z"
+    },
+    {
+      "path": "hotdors-review.sh",
+      "type": [
+        "unknown"
+      ],
+      "size_bytes": 0,
+      "lines": 1,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:01:30.812Z",
+      "ctime": "2025-09-03T03:01:30.812Z"
+    },
+    {
+      "path": "migrate_to_sst3.sh",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "size_bytes": 14703,
+      "lines": 425,
+      "hash": "d2d034725ea059a426e08c9e6c1965cd72effdd47433194730338587dd318ba0",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [
+        "continuous",
+        "generation"
+      ],
+      "cli_flags": [
+        "--is-inside-work-tree",
+        "--quiet",
+        "--cached",
+        "---",
+        "--include"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-02T12:39:45.088Z",
+      "ctime": "2025-08-02T12:39:45.088Z"
+    },
+    {
+      "path": "migrate_to_sst_v3.sh",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "size_bytes": 22743,
+      "lines": 701,
+      "hash": "6c62f516a39324eb338fca6f771788fa11c0bcdbedd7de45f0c987a4f45e2f63",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--force",
+        "--include"
+      ],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-07-30T05:55:32.816Z",
+      "ctime": "2025-07-30T05:55:32.816Z"
+    },
+    {
+      "path": "scripts/agent.goalrunner.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 14634,
+      "lines": 301,
+      "hash": "36091b4d6c9bea51ccd06e1ee2200b7a16f529e241650b161251b55c21194b2a",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "----------"
+      ],
+      "beatbus_events": [
+        "PARTICLES_START_EMERGING",
+        "PARTICLES_EMERGED"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {
+        "canonical": "src/config/canonical/sst-v3.3.json",
+        "engine": "src/engine/ConsciousnessEngine.js",
+        "renderer": "src/components/webgl/WebGLBackground.jsx",
+        "opening": "src/components/theater/OpeningSequence.jsx",
+        "director": "src/theater/TheaterDirector.js",
+        "orchestrator": "src/theater/ScrollOrchestrator.js",
+        "validator": "scripts/validate-sst.js",
+        "sentinel": "tools/sst-guard.mjs"
+      },
+      "mtime": "2025-09-06T02:05:31.556Z",
+      "ctime": "2025-09-06T02:05:31.556Z"
+    },
+    {
+      "path": "scripts/apply-sst-v3-behavior-hotfix-v2.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 7653,
+      "lines": 215,
+      "hash": "d2173bf2c3db4a1fe6ef2870e454b2ccebe438b8f47045c3e18267214a466784",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--dry",
+        "--dry-run"
+      ],
+      "beatbus_events": [
+        "PARTICLES_EMERGED",
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.266Z",
+      "ctime": "2025-09-03T03:06:47.266Z"
+    },
+    {
+      "path": "scripts/apply-sst-v3-behavior-hotfix-v3.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 8354,
+      "lines": 235,
+      "hash": "ac2b38c0d6989ee6d18294222820c30c1049651c9c8ff60b66848617b895be06",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--dry",
+        "--dry-run"
+      ],
+      "beatbus_events": [
+        "PARTICLES_EMERGED",
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.266Z",
+      "ctime": "2025-09-03T03:06:47.266Z"
+    },
+    {
+      "path": "scripts/apply-sst-v3-behavior-hotfix.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 8758,
+      "lines": 277,
+      "hash": "9a32523b0d79b6e58bec3d5b572b674dbbf46f542944ebd54229168dc8496cdb",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--dry",
+        "--dry-run"
+      ],
+      "beatbus_events": [
+        "PARTICLES_EMERGED",
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.266Z",
+      "ctime": "2025-09-03T03:06:47.266Z"
+    },
+    {
+      "path": "scripts/apply-sst-v3-fixes.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "size_bytes": 11147,
+      "lines": 332,
+      "hash": "dd039e3576fffa83ebfe2cc4653727070f5ca25e74b50e1e7a22d90ed515844f",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--dry",
+        "--dry-run",
+        "----",
+        "-------------------------------------------------",
+        "--------------------------------------------------",
+        "------------------------------------------------------"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.266Z",
+      "ctime": "2025-09-03T03:06:47.266Z"
+    },
+    {
+      "path": "scripts/canon-guard-l2-bridge.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "validator"
+      ],
+      "size_bytes": 6832,
+      "lines": 129,
+      "hash": "7910552e5bfcebab61b509c2714e1c7d984b9112fc786a763c14da97f751c372",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.266Z",
+      "ctime": "2025-09-03T03:06:47.266Z"
+    },
+    {
+      "path": "scripts/consciousness-flow-doctor.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 7357,
+      "lines": 212,
+      "hash": "1352ccf1613d263ea9a3ba956ed8ce23d1954109594686643dd32ccbe8c59d52",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-blueprint-trace.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 6471,
+      "lines": 200,
+      "hash": "7e250ba14238f3239f552d3f316f91df1497693107b9ecf37deac35b1aff7af1",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--include"
+      ],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-morph-v2.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 8141,
+      "lines": 195,
+      "hash": "8c520958e360ec3b5d5c15a87737c149bed88feb061714e542cfc753814224d9",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "MORPH_PROGRESS",
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-one-touch.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 9195,
+      "lines": 248,
+      "hash": "523fc0f2338ec943544eb0e271dd76f7b2f7096ebe618ead59b34a4f2b685b7b",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--write"
+      ],
+      "beatbus_events": [
+        "PARTICLES_START_EMERGING",
+        "MORPH_PROGRESS",
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {
+        "opening": "src/components/theater/OpeningSequence.jsx",
+        "director": "src/theater/TheaterDirector.js",
+        "bg": "src/components/webgl/WebGLBackground.jsx",
+        "bridge": "modules/state/bridges/AtomicToBeatBus.js"
+      },
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-render-apply.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 5195,
+      "lines": 174,
+      "hash": "fbafc077a145c4313a3a5476167a35702627c59abb4a17213494ee933f7d8d75",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "BLUEPRINT_READY",
+        "MORPH_PROGRESS"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-render-pipeline.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 7778,
+      "lines": 191,
+      "hash": "752bfbf8239d825e44c0e7e9d5a092a1ce8ea9ca73c5a3aa17681b290933be26",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-scope-trim.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 4799,
+      "lines": 105,
+      "hash": "be07f68f8d874ee521a843c9e3f8aa67a850208f6dfc6f9d11dbbfcdc58c0c9b",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--strict-perf",
+        "--record"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-scroll-stage-bridge.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor-sequence-unblock.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 9812,
+      "lines": 249,
+      "hash": "78dc84ce6d85dcb9c92a5e4ae83296b9eea9ec0f89c35bee9a96f3f9fafb08fa",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--dry-run",
+        "----------"
+      ],
+      "beatbus_events": [
+        "X",
+        "PARTICLES_START_EMERGING",
+        "MORPH_PROGRESS",
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-27T03:27:35.154Z",
+      "ctime": "2025-08-27T03:27:35.154Z"
+    },
+    {
+      "path": "scripts/doctor-v2-structure.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 7463,
+      "lines": 201,
+      "hash": "9682e11b85536a72ed7c524d790f2179120396e1284258a72268a4db9c8c82c4",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--apply",
+        "---"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor.catalog-agents-sentinels.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 9609,
+      "lines": 240,
+      "hash": "341f01eebdbca674e4331aba1bcbad2a0172cf396fda4fecfcd32804ea20603f",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--goal"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-07T21:33:39.814Z",
+      "ctime": "2025-09-07T21:33:39.824Z"
+    },
+    {
+      "path": "scripts/doctor_canon_amplification.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 24518,
+      "lines": 651,
+      "hash": "fc39d5f92ceae1bdc97485fca09e2fad16875f9216ecff4211a6ec5caa59fcb8",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--dry",
+        "--------------------------"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor_canon_bootstrap_l2.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 14481,
+      "lines": 263,
+      "hash": "4b91cf2f379f36b2d268988d69561cc51b61d479d1f850ab3454762a8532886d",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--commit",
+        "--no-verify",
+        "--tag",
+        "--push",
+        "--tags"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor_canon_lock.cjs",
+      "type": [
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 2579,
+      "lines": 57,
+      "hash": "36822ba24dc628bed9d8d737768405d6e7f77ec82f616301d9b3f22711f3a32a",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--commit"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor_canon_one_touch.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 21090,
+      "lines": 613,
+      "hash": "10c0087f1e4305b098ede45f35ce55df40a1012e2cb9a48c5173caf219d9b31b",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [
+        "guard"
+      ],
+      "cli_flags": [
+        "--commit",
+        "--tag",
+        "--push",
+        "--no-verify",
+        "--------------------------------------------------------------------------------------",
+        "------------------------------------------------------------------------------------",
+        "--tags"
+      ],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "QUALITY_CHANGE"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor_canon_suite_complete.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 21679,
+      "lines": 784,
+      "hash": "719c9d7e0d542c86a2fb0abdfc7c79b3a3327aa216c60bd4d2eb19fe248588de",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor_canon_suite_fixups.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 6581,
+      "lines": 164,
+      "hash": "84f1697d80526fffd776b924369d0598e231f2c6e2fb080e558b657c3d134903",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.277Z",
+      "ctime": "2025-09-03T03:06:47.277Z"
+    },
+    {
+      "path": "scripts/doctor_hotwire_bus_and_aliases.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 6063,
+      "lines": 163,
+      "hash": "9a478304aace2fe848b9c13f5730a231d22de8e4ffc740355d87b07da661930b",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--commit",
+        "--no-verify",
+        "--tag",
+        "--push",
+        "----",
+        "--tags"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/doctor_post_bootstrap_fix.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 6912,
+      "lines": 186,
+      "hash": "5cf542e4001c68a54444b1411c16883f3b9a7e8a095c15a7871a9658d7891fd1",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--commit",
+        "--no-verify",
+        "--tag",
+        "--push",
+        "--tags"
+      ],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "QUALITY_CHANGE"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/doctor_render_apply_shim.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 8592,
+      "lines": 246,
+      "hash": "bc4b6b9392b3f5b7ccf40b6877cdff09a4be9ca40ab72656598c400e46fa2a1e",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--verbose"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/doctor_render_path_one_touch.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 9977,
+      "lines": 293,
+      "hash": "1e3ff082a15084c915fed05a753adfb2ff52ea2a2e9441dc18cddf6549d00fd5",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--verbose"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/doctor_render_resubscribe.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 9058,
+      "lines": 253,
+      "hash": "42c0896586692a59b2681507f9ee327e2ff20b7ce254becf44779fde1843e484",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--write",
+        "---"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/finish-guard-console.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 14495,
+      "lines": 427,
+      "hash": "eb1251880bcc083c5f026ceb20667ac436abb8819a5661b12b8e1da6f8b972f8",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "-----------------------------",
+        "--fix"
+      ],
+      "beatbus_events": [
+        "BLUEPRINT_READY"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/fix-guard-inject-path.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 3576,
+      "lines": 107,
+      "hash": "8d5263b171f544ecc6f8a0b1974ca3c5af581e990ed9eabdbf0a1e709d6b050b",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors-autofix.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 12066,
+      "lines": 318,
+      "hash": "1b48b668c90a49710cdd79bfc73422b26a471ebe6ab4378060f3b8da7eb50504",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--dry",
+        "--no-ci",
+        "----",
+        "----------",
+        "---------------",
+        "------"
+      ],
+      "beatbus_events": [
+        "STAGE_CHANGE"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:01:30.823Z",
+      "ctime": "2025-09-03T03:01:30.823Z"
+    },
+    {
+      "path": "scripts/hotdors-bootstrap.sh",
+      "type": [
+        "sentinel",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 10230,
+      "lines": 301,
+      "hash": "50306c7e2b36962ebec2b4729f6f0649cda9b4f9faf747b759c84056ebd474eb",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "---",
+        "--yes"
+      ],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-03T03:01:30.823Z",
+      "ctime": "2025-09-03T03:01:30.823Z"
+    },
+    {
+      "path": "scripts/hotdors-validate-fixer.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 8138,
+      "lines": 206,
+      "hash": "cab4ca97479b078f21933e5fe3eecec5200d0d0b281af63442062e6caaab7ee7",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.add-dev-bridge.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.add-mc-alias.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.agent-upgrade.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 19236,
+      "lines": 422,
+      "hash": "942fdd664a9a35c046b7e7e5b10f270b54e3d58c871aaf1942471f13239b31c3",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [
+        "emergence",
+        "opening"
+      ],
+      "cli_flags": [
+        "-----",
+        "--goal",
+        "--files"
+      ],
+      "beatbus_events": [
+        "PARTICLES_START_EMERGING",
+        "PARTICLES_EMERGED",
+        "MORPH_PROGRESS",
+        "ENABLE_SCROLL"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {
+        "engine": "src/engine/ConsciousnessEngine.js",
+        "renderer": "src/components/webgl/WebGLBackground.jsx",
+        "director": "src/theater/TheaterDirector.js",
+        "opening": "src/components/theater/OpeningSequence.jsx"
+      },
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.emergence-from-text.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 11527,
+      "lines": 324,
+      "hash": "241cc6fb312949142abd99030f6cf2b646e8b30a27350338cf4c87048c4052bc",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [],
+      "beatbus_events": [
+        "PARTICLES_START_EMERGING",
+        "PARTICLES_EMERGED"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.engine-emergence-one-touch.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 8653,
+      "lines": 157,
+      "hash": "c135c3bd86b715d2d79c1727835c4698f2b11b2451f857682756027cdc192318",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "---"
+      ],
+      "beatbus_events": [
+        "BLUEPRINT_READY",
+        "ENGINE_VIEWPORT_HINT",
+        "ENABLE_SCROLL",
+        "BUILD_EMERGENCE_BLUEPRINT"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.finalize-orchestrator-and-emergence.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 9325,
+      "lines": 238,
+      "hash": "f2a9415f1c58ea0b4bffb9bfda6c06b24d6c65e2d364bdf011033b97de012b09",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [],
+      "beatbus_events": [
+        "PARTICLES_START_EMERGING",
+        "PARTICLES_EMERGED"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {
+        "engine": "src/engine/ConsciousnessEngine.js",
+        "renderer": "src/components/webgl/WebGLBackground.jsx",
+        "opening": "src/components/theater/OpeningSequence.jsx",
+        "validator": "scripts/validate-sst.js",
+        "sentinel": "tools/sst-guard.mjs"
+      },
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.fix-director-and-renderer.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 1925,
+      "lines": 54,
+      "hash": "4595877bf3ddef24f33d9d40b1a898a52150050f2d2bf6f9c87ee689bcb2edb0",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "STAGE_CHANGE",
+        "PARTICLES_EMERGED"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.fix.devguard.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.helpers.rewrite.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.lint-fixes.mjs",
+      "type": [
+        "agent",
+        "doctor",
+        "validator"
+      ],
+      "size_bytes": 5254,
+      "lines": 149,
+      "hash": "5ac4c8bd2fbb5dc7bd8df9f2761845c66f28b57ae7cd4c1e1d0ac6fe53dd4c9b",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "----------"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.scroll-orchestrator.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 12057,
+      "lines": 330,
+      "hash": "be79593d849eb155c15ffd9540c82c2ced98f6974e6964d0e2177ef6cc511baf",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "MORPH_PROGRESS",
+        "STAGE_CHANGE",
+        "MEMORY_FRAGMENT_TRIGGER",
+        "PARTICLES_START_EMERGING"
+      ],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "scripts/hotdors.visual-path.selfboot.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.wiring.cleanup.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.wiring.patch.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/hotdors.wiring.tune.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.287Z",
+      "ctime": "2025-09-03T03:06:47.287Z"
+    },
+    {
+      "path": "scripts/one-touch/upgrade-agent-and-sentinel.mjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 16410,
+      "lines": 339,
+      "hash": "d0ec7785d8c18013b5e89900389841569be198a8f42d67d9b9f1bfc4ba6c14a0",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [
+        "emergence"
+      ],
+      "cli_flags": [
+        "--goal",
+        "--apply"
+      ],
+      "beatbus_events": [
+        "PARTICLES_START_EMERGING",
+        "PARTICLES_EMERGED",
+        "ENGINE_VIEWPORT_HINT"
+      ],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-06T17:25:56.948Z",
+      "ctime": "2025-09-06T17:25:56.948Z"
+    },
+    {
+      "path": "scripts/phase4a-bus-topology-doctor.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 23331,
+      "lines": 813,
+      "hash": "a9b28d24debf0768999d33e9cae4eb83222da3cc98281bd9ac768c65d48d429e",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--write",
+        "--strict",
+        "--verbose"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/phase4b-finisher-doctor.cjs",
+      "type": [
+        "sentinel",
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 20373,
+      "lines": 587,
+      "hash": "42148f68d7ad20cffa4c087651854bc405b8d33d9c0da77837fd1bb0aa3007a3",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--write",
+        "--verbose",
+        "--focus",
+        "--all",
+        "----",
+        "----------------------------------------------------------",
+        "-------------------------------------------------------------",
+        "---",
+        "------------------------------------------------------------------"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/phase4b-hmr-hygiene-doctor.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 26270,
+      "lines": 934,
+      "hash": "ae686bbe9e961940d15eb538c6446a81613cd7ec24697f80ab52ae02a24d5ac0",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "--write",
+        "--strict",
+        "--verbose"
+      ],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": false,
+      "self_bootstrap": true,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/phase4r-render-recovery-doctor.cjs",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 22,
+      "lines": 2,
+      "hash": "689852a818cd206ced9951b66419e3551059a680c6d137439a546ed4bfb2ef9c",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/render-doctor.v2.cjs",
+      "type": [
+        "agent",
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 6348,
+      "lines": 168,
+      "hash": "59ec07bb14f4eb75e271a809a371aba2d4ba65edbbb47bedd3f9f400bda4b3e3",
+      "esm": true,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": true,
+      "executes": true,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/sst-v3-theater-doctor.cjs",
+      "type": [
+        "doctor",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 3520,
+      "lines": 93,
+      "hash": "0d9cb46d331f5bb986406b9a7da34676ba5f62e0da5b9dc4b3a712b76f8b39f7",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "X"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-27T03:27:35.252Z",
+      "ctime": "2025-08-27T03:27:35.252Z"
+    },
+    {
+      "path": "scripts/validate-atomic-stores.js",
+      "type": [
+        "validator"
+      ],
+      "size_bytes": 10117,
+      "lines": 321,
+      "hash": "d8c14afe0f68c5c30f74e84d42cf1df95552447d70a285dcaeae3f8acf439678",
+      "esm": false,
+      "cjs": true,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/validate-sst-text.js",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "size_bytes": 6842,
+      "lines": 212,
+      "hash": "5ccd6944b3863af027548bc4d95b1c777dd24d9979ccb217c5eac03cb851bdf8",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "scripts/validate-sst.js",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "size_bytes": 13099,
+      "lines": 334,
+      "hash": "e20866f687b25c2ed0b5a8288a6e9acfa7f6a2544b1f0f1c380cff95bf5009eb",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [
+        "----"
+      ],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:06:47.298Z",
+      "ctime": "2025-09-03T03:06:47.298Z"
+    },
+    {
+      "path": "snapshots/doctor_canon_one_touch_2025-08-19T19-32-09.840Z/src__canon__guard__L2.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "size_bytes": 952,
+      "lines": 31,
+      "hash": "1713e1543bfcd8e203d1f53026dcf0790ff228b1ca4b7fb750e0a2c257edd078",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-23T03:12:20.425Z",
+      "ctime": "2025-08-23T03:12:20.425Z"
+    },
+    {
+      "path": "snapshots/doctor_canon_one_touch_2025-08-19T19-32-09.977Z/src__canon__guard__L2.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "size_bytes": 952,
+      "lines": 31,
+      "hash": "1713e1543bfcd8e203d1f53026dcf0790ff228b1ca4b7fb750e0a2c257edd078",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-23T03:12:20.425Z",
+      "ctime": "2025-08-23T03:12:20.425Z"
+    },
+    {
+      "path": "src/bootstrap/wireSSTv3.js",
+      "type": [
+        "unknown"
+      ],
+      "size_bytes": 3201,
+      "lines": 122,
+      "hash": "397f259143e63bcd69b20c6e763ad05ca8b2b687ddc667d2c22d6c0287a47356",
+      "esm": true,
+      "cjs": true,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-30T21:52:05.184Z",
+      "ctime": "2025-08-30T21:52:05.184Z"
+    },
+    {
+      "path": "src/canon-guard/blueprintGuard.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor",
+        "validator"
+      ],
+      "size_bytes": 2834,
+      "lines": 56,
+      "hash": "619d4a1766aef2ff7796cea2352b09aded19e21ec698aea96c2436b7de1176b0",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "BLUEPRINT_READY"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "src/canon-guard/runtime/GuardRuntimeInject.js",
+      "type": [
+        "sentinel",
+        "agent",
+        "runtime_doctor"
+      ],
+      "size_bytes": 2700,
+      "lines": 88,
+      "hash": "39c3002fdaca46201821e969565d484361218fe055fe28267c2ff15b17e2ba21",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "BLUEPRINT_READY"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "size_bytes": 10187,
+      "lines": 268,
+      "hash": "42fa2f2ee73f50c37a644a87d10adf3f9ca4aa1d89f2e56df45000a3fb8ea57f",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [
+        "ArrowRight",
+        "ArrowLeft",
+        "ArrowUp",
+        "ArrowDown",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "h",
+        "H",
+        "m",
+        "M",
+        "r",
+        "R"
+      ],
+      "cli_flags": [],
+      "beatbus_events": [
+        "ENGINE_VIEWPORT_HINT",
+        "ENABLE_SCROLL",
+        "START_NARRATIVE"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-07T14:47:00.228Z",
+      "ctime": "2025-09-07T14:47:00.228Z"
+    },
+    {
+      "path": "src/config/sst3/sst-v3.0-config.js",
+      "type": [
+        "sentinel"
+      ],
+      "size_bytes": 5189,
+      "lines": 140,
+      "hash": "7780adaf87a46d6a119c70b9b60fe813620bf48a00a72cdd4881f52e735145c6",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-08-30T21:52:05.264Z",
+      "ctime": "2025-08-30T21:52:05.264Z"
+    },
+    {
+      "path": "src/dev/hotdors.visual.helpers.js",
+      "type": [
+        "unknown"
+      ],
+      "size_bytes": 0,
+      "lines": 1,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "esm": false,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-03T03:01:30.823Z",
+      "ctime": "2025-09-03T03:01:30.823Z"
+    },
+    {
+      "path": "src/theater/ScrollOrchestrator.js",
+      "type": [
+        "sentinel",
+        "runtime_doctor"
+      ],
+      "size_bytes": 3925,
+      "lines": 107,
+      "hash": "4abbae01ef4513186cb1c19648d11fa456451ca1c32a12dcd8dafa2e05f7563b",
+      "esm": true,
+      "cjs": false,
+      "shebang": false,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [
+        "MORPH_PROGRESS",
+        "STAGE_CHANGE",
+        "MEMORY_FRAGMENT_TRIGGER"
+      ],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": false,
+      "references": {},
+      "mtime": "2025-09-06T02:05:31.566Z",
+      "ctime": "2025-09-06T02:05:31.566Z"
+    },
+    {
+      "path": "tools/sst-guard.mjs",
+      "type": [
+        "sentinel",
+        "validator"
+      ],
+      "size_bytes": 5664,
+      "lines": 160,
+      "hash": "582610772bc50e85df6c846c36d993ed00005fc7fb291de6a22df60a712e19af",
+      "esm": true,
+      "cjs": false,
+      "shebang": true,
+      "goals": [],
+      "cli_flags": [],
+      "beatbus_events": [],
+      "mutates": false,
+      "executes": false,
+      "self_bootstrap": false,
+      "ats_signals": true,
+      "references": {},
+      "mtime": "2025-09-07T14:47:00.248Z",
+      "ctime": "2025-09-07T14:47:00.248Z"
+    }
+  ],
+  "suggestions_global": [
+    "Multiple agent files detected (48). Consolidate into scripts/agent.cjs with a goal registry.",
+    "Multiple sentinels detected (53). Prefer a single tools/sst-guard.mjs and deprecate others.",
+    "Duplicate files by content hash found (3 groups). Keep one source-of-truth."
+  ],
+  "errors": []
+}

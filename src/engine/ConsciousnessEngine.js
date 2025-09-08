@@ -216,6 +216,14 @@ class ConsciousnessEngine {
 
     // Get viewport for proper scaling
     const { width: vw, height: vh } = this._viewportHint || { width: 120, height: 90 };
+
+    // Vision: expose cloud factors for telemetry
+    try {
+      const smin = Math.min(vw, vh);
+      window.__vc_gasRadiusFactor      = (typeof gasRadius      === 'number' ? gasRadius / smin : 0.38);
+      window.__vc_expandedRadiusFactor = (typeof expandedRadius === 'number' ? expandedRadius / smin : 0.52);
+      window.__vc_zRange               = (typeof zDepth === 'number' ? zDepth : 30);
+    } catch {}
     const jitter = Math.min(vw, vh) * 0.45; // 45% of viewport
     const zDepth = 15.0;
 

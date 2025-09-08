@@ -48,7 +48,13 @@
     "doctor:repo": "npm run validate && npm run doctor:perf",
     "evidence:rollup": "node scripts/evidence-rollup.cjs",
     "sst:verify": "node tools/sst-guard.mjs",
-    "agent:run": "node scripts/agent/runner.mjs"
+    "agent:run": "node scripts/agent/runner.mjs",
+    "validate:opening": "node tools/sst-guard.mjs --opening",
+    "validate:vision": "node tools/sst-guard.mjs --vision",
+    "agent:visuals": "node scripts/agent/goals/visuals.mjs",
+    "agent:record": "node scripts/agent/goals/record.mjs",
+    "doctor:agents": "node scripts/doctor.catalog-agents-sentinels.mjs --write",
+    "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

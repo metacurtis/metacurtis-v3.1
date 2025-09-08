@@ -1,0 +1,100 @@
+* 7c4c3ea Sat Sep 6 09:49:17 2025  (HEAD -> chore/hotdors-visual-wiring-stabilize, safe-pre-rollback-202509061145) fix(engine): emergence TARGET randomized (no spiral), dedupe opening flags, opening gate in buildAndEmitBlueprint
+* ea13741 Sat Sep 6 09:37:32 2025  opening(bigbang): emergence TARGET = randomized expanded cloud (no spiral); morph random→random for chaotic gas burst
+* b33d3f0 Sat Sep 6 09:27:29 2025  opening(bigbang): gas cloud → swirl → coalescence → constellation → BeatGlyph; start-after-viewport; engine gate; renderer guards + micro-burst; remove CTF; single-bus
+* f8e5466 Sat Sep 6 08:40:12 2025  opening: fencepost pack — start-after-viewport; Engine opening gate + single-emergence; Renderer guards + micro-burst; OpeningSequence single-bus + no-CTF
+* dd65679 Sat Sep 6 01:10:26 2025  fix(theater): de-duplicate viewportReadyRef in ConsciousnessTheater (start-after-viewport gate)
+* 1b8ded9 Sat Sep 6 01:07:36 2025  opening: fencepost pack — gate Director until viewport hint; Engine opening gate + single-emergence; Renderer guards + micro-burst; Director waits for PARTICLES_EMERGED
+* 43526f9 Sat Sep 6 00:53:24 2025  opening: renderer micro-burst on emergence bind for visible viewport explosion
+* 54fc3f8 Sat Sep 6 00:51:31 2025  opening: gate Director start until ENGINE_VIEWPORT_HINT (prevents small emergence burst)
+* b001077 Fri Sep 5 21:14:17 2025  fix(opening): Engine opening gate + single-emergence per opening
+* 4e8917e Fri Sep 5 21:13:53 2025  chore: limit lint-staged to src/** (skip scripts/** during migration)
+* 50478be Tue Sep 2 22:06:47 2025  (tag: v3.3-bootstrap-20250902, tag: hotdors-v3.3-boot-20250902) chore(lint): flat-config ignores + Node env for scripts/tools
+* 80f4cbc Tue Sep 2 22:01:31 2025  feat(BeatGlyph v3.3): bootstrap + sentinel-green + dumb renderer
+* 800da62 Mon Sep 1 23:45:55 2025  (origin/chore/hotdors-visual-wiring-stabilize) chore(dev): ignore HOT-DORS backups
+* 564e3b1 Sat Aug 30 00:16:44 2025  (restore-working-visuals, hotdors-dumb-renderer) feat: migrate from brain to 3D text formations
+* 2a28b53 Fri Aug 29 17:08:54 2025  (origin/bulletproof-architecture) Refactor: Unified state management architecture
+* bbd02f8 Tue Aug 26 22:27:35 2025  fix: resolve blueprint event flow and eliminate emergence duplication
+* 8b5fa8d Tue Aug 26 00:24:16 2025  fix: resolve blueprint event flow and eliminate emergence duplication
+* 7243989 Sat Aug 23 14:19:28 2025  (origin/chore/park-hot-dors, chore/park-hot-dors, backup-20250820-working) feat(hot-dors): event bridge aligned with canonical + legacy support
+* 65ce487 Sat Aug 23 12:51:16 2025  chore(sprint): snapshot — Bridge applied; ready to test morph/stage [S-20250822-2059-consciousness-particles-48hr]\n\nArtifacts:\n- doctor_artifacts/hot-dors-summary.md\n- doctor_artifacts/imports-state-summary.md\n- doctor_artifacts/atoms-summary.md\n- doctor_artifacts/sprints/S-20250822-2059-consciousness-particles-48hr/snap-2025-08-23T17-51-16-346Z-summary.md\n
+* 44e284c Fri Aug 22 22:58:32 2025  (tag: sprint-restore-render-2025-08-23) chore(sprint): restore render pipeline; wire Engine→Renderer; add doctors; lint hot-fix
+* ded0176 Fri Aug 22 22:12:46 2025  snapshot: particles rendering + narration overlay fixed
+* 9729933 Fri Aug 22 19:35:00 2025  morph(driver): centralize into single rAF publisher
+* 9ecb163 Fri Aug 22 19:34:28 2025  WIP: checkpoint
+* b033cd2 Tue Aug 19 17:16:27 2025  (tag: working-baseline-20250822, tag: canon-amplified-v1, origin/canon/amplified, before-state-changes) canon: amplify v1 — contracts+boundary+HUD+tests+CI+deprecations; wire init-amplified; fix CJS verify
+* 6cb1640 Tue Aug 19 14:32:10 2025  (tag: doctor_canon_one_touch_2025-08-19T19-32-09.977Z) doctor(canon): one-touch bootstrap · canonical bus + L2 guard/console
+* 6e73a6a Tue Aug 19 11:25:47 2025  chore(canon): L2 fix-ups (console proxy, BeatBus preflight, debug API)
+* 4115c69 Tue Aug 19 10:47:09 2025  (tag: canon_hotwire_2025-08-19T15-47-09.807Z) chore(canon): hotwire bus + aliases + engine bootstrap
+* 80cafb0 Tue Aug 19 10:40:23 2025  (tag: canon_hotwire_2025-08-19T15-40-23.024Z) chore(canon): hotwire bus + aliases + engine bootstrap
+* d1086d2 Tue Aug 19 08:00:01 2025  chore(ci): add push guard
+* 7afaf5a Sun Aug 17 16:00:50 2025  (tag: canon-bypass_20250817_210050, origin/restore/working-2025-08-17T16-44-05-253Z, phase4-statecore-consolidation) feat: snapshot L2/L3 (bypass) — state-core sync
+* a024ee2 Sat Aug 16 12:00:28 2025  (tag: canon-l2_guard-l3_20250817_205103) feat: Add Canon Console Level 1 - smart noise-reducing dev console
+* 9a09fd0 Sun Aug 10 08:54:15 2025  feat: Fix particle rendering and emergence from text
+* e324ebf Sat Aug 9 23:01:36 2025  feat: AI-Native automation + SST v3.0 implementation
+* ddb3769 Sat Aug 9 20:37:22 2025  feat: AI-Native automation + Director fixes + pre-ship checkpoint
+* 7201f5c Sat Aug 9 14:15:43 2025  refactor(debug): consolidate debug panels into Director Console
+* d1553db Fri Aug 8 15:20:32 2025  fix(lint): resolve all ESLint errors with heredoc
+* 9b47c06 Fri Aug 8 11:56:05 2025  feat(theater): add Director pattern infrastructure
+* 1d133bc Fri Aug 8 09:33:25 2025  docs: replace week checklists with SST v3.0 implementation plan
+* 167809b Wed Aug 6 13:05:52 2025  (origin/chore/lean-week1-prune, chore/lean-week1-prune) chore: prune legacy helpers & direct atom writes – finish Week-1 lean cut-over
+* a872f11 Sun Aug 3 09:43:35 2025  (origin/feat/consciousness-theater-v3, upgrade/vite7, restore/canon-full, feat/consciousness-theater-v3) docs: update WebGL refactor plan to ConsciousnessEngine integration
+* 3e48085 Sun Aug 3 09:25:34 2025  fix: resolve ESLint warnings
+* 78c8a7c Sun Aug 3 09:25:10 2025  feat: complete state management and event orchestration system
+* dc5e9be Sat Aug 2 23:20:25 2025  fix(state): critical lifecycle and mapping fixes
+* d172b7a Sat Aug 2 23:03:25 2025  feat(state): implement complete state management system
+* 466bf3c Sat Aug 2 13:00:25 2025  (tag: implementation-start) feat: initialize SST v3.0 implementation structure
+* 207b94d Sat Aug 2 12:21:23 2025  (fix-from-good-state) fix: resolve atomic store export errors and unused imports
+* 2abc5ab Sun Jul 27 07:30:35 2025  TEMP: commit with lint errors
+* 31d5a98 Thu Jul 24 13:33:09 2025  (tag: pre-v3-migration) checkpoint: before SST v3.0 migration - working v2.1 system
+* a84383d Thu Jul 24 13:21:02 2025  checkpoint: before SST v3.0 migration - working v2.1 system
+* 1740470 Sun Jul 6 20:02:36 2025  (sst-realignment) Revert "SST v2.0: Remove non-compliant components and realign"
+* 56f098e Wed Jul 2 14:05:32 2025  (origin/sst-realignment) SST v2.0: Remove non-compliant components and realign
+* f581aeb Sun Jun 15 13:40:35 2025  (tag: pre-sst-cleanup, origin/digital-awakening, digital-awakening) Digital Awakening neural shift before UI/UX
+* 8ea11d4 Sun Jun 8 11:41:16 2025  (tag: digital-awakening-initial) fix: resolve ESLint quote escaping issues after 18-hour battle
+* 7ddf0c0 Thu Jun 5 12:56:23 2025  (origin/main, origin/living-canvas, main) living canvas engine complete
+* 041bfbe Tue Jun 3 15:05:25 2025  Webglbackground prep for liquid surface
+* 2179636 Tue Jun 3 11:57:52 2025  fixed particle debug update complete
+* 4a209ec Sun Jun 1 12:04:30 2025   UI navigation flow Stable
+* a3d7ec9 Tue May 27 23:55:55 2025  Trigger CI/CD pipeline
+* 8810443 Wed May 21 23:11:51 2025  hero section fixed/v4 css
+* 3962859 Wed May 21 23:05:36 2025  hero section fixed/v4 css
+* 3168d90 Sat May 17 18:53:49 2025  performance dashboard working
+* f286343 Thu May 8 19:45:56 2025  Add robots.txt to public folder for Vite
+* 3dae675 Thu May 8 19:37:45 2025  Switch LHCI to port 5000 and fix JSON syntax
+* 86c04b1 Thu May 8 14:29:38 2025  lighthouse code correction
+* cf89eb4 Thu May 8 14:18:24 2025  Robot in html added
+* 3892170 Thu May 8 12:14:56 2025  Force strict port for stable LHCI runs
+* 3228c1c Thu May 8 12:08:29 2025  Add missing start script for LHCI
+* 97b9f1d Thu May 8 11:59:02 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* 17e26de Thu May 8 11:48:10 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* 51560f1 Thu May 8 11:33:33 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* ba3a842 Thu May 8 09:59:30 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* 6499fb6 Thu May 8 09:56:17 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* 48076bf Wed May 7 22:50:52 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* cbe31f8 Wed May 7 22:47:03 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* ce2afa2 Wed May 7 22:15:06 2025  chore: Complete Phase 4 - AQS Foundation & Layout Fix
+* 4efa395 Mon May 5 22:20:10 2025  style(lint): Fix lint errors and warnings
+* aeec78e Mon May 5 21:54:34 2025  feat(state): Integrate Zustand for manual frameloopMode control
+* 19a0175 Mon May 5 21:07:34 2025  feat(graphics): Implement SimpleAnimatedCube with useFrame rotation
+* 08219cd Wed Apr 23 20:46:48 2025  1st phase of about section
+* 08b5afe Wed Apr 23 14:22:33 2025  x x
+* b41cc08 Wed Apr 23 09:11:21 2025  performance plumbing solid (FPS tick, Dev monitor, adaptive quality) and our shader‐driven particle field
+* 906f2a7 Wed Apr 23 07:54:44 2025  performance studio quality
+* 8936995 Tue Apr 22 20:56:33 2025  fix(ui): address lint errors in DevPerformanceMonitor and performanceStore
+* 5ca7e5c Tue Apr 22 12:14:00 2025  Fix WebGLBackground useMemo deps and remove debug logs for CI/CD and Lighthouse compliance
+* cc5eeb6 Tue Apr 22 11:39:41 2025  fix: lint warnings to pass CI/CD
+* 27e594f Tue Apr 22 02:45:48 2025  (backup-before-revert) Double particle size and noise amplitude
+* 6f2ba96 Tue Apr 22 02:29:14 2025  ResourceTracker and increased point to .06
+* 09a9c41 Mon Apr 21 14:47:19 2025  chore: remove unused React imports & disable fast-refresh warning in QualityController
+* fb1d85a Mon Apr 21 14:40:11 2025  refactor: use centralized qualityPresets in QualityController
+* a465dd6 Mon Apr 21 14:23:59 2025  feat: integrate adaptive quality system, Canvas error boundary, and shader utils
+* 89597fe Mon Apr 21 05:59:33 2025  chore: increase particle size to 0.04 in full shader-component system
+* 6b283ec Sun Apr 20 23:10:21 2025  feat: full shader‑component system via ParticleField & modular GLSL
+* 6229b9c Sun Apr 20 22:48:53 2025  chore: remove unused React import from ParticleField.jsx
+* f48fb8e Sun Apr 20 22:46:35 2025  feat: add ParticleField component and update WebGLBackground
+* df0d77d Sun Apr 20 22:14:50 2025  Fix ESLint warnings in BackgroundPoints, ParticleField, and WebGLBackground
+* a928c3f Sun Apr 20 22:03:25 2025  Restore shaders & finalize WebGLBackground
+* b962bab Sun Apr 20 21:59:26 2025  Undelete modular shaders from HEAD@{3}
+* a842194 Sun Apr 20 21:54:34 2025  Re‑restore modular shader files from Modularize shaders commit
+* bb74c5e Sun Apr 20 21:03:41 2025  (origin/modularize-shaders, modularize-shaders) Modularize GLSL: split noise/vertex/fragment shaders into separate files
+* da8de3b Sun Apr 20 20:49:48 2025  feat(WebGL): Implement enhanced particle system visuals and animation

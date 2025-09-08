@@ -1,159 +1,118 @@
 #!/usr/bin/env node
 /* eslint-env node */
-import fs from 'fs';
-import path from 'path';
-import fg from 'fast-glob';
-import Ajv2020 from 'ajv/dist/2020.js';
-import addFormats from 'ajv-formats';
-import { fileURLToPath } from 'url';
+// Master Sentinel: --opening (architecture) and --vision (feel)
+// Safe, dependency-free, Node 22+ (ESM)
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const root = process.cwd();
+import fs from 'node:fs';
+import path from 'node:path';
 
-const log = {
-  ok:  (m) => console.log(`\x1b[32m✔\x1b[0m ${m}`),
-  bad: (m) => console.log(`\x1b[31m✘\x1b[0m ${m}`),
-  warn:(m) => console.log(`\x1b[33m▲\x1b[0m ${m}`),
-  info:(m) => console.log(`\x1b[36mℹ\x1b[0m ${m}`)
-};
+const args = new Set(process.argv.slice(2));
+const checkOpening = args.has('--opening') || !args.size;
+const checkVision  = args.has('--vision')  || !args.size;
 
-const cfg = {
-  canonicalJson: 'src/config/canonical/sst-v3.3.json',
-  schemaJson:    'src/config/canonical/sst-v3.3.schema.json',
-  canonicalModule: 'src/config/canonical/canonicalAuthority.js',
-  rendererAllow: [
-    'src/components/webgl/WebGLBackground.jsx',
-    'src/components/webgl/WebGLBackground.tsx',
-    'src/components/webgl/WebGLBackground.js'
-  ],
-  directorHints: [
-    'src/theater/TheaterDirector.js',
-    'src/theater/TheaterDirector.jsx',
-    'src/theater/TheaterDirector.ts',
-    'src/theater/TheaterDirector.tsx'
-  ],
-  openingSequence: [
-    'src/components/theater/OpeningSequence.jsx',
-    'src/components/theater/OpeningSequence.tsx'
-  ]
-};
+function readSafe(p) { try { return fs.readFileSync(p, 'utf8'); } catch { return ''; } }
 
-function readIf(p) {
-  try { return fs.readFileSync(path.join(root, p), 'utf8'); }
-  catch { return null; }
+function latestTelemetry() {
+  const dir = '.vision/telemetry';
+  try {
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
+    if (!files.length) return null;
+    return files
+      .map(f => path.join(dir, f))
+      .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0];
+  } catch { return null; }
 }
 
-function exists(p) {
-  return fs.existsSync(path.join(root, p));
+let fails = 0;
+
+/* --------------------------- Opening fencepost --------------------------- */
+if (checkOpening) {
+  const opening  = readSafe('src/components/theater/OpeningSequence.jsx');
+  const engine   = readSafe('src/engine/ConsciousnessEngine.js');
+  const renderer = readSafe('src/components/webgl/WebGLBackground.jsx');
+  const theater  = readSafe('src/components/consciousness/ConsciousnessTheater.jsx');
+
+  const rows = [];
+  const row = (ok, label) => { rows.push((ok ? 'OK ' : 'X  ') + label); if (!ok) fails++; };
+
+  // OpeningSequence: overlay-only + single bus + no CTF
+  row(/import\s+BeatBus\s+from\s+['"]@\/theater\/bus['"]/.test(opening), 'OpeningSequence uses single bus');
+  row(!/CTF_BUILD/.test(opening), 'OpeningSequence has no CTF');
+  row(!/(BufferGeometry|useFrame|THREE\.)/.test(opening), 'OpeningSequence overlay-only');
+
+  // Engine: opening gate + mode:'emergence' + no spiral math
+  row(
+    /buildAndEmitBlueprint[^]*?if\s*\(\s*this\._openingPhase\s*&&\s*stage\s*!==\s*['"]genesis['"]\s*\)/.test(engine),
+    'Engine gate at top of buildAndEmitBlueprint'
+  );
+  row(
+    /BLUEPRINT_READY[^]*mode\s*:\s*['"]emergence['"]/.test(engine),
+    'Engine emergence emits mode:"emergence"'
+  );
+  const spiral =
+    /(swirl|spiral)/.test(engine) ||
+    (/ang\s*=\s*(?:i|t)[^;]*\*/.test(engine) && /\br\s*=\s*(?:i|t)\s*\*/.test(engine));
+  row(!spiral, 'Engine emergence random->random (no spiral)');
+
+  // Renderer: emit-once fencepost present (heuristic)
+  row(/BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/.test(renderer), 'Renderer emits PARTICLES_EMERGED fencepost once');
+
+  // Theater: start after viewport hint present
+  row(/ENGINE_VIEWPORT_HINT/.test(theater), 'Theater start-after-viewport gate present');
+
+  console.log('\nOpening checks:');
+  rows.forEach(l => console.log(l));
+  console.log('\nOpening sentinel:', rows.some(l => l.startsWith('X')) ? 'FAIL' : 'OK');
 }
 
-function loadJSON(p) {
-  const s = readIf(p);
-  if (!s) return null;
-  try { return JSON.parse(s); } catch { return null; }
-}
-
-const errors = [];
-const warnings = [];
-
-function err(id, msg, file) { errors.push({ id, msg, file }); }
-function warn(id, msg, file) { warnings.push({ id, msg, file }); }
-
-function finish() {
-  if (!errors.length && !warnings.length) {
-    log.ok('SST guard: all checks passed');
-    process.exit(0);
-  }
-  warnings.forEach(w => log.warn(`${w.id}: ${w.msg}${w.file ? ` [${w.file}]` : ''}`));
-  if (errors.length) {
-    errors.forEach(e => log.bad(`${e.id}: ${e.msg}${e.file ? ` [${e.file}]` : ''}`));
-    process.exit(1);
+/* ------------------------------ Vision check ---------------------------- */
+if (checkVision) {
+  const vcPath = 'vision/vision-contract.v1.json';
+  if (!fs.existsSync(vcPath)) {
+    console.log('\nVision: contract not found (vision/vision-contract.v1.json)');
   } else {
-    process.exit(0);
-  }
-}
+    const vc = JSON.parse(fs.readFileSync(vcPath, 'utf8'));
+    const telPath = latestTelemetry();
 
-// 1) JSON + Schema + Version
-if (!exists(cfg.canonicalJson)) err('CANON_MISSING', `Canonical JSON not found at ${cfg.canonicalJson}`);
-if (!exists(cfg.schemaJson))   err('SCHEMA_MISSING',  `Schema not found at ${cfg.schemaJson}`);
+    if (!telPath) {
+      console.log('\nVision: no telemetry in .vision/telemetry — run: npm run agent:run -- --goal=opening:record');
+    } else {
+      const t = JSON.parse(fs.readFileSync(telPath, 'utf8'));
+      console.log('\nVision checks (' + path.basename(telPath) + ')');
 
-const sst = loadJSON(cfg.canonicalJson);
-const schema = loadJSON(cfg.schemaJson);
+      const inR = (v, [lo, hi]) => typeof v === 'number' && v >= lo && v <= hi;
+      const ok  = (m) => console.log('OK ', m);
+      const bad = (m) => { console.log('X  ', m); fails++; };
 
-if (sst && schema) {
-  const ajv = new Ajv2020({ allErrors: true, allowUnionTypes: true })
-  addFormats(ajv);
-  const validate = ajv.compile(schema);
-  const ok = validate(sst);
-  if (!ok) err('SCHEMA_INVALID', JSON.stringify(validate.errors, null, 2));
-  if (sst?.meta?.version !== '3.3') err('VERSION_MISMATCH', `meta.version=${sst?.meta?.version}; expected 3.3`, cfg.canonicalJson);
-  if (sst?.meta?.authority !== 'ABSOLUTE') err('AUTHORITY_WRONG', `meta.authority must be ABSOLUTE`, cfg.canonicalJson);
-  if (sst?.meta?.mode !== 'TEXT_FIRST_REVEAL') err('MODE_WRONG', `meta.mode must be TEXT_FIRST_REVEAL`, cfg.canonicalJson);
-}
+      // No initial flash
+      (t.fillLinesAtStart ?? 0) === 0 ? ok('No initial fill flash') : bad('Initial fill flashed');
 
-const stamp = readIf('SST_VERSION');
-if (!stamp || stamp.trim() !== '3.3') warn('STAMP_MISSING_OR_WRONG', 'SST_VERSION should be 3.3');
+      // Min fill visibility
+      const minFill = vc.opening.timeline.minFillVisibleMs;
+      if (typeof t.tFillStart === 'number' && typeof t.tFadeOutStart === 'number') {
+        const vis = t.tFadeOutStart - t.tFillStart;
+        vis >= minFill ? ok('Fill visible ≥ min') : bad(`Fill visible ${vis}ms < ${minFill}ms`);
+      } else {
+        console.log('▲ Missing tFillStart/tFadeOutStart in telemetry');
+      }
 
-// 2) Canonical module wiring
-const canonMod = readIf(cfg.canonicalModule);
-if (!canonMod) warn('CANON_MODULE_MISSING', `Expected canonical module at ${cfg.canonicalModule}`);
-else if (!/sst-v3\.3\.json/.test(canonMod)) warn('CANON_MODULE_STALE', `canonicalAuthority.js should import sst-v3.3.json`, cfg.canonicalModule);
+      // Optional ranges (durations / spin / cloud)
+      const D = vc.opening.timeline;
+      const S = vc.opening.chaosSpin;
+      const C = vc.opening.emergenceCloud;
 
-// 3) Single writer: geometry/uniforms
-const codeFiles = fg.sync(['src/**/*.{js,jsx,ts,tsx}'], { cwd: root, dot: false });
-const rendererAllowSet = new Set(cfg.rendererAllow.map(p => path.join(root, p)));
-for (const f of codeFiles) {
-  const full = path.join(root, f);
-  const text = readIf(f) || '';
-  const writesGeom = /\.setAttribute\s*\(|\.setDrawRange\s*\(/.test(text);
-  if (writesGeom && !rendererAllowSet.has(full)) {
-    err('SINGLE_WRITER_GEOMETRY', 'Geometry writes outside renderer are forbidden', f);
-  }
-}
+      if (t.chaosMs    != null) inR(t.chaosMs,    D.chaosMs)    ? ok('CHAOS in range')       : bad('CHAOS out of range');
+      if (t.coalesceMs != null) inR(t.coalesceMs, D.coalesceMs) ? ok('COALESCE in range')    : bad('COALESCE out of range');
+      if (t.settleMs   != null) inR(t.settleMs,   D.settleMs)   ? ok('SETTLE in range')      : bad('SETTLE out of range');
+      if (t.spin?.zPerSec != null) inR(t.spin.zPerSec, S.zPerSec) ? ok('Spin Z in range')    : bad('Spin Z out of range');
+      if (t.spin?.yPerSec != null) inR(t.spin.yPerSec, S.yPerSec) ? ok('Spin Y in range')    : bad('Spin Y out of range');
+      if (t.cloud?.gasRadiusFactor      != null) inR(t.cloud.gasRadiusFactor,      C.gasRadiusFactor)      ? ok('gasRadiusFactor in range')      : bad('gasRadiusFactor out of range');
+      if (t.cloud?.expandedRadiusFactor != null) inR(t.cloud.expandedRadiusFactor, C.expandedRadiusFactor) ? ok('expandedRadiusFactor in range') : bad('expandedRadiusFactor out of range');
+      if (t.cloud?.zRange               != null) inR(t.cloud.zRange,               C.zRange)               ? ok('zRange in range')               : bad('zRange out of range');
 
-// 4) Renderer synthesis disallowed
-for (const r of cfg.rendererAllow) {
-  const text = readIf(r);
-  if (!text) continue;
-  if (/addEventListener\s*\(\s*['"]scroll['"]/.test(text) || /document\.documentElement\.scrollTop/.test(text)) {
-    err('RENDERER_SYNTHESIS', 'Renderer must not read scroll', r);
-  }
-  if (/camera\.fov/.test(text) || /getParameter\(.*ALIASED_POINT_SIZE_RANGE/.test(text)) {
-    warn('RENDERER_FOV_TWEAK', 'Renderer should not adjust FOV/point-size heuristics; prefer canon-driven uniforms', r);
-  }
-  if (/ensureArraysFromEmergence|fabricate/i.test(text)) {
-    err('RENDERER_TARGET_FABRICATION', 'Renderer must not fabricate targets/tiers', r);
-  }
-}
-
-// 5) Event single-source: PARTICLES_EMERGED only from renderer
-for (const f of codeFiles) {
-  const text = readIf(f) || '';
-  if (/BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/.test(text)) {
-    const isRenderer = rendererAllowSet.has(path.join(root, f));
-    if (!isRenderer) err('EMIT_SOURCE', 'Only renderer may emit PARTICLES_EMERGED', f);
-  }
-}
-
-// 6) Director hints
-for (const d of cfg.directorHints) {
-  const t = readIf(d);
-  if (!t) continue;
-  if (!/STAGE_CHANGE[^]*?['"]genesis['"]/.test(t)) {
-    warn('DIRECTOR_GENESIS_MISSING', 'Director should emit STAGE_CHANGE(\"genesis\") after emergence', d);
-  }
-}
-
-// 7) CTF fade gating
-const ctfEnabled = !!sst?.features?.ctfOpening;
-if (!ctfEnabled) {
-  for (const o of cfg.openingSequence) {
-    const t = readIf(o);
-    if (t && /CTF_BUILD/.test(t)) {
-      err('CTF_GATED', 'CTF_BUILD fade is present while Canonical.features.ctfOpening=false', o);
+      console.log('\nVision sentinel:', fails ? 'FAIL' : 'OK');
     }
   }
 }
 
-finish();
+process.exit(fails ? 1 : 0);

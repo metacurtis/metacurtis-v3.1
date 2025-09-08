@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "opening": {
+    "terminal": { "fontStack": ["'Courier New'", "Courier", "'Lucida Console'", "'DejaVu Sans Mono'", "monospace"], "colorHex": "#00FF00", "allowGlow": false },
+    "timeline": { "chaosMs": [1200,1800], "coalesceMs": [1200,2000], "settleMs": [800,1400], "minFillVisibleMs": 1200 },
+    "emergenceCloud": { "gasRadiusFactor": [0.35,0.40], "expandedRadiusFactor": [0.50,0.55], "zRange": [25,35] },
+    "chaosSpin": { "zPerSec": [0.45,0.70], "yPerSec": [0.20,0.35] },
+    "noInitialFillFlash": true,
+    "deferFadeUntilMinFill": true
+  }
+}

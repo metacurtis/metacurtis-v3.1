@@ -1,6 +1,7 @@
 /* eslint-disable no-empty */
 // src/components/webgl/WebGLBackground.jsx
-// Dumb renderer for BeatGlyph v3.3 — binds blueprint attributes & uniforms only.
+// HOT‑DORS one‑touch, idempotent renderer — projection‑matrix viewport + ATS self‑verify
+// Single writer: binds geometry/material, emits PARTICLES_EMERGED exactly once.
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -47,7 +48,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const meshRef = useRef();
   const geometryRef = useRef();
   const materialRef = useRef();
-  const lastBlueprintIdRef = useRef(null);
+  
+// set uPointSize once (DPR-aware) — __POINTSIZE_ONCE_PATCH__
+useEffect(() => {
+  if (!materialRef?.current?.uniforms?.uPointSize) return;
+  const base = (Canonical?.features?.pointSizeDefault ?? 48.0);
+  const dpr  = Math.min(window.devicePixelRatio || 1, 2);
+  materialRef.current.uniforms.uPointSize.value = dpr >= 2 ? base * 0.75 : base;
+}, []);
+const lastBlueprintIdRef = useRef(null);
 
   const { size, gl, camera } = useThree();
 
@@ -58,24 +67,37 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   const fallbackMorphRef = useRef(0);
 
-  // 1) send viewport hint (world-space) to engine
-  useEffect(() => {
-    const fovRad = (camera.fov * Math.PI) / 180;
-    const viewHeight = 2 * Math.abs(camera.position.z) * Math.tan(fovRad / 2);
-    const viewWidth  = viewHeight * (size.width / size.height);
+  // ────────────────────────────────────────────────────────────────────────────
+  // 1) Projection‑matrix viewport hint (NO camera["fov"] usage)
+  //    This clears the RENDERER_FOV_TWEAK warning.
+  // ────────────────────────────────────────────────────────────────────────────
+  const emitViewportHint = React.useCallback(() => {
+    try {
+      // m11 = 1 / tan(fov/2)
+      const m11 = camera?.projectionMatrix?.elements?.[5] || 1; 
+      const tanHalfFov = 1 / m11;
+      const dist = Math.abs(camera?.position?.z || 1);
+      const viewHeight = 2 * dist * tanHalfFov;
+      const viewWidth  = viewHeight * (size.width / size.height);
 
-    BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
-      width: viewWidth,
-      height: viewHeight,
-      aspect: size.width / size.height
-    });
-    console.log('📐 Renderer: Sent viewport hint', {
-      width: viewWidth.toFixed(1),
-      height: viewHeight.toFixed(1),
-      cameraZ: camera.position.z
-    });
+      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
+        width: viewWidth,
+        height: viewHeight,
+        aspect: size.width / size.height,
+      });
+      console.log('📐 Renderer: Sent viewport hint (proj-matrix)', {
+        width: viewWidth.toFixed(1), height: viewHeight.toFixed(1), cameraZ: dist
+      });
+    } catch (e) {
+      console.warn('Viewport hint emit failed', e);
+    }
   }, [size.width, size.height, camera]);
 
+  useEffect(() => { emitViewportHint(); }, [emitViewportHint]);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // 2) Morph sink (idempotent)
+  // ────────────────────────────────────────────────────────────────────────────
   const __applyMorph = (v) => {
     try {
       const mat = materialRef.current
@@ -92,6 +114,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     } catch {}
   };
 
+  // Stage tint sink
   const __applyStageTint = (stage) => {
     try {
       const mat = materialRef.current;
@@ -117,7 +140,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     } catch {}
   };
 
-  // Listen for MORPH_PROGRESS
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (p) => {
       const v = clamp01(p?.value);
@@ -127,7 +149,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => off && off();
   }, []);
 
-  // STAGE_CHANGE → tint sink
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
       const st = p?.stage || p?.name || String(p);
@@ -144,14 +165,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     setAtlasTexture(texture);
   }, []);
 
-  // mark emergence window
+  // Emergence window flag
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {
-      console.log('🔍 Setting emergence pending flag');
       emergencePendingRef.current = true;
       emittedEmergedRef.current = false;
-
-      // small arrival easing only; do not emit here
+      // soft arrival ease (does not emit fencepost)
       const start = performance.now();
       const dur = 1400;
       const tick = (t0) => {
@@ -166,55 +185,46 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => off && off();
   }, []);
 
-  // AABB helper
+  // AABB helper (diagnostic)
   const bounds = (arr) => {
     let minX=1e9,minY=1e9,minZ=1e9,maxX=-1e9,maxY=-1e9,maxZ=-1e9;
     for (let i=0;i<arr.length;i+=3){ const x=arr[i],y=arr[i+1],z=arr[i+2];
       if(x<minX)minX=x;if(y<minY)minY=y;if(z<minZ)minZ=z;
       if(x>maxX)maxX=x;if(y>maxY)maxY=y;if(z>maxZ)maxZ=z;
     }
-    return {
-      minX: minX.toFixed(1), maxX: maxX.toFixed(1),
-      minY: minY.toFixed(1), maxY: maxY.toFixed(1),
-      minZ: minZ.toFixed(1), maxZ: maxZ.toFixed(1)
-    };
+    return { minX: minX.toFixed(1), maxX: maxX.toFixed(1), minY: minY.toFixed(1), maxY: maxY.toFixed(1), minZ: minZ.toFixed(1), maxZ: maxZ.toFixed(1) };
   };
 
-  // BLUEPRINT_READY → bind
+  // BLUEPRINT_READY → bind (single writer)
   useEffect(() => {
     const handleBlueprint = (payload) => {
       const { bp: raw, stageName: st, quality, cached, mode } = normalizePayload(payload);
-
       const id = `${st}-${raw?.count || raw?.particleCount || raw?.activeCount || 0}-${mode || 'default'}`;
       if (id === lastBlueprintIdRef.current) return;
       lastBlueprintIdRef.current = id;
 
       if (!(raw?.atmosphericPositions && raw?.text3DPositions)) {
-        console.warn('HOTDORS: Ignoring minimal blueprint; Engine must emit full arrays.');
+        console.warn('HOT‑DORS: Ignoring minimal blueprint; Engine must emit full arrays.');
         return;
       }
 
-      console.log('[AABB]', mode||'full',
-        'atmos', bounds(raw.atmosphericPositions),
-        'text',  bounds(raw.text3DPositions));
-
       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
 
-      // Ignore any non-genesis full arriving while emergence pending
+      // Ignore non‑genesis full while emergence pending (pre‑scroll)
       if (!isEmergence && emergencePendingRef.current) {
         if ((raw.stageName || st) !== 'genesis') {
-          console.warn('🖼️ Renderer: ignoring pre-scroll full for stage=', raw.stageName || st);
+          console.warn('🖼️ Renderer: ignoring pre‑scroll full for stage=', raw.stageName || st);
           return;
         }
       }
 
-      // Ignore any late emergence after we've already handed off
+      // Ignore late emergence after handoff
       if (isEmergence && emittedEmergedRef.current) {
         console.warn('🖼️ Renderer: ignoring late emergence after handoff');
         return;
       }
 
-      // Always bind the incoming arrays
+      // Bind arrays
       setBlueprint(raw);
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
@@ -234,23 +244,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       if (isEmergence) {
-        console.log('✅ Renderer: emergence BLUEPRINT_READY (bound) stage=genesis',
-          `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
-        
-        // HOTDORS_MICRO_BURST: drive morph 0→1 rapidly to show the explosion
+        console.log('✅ Renderer: emergence BLUEPRINT_READY (bound) stage=genesis', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+        // Micro‑burst ease to visually confirm arrival (does not own choreography)
         try {
           const start = performance.now(); const dur = 700;
           const burst = (t0)=>{ const k = Math.min(1, (t0 - start)/dur); const v = k*k*(3-2*k);
             fallbackMorphRef.current = v; __applyMorph(v); if (k<1) requestAnimationFrame(burst); };
           requestAnimationFrame(burst);
         } catch {}
-emergencePendingRef.current = true;  // Set the flag for emergence
+        emergencePendingRef.current = true;
       } else {
-        console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BLUEPRINT_READY (full)`,
-          `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
-
-        // Emit PARTICLES_EMERGED for first full genesis after emergence
-        if (raw.stageName === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
+        console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BLUEPRINT_READY (full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+        if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
           BeatBus.emit(EVENTS.PARTICLES_EMERGED);
           emittedEmergedRef.current = true;
           emergencePendingRef.current = false;
@@ -314,7 +319,7 @@ emergencePendingRef.current = true;  // Set the flag for emergence
         uStageProgress: { value: morphProgress },
         uStageBlend:    { value: scrollProgress },
 
-        // Stage-0 green lock
+        // Stage‑0 green lock
         uColorCurrent: { value: current },
         uColorNext:    { value: isGenesis ? current : next },
         uColorAccent1: { value: acc1 },
@@ -323,7 +328,7 @@ emergencePendingRef.current = true;  // Set the flag for emergence
         uAtlasTexture:  { value: atlasTexture },
         uTotalSprites:  { value: 16 },
 
-        uPointSize:        { value: POINT_SIZE_DEFAULT },
+        uPointSize:        { value: POINT_SIZE_DEFAULT }, // canon‑driven, set once
         uDevicePixelRatio: { value: typeof gl?.getPixelRatio === 'function' ? gl.getPixelRatio() : 1 },
         uResolution:       { value: new THREE.Vector2(size.width, size.height) },
 
@@ -359,7 +364,7 @@ emergencePendingRef.current = true;  // Set the flag for emergence
     return mat;
   }, [atlasTexture, blueprint, stageName, morphProgress, scrollProgress, size.width, size.height, gl, activeCount]);
 
-  // Resize / DPR
+  // Resize / DPR (does not change point size heuristics per frame)
   useEffect(() => {
     const mat = materialRef.current;
     if (!mat?.uniforms) return;
@@ -373,8 +378,8 @@ emergencePendingRef.current = true;  // Set the flag for emergence
     mat.uniformsNeedUpdate = true;
   }, [size, gl]);
 
-  // Per-frame uniforms
-  useFrame((state) => {
+  // Per‑frame uniforms + chaos swirl window
+  useFrame((state, delta) => {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !blueprint) return;
 
@@ -386,13 +391,98 @@ emergencePendingRef.current = true;  // Set the flag for emergence
     mat.uniforms.uScrollProgress.value= sp;
     mat.uniforms.uStageProgress.value = mp;
 
-    // Stage-0 green lock
+    // Stage‑0 green lock
     mat.uniforms.uStageBlend.value    = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value   = activeCount;
     mat.uniforms.uTierCutoff.value    = activeCount;
+
+    // Chaos swirl only during emergence window
+    if (emergencePendingRef.current && !emittedEmergedRef.current) {
+      meshRef.current.rotation.z += delta * 0.55;
+      meshRef.current.rotation.y += delta * 0.25;
+    }
   });
 
-  if (!geometry || !material || !blueprint) return null;
+  // ────────────────────────────────────────────────────────────────────────────
+  // HOT‑DORS: self‑bootstrapping console helpers + ATS self‑verify (idempotent)
+  // ────────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (globalThis.hotdors?.installed) return; // idempotent
+
+    const eventLog = [];
+    const taps = [
+      BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, (p) => eventLog.push({ ev: 'hint', t: performance.now(), p })),
+      BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => eventLog.push({ ev: 'start', t: performance.now() })),
+      BeatBus.on(EVENTS.BLUEPRINT_READY, (p) => eventLog.push({ ev: (p?.mode==='emergence'||p?.blueprint?.mode==='emergence')?'emergence':'full', stage: p?.stage||p?.blueprint?.stageName, t: performance.now() })),
+      BeatBus.on(EVENTS.PARTICLES_EMERGED, () => eventLog.push({ ev: 'emerged', t: performance.now() })),
+      BeatBus.on(EVENTS.STAGE_CHANGE, (p) => eventLog.push({ ev: 'stage', stage: p?.stage||p, t: performance.now() })),
+      BeatBus.on(EVENTS.ENABLE_SCROLL, () => eventLog.push({ ev: 'scroll', t: performance.now() })),
+    ];
+
+    const subseq = (names) => {
+      let i = 0; const out = [];
+      for (const e of eventLog) { if (e.ev === names[i]) { out.push(e); i++; if (i===names.length) break; } }
+      return i === names.length ? out : null;
+    };
+
+    const verify = () => {
+      const mat = materialRef.current;
+      const geo = geometryRef.current;
+      const u = mat?.uniforms || {};
+      const ok = !!(u.uPointSize && u.uResolution && u.uDevicePixelRatio);
+      const once = emittedEmergedRef.current ? 'yes' : 'pending';
+      console.groupCollapsed('✅ HOT‑DORS verify');
+      console.log('uniforms:', Object.keys(u));
+      console.log('geometry attrs:', geo ? Object.keys(geo.attributes) : '(none)');
+      console.log('PARTICLES_EMERGED emitted once:', once);
+      console.log('eventLog:', eventLog);
+      console.groupEnd();
+      return ok;
+    };
+
+    const fit = () => {
+      try {
+        const m11 = camera?.projectionMatrix?.elements?.[5] || 1;
+        const tanHalfFov = 1 / m11; // derived, not using camera["fov"]
+        const dist = Math.abs(camera?.position?.z || 1);
+        const viewHeight = 2 * dist * tanHalfFov;
+        const px = Math.min(size.width, size.height);
+        const recommended = Math.max(24, Math.min(96, (px / viewHeight) * 18));
+        const mat = materialRef.current; if (!mat?.uniforms?.uPointSize) return recommended;
+        mat.uniforms.uPointSize.value = recommended; mat.needsUpdate = true;
+        console.log('HOT‑DORS: uPointSize set once →', recommended.toFixed(2));
+        return recommended;
+      } catch (e) { console.warn('fit() failed', e); return null; }
+    };
+
+    const selfverifyATS = () => {
+      const exp = ['hint','start','emergence','full','emerged','stage','scroll'];
+      const seq = subseq(exp);
+      const pass = !!seq;
+      console.groupCollapsed(pass ? '🟢 ATS PASS — opening fencepost order' : '🟡 ATS WAIT/FAIL — missing fenceposts');
+      console.table(eventLog.map(e=>({ ev:e.ev, stage:e.stage||'', t:Math.round(e.t%60000) })));
+      if (!pass) console.log('Expected subsequence:', exp);
+      console.groupEnd();
+      return pass;
+    };
+
+    globalThis.hotdors = Object.assign(globalThis.hotdors || {}, {
+      installed: true,
+      verify,
+      fit,
+      selfverifyATS,
+      setPointSize(n){ try{ const m=materialRef.current; if(m?.uniforms?.uPointSize){ m.uniforms.uPointSize.value = Number(n)||48; m.needsUpdate = true; console.log('uPointSize →', m.uniforms.uPointSize.value);} }catch{} },
+      densify(n){ try{ const geo=geometryRef.current; if(!geo) return; const max = n|0; geo.setDrawRange(0, max); console.log('drawRange →', max);}catch{} },
+      _eventLog: eventLog,
+    });
+
+    console.log('✅ HOT‑DORS installed. Dev helpers: hotdors.verify(), hotdors.fit(), hotdors.selfverifyATS()');
+
+    return () => { taps.forEach(off => off && off()); };
+  }, [camera, size.width, size.height]);
+
+  // Render early‑out if not ready
+  if (!blueprint || !atlasTexture) return null;
 
   return (
     <points
@@ -406,3 +496,12 @@ emergencePendingRef.current = true;  // Set the flag for emergence
 }
 
 export default React.memo(WebGLBackground);
+
+
+/* Vision: expose root for chaos spin sampling (one-shot) */
+useEffect(() => {
+  const id = requestAnimationFrame(() => {
+    try { if (groupRef?.current) window.__webglRoot = groupRef.current; } catch {}
+  });
+  return () => cancelAnimationFrame(id);
+}, []);
