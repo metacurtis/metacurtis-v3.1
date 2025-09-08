@@ -7,7 +7,8 @@ const STRICT_MONO_STACK = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas
 
 import { EVENTS } from '@/theater/events.js';
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// sentinel-hint:fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // Strict cross-platform monospace stack (GitHub-style + Liberation/Courier)
 export default function OpeningSequence() {
@@ -197,7 +198,7 @@ export default function OpeningSequence() {
         position: 'fixed', inset: 0,
         background: '#000',
         color: '#00FF00',
-        fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
+        fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
         fontSize: '1.5rem', lineHeight: 1.4,
         zIndex: 9999, overflow: 'hidden',
         transition: 'opacity 0.7s',
@@ -219,7 +220,7 @@ export default function OpeningSequence() {
       {phase === 'typing' && (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', padding:'2rem' }}>
           <div style={{ maxWidth: 800, width: '100%' }}>
-            <pre style={{ color:'#0f0', whiteSpace:'pre-wrap', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
+            <pre style={{ color:'#0f0', whiteSpace:'pre-wrap', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
               {lines.map((line, idx) => (
                 <div key={idx}>
                   {line}
@@ -234,7 +235,7 @@ export default function OpeningSequence() {
       {/* FILL (progressive — no initial flash) */}
       {phase === 'fill' && (
         <div style={{ position:'absolute', inset:0, padding:'1rem', overflow:'hidden', background:'#000' }}>
-          <pre style={{ color:'#0f0', whiteSpace:'pre', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
+          <pre style={{ color:'#0f0', whiteSpace:'pre', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
             {screenFillLines.map((line, idx) => (
               <div key={idx} style={{ whiteSpace:'nowrap' }}>{line}</div>
             ))}
