@@ -1,98 +1,14 @@
 // src/components/consciousness/ConsciousnessTheater.jsx
-// Director-integrated Theater — robust, race-free opening (single start after viewport hint)
-
 import { useEffect, useState, useRef } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { stageAtom } from '@/state/atoms/stageAtom.js';
 import { qualityAtom } from '@/state/atoms/qualityAtom.js';
 import { useMemoryFragments } from '@/hooks/useMemoryFragments.js';
 import WebGLCanvas from '@/components/webgl/WebGLCanvas.jsx';
-import _DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
-
 import director from '@/theater/TheaterDirector.js';
 import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
-
-console.log('🧬 LOADED: ConsciousnessTheater — race-free opening');
-
-const NarrationOverlay = ({ segment }) => {
-  if (!segment) return null;
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '100px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '80%',
-        maxWidth: '800px',
-        background: 'rgba(0, 0, 0, 0.9)',
-        padding: '20px 30px',
-        borderRadius: '10px',
-        border: '1px solid rgba(0, 255, 0, 0.3)',
-        zIndex: 40,
-      }}
-    >
-      <p style={{
-        color: '#ffffff', fontFamily: 'Arial, sans-serif',
-        fontSize: '1.1rem', lineHeight: '1.6', margin: 0, textAlign: 'center'
-      }}>
-        {segment.text}
-      </p>
-    </div>
-  );
-};
-
-const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
-  if (!fragment) return null;
-  return (
-    <div
-      style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        background: 'rgba(0, 0, 0, 0.95)', border: '2px solid #00FF00',
-        borderRadius: '10px', padding: '30px', zIndex: 100, minWidth: '400px', maxWidth: '600px',
-      }}
-    >
-      <h3 style={{ color: '#00FF00', marginTop: 0, fontFamily: 'Courier New, monospace' }}>
-        {fragment.name}
-      </h3>
-
-      <div style={{ color: '#ffffff', marginBottom: '20px' }}>
-        {fragment.content?.type === 'interactive' &&
-          fragment.content?.element === 'commodore_terminal' && (
-            <div
-              style={{
-                background: '#000', padding: '20px',
-                fontFamily: 'Courier New, monospace', color: '#00FF00',
-                border: '1px solid #00FF00',
-              }}
-            >
-              READY.<br />
-              10 PRINT &quot;HELLO CURTIS&quot;<br />
-              20 GOTO 10<br />
-              RUN<br />
-              <div style={{ marginTop: '10px', opacity: 0.7 }}>
-                {Array(5).fill('HELLO CURTIS ').join('')}...
-              </div>
-            </div>
-          )}
-      </div>
-
-      <button
-        onClick={onDismiss}
-        style={{
-          padding: '10px 20px', background: '#00FF00', color: '#000',
-          border: 'none', borderRadius: '5px', cursor: 'pointer',
-          fontFamily: 'Courier New, monospace', fontWeight: 'bold',
-        }}
-      >
-        Close
-      </button>
-    </div>
-  );
-};
 
 export default function ConsciousnessTheater() {
   const [currentStage, setCurrentStage] = useState('genesis');
@@ -101,70 +17,49 @@ export default function ConsciousnessTheater() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [narrativeEnabled, setNarrativeEnabled] = useState(false);
-  const [activeNarrative, setActiveNarrative] = useState(null); // ← was used but not declared earlier
+  const [activeNarrative, setActiveNarrative] = useState(null);
   const [showCanvas] = useState(true);
 
   const startTimeRef = useRef(Date.now());
   const currentStageRef = useRef('genesis');
   const directorStartedRef = useRef(false);
-  const viewportReadyRef = useRef(false);
-
-  const _stageConfig = Canonical.stages[currentStage];                 // For future tuning
-  const narrative = Canonical.dialogue?.[currentStage];
 
   const { activeFragments, fragmentStates, triggerFragment, dismissFragment } =
     useMemoryFragments(currentStage, scrollProgress * 100, null);
 
-  // keep latest trigger function
-  const triggerFragmentRef = useRef(triggerFragment);
-  triggerFragmentRef.current = triggerFragment;
-
-  // ───────────────── Race-free Director start (single gate) ─────────────────
+  // Single, race-free Director start (hint or synthetic)
   useEffect(() => {
-    let started = false;
-    let gotHint = false;
+    let gotHint = false, started = false;
 
     const startDirector = () => {
       if (started) return;
-      started = true;
-      directorStartedRef.current = true;
+      started = true; directorStartedRef.current = true;
       try { document.body.style.overflow = 'hidden'; } catch {}
-      try { director.start(); } catch (e) { console.warn('Director.start failed:', e?.message); }
+      try { director.start(); } catch (e) { console.warn('Director.start error:', e?.message); }
     };
 
-    // 1) real viewport hint
-    const offHint = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => {
-      viewportReadyRef.current = true;
-      gotHint = true;
-      startDirector();
-    });
+    const offHint = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => { gotHint = true; startDirector(); });
 
-    // 2) synthetic hint fallback after 800ms if nothing arrived
     const t = setTimeout(() => {
       if (!gotHint && !directorStartedRef.current) {
         try {
           const w = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
           const h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
           BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width:w, height:h, aspect: w/Math.max(1,h) });
-          console.log('📐 Theater: synthetic ENGINE_VIEWPORT_HINT emitted');
+          console.log('�� Theater: synthetic ENGINE_VIEWPORT_HINT emitted');
         } catch {}
         startDirector();
       }
     }, 800);
 
-    // 3) handoff signals
     const offs = [
       BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
-        console.log('   Theater: Scroll enabled by Director');
         setScrollEnabled(true);
         try { document.body.style.overflow = ''; } catch {}
       }),
       BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {
-        console.log(`   Theater: Starting ${stage} narrative`);
-        setNarrativeEnabled(true);
-        setIsInitialized(true);
-        startTimeRef.current = Date.now();
-      }),
+        setNarrativeEnabled(true); setIsInitialized(true); startTimeRef.current = Date.now();
+      })
     ];
 
     return () => {
@@ -174,18 +69,15 @@ export default function ConsciousnessTheater() {
       try { document.body.style.overflow = ''; } catch {}
       try { director.cancel(); } catch {}
       directorStartedRef.current = false;
-      viewportReadyRef.current = false;
     };
   }, []);
 
-  // ───────────────── Keyboard navigation (after handoff) ────────────────────
+  // keyboard nav
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
     const handleKey = (e) => {
       if (["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
-      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) {
-        e.preventDefault(); e.stopPropagation();
-      }
+      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) { e.preventDefault(); e.stopPropagation(); }
       switch (e.key) {
         case "ArrowRight": stageAtom.nextStage(); break;
         case "ArrowLeft":  stageAtom.prevStage(); break;
@@ -198,7 +90,6 @@ export default function ConsciousnessTheater() {
           if (names[idx]) stageAtom.jumpToStage(names[idx]);
           break;
         }
-        case "h": case "H": window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR; window.location.reload(); break;
         case "m": case "M": setMorphProgress(p => (p > 0.5 ? 0 : 1)); break;
         case "r": case "R": stageAtom.jumpToStage("genesis"); setMorphProgress(0); break;
         default: break;
@@ -208,7 +99,7 @@ export default function ConsciousnessTheater() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [isInitialized, scrollEnabled]);
 
-  // ───────────────── Stage subscription ─────────────────────────────────────
+  // stage subscription
   useEffect(() => {
     const unsubscribe = stageAtom.subscribe(state => {
       if (state.currentStage !== currentStageRef.current) {
@@ -220,33 +111,28 @@ export default function ConsciousnessTheater() {
     return unsubscribe;
   }, []);
 
-  // ───────────────── Scroll → morph/stage (after handoff) ───────────────────
+  // scroll → morph + stage
   useEffect(() => {
     if (!isInitialized || !scrollEnabled) return;
-
     const handleScroll = () => {
       const scrollTop = window.scrollY;
       const scrollHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       const progress = Math.min(scrollTop / scrollHeight, 1);
-
       setScrollProgress(progress);
-      setMorphProgress(Math.min(progress * 2, 1)); // 0–50% maps to 0–1
-
+      setMorphProgress(Math.min(progress * 2, 1));
       const stageProgress = progress * 100;
-      const newStageCfg = Canonical.getStageByScroll?.(stageProgress);
+      const cfg = Canonical.getStageByScroll?.(stageProgress);
       const atomStage = stageAtom.getState().currentStage;
-      if (newStageCfg && newStageCfg.name !== atomStage) {
-        stageAtom.jumpToStage(newStageCfg.name);
-      }
+      if (cfg && cfg.name !== atomStage) stageAtom.jumpToStage(cfg.name);
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isInitialized, scrollEnabled]);
 
-  // ───────────────── Narrative timing (optional) ─────────────────────────────
+  // optional narrative timing
   useEffect(() => {
+    const narrative = Canonical.dialogue?.[currentStage];
     if (!narrative?.narration?.segments || !isInitialized || !narrativeEnabled) return;
     const timer = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
@@ -257,27 +143,19 @@ export default function ConsciousnessTheater() {
       setActiveNarrative(prev => (seg && seg.id !== prev?.id ? seg : (!seg ? null : prev)));
     }, 100);
     return () => clearInterval(timer);
-  }, [narrative, isInitialized, narrativeEnabled]);
+  }, [currentStage, isInitialized, narrativeEnabled]);
 
-  // ───────────────── Render ─────────────────────────────────────────────────
   return (
     <div className="consciousness-theater-v3">
       <OpeningSequence />
-
-      {/* spacer to allow scrolling once enabled */}
       <div style={{ position: 'absolute', width: '1px', height: '700vh', pointerEvents: 'none', zIndex: -1 }} />
-
-      {showCanvas && (
-        <WebGLCanvas stage={currentStage} morphProgress={morphProgress} scrollProgress={scrollProgress} />
-      )}
-
-      {/* {narrativeEnabled && activeNarrative && <NarrationOverlay segment={activeNarrative} />} */}
-
+      {showCanvas && (<WebGLCanvas stage={currentStage} morphProgress={morphProgress} scrollProgress={scrollProgress} />)}
+      {/* narrative overlay & fragments optional */}
       {activeFragments.map(fragment => {
         const state = fragmentStates[fragment.id];
-        return state?.state === 'active' ? (
-          <MemoryFragmentRenderer key={fragment.id} fragment={fragment} onDismiss={() => dismissFragment(fragment.id)} />
-        ) : null;
+        return state?.state === 'active'
+          ? <div key={fragment.id} />
+          : null;
       })}
     </div>
   );

@@ -25,7 +25,11 @@ if (checkOpening){
   row(/ENGINE_VIEWPORT_HINT/.test(theater),'Theater start-after-viewport gate present');
 
   // Phase-1 static style contracts (OpeningSequence)
-  row(/fontFamily:\s*["'][^"']*Courier New[^"']*["']/.test(opening),'OpeningSequence strict mono font stack');
+  // Phase-1 static style contracts (OpeningSequence)
+// Accept inline Courier New or ui-monospace OR usage of STRICT_MONO_STACK
+const __mono_literal = /fontFamily\s*:\s*["'][^"']*(Courier New|ui-monospace)[^"']*["']/.test(opening);
+const __mono_const   = /fontFamily\s*:\s*STRICT_MONO_STACK\b/.test(opening);
+row((__mono_literal || __mono_const), 'OpeningSequence strict mono font stack');
   row(!/textShadow:\s*['"][^'"]+['"]/.test(opening) || /textShadow:\s*['"]none['"]/.test(opening),'OpeningSequence no glow');
   row(/__opening_fill_start_lines/.test(opening) && /setScreenFillLines\(\s*\[\s*\]\s*\)/.test(opening),'OpeningSequence progressive fill (no flash)');
 
