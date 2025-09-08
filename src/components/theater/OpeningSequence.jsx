@@ -219,7 +219,7 @@ export default function OpeningSequence() {
       {phase === 'typing' && (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', padding:'2rem' }}>
           <div style={{ maxWidth: 800, width: '100%' }}>
-            <pre style={{ color:'#0f0', whiteSpace:'pre-wrap', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",}}>
+            <pre style={{ color:'#0f0', whiteSpace:'pre-wrap', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
               {lines.map((line, idx) => (
                 <div key={idx}>
                   {line}
@@ -234,7 +234,7 @@ export default function OpeningSequence() {
       {/* FILL (progressive — no initial flash) */}
       {phase === 'fill' && (
         <div style={{ position:'absolute', inset:0, padding:'1rem', overflow:'hidden', background:'#000' }}>
-          <pre style={{ color:'#0f0', whiteSpace:'pre', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",}}>
+          <pre style={{ color:'#0f0', whiteSpace:'pre', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
             {screenFillLines.map((line, idx) => (
               <div key={idx} style={{ whiteSpace:'nowrap' }}>{line}</div>
             ))}
