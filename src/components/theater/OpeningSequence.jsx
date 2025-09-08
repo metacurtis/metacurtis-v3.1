@@ -1,15 +1,13 @@
 // src/components/theater/OpeningSequence.jsx
-// SST v3.x Opening Sequence — event-driven + self-boot fallback (no nested hooks)
+// SST v3.x Opening Sequence — event-driven (Director owns clock), progressive fill, strict mono
 
 import { useEffect, useRef, useState } from 'react';
 import BeatBus from '@/theater/bus';
-const STRICT_MONO_STACK = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
-
 import { EVENTS } from '@/theater/events.js';
 
+const STRICT_MONO_STACK = "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace";
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-
-// Strict cross-platform monospace stack (GitHub-style + Liberation/Courier)
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(true);
   const [phase, setPhase] = useState('black'); // 'black' | 'cursor' | 'typing' | 'fill' | 'complete'
@@ -30,19 +28,18 @@ export default function OpeningSequence() {
 
   const addTimeout = (fn, ms) => { const id = setTimeout(fn, ms); timers.current.add(id); return id; };
   const addInterval = (fn, ms) => { const id = setInterval(fn, ms); intervals.current.add(id); return id; };
-  const clearAllTimers = () => { for (const id of timers.current) clearTimeout(id); for (const id of intervals.current) clearInterval(id);
-    timers.current.clear(); intervals.current.clear(); };
+  const clearAllTimers = () => {
+    for (const id of timers.current) clearTimeout(id);
+    for (const id of intervals.current) clearInterval(id);
+    timers.current.clear(); intervals.current.clear();
+  };
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Primary effect: user-gesture audio gate + Director-driven event handlers
-  // ────────────────────────────────────────────────────────────────────────────
+  // Director-driven event handlers
   useEffect(() => {
     mounted.current = true;
     setVisible(true);
     setPhase('black');
-    console.log('🎬 OpeningSequence: Ready for Director signals');
-
-    // 1) One-time user gesture gate (autoplay safety)
+    // one-time gesture gate (autoplay safety)
     const __unlockAudio = () => {
       try { humAudioRef.current?.play?.().catch(()=>{}); } catch {}
       window.removeEventListener('pointerdown', __unlockAudio);
@@ -53,7 +50,6 @@ export default function OpeningSequence() {
     window.addEventListener('touchstart', __unlockAudio, { once: true });
     window.addEventListener('keydown', __unlockAudio, { once: true });
 
-    // 2) Director-driven sequence handlers
     const offs = [
       BeatBus.on(EVENTS.CURSOR_SHOW, () => { setPhase('cursor'); setCursorVisible(true); }),
       BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
@@ -89,18 +85,20 @@ export default function OpeningSequence() {
         }
         setCurrentTypingLine(-1);
       }),
+      // Progressive fill (no flash)
       BeatBus.on(EVENTS.SCREEN_FILL, ({ text = 'HELLO CURTIS ', scrollSpeed = 50 } = {}) => {
         setPhase('fill');
         const fillText = text.repeat(10);
         try { window.__opening_fill_start_lines = 0; } catch {}
-        setScreenFillLines([]);
+        setScreenFillLines([]); // seed []
         addInterval(() => {
           setScreenFillLines(prev => prev.length >= 30 ? [...prev.slice(1), fillText] : [...prev, fillText]);
         }, scrollSpeed);
       }),
       BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 } = {}) => {
         if (!humAudioRef.current) {
-          humAudioRef.current = new Audio('/audio/computer-hum.mp3'); humAudioRef.current.loop = true;
+          humAudioRef.current = new Audio('/audio/computer-hum.mp3');
+          humAudioRef.current.loop = true;
         }
         humAudioRef.current.volume = volume;
         humAudioRef.current.play().catch(()=>{});
@@ -111,6 +109,7 @@ export default function OpeningSequence() {
         keyClickAudioRef.current.currentTime = 0;
         keyClickAudioRef.current.play().catch(()=>{});
       }),
+      // fade out on emergence
       BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
         addTimeout(() => {
           setVisible(false);
@@ -140,54 +139,6 @@ export default function OpeningSequence() {
     };
   }, []);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Self-boot fallback: show the intro if Director never emits early beats
-  // ────────────────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    let sawDirector = false, cancelled = false;
-    const taps = [
-      BeatBus.on(EVENTS.CURSOR_SHOW,   () => { sawDirector = true; }),
-      BeatBus.on(EVENTS.TERMINAL_TYPE, () => { sawDirector = true; }),
-      BeatBus.on(EVENTS.SCREEN_FILL,   () => { sawDirector = true; }),
-    ];
-    const boot = async () => {
-      setPhase('black'); await sleep(200);
-      setPhase('cursor'); setCursorVisible(true);
-      for (let i = 0; i < 2 && !cancelled; i++) {
-        setCursorVisible(false); await sleep(500);
-        setCursorVisible(true);  await sleep(500);
-      }
-      setCursorVisible(false);
-
-      const defaults = ['READY.','10 PRINT "HELLO CURTIS"','20 GOTO 10','RUN'];
-      setPhase('typing'); setLines([]); const token = ++typingToken.current;
-
-      for (let li = 0; li < defaults.length && !cancelled; li++) {
-        setCurrentTypingLine(li);
-        setLines(prev => [...prev, '']);
-        const line = defaults[li];
-        for (let ci = 0; ci < line.length && !cancelled; ci++) {
-          if (token !== typingToken.current) break;
-          setLines(prev => { const n=[...prev]; n[li] = (n[li] || '') + line[ci]; return n; });
-          await sleep(50);
-        }
-        if (li < defaults.length - 1) await sleep(300);
-      }
-      setCurrentTypingLine(-1);
-
-      try { window.__opening_fill_start_lines = 0; } catch {}
-      setPhase('fill'); setScreenFillLines([]);
-      const fillText = 'HELLO CURTIS '.repeat(10);
-      const iv = setInterval(() => {
-        if (cancelled) return clearInterval(iv);
-        setScreenFillLines(prev => prev.length >= 30 ? [...prev.slice(1), fillText] : [...prev, fillText]);
-      }, 50);
-      setTimeout(() => clearInterval(iv), 4000);
-    };
-    const t = setTimeout(() => { if (!sawDirector) boot(); }, 700);
-    return () => { cancelled = true; clearTimeout(t); taps.forEach(off => off && off()); };
-  }, []);
-
   if (phase === 'complete') return null;
 
   return (
@@ -197,7 +148,7 @@ export default function OpeningSequence() {
         position: 'fixed', inset: 0,
         background: '#000',
         color: '#00FF00',
-         Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
+        fontFamily: STRICT_MONO_STACK,
         fontSize: '1.5rem', lineHeight: 1.4,
         zIndex: 9999, overflow: 'hidden',
         transition: 'opacity 0.7s',
@@ -219,7 +170,7 @@ export default function OpeningSequence() {
       {phase === 'typing' && (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', padding:'2rem' }}>
           <div style={{ maxWidth: 800, width: '100%' }}>
-            <pre style={{ color:'#0f0', whiteSpace:'pre-wrap', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
+            <pre style={{ color:'#0f0', whiteSpace:'pre-wrap', fontFamily: STRICT_MONO_STACK }}>
               {lines.map((line, idx) => (
                 <div key={idx}>
                   {line}
@@ -231,10 +182,10 @@ export default function OpeningSequence() {
         </div>
       )}
 
-      {/* FILL (progressive — no initial flash) */}
+      {/* FILL */}
       {phase === 'fill' && (
         <div style={{ position:'absolute', inset:0, padding:'1rem', overflow:'hidden', background:'#000' }}>
-          <pre style={{ color:'#0f0', whiteSpace:'pre', fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace", Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",,}}>
+          <pre style={{ color:'#0f0', whiteSpace:'pre', fontFamily: STRICT_MONO_STACK }}>
             {screenFillLines.map((line, idx) => (
               <div key={idx} style={{ whiteSpace:'nowrap' }}>{line}</div>
             ))}
@@ -242,7 +193,7 @@ export default function OpeningSequence() {
         </div>
       )}
 
-      {/* Scoped harden: enforce stack everywhere in the overlay */}
+      {/* Scoped mono CSS (belt-and-suspenders) */}
       <style>{`
         .opening-sequence, .opening-sequence * {
           font-family: ${STRICT_MONO_STACK} !important;
