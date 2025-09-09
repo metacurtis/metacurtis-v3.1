@@ -65,7 +65,34 @@ class TheaterDirector {                                                // 19
   }                                                                    // 55
 
   // --- Entry ---------------------------------------------------------
-  async start() {                                                      // 56
+  async start() {
+    // [AI-PHASE1] PHASE-1 SCHEDULE — exact timings + min-fill guard
+    const __t0 = performance.now();
+    this.phase = 'cursor';
+    this._emit(EVENTS.CURSOR_SHOW);
+    this._emit(EVENTS.CURSOR_BLINK, { count: 2, interval: 250 });
+
+    await this._sleep(250); // reaches 2.25s from t0 given prior 2.0s gating upstream
+    this.phase = 'terminal';
+    const DEFAULT_LINES = [ 'READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN' ];
+    this._emit(EVENTS.TERMINAL_TYPE, { lines: DEFAULT_LINES, typeSpeed: 12, lineDelay: 60 });
+
+    {
+      const since = performance.now() - __t0;
+      const toT3 = Math.max(0, 3000 - since);
+      await this._sleep(toT3);
+    }
+    this.phase = 'fill';
+    this._emit(EVENTS.SCREEN_FILL, { text: 'HELLO CURTIS ', scrollSpeed: 50 });
+    const __tFill = performance.now();
+
+    // Min fill visible ≥ 1200ms before emergence blueprint
+    {
+      const wait = Math.max(0, 1200 - (performance.now() - __tFill));
+      if (wait) await this._sleep(wait);
+    }
+    this._emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, { sourceText: 'HELLO CURTIS', count: 2000 });
+                                                      // 56
     if (this.isRunning) {                                              // 57
       console.log("🎬 Director: Already running, ignoring duplicate start"); // 58
       return;                                                          // 59
@@ -93,11 +120,9 @@ class TheaterDirector {                                                // 19
       // Phase 2: cursor blinks                                         
       this.phase = "cursor";                                           // 76
       console.log("   Phase: Cursor (blinks twice)");                  // 77
-      this._emit(EVENTS.CURSOR_SHOW);                                  // 78
+      /* [AI-PHASE1] removed duplicate: this._emit(EVENTS.CURSOR_SHOW); */                                  // 78
       await this._sleep(CURSOR_BLINK_INTERVAL);                        // 79
-      this._emit(EVENTS.CURSOR_BLINK, {                                // 80
-        count: CURSOR_BLINK_COUNT, interval: CURSOR_BLINK_INTERVAL     // 81
-      });                                                              // 82
+      /* [AI-PHASE1] removed duplicate: this._emit(EVENTS.CURSOR_BLINK, {                                // 80         count: CURSOR_BLINK_COUNT, interval: CURSOR_BLINK_INTERVAL     // 81       }); */                                                              // 82
       await this._sleep(CURSOR_BLINK_INTERVAL * CURSOR_BLINK_COUNT * 2);// 83
       if (this.cancelled) return this._finalizeCancel();               // 84
 
@@ -105,11 +130,7 @@ class TheaterDirector {                                                // 19
       this.phase = "terminal";                                         // 85
       console.log("   Phase: Terminal typing");                        // 86
       this._mark('tType');                                             // 87
-      this._emit(EVENTS.TERMINAL_TYPE, {                               // 88
-        lines: DEFAULT_LINES,                                          // 89
-        typeSpeed: TYPE_SPEED_MS,                                      // 90
-        lineDelay: LINE_DELAY_MS                                       // 91
-      });                                                              // 92
+      /* [AI-PHASE1] removed duplicate: this._emit(EVENTS.TERMINAL_TYPE, {                               // 88         lines: DEFAULT_LINES,                                          // 89         typeSpeed: TYPE_SPEED_MS,                                      // 90         lineDelay: LINE_DELAY_MS                                       // 91       }); */                                                              // 92
       // Estimate duration (safe margin; the overlay does the real work)
       const estChars = DEFAULT_LINES.reduce((n,s)=>n+s.length,0);      // 93
       const estTyping = estChars*TYPE_SPEED_MS +                       // 94
@@ -121,9 +142,7 @@ class TheaterDirector {                                                // 19
       this.phase = "fill";                                             // 98
       console.log("   Phase: Screen fill");                            // 99
       this._mark('tFill');                                             // 100
-      this._emit(EVENTS.SCREEN_FILL, {                                 // 101
-        text: "HELLO CURTIS ", scrollSpeed: 50                         // 102
-      });                                                              // 103
+      /* [AI-PHASE1] removed duplicate: this._emit(EVENTS.SCREEN_FILL, {                                 // 101         text: "HELLO CURTIS ", scrollSpeed: 50                         // 102       }); */                                                              // 103
       await this._sleep(FILL_DWELL_MS);                                // 104
       if (this.cancelled) return this._finalizeCancel();               // 105
 
@@ -140,9 +159,7 @@ class TheaterDirector {                                                // 19
       }                                                                // 113
 
       // 1) Build emergence (Engine emits BLUEPRINT_READY with mode:'emergence')
-      this._emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {                   // 114
-        sourceText: "HELLO CURTIS", count: 2000                        // 115
-      });                                                              // 116
+      /* [AI-PHASE1] removed duplicate: this._emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {                   // 114         sourceText: "HELLO CURTIS", count: 2000                        // 115       }); */                                                              // 116
 
       // 2) Signal overlay fade & renderer arrival-ease (no fencepost here)
       this._emit(EVENTS.PARTICLES_START_EMERGING);                     // 117

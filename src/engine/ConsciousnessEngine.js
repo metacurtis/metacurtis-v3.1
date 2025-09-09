@@ -215,12 +215,6 @@ class ConsciousnessEngine {
     const gasRadius      = smin * 0.38;
     const expandedRadius = smin * 0.52;
     const zDepth         = 15.0;
-// Vision: expose cloud factors for telemetry
-    try {
-      window.__vc_gasRadiusFactor      = gasRadius / smin;
-      window.__vc_expandedRadiusFactor = expandedRadius / smin;
-      window.__vc_zRange               = zDepth;
-    } catch {}
 const jitter = smin * 0.45; // 45% of viewport
    /* duplicate zDepth removed */
 
