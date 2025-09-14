@@ -49,14 +49,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const geometryRef = useRef();
   const materialRef = useRef();
   
-// set uPointSize once (DPR-aware) — __POINTSIZE_ONCE_PATCH__
-useEffect(() => {
-  if (!materialRef?.current?.uniforms?.uPointSize) return;
-  const base = (Canonical?.features?.pointSizeDefault ?? 48.0);
-  const dpr  = Math.min(window.devicePixelRatio || 1, 2);
-  materialRef.current.uniforms.uPointSize.value = dpr >= 2 ? base * 0.75 : base;
-}, []);
-const lastBlueprintIdRef = useRef(null);
+  // set uPointSize once (DPR-aware) — __POINTSIZE_ONCE_PATCH__
+  useEffect(() => {
+    if (!materialRef?.current?.uniforms?.uPointSize) return;
+    const base = (Canonical?.features?.pointSizeDefault ?? 48.0);
+    const dpr  = Math.min(window.devicePixelRatio || 1, 2);
+    materialRef.current.uniforms.uPointSize.value = dpr >= 2 ? base * 0.75 : base;
+  }, []);
+  
+  const lastBlueprintIdRef = useRef(null);
 
   const { size, gl, camera } = useThree();
 
@@ -95,20 +96,20 @@ const lastBlueprintIdRef = useRef(null);
 
   useEffect(() => { emitViewportHint(); }, [emitViewportHint]);
 
-  
-/* Re-emit viewport hint on mount + for 1.5s and on resize — __HINT_REEMIT_PATCH__ */
-useEffect(() => {
-  let stopped=false;
-  const onResize = () => { try { emitViewportHint(); } catch {} };
-  const t0 = performance.now();
-  const iv = setInterval(() => {
-    try { emitViewportHint(); } catch {}
-    if (performance.now() - t0 > 1500) { clearInterval(iv); }
-  }, 250);
-  window.addEventListener('resize', onResize);
-  return () => { clearInterval(iv); window.removeEventListener('resize', onResize); stopped=true; };
-}, [emitViewportHint]);
-// ────────────────────────────────────────────────────────────────────────────
+  /* Re-emit viewport hint on mount + for 1.5s and on resize — __HINT_REEMIT_PATCH__ */
+  useEffect(() => {
+    let stopped=false;
+    const onResize = () => { try { emitViewportHint(); } catch {} };
+    const t0 = performance.now();
+    const iv = setInterval(() => {
+      try { emitViewportHint(); } catch {}
+      if (performance.now() - t0 > 1500) { clearInterval(iv); }
+    }, 250);
+    window.addEventListener('resize', onResize);
+    return () => { clearInterval(iv); window.removeEventListener('resize', onResize); stopped=true; };
+  }, [emitViewportHint]);
+
+  // ────────────────────────────────────────────────────────────────────────────
   // 2) Morph sink (idempotent)
   // ────────────────────────────────────────────────────────────────────────────
   const __applyMorph = (v) => {
@@ -494,6 +495,18 @@ useEffect(() => {
     return () => { taps.forEach(off => off && off()); };
   }, [camera, size.width, size.height]);
 
+  /* Vision: expose root for chaos spin sampling (one-shot) */
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      try { 
+        if (meshRef?.current) {
+          window.__webglRoot = meshRef.current;
+        }
+      } catch {}
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   // Render early‑out if not ready
   if (!blueprint || !atlasTexture) return null;
 
@@ -509,12 +522,3 @@ useEffect(() => {
 }
 
 export default React.memo(WebGLBackground);
-
-
-/* Vision: expose root for chaos spin sampling (one-shot) */
-useEffect(() => {
-  const id = requestAnimationFrame(() => {
-    try { if (groupRef?.current) window.__webglRoot = groupRef.current; } catch {}
-  });
-  return () => cancelAnimationFrame(id);
-}, []);

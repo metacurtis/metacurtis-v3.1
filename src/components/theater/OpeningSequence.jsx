@@ -1,5 +1,5 @@
 // src/components/theater/OpeningSequence.jsx
-// SST v3.0 100% Compliant Opening Sequence - Exact specifications
+// SST v3.0 Compliant - Pure event-driven overlay (no self-boot)
 
 import { useEffect, useRef, useState } from 'react';
 import BeatBus from '@/theater/bus';
@@ -9,7 +9,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(false);
-  const [phase, setPhase] = useState('black'); // black | cursor | typing | fill
+  const [phase, setPhase] = useState('black');
   const [cursorVisible, setCursorVisible] = useState(false);
   const [lines, setLines] = useState([]);
   const [currentTypingLine, setCurrentTypingLine] = useState(-1);
@@ -24,6 +24,7 @@ export default function OpeningSequence() {
   const intervals = useRef(new Set());
   const typingToken = useRef(0);
   const mounted = useRef(true);
+  const audioUnlocked = useRef(false);
 
   const addTimeout = (fn, ms) => {
     const id = setTimeout(fn, ms);
@@ -44,94 +45,47 @@ export default function OpeningSequence() {
     intervals.current.clear();
   };
 
+  // Single audio unlock gate (in useEffect, properly cleaned up)
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audioUnlocked.current) return;
+      audioUnlocked.current = true;
+      
+      // Try to play hum if it exists
+      if (humAudioRef.current) {
+        humAudioRef.current.play().catch(() => {});
+      }
+    };
+
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+    window.addEventListener('touchstart', unlockAudio, { once: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      window.removeEventListener('keydown', unlockAudio);
+    };
+  }, []);
+
+  // Main event subscription effect
   useEffect(() => {
     mounted.current = true;
-    setVisible(true); // Show overlay when component mounts
+    setVisible(true);
     console.log('🎬 OpeningSequence: Ready for Director signals');
 
-
-
-// --- self-boot intro if Director is silent — __SELF_BOOT_FALLBACK__
-useEffect(() => {
-  let sawDirector = false, cancelled = false;
-  const taps = [
-    BeatBus.on(EVENTS.CURSOR_SHOW,   ()=>{ sawDirector=true; }),
-    BeatBus.on(EVENTS.TERMINAL_TYPE, ()=>{ sawDirector=true; }),
-    BeatBus.on(EVENTS.SCREEN_FILL,   ()=>{ sawDirector=true; })
-  ];
-  const boot = async () => {
-    // Black hold
-    setPhase('black'); await sleep(200);
-    // Cursor blink ×2
-    setPhase('cursor'); setCursorVisible(true);
-    for (let i=0;i<2 && !cancelled;i++){ setCursorVisible(false); await sleep(500); setCursorVisible(true); await sleep(500); }
-    setCursorVisible(false);
-    // Type default lines
-    const defaults = ['READY.','10 PRINT "HELLO CURTIS"','20 GOTO 10','RUN'];
-    setPhase('typing'); setLines([]); let token = ++typingToken.current;
-    for (let li=0;li<defaults.length && !cancelled;li++){
-      setCurrentTypingLine(li); setLines(prev=>[...prev,'']); const line = defaults[li];
-      for (let ci=0; ci<line.length && !cancelled; ci++){
-        if (token !== typingToken.current) break;
-        setLines(prev => { const n=[...prev]; n[li]=(n[li]||'')+line[ci]; return n; });
-        await sleep(50);
-      }
-      if (li<defaults.length-1) await sleep(300);
-    }
-    setCurrentTypingLine(-1);
-    // Progressive fill (no flash)
-    try { window.__opening_fill_start_lines = 0; } catch {}
-    setPhase('fill'); setScreenFillLines([]);
-    const fillText = 'HELLO CURTIS '.repeat(10);
-    const iv = setInterval(() => {
-      if (cancelled) return clearInterval(iv);
-      setScreenFillLines(prev => prev.length>=30 ? [...prev.slice(1),fillText] : [...prev, fillText]);
-    }, 50);
-    // autoresolve after a short dwell if Director still silent
-    setTimeout(()=>clearInterval(iv), 4000);
-  };
-  const t = setTimeout(() => { if (!sawDirector) boot(); }, 700);
-  return () => { cancelled = true; clearTimeout(t); taps.forEach(off=>off&&off()); };
-}, []);
-
-// HOTDORS: one-time user gesture gate for autoplay audio
-let __gestureOk = false;
-const __unlockAudio = () => {
-  __gestureOk = true;
-  try { humAudioRef.current?.play?.().catch(()=>{}); } catch {}
-  window.removeEventListener('pointerdown', __unlockAudio);
-  window.removeEventListener('touchstart', __unlockAudio);
-  window.removeEventListener('keydown', __unlockAudio);
-};
-window.addEventListener('pointerdown', __unlockAudio, { once: true });
-window.addEventListener('touchstart', __unlockAudio, { once: true });
-window.addEventListener('keydown', __unlockAudio, { once: true });
-// HOTDORS: one-time user gesture gate for audio autoplay
-    let gestureOk = false;
-    const __gesturePlay = () => {
-      gestureOk = true;
-      try { humAudioRef.current && humAudioRef.current.play && humAudioRef.current.play().catch(()=>{}); } catch {}
-      window.removeEventListener('pointerdown', __gesturePlay);
-      window.removeEventListener('touchstart', __gesturePlay);
-      window.removeEventListener('keydown', __gesturePlay);
-    };
-    window.addEventListener('pointerdown', __gesturePlay, { once: true });
-    window.addEventListener('touchstart', __gesturePlay, { once: true });
-    window.addEventListener('keydown', __gesturePlay, { once: true });
-
     const eventHandlers = [
-      // ========== CURSOR SHOW ==========
+      // CURSOR SHOW
       BeatBus.on(EVENTS.CURSOR_SHOW, () => {
         console.log('   OpeningSequence: CURSOR_SHOW received');
         setPhase('cursor');
         setCursorVisible(true);
       }),
 
-      // ========== CURSOR BLINK (Must blink TWICE per SST v3.0) ==========
+      // CURSOR BLINK
       BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
         console.log(`   OpeningSequence: CURSOR_BLINK received (${count} times)`);
-
-        // Blink exactly N times
+        
         for (let i = 0; i < count && mounted.current; i++) {
           setCursorVisible(false);
           await sleep(interval);
@@ -139,96 +93,78 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
           setCursorVisible(true);
           await sleep(interval);
         }
-
-        setCursorVisible(false); // Hide cursor after blinking
+        
+        setCursorVisible(false);
       }),
 
-      // ========== TERMINAL TYPE (SST v3.0 exact text) ==========
-      BeatBus.on(
-        EVENTS.TERMINAL_TYPE,
-        async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
-          console.log('   OpeningSequence: TERMINAL_TYPE received');
-          setPhase('typing');
-          setCursorVisible(false);
-          typingToken.current += 1;
-          const token = typingToken.current;
+      // TERMINAL TYPE
+      BeatBus.on(EVENTS.TERMINAL_TYPE, async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
+        console.log('   OpeningSequence: TERMINAL_TYPE received');
+        setPhase('typing');
+        setCursorVisible(false);
+        typingToken.current += 1;
+        const token = typingToken.current;
 
-          // Clear previous content
-          setLines([]);
+        setLines([]);
 
-          // Type each line character by character
-          for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
+        for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
+          if (!mounted.current || token !== typingToken.current) return;
+
+          const line = toType[lineIdx];
+          setCurrentTypingLine(lineIdx);
+          let currentText = '';
+
+          setLines(prev => [...prev, '']);
+
+          for (let charIdx = 0; charIdx < line.length; charIdx++) {
             if (!mounted.current || token !== typingToken.current) return;
 
-            const line = toType[lineIdx];
-            setCurrentTypingLine(lineIdx);
-            let currentText = '';
+            currentText += line[charIdx];
 
-            // Add empty line first
-            setLines(prev => [...prev, '']);
-
-            // Type character by character
-            for (let charIdx = 0; charIdx < line.length; charIdx++) {
-              if (!mounted.current || token !== typingToken.current) return;
-
-              currentText += line[charIdx];
-
-              // Trigger key click sound for each character
-              if (keyClickAudioRef.current) {
-                keyClickAudioRef.current.currentTime = 0;
-                keyClickAudioRef.current.play().catch(() => {});
-              }
-
-              // Update the current line
-              setLines(prev => {
-                const updated = [...prev];
-                updated[lineIdx] = currentText;
-                return updated;
-              });
-
-              await sleep(typeSpeed);
+            if (keyClickAudioRef.current && audioUnlocked.current) {
+              keyClickAudioRef.current.currentTime = 0;
+              keyClickAudioRef.current.play().catch(() => {});
             }
 
-            // Pause between lines
-            if (lineIdx < toType.length - 1) {
-              await sleep(lineDelay);
-            }
+            setLines(prev => {
+              const updated = [...prev];
+              updated[lineIdx] = currentText;
+              return updated;
+            });
+
+            await sleep(typeSpeed);
           }
 
-          setCurrentTypingLine(-1);
+          if (lineIdx < toType.length - 1) {
+            await sleep(lineDelay);
+          }
         }
-      ),
 
-      // ========== SCREEN FILL (Scrolling "HELLO CURTIS") ==========
-      BeatBus.on(
-        EVENTS.SCREEN_FILL,
-        ({
-          text = 'HELLO CURTIS ', // FIXED: Correct spelling
-          scrollSpeed = 50,
-        } = {}) => {
-          console.log('   OpeningSequence: SCREEN_FILL received');
-          setPhase('fill');
+        setCurrentTypingLine(-1);
+      }),
 
-          // Fill screen with scrolling text
-          const fillText = text.repeat(10); // Repeat across width
-          try { window.__opening_fill_start_lines = 0; } catch {}
-          setScreenFillLines([]);
+      // SCREEN FILL
+      BeatBus.on(EVENTS.SCREEN_FILL, ({ text = 'HELLO CURTIS ', scrollSpeed = 50 } = {}) => {
+        console.log('   OpeningSequence: SCREEN_FILL received');
+        setPhase('fill');
 
-          // Add new lines progressively
-          addInterval(() => {
-            setScreenFillLines(prev => {
-              if (prev.length >= 30) {
-                // Screen is full
-                // Scroll effect: remove first, add new at bottom
-                return [...prev.slice(1), fillText];
-              }
-              return [...prev, fillText];
-            });
-          }, scrollSpeed);
-        }
-      ),
+        const fillText = text.repeat(10);
+        setScreenFillLines([]);
 
-      // ========== AUDIO: COMPUTER HUM ==========
+        const intervalId = addInterval(() => {
+          setScreenFillLines(prev => {
+            if (prev.length >= 30) {
+              return [...prev.slice(1), fillText];
+            }
+            return [...prev, fillText];
+          });
+        }, scrollSpeed);
+
+        // Store interval ID for cleanup
+        intervals.current.add(intervalId);
+      }),
+
+      // AUDIO COMPUTER HUM
       BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {
         console.log(`   OpeningSequence: Computer hum at volume ${volume}`);
         if (!humAudioRef.current) {
@@ -236,35 +172,38 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
           humAudioRef.current.loop = true;
           humAudioRef.current.volume = volume;
         }
-        humAudioRef.current
-          .play()
-          .catch(e => console.log('Audio playback requires user interaction:', e));
+        
+        if (audioUnlocked.current) {
+          humAudioRef.current.play().catch(e => 
+            console.log('Audio playback waiting for user interaction')
+          );
+        }
       }),
 
-      // ========== AUDIO: KEY CLICKS ==========
+      // AUDIO KEY CLICK
       BeatBus.on(EVENTS.AUDIO_KEY_CLICK, () => {
         if (!keyClickAudioRef.current) {
           keyClickAudioRef.current = new Audio('/audio/key-click.mp3');
           keyClickAudioRef.current.volume = 0.5;
         }
-        keyClickAudioRef.current.currentTime = 0;
-        keyClickAudioRef.current.play().catch(() => {});
+        
+        if (audioUnlocked.current) {
+          keyClickAudioRef.current.currentTime = 0;
+          keyClickAudioRef.current.play().catch(() => {});
+        }
       }),
 
-      // ========== PARTICLES EMERGING (Fade out) ==========
+      // PARTICLES START EMERGING
       BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
         console.log('   OpeningSequence: Particles emerging, fading out');
 
-        // Fade out gracefully
         addTimeout(() => {
           setVisible(false);
 
-          // Cleanup after fade
           addTimeout(() => {
             setPhase('complete');
             clearAllTimers();
 
-            // Stop audio
             if (humAudioRef.current) {
               humAudioRef.current.pause();
               humAudioRef.current = null;
@@ -273,14 +212,13 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
         }, 100);
       }),
 
-      // ========== DIRECTOR CANCEL ==========
+      // DIRECTOR CANCEL
       BeatBus.on(EVENTS.DIRECTOR_CANCEL, () => {
         console.log('   OpeningSequence: Director cancelled');
         setVisible(false);
         setPhase('complete');
         clearAllTimers();
 
-        // Stop all audio
         if (humAudioRef.current) {
           humAudioRef.current.pause();
           humAudioRef.current = null;
@@ -298,7 +236,6 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
       clearAllTimers();
       eventHandlers.forEach(off => off && off());
 
-      // Stop audio on unmount
       if (humAudioRef.current) {
         humAudioRef.current.pause();
       }
@@ -314,7 +251,8 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
   }
 
   return (
-    <div className="opening-sequence"
+    <div 
+      className="opening-sequence"
       style={{
         position: 'fixed',
         top: 0,
@@ -322,8 +260,8 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
         width: '100vw',
         height: '100vh',
         backgroundColor: '#000000',
-        color: '#00FF00', // SST v3.0 exact green
-        fontFamily: "'Courier New', monospace",
+        color: '#00FF00',
+        fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
         fontSize: '1.5rem',
         lineHeight: 1.4,
         zIndex: 9999,
@@ -337,7 +275,7 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
         <div style={{ width: '100%', height: '100%', backgroundColor: '#000000' }} />
       )}
 
-      {/* CURSOR PHASE - Blinks exactly twice */}
+      {/* CURSOR PHASE */}
       {phase === 'cursor' && (
         <div
           style={{
@@ -353,7 +291,7 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
               fontSize: '2rem',
               color: '#00FF00',
               opacity: cursorVisible ? 1 : 0,
-              textShadow: cursorVisible ? '0 0 10px #00FF00' : 'none',
+              textShadow: 'none', // NO GLOW
               transition: 'opacity 100ms',
             }}
           >
@@ -362,7 +300,7 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
         </div>
       )}
 
-      {/* TERMINAL TYPING PHASE - SST v3.0 exact text */}
+      {/* TERMINAL TYPING PHASE */}
       {phase === 'typing' && (
         <div
           style={{
@@ -377,10 +315,10 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
             <pre
               style={{
                 color: '#00FF00',
-                fontFamily: "'Courier New', monospace",
+                fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
                 fontSize: '1.5rem',
                 lineHeight: 1.6,
-                textShadow: '0 0 5px #00FF00',
+                textShadow: 'none', // NO GLOW
                 whiteSpace: 'pre-wrap',
               }}
             >
@@ -391,7 +329,7 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
                     <span
                       style={{
                         animation: 'blink 1s step-end infinite',
-                        textShadow: '0 0 10px #00FF00',
+                        textShadow: 'none', // NO GLOW
                       }}
                     >
                       _
@@ -404,7 +342,7 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
         </div>
       )}
 
-      {/* SCREEN FILL PHASE - Scrolling "HELLO CURTIS" */}
+      {/* SCREEN FILL PHASE */}
       {phase === 'fill' && (
         <div
           style={{
@@ -421,11 +359,11 @@ window.addEventListener('keydown', __unlockAudio, { once: true });
           <pre
             style={{
               color: '#00FF00',
-              fontFamily: "'Courier New', monospace",
+              fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
               fontSize: '1.2rem',
               lineHeight: 1.2,
               opacity: 0.8,
-              textShadow: '0 0 3px #00FF00',
+              textShadow: 'none', // NO GLOW
               whiteSpace: 'pre',
             }}
           >

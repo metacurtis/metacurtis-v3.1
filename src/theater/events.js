@@ -1,41 +1,48 @@
-// src/theater/events.js
-// SST v3.0 Complete Event Catalog - All requirements included
+// SST v3.3 Complete Event Catalog — pinned contract (clean & safe)
 
 export const EVENTS = {
-  // Opening phases (SST v3.0 compliant)
+  // Opening (overlay-only; driven by Director)
   CURSOR_SHOW: 'CURSOR_SHOW',
-  CURSOR_BLINK: 'CURSOR_BLINK', // Controls exact blink count
-  TERMINAL_TYPE: 'TERMINAL_TYPE',
-  SCREEN_FILL: 'SCREEN_FILL',
+  CURSOR_BLINK: 'CURSOR_BLINK',                 // { count, interval }
+  TERMINAL_TYPE: 'TERMINAL_TYPE',               // { lines[], typeSpeed, lineDelay }
+  SCREEN_FILL: 'SCREEN_FILL',                   // { text, scrollSpeed }
 
-  // Critical emergence handoff
-  BUILD_EMERGENCE_BLUEPRINT: 'BUILD_EMERGENCE_BLUEPRINT',
+  // Renderer/Theater gates
+  ENGINE_VIEWPORT_HINT: 'ENGINE_VIEWPORT_HINT', // { width, height, aspect }
+
+  // Emergence handoff
+  BUILD_EMERGENCE_BLUEPRINT: 'BUILD_EMERGENCE_BLUEPRINT', // { sourceText, count }
   PARTICLES_START_EMERGING: 'PARTICLES_START_EMERGING',
-  PARTICLES_EMERGED: 'PARTICLES_EMERGED',
+  PARTICLES_EMERGED: 'PARTICLES_EMERGED',                 // emitted ONCE by renderer
 
-  // Narrative control
-  START_NARRATIVE: 'START_NARRATIVE',
+  // Renderer tuning & morph
+  RENDERER_TUNE: 'RENDERER_TUNE',               // { driftAmp, vibeAmp, flutterAmp, verticalBias, rotZSpeedDegPerSec, trails, brightToward, dimAway, tierReveal, tierSpeedScale, breathingAmp, breathingPeriodSec, flareProb, flareGain, pulseOnce }
+  PARTICLE_PHASE: 'PARTICLE_PHASE',             // { name: 'swirl_full' | 'constellation' | ... }
+  MORPH_PROGRESS: 'MORPH_PROGRESS',             // { value: 0..1 }
+
+  // Narrative & stage control (canonical shapes)
+  START_NARRATIVE: 'START_NARRATIVE',           // { stage }
   NARRATIVE_STAGE_CHANGE: 'NARRATIVE_STAGE_CHANGE',
   NARRATIVE_LINE: 'NARRATIVE_LINE',
+  STAGE_CHANGE: 'STAGE_CHANGE',                 // { from, to }  ← canonical (old `{stage}` is deprecated)
+  QUALITY_CHANGE: 'QUALITY_CHANGE',             // { tier }      ← canonical (old `{quality}` is deprecated)
+  BLUEPRINT_READY: 'BLUEPRINT_READY',           // { blueprint, stage?, quality?, mode? }
 
-  // Memory fragments (SST v3.0 scroll percentages)
+  // Scroll / fragments
   ENABLE_SCROLL: 'ENABLE_SCROLL',
   MEMORY_FRAGMENT_CHECK: 'MEMORY_FRAGMENT_CHECK',
-  TRIGGER_FRAGMENT: 'TRIGGER_FRAGMENT',
+  MEMORY_FRAGMENT_TRIGGER: 'MEMORY_FRAGMENT_TRIGGER', // canonical
+  // Back-compat alias: keep, but map to canonical string (no self-reference to EVENTS)
+  TRIGGER_FRAGMENT: 'MEMORY_FRAGMENT_TRIGGER',
 
-  // Audio system (SST v3.0 requirements)
-  AUDIO_START_STAGE: 'AUDIO_START_STAGE',
+  // Audio
+  AUDIO_START_STAGE: 'AUDIO_START_STAGE',       // { stage }
   AUDIO_KEY_CLICK: 'AUDIO_KEY_CLICK',
   AUDIO_COMPUTER_HUM: 'AUDIO_COMPUTER_HUM',
   AUDIO_CROSSFADE: 'AUDIO_CROSSFADE',
 
-  // Tier behaviors (SST v3.0 specifications)
+  // Tiers (optional)
   TIER_BEHAVIOR_UPDATE: 'TIER_BEHAVIOR_UPDATE',
-
-  // Stage management
-  STAGE_CHANGE: 'STAGE_CHANGE',
-  QUALITY_CHANGE: 'QUALITY_CHANGE',
-  BLUEPRINT_READY: 'BLUEPRINT_READY',
 
   // Prewarm
   PREWARM_GENESIS_BLUEPRINT: 'PREWARM_GENESIS_BLUEPRINT',
@@ -45,26 +52,33 @@ export const EVENTS = {
   DIRECTOR_CANCEL: 'DIRECTOR_CANCEL',
 };
 
-// SST v3.0 Memory Fragment trigger points
+// SST v3.x Memory Fragment trigger points (scroll %)
 export const FRAGMENT_TRIGGERS = {
-  genesis: 5, // Commodore 64 at 5%
-  discipline: 20, // Marine emblem at 20%
-  neural: 35, // Chat interface at 35%
-  velocity: 49, // GitHub graph at 49%
-  architecture: 63, // FPS counter at 63%
-  harmony: 77, // Live code at 77%
-  transcendence: 92, // Particle count at 92%
+  genesis: 5,
+  discipline: 20,
+  neural: 35,
+  velocity: 49,
+  architecture: 63,
+  harmony: 77,
+  transcendence: 92,
 };
 
-// SST v3.0 Stage audio mappings
+// Stage → audio file mapping
 export const STAGE_AUDIO = {
-  genesis: 'genesis-hum.mp3', // 1980s computer hum
-  discipline: 'discipline-march.mp3', // Military rhythm
-  neural: 'neural-synapse.mp3', // Digital awakening
-  velocity: 'velocity-thunder.mp3', // Electronic acceleration
-  architecture: 'architecture-build.mp3', // Construction sounds
-  harmony: 'harmony-flow.mp3', // Flow state tones
-  transcendence: 'transcendence-cosmos.mp3', // Cosmic harmony
+  genesis: 'genesis-hum.mp3',
+  discipline: 'discipline-march.mp3',
+  neural: 'neural-synapse.mp3',
+  velocity: 'velocity-thunder.mp3',
+  architecture: 'architecture-build.mp3',
+  harmony: 'harmony-flow.mp3',
+  transcendence: 'transcendence-cosmos.mp3',
 };
+
+// Dev convenience: expose catalog to the console in dev builds
+if (typeof window !== 'undefined' && import.meta?.env?.DEV) {
+  // Safe pointer for ad-hoc console usage: EVENTS.ENGINE_VIEWPORT_HINT, etc.
+  // (ESM remains the source of truth in code)
+  window.EVENTS = EVENTS;
+}
 
 export default EVENTS;
