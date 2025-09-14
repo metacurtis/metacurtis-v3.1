@@ -39,7 +39,7 @@ class WebGLSink {
     };
   }
   
-    wrapContext(gl) {
+      wrapContext(gl) {
     if (!gl || this.contexts.has(gl)) return;
     
     this.contexts.set(gl, true);
@@ -236,7 +236,7 @@ class WebGLSink {
     this.store.add(incident);
   }
   
-    hookThree() {
+      hookThree() {
     const sink = this;
     const THREE = window?.THREE;
     if (!THREE?.WebGLRenderer) return;

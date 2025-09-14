@@ -127,7 +127,7 @@ export const Playbooks = {
 write(P('console/runtime/playbooks.js'), playbooksJs);
 
 // --- 3) runtime injector (incidents + shadow renderer + UI + runner) ---
-const injectJs = `// console/runtime/inject.js
+const injectJs = `// canon-console/browser/inject.js
 // Canon Console Level 2 – Healer runtime (dev only).
 // - Incident store + sinks (console/window/WebGL-ish)
 // - ShadowRenderer (offscreen compile/validate loop)
@@ -434,7 +434,7 @@ import { Playbooks } from './playbooks.js';
 })();
 `;
 
-write(P('console/runtime/inject.js'), injectJs);
+write(P('canon-console/browser/inject.js'), injectJs);
 
 // --- 4) patch src/main.jsx (dev import) ---
 const mainPath = P('src/main.jsx');
@@ -445,7 +445,7 @@ if (mainSrc) {
 `if (import.meta.env.DEV) {`,
 `if (import.meta.env.DEV) {
   // Canon Console L2 (dev runtime)
-  import(/* @vite-ignore */ '../console/runtime/inject.js')
+  import(/* @vite-ignore */ '../canon-console/browser/inject.js')
     .then(()=>console.log('✅ Canon L2 injected'))
     .catch((err)=>console.warn('Canon L2 not found (optional):', err));`
     );
@@ -462,7 +462,7 @@ const pkgPath = P('package.json');
 const pkg = JSON.parse(read(pkgPath)||'{}');
 pkg.scripts = pkg.scripts || {};
 if (!pkg.scripts['canon:level2']) pkg.scripts['canon:level2'] = 'node scripts/canon-level2.cjs';
-if (!pkg.scripts['canon:level2:verify']) pkg.scripts['canon:level2:verify'] = 'node -e "console.log(\\\"Canon L2 files:\\\");[\\\"console/runtime/inject.js\\\",\\\"console/runtime/steps.js\\\",\\\"console/runtime/playbooks.js\\\"].forEach(f=>console.log(require(\\\"fs\\\").existsSync(f)?\\\"✓ \\\\t\\\"+f:\\\"✗ \\\\t\\\"+f))"';
+if (!pkg.scripts['canon:level2:verify']) pkg.scripts['canon:level2:verify'] = 'node -e "console.log(\\\"Canon L2 files:\\\");[\\\"canon-console/browser/inject.js\\\",\\\"console/runtime/steps.js\\\",\\\"console/runtime/playbooks.js\\\"].forEach(f=>console.log(require(\\\"fs\\\").existsSync(f)?\\\"✓ \\\\t\\\"+f:\\\"✗ \\\\t\\\"+f))"';
 write(pkgPath, JSON.stringify(pkg,null,2));
 
 console.log('\\n🎯 Level 2 installed. Next:');

@@ -22,7 +22,7 @@ const ensurePkgScript=(name,val)=>{const pkgPath=P('package.json'); const pkg=JS
 // resolve console base (prefer existing canon-console/)
 const bases=[
   {base:'canon-console', inj:'canon-console/browser/inject.js'},
-  {base:'console', inj:'console/runtime/inject.js'}
+  {base:'canon-console', inj:'canon-console/browser/inject.js'}
 ];
 let base = bases.find(b=>fs.existsSync(P(b.inj))) || bases[0]; // default to canon-console
 const baseDir=base.base; const injPath=P(base.inj);

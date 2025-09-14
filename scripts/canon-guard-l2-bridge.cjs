@@ -61,10 +61,10 @@ const bridgeJs = `// console/runtime/bridge-guard.js
 W(P('console/runtime/bridge-guard.js'), bridgeJs);
 
 /* 2) Patch inject.js to lazy-load the bridge (idempotent) */
-const injPath = P('console/runtime/inject.js');
+const injPath = /* LEGACY L2 DISABLED */ null;
 let inj = R(injPath);
 if (!inj) {
-  console.warn('⚠️ console/runtime/inject.js not found. Did you run the Level 2 installer?');
+  console.warn('⚠️ Legacy L2 is disabled; using browser injector.
 } else if (!/bridge-guard\.js/.test(inj)) {
   inj = inj.replace(/deps\(\)\.catch\(\s*=>\s*\{\}\s*\);/m,
     `deps().catch(()=>{});
@@ -120,7 +120,7 @@ const pkg = JSON.parse(R(pkgPath) || '{}');
 pkg.scripts = pkg.scripts || {};
 if (!pkg.scripts['canon:bridge:l2']) pkg.scripts['canon:bridge:l2'] = 'node scripts/canon-guard-l2-bridge.cjs';
 if (!pkg.scripts['canon:bridge:l2:verify']) pkg.scripts['canon:bridge:l2:verify'] =
-  'node -e "const fs=require(\'fs\');[[\'console/runtime/bridge-guard.js\'],[\'console/runtime/inject.js\'],[\'console/runtime/steps.js\'],[\'console/runtime/playbooks.js\']].forEach(([f])=>console.log((fs.existsSync(f)?\'✓ \':\'✗ \')+f))"';
+  'node -e "const fs=require(\'fs\');[[\'console/runtime/bridge-guard.js\'],[\'canon-console/browser/inject.js\'],[\'console/runtime/steps.js\'],[\'console/runtime/playbooks.js\']].forEach(([f])=>console.log((fs.existsSync(f)?\'✓ \':\'✗ \')+f))"';
 W(pkgPath, JSON.stringify(pkg,null,2));
 
 console.log('\\n🎯 Bridge ready.');

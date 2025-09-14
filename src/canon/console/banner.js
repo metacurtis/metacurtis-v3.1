@@ -1,4 +1,4 @@
-// __CANON_INSTALLED__
+// LEGACY DISABLED: // LEGACY DISABLED: // __CANON_INSTALLED__
 import BeatBus from '@/theater/bus';
 let heartbeatTimer;
 
