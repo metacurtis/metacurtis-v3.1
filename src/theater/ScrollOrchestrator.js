@@ -24,6 +24,12 @@ export default class ScrollOrchestrator {
     this.morph = 0;
     this.morphTarget = 0;
     this.fragmentFired = new Set();
+  
+    this._rafId = 0;
+    
+    // throttle / change-detect emit guards
+    this._lastEmitVal = -1;
+    this._lastEmitTs = 0;
   }
 
   start() {
@@ -33,22 +39,8 @@ export default class ScrollOrchestrator {
     window.addEventListener('scroll', this._onScroll, { passive: true });
     // kick once
     this._onScroll();
-    // RAF tick for smoothing / overshoot
-    const loop = () => {
-      if (!this.running) return;
-      // smoothing 0.15, overshoot 0.05
-      const smoothing = Canonical?.scrollAndMorph?.morphResponse?.smoothing ?? 0.15;
-      const overshoot = Canonical?.scrollAndMorph?.morphResponse?.overshoot ?? 0.05;
-      const delta = this.morphTarget - this.morph;
-      this.morph += delta * smoothing;
-      // small elastic settle near 1.0
-      if (this.morphTarget > 0.95 && this.morph > 0.95) {
-        this.morph = Math.min(1, this.morph + overshoot * (1 - this.morph));
-      }
-      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: clamp01(this.morph) });
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
+    // schedule smoothing loop
+    this._schedule();
     // dev
     if (typeof window !== 'undefined') window.__scrollOrchestrator = this;
   }
@@ -57,6 +49,8 @@ export default class ScrollOrchestrator {
     if (!this.running) return;
     this.running = false;
     window.removeEventListener('scroll', this._onScroll);
+  
+    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = 0; }
   }
 
   _onScroll() {
@@ -82,6 +76,8 @@ export default class ScrollOrchestrator {
       // v3.3 morph: speedMultiplier=2.0
       const speed = Canonical?.scrollAndMorph?.morphResponse?.speedMultiplier ?? 2.0;
       this.morphTarget = clamp01(local * speed);
+      // ensure the loop runs to converge to new target
+      this._schedule();
 
       // stage change event
       if (stageIdx !== this.lastStageIndex && stageName) {
