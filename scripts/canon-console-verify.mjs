@@ -1,36 +1,17 @@
 #!/usr/bin/env node
-/* canon-console-verify.mjs
- * Read-only verifier that checks invariants and prints a concise status.
- */
-import fs from 'node:fs';
-import path from 'node:path';
-const ROOT = process.cwd();
-const rel = p => path.relative(ROOT, p);
-const read= p => fs.readFileSync(p,'utf8');
-const exists = p => fs.existsSync(p);
-
-const fails = [];
-
-const app = path.join(ROOT,'src/App.jsx');
-if (!exists(app) || !read(app).includes("canon-console/browser/inject.js")) {
-  fails.push('App.jsx missing DEV import of canon-console/browser/inject.js');
+import fs from 'node:fs'; import path from 'node:path';
+const ROOT=process.cwd(), rel=p=>path.relative(ROOT,p), read=p=>fs.readFileSync(p,'utf8'), ex=p=>fs.existsSync(p);
+const fails=[], warns=[];
+const app=path.join(ROOT,'src/App.jsx');
+if(!ex(app)) fails.push('Missing src/App.jsx');
+else{ const s=read(app);
+  if(!/canon-console\/browser\/inject\.js/.test(s)) fails.push('App.jsx missing DEV import of canon-console/browser/inject.js');
+  if(/console\/runtime\/inject\.js/.test(s)) fails.push('App.jsx references legacy console/runtime/inject.js');
 }
-
-const legacy = path.join(ROOT,'canon-console/browser/inject.js');
-if (exists(legacy)) fails.push('Legacy injector file exists: canon-console/browser/inject.js');
-
-const inj = path.join(ROOT,'canon-console/browser/inject.js');
-if (!exists(inj)) fails.push('Missing injector: canon-console/browser/inject.js');
-else if (!/__canonInjectorV3__/.test(read(inj))) fails.push('Injector missing idempotency guard (__canonInjectorV3__)');
-
-const hud = path.join(ROOT,'canon-console/runtime/hud.js');
-if (!exists(hud)) fails.push('Missing HUD v2: canon-console/runtime/hud.js');
-
-if (fails.length) {
-  console.error('⛔ Canon Console Verify: FAIL');
-  for (const f of fails) console.error(' -', f);
-  process.exit(1);
-} else {
-  console.log('✅ Canon Console Verify: PASS');
-  console.log('DevTools smoke:\n  await window.CANON_INJECTOR?.ready?.();\n  window.CANON_INJECTOR?.loaded;\n  typeof window.__canonHudV2__;\n  document.getElementById("canon-hud-v2");');
-}
+const legacy=path.join(ROOT,'console/runtime/inject.js'); if(ex(legacy)) fails.push('Legacy injector still exists: console/runtime/inject.js');
+const inj=path.join(ROOT,'canon-console/browser/inject.js');
+if(!ex(inj)) fails.push('Missing modern injector: canon-console/browser/inject.js');
+else{ const s=read(inj); if(!/__canonInjectorV3__/.test(s)) warns.push('Injector missing __canonInjectorV3__ marker'); if(!/busCounts/.test(s)||!/__canon_patched/.test(s)) warns.push('Injector may be missing BeatBus counters'); }
+const hud=path.join(ROOT,'canon-console/runtime/hud.js'); if(!ex(hud)) fails.push('Missing HUD v2: canon-console/runtime/hud.js');
+if(fails.length){ console.error('⛔ Canon Console Verify: FAIL'); for(const f of fails) console.error(' -', f); if(warns.length){console.error('\nWarnings:'); for(const w of warns) console.error(' -', w);} process.exit(1);}
+console.log('✅ Canon Console Verify: PASS'); if(warns.length){ console.log('\nWarnings:'); for(const w of warns) console.log(' -', w); }

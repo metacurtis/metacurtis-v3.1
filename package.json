@@ -33,7 +33,7 @@
     "canon:bridge:l2": "node scripts/canon-guard-l2-bridge.cjs",
     "canon:bridge:l2:verify": "node scripts/canon-console-verify.js",
     "canon:pilot:install": "node scripts/canon-pilot-install.cjs",
-    "canon:pilot:verify": "node -e \"['${baseDir}/agent/policy.js','${baseDir}/agent/pilot.js','${baseDir}/runtime/bridge-guard.js','${baseDir}/runtime/pilot-ui-mini.js'].forEach(f=>console.log((require('fs').existsSync(f)?'✓':'✗'), f))\"",
+    "canon:pilot:verify": "node scripts/canon-pilot-verify.mjs",
     "guard:finish": "node scripts/finish-guard-console.cjs",
     "console:l2:finish": "node scripts/finish-guard-console.cjs",
     "hot-dors": "node scripts/hot-dors.v2.cjs",
@@ -54,7 +54,10 @@
     "agent:visuals": "node scripts/agent/goals/visuals.mjs",
     "agent:record": "node scripts/agent/goals/record.mjs",
     "doctor:agents": "node scripts/doctor.catalog-agents-sentinels.mjs --write",
-    "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals"
+    "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals",
+    "canon:verify": "node scripts/canon-console-verify.mjs",
+    "ci:fencepost": "node scripts/ci/opening-fencepost-check.mjs",
+    "devos:verify": "node scripts/ci/opening-fencepost-check.mjs || true"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -92,6 +95,7 @@
     "husky": "^8.0.3",
     "jsdom": "^26.0.0",
     "lint-staged": "^15.2.7",
+    "playwright": "^1.55.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.7",

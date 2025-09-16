@@ -7,3 +7,5 @@ coverage/
 
 # HOT-DORS
 .hotdors_backups/
+.canon_backups/
+.vision/telemetry/
