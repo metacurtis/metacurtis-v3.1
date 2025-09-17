@@ -1,11 +1,30 @@
+// >>> Throttled Morph Emitter v1 <<<
+let __lastMorph = -1;
+let __lastMorphEmit = 0;
+/** Local throttle config (ms) can be overridden by localStorage.canonMorphThrottleMs */
+function __getMorphThrottleMs() {
+  try {
+    return Math.max(0, parseInt(localStorage.getItem('canonMorphThrottleMs') || '80', 10));
+  } catch {
+    return 80;
+  }
+}
+function __emitMorphThrottled(BeatBus, EVENTS, v) {
+  try {
+    const EPS = 0.005; // 0.5% change
+    const now = performance.now();
+    const MIN = __getMorphThrottleMs(); // default 80ms
+    if (typeof v !== 'number') return;
+    if (Math.abs(v - __lastMorph) < EPS) return; // no change
+    if (now - __lastMorphEmit < MIN) return; // too soon
+    __lastMorph = v;
+    __lastMorphEmit = now;
+    BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', { value: v });
+  } catch {}
+}
+
 // State Command Layer with proper cleanup
-import { 
-  stageAtom,
-  narrativeAtom,
-  qualityAtom,
-  performanceAtom,
-  interactionAtom
-} from '../atoms';
+import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom } from '../atoms';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
 
@@ -20,7 +39,7 @@ class StateCommands {
   wireAtomsToBeatBus() {
     // Stage changes → BeatBus
     let prevStage = stageAtom.getState?.()?.currentStage;
-    const stageSub = stageAtom.subscribe?.((s) => {
+    const stageSub = stageAtom.subscribe?.(s => {
       const next = s.currentStage;
       if (next !== prevStage) {
         BeatBus.emit(EVENTS.STAGE_CHANGE, { from: prevStage, to: next, reason: 'atom' });
@@ -38,10 +57,10 @@ class StateCommands {
 
     // Morph progress from narrativeAtom
     let lastMorph = narrativeAtom.getState?.()?.morphProgress ?? 0;
-    const morphSub = narrativeAtom.subscribe?.((s) => {
+    const morphSub = narrativeAtom.subscribe?.(s => {
       const v = Number(s.morphProgress ?? 0);
       if (v !== lastMorph) {
-        BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: v });
+        __emitMorphThrottled(BeatBus, EVENTS, v);
         lastMorph = v;
       }
     });
@@ -50,7 +69,7 @@ class StateCommands {
 
   async executeClimaxMorph({ text, duration = 3000 }) {
     this.createSnapshot('pre-morph');
-    
+
     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
     interactionAtom.setState?.(prev => ({ ...prev, locked: true }));
 
@@ -58,7 +77,7 @@ class StateCommands {
     const animate = () => {
       const progress = Math.min((performance.now() - startTime) / duration, 1);
       narrativeAtom.setMorphProgress?.(progress);
-      
+
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
@@ -66,20 +85,20 @@ class StateCommands {
         interactionAtom.setState?.(prev => ({ ...prev, locked: false }));
       }
     };
-    
+
     requestAnimationFrame(animate);
   }
 
   interruptForFragment(fragment) {
     this.createSnapshot('fragment');
-    
+
     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
-    interactionAtom.setState?.(prev => ({ 
-      ...prev, 
+    interactionAtom.setState?.(prev => ({
+      ...prev,
       memoryFragment: fragment,
-      locked: true 
+      locked: true,
     }));
-    
+
     BeatBus.emit(EVENTS.MEMORY_FRAGMENT_START, fragment);
   }
 
@@ -103,8 +122,8 @@ class StateCommands {
         stage: stageAtom.getState?.(),
         narrative: narrativeAtom.getState?.(),
         quality: qualityAtom.getState?.(),
-        interaction: interactionAtom.getState?.()
-      }
+        interaction: interactionAtom.getState?.(),
+      },
     });
   }
 

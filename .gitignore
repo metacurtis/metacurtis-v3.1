@@ -9,3 +9,7 @@ coverage/
 .hotdors_backups/
 .canon_backups/
 .vision/telemetry/
+
+# Canon backups/reports
+.canon_backups/
+.canon_reports/

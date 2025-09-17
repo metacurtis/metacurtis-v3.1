@@ -29,3 +29,36 @@ export const policy = {
   }
 };
 if (typeof window!=='undefined') window.CANON_POLICY = policy;
+
+
+/** Smart Degrade Policy (GPU-aware, risk-scored)
+ * Emits DEGRADE suggestion when fps is low on integrated GPUs.
+ * Keeps DEGRADE as suggest-only unless `auto=true` and confidence high.
+ */
+function smartDegradePolicy(ctx){
+  const gpu = (ctx && ctx.gpu) || {};
+  const last = ctx && ctx.lastIncident;
+  const isIntegrated = /Intel|Iris|UHD/i.test(String(gpu?.renderer||gpu?.vendor||''));
+  let riskScore = 0; // 0..100
+  if (last && (last.code==='FPS_LOW' || last.code==='VERIFY_FPS_FAIL')) riskScore += 40;
+  if (isIntegrated) riskScore += 35;
+  const action = (riskScore >= 60) ? 'DEGRADE' : 'OBSERVE';
+  const amount = (riskScore >= 80) ? 0.7 : 0.85; // drawRange scale
+  return { action, why:'smart-degrade', riskScore, isIntegrated, amount };
+}
+
+// Append to policy export if missing:
+try {
+  if (typeof policy === 'object') {
+    const base = policy.decisions;
+    policy.decisions = function(ctx){
+      const d = base ? base(ctx) : { action:'OBSERVE' };
+      const sd = smartDegradePolicy(ctx||{});
+      // Only upgrade to DEGRADE if sd asks for it and base didn't already decide something stronger
+      if (sd.action==='DEGRADE' && (d.action==='OBSERVE' || d.action==='RUN_PLAYBOOK')) {
+        return sd;
+      }
+      return d;
+    };
+  }
+} catch {}
