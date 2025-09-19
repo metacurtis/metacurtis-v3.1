@@ -3,30 +3,56 @@
 export const EVENTS = {
   // Opening (overlay-only; driven by Director)
   CURSOR_SHOW: 'CURSOR_SHOW',
-  CURSOR_BLINK: 'CURSOR_BLINK',                 // { count, interval }
-  TERMINAL_TYPE: 'TERMINAL_TYPE',               // { lines[], typeSpeed, lineDelay }
-  SCREEN_FILL: 'SCREEN_FILL',                   // { text, scrollSpeed }
+  CURSOR_BLINK: 'CURSOR_BLINK', // { count, interval }
+  TERMINAL_TYPE: 'TERMINAL_TYPE', // { lines[], typeSpeed, lineDelay }
+  SCREEN_FILL: 'SCREEN_FILL', // { text, scrollSpeed }
 
   // Renderer/Theater gates
   ENGINE_VIEWPORT_HINT: 'ENGINE_VIEWPORT_HINT', // { width, height, aspect }
 
   // Emergence handoff
-  BUILD_EMERGENCE_BLUEPRINT: 'BUILD_EMERGENCE_BLUEPRINT', // { sourceText, count }
+  // Canonical payload (SST v3.3):
+  // {
+  //   mode: 'emergence',
+  //   source: 'viewportSpread',
+  //   target: 'constellation',
+  //   count: number,
+  //   tierRatios?: [number, number, number, number],   // default [0.5, 0.2, 0.15, 0.15]
+  //   viewportHint?: { width: number, height: number, aspect: number },
+  //   direction?: 'implode' | 'explode'
+  // }
+  BUILD_EMERGENCE_BLUEPRINT: 'BUILD_EMERGENCE_BLUEPRINT',
+
   PARTICLES_START_EMERGING: 'PARTICLES_START_EMERGING',
-  PARTICLES_EMERGED: 'PARTICLES_EMERGED',                 // emitted ONCE by renderer
+
+  // Fencepost: emitted ONCE by the **engine** immediately after it emits BLUEPRINT_READY
+  // (If you later move ownership to the renderer, flip this comment and remove the CE emit.)
+  PARTICLES_EMERGED: 'PARTICLES_EMERGED',
 
   // Renderer tuning & morph
-  RENDERER_TUNE: 'RENDERER_TUNE',               // { driftAmp, vibeAmp, flutterAmp, verticalBias, rotZSpeedDegPerSec, trails, brightToward, dimAway, tierReveal, tierSpeedScale, breathingAmp, breathingPeriodSec, flareProb, flareGain, pulseOnce }
-  PARTICLE_PHASE: 'PARTICLE_PHASE',             // { name: 'swirl_full' | 'constellation' | ... }
-  MORPH_PROGRESS: 'MORPH_PROGRESS',             // { value: 0..1 }
+  // { driftAmp, vibeAmp, flutterAmp, verticalBias, rotZSpeedDegPerSec, trails, brightToward,
+  //   dimAway, tierReveal, tierSpeedScale, breathingAmp, breathingPeriodSec, flareProb, flareGain, pulseOnce }
+  RENDERER_TUNE: 'RENDERER_TUNE',
+
+  // { name: 'swirl_full' | 'constellation' | ... }
+  PARTICLE_PHASE: 'PARTICLE_PHASE',
+
+  // { value: 0..1 } — throttled by Director helper
+  MORPH_PROGRESS: 'MORPH_PROGRESS',
 
   // Narrative & stage control (canonical shapes)
-  START_NARRATIVE: 'START_NARRATIVE',           // { stage }
+  START_NARRATIVE: 'START_NARRATIVE', // { stage }
   NARRATIVE_STAGE_CHANGE: 'NARRATIVE_STAGE_CHANGE',
-  NARRATIVE_LINE: 'NARRATIVE_LINE',
-  STAGE_CHANGE: 'STAGE_CHANGE',                 // { from, to }  ← canonical (old `{stage}` is deprecated)
-  QUALITY_CHANGE: 'QUALITY_CHANGE',             // { tier }      ← canonical (old `{quality}` is deprecated)
-  BLUEPRINT_READY: 'BLUEPRINT_READY',           // { blueprint, stage?, quality?, mode? }
+  NARRATIVE_LINE: 'NARRIATIVE_LINE',
+
+  // Canonical (old `{stage}` deprecated)
+  STAGE_CHANGE: 'STAGE_CHANGE', // { from, to }
+
+  // Canonical (old `{quality}` deprecated)
+  QUALITY_CHANGE: 'QUALITY_CHANGE', // { tier }
+
+  // { blueprint, stage?, quality?, mode? } — CE emits; renderer consumes
+  BLUEPRINT_READY: 'BLUEPRINT_READY',
 
   // Scroll / fragments
   ENABLE_SCROLL: 'ENABLE_SCROLL',
@@ -36,7 +62,7 @@ export const EVENTS = {
   TRIGGER_FRAGMENT: 'MEMORY_FRAGMENT_TRIGGER',
 
   // Audio
-  AUDIO_START_STAGE: 'AUDIO_START_STAGE',       // { stage }
+  AUDIO_START_STAGE: 'AUDIO_START_STAGE', // { stage }
   AUDIO_KEY_CLICK: 'AUDIO_KEY_CLICK',
   AUDIO_COMPUTER_HUM: 'AUDIO_COMPUTER_HUM',
   AUDIO_CROSSFADE: 'AUDIO_CROSSFADE',
