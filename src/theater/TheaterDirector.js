@@ -147,7 +147,7 @@ class TheaterDirector {
         typeSpeed: 50,
         lineDelay: 300,
       });
-      await this.sleep(2500);
+      await this.sleep(3700);
       if (this.cancelled) {
         console.log('   Director cancelled during terminal phase');
         return;
