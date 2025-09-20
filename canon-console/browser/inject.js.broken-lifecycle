@@ -1,4 +1,4 @@
-/* Canon Dev-OS Injector v3.6 - Complete with Lifecycle Guards & Learning System
+/* Canon Dev-OS Injector v3.5 - SYNTAX FIXED
  * DEV-only (by host), idempotent, DOM-ready, BeatBus counters, /@fs fallback, early stats()
  */
 (() => {
@@ -25,8 +25,7 @@
 
   var L = CANON_INJECTOR.loaded || {
     bridge: false, pilot: false, vtap: false, mini: false,
-    hud: false, macros: false, steps: false, plays: false,
-    contractTap: false, lifecycleGuards: false, learningSystem: false, blueprintGuard: false
+    hud: false, macros: false, steps: false, plays: false
   };
   CANON_INJECTOR.loaded = L;
 
@@ -219,7 +218,7 @@
     })
     .then(function () { return imp('runtime/violation-tap.js', 'vtap'); })
     .then(function () {
-      // Install Contract-Tap
+      // Install Contract-Tap  
       return imp('runtime/contract-tap.js', 'contractTap', function (m) {
         try {
           const BeatBus = w.BeatBus || w.theaterBus?.bus;
@@ -234,9 +233,6 @@
             L.contractTap = true;
             console.log('📝 Contract-Tap installed');
           }
-        } catch (e) {
-          errors.push(e);
-          console.warn('Contract-Tap error:', e);
         }
       });
     })
@@ -252,7 +248,6 @@
           if (BeatBus && m.default) {
             m.default.install(BeatBus, incidentCollector);
             L.lifecycleGuards = true;
-            w.CANON_LIFECYCLE = m.default; // Expose for debugging
             console.log('🛡️ Lifecycle Guards installed');
           }
         } catch (e) {
@@ -272,12 +267,17 @@
           if (m.default) {
             m.default.install(incidentCollector);
             L.learningSystem = true;
-            w.CANON_LEARNING = m.default; // Expose for debugging
+            
+            // Expose for debugging
+            w.CANON_LEARNING = m.default;
             console.log('🧠 Learning System installed');
           }
         } catch (e) {
           errors.push(e);
-          console.warn('Learning System error:', e);
+          console.warn('Learning System error:', e);        }
+        } catch (e) {
+          errors.push(e);
+          console.warn('Contract-Tap error:', e);
         }
       });
     })
@@ -292,7 +292,7 @@
             if (evMod && evMod.EVENTS && m.default) {
               m.default.install(BeatBus, incidentCollector, evMod.EVENTS);
               L.blueprintGuard = true;
-              console.log('🛡️ Blueprint Guard V2 installed');
+              console.log('Blueprint Guard V2 installed');
             }
           });
         } catch (e) { 
@@ -309,13 +309,15 @@
         forceShowHud();
       });
     })
-    .then(function () { return imp('runtime/hud-macro-core.js', 'macros'); })
+    .then(function () {
+      return imp('runtime/hud-macro-core.js', 'macros');
+    })
     .then(function () { return ensureMacrosReady(); })
     .then(function () { return imp('runtime/steps.js', 'steps'); })
     .then(function () { return imp('runtime/playbooks.js', 'plays'); })
     .then(function () {
       w.__canonInjectorV3__.alive = true;
-      console.debug('[Canon] Injector v3.6 ready:', w.CANON_CONSOLE.stats());
+      console.debug('[Canon] Injector v3.5 ready:', w.CANON_CONSOLE.stats());
       
       forceShowHud();
       
@@ -414,7 +416,6 @@
   } catch (e) { console.warn('BusLimiter init failed', e); }
 })();
 
-// Set default limiter settings
 try {
   if (localStorage.getItem('canonBusLimiter') == null) {
     localStorage.setItem('canonBusLimiter', 'on');
@@ -424,4 +425,4 @@ try {
   }
 } catch {}
 
-console.log('\n╔════════════════════════════════════════╗\n║  Canon Dev-OS v3.6 - HUD Controls     ║\n╠════════════════════════════════════════╣\n║  F2         = Toggle HUD (easiest)     ║\n║  Ctrl+H     = Toggle HUD (laptop)      ║\n║  ?hud=1     = Force on via URL         ║\n║                                        ║\n║  Console Commands:                     ║\n║  CANON_CONSOLE.showHud()              ║\n║  CANON_CONSOLE.hideHud()              ║\n║  CANON_CONSOLE.stats()                ║\n╚════════════════════════════════════════╝\n');
+console.log('\n╔════════════════════════════════════════╗\n║  Canon Dev-OS v3.5 - HUD Controls     ║\n╠════════════════════════════════════════╣\n║  F2         = Toggle HUD (easiest)     ║\n║  Ctrl+H     = Toggle HUD (laptop)      ║\n║  ?hud=1     = Force on via URL         ║\n║                                        ║\n║  Console Commands:                     ║\n║  CANON_CONSOLE.showHud()              ║\n║  CANON_CONSOLE.hideHud()              ║\n╚════════════════════════════════════════╝\n');
