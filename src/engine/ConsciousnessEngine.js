@@ -1,187 +1,412 @@
 // src/engine/ConsciousnessEngine.js
-// Canon Dev-OS — Consciousness Engine (single writer for blueprints)
-// - Emits BLUEPRINT_READY only (renderer owns PARTICLES_EMERGED fencepost)
-// - Viewport-aware "spread → constellation" builders
-// - Idempotent/HMR-safe listeners; validated blueprints
+// Fixed version with working emergence blueprint builder
 
-import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+import * as THREE from 'three';
 
-import BeatBus from '@/theater/bus/index.js';
-import { EVENTS } from '@/theater/events.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
-import { createSeededRandom } from '@/utils/random.js';
-
-const ev = (k) => (EVENTS?.[k] || k); // tolerant listener mapping
+import { createSeededRandom } from '../utils/random.js';
+import BeatBus from '@/theater/bus';
+import { EVENTS } from '@/theater/events.js';
 
 class ConsciousnessEngine {
   constructor() {
-    // font & caches
+    // Text / font
     this.font = null;
     this.text3DCache = new Map();
+    this.text2DFallback = true;
+    this.loadFont();
 
-    // state
+    // State / caches
     this.blueprintCache = new Map();
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
-    this._openingPhase = true; // block non-genesis during opening
+    
+    // Opening gates
+    this._openingPhase = true;
     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };
 
-    // post-emergence handoff
-    this._lastEmergenceTargets = null;
+    // Emergence memory (for post-emergence genesis rebuild)
+    this._lastEmergenceBlueprint = null;
+    this._hasBuiltEmergence = false;
 
-    // wiring/diag
-    this._listeners = [];
-    this._eventLog = [];
-
-    this._initialized = false;
-    this.init();
-
-    console.log('🧠 ConsciousnessEngine initialized (single-writer for blueprints)');
+    // Initialize listeners IMMEDIATELY in constructor
+    this.initializeBeatBusListeners();
+    console.log('🧠 ConsciousnessEngine initialized with emergence support');
   }
 
-  // ---- lifecycle -------------------------------------------------------------
-  init() {
-    if (this._initialized) return;
-    this._initialized = true;
-    this.loadFont();
-    this._installListeners();
+  async init() {
+    // Do not auto-build during opening; Director drives flow
   }
 
-  _installListeners() {
-    this._cleanupListeners();
+  initializeBeatBusListeners() {
+    // Viewport hint from renderer - CRITICAL for proper sizing
+    BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, (hint = {}) => {
+      if (hint.width && hint.height) {
+        this._viewportHint = {
+          width: Number(hint.width),
+          height: Number(hint.height),
+          aspect: Number(hint.aspect || hint.width / hint.height),
+        };
+        console.log('🧠 Engine: viewport hint received', {
+          width: this._viewportHint.width.toFixed(1),
+          height: this._viewportHint.height.toFixed(1),
+        });
+      }
+    });
 
-    // Projection-matrix viewport hint (passive)
-    this._listeners.push(
-      BeatBus.on(ev('ENGINE_VIEWPORT_HINT'), (hint = {}) => {
-        const w = Number(hint.width),
-          h = Number(hint.height);
-        if (w && h) {
-          this._viewportHint = {
-            width: w,
-            height: h,
-            aspect: Number(hint.aspect || w / h),
-          };
-          this._log('viewport_hint', this._viewportHint);
+    // Opening gate ends only after Director enables scroll
+    BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+      console.log('🧠 Engine: Opening phase complete');
+      this._openingPhase = false;
+    });
+
+    // Stage changes - BLOCK non-genesis during opening
+    BeatBus.on(EVENTS.STAGE_CHANGE, (payload = {}) => {
+      const stage = payload.stage ?? payload.to;
+      if (!stage) return;
+
+      // CRITICAL: Block non-genesis stages during opening
+      if (this._openingPhase && stage !== 'genesis') {
+        console.log(`🧠 Engine: Blocking ${stage} during opening phase`);
+        return;
+      }
+
+      console.log(`🧠 Engine: Stage -> ${stage}`);
+      this.currentStage = stage;
+      this.buildAndEmitBlueprint(stage, this.currentQuality);
+    });
+
+    // Quality changes
+    BeatBus.on(EVENTS.QUALITY_CHANGE, (payload = {}) => {
+      const tier = payload.tier ?? payload.quality;
+      if (!tier) return;
+      console.log(`🧠 Engine: Quality -> ${tier}`);
+      this.currentQuality = tier;
+      this.buildAndEmitBlueprint(this.currentStage, tier);
+    });
+
+    // Prewarm emergence - cache but don't emit
+    BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
+      console.log('🧠 Engine: Prewarming genesis blueprint');
+      const key = 'genesis|HIGH';
+      if (!this.blueprintCache.has(key)) {
+        const bp = this.buildBlueprint('genesis', { quality: 'HIGH' });
+        if (bp) {
+          this.blueprintCache.set(key, bp);
         }
-      })
-    );
+      }
+      BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
+    });
 
-    // Opening gate completes on ENABLE_SCROLL
-    this._listeners.push(
-      BeatBus.on(ev('ENABLE_SCROLL'), () => {
-        this._openingPhase = false;
-        this._log('scroll_enabled');
-        console.log('🧠 Engine: Opening phase complete');
-      })
-    );
-
-    // Stage change (respect opening gate)
-    this._listeners.push(
-      BeatBus.on(ev('STAGE_CHANGE'), (p = {}) => {
-        const stage = p.to ?? p.stage;
-        if (!stage) return;
-        if (this._openingPhase && stage !== 'genesis') {
-          console.log(`🧠 Engine: blocked ${stage} during opening`);
+    // BUILD EMERGENCE - THIS IS THE CRITICAL HANDLER
+    BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (payload = {}) => {
+      try {
+        console.log('🧠 Engine: BUILD_EMERGENCE_BLUEPRINT received', payload);
+        
+        // Build the emergence blueprint
+        const blueprint = this.buildEmergenceBlueprint(payload);
+        
+        if (!blueprint) {
+          console.error('🧠 Engine: Failed to build emergence blueprint');
           return;
         }
-        this.currentStage = stage;
-        this.buildAndEmitBlueprint(stage, this.currentQuality);
-        this._log('stage_change', { stage });
-      })
-    );
 
-    // Quality change
-    this._listeners.push(
-      BeatBus.on(ev('QUALITY_CHANGE'), (p = {}) => {
-        const tier = p.tier ?? p.quality;
-        if (!tier) return;
-        this.currentQuality = tier;
-        this.buildAndEmitBlueprint(this.currentStage, tier);
-        this._log('quality_change', { tier });
-      })
-    );
+        // Remember for post-emergence Stage-0
+        this._lastEmergenceBlueprint = blueprint;
+        this._hasBuiltEmergence = true;
 
-    // NOTE: Emergence triggers intentionally NOT wired in this baseline.
-    // When you’re ready, wire BUILD_EMERGENCE_BLUEPRINT/START_EMERGING to buildEmergenceBlueprint()
-    // and keep the renderer as the sole emitter of PARTICLES_EMERGED.
-  
+        // Emit emergence blueprint with mode flag
+        BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+          blueprint,
+          stage: 'genesis',
+          quality: this.currentQuality,
+          mode: 'emergence',
+          cached: false
+        });
+        
+        console.log('🧠 Engine: Emergence blueprint emitted', {
+          count: blueprint.particleCount,
+          mode: 'emergence'
+        });
 
-    // Build emergence on demand — Engine emits BLUEPRINT_READY only.
-    // Renderer owns PARTICLES_EMERGED (do not emit it here).
-    this._listeners.push(
-      BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (payload = {}) => {
-        try {
-          const bp = this.buildEmergenceBlueprint({
-            mode: 'emergence',
-            count: payload.count || 2000,
-            viewportHint: payload.viewportHint || this._viewportHint,
-            tierRatios: payload.tierRatios || [0.5, 0.2, 0.15, 0.15],
-          });
-
-          if (!this._validateBlueprint(bp)) {
-            console.error('🧠 Engine: invalid emergence blueprint; not emitting');
-            return;
-          }
-
-          this._lastEmergenceTargets = bp.text3DPositions;
-          BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-            blueprint: bp,
-            stage: 'genesis',
-            quality: this.currentQuality,
-            mode: 'emergence',
-            cached: false,
-          });
-          this._log('blueprint_emit', { stage: 'genesis', quality: this.currentQuality, mode: 'emergence', count: bp.activeCount });
-        } catch (e) {
-          console.error('🧠 Engine: emergence build failed:', e);
-        }
-      })
-    );
-}
-
-  _cleanupListeners() {
-    if (this._listeners?.length) {
-      this._listeners.forEach((off) => off && off());
-      this._listeners.length = 0;
-    }
+        // DO NOT emit PARTICLES_EMERGED - renderer owns this
+        
+      } catch (e) {
+        console.error('[Engine] BUILD_EMERGENCE_BLUEPRINT error:', e);
+      }
+    });
   }
 
-  // ---- public build path -----------------------------------------------------
-  buildAndEmitBlueprint(stage, quality = this.currentQuality) {
+  // Build emergence blueprint (viewport spread → constellation)
+  buildEmergenceBlueprint(payload = {}) {
+    const {
+      mode = 'emergence',
+      source = 'viewportSpread',
+      target = 'constellation',
+      count = 2000,
+      tierRatios = [0.5, 0.2, 0.15, 0.15],
+      viewportHint = this._viewportHint
+    } = payload;
+    
+    console.log(`🌟 Building emergence: ${source} → ${target} with ${count} particles`);
+    
+    // SOURCE: Full viewport dispersion (starting positions)
+    const atmosphericPositions = this.generateViewportSpread(count, viewportHint);
+    
+    // TARGET: Constellation formation (ending positions)
+    const text3DPositions = this.generateConstellationFormation(count, tierRatios, viewportHint);
+    
+    // Visual properties
+    const sizeMultipliers = new Float32Array(count);
+    const opacityData = new Float32Array(count);
+    const atlasIndices = new Float32Array(count);
+    const tierData = new Float32Array(count);
+    const animationSeeds = new Float32Array(count * 3);
+    
+    const rnd = createSeededRandom('emergence');
+    
+    // Assign tier data based on ratios
+    let tierIndex = 0;
+    let tierCounter = 0;
+    const tierCounts = tierRatios.map(r => Math.floor(count * r));
+    tierCounts[3] += count - tierCounts.reduce((a, b) => a + b, 0);
+    
+    for (let i = 0; i < count; i++) {
+      // Assign tier
+      if (tierCounter >= tierCounts[tierIndex] && tierIndex < 3) {
+        tierIndex++;
+        tierCounter = 0;
+      }
+      tierData[i] = tierIndex;
+      tierCounter++;
+      
+      // Size based on tier
+      const tierSizeScale = [1.0, 0.85, 0.7, 0.6][tierIndex];
+      sizeMultipliers[i] = (0.5 + rnd() * 1.0) * tierSizeScale;
+      
+      // Opacity based on tier
+      const tierOpacityRange = [
+        [0.3, 0.6],  // Tier 0: atmospheric
+        [0.4, 0.7],  // Tier 1: spatial
+        [0.5, 0.8],  // Tier 2: anchors
+        [0.6, 0.9],  // Tier 3: core
+      ][tierIndex];
+      opacityData[i] = tierOpacityRange[0] + rnd() * (tierOpacityRange[1] - tierOpacityRange[0]);
+      
+      // Sprite variety based on tier
+      const tierSpriteOptions = [
+        [0, 1, 7],        // Tier 0: soft sprites
+        [0, 1, 2, 7],     // Tier 1: mixed
+        [2, 4, 5],        // Tier 2: structured
+        [4, 5, 11],       // Tier 3: crystalline
+      ][tierIndex];
+      atlasIndices[i] = tierSpriteOptions[Math.floor(rnd() * tierSpriteOptions.length)];
+      
+      // Animation seeds
+      const j = i * 3;
+      animationSeeds[j]     = rnd();
+      animationSeeds[j + 1] = rnd();
+      animationSeeds[j + 2] = rnd();
+    }
+    
+    // Log telemetry for verification
+    try {
+      window.__emergence_telemetry = {
+        source: 'viewportSpread',
+        target: 'constellation',
+        count,
+        tierDistribution: tierCounts,
+        viewportScale: viewportHint
+      };
+      console.log('   Emergence telemetry saved to window.__emergence_telemetry');
+    } catch {}
+    
+    return {
+      id: 'emergence-corrected',
+      mode: 'emergence',
+      stageName: 'genesis',
+      count,
+      particleCount: count,
+      maxParticles: count,
+      activeCount: count,
+      atmosphericPositions,
+      text3DPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      metadata: {
+        source,
+        target,
+        viewport: viewportHint,
+        tierRatios,
+        tierCounts,
+      },
+    };
+  }
+
+  // Helper: Full-viewport dispersed starting positions
+  generateViewportSpread(N, hint) {
+    const { width = 120, height = 90, aspect = (120/90) } = hint || this._viewportHint;
+    const out = new Float32Array(N * 3);
+    
+    // Use viewport-relative units
+    const halfW = width * 0.5;
+    const halfH = height * 0.5;
+    const zDepth = Math.max(width, height) * 0.3;
+    
+    for (let i = 0; i < N; i++) {
+      const j = i * 3;
+      // Full viewport spread
+      const x = (Math.random() * 2 - 1) * halfW;
+      const y = (Math.random() * 2 - 1) * halfH;
+      const z = (Math.random() * 2 - 1) * zDepth;
+      
+      out[j]     = x;
+      out[j + 1] = y;
+      out[j + 2] = z;
+    }
+    
+    console.log(`   Generated viewport spread: ±${halfW.toFixed(1)} x ±${halfH.toFixed(1)} x ±${zDepth.toFixed(1)}`);
+    return out;
+  }
+
+  // Helper: Constellation end positions with 4-tier structure
+  generateConstellationFormation(N, tierRatios = [0.5, 0.2, 0.15, 0.15], hint) {
+    const out = new Float32Array(N * 3);
+    const rnd = createSeededRandom('constellation');
+    
+    // Calculate tier counts
+    const tierCounts = [
+      Math.floor(N * tierRatios[0]),
+      Math.floor(N * tierRatios[1]),
+      Math.floor(N * tierRatios[2]),
+      Math.floor(N * tierRatios[3]),
+    ];
+    // Adjust last tier for rounding
+    const sum = tierCounts[0] + tierCounts[1] + tierCounts[2];
+    tierCounts[3] = N - sum;
+    
+    let idx = 0;
+    
+    // Tier 0: Outer atmospheric layer
+    for (let i = 0; i < tierCounts[0]; i++) {
+      const j = idx * 3;
+      const angle = (i / tierCounts[0]) * Math.PI * 2;
+      const radius = 30 + rnd() * 10;
+      out[j]     = Math.cos(angle) * radius;
+      out[j + 1] = Math.sin(angle) * radius * 0.6;
+      out[j + 2] = (rnd() - 0.5) * 15;
+      idx++;
+    }
+    
+    // Tier 1: Spatial structure layer
+    for (let i = 0; i < tierCounts[1]; i++) {
+      const j = idx * 3;
+      const angle = (i / tierCounts[1]) * Math.PI * 2;
+      const radius = 20 + rnd() * 5;
+      out[j]     = Math.cos(angle) * radius;
+      out[j + 1] = Math.sin(angle) * radius * 0.7;
+      out[j + 2] = (rnd() - 0.5) * 10;
+      idx++;
+    }
+    
+    // Tier 2: Memory anchors
+    for (let i = 0; i < tierCounts[2]; i++) {
+      const j = idx * 3;
+      const angle = (i / tierCounts[2]) * Math.PI * 2;
+      const radius = 12 + rnd() * 3;
+      out[j]     = Math.cos(angle) * radius;
+      out[j + 1] = Math.sin(angle) * radius * 0.8;
+      out[j + 2] = (rnd() - 0.5) * 5;
+      idx++;
+    }
+    
+    // Tier 3: Core constellation
+    for (let i = 0; i < tierCounts[3]; i++) {
+      const j = idx * 3;
+      const angle = (i / tierCounts[3]) * Math.PI * 2;
+      const radius = 5 + rnd() * 3;
+      out[j]     = Math.cos(angle) * radius;
+      out[j + 1] = Math.sin(angle) * radius;
+      out[j + 2] = (rnd() - 0.5) * 2;
+      idx++;
+    }
+    
+    console.log(`   Generated constellation with ${N} particles in 4 tiers`);
+    return out;
+  }
+
+  // Build standard stages with post-emergence handling
+  buildAndEmitBlueprint(stage, quality) {
     if (this._openingPhase && stage !== 'genesis') {
       console.warn('🧠 Engine: blocked non-genesis during opening:', stage);
       return;
     }
-
+    
     const cacheKey = `${stage}|${quality}`;
-    let bp = this.blueprintCache.get(cacheKey);
+    let blueprint = this.blueprintCache.get(cacheKey);
 
-    // (Optional) future: if emergence ran, use last targets as genesis source once.
+    // After emergence, use emergence endpoints as genesis source
+    if (stage === 'genesis' && this._hasBuiltEmergence && this._lastEmergenceBlueprint) {
+      console.log('🧠 Engine: Building post-emergence genesis (constellation → text)');
 
-    if (!bp) {
-      bp = this._buildStageBlueprint(stage, quality);
-      if (bp) this.blueprintCache.set(cacheKey, bp);
-    }
+      const baseCount = 2000;
+      const particleCount = this.getParticleCountForQuality(baseCount, quality);
+      
+      // Build standard genesis blueprint
+      blueprint = this.buildBlueprint(stage, { quality });
 
-    if (!this._validateBlueprint(bp)) {
-      console.error('🧠 Engine: invalid blueprint; not emitting', { stage, quality });
+      // Override atmospheric positions with constellation endpoints from emergence
+      const emergenceTargets = this._lastEmergenceBlueprint.text3DPositions;
+      const n = Math.min(particleCount * 3, emergenceTargets.length);
+      for (let i = 0; i < n; i++) {
+        blueprint.atmosphericPositions[i] = emergenceTargets[i];
+      }
+
+      // Clear flag after use
+      this._hasBuiltEmergence = false;
+
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+        blueprint,
+        stage,
+        quality,
+        cached: false,
+      });
       return;
     }
 
-    BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-      blueprint: bp,
-      stage,
-      quality,
-      cached: !!this.blueprintCache.get(cacheKey),
-    });
+    // Normal path: cached or fresh build
+    if (blueprint) {
+      console.log(`🧠 Using cached blueprint for ${stage}|${quality}`);
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+        blueprint,
+        stage,
+        quality,
+        cached: true,
+      });
+      return;
+    }
 
-    this._log('blueprint_emit', { stage, quality, count: bp.activeCount });
+    console.log(`🧠 Building new blueprint for ${stage}|${quality}`);
+    blueprint = this.buildBlueprint(stage, { quality });
+
+    if (blueprint) {
+      this.blueprintCache.set(cacheKey, blueprint);
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+        blueprint,
+        stage,
+        quality,
+        cached: false,
+      });
+    }
   }
 
-  // ---- stage builders --------------------------------------------------------
-  _buildStageBlueprint(stageName, quality) {
+  // Build generic stage blueprint
+  buildBlueprint(stageName, options = {}) {
     const STAGE_TEXTS = {
       genesis: 'HELLO CURTIS',
       discipline: 'STRUCTURE',
@@ -192,8 +417,8 @@ class ConsciousnessEngine {
       transcendence: 'CONSCIOUSNESS',
     };
 
-    const stageCfg = Canonical?.stages?.[stageName] || {};
-    const baseSpec = {
+    const stageConfig = Canonical?.stages?.[stageName] || {};
+    const SPEC_COUNTS = {
       genesis: 2000,
       discipline: 3000,
       neural: 5000,
@@ -201,36 +426,48 @@ class ConsciousnessEngine {
       architecture: 8000,
       harmony: 12000,
       transcendence: 15000,
-    }[stageName] ?? 5000;
+    };
 
-    const baseCount = stageCfg.particleCount ?? baseSpec;
-    const N = this._countForQuality(baseCount, quality);
+    if (!stageConfig) {
+      console.error(`Stage ${stageName} not found`);
+      return null;
+    }
 
-    // lean allocations (exact N)
-    const atmosphericPositions = new Float32Array(N * 3);
-    const text3DPositions = new Float32Array(N * 3);
-    const animationSeeds = new Float32Array(N * 3);
-    const sizeMultipliers = new Float32Array(N);
-    const opacityData = new Float32Array(N);
-    const atlasIndices = new Float32Array(N);
-    const tierData = new Float32Array(N);
+    const quality = options.quality || this.currentQuality;
+    const baseParticleCount = stageConfig.particleCount || SPEC_COUNTS[stageName] || 5000;
+    const particleCount = this.getParticleCountForQuality(baseParticleCount, quality);
 
-    // target formation
-    const tg = this._gen3DText(STAGE_TEXTS[stageName] || stageName.toUpperCase(), N);
+    console.log(`🧠 Building ${stageName}: ${particleCount} particles`);
+
+    const maxParticles = 15000;
+    const atmosphericPositions = new Float32Array(maxParticles * 3);
+    const text3DPositions = new Float32Array(maxParticles * 3);
+    const animationSeeds = new Float32Array(maxParticles * 3);
+    const sizeMultipliers = new Float32Array(maxParticles);
+    const opacityData = new Float32Array(maxParticles);
+    const atlasIndices = new Float32Array(maxParticles);
+    const tierData = new Float32Array(maxParticles);
+
+    const textFormation = this.generate3DTextFormation(
+      STAGE_TEXTS[stageName] || stageName.toUpperCase(),
+      particleCount
+    );
 
     const rnd = createSeededRandom(stageName);
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < particleCount; i++) {
       const j = i * 3;
 
-      // default atmospheric (source)
+      // Default atmospheric positions
       atmosphericPositions[j + 0] = (rnd() - 0.5) * 120;
       atmosphericPositions[j + 1] = (rnd() - 0.5) * 90;
       atmosphericPositions[j + 2] = (rnd() - 0.5) * 40;
 
-      // target (text)
-      text3DPositions[j + 0] = tg[j + 0] * 4;
-      text3DPositions[j + 1] = tg[j + 1] * 4;
-      text3DPositions[j + 2] = tg[j + 2] * 4;
+      // Text formation positions
+      if (textFormation && j + 2 < textFormation.length) {
+        text3DPositions[j + 0] = textFormation[j + 0] * 4;
+        text3DPositions[j + 1] = textFormation[j + 1] * 4;
+        text3DPositions[j + 2] = textFormation[j + 2] * 4;
+      }
 
       animationSeeds[j + 0] = rnd();
       animationSeeds[j + 1] = rnd();
@@ -244,9 +481,9 @@ class ConsciousnessEngine {
 
     return {
       stageName,
-      particleCount: N,
-      maxParticles: N,
-      activeCount: N,
+      particleCount,
+      maxParticles,
+      activeCount: particleCount,
       atmosphericPositions,
       text3DPositions,
       animationSeeds,
@@ -254,78 +491,48 @@ class ConsciousnessEngine {
       opacityData,
       atlasIndices,
       tierData,
-      metadata: { quality },
+      metadata: { quality, buildTime: 0 },
     };
   }
 
-  // ---- helpers ---------------------------------------------------------------
-  _generateViewportSpread(N, hint) {
-    const v = hint || this._viewportHint || { width: 120, height: 90, aspect: 4 / 3 };
-    const halfW = (Number(v.width) || 120) * 0.5;
-    const halfH = (Number(v.height) || 90) * 0.5;
-    const zDepth = Math.max(halfW, halfH) * 0.6;
-
-    const out = new Float32Array(N * 3);
-    for (let i = 0; i < N; i++) {
-      const j = i * 3;
-      out[j + 0] = (Math.random() * 2 - 1) * halfW;
-      out[j + 1] = (Math.random() * 2 - 1) * halfH;
-      out[j + 2] = (Math.random() * 2 - 1) * zDepth;
+  // Utility functions
+  textToParticlePositions(text, count) {
+    const positions = new Float32Array(count * 3);
+    const charWidth = 8.0, textHeight = 12.0;
+    for (let i = 0; i < count; i++) {
+      const ci = Math.floor(Math.random() * text.length);
+      const baseX = (ci - text.length / 2) * charWidth;
+      positions[i * 3 + 0] = baseX + (Math.random() - 0.5) * charWidth * 0.8;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * textHeight;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
     }
-    return out;
+    return positions;
   }
 
-  _generateConstellation(N, ratios = [0.5, 0.2, 0.15, 0.15]) {
-    const out = new Float32Array(N * 3);
-    const rnd = createSeededRandom('constellation');
-    const t = [
-      Math.floor(N * ratios[0]),
-      Math.floor(N * ratios[1]),
-      Math.floor(N * ratios[2]),
-      Math.floor(N * ratios[3]),
-    ];
-    t[3] += N - (t[0] + t[1] + t[2] + t[3]);
-
-    let idx = 0;
-    const shells = [
-      { r: 30, dr: 10, sy: 0.6, dz: 15 },
-      { r: 20, dr: 5, sy: 0.7, dz: 10 },
-      { r: 12, dr: 3, sy: 0.8, dz: 5 },
-      { r: 5, dr: 3, sy: 1.0, dz: 2 },
-    ];
-    for (let tier = 0; tier < 4; tier++) {
-      const { r, dr, sy, dz } = shells[tier];
-      for (let i = 0; i < t[tier]; i++, idx++) {
-        const j = idx * 3;
-        const angle = (i / Math.max(1, t[tier])) * Math.PI * 2;
-        const radius = r + rnd() * dr;
-        out[j + 0] = Math.cos(angle) * radius;
-        out[j + 1] = Math.sin(angle) * radius * sy;
-        out[j + 2] = (rnd() - 0.5) * dz;
-      }
-    }
-    return out;
+  getParticleCountForQuality(baseCount, quality) {
+    const mult = { LOW: 0.3, MEDIUM: 0.6, HIGH: 1.0, ULTRA: 1.5 }[quality] ?? 1.0;
+    return Math.min(Math.floor(baseCount * mult), 15000);
   }
 
   async loadFont() {
     try {
       const loader = new FontLoader();
-      const res = await fetch('/fonts/helvetiker_bold.typeface.json');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const fontData = await res.json();
-      this.font = loader.parse(fontData);
-      this.text2DFallback = false;
-      console.log('✅ 3D font loaded');
+      const response = await fetch('/fonts/helvetiker_bold.typeface.json');
+      if (response.ok) {
+        const fontData = await response.json();
+        this.font = loader.parse(fontData);
+        this.text2DFallback = false;
+        console.log('✅ 3D font loaded');
+      }
     } catch (e) {
-      this.text2DFallback = true;
       console.warn('Using 2D fallback:', e.message);
     }
   }
 
-  _gen3DText(text, count) {
-    const key = `${text}_${count}`;
-    if (this.text3DCache.has(key)) return this.text3DCache.get(key);
-    if (!this.font) return this._textToRandomPlane(text, count);
+  generate3DTextFormation(text, count) {
+    const cacheKey = `${text}_${count}`;
+    if (this.text3DCache.has(cacheKey)) return this.text3DCache.get(cacheKey);
+    if (!this.font) return this.textToParticlePositions(text, count);
 
     const geometry = new TextGeometry(text, {
       font: this.font,
@@ -337,92 +544,44 @@ class ConsciousnessEngine {
     geometry.computeBoundingBox();
     geometry.center();
 
-    const pos = new Float32Array(count * 3);
+    const pos = [];
     const attr = geometry.attributes.position;
-    const m = Math.min(count, attr.count);
-    for (let i = 0; i < m; i++) {
-      const j = i * 3;
-      pos[j + 0] = attr.getX(i);
-      pos[j + 1] = attr.getY(i);
-      pos[j + 2] = attr.getZ(i) * 0.1;
+    for (let i = 0; i < attr.count && pos.length < count * 3; i++) {
+      pos.push(attr.getX(i), attr.getY(i), attr.getZ(i) * 0.1);
     }
-    // pad rest with light jitter
-    for (let i = m; i < count; i++) {
-      const j = i * 3;
-      pos[j + 0] = (Math.random() - 0.5) * 10;
-      pos[j + 1] = (Math.random() - 0.5) * 6;
-      pos[j + 2] = (Math.random() - 0.5) * 1;
+
+    const result = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) {
+      result[i] = pos[i] ?? (Math.random() - 0.5) * 10;
     }
+
     geometry.dispose();
-    this.text3DCache.set(key, pos);
-    return pos;
-  }
-
-  _textToRandomPlane(text, count) {
-    const positions = new Float32Array(count * 3);
-    const cw = 8.0,
-      th = 12.0;
-    for (let i = 0; i < count; i++) {
-      const ci = Math.floor(Math.random() * text.length);
-      const baseX = (ci - text.length / 2) * cw;
-      positions[i * 3 + 0] = baseX + (Math.random() - 0.5) * cw * 0.8;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * th;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
-    }
-    return positions;
-  }
-
-  // ---- validation & utils ----------------------------------------------------
-  _validateBlueprint(bp) {
-    if (!bp) return false;
-    const a = bp.atmosphericPositions,
-      t = bp.text3DPositions;
-    if (!(a && t && a.length && t.length)) return false;
-    if (a.length % 3 !== 0 || t.length % 3 !== 0) return false;
-    if (a.length !== t.length) return false;
-    for (let i = 0; i < a.length; i++) if (!isFinite(a[i]) || !isFinite(t[i])) return false;
-    return true;
-  }
-
-  _countForQuality(base, quality) {
-    const mult = { LOW: 0.3, MEDIUM: 0.6, HIGH: 1.0, ULTRA: 1.5 }[quality] ?? 1.0;
-    return Math.min(Math.floor(base * mult), 15000);
-  }
-
-  _log(type, data = {}) {
-    this._eventLog.push({ type, t: performance.now(), data });
-    if (this._eventLog.length > 100) this._eventLog.shift();
-  }
-
-  getStats() {
-    return {
-      cacheSize: this.blueprintCache.size,
-      cached: Array.from(this.blueprintCache.keys()),
-      openingPhase: this._openingPhase,
-      viewport: this._viewportHint,
-      lastEvents: this._eventLog.slice(-20),
-    };
+    this.text3DCache.set(cacheKey, result);
+    return result;
   }
 
   clearCache() {
     this.blueprintCache.clear();
-    this._lastEmergenceTargets = null;
-    console.log('🧠 Engine: cache cleared');
+    this._lastEmergenceBlueprint = null;
+    this._hasBuiltEmergence = false;
+    console.log('🧠 Cache cleared');
+  }
+
+  getCacheStats() {
+    return {
+      size: this.blueprintCache.size,
+      keys: Array.from(this.blueprintCache.keys()),
+      hasEmergenceBlueprint: !!this._lastEmergenceBlueprint,
+      hasBuiltEmergence: this._hasBuiltEmergence,
+      viewportHint: this._viewportHint,
+      openingPhase: this._openingPhase,
+    };
   }
 }
 
-// HMR-safe singleton
-let engine;
+// Create and export singleton
+const engine = new ConsciousnessEngine();
 if (typeof window !== 'undefined') {
-  if (window.__consciousnessEngine) {
-    engine = window.__consciousnessEngine;
-    engine.init();
-  } else {
-    engine = new ConsciousnessEngine();
-    window.__consciousnessEngine = engine;
-  }
-} else {
-  engine = new ConsciousnessEngine();
+  window.consciousnessEngine = engine;
 }
-
 export default engine;

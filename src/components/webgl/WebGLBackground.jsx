@@ -4,10 +4,63 @@
 // Single writer: binds geometry/material, emits PARTICLES_EMERGED exactly once.
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
+
+
+// === __canonRendererHelpers__ (do not edit) ===============================
+// Clamp 0..1
+const __clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+// Normalize BLUEPRINT_READY payload (supports old/new contracts)
+function __normalizeBlueprintPayload(payload){
+  // __canonEmergenceRefs__
+  const __emergencePendingRef = React.useRef(false);
+  const __emergedOnce = React.useRef(false);
+  const __emitFencepostOnce = React.useRef(__makeOnce(()=>BeatBus.emit(EVENTS.PARTICLES_EMERGED, { t: performance.now() }))).current;
+
+  const p = payload || {};
+  // new: { blueprint, stage, quality, mode? }
+  if (p.blueprint && (p.blueprint.atmosphericPositions || p.blueprint.text3DPositions)) return { bp: p.blueprint, stage: p.stage || p.blueprint.stageName, quality: p.quality, mode: p.mode };
+  // old: the blueprint object itself
+  if (p.atmosphericPositions && p.text3DPositions) return { bp: p, stage: p.stageName || 'genesis', quality: p.metadata?.quality, mode: p.mode };
+  return { bp: null };
+}
+// Validate float attribute triplets
+function __validAttr(a){ return a && a.length && a.length % 3 === 0 && Number.isFinite(a[0]); }
+// One-time fencepost emitter
+function __makeOnce(fn){ let done=false; 
+  // __canonEventWire__
+  useEffect(() => {
+    const onBR = (payload={}) => {
+      const { bp, mode } = __normalizeBlueprintPayload(payload);
+      if (!bp) return;
+      if (!(__validAttr(bp.atmosphericPositions) && __validAttr(bp.text3DPositions))) {
+        console.warn('Renderer: invalid blueprint attributes, ignoring');
+        return;
+      }
+      if (mode === 'emergence') {
+        __emergencePendingRef.current = true;
+      }
+      // Try common local handlers/state
+      try {
+        if (typeof handleBlueprint === 'function') { handleBlueprint(payload); return; }
+      } catch {}
+      try {
+        // Fallback: set globals so existing code (if reading globals) can pick up
+        globalThis.__canonLastBlueprint = bp;
+      } catch {}
+    };
+    const onStartEmerging = () => { __emergencePendingRef.current = true; };
+
+    const off1 = BeatBus.on(EVENTS.BLUEPRINT_READY, onBR);
+    const off2 = BeatBus.on(EVENTS.PARTICLES_START_EMERGING, onStartEmerging);
+    return () => { off1?.(); off2?.(); };
+  }, []);
+
+  return (...args)=>{ if(done) return; done=true; try{ fn(...args); }catch(e){} }; }
+// ==========================================================================
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { EVENTS } from '@/theater/events.js';
-import BeatBus from '@/theater/bus';
+import BeatBus from '@/theater/bus/index.js';
 
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
@@ -284,7 +337,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // Build geometry
   const geometry = useMemo(() => {
-    if (!blueprint) return null;
+    if (!blueprint) // __canonFallbackPoints__
+return (
+  <points>
+    <bufferGeometry>
+      <bufferAttribute attach="attributes-position" array={new Float32Array([0,0,0])} itemSize={3} />
+    </bufferGeometry>
+    <pointsMaterial size={8} />
+  </points>
+);
+
 
     const count =
       blueprint.activeCount ||
@@ -292,7 +354,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       blueprint.maxParticles ||
       (blueprint.atmosphericPositions ? (blueprint.atmosphericPositions.length / 3) | 0 : 0);
 
-    if (!count || !blueprint.atmosphericPositions || !blueprint.text3DPositions) return null;
+    if (!count || !blueprint.atmosphericPositions || !blueprint.text3DPositions) // __canonFallbackPoints__
+return (
+  <points>
+    <bufferGeometry>
+      <bufferAttribute attach="attributes-position" array={new Float32Array([0,0,0])} itemSize={3} />
+    </bufferGeometry>
+    <pointsMaterial size={8} />
+  </points>
+);
+
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position',            new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
@@ -317,7 +388,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // Build material
   const material = useMemo(() => {
-    if (!atlasTexture || !blueprint) return null;
+    if (!atlasTexture || !blueprint) // __canonFallbackPoints__
+return (
+  <points>
+    <bufferGeometry>
+      <bufferAttribute attach="attributes-position" array={new Float32Array([0,0,0])} itemSize={3} />
+    </bufferGeometry>
+    <pointsMaterial size={8} />
+  </points>
+);
+
 
     const isGenesis = stageName === 'genesis';
     const { current, next, acc1, acc2 } = pickStageColors(stageName);
@@ -325,6 +405,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const POINT_SIZE_DEFAULT = Canonical?.features?.pointSizeDefault ?? 48.0;
 
     const mat = new THREE.ShaderMaterial({
+      // __canonShaderProbe__
+      onBeforeCompile: (shader)=>{ try { console.log('🧪 Shader compiled'); } catch {} },
       uniforms: {
         uTime: { value: 0 },
         uMorphProgress:  { value: morphProgress },
@@ -417,6 +499,31 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
   });
 
+  // __canonBindProbe__
+  useEffect(() => {
+    const it = setInterval(() => {
+      try {
+        const mat = (materialRef?.current) || (globalThis.__consciousnessMaterial);
+        const geo = (geometryRef?.current) || (globalThis.__consciousnessGeometry);
+        const mesh = (meshRef?.current);
+        if (!mat || !geo) return;
+        // uMorphProgress presence indicates shader is live; geometry attributes count >0 indicates bound
+        const hasMorph = !!(mat.uniforms && mat.uniforms.uMorphProgress);
+        const count = geo.attributes?.position?.count || 0;
+        if (hasMorph && count > 0) {
+          if (__emergencePendingRef.current && !__emergedOnce.current) {
+            __emergedOnce.current = true;
+            __emitFencepostOnce();
+            __emergencePendingRef.current = false;
+            console.log('🎯 Renderer: PARTICLES_EMERGED fencepost (first bind)');
+          }
+        }
+      } catch {}
+    }, 100);
+    return () => clearInterval(it);
+  }, []);
+
+
   // ────────────────────────────────────────────────────────────────────────────
   // HOT‑DORS: self‑bootstrapping console helpers + ATS self‑verify (idempotent)
   // ────────────────────────────────────────────────────────────────────────────
@@ -466,7 +573,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         mat.uniforms.uPointSize.value = recommended; mat.needsUpdate = true;
         console.log('HOT‑DORS: uPointSize set once →', recommended.toFixed(2));
         return recommended;
-      } catch (e) { console.warn('fit() failed', e); return null; }
+      } catch (e) { console.warn('fit() failed', e); // __canonFallbackPoints__
+return (
+  <points>
+    <bufferGeometry>
+      <bufferAttribute attach="attributes-position" array={new Float32Array([0,0,0])} itemSize={3} />
+    </bufferGeometry>
+    <pointsMaterial size={8} />
+  </points>
+);
+ }
     };
 
     const selfverifyATS = () => {
@@ -508,7 +624,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   }, []);
 
   // Render early‑out if not ready
-  if (!blueprint || !atlasTexture) return null;
+  if (!blueprint || !atlasTexture) // __canonFallbackPoints__
+return (
+  <points>
+    <bufferGeometry>
+      <bufferAttribute attach="attributes-position" array={new Float32Array([0,0,0])} itemSize={3} />
+    </bufferGeometry>
+    <pointsMaterial size={8} />
+  </points>
+);
+
 
   return (
     <points

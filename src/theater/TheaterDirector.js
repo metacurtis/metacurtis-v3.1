@@ -1,7 +1,14 @@
-// >>> Throttled Morph Emitter v1 <<<
+// SST v3.3 BeatGlyph Theater Director — Complete Clean Version
+// Single source of timeline; Renderer stays single GPU writer; Engine writes blueprints.
+
+import BeatBus from '@/theater/bus';
+import { EVENTS } from '@/theater/events.js';
+import ScrollOrchestrator from './ScrollOrchestrator.js';
+
+// ── Throttled Morph Emitter (single-writer safe) ─────────────────────────────
 let __lastMorph = -1;
 let __lastMorphEmit = 0;
-/** Local throttle config (ms) can be overridden by localStorage.canonMorphThrottleMs */
+
 function __getMorphThrottleMs() {
   try {
     return Math.max(0, parseInt(localStorage.getItem('canonMorphThrottleMs') || '80', 10));
@@ -9,31 +16,38 @@ function __getMorphThrottleMs() {
     return 80;
   }
 }
+
 function __emitMorphThrottled(BeatBus, EVENTS, v) {
   try {
-    const EPS = 0.005; // 0.5% change
+    const EPS = 0.005; // 0.5% change threshold
     const now = performance.now();
-    const MIN = __getMorphThrottleMs(); // default 80ms
+    const MIN = __getMorphThrottleMs();
+    
     if (typeof v !== 'number') return;
-    if (Math.abs(v - __lastMorph) < EPS) return; // no change
-    if (now - __lastMorphEmit < MIN) return; // too soon
+    if (Math.abs(v - __lastMorph) < EPS) return;
+    if (now - __lastMorphEmit < MIN) return;
+    
     __lastMorph = v;
     __lastMorphEmit = now;
     BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', { value: v });
   } catch {}
 }
 
-// SST v3.3 BeatGlyph Theater Director — viewport-triggered with cancel guards
-
-import BeatBus from '@/theater/bus';
-import EVENTS from './events.js'; // default import is fine; named also available
-import ScrollOrchestrator from './ScrollOrchestrator.js';
-
+// ── Theater Director Class ───────────────────────────────────────────────────
 class TheaterDirector {
+  constructor() {
+    this.reset();
+    this.timeline = {};
+    this.scrollOrchestrator = null;
+  }
+
   reset() {
+    // Clean up
     try {
       this.scrollOrchestrator?.stop?.();
     } catch {}
+    
+    // Reset state
     this.phase = 'idle';
     this.cancelled = false;
     this.isRunning = false;
@@ -42,69 +56,60 @@ class TheaterDirector {
     this.viewportReady = false;
     this.waitingForViewport = false;
     this.currentStage = null;
+    
+    // Reset global flags
     try {
       window.__canonFencepostSeen = false;
     } catch {}
+    
     return this;
   }
 
-  constructor() {
-    this.phase = 'idle';
-    this.cancelled = false;
-    this.isRunning = false;
-    this.hasRun = false;
-    this.startTime = null;
-    this.timeline = {};
-    this.scrollOrchestrator = null;
-    this.viewportReady = false;
-    this.waitingForViewport = false;
-
-    // Track canonical stage transitions for STAGE_CHANGE { from, to }
-    this.currentStage = null;
-  }
-
   async start() {
-    // Prevent duplicate starts
+    // Strong duplicate protection
     if (this.isRunning) {
       console.log('🎬 Director: Already running, ignoring duplicate start');
       return;
     }
-
+    
     if (this.hasRun) {
       console.log('🎬 Director: Already completed, ignoring restart');
       return;
     }
 
-    // Wait for viewport hint if not ready
+    // Wait for viewport (non-recursive)
     if (!this.viewportReady && !this.waitingForViewport) {
       console.log('🎬 Director: Waiting for ENGINE_VIEWPORT_HINT...');
       this.waitingForViewport = true;
 
-      // Set up viewport listener
-      const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, data => {
+      const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, (data) => {
         console.log('🎬 Director: Viewport ready', data);
         this.viewportReady = true;
         this.waitingForViewport = false;
         unsubscribe?.();
-
-        // Now start for real
-        this.start();
+        // Deferred start to avoid recursion
+        setTimeout(() => {
+          if (!this.isRunning && !this.hasRun) this.start();
+        }, 0);
       });
 
-      // Timeout fallback if viewport hint never comes
+      // Fallback if viewport hint never arrives
       setTimeout(() => {
         if (this.waitingForViewport) {
           console.warn('🎬 Director: Viewport hint timeout, starting anyway');
           this.viewportReady = true;
           this.waitingForViewport = false;
           unsubscribe?.();
-          this.start();
+          setTimeout(() => {
+            if (!this.isRunning && !this.hasRun) this.start();
+          }, 0);
         }
       }, 2000);
-
+      
       return;
     }
 
+    // Begin execution
     this.isRunning = true;
     this.cancelled = false;
     this.phase = 'starting';
@@ -114,237 +119,213 @@ class TheaterDirector {
     console.log('   Timeline: 0s black → 2s cursor → 2.5s typing → 3s fill → 3.7s emergence');
 
     try {
-      // Optional prewarm
-      await this.prewarm();
-
-      // ───────────────── Phase 1: Black (2s)
-      this.phase = 'black';
-      console.log('   Phase: Black screen (2s)');
-      await this.sleep(2000);
-      if (this.cancelled) {
-        console.log('   Director cancelled during black phase');
-        return;
-      }
-
-      // ───────────────── Phase 2: Cursor blinks
-      this.phase = 'cursor';
-      console.log('   Phase: Cursor (blinks twice)');
-      BeatBus.emit(EVENTS.CURSOR_SHOW);
-      BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: 0.25 });
-      await this.sleep(500);
-      BeatBus.emit(EVENTS.CURSOR_BLINK, { count: 2, interval: 250 });
-      await this.sleep(1000);
-      if (this.cancelled) {
-        console.log('   Director cancelled during cursor phase');
-        return;
-      }
-
-      // ───────────────── Phase 3: Terminal typing
-      this.phase = 'terminal';
-      console.log('   Phase: Terminal typing');
-      BeatBus.emit(EVENTS.TERMINAL_TYPE, {
-        lines: ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN'],
-        typeSpeed: 50,
-        lineDelay: 300,
-      });
-      await this.sleep(3700);
-      if (this.cancelled) {
-        console.log('   Director cancelled during terminal phase');
-        return;
-      }
-
-      // ───────────────── Phase 4: Fill
-      this.phase = 'fill';
-      console.log('   Phase: Screen fill');
-      BeatBus.emit(EVENTS.SCREEN_FILL, { text: 'HELLO CURTIS ', scrollSpeed: 50 });
-      await this.sleep(1500);
-      if (this.cancelled) {
-        console.log('   Director cancelled during fill phase');
-        return;
-      }
-
-      // ───────────────── Phase 5: Emergence
-      this.phase = 'emergence';
-      console.log('   Phase: Particle emergence');
-
-      // Build emergence blueprint
-      BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
-        sourceText: 'HELLO CURTIS',
-        count: 2000,
-      });
-
-      // Start overlay fade
-      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
-
-      // Initial visual tune
-      this.emitTune({
-        particleFlash: 1.3,
-        opacityMin: 0.7,
-        opacityMax: 1.0,
-        driftAmp: 1.0,
-        vibeAmp: 0.2,
-        flutterAmp: 0.6,
-        verticalBias: 0.1,
-      });
-
-      // Wait for renderer fencepost (extended timeout)
-      console.log('   Waiting for renderer fencepost...');
-      const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, 5000);
-
-      if (this.cancelled) {
-        console.log('   Director cancelled during emergence phase');
-        return;
-      }
-
-      if (!fencepostReceived) {
-        console.warn('   Renderer fencepost timeout, continuing anyway');
-      }
-
-      // ───────────────── Phase 6: Stage-0 Genesis
-      const fromStage = this.currentStage ?? 'emergence';
-      const toStage = 'genesis';
-
-      this.phase = 'genesis';
-      this.currentStage = toStage;
-
-      console.log('🧬 Phase: Genesis stage handoff');
-
-      // Canonical stage-change payload { from, to }
-      BeatBus.emit(EVENTS.STAGE_CHANGE, { from: fromStage, to: toStage });
-      BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
-
-      // Reset scroll position
-      try {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      } catch {
-        /* noop */
-      }
-
-      // Initial morph to constellation
-      __emitMorphThrottled(BeatBus, EVENTS, 0);
-      await this._easeMorphTo(1, 1400);
-
-      // ───────────────── Visual schedule (4.5s - 7.5s)
-
-      // T+4.5s: Swirl start
-      this.emitTune({
-        rotZSpeedDegPerSec: 15,
-        trails: 0.12,
-        brightToward: 1.1,
-        dimAway: 0.95,
-      });
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_start' });
-      await this.sleep(1000);
-
-      // T+5.5s: Swirl full
-      this.emitTune({
-        rotZSpeedDegPerSec: 12,
-        trails: 0.15,
-        brightToward: 1.15,
-        dimAway: 0.9,
-      });
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_full' });
-      await this.sleep(500);
-
-      // T+6.0s: Deceleration
-      this.emitTune({
-        rotZSpeedDegPerSec: 8,
-        driftAmp: 0.8,
-        flutterAmp: 0.4,
-      });
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_decel' });
-      await this.sleep(500);
-
-      // T+6.5s: Tier emergence
-      this.emitTune({
-        tierReveal: 1,
-        rotZSpeedDegPerSec: 3,
-      });
-      __emitMorphThrottled(BeatBus, EVENTS, 1.0);
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'tier_emergence' });
-      await this.sleep(500);
-
-      // T+7.0s: Constellation stable
-      this.emitTune({
-        rotZSpeedDegPerSec: 1,
-        driftAmp: 0.3,
-        flutterAmp: 0.15,
-      });
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'constellation' });
-      await this.sleep(500);
-
-      // T+7.5s: Narrative start with breathing and pulse
-      BeatBus.emit(EVENTS.START_NARRATIVE, { stage: toStage });
-      this.emitTune({
-        breathingAmp: 0.02,
-        breathingPeriodSec: 4,
-        flareProb: 0.02,
-        flareGain: 1.3,
-        tierSpeedScale: [1.0, 0.8, 0.6, 0.4],
-        pulseOnce: 1,
-      });
-
-      // Enable scroll
-      BeatBus.emit(EVENTS.ENABLE_SCROLL);
-
-      // Start scroll orchestrator
-      if (!this.scrollOrchestrator) {
-        this.scrollOrchestrator = new ScrollOrchestrator();
-      }
-      this.scrollOrchestrator.start();
-      this.monitorFragments();
-
-      // Complete
-      this.phase = 'complete';
-      const elapsed = Date.now() - this.startTime;
-      console.log('🎬 Director: Opening complete → user-driven experience');
-      console.log(`   Total opening time: ${elapsed}ms`);
-      console.log(`   Expected: ~8000ms, Actual: ${elapsed}ms`);
-
-      this.hasRun = true;
-      this.isRunning = false;
+      await this._runSequence();
     } catch (error) {
       console.error('🎬 Director error:', error);
-      this.isRunning = false;
       this.phase = 'error';
-      BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
+      BeatBus.emit(EVENTS.DIRECTOR_ERROR, { error });
+    } finally {
+      this.isRunning = false;
+      if (this.phase !== 'cancelled' && this.phase !== 'error') {
+        this.hasRun = true;
+      }
     }
   }
 
-  emitTune(payload) {
-    console.log('   RENDERER_TUNE:', payload);
-    BeatBus.emit(EVENTS.RENDERER_TUNE, payload || {});
-  }
+  async _runSequence() {
+    // Optional prewarm
+    await this.prewarm();
 
-  async prewarm() {
+    // ───────────────── Phase 1: Black (2s)
+    this.phase = 'black';
+    console.log('   Phase: Black screen (2s)');
+    await this.sleep(2000);
+    if (this.cancelled) return;
+
+    // ───────────────── Phase 2: Cursor (0.5s + 1s)
+    this.phase = 'cursor';
+    console.log('   Phase: Cursor (blinks twice)');
+    BeatBus.emit(EVENTS.CURSOR_SHOW);
+    BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: 0.25 });
+    await this.sleep(500);
+    BeatBus.emit(EVENTS.CURSOR_BLINK, { count: 2, interval: 250 });
+    await this.sleep(1000);
+    if (this.cancelled) return;
+
+    // ───────────────── Phase 3: Terminal typing (3.7s)
+    this.phase = 'terminal';
+    console.log('   Phase: Terminal typing');
+    BeatBus.emit(EVENTS.TERMINAL_TYPE, {
+      lines: ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN'],
+      typeSpeed: 50,
+      lineDelay: 300,
+    });
+    await this.sleep(3700);
+    if (this.cancelled) return;
+
+    // ───────────────── Phase 4: Fill (1.5s)
+    this.phase = 'fill';
+    console.log('   Phase: Screen fill');
+    BeatBus.emit(EVENTS.SCREEN_FILL, { text: 'HELLO CURTIS ', scrollSpeed: 50 });
+    await this.sleep(1500);
+    if (this.cancelled) return;
+
+    // ───────────────── Phase 5: Emergence (viewport → constellation)
+    this.phase = 'emergence';
+    console.log('   Phase: Particle emergence');
+
+    // Build emergence with CORRECTED contract
+    BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+      mode: 'emergence',
+      source: 'viewportSpread',
+      target: 'constellation',
+      count: 2000,
+      tierRatios: [0.5, 0.2, 0.15, 0.15],
+      viewportHint: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        aspect: window.innerWidth / window.innerHeight,
+      },
+    });
+
+    // Signal overlay to fade
+    BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
+
+    // Initial visual tune
+    this.emitTune({
+      particleFlash: 1.3,
+      opacityMin: 0.7,
+      opacityMax: 1.0,
+      driftAmp: 1.0,
+      vibeAmp: 0.2,
+      flutterAmp: 0.6,
+      verticalBias: 0.1,
+    });
+
+    // Drive morph 0 → 0.75 during emergence
+    await this._easeMorphTo(0.75, 1200);
+
+    // Wait for renderer confirmation
+    console.log('   Waiting for renderer fencepost...');
+    const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, 5000);
+    if (!fencepostReceived) {
+      console.warn('   Renderer fencepost timeout, continuing anyway');
+    }
+    if (this.cancelled) return;
+
+    // ───────────────── Phase 6: Genesis handoff
+    const fromStage = this.currentStage ?? 'emergence';
+    const toStage = 'genesis';
+    
+    this.phase = 'genesis';
+    this.currentStage = toStage;
+    console.log('🧬 Phase: Genesis stage handoff');
+
+    // Emit stage change
+    BeatBus.emit(EVENTS.STAGE_CHANGE, { from: fromStage, to: toStage });
+    BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
+
+    // Reset scroll position
     try {
-      console.log('   Prewarming genesis blueprint...');
-      BeatBus.emit(EVENTS.PREWARM_GENESIS_BLUEPRINT);
-      await this.once(EVENTS.PREWARM_COMPLETE, 500);
-      console.log('   Prewarm complete');
-    } catch {
-      // Non-fatal if prewarm times out
-      console.log('   Prewarm timeout (non-fatal)');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {}
+
+    // Continue morph from 0.75 → 1.0 (NO RESET!)
+    await this._easeMorphTo(1, 1400);
+
+    // ───────────────── Visual choreography
+    await this._runVisualSchedule();
+
+    // ───────────────── Enable scroll and narrative
+    BeatBus.emit(EVENTS.START_NARRATIVE, { stage: toStage });
+    this.emitTune({
+      breathingAmp: 0.02,
+      breathingPeriodSec: 4,
+      flareProb: 0.02,
+      flareGain: 1.3,
+      tierSpeedScale: [1.0, 0.8, 0.6, 0.4],
+      pulseOnce: 1,
+    });
+
+    BeatBus.emit(EVENTS.ENABLE_SCROLL);
+    
+    // Start scroll orchestrator
+    if (!this.scrollOrchestrator) {
+      this.scrollOrchestrator = new ScrollOrchestrator();
     }
+    this.scrollOrchestrator.start();
+    this.monitorFragments();
+
+    // Complete
+    this.phase = 'complete';
+    const elapsed = Date.now() - this.startTime;
+    console.log('🎬 Director: Opening complete → user-driven experience');
+    console.log(`   Total opening time: ${elapsed}ms`);
+    console.log(`   Expected: ~8000ms, Actual: ${elapsed}ms`);
   }
 
-  monitorFragments() {
-    // Fragment monitoring placeholder
-    console.log('   Fragment monitoring enabled');
+  async _runVisualSchedule() {
+    // T+4.5s: Swirl start
+    this.emitTune({
+      rotZSpeedDegPerSec: 15,
+      trails: 0.12,
+      brightToward: 1.1,
+      dimAway: 0.95,
+    });
+    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_start' });
+    await this.sleep(1000);
+
+    // T+5.5s: Swirl full
+    this.emitTune({
+      rotZSpeedDegPerSec: 12,
+      trails: 0.15,
+      brightToward: 1.15,
+      dimAway: 0.9,
+    });
+    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_full' });
+    await this.sleep(500);
+
+    // T+6.0s: Deceleration
+    this.emitTune({
+      rotZSpeedDegPerSec: 8,
+      driftAmp: 0.8,
+      flutterAmp: 0.4,
+    });
+    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_decel' });
+    await this.sleep(500);
+
+    // T+6.5s: Tier emergence
+    this.emitTune({
+      tierReveal: 1,
+      rotZSpeedDegPerSec: 3,
+    });
+    __emitMorphThrottled(BeatBus, EVENTS, 1.0);
+    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'tier_emergence' });
+    await this.sleep(500);
+
+    // T+7.0s: Constellation stable
+    this.emitTune({
+      rotZSpeedDegPerSec: 1,
+      driftAmp: 0.3,
+      flutterAmp: 0.15,
+    });
+    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'constellation' });
+    await this.sleep(500);
   }
 
   cancel() {
-    // Guard against cancellation during critical phases
     if (!this.isRunning) {
       console.log('🎬 Director: Not running, cancel ignored');
       return;
     }
 
-    // In development, warn about early cancellation
-    if (this.phase === 'black' || this.phase === 'cursor' || this.phase === 'terminal') {
-      console.warn('🎬 Director: WARNING - Cancelling during early phase:', this.phase);
-      console.warn('   This may be caused by HMR or effect cleanup');
-      console.trace('Cancel call stack');
+    // Warn about early cancellation in development
+    if (import.meta?.env?.DEV) {
+      if (this.phase === 'black' || this.phase === 'cursor' || this.phase === 'terminal') {
+        console.warn('🎬 Director: WARNING - Cancelling during early phase:', this.phase);
+        console.warn('   This may be caused by HMR or effect cleanup');
+        console.trace('Cancel call stack');
+      }
     }
 
     console.log('🎬 Director: Cancelling show at phase:', this.phase);
@@ -355,6 +336,28 @@ class TheaterDirector {
     BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
   }
 
+  async prewarm() {
+    try {
+      console.log('   Prewarming genesis blueprint...');
+      BeatBus.emit(EVENTS.PREWARM_GENESIS_BLUEPRINT);
+      await this.once(EVENTS.PREWARM_COMPLETE, 500);
+      console.log('   Prewarm complete');
+    } catch {
+      console.log('   Prewarm timeout (non-fatal)');
+    }
+  }
+
+  monitorFragments() {
+    console.log('   Fragment monitoring enabled');
+    // Fragment monitoring implementation would go here
+  }
+
+  emitTune(payload) {
+    console.log('   RENDERER_TUNE:', payload);
+    BeatBus.emit(EVENTS.RENDERER_TUNE, payload || {});
+  }
+
+  // Utility methods
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -362,7 +365,7 @@ class TheaterDirector {
   _easeMorphTo(target = 1, duration = 1400) {
     return new Promise(resolve => {
       const start = performance.now();
-      const ease = t => t * t * (3 - 2 * t);
+      const ease = t => t * t * (3 - 2 * t); // Smooth cubic ease
 
       const step = now => {
         if (this.cancelled) return resolve();
@@ -413,12 +416,10 @@ class TheaterDirector {
       isRunning: this.isRunning,
       hasRun: this.hasRun,
       viewportReady: this.viewportReady,
-      timeline: this.timeline,
       currentStage: this.currentStage,
     };
   }
 
-  // Manual start method for debugging
   forceStart() {
     console.log('🎬 Director: Force starting (bypassing viewport wait)');
     this.viewportReady = true;
@@ -427,15 +428,14 @@ class TheaterDirector {
   }
 }
 
-// Create singleton instance
+// ── Singleton Instance & Dev Tools ───────────────────────────────────────────
 const director = new TheaterDirector();
 
-// Expose to window for debugging / dev ergonomics
 if (typeof window !== 'undefined') {
   window.theaterDirector = director;
 
   if (import.meta?.env?.DEV) {
-    // Install cancel wrapper to track who's calling cancel
+    // Wrap cancel to track callers in development
     const originalCancel = director.cancel.bind(director);
     director.cancel = function (...args) {
       console.warn('🎬 Director: cancel() called - tracking caller');
@@ -443,17 +443,13 @@ if (typeof window !== 'undefined') {
       return originalCancel(...args);
     };
 
-    // Status shortcut
+    // Development shortcuts
     window.theaterStatus = () => director.getStatus();
-
-    // BeatBus helpers (avoid ESM import friction in DevTools)
     window.emit = (e, p) => BeatBus.emit(e, p);
     window.on = (e, h) => BeatBus.on(e, h);
-
-    // Viewport helper
     window.emitViewportHint = () => {
-      const w = window.innerWidth,
-        h = window.innerHeight;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
       BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width: w, height: h, aspect: w / h });
     };
 
@@ -462,11 +458,11 @@ if (typeof window !== 'undefined') {
     console.log('   - window.theaterDirector.start()       // Start with viewport wait');
     console.log('   - window.theaterDirector.forceStart()  // Start immediately');
     console.log('   - window.theaterStatus()               // Get current status');
-    console.log("   - emit('ENGINE_VIEWPORT_HINT', {...})  // Emit any event");
+    console.log('   - emit("ENGINE_VIEWPORT_HINT", {...})  // Emit any event');
     console.log('   - emitViewportHint()                   // Emit current viewport hint');
   }
 
-  // Listen for viewport hint to auto-start (once)
+  // Auto-start listener (once)
   let viewportListenerInstalled = false;
   const installViewportListener = () => {
     if (viewportListenerInstalled) return;
@@ -501,15 +497,13 @@ if (typeof window !== 'undefined') {
 
 export default director;
 
-// __CANON_INSTALLED__
-// Canon event contracts (versioned)
+// ── Event Contracts ──────────────────────────────────────────────────────────
 export const CANON_CONTRACTS = {
   version: '1.0.1',
   events: {
     STAGE_CHANGE: {
       required: ['from', 'to'],
-      notes:
-        'Canonical shape. Old `{stage}` payload is deprecated and should be mapped to { from, to }.',
+      notes: 'Canonical shape. Old `{stage}` payload is deprecated.',
     },
     QUALITY_CHANGE: {
       required: ['tier'],
@@ -517,8 +511,13 @@ export const CANON_CONTRACTS = {
     },
     BLUEPRINT_READY: {
       required: ['stage', 'quality', 'blueprint'],
-      optional: ['cached'],
-      notes: 'Renderer consumes stage/quality/blueprint; `cached` is informative.',
+      optional: ['cached', 'mode'],
+      notes: 'Renderer consumes stage/quality/blueprint; mode=emergence for special handling.',
+    },
+    BUILD_EMERGENCE_BLUEPRINT: {
+      required: ['mode', 'source', 'target', 'count'],
+      optional: ['tierRatios', 'viewportHint'],
+      notes: 'Corrected contract for viewport spread → constellation emergence.',
     },
   },
   deprecations: {
