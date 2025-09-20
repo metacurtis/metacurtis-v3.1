@@ -1,4 +1,4 @@
-/* Canon Dev-OS Injector v3.5 - COMPLETE FIX
+/* Canon Dev-OS Injector v3.5 - SYNTAX FIXED
  * DEV-only (by host), idempotent, DOM-ready, BeatBus counters, /@fs fallback, early stats()
  */
 (() => {
@@ -8,7 +8,6 @@
   const isDevHost = /^(localhost|127\.|0\.0\.0\.0)$/i.test(location.hostname);
   const forceOn = !!w.__CANON_FORCE_DEV__ || localStorage.getItem('canonDevOsEnabled') === '1';
 
-  // Honor URL / hash / global overrides as early hints
   let __forceHud = false;
   try {
     const q = new URLSearchParams(location.search);
@@ -59,7 +58,7 @@
       var el = document.getElementById('canon-hud-v2');
       if (el) {
         el.classList.add('show');
-        el.style.display = 'block'; // Force visible
+        el.style.display = 'block';
       }
     } catch (e) { errors.push(e); }
   };
@@ -85,7 +84,6 @@
     if (resolveReady) resolveReady();
   }
 
-  // Set HUD visible by default for dev
   try {
     if (localStorage.getItem('canonHud:visible') == null) {
       localStorage.setItem('canonHud:visible', 'true');
@@ -153,7 +151,6 @@
   }
   resolveBusAndPatch();
 
-  // Cache-busted ensure step for macro registration race/HMR
   async function ensureMacrosReady() {
     const ok = () =>
       (typeof window.CANON_CONSOLE?.runMacro === 'function' &&
@@ -163,14 +160,12 @@
 
     if (ok()) return true;
 
-    // Try once with cache-bust
     try {
-      await import(/* @vite-ignore */ `/canon-console/runtime/hud-macro-core.js?bust=${Date.now()}`);
+      await import(/* @vite-ignore */ '/canon-console/runtime/hud-macro-core.js?bust=' + Date.now());
     } catch {}
 
     if (ok()) return true;
 
-    // Short backoff loop for HMR settle
     const t0 = performance.now();
     while (performance.now() - t0 < 1500) {
       await new Promise(r => setTimeout(r, 100));
@@ -181,7 +176,6 @@
     return false;
   }
 
-  // Force show HUD helper (resilient)
   function forceShowHud() {
     try {
       if (localStorage.getItem('canonHud:visible') === 'false') return;
@@ -208,79 +202,92 @@
     }
   }
 
-  (function () {
-    imp('runtime/bridge-guard.js', 'bridge')
-      .then(function () { return imp('agent/policy.js', null); })
-      .then(function () {
-        return imp('agent/pilot.js', 'pilot', function (m) {
-          try {
-            if (typeof m.startPilot === 'function') {
-              return m.startPilot({ auto: true }).then(function (st) {
-                w.CANON_PILOT = st || w.CANON_PILOT || {};
-              });
-            }
-          } catch (e) { errors.push(e); }
-        });
-      })
-      .then(function () { return imp('runtime/violation-tap.js', 'vtap'); })
-      .then(function () { return domReady(); })
-      .then(function () { installBusCounters(); })
-      .then(function () { return imp('runtime/pilot-ui-mini.js', 'mini'); })
-      .then(function () {
-        // Load HUD and immediately try to show it
-        return imp('runtime/hud.js', 'hud', function () {
-          forceShowHud();
-        });
-      })
-      .then(function () {
-        // Load macro core separately (single source of truth)
-        return imp('runtime/hud-macro-core.js', 'macros');
-      })
-      .then(function () { return ensureMacrosReady(); })
-      .then(function () { return imp('runtime/steps.js', 'steps'); })
-      .then(function () { return imp('runtime/playbooks.js', 'plays'); })
-      .then(function () {
-        w.__canonInjectorV3__.alive = true;
-        console.debug('[Canon] Injector v3.5 ready:', w.CANON_CONSOLE.stats());
-        
-        // Final attempt to ensure HUD is visible
-        forceShowHud();
-        
-        // Add easy keyboard shortcuts for HP Envy laptop
-        window.addEventListener('keydown', function(e) {
-          // F2 key - easiest on laptop
-          if (e.key === 'F2') {
-            e.preventDefault();
-            var el = document.getElementById('canon-hud-v2');
-            if (el) {
-              if (el.classList.contains('show')) {
-                CANON_CONSOLE.hideHud();
-              } else {
-                CANON_CONSOLE.showHud();
-              }
-            }
+  // Main loading chain
+  imp('runtime/bridge-guard.js', 'bridge')
+    .then(function () { return imp('agent/policy.js', null); })
+    .then(function () {
+      return imp('agent/pilot.js', 'pilot', function (m) {
+        try {
+          if (typeof m.startPilot === 'function') {
+            return m.startPilot({ auto: true }).then(function (st) {
+              w.CANON_PILOT = st || w.CANON_PILOT || {};
+            });
           }
-          
-          // Ctrl+H - laptop friendly
-          if (e.ctrlKey && e.key.toLowerCase() === 'h') {
-            e.preventDefault();
-            var el = document.getElementById('canon-hud-v2');
-            if (el) {
-              if (el.classList.contains('show')) {
-                CANON_CONSOLE.hideHud();
-              } else {
-                CANON_CONSOLE.showHud();
-              }
-            }
-          }
-        }, true);
-        
-        maybeReady();
+        } catch (e) { errors.push(e); }
       });
-  })();
+    })
+    .then(function () { return imp('runtime/violation-tap.js', 'vtap'); })
+    .then(function () {
+      // Install Blueprint Guard V2
+      return imp('runtime/blueprint-guard-v2.js', 'blueprintGuard', function (m) {
+        try {
+          const BeatBus = w.BeatBus || w.theaterBus?.bus;
+          const incidentCollector = w.CANON_CONSOLE?.incidents || { add: console.warn };
+          
+          return tryImport('/src/theater/events.js').then(function(evMod) {
+            if (evMod && evMod.EVENTS && m.default) {
+              m.default.install(BeatBus, incidentCollector, evMod.EVENTS);
+              L.blueprintGuard = true;
+              console.log('Blueprint Guard V2 installed');
+            }
+          });
+        } catch (e) { 
+          errors.push(e); 
+          console.warn('Blueprint Guard V2 error:', e);
+        }
+      });
+    })
+    .then(function () { return domReady(); })
+    .then(function () { installBusCounters(); })
+    .then(function () { return imp('runtime/pilot-ui-mini.js', 'mini'); })
+    .then(function () {
+      return imp('runtime/hud.js', 'hud', function () {
+        forceShowHud();
+      });
+    })
+    .then(function () {
+      return imp('runtime/hud-macro-core.js', 'macros');
+    })
+    .then(function () { return ensureMacrosReady(); })
+    .then(function () { return imp('runtime/steps.js', 'steps'); })
+    .then(function () { return imp('runtime/playbooks.js', 'plays'); })
+    .then(function () {
+      w.__canonInjectorV3__.alive = true;
+      console.debug('[Canon] Injector v3.5 ready:', w.CANON_CONSOLE.stats());
+      
+      forceShowHud();
+      
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'F2') {
+          e.preventDefault();
+          var el = document.getElementById('canon-hud-v2');
+          if (el) {
+            if (el.classList.contains('show')) {
+              CANON_CONSOLE.hideHud();
+            } else {
+              CANON_CONSOLE.showHud();
+            }
+          }
+        }
+        
+        if (e.ctrlKey && e.key.toLowerCase() === 'h') {
+          e.preventDefault();
+          var el = document.getElementById('canon-hud-v2');
+          if (el) {
+            if (el.classList.contains('show')) {
+              CANON_CONSOLE.hideHud();
+            } else {
+              CANON_CONSOLE.showHud();
+            }
+          }
+        }
+      }, true);
+      
+      maybeReady();
+    });
 })();
 
-// >>> Canon Bus Limiter v1 <<<
+// >>> Canon Bus Limiter v1 <
 (function CanonBusLimiter() {
   try {
     if (window.__canonBusLimiterInstalled) return;
@@ -345,7 +352,6 @@
   } catch (e) { console.warn('BusLimiter init failed', e); }
 })();
 
-// >>> Canon Bus Limiter default ON v1 <<<
 try {
   if (localStorage.getItem('canonBusLimiter') == null) {
     localStorage.setItem('canonBusLimiter', 'on');
@@ -355,16 +361,4 @@ try {
   }
 } catch {}
 
-console.log(`
-╔════════════════════════════════════════╗
-║  Canon Dev-OS v3.5 - HUD Controls     ║
-╠════════════════════════════════════════╣
-║  F2         = Toggle HUD (easiest)     ║
-║  Ctrl+H     = Toggle HUD (laptop)      ║
-║  ?hud=1     = Force on via URL         ║
-║                                        ║
-║  Console Commands:                     ║
-║  CANON_CONSOLE.showHud()              ║
-║  CANON_CONSOLE.hideHud()              ║
-╚════════════════════════════════════════╝
-`);
+console.log('\n╔════════════════════════════════════════╗\n║  Canon Dev-OS v3.5 - HUD Controls     ║\n╠════════════════════════════════════════╣\n║  F2         = Toggle HUD (easiest)     ║\n║  Ctrl+H     = Toggle HUD (laptop)      ║\n║  ?hud=1     = Force on via URL         ║\n║                                        ║\n║  Console Commands:                     ║\n║  CANON_CONSOLE.showHud()              ║\n║  CANON_CONSOLE.hideHud()              ║\n╚════════════════════════════════════════╝\n');

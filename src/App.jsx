@@ -10,7 +10,6 @@ import './engine/ConsciousnessEngine';
 
 // DEV: Canon Dev-OS injector (idempotent, order-aware)
 if (import.meta.env.DEV && typeof window !== 'undefined') {
-  void import('/canon-console/browser/inject.js'); // absolute from Vite root
 }
 
 export default function App() {

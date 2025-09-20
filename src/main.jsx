@@ -1,5 +1,8 @@
-import './canon/init-amplified.js';
 import React from 'react';
+// Import Canon Dev-OS (dev only)
+if (import.meta.env.DEV) {
+  import("/canon-console/browser/inject.js");
+}
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/index.css';
