@@ -1,25 +1,17 @@
-// __CANON_INSTALLED__
-// Canon event contracts (versioned)
+// Stub for legacy import - actual contracts now in canon-console/runtime/contracts/registry.js
 export const CANON_CONTRACTS = {
   version: '1.0.0',
   events: {
     STAGE_CHANGE: {
-      required: ['from','to'],
-      notes: 'Single canonical shape. No aliases.'
+      required: ['from', 'to'],
     },
     QUALITY_CHANGE: {
       required: ['tier'],
-      notes: 'Single canonical shape. No aliases.'
     },
     BLUEPRINT_READY: {
-      required: ['stage','quality','blueprint'],
-      optional: ['cached'],
-      notes: 'Renderer consumes stage/quality/blueprint; cached is informative.'
+      required: ['stage', 'quality', 'blueprint'],
     }
-  },
-  deprecations: {
-    STAGE_CHANGE: { stage: 'deprecated' },
-    QUALITY_CHANGE: { quality: 'deprecated' }
   }
 };
+
 export default CANON_CONTRACTS;

@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo "=== Fixing Injector Syntax Error ==="
+
+# Create a corrected version of the injector
+cat << 'INJECTOR' > canon-console/browser/inject.js.fixed
 /* Canon Dev-OS Injector v3.5 - SYNTAX FIXED
  * DEV-only (by host), idempotent, DOM-ready, BeatBus counters, /@fs fallback, early stats()
  */
@@ -218,28 +224,6 @@
     })
     .then(function () { return imp('runtime/violation-tap.js', 'vtap'); })
     .then(function () {
-      // Install Contract-Tap  
-      return imp('runtime/contract-tap.js', 'contractTap', function (m) {
-        try {
-          const BeatBus = w.BeatBus || w.theaterBus?.bus;
-          const incidentCollector = w.CANON_CONSOLE?.incidents || { 
-            add: function(incident) {
-              console.warn('[Contract]', incident.message, incident.context);
-            }
-          };
-          
-          if (BeatBus && m.default && m.default.installContractTap) {
-            m.default.installContractTap(BeatBus, incidentCollector);
-            L.contractTap = true;
-            console.log('📝 Contract-Tap installed');
-          }
-        } catch (e) {
-          errors.push(e);
-          console.warn('Contract-Tap error:', e);
-        }
-      });
-    })
-    .then(function () {
       // Install Blueprint Guard V2
       return imp('runtime/blueprint-guard-v2.js', 'blueprintGuard', function (m) {
         try {
@@ -384,3 +368,13 @@ try {
 } catch {}
 
 console.log('\n╔════════════════════════════════════════╗\n║  Canon Dev-OS v3.5 - HUD Controls     ║\n╠════════════════════════════════════════╣\n║  F2         = Toggle HUD (easiest)     ║\n║  Ctrl+H     = Toggle HUD (laptop)      ║\n║  ?hud=1     = Force on via URL         ║\n║                                        ║\n║  Console Commands:                     ║\n║  CANON_CONSOLE.showHud()              ║\n║  CANON_CONSOLE.hideHud()              ║\n╚════════════════════════════════════════╝\n');
+INJECTOR
+
+# Backup original and replace
+cp canon-console/browser/inject.js canon-console/browser/inject.js.broken
+mv canon-console/browser/inject.js.fixed canon-console/browser/inject.js
+
+echo "✓ Fixed injector syntax error"
+echo "✓ Original backed up as inject.js.broken"
+echo ""
+echo "Now run: npm run dev"

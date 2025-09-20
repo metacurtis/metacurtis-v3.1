@@ -1,0 +1,278 @@
+==========================================
+CONTENTS OF FOLDER: canon-console
+PATH: /home/curtis/projects/metacurtis-v3.1/src/canon-console
+GENERATED: Sat Sep 20 14:36:25 CDT 2025
+==========================================
+
+
+==========================================----
+FILE: L2.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon-console/L2.js
+SIZE: 4176 bytes
+MODIFIED: 2025-09-02 07:04:33.648698627 -0500
+----==========================================
+
+/**
+ * Canon Console L2 - Active Assistant
+ * Context-aware filtering and fix suggestions
+ */
+import CanonConsoleL1 from './L1.js';
+
+export class CanonConsoleL2 extends CanonConsoleL1 {
+  constructor() {
+    super();
+    this.context = null;
+    this.filters = { show: [], hide: [] };
+    this.suggestions = new Map();
+
+    console.log('🎮 Canon Console L2: Active assistant ready');
+  }
+
+  setContext(context) {
+    this.context = context;
+
+    const contextFilters = {
+      morphing: {
+        show: ['morph', 'scroll', 'uniform', 'progress', 'stage'],
+        hide: ['particle', 'audio', 'network', 'mouse'],
+      },
+      rendering: {
+        show: ['blueprint', 'shader', 'webgl', 'fps', 'particle', 'draw'],
+        hide: ['event', 'state', 'audio'],
+      },
+      performance: {
+        show: ['fps', 'memory', 'cache', 'quality', 'render', 'frame'],
+        hide: ['debug', 'verbose', 'trace'],
+      },
+      events: {
+        show: ['emit', 'event', 'stage', 'quality', 'blueprint'],
+        hide: ['render', 'particle', 'shader'],
+      },
+    };
+
+    this.filters = contextFilters[context] || { show: [], hide: [] };
+
+    console.log(`🎮 Canon Console: Context set to '${context}'`);
+    console.log(`    Showing: ${this.filters.show.join(', ') || 'all'}`);
+    console.log(`    Hiding: ${this.filters.hide.join(', ') || 'none'}`);
+  }
+
+  shouldShowContextual(message) {
+    if (!this.context) return true;
+
+    const msgStr = String(message).toLowerCase();
+
+    // Check hide filters first (blacklist)
+    for (const term of this.filters.hide) {
+      if (msgStr.includes(term)) {
+        return false;
+      }
+    }
+
+    // If show filters exist, use them (whitelist)
+    if (this.filters.show.length > 0) {
+      for (const term of this.filters.show) {
+        if (msgStr.includes(term)) {
+          return true;
+        }
+      }
+      return false; // Hide if no show terms match
+    }
+
+    return true; // Show by default if no filters
+  }
+
+  shouldShow(level, message) {
+    // First check verbosity level
+    if (!super.shouldShow(level, message)) {
+      return false;
+    }
+
+    // Then check context filters
+    return this.shouldShowContextual(message);
+  }
+
+  detectPattern(message) {
+    const pattern = super.detectPattern(message);
+
+    // Generate suggestions for common patterns
+    if (pattern.count === 3 && !this.suggestions.has(message)) {
+      const suggestion = this.generateSuggestion(message);
+      if (suggestion) {
+        this.suggestions.set(message, suggestion);
+        console.log(`🎮 Canon Console: Suggestion available - ${suggestion.brief}`);
+      }
+    }
+
+    return pattern;
+  }
+
+  generateSuggestion(message) {
+    const msgLower = String(message).toLowerCase();
+
+    const suggestionMap = {
+      uniform: {
+        brief: 'Uniform issue detected',
+        fix: 'Check shader uniforms match material uniforms',
+        doctorScript: 'doctor-fix-uniforms.cjs',
+      },
+      null: {
+        brief: 'Null reference detected',
+        fix: 'Add null checks before accessing properties',
+        doctorScript: 'doctor-add-null-checks.cjs',
+      },
+      undefined: {
+        brief: 'Undefined value detected',
+        fix: 'Ensure all variables are initialized',
+        doctorScript: 'doctor-fix-undefined.cjs',
+      },
+      failed: {
+        brief: 'Operation failure detected',
+        fix: 'Check error details and stack trace',
+        doctorScript: null,
+      },
+      deprecated: {
+        brief: 'Deprecated API usage',
+        fix: 'Update to modern API',
+        doctorScript: 'doctor-fix-deprecated.cjs',
+      },
+    };
+
+    for (const [key, suggestion] of Object.entries(suggestionMap)) {
+      if (msgLower.includes(key)) {
+        return suggestion;
+      }
+    }
+
+    return null;
+  }
+
+  getSuggestions() {
+    return Array.from(this.suggestions.entries()).map(([message, suggestion]) => ({
+      message: message.slice(0, 50) + '...',
+      ...suggestion,
+    }));
+  }
+
+  analyze() {
+    const stats = this.getStats();
+
+    return {
+      ...stats,
+      context: this.context,
+      filters: this.filters,
+      suggestions: this.getSuggestions(),
+    };
+  }
+}
+
+export default CanonConsoleL2;
+
+
+
+
+==========================================----
+FILE: L1.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon-console/L1.js
+SIZE: 2262 bytes
+MODIFIED: 2025-08-30 16:52:05.193925362 -0500
+----==========================================
+
+/**
+ * Canon Console L1 - Silent Monitor
+ * Basic noise reduction and pattern detection
+ */
+export class CanonConsoleL1 {
+  constructor() {
+    this.patterns = new Map();
+    this.messageCount = 0;
+    this.startTime = Date.now();
+    this.verbosity = 'important'; // critical, important, verbose
+    this.duplicateThreshold = 5;
+
+    console.log('🎮 Canon Console L1: Silent monitor active');
+  }
+
+  shouldShow(level, message) {
+    const priority = {
+      error: 3,
+      warn: 2,
+      log: 1,
+      info: 0,
+      debug: -1,
+    };
+
+    const threshold = {
+      critical: 3,
+      important: 2,
+      verbose: 0,
+      debug: -1,
+    };
+
+    return priority[level] >= threshold[this.verbosity];
+  }
+
+  detectPattern(message) {
+    this.messageCount++;
+
+    // Create pattern key from first 50 chars
+    const key = String(message).slice(0, 50);
+    const pattern = this.patterns.get(key) || {
+      count: 0,
+      first: Date.now(),
+      last: null,
+      suppressed: false,
+    };
+
+    pattern.count++;
+    pattern.last = Date.now();
+
+    // Suppress after threshold
+    if (pattern.count === this.duplicateThreshold && !pattern.suppressed) {
+      pattern.suppressed = true;
+      console.warn(
+        `🎮 Canon Console: Suppressing repeated message (×${pattern.count}): "${key}..."`
+      );
+    }
+
+    this.patterns.set(key, pattern);
+
+    return pattern;
+  }
+
+  setVerbosity(level) {
+    this.verbosity = level;
+    console.log(`🎮 Canon Console: Verbosity set to '${level}'`);
+  }
+
+  getStats() {
+    const runtime = Math.floor((Date.now() - this.startTime) / 1000);
+    const topPatterns = Array.from(this.patterns.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5)
+      .map(([msg, data]) => ({
+        message: msg,
+        count: data.count,
+        suppressed: data.suppressed,
+      }));
+
+    return {
+      runtime,
+      messagesTotal: this.messageCount,
+      patternsDetected: this.patterns.size,
+      suppressedPatterns: Array.from(this.patterns.values()).filter(p => p.suppressed).length,
+      verbosity: this.verbosity,
+      topPatterns,
+    };
+  }
+
+  clearPatterns() {
+    this.patterns.clear();
+    console.log('🎮 Canon Console: Pattern cache cleared');
+  }
+}
+
+export default CanonConsoleL1;
+
+
+
