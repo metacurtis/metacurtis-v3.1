@@ -1,6 +1,10 @@
+// src/state/commands/StateCommands.js
+// Canon-compliant state command layer with proper event contracts
+
 // >>> Throttled Morph Emitter v1 <<<
 let __lastMorph = -1;
 let __lastMorphEmit = 0;
+
 /** Local throttle config (ms) can be overridden by localStorage.canonMorphThrottleMs */
 function __getMorphThrottleMs() {
   try {
@@ -9,6 +13,7 @@ function __getMorphThrottleMs() {
     return 80;
   }
 }
+
 function __emitMorphThrottled(BeatBus, EVENTS, v) {
   try {
     const EPS = 0.005; // 0.5% change
@@ -23,7 +28,7 @@ function __emitMorphThrottled(BeatBus, EVENTS, v) {
   } catch {}
 }
 
-// State Command Layer with proper cleanup
+// State Command Layer with proper cleanup and architectural contracts
 import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom } from '../atoms';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
@@ -33,23 +38,87 @@ class StateCommands {
     this.snapshots = [];
     this.morphState = null;
     this.subscriptions = []; // Track subscriptions for cleanup
+    this.openingComplete = false; // Track opening phase
+    
+    // Event emission contracts
+    this.eventContracts = {
+      BUILD_EMERGENCE_BLUEPRINT: {
+        maxEmissions: 1,
+        emissionCount: 0,
+        allowedPhase: 'opening',
+        lastEmission: null
+      }
+    };
+    
     this.wireAtomsToBeatBus();
+    this.installOpeningListener();
+  }
+
+  // Listen for opening completion
+  installOpeningListener() {
+    const scrollSub = BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+      this.openingComplete = true;
+      console.log('[StateCommands] Opening phase complete');
+    });
+    if (scrollSub) this.subscriptions.push(scrollSub);
+  }
+
+  // Check if event emission is allowed per contract
+  canEmit(eventName) {
+    const contract = this.eventContracts[eventName];
+    if (!contract) return true; // No contract, allow emission
+    
+    // Check phase restriction
+    if (contract.allowedPhase === 'opening' && this.openingComplete) {
+      console.warn(`[StateCommands] ${eventName} blocked - only allowed during opening phase`);
+      return false;
+    }
+    
+    // Check max emissions
+    if (contract.maxEmissions && contract.emissionCount >= contract.maxEmissions) {
+      console.warn(`[StateCommands] ${eventName} blocked - max emissions (${contract.maxEmissions}) reached`);
+      return false;
+    }
+    
+    return true;
+  }
+
+  // Record event emission
+  recordEmission(eventName) {
+    const contract = this.eventContracts[eventName];
+    if (contract) {
+      contract.emissionCount++;
+      contract.lastEmission = performance.now();
+    }
   }
 
   wireAtomsToBeatBus() {
-    // Stage changes → BeatBus
+    // Stage changes → BeatBus (without emergence blueprint emission)
     let prevStage = stageAtom.getState?.()?.currentStage;
     const stageSub = stageAtom.subscribe?.(s => {
       const next = s.currentStage;
       if (next !== prevStage) {
-        BeatBus.emit(EVENTS.STAGE_CHANGE, { from: prevStage, to: next, reason: 'atom' });
+        // Emit stage change events
+        BeatBus.emit(EVENTS.STAGE_CHANGE, { 
+          from: prevStage, 
+          to: next, 
+          stage: next,  // Include for compatibility
+          reason: 'atom' 
+        });
+        
+        // Compatibility event if different
         if (EVENTS.STAGE_CHANGED !== EVENTS.STAGE_CHANGE) {
-          BeatBus.emit(EVENTS.STAGE_CHANGED, { from: prevStage, to: next, reason: 'atom' });
+          BeatBus.emit(EVENTS.STAGE_CHANGED, { 
+            from: prevStage, 
+            to: next, 
+            reason: 'atom' 
+          });
         }
-        BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, { stage: next, trigger: 'stage-change' });
-        if (EVENTS.BUILD_BLUEPRINT !== EVENTS.BUILD_EMERGENCE_BLUEPRINT) {
-          BeatBus.emit(EVENTS.BUILD_BLUEPRINT, { stage: next, trigger: 'stage-change' });
-        }
+        
+        // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
+        // This was causing emergence to build on every stage change
+        // Emergence should only be triggered by TheaterDirector during opening
+        
         prevStage = next;
       }
     });
@@ -65,6 +134,42 @@ class StateCommands {
       }
     });
     if (morphSub) this.subscriptions.push(morphSub);
+
+    // Quality changes → BeatBus
+    let lastQuality = qualityAtom.getState?.()?.currentQualityTier;
+    const qualitySub = qualityAtom.subscribe?.(s => {
+      const tier = s.currentQualityTier;
+      if (tier !== lastQuality) {
+        BeatBus.emit(EVENTS.QUALITY_CHANGE, { 
+          tier, 
+          quality: tier,  // Include for compatibility
+          from: lastQuality,
+          reason: 'atom' 
+        });
+        lastQuality = tier;
+      }
+    });
+    if (qualitySub) this.subscriptions.push(qualitySub);
+  }
+
+  // Programmatic emergence trigger (only for opening sequence)
+  triggerEmergence(payload = {}) {
+    if (!this.canEmit('BUILD_EMERGENCE_BLUEPRINT')) {
+      console.error('[StateCommands] Cannot trigger emergence - contract violation');
+      return false;
+    }
+    
+    this.recordEmission('BUILD_EMERGENCE_BLUEPRINT');
+    BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+      mode: 'emergence',
+      source: 'viewportSpread',
+      target: 'constellation',
+      count: 2000,
+      trigger: 'programmatic',
+      ...payload
+    });
+    
+    return true;
   }
 
   async executeClimaxMorph({ text, duration = 3000 }) {
@@ -136,6 +241,17 @@ class StateCommands {
     }
   }
 
+  // Get contract status
+  getContractStatus() {
+    return Object.entries(this.eventContracts).map(([event, contract]) => ({
+      event,
+      emissionCount: contract.emissionCount,
+      maxAllowed: contract.maxEmissions,
+      lastEmission: contract.lastEmission,
+      canEmit: this.canEmit(event)
+    }));
+  }
+
   // Clean up subscriptions
   dispose() {
     this.subscriptions.forEach(unsub => {
@@ -156,10 +272,12 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     stateCommands.dispose();
   });
+  
+  // Dev tools
+  if (import.meta.env.DEV) {
+    window.StateCommands = stateCommands;
+    window.stateCommandContracts = () => stateCommands.getContractStatus();
+  }
 }
 
 export default stateCommands;
-
-if (import.meta.env.DEV) {
-  window.StateCommands = stateCommands;
-}
