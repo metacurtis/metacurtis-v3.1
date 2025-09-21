@@ -58,7 +58,14 @@
     "canon:verify": "node scripts/canon-console-verify.mjs",
     "ci:fencepost": "node scripts/ci/opening-fencepost-check.mjs",
     "devos:verify": "node scripts/ci/opening-fencepost-check.mjs || true",
-    "validate:single-writer": "grep -r 'setAttribute\\|setDrawRange\\|material\\.uniforms' src --include='*.js' --include='*.jsx' | grep -v 'WebGL' && echo '⛔ GPU writes outside renderer' && exit 1 || echo '✅ Single-writer clean'"
+    "validate:single-writer": "grep -r 'setAttribute\\|setDrawRange\\|material\\.uniforms' src --include='*.js' --include='*.jsx' | grep -v 'WebGL' && echo '⛔ GPU writes outside renderer' && exit 1 || echo '✅ Single-writer clean'",
+    "canon:critical": "node scripts/hotdors-critical-four-final.mjs",
+    "canon:critical:verify": "node scripts/hotdors-critical-four-final.mjs --verify",
+    "canon:verify:all": "npm run canon:critical:verify && npm run validate:opening && npm run ci:fencepost",
+    "test:fencepost": "./scripts/ci/run-fencepost-test.sh",
+    "ci:fencepost:wait": "./scripts/ci/wait-and-test.sh",
+    "ci:test:parallel": "npm-run-all --parallel --race dev ci:fencepost:wait",
+    "test:all": "npm run canon:critical:verify && npm run test:fencepost"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -96,6 +103,7 @@
     "husky": "^8.0.3",
     "jsdom": "^26.0.0",
     "lint-staged": "^15.2.7",
+    "npm-run-all": "^4.1.5",
     "playwright": "^1.55.0",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
