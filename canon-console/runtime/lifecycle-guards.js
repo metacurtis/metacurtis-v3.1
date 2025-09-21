@@ -1,11 +1,13 @@
 // canon-console/runtime/lifecycle-guards.js
 // Behavioral contract enforcement for event lifecycles
+// v3.6.1 - Fixed for opening sequence compatibility
 
 export class LifecycleGuards {
   constructor() {
     this.guards = new Map();
     this.violations = [];
     this.enabled = true;
+    this.openingSequenceActive = false;
   }
 
   register(eventName, contract) {
@@ -46,10 +48,14 @@ export class LifecycleGuards {
           
           incidentCollector.add(incident);
           
-          // In STRICT mode, prevent emission
-          if (localStorage.getItem('canonBusMode') === 'STRICT') {
+          // In STRICT mode, only block if critical and not in opening
+          if (localStorage.getItem('canonBusMode') === 'STRICT' && 
+              validation.critical && 
+              !this.openingSequenceActive) {
             console.error('[LifecycleGuard] Blocking emission:', eventName, validation);
             return false;
+          } else {
+            console.warn('[LifecycleGuard] Violation (allowing):', eventName, validation.reason);
           }
         }
       }
@@ -57,31 +63,47 @@ export class LifecycleGuards {
       return originalEmit(eventName, payload);
     };
     
+    // Monitor for opening sequence
+    BeatBus.on('CURSOR_SHOW', () => this.openingSequenceActive = true);
+    BeatBus.on('PARTICLES_EMERGED', () => {
+      setTimeout(() => this.openingSequenceActive = false, 1000);
+    });
+    
     console.log('🛡️ Lifecycle Guards installed');
   }
 
   registerDefaults() {
-    // Critical: Emergence should only happen once
+    // BUILD_EMERGENCE_BLUEPRINT - Allow during opening and stage changes
     this.register('BUILD_EMERGENCE_BLUEPRINT', {
-      maxOccurrences: 1,
-      validPhases: ['opening'],
-      resetOn: 'page_reload',
-      critical: true,
-      description: 'Emergence blueprint should only build once during opening'
+      maxOccurrences: 20,  // Allow multiple (one per stage + opening)
+      validPhases: ['opening', 'emergence', 'runtime'],
+      minInterval: 50,  // Prevent only rapid-fire
+      critical: false,   // Don't block
+      description: 'Emergence blueprint builds on stage changes'
     });
     
-    // Particles emerged is a one-time fencepost
+    // PARTICLES_EMERGED - Renderer emits this per emergence
     this.register('PARTICLES_EMERGED', {
-      maxOccurrences: 1,
-      validPhases: ['opening', 'emergence'],
-      critical: true,
-      description: 'Particles emerged is a one-time fencepost event'
+      maxOccurrences: 20,  // Allow multiple 
+      validPhases: ['opening', 'emergence', 'runtime'],
+      minInterval: 50,
+      critical: false,
+      description: 'Particles emerged signals emergence complete'
+    });
+    
+    // RENDERER_TUNE - Can happen multiple times during setup
+    this.register('RENDERER_TUNE', {
+      maxOccurrences: 100,  // Many during opening
+      minInterval: 10,
+      critical: false,
+      description: 'Renderer tuning happens frequently during setup'
     });
     
     // Stage changes should not be too rapid
     this.register('STAGE_CHANGE', {
-      minInterval: 100, // ms between changes
-      validEmitters: ['stageAtom', 'TheaterDirector'],
+      minInterval: 100,
+      validEmitters: ['stageAtom', 'TheaterDirector', 'ScrollOrchestrator'],
+      critical: false,
       description: 'Stage changes should be deliberate, not rapid'
     });
     
@@ -89,13 +111,49 @@ export class LifecycleGuards {
     this.register('QUALITY_CHANGE', {
       minInterval: 500,
       maxPerMinute: 10,
+      critical: true,
       description: 'Quality changes should be infrequent'
+    });
+    
+    // Opening sequence events - track but don't block
+    this.register('CURSOR_SHOW', {
+      maxOccurrences: 5,
+      validPhases: ['preload', 'opening'],
+      critical: false
+    });
+    
+    this.register('CURSOR_BLINK', {
+      maxOccurrences: 10,
+      validPhases: ['opening'],
+      critical: false
+    });
+    
+    this.register('TERMINAL_TYPE', {
+      maxOccurrences: 5,
+      validPhases: ['opening'],
+      critical: false
+    });
+    
+    this.register('SCREEN_FILL', {
+      maxOccurrences: 5,
+      validPhases: ['opening'],
+      critical: false
     });
   }
 
   validate(eventName, emitter, context) {
     const guard = this.guards.get(eventName);
     if (!guard) return { valid: true };
+    
+    // During opening sequence, be more lenient
+    if (this.openingSequenceActive) {
+      const criticalEvents = ['QUALITY_CHANGE']; // Only truly critical events
+      if (!criticalEvents.includes(eventName)) {
+        guard.occurrences++;
+        guard.lastOccurrence = Date.now();
+        return { valid: true }; // Allow during opening
+      }
+    }
     
     const now = Date.now();
     
@@ -110,7 +168,8 @@ export class LifecycleGuards {
       return {
         valid: false,
         reason: `Exceeded max occurrences (expected: ${guard.maxOccurrences}, actual: ${guard.occurrences})`,
-        violation: 'FREQUENCY_VIOLATION'
+        violation: 'FREQUENCY_VIOLATION',
+        critical: guard.critical
       };
     }
     
@@ -121,7 +180,8 @@ export class LifecycleGuards {
         return {
           valid: false,
           reason: `Too rapid (interval: ${interval}ms, minimum: ${guard.minInterval}ms)`,
-          violation: 'TIMING_VIOLATION'
+          violation: 'TIMING_VIOLATION',
+          critical: guard.critical
         };
       }
     }
@@ -137,7 +197,8 @@ export class LifecycleGuards {
         return {
           valid: false,
           reason: `Rate limit exceeded (${recentCount}/min, max: ${guard.maxPerMinute}/min)`,
-          violation: 'RATE_VIOLATION'
+          violation: 'RATE_VIOLATION',
+          critical: guard.critical
         };
       }
     }
@@ -147,7 +208,8 @@ export class LifecycleGuards {
       return {
         valid: false,
         reason: `Invalid phase (expected: ${guard.validPhases.join(', ')}, actual: ${context.phase})`,
-        violation: 'PHASE_VIOLATION'
+        violation: 'PHASE_VIOLATION',
+        critical: guard.critical
       };
     }
     
@@ -168,13 +230,21 @@ export class LifecycleGuards {
   }
   
   detectPhase() {
-    // Simple phase detection based on what has occurred
-    const hasEmerged = this.guards.get('PARTICLES_EMERGED')?.occurrences > 0;
+    // More sophisticated phase detection
     const hasStarted = this.guards.get('CURSOR_SHOW')?.occurrences > 0;
+    const hasEmerged = this.guards.get('PARTICLES_EMERGED')?.occurrences > 0;
+    const hasStageChange = this.guards.get('STAGE_CHANGE')?.occurrences > 0;
+    const hasTerminal = this.guards.get('TERMINAL_TYPE')?.occurrences > 0;
     
     if (!hasStarted) return 'preload';
-    if (!hasEmerged) return 'opening';
+    if (hasStarted && !hasEmerged) return 'opening';
+    if (hasEmerged && !hasStageChange) return 'emergence';
     return 'runtime';
+  }
+  
+  setOpeningActive(active) {
+    this.openingSequenceActive = active;
+    console.log(`[LifecycleGuard] Opening sequence active: ${active}`);
   }
   
   reset() {
@@ -184,13 +254,15 @@ export class LifecycleGuards {
       guard.lastOccurrence = null;
     });
     this.violations = [];
+    this.openingSequenceActive = false;
   }
   
   getReport() {
     const report = {
       guards: {},
       violations: this.violations.slice(-10),
-      phase: this.detectPhase()
+      phase: this.detectPhase(),
+      openingActive: this.openingSequenceActive
     };
     
     this.guards.forEach((guard, event) => {
@@ -198,7 +270,8 @@ export class LifecycleGuards {
         report.guards[event] = {
           occurrences: guard.occurrences,
           maxAllowed: guard.maxOccurrences,
-          violated: guard.maxOccurrences ? guard.occurrences > guard.maxOccurrences : false
+          violated: guard.maxOccurrences ? guard.occurrences > guard.maxOccurrences : false,
+          critical: guard.critical || false
         };
       }
     });
