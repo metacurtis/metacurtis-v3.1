@@ -569,3 +569,40 @@ try {
 } catch {}
 
 console.log('\n╔════════════════════════════════════════╗\n║  Canon Dev-OS v3.6 - HUD Controls     ║\n╠════════════════════════════════════════╣\n║  F2         = Toggle HUD (easiest)     ║\n║  Ctrl+H     = Toggle HUD (laptop)      ║\n║  ?hud=1     = Force on via URL         ║\n║                                        ║\n║  Console Commands:                     ║\n║  CANON_CONSOLE.showHud()              ║\n║  CANON_CONSOLE.hideHud()              ║\n║  CANON_CONSOLE.stats()                ║\n╚════════════════════════════════════════╝\n');
+
+// Learning System incident hook - HOT-DORS injected
+(function installLearningHook() {
+  try {
+    if (window.__canonLearningHook__) return;
+    window.__canonLearningHook__ = true;
+    
+    const bus = window.BeatBus;
+    if (!bus || !bus.on) return;
+    
+    // Hook these incident types
+    const incidentTypes = [
+      'CANON_VIOLATION', 'GUARD_WARN', 'GUARD_ERROR',
+      'SHADER_COMPILE_ERROR', 'SHADER_COMPILE_FAIL', 'SHADER_LINK_FAIL',
+      'FPS_LOW', 'FENCEPOST_TIMEOUT', 'BLUEPRINT_INVALID'
+    ];
+    
+    const tap = (eventName) => {
+      bus.on(eventName, (payload) => {
+        try {
+          if (window.CANON_LEARNING?.recordPattern) {
+            window.CANON_LEARNING.recordPattern(eventName, {
+              payload,
+              ts: Date.now()
+            });
+          }
+        } catch (e) {}
+      });
+    };
+    
+    incidentTypes.forEach(tap);
+    console.log('🧠 Learning System connected to', incidentTypes.length, 'incident types');
+    
+  } catch (e) {
+    console.warn('[Canon] Learning hook failed:', e);
+  }
+})();

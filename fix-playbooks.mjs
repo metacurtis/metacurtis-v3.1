@@ -1,4 +1,18 @@
-// canon-console/runtime/playbooks-extra.js
+#!/usr/bin/env node
+// fix-playbooks.mjs
+// Quick fix to add the missing playbooks
+
+import fs from 'fs/promises';
+import path from 'path';
+
+const ROOT = process.cwd();
+
+async function fixPlaybooks() {
+  console.log('🔧 Adding missing playbooks...\n');
+  
+  const playbooksExtraFile = path.join(ROOT, 'canon-console/runtime/playbooks-extra.js');
+  
+  const content = `// canon-console/runtime/playbooks-extra.js
 // Canon Playbooks Extra
 
 export const ExtraPlaybooks = {};
@@ -76,3 +90,18 @@ if (typeof window !== 'undefined') {
 }
 
 export default ExtraPlaybooks;
+`;
+
+  await fs.writeFile(playbooksExtraFile, content);
+  console.log('✅ Created playbooks-extra.js with:');
+  console.log('  - RECOVER_DIM_POINTS');
+  console.log('  - OPENING_FENCEPOST');
+  
+  console.log('\n📝 Testing commands:');
+  console.log('  window.CANON_PLAYBOOKS_EXTRA.RECOVER_DIM_POINTS()');
+  console.log('  window.CANON_PLAYBOOKS_EXTRA.OPENING_FENCEPOST()');
+  
+  console.log('\n✅ Playbooks fix complete! Reload your app.');
+}
+
+fixPlaybooks().catch(console.error);

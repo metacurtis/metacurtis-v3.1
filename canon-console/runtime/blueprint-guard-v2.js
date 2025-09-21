@@ -155,4 +155,82 @@ export class BlueprintGuardV2 {
 }
 
 export const blueprintGuard = new BlueprintGuardV2();
+
+// Blueprint validation function - HOT-DORS injected
+const __canonBlueprintValidate = (blueprint) => {
+  const issues = [];
+  
+  // Check typed arrays
+  const isTypedArray = (x) => ArrayBuffer.isView(x) && x.BYTES_PER_ELEMENT;
+  const isLen3Multiple = (x) => isTypedArray(x) && x.length % 3 === 0;
+  
+  if (!isLen3Multiple(blueprint?.atmosphericPositions)) {
+    issues.push('atmosphericPositions: missing/invalid typed array');
+  }
+  
+  if (!isLen3Multiple(blueprint?.text3DPositions)) {
+    issues.push('text3DPositions: missing/invalid typed array');
+  }
+  
+  // Check particle count bounds
+  const count = blueprint?.particleCount || blueprint?.activeCount || 0;
+  if (count < 100 || count > 200000) {
+    issues.push(`particleCount out of bounds: ${count}`);
+  }
+  
+  // NaN/Infinity scan (sample first 100)
+  const scanForNaN = (arr, name) => {
+    if (!isTypedArray(arr)) return;
+    const limit = Math.min(arr.length, 100);
+    for (let i = 0; i < limit; i++) {
+      if (!Number.isFinite(arr[i])) {
+        issues.push(`${name} contains NaN/Infinity at index ${i}`);
+        break;
+      }
+    }
+  };
+  
+  scanForNaN(blueprint?.atmosphericPositions, 'atmosphericPositions');
+  scanForNaN(blueprint?.text3DPositions, 'text3DPositions');
+  
+  return { valid: issues.length === 0, issues };
+};
+
+// Hook into blueprint processing
+const originalInstall = blueprintGuard.install;
+blueprintGuard.install = function(BeatBus, incidentCollector, EVENTS) {
+  // Call original if it exists
+  if (originalInstall) {
+    originalInstall.call(this, BeatBus, incidentCollector, EVENTS);
+  }
+  
+  // Add validation tap
+  if (BeatBus && EVENTS?.BLUEPRINT_READY) {
+    BeatBus.on(EVENTS.BLUEPRINT_READY, (payload) => {
+      const validation = __canonBlueprintValidate(payload);
+      if (!validation.valid) {
+        console.warn('[BlueprintGuard] Validation failed:', validation.issues);
+        
+        if (incidentCollector?.add) {
+          incidentCollector.add({
+            code: 'BLUEPRINT_INVALID',
+            severity: 'error',
+            message: 'Blueprint validation failed',
+            context: { issues: validation.issues }
+          });
+        }
+        
+        BeatBus.emit('CANON_VIOLATION', {
+          type: 'BLUEPRINT_GUARD',
+          issues: validation.issues,
+          ts: Date.now()
+        });
+      }
+    });
+    
+    console.log('🛡️ Blueprint validation wired to BLUEPRINT_READY');
+  }
+};
+
+
 export default blueprintGuard;
