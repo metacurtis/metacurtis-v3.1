@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-09-20T21:09:39.163Z",
+  "timestamp": "2025-09-21T02:06:16.879Z",
   "runtime": {
     "injector": {
-      "version": "3.5",
+      "version": "3.6",
       "modules": [
         "bridge-guard",
         "violation-tap",

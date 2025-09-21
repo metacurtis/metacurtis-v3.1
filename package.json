@@ -57,7 +57,8 @@
     "opening:check": "node tools/sst-guard.mjs --opening --vision && node scripts/agent/runner.mjs --goal=opening:visuals",
     "canon:verify": "node scripts/canon-console-verify.mjs",
     "ci:fencepost": "node scripts/ci/opening-fencepost-check.mjs",
-    "devos:verify": "node scripts/ci/opening-fencepost-check.mjs || true"
+    "devos:verify": "node scripts/ci/opening-fencepost-check.mjs || true",
+    "validate:single-writer": "grep -r 'setAttribute\\|setDrawRange\\|material\\.uniforms' src --include='*.js' --include='*.jsx' | grep -v 'WebGL' && echo '⛔ GPU writes outside renderer' && exit 1 || echo '✅ Single-writer clean'"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

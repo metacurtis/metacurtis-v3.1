@@ -60,7 +60,14 @@ if (checkOpening) {
   // Theater: start after viewport hint present
   row(/ENGINE_VIEWPORT_HINT/.test(theater), 'Theater start-after-viewport gate present');
 
-  console.log('\nOpening checks:');
+  
+  // Single-writer architecture enforcement
+  const engineGPU = /(setAttribute|setDrawRange|material\.uniforms)/.test(engine);
+  const theaterGPU = /(setAttribute|setDrawRange|material\.uniforms)/.test(theater);
+  row(!engineGPU, 'Engine: no direct GPU writes');
+  row(!theaterGPU, 'Theater: no direct GPU writes');
+
+console.log('\nOpening checks:');
   rows.forEach(l => console.log(l));
   console.log('\nOpening sentinel:', rows.some(l => l.startsWith('X')) ? 'FAIL' : 'OK');
 }

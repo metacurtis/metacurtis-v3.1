@@ -349,6 +349,150 @@
     });
 })();
 
+
+// === Single-Writer Watchdog (DEV only) ======================================
+// Prevents GPU writes outside renderer - Canon Dev-OS v3.7
+// Installed: 2025-09-21T02:38:29.701Z
+(function installSingleWriterWatchdog() {
+  try {
+    if (window.__gpuWatchdogInstalled) return;
+    window.__gpuWatchdogInstalled = true;
+
+    const mode = localStorage.getItem('canonSingleWriter') || 'warn';
+    const allowlist = [
+      'WebGLBackground.jsx',
+      'WebGLCanvas.jsx',
+      '/src/components/webgl/',
+      'renderer'  // Allow any file with 'renderer' in the path
+    ];
+
+    window.__gpuViolations = [];
+    
+    const checkCaller = (fnName) => {
+      const stack = new Error().stack || '';
+      const allowed = allowlist.some(pattern => stack.includes(pattern));
+      
+      if (!allowed) {
+        // Extract the most relevant caller from stack
+        const lines = stack.split('\n');
+        const callerLine = lines[3] || lines[2] || 'unknown';
+        
+        const violation = {
+          fn: fnName,
+          timestamp: Date.now(),
+          caller: callerLine.trim()
+        };
+        
+        window.__gpuViolations.push(violation);
+        console.warn('[GPU Watchdog]', fnName, 'from non-renderer:', violation.caller);
+        
+        // Report to Canon systems
+        if (window.BeatBus?.emit) {
+          window.BeatBus.emit('CANON_VIOLATION', { 
+            type: 'SINGLE_WRITER', 
+            ...violation 
+          });
+        }
+        
+        if (window.CANON_CONSOLE?.incidents?.add) {
+          window.CANON_CONSOLE.incidents.add({
+            code: 'SINGLE_WRITER_VIOLATION',
+            severity: 'error',
+            message: `GPU write from non-renderer: ${fnName}`,
+            context: violation
+          });
+        }
+        
+        if (mode === 'strict') {
+          throw new Error(`GPU SINGLE_WRITER_VIOLATION: ${fnName} from non-renderer`);
+        }
+      }
+    };
+
+    // Wait for THREE.js then patch
+    const patchThree = () => {
+      if (!window.THREE?.BufferGeometry?.prototype) {
+        window.__gpuWatchdogRetries = (window.__gpuWatchdogRetries || 0) + 1;
+        if (window.__gpuWatchdogRetries < 50) {
+          setTimeout(patchThree, 100);
+        } else {
+          console.warn('[GPU Watchdog] THREE.js not found after 50 attempts');
+        }
+        return;
+      }
+
+      const proto = window.THREE.BufferGeometry.prototype;
+      const orig = {
+        setAttribute: proto.setAttribute,
+        setDrawRange: proto.setDrawRange
+      };
+      
+      // Patch setAttribute
+      proto.setAttribute = function(...args) {
+        checkCaller('setAttribute');
+        return orig.setAttribute.apply(this, args);
+      };
+      
+      // Patch setDrawRange
+      proto.setDrawRange = function(...args) {
+        checkCaller('setDrawRange');
+        return orig.setDrawRange.apply(this, args);
+      };
+      
+      // Also patch ShaderMaterial uniforms if available
+      if (window.THREE.ShaderMaterial?.prototype) {
+        const shaderProto = window.THREE.ShaderMaterial.prototype;
+        const uniformsDesc = Object.getOwnPropertyDescriptor(shaderProto, 'uniforms');
+        if (uniformsDesc?.set) {
+          Object.defineProperty(shaderProto, 'uniforms', {
+            ...uniformsDesc,
+            set: function(value) {
+              checkCaller('uniforms.set');
+              return uniformsDesc.set.call(this, value);
+            }
+          });
+        }
+      }
+      
+      console.log('🛡️ GPU Watchdog v3.7 active (mode:', mode, ')');
+      console.log('📊 Use window.CANON_GPU_WATCHDOG for control');
+    };
+    
+    patchThree();
+    
+    // Control API
+    window.CANON_GPU_WATCHDOG = {
+      version: '3.7',
+      test: () => {
+        if (!window.THREE) return 'THREE.js not loaded yet';
+        const before = window.__gpuViolations.length;
+        try {
+          const geom = new THREE.BufferGeometry();
+          geom.setAttribute('test', new THREE.Float32BufferAttribute([0,0,0], 3));
+          const after = window.__gpuViolations.length;
+          return after > before ? 
+            '✅ Watchdog working! Caught violation.' : 
+            '❌ No violation caught - check installation';
+        } catch(e) {
+          return '✅ Strict mode working: ' + e.message;
+        }
+      },
+      getViolations: () => window.__gpuViolations,
+      clearViolations: () => { window.__gpuViolations = []; },
+      setMode: (m) => { 
+        localStorage.setItem('canonSingleWriter', m);
+        console.log('[GPU Watchdog] Mode set to:', m);
+        return m;
+      },
+      getMode: () => localStorage.getItem('canonSingleWriter') || 'warn'
+    };
+    
+  } catch (e) {
+    console.error('[GPU Watchdog] Install failed:', e);
+  }
+})();
+// === End Single-Writer Watchdog =============================================
+
 // >>> Canon Bus Limiter v1 <
 (function CanonBusLimiter() {
   try {
