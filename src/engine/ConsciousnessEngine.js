@@ -2,6 +2,7 @@
 // Canon-compliant production version with HMR safety, validation, and efficiency
 
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { VC } from '@/config/visual-controls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import * as THREE from 'three';
 
@@ -28,6 +29,7 @@ class ConsciousnessEngine {
 
     // Emergence memory - store only targets, not full blueprint
     this._lastEmergenceTargets = null;
+    this._emergenceRaf = null;
 
     // HMR safety
     this._listeners = [];
@@ -177,19 +179,83 @@ class ConsciousnessEngine {
         cached: false
       });
       
-      console.log('🧠 Engine: Emergence blueprint emitted', {
-        count: blueprint.particleCount,
-        mode: 'emergence'
-      });
-      
+      console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
       this._log('emergence_built', { count: blueprint.particleCount });
 
+      // Drive implosion → settle via directives; renderer remains passive
+      this._startEmergenceTimeline(blueprint);
+
       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost
-      
+
     } catch (e) {
       console.error('[Engine] BUILD_EMERGENCE_BLUEPRINT error:', e);
       this._log('emergence_error', { error: e.message });
     }
+  }
+
+  _startEmergenceTimeline(bp) {
+    const count = bp?.activeCount || bp?.particleCount || 0;
+    if (!count || typeof window === 'undefined' || !performance?.now) return;
+
+    if (this._emergenceRaf) cancelAnimationFrame(this._emergenceRaf);
+
+    const base = Canonical?.features?.pointSizeDefault ?? 48;
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const implMs = VC.IMPLODE_MS;
+    const settleMs = VC.SETTLE_MS;
+    const mid = VC.MID_MORPH;
+
+    const start = performance.now();
+    const total = implMs + settleMs;
+
+    const step = () => {
+      const el = performance.now() - start;
+      const tI = Math.min(1, el / implMs);
+      const tS = el <= implMs ? 0 : Math.min(1, (el - implMs) / settleMs);
+
+      const m = el <= implMs ? mid * smooth(tI) : mid + (1 - mid) * smooth(tS);
+      const eI = smooth(tI);
+      const eS = smooth(tS);
+
+      const draw = Math.max(1, Math.round(count * (el <= implMs ? eI : 1)));
+      const ps = base * (el <= implMs
+        ? 1 + (VC.POINT_SIZE_KICK - 1) * eI
+        : VC.POINT_SIZE_KICK - (VC.POINT_SIZE_KICK - 1) * eS);
+
+      const sig = el <= implMs
+        ? VC.SIGMA_BASE + (VC.SIGMA_PEAK - VC.SIGMA_BASE) * eI
+        : VC.SIGMA_PEAK - (VC.SIGMA_PEAK - VC.SIGMA_BASE) * eS;
+
+      const t4 = el <= implMs
+        ? VC.T4_HI_PEAK
+        : VC.T4_HI_PEAK - (VC.T4_HI_PEAK - VC.T4_HI_SETTLE) * eS;
+
+      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+        morphProgress: +m.toFixed(3),
+        drawCount: draw,
+        activeCount: draw,
+        pointSize: ps,
+        gaussianSigma: sig,
+        tierHighlight: [1, 1, 1, t4],
+      });
+
+      if (el < total) {
+        this._emergenceRaf = requestAnimationFrame(step);
+      } else {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          morphProgress: 1,
+          drawCount: count,
+          activeCount: count,
+          pointSize: base,
+          gaussianSigma: VC.SIGMA_BASE,
+          tierHighlight: [1, 1, 1, VC.T4_HI_SETTLE],
+          uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
+        });
+        this._emergenceRaf = null;
+      }
+    };
+
+    this._emergenceRaf = requestAnimationFrame(step);
   }
 
   // --- Blueprint Generation ---
@@ -488,83 +554,133 @@ class ConsciousnessEngine {
   generateViewportSpread(N, hint) {
     const { width = 120, height = 90 } = hint || this._viewportHint;
     const out = new Float32Array(N * 3);
-    
-    // Use viewport-relative units
-    const halfW = width * 0.5;
-    const halfH = height * 0.5;
-    const zDepth = Math.max(width, height) * 0.3;
-    
+
+    // derive viewport target radius (same basis as starfield) and widen atmospheric layer
+    const vw = width * 0.5;
+    const vh = height * 0.5;
+    const R = (VC?.STARFIELD_SCALE ?? 0.72) * Math.min(vw, vh);
+    const AT = VC?.ATMO_SCALE ?? 1.15;
+    const rx = Math.min(R * AT, VC.VIEW_CAP_HALF_W);
+    const ry = Math.min(R * AT, VC.VIEW_CAP_HALF_H);
+    const zMin = -VC.Z_BACK_MAX;
+    const zMax = -VC.Z_BACK_MIN;
+
+    // gaussian helper (clamped) for a natural elliptical cloud
+    const rnd = Math.random;
+    const gauss = () => {
+      let u = 0;
+      let v = 0;
+      while (u === 0) u = rnd();
+      while (v === 0) v = rnd();
+      const g = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      return Math.max(-1.2, Math.min(1.2, g));
+    };
+
     for (let i = 0; i < N; i++) {
       const j = i * 3;
-      out[j]     = (Math.random() * 2 - 1) * halfW;
-      out[j + 1] = (Math.random() * 2 - 1) * halfH;
-      out[j + 2] = (Math.random() * 2 - 1) * zDepth;
+      out[j] = gauss() * rx;
+      out[j + 1] = gauss() * ry;
+      out[j + 2] = zMin + rnd() * (zMax - zMin);
     }
-    
+
     return out;
   }
 
   generateConstellationFormation(N, tierRatios = [0.5, 0.2, 0.15, 0.15], hint) {
+    // Starfield (not rings): viewport-scaled, 4 tiers with different spreads/cluster behavior.
     const out = new Float32Array(N * 3);
-    const rnd = createSeededRandom('constellation');
-    
-    // Calculate tier counts
-    const tierCounts = [
-      Math.floor(N * tierRatios[0]),
-      Math.floor(N * tierRatios[1]),
-      Math.floor(N * tierRatios[2]),
-      Math.floor(N * tierRatios[3]),
-    ];
-    // Adjust last tier for rounding
-    const sum = tierCounts[0] + tierCounts[1] + tierCounts[2];
-    tierCounts[3] = N - sum;
-    
-    let idx = 0;
-    
-    // Tier 0: Outer atmospheric layer
-    for (let i = 0; i < tierCounts[0]; i++) {
-      const j = idx * 3;
-      const angle = (i / tierCounts[0]) * Math.PI * 2;
-      const radius = 30 + rnd() * 10;
-      out[j]     = Math.cos(angle) * radius;
-      out[j + 1] = Math.sin(angle) * radius * 0.6;
-      out[j + 2] = (rnd() - 0.5) * 15;
-      idx++;
+    const rnd = createSeededRandom('starfield');
+    // tier counts
+    const tc0 = Math.floor(N * tierRatios[0]);
+    const tc1 = Math.floor(N * tierRatios[1]);
+    const tc2 = Math.floor(N * tierRatios[2]);
+    const tc3 = N - (tc0 + tc1 + tc2);
+    // viewport-based radius
+    const vw = (hint?.width ?? this._viewportHint.width) * 0.5;
+    const vh = (hint?.height ?? this._viewportHint.height) * 0.5;
+    const R = (VC?.STARFIELD_SCALE ?? 0.72) * Math.min(vw, vh);
+    // helpers
+    // Box-Muller with clamp to bound starfield extent (|g| ≤ 1.2)
+    const gauss = () => {
+      let u = 0, v = 0;
+      while (u === 0) u = rnd();
+      while (v === 0) v = rnd();
+      const g = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      return Math.max(-1.2, Math.min(1.2, g));
+    };
+    const sampleEllipse = (rx, ry) => {
+      // Gaussian-weighted inside ellipse
+      const gx = gauss() * rx;
+      const gy = gauss() * ry;
+      return [gx, gy];
+    };
+    let k = 0;
+    // Tier 0 — diffuse substrate (wider in X, flattened Y)
+    for (let i = 0; i < tc0; i++, k++) {
+      const j = 3 * k;
+      const [x, y] = sampleEllipse(R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70));
+      out[j] = x;
+      out[j + 1] = y;
+      out[j + 2] = (rnd() - 0.5) * (VC.T0_Z_JITTER ?? 4);
     }
-    
-    // Tier 1: Spatial structure layer
-    for (let i = 0; i < tierCounts[1]; i++) {
-      const j = idx * 3;
-      const angle = (i / tierCounts[1]) * Math.PI * 2;
-      const radius = 20 + rnd() * 5;
-      out[j]     = Math.cos(angle) * radius;
-      out[j + 1] = Math.sin(angle) * radius * 0.7;
-      out[j + 2] = (rnd() - 0.5) * 10;
-      idx++;
+    // Tier 1 — denser substrate (slightly tighter spread)
+    for (let i = 0; i < tc1; i++, k++) {
+      const j = 3 * k;
+      const [x, y] = sampleEllipse(R * 0.75, R * 0.75);
+      out[j] = x;
+      out[j + 1] = y;
+      out[j + 2] = (rnd() - 0.5) * (VC.T1_Z_JITTER ?? 3);
     }
-    
-    // Tier 2: Memory anchors
-    for (let i = 0; i < tierCounts[2]; i++) {
-      const j = idx * 3;
-      const angle = (i / tierCounts[2]) * Math.PI * 2;
-      const radius = 12 + rnd() * 3;
-      out[j]     = Math.cos(angle) * radius;
-      out[j + 1] = Math.sin(angle) * radius * 0.8;
-      out[j + 2] = (rnd() - 0.5) * 5;
-      idx++;
+    // Tier 2 — few gaussian clusters
+    const cCount = VC.T2_CLUSTER_COUNT ?? 3;
+    const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.14) * R; // slightly tighter clusters
+    const clusters = Array.from({ length: cCount }, () => {
+      const [cx, cy] = sampleEllipse(R * 0.66, R * 0.66);
+      return { cx, cy };
+    });
+    for (let i = 0; i < tc2; i++, k++) {
+      const j = 3 * k;
+      const c = clusters[Math.floor(rnd() * clusters.length)];
+      const x = c.cx + gauss() * cSigma;
+      const y = c.cy + gauss() * cSigma;
+      out[j] = x;
+      out[j + 1] = y;
+      out[j + 2] = (rnd() - 0.5) * (VC.T2_Z_JITTER ?? 2);
     }
-    
-    // Tier 3: Core constellation
-    for (let i = 0; i < tierCounts[3]; i++) {
-      const j = idx * 3;
-      const angle = (i / tierCounts[3]) * Math.PI * 2;
-      const radius = 5 + rnd() * 3;
-      out[j]     = Math.cos(angle) * radius;
-      out[j + 1] = Math.sin(angle) * radius;
-      out[j + 2] = (rnd() - 0.5) * 2;
-      idx++;
+    // Tier 3 — constellation anchors: try text formation if font present, else compact cluster
+    if (tc3 > 0 && (VC.USE_T3_TEXT ?? true) && this.font) {
+      const pts = this.generate3DTextFormation(VC.T3_TEXT || 'HELLO CURTIS', tc3);
+      // center & scale into frame
+      let minX = Number.POSITIVE_INFINITY;
+      let maxX = Number.NEGATIVE_INFINITY;
+      let minY = Number.POSITIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+      for (let i = 0; i < pts.length; i += 3) {
+        const x = pts[i];
+        const y = pts[i + 1];
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+      const sx = (VC.T3_TEXT_SCALE ?? 0.70) * R / Math.max(1, (maxX - minX) * 0.5);
+      const sy = (VC.T3_TEXT_SCALE ?? 0.70) * R / Math.max(1, (maxY - minY) * 0.5);
+      for (let i = 0; i < tc3; i++, k++) {
+        const j = 3 * k;
+        const s = i * 3;
+        out[j] = pts[s] * sx;
+        out[j + 1] = pts[s + 1] * sy;
+        out[j + 2] = (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 1.5);
+      }
+    } else {
+      for (let i = 0; i < tc3; i++, k++) {
+        const j = 3 * k;
+        const [x, y] = sampleEllipse(R * 0.28, R * 0.28);
+        out[j] = x;
+        out[j + 1] = y;
+        out[j + 2] = (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 1.5);
+      }
     }
-    
     return out;
   }
 

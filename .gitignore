@@ -13,3 +13,5 @@ coverage/
 # Canon backups/reports
 .canon_backups/
 .canon_reports/
+.vision/*.log
+.local-canon/*

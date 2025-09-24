@@ -1,11 +1,20 @@
 {
   "version": "v1",
   "opening": {
-    "terminal": { "fontStack": ["'Courier New'", "Courier", "'Lucida Console'", "'DejaVu Sans Mono'", "monospace"], "colorHex": "#00FF00", "allowGlow": false },
-    "timeline": { "chaosMs": [1200,1800], "coalesceMs": [1200,2000], "settleMs": [800,1400], "minFillVisibleMs": 1200 },
-    "emergenceCloud": { "gasRadiusFactor": [0.35,0.40], "expandedRadiusFactor": [0.50,0.55], "zRange": [25,35] },
-    "chaosSpin": { "zPerSec": [0.45,0.70], "yPerSec": [0.20,0.35] },
-    "noInitialFillFlash": true,
-    "deferFadeUntilMinFill": true
+    "timeline": {
+      "minFillVisibleMs": 700,
+      "chaosMs": [700, 1400],
+      "coalesceMs": [600, 1300],
+      "settleMs": [700, 1200]
+    },
+    "chaosSpin": {
+      "zPerSec": [0.0, 0.0],
+      "yPerSec": [0.0, 0.0]
+    },
+    "emergenceCloud": {
+      "gasRadiusFactor": [0.60, 0.95],
+      "expandedRadiusFactor": [0.80, 1.10],
+      "zRange": [50, 140]
+    }
   }
 }

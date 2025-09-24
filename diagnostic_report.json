@@ -1,0 +1,118 @@
+{
+  "findings": [
+    {
+      "id": "shader_point_size",
+      "file": "src/shaders/templates/consciousness-vertex.glsl:95-100",
+      "context": "  vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);\n  gl_Position = projectionMatrix * mvPosition;\n  float dist = length(mvPosition.xyz);\n  float attenuation = 300.0 / dist;\n  gl_PointSize = uPointSize * sizeMultiplier * attenuation * uDevicePixelRatio;\n  gl_PointSize = clamp(gl_PointSize, 2.0, 64.0);",
+      "note": "gl_PointSize scales by both uPointSize and uDevicePixelRatio; attenuation constant 300 amplifies at close range before clamp."
+    },
+    {
+      "id": "wbg_pointsize_dpr_effect",
+      "file": "src/components/webgl/WebGLBackground.jsx:64-71",
+      "context": "  useEffect(() => {\n    const u = materialRef.current?.uniforms;\n    if (!u?.uPointSize) return;\n    const base = Canonical?.features?.pointSizeDefault ?? 48.0;\n    const dpr  = Math.min(window.devicePixelRatio || 1, 2);\n    u.uPointSize.value = dpr >= 2 ? base * 0.75 : base;\n  }, []);",
+      "note": "uPointSize is pre-scaled by window.devicePixelRatio (halved only for DPR >= 2), so shader multiply re-applies DPR."
+    },
+    {
+      "id": "wbg_uniform_init",
+      "file": "src/components/webgl/WebGLBackground.jsx:244-255,288-292",
+      "context": "        uPointSize:        { value: POINT_SIZE_DEFAULT },\n        uDevicePixelRatio: { value: typeof gl?.getPixelRatio === 'function' ? gl.getPixelRatio() : 1 },\n        uResolution:       { value: new THREE.Vector2(size.width, size.height) },\n...\n    if (u.uResolution && width && height) u.uResolution.value.set(width, height);\n    if (u.uDevicePixelRatio && typeof gl?.getPixelRatio === 'function') u.uDevicePixelRatio.value = gl.getPixelRatio();\n    materialRef.current.uniformsNeedUpdate = true;",
+      "note": "ShaderMaterial primes uDevicePixelRatio with the renderer pixel ratio and refreshes it every resize; combined with DPR-aware point size this yields squared scaling."
+    },
+    {
+      "id": "viewport_hint_geometry",
+      "file": "src/components/webgl/WebGLBackground.jsx:73-83",
+      "context": "  const emitViewportHint = useCallback(() => {\n    try {\n      const m11 = camera?.projectionMatrix?.elements?.[5] || 1;\n      const tanHalfFov = 1 / m11;\n      const dist = Math.abs(camera?.position?.z || 1);\n      const viewHeight = 2 * dist * tanHalfFov;\n      const viewWidth  = viewHeight * (size.width / size.height);\n      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width: viewWidth, height: viewHeight, aspect: size.width / size.height });",
+      "note": "Viewport width/height are derived from PerspectiveCamera Z (100) and canvas aspect; any camera shift or initial hint lag influences formation scaling inputs."
+    },
+    {
+      "id": "canvas_camera_config",
+      "file": "src/components/webgl/WebGLCanvas.jsx:348-362",
+      "context": "      >\n        {/* Optimal camera for constellation viewing */}\n        <PerspectiveCamera makeDefault position={[0, 0, 100]} fov={75} near={0.1} far={200} lookAt={[0, 0, 0]} />",
+      "note": "Single PerspectiveCamera is fixed at z=100 with fov 75; no dynamic dolly or scale compensation once particles overshoot."
+    },
+    {
+      "id": "engine_viewport_spread",
+      "file": "src/engine/ConsciousnessEngine.js:554-567",
+      "context": "  generateViewportSpread(N, hint) {\n    const { width = 120, height = 90 } = hint || this._viewportHint;\n    const out = new Float32Array(N * 3);\n    const halfW = width * 0.5;\n    const halfH = height * 0.5;\n    const zDepth = Math.max(width, height) * 0.3;\n    for (let i = 0; i < N; i++) {\n      out[i * 3]     = (Math.random() * 2 - 1) * halfW;\n      out[i * 3 + 1] = (Math.random() * 2 - 1) * halfH;\n      out[i * 3 + 2] = (Math.random() * 2 - 1) * zDepth;\n    }",
+      "note": "Spawn volume ignores VC.VIEW_CAP_* and VC.Z_BACK_*; depth expands with viewport size and can exceed intended rush window."
+    },
+    {
+      "id": "engine_starfield_gaussian",
+      "file": "src/engine/ConsciousnessEngine.js:583-632",
+      "context": "    const vw = (hint?.width ?? this._viewportHint.width) * 0.5;\n    const vh = (hint?.height ?? this._viewportHint.height) * 0.5;\n    const R = (VC?.STARFIELD_SCALE ?? 0.78) * Math.min(vw, vh);\n    const gauss = () => {\n      let u = 0, v = 0;\n      while (u === 0) u = rnd();\n      while (v === 0) v = rnd();\n      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);\n    };\n    const sampleEllipse = (rx, ry) => {\n      const gx = gauss() * rx;\n      const gy = gauss() * ry;\n      return [gx, gy];\n    };",
+      "note": "Gaussian samples are unbounded; outer tiers and clusters can push many sigma beyond R, producing oversized 'ring' halos despite STARFIELD_SCALE nominally < 0.4 of frame."
+    },
+    {
+      "id": "engine_pointsize_directive",
+      "file": "src/engine/ConsciousnessEngine.js:221-239",
+      "context": "      const ps = base * (el <= implMs\n        ? 1 + (VC.POINT_SIZE_KICK - 1) * eI\n        : VC.POINT_SIZE_KICK - (VC.POINT_SIZE_KICK - 1) * eS);\n      const sig = el <= implMs\n        ? VC.SIGMA_BASE + (VC.SIGMA_PEAK - VC.SIGMA_BASE) * eI\n        : VC.SIGMA_PEAK - (VC.SIGMA_PEAK - VC.SIGMA_BASE) * eS;\n      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n        morphProgress: +m.toFixed(3),\n        drawCount: draw,\n        activeCount: draw,\n        pointSize: ps,\n        gaussianSigma: sig,\n        tierHighlight: [1, 1, 1, t4],\n      });",
+      "note": "Directive pointSize oscillates between base (≈48) and base*VC.POINT_SIZE_KICK (≈67.2); with shader DPR multiplication this yields 90–130px sprites on DPR=2 displays."
+    },
+    {
+      "id": "visual_controls_constants",
+      "file": "src/config/visual-controls.js:11-45",
+      "context": "  Z_BACK_MIN:  80,       /* VC.Z_BACK_MIN */\n  Z_BACK_MAX: 120,       /* VC.Z_BACK_MAX */\n  VIEW_CAP_HALF_W: 40,   /* VC.VIEW_CAP_HALF_W */\n  VIEW_CAP_HALF_H: 30,   /* VC.VIEW_CAP_HALF_H */\n  STARFIELD_SCALE: 0.78, /* VC.STARFIELD_SCALE */\n  POINT_SIZE_KICK: 1.4,  /* VC.POINT_SIZE_KICK */\n  SIGMA_BASE:     2.5,   /* VC.SIGMA_BASE */\n  SIGMA_PEAK:     3.8,   /* VC.SIGMA_PEAK */",
+      "note": "Depth and view caps defined here are never consumed in generateViewportSpread/ConstellationFormation, so spawn volume always depends on live viewport math."
+    },
+    {
+      "id": "quality_atom_dpr",
+      "file": "src/state/atoms/qualityAtom.js:82-95,186-194",
+      "context": "  getDPR(tier, devicePixelRatio = 1) {\n    const multiplier = SST_V3_QUALITY_MULTIPLIERS[tier]?.dpr || 1.0;\n    const dpr = Math.min(devicePixelRatio * multiplier, 3.0);\n    this.dprCache.set(key, dpr);\n    return dpr;\n  }\n...\n      const dpr = cache.getDPR(tier, state.devicePixelRatio);\n      setState({ ...state, currentQualityTier: tier, targetDpr: dpr, particleCount });",
+      "note": "Quality atom computes targetDpr per tier but WebGLCanvas never applies it to the renderer, so high-DPR devices keep full pixel ratio, compounding point size growth."
+    }
+  ],
+  "minimal_change_plan": {
+    "CE": [
+      "Clamp gaussian samples in generateConstellationFormation (lines 587-629) to |gauss| ≤ 1.2 before scaling so extents stay within ~0.6·min(view), then renormalize clusters.",
+      "Lower VC.STARFIELD_SCALE (visual-controls.js:19) into 0.60–0.66 and VC.T2_CLUSTER_SIGMA (line 38) into 0.12–0.14 to keep every tier ≤0.82·min(viewWidth,viewHeight).",
+      "Use VC.VIEW_CAP_HALF_W/H when viewportHint is missing and bound generateViewportSpread (lines 555-567) to those caps instead of raw width/height.",
+      "Replace zDepth = max(width,height)*0.3 (line 561) with interpolation between VC.Z_BACK_MIN/MAX for consistent rush depth regardless of viewport.",
+      "Emit final RENDER_DIRECTIVE pointSize = base after settle (line 249) and cap incoming overrides to base..base*VC.POINT_SIZE_KICK before sending."
+    ],
+    "WBG": [
+      "Stop pre-scaling uPointSize by window.devicePixelRatio (lines 64-70); keep base size and rely on shader’s uDevicePixelRatio multiplier for a single source of truth.",
+      "Clamp uDevicePixelRatio updates to e.g. Math.min(gl.getPixelRatio(), 1.5) in the resize hook (line 290) so directives don’t explode on 4K/HiDPI.",
+      "Log/guard RENDER_DIRECTIVE pointSize overrides (line 329) to ensure they respect the new base range before marking mat.needsUpdate.",
+      "Emit viewport hints once per warm-up and on explicit resize only (lines 73-105) to reduce jitter when extents are near the edge.",
+      "Expose a dev probe (via window.__webglBackground) that reports combined uPointSize·uDevicePixelRatio so sizing regression is easy to verify."
+    ],
+    "Canvas": [
+      "Pass a bounded DPR to <Canvas> (line 338), e.g. dpr={Math.min(window.devicePixelRatio || 1, 1.5)}, so renderer pixel ratio matches the clamp used in WBG."
+    ]
+  },
+  "edit_anchors": {
+    "glsl_point_size": {
+      "path": "src/shaders/templates/consciousness-vertex.glsl:99",
+      "code": "gl_PointSize = uPointSize * sizeMultiplier * attenuation * uDevicePixelRatio;"
+    },
+    "ce_starfield_scale": {
+      "path": "src/config/visual-controls.js:19,38",
+      "code": "STARFIELD_SCALE: 0.78 // adjust to 0.60–0.66\nT2_CLUSTER_SIGMA: 0.16 // adjust to 0.12–0.14"
+    },
+    "ce_gaussian_clamp": {
+      "path": "src/engine/ConsciousnessEngine.js:587-632",
+      "code": "const gauss = () => { /* Box-Muller */ };\nconst sampleEllipse = (rx, ry) => { const gx = gauss() * rx; const gy = gauss() * ry; return [gx, gy]; };"
+    },
+    "ce_depth_cap": {
+      "path": "src/engine/ConsciousnessEngine.js:555-563",
+      "code": "const { width = 120, height = 90 } = hint || this._viewportHint;\nconst halfW = width * 0.5;\nconst halfH = height * 0.5;\nconst zDepth = Math.max(width, height) * 0.3;"
+    },
+    "wbg_pointsize_effect": {
+      "path": "src/components/webgl/WebGLBackground.jsx:64-71",
+      "code": "const dpr = Math.min(window.devicePixelRatio || 1, 2);\nu.uPointSize.value = dpr >= 2 ? base * 0.75 : base;"
+    },
+    "wbg_device_pixel_ratio": {
+      "path": "src/components/webgl/WebGLBackground.jsx:252-254,290-291",
+      "code": "uDevicePixelRatio: { value: typeof gl?.getPixelRatio === 'function' ? gl.getPixelRatio() : 1 };\nif (u.uDevicePixelRatio && typeof gl?.getPixelRatio === 'function') u.uDevicePixelRatio.value = gl.getPixelRatio();"
+    },
+    "canvas_dpr": {
+      "path": "src/components/webgl/WebGLCanvas.jsx:332-360",
+      "code": "<Canvas ...> // add dpr prop alongside style/ref"
+    }
+  },
+  "acceptance_probes": {
+    "formation_aabb": "(() => { const geo = window.__particleGeometry; if (!geo) return 'geometry unavailable'; const attr = geo.getAttribute('text3DPosition'); if (!attr) return 'text3DPosition missing'; const arr = attr.array; let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity; for (let i=0;i<arr.length;i+=3){ const x=arr[i], y=arr[i+1]; if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } const width=maxX-minX; const height=maxY-minY; const hint=(window.__lastViewportHint)||(window.CANON_CONSOLE?.stats?.()?.viewportHint)||(window.__consciousnessEngine?._viewportHint); const minView=hint?Math.min(hint.width, hint.height):null; return { width, height, minView, ratioX: minView? +(width/minView).toFixed(3):null, ratioY: minView? +(height/minView).toFixed(3):null }; })();",
+    "pointsize_dpr": "(() => { const mat = window.__consciousnessMaterial; if (!mat) return 'material unavailable'; const up = mat.uniforms?.uPointSize?.value; const dpr = mat.uniforms?.uDevicePixelRatio?.value; return { uPointSize: up, uDevicePixelRatio: dpr, combined: up && dpr ? up * dpr : null }; })();",
+    "counts_lockstep": "(() => { const geo = window.__particleGeometry; const mat = window.__consciousnessMaterial; if (!geo || !mat) return 'missing geometry/material'; const { count } = geo.drawRange || {}; const active = mat.uniforms?.uActiveCount?.value; return { drawRangeCount: count, uActiveCount: active, match: count === active }; })();"
+  }
+}

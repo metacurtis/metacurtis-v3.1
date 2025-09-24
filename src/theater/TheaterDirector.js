@@ -2,6 +2,8 @@
 // Single source of timeline; Renderer stays single GPU writer; Engine writes blueprints.
 
 import BeatBus from '@/theater/bus';
+
+import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 
@@ -203,7 +205,7 @@ class TheaterDirector {
     });
 
     // Drive morph 0 → 0.75 during emergence
-    await this._easeMorphTo(0.75, 1200);
+    await this._easeMorphTo(VC.MID_MORPH /* 0.85 */, VC.IMPLODE_MS /* 1000 */);
 
     // Wait for renderer confirmation
     console.log('   Waiting for renderer fencepost...');
@@ -214,15 +216,15 @@ class TheaterDirector {
     if (this.cancelled) return;
 
     // ───────────────── Phase 6: Genesis handoff
-    const fromStage = this.currentStage ?? 'emergence';
     const toStage = 'genesis';
     
     this.phase = 'genesis';
+    const previousStage = this.currentStage ?? 'emergence';
     this.currentStage = toStage;
     console.log('🧬 Phase: Genesis stage handoff');
 
-    // Emit stage change
-    BeatBus.emit(EVENTS.STAGE_CHANGE, { from: fromStage, to: toStage });
+    // canonical STAGE_CHANGE shape { from, to }
+    BeatBus.emit(EVENTS.STAGE_CHANGE, { from: previousStage, to: toStage });
     BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
 
     // Reset scroll position
@@ -231,7 +233,7 @@ class TheaterDirector {
     } catch {}
 
     // Continue morph from 0.75 → 1.0 (NO RESET!)
-    await this._easeMorphTo(1, 1400);
+    await this._easeMorphTo(1, VC.SETTLE_MS /* 900 */);
 
     // ───────────────── Visual choreography
     await this._runVisualSchedule();
@@ -340,7 +342,7 @@ class TheaterDirector {
     try {
       console.log('   Prewarming genesis blueprint...');
       BeatBus.emit(EVENTS.PREWARM_GENESIS_BLUEPRINT);
-      await this.once(EVENTS.PREWARM_COMPLETE, 500);
+      await this.once(EVENTS.PREWARM_COMPLETE, 1500);
       console.log('   Prewarm complete');
     } catch {
       console.log('   Prewarm timeout (non-fatal)');
