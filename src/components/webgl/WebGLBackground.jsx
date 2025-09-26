@@ -59,7 +59,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const [atlasTexture, setAtlasTexture] = useState(null);
   const [activeCount, setActiveCount] = useState(0);
 
-  // Point size (once) — do NOT pre-scale by DPR (shader multiplies by uDevicePixelRatio)
+  // Point size (once) -- base only; shader multiplies by uDevicePixelRatio
   useEffect(() => {
     const u = materialRef.current?.uniforms;
     if (!u?.uPointSize) return;
@@ -245,7 +245,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         uTotalSprites:  { value: 16 },
 
         uPointSize:        { value: POINT_SIZE_DEFAULT },
-        // clamp DPR so gl_PointSize doesn’t explode on HiDPI
+        // clamp device pixel ratio to keep sprites from "exploding" on HiDPI
         uDevicePixelRatio: { value: (() => {
           try { return Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); } catch { return 1; }
         })() },
@@ -333,6 +333,36 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
       if (d.uniforms) for (const k in d.uniforms) if (u[k]) u[k].value = d.uniforms[k];
       mat.needsUpdate = true;
+    });
+    return () => off && off();
+  }, []);
+
+  // When binding a blueprint, honor palette metadata colors if present
+  useEffect(() => {
+    const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, (payload = {}) => {
+      const { bp: raw } = normalizePayload(payload);
+      const colors = raw?.metadata?.colors;
+      if (!colors || !materialRef.current?.uniforms) return;
+      const u = materialRef.current.uniforms;
+      const applyColor = (uniform, value) => {
+        if (!uniform) return;
+        const target = uniform.value ?? uniform;
+        if (Array.isArray(value) && value.length >= 3 && value.every((v) => typeof v === 'number')) {
+          if (target?.setRGB) {
+            target.setRGB(value[0], value[1], value[2]);
+            return;
+          }
+        }
+        if (target?.set) {
+          target.set(value);
+        } else {
+          uniform.value = value;
+        }
+      };
+      applyColor(u.uColorCurrent, colors[0]);
+      applyColor(u.uColorNext, colors[1] ?? colors[0]);
+      applyColor(u.uColorAccent1, colors[2] ?? colors[0]);
+      materialRef.current.needsUpdate = true;
     });
     return () => off && off();
   }, []);

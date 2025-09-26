@@ -95,9 +95,10 @@ void main() {
   
   // Point size with distance attenuation
   float dist = length(mvPosition.xyz);
-  float attenuation = 300.0 / dist;
+  // gentler near-camera size; avoid "magnified pixels"
+  float attenuation = 180.0 / dist;
   gl_PointSize = uPointSize * sizeMultiplier * attenuation * uDevicePixelRatio;
-  gl_PointSize = clamp(gl_PointSize, 2.0, 64.0);
+  gl_PointSize = clamp(gl_PointSize, 2.0, 36.0);
   
   // Pass color blend
   vBlend = uScrollProgress;

@@ -267,52 +267,8 @@ class TheaterDirector {
   }
 
   async _runVisualSchedule() {
-    // T+4.5s: Swirl start
-    this.emitTune({
-      rotZSpeedDegPerSec: 15,
-      trails: 0.12,
-      brightToward: 1.1,
-      dimAway: 0.95,
-    });
-    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_start' });
-    await this.sleep(1000);
-
-    // T+5.5s: Swirl full
-    this.emitTune({
-      rotZSpeedDegPerSec: 12,
-      trails: 0.15,
-      brightToward: 1.15,
-      dimAway: 0.9,
-    });
-    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_full' });
-    await this.sleep(500);
-
-    // T+6.0s: Deceleration
-    this.emitTune({
-      rotZSpeedDegPerSec: 8,
-      driftAmp: 0.8,
-      flutterAmp: 0.4,
-    });
-    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'swirl_decel' });
-    await this.sleep(500);
-
-    // T+6.5s: Tier emergence
-    this.emitTune({
-      tierReveal: 1,
-      rotZSpeedDegPerSec: 3,
-    });
-    __emitMorphThrottled(BeatBus, EVENTS, 1.0);
-    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'tier_emergence' });
-    await this.sleep(500);
-
-    // T+7.0s: Constellation stable
-    this.emitTune({
-      rotZSpeedDegPerSec: 1,
-      driftAmp: 0.3,
-      flutterAmp: 0.15,
-    });
-    BeatBus.emit(EVENTS.PARTICLE_PHASE, { name: 'constellation' });
-    await this.sleep(500);
+    // Visual schedule disabled for VC/band opening (renderer is passive)
+    return;
   }
 
   cancel() {
