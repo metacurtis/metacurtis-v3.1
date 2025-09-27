@@ -183,11 +183,7 @@ class TheaterDirector {
       target: 'constellation',
       count: 2000,
       tierRatios: [0.5, 0.2, 0.15, 0.15],
-      viewportHint: {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        aspect: window.innerWidth / window.innerHeight,
-      },
+      viewportHint: { width: 120, height: 90, aspect: 4 / 3 },
     });
 
     // Signal overlay to fade

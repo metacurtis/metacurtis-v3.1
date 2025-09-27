@@ -78,6 +78,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
         width: viewWidth, height: viewHeight, aspect: size.width / size.height,
       });
+      // expose last hint for probes (DEV only reads)
+      if (typeof window !== 'undefined') {
+        window.__viewportHint = { width: viewWidth, height: viewHeight, aspect: size.width / size.height };
+      }
       console.log('📐 Renderer: Sent viewport hint (proj-matrix)', {
         width: viewWidth.toFixed(1), height: viewHeight.toFixed(1), cameraZ: dist
       });
@@ -122,6 +126,29 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (u.uColorNext)    u.uColorNext.value    = next;
     if (u.uColorAccent1) u.uColorAccent1.value = acc1;
     if (u.uColorAccent2) u.uColorAccent2.value = acc2;
+    mat.needsUpdate = true;
+  };
+
+  const applyMetadataColors = (colors) => {
+    if (!Array.isArray(colors) || colors.length === 0) return;
+    const mat = materialRef.current;
+    const u = mat?.uniforms;
+    if (!u) return;
+    const assign = (uniform, value) => {
+      if (!uniform) return;
+      const target = uniform.value ?? uniform;
+      if (Array.isArray(value) && value.length >= 3 && value.every((v) => typeof v === 'number')) {
+        if (target?.setRGB) {
+          target.setRGB(value[0], value[1], value[2]);
+          return;
+        }
+      }
+      if (target?.set) target.set(value);
+      else uniform.value = value;
+    };
+    assign(u.uColorCurrent, colors[0]);
+    assign(u.uColorNext, colors[1] ?? colors[0]);
+    assign(u.uColorAccent1, colors[2] ?? colors[0]);
     mat.needsUpdate = true;
   };
 
@@ -184,6 +211,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setBlueprint(raw);
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
+      applyMetadataColors(raw?.metadata?.colors);
 
       if (geometryRef.current) geometryRef.current.dispose();
       const geo = new THREE.BufferGeometry();
@@ -333,36 +361,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
       if (d.uniforms) for (const k in d.uniforms) if (u[k]) u[k].value = d.uniforms[k];
       mat.needsUpdate = true;
-    });
-    return () => off && off();
-  }, []);
-
-  // When binding a blueprint, honor palette metadata colors if present
-  useEffect(() => {
-    const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, (payload = {}) => {
-      const { bp: raw } = normalizePayload(payload);
-      const colors = raw?.metadata?.colors;
-      if (!colors || !materialRef.current?.uniforms) return;
-      const u = materialRef.current.uniforms;
-      const applyColor = (uniform, value) => {
-        if (!uniform) return;
-        const target = uniform.value ?? uniform;
-        if (Array.isArray(value) && value.length >= 3 && value.every((v) => typeof v === 'number')) {
-          if (target?.setRGB) {
-            target.setRGB(value[0], value[1], value[2]);
-            return;
-          }
-        }
-        if (target?.set) {
-          target.set(value);
-        } else {
-          uniform.value = value;
-        }
-      };
-      applyColor(u.uColorCurrent, colors[0]);
-      applyColor(u.uColorNext, colors[1] ?? colors[0]);
-      applyColor(u.uColorAccent1, colors[2] ?? colors[0]);
-      materialRef.current.needsUpdate = true;
     });
     return () => off && off();
   }, []);

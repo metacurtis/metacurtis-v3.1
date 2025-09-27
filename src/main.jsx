@@ -12,6 +12,11 @@ import _StateCommands from "@/state/commands/StateCommands";
 
 // Import Canon L2 (now it exists!)
 
+// DEV-only: dynamic visual probes for ad-hoc inspection
+if (import.meta?.env?.DEV) {
+  import('./dev/visual-probes.js').catch(() => {});
+}
+
 const rootEl = document.getElementById('root');
 
 if (!rootEl) {

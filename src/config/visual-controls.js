@@ -16,8 +16,11 @@ export const VC = {
   VIEW_CAP_HALF_H: 30,   /* VC.VIEW_CAP_HALF_H */
 
   // Starfield fit (as fraction of min(viewWidth, viewHeight))
-  STARFIELD_SCALE: 0.72, /* VC.STARFIELD_SCALE */
-  ATMO_SCALE:     1.15,  /* VC.ATMO_SCALE     */ // atmospheric XY spread vs target (>1 → implosion feel)
+  STARFIELD_SCALE: 0.60, /* VC.STARFIELD_SCALE */
+  FIT_FRAC:        0.78, /* VC.FIT_FRAC */
+  ATMO_SCALE:      1.15, /* VC.ATMO_SCALE     */ // atmospheric XY spread vs target (>1 → implosion feel)
+  // Use band sampler for atmospheric spawn (instead of ellipse)
+  ATMO_USE_BAND:   true, /* VC.ATMO_USE_BAND */
 
   // Visual kick (engine directives → renderer uniforms)
   POINT_SIZE_KICK: 1.4,  /* VC.POINT_SIZE_KICK */
@@ -44,4 +47,14 @@ export const VC = {
   T3_TEXT:            'HELLO CURTIS', /* VC.T3_TEXT */
   T3_TEXT_SCALE:      0.70,  /* VC.T3_TEXT_SCALE     */ // relative to STARFIELD_SCALE
   T3_Z_JITTER:        1.5,   /* VC.T3_Z_JITTER       */
+
+  // Band frame controls (Milky Way ribbon mapping)
+  BAND_ENABLED:       true,
+  BAND_ANGLE_DEG:     18,
+  BAND_LENGTH_SCALE:  2.20,
+  BAND_CORE_WIDTH:    0.08,
+  BAND_FADE_WIDTH:    0.20,
+  BAND_T1_P:          0.85,
+  BAND_T2_P:          0.95,
+  BAND_T3_P:          1.00,
 };

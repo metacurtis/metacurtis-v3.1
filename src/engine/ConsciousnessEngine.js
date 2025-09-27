@@ -12,20 +12,21 @@ import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 
 // ===== Band probe helpers (pure, exportable) =================================
-const __deg2rad = (d) => (d * Math.PI) / 180;
-function __makeBandFrame(vc, rnd, gauss) {
-  const ANG = __deg2rad(vc.BAND_ANGLE_DEG ?? 0);
+const deg2rad = (d) => (d * Math.PI) / 180;
+function makeBandFrame(vc, rnd, gauss) {
+  const ANG = deg2rad(vc.BAND_ANGLE_DEG ?? 0);
   const c = Math.cos(ANG);
   const s = Math.sin(ANG);
   const len = vc.BAND_LENGTH_SCALE ?? 2.20;
   const core = vc.BAND_CORE_WIDTH ?? 0.08;
   const fade = vc.BAND_FADE_WIDTH ?? 0.20;
   const unrot = (u, v) => [c * u - s * v, s * u + c * v];
-  const sampleBand = (bias = 1.0) => {
+  const sampleBand = (bias = 1.0, scaleX = 1.0, scaleY = 1.0) => {
     const u = (rnd() * 2 - 1) * len;
     const useCore = rnd() < 0.7;
     const v = (useCore ? gauss() * core : gauss() * fade) / Math.max(0.001, bias);
-    return unrot(u, v);
+    const [ux, uy] = unrot(u, v);
+    return [ux * scaleX, uy * scaleY];
   };
   return { sampleBand };
 }
@@ -70,7 +71,7 @@ export function __synthesizeBandPositions(N, hint) {
   const vw = (hint?.width ?? 120) * 0.5;
   const vh = (hint?.height ?? 90) * 0.5;
   const R = (VC?.STARFIELD_SCALE ?? 0.60) * Math.min(vw, vh);
-  const band = __makeBandFrame(VC, rnd, () => {
+  const band = makeBandFrame(VC, rnd, () => {
     let u = 0;
     let v = 0;
     while (u === 0) u = rnd();
@@ -100,7 +101,9 @@ export function __synthesizeBandPositions(N, hint) {
   for (let i = 0; i < tc0; i++, k++) {
     const j = 3 * k;
     const useBand = (VC?.BAND_ENABLED ?? true) && rnd() < 0.85;
-    const [x, y] = useBand ? band.sampleBand(1.4) : sampleEllipse(R, R * t0y);
+    const [x, y] = useBand
+      ? band.sampleBand(1.4, R, R * t0y)
+      : sampleEllipse(R, R * t0y);
     out[j] = x;
     out[j + 1] = y;
     out[j + 2] = 0;
@@ -109,7 +112,9 @@ export function __synthesizeBandPositions(N, hint) {
   for (let i = 0; i < tc1; i++, k++) {
     const j = 3 * k;
     const useBand = (VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T1_P ?? 0.85);
-    const [x, y] = useBand ? band.sampleBand(1.0) : sampleEllipse(R * 0.75, R * 0.75);
+    const [x, y] = useBand
+      ? band.sampleBand(1.0, R * 0.75, R * 0.75)
+      : sampleEllipse(R * 0.75, R * 0.75);
     out[j] = x;
     out[j + 1] = y;
     out[j + 2] = 0;
@@ -118,20 +123,26 @@ export function __synthesizeBandPositions(N, hint) {
   const cCount = VC.T2_CLUSTER_COUNT ?? 6;
   const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.09) * R;
   const clusters = Array.from({ length: cCount }, () => {
-    if ((VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T2_P ?? 0.95)) return { xy: band.sampleBand(0.8) };
-    return { xy: sampleEllipse(R * 0.66, R * 0.66) };
+    if ((VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
+      const [bx, by] = band.sampleBand(0.8, R * 0.66, R * 0.66);
+      return { cx: bx, cy: by };
+    }
+    const [cx, cy] = sampleEllipse(R * 0.66, R * 0.66);
+    return { cx, cy };
   });
   for (let i = 0; i < tc2; i++, k++) {
     const j = 3 * k;
-    const c = clusters[Math.floor(rnd() * clusters.length)].xy;
-    out[j] = c[0] + (rnd() * 2 - 1) * cSigma;
-    out[j + 1] = c[1] + (rnd() * 2 - 1) * cSigma;
+    const c = clusters[Math.floor(rnd() * clusters.length)];
+    out[j] = c.cx + (rnd() * 2 - 1) * cSigma;
+    out[j + 1] = c.cy + (rnd() * 2 - 1) * cSigma;
     out[j + 2] = 0;
   }
   // T3: anchors on band
   for (let i = 0; i < tc3; i++, k++) {
     const j = 3 * k;
-    const [x, y] = (VC?.BAND_ENABLED ?? true) ? band.sampleBand(0.6) : sampleEllipse(R * 0.28, R * 0.28);
+    const [x, y] = (VC?.BAND_ENABLED ?? true)
+      ? band.sampleBand(0.6, R * 0.28, R * 0.28)
+      : sampleEllipse(R * 0.28, R * 0.28);
     out[j] = x;
     out[j + 1] = y;
     out[j + 2] = 0;
@@ -704,17 +715,15 @@ class ConsciousnessEngine {
     const { width = 120, height = 90 } = hint || this._viewportHint;
     const out = new Float32Array(N * 3);
 
-    // derive viewport target radius (same basis as starfield) and widen atmospheric layer
     const vw = width * 0.5;
     const vh = height * 0.5;
-    const R = (VC?.STARFIELD_SCALE ?? 0.72) * Math.min(vw, vh);
+    const R = (VC?.STARFIELD_SCALE ?? 0.60) * Math.min(vw, vh);
     const AT = VC?.ATMO_SCALE ?? 1.15;
-    const rx = Math.min(R * AT, VC.VIEW_CAP_HALF_W);
-    const ry = Math.min(R * AT, VC.VIEW_CAP_HALF_H);
+    const rx = R * AT;
+    const ry = rx * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70);
     const zMin = -VC.Z_BACK_MAX;
     const zMax = -VC.Z_BACK_MIN;
 
-    // gaussian helper (clamped) for a natural elliptical cloud
     const rnd = Math.random;
     const gauss = () => {
       let u = 0;
@@ -724,6 +733,18 @@ class ConsciousnessEngine {
       const g = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
       return Math.max(-1.2, Math.min(1.2, g));
     };
+
+    if (VC?.ATMO_USE_BAND) {
+      const band = makeBandFrame(VC, rnd, gauss);
+      for (let i = 0; i < N; i++) {
+        const j = i * 3;
+        const [x, y] = band.sampleBand(1.0, rx, ry);
+        out[j] = x;
+        out[j + 1] = y;
+        out[j + 2] = zMin + rnd() * (zMax - zMin);
+      }
+      return out;
+    }
 
     for (let i = 0; i < N; i++) {
       const j = i * 3;
@@ -747,7 +768,7 @@ class ConsciousnessEngine {
     // viewport-based radius
     const vw = (hint?.width ?? this._viewportHint.width) * 0.5;
     const vh = (hint?.height ?? this._viewportHint.height) * 0.5;
-    const R = (VC?.STARFIELD_SCALE ?? 0.72) * Math.min(vw, vh);
+    const R = (VC?.STARFIELD_SCALE ?? 0.60) * Math.min(vw, vh);
     // helpers
     // Box-Muller with clamp to bound starfield extent (|g| ≤ 1.2)
     const gauss = () => {
@@ -763,11 +784,15 @@ class ConsciousnessEngine {
       const gy = gauss() * ry;
       return [gx, gy];
     };
+    const band = makeBandFrame(VC, rnd, gauss);
     let k = 0;
     // Tier 0 — diffuse substrate (wider in X, flattened Y)
     for (let i = 0; i < tc0; i++, k++) {
       const j = 3 * k;
-      const [x, y] = sampleEllipse(R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70));
+      const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < 0.85);
+      const [x, y] = useBand
+        ? band.sampleBand(1.4, R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70))
+        : sampleEllipse(R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70));
       out[j] = x;
       out[j + 1] = y;
       out[j + 2] = (rnd() - 0.5) * (VC.T0_Z_JITTER ?? 4);
@@ -775,7 +800,10 @@ class ConsciousnessEngine {
     // Tier 1 — denser substrate (slightly tighter spread)
     for (let i = 0; i < tc1; i++, k++) {
       const j = 3 * k;
-      const [x, y] = sampleEllipse(R * 0.75, R * 0.75);
+      const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < (VC?.BAND_T1_P ?? 0.85));
+      const [x, y] = useBand
+        ? band.sampleBand(1.0, R * 0.75, R * 0.75)
+        : sampleEllipse(R * 0.75, R * 0.75);
       out[j] = x;
       out[j + 1] = y;
       out[j + 2] = (rnd() - 0.5) * (VC.T1_Z_JITTER ?? 3);
@@ -784,6 +812,10 @@ class ConsciousnessEngine {
     const cCount = VC.T2_CLUSTER_COUNT ?? 3;
     const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.14) * R; // slightly tighter clusters
     const clusters = Array.from({ length: cCount }, () => {
+      if ((VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
+        const [bx, by] = band.sampleBand(0.8, R * 0.66, R * 0.66);
+        return { cx: bx, cy: by };
+      }
       const [cx, cy] = sampleEllipse(R * 0.66, R * 0.66);
       return { cx, cy };
     });
@@ -824,7 +856,10 @@ class ConsciousnessEngine {
     } else {
       for (let i = 0; i < tc3; i++, k++) {
         const j = 3 * k;
-        const [x, y] = sampleEllipse(R * 0.28, R * 0.28);
+        const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < (VC?.BAND_T3_P ?? 1.0));
+        const [x, y] = useBand
+          ? band.sampleBand(0.6, R * 0.28, R * 0.28)
+          : sampleEllipse(R * 0.28, R * 0.28);
         out[j] = x;
         out[j + 1] = y;
         out[j + 2] = (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 1.5);
