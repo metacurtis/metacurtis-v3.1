@@ -17,7 +17,7 @@ export const VC = {
 
   // Starfield fit (as fraction of min(viewWidth, viewHeight))
   STARFIELD_SCALE: 0.60, /* VC.STARFIELD_SCALE */
-  FIT_FRAC:        0.78, /* VC.FIT_FRAC */
+  FIT_FRAC:        0.80, /* VC.FIT_FRAC */
   ATMO_SCALE:      1.15, /* VC.ATMO_SCALE     */ // atmospheric XY spread vs target (>1 → implosion feel)
   // Use band sampler for atmospheric spawn (instead of ellipse)
   ATMO_USE_BAND:   true, /* VC.ATMO_USE_BAND */
@@ -50,11 +50,11 @@ export const VC = {
 
   // Band frame controls (Milky Way ribbon mapping)
   BAND_ENABLED:       true,
-  BAND_ANGLE_DEG:     18,
-  BAND_LENGTH_SCALE:  2.20,
-  BAND_CORE_WIDTH:    0.08,
-  BAND_FADE_WIDTH:    0.20,
-  BAND_T1_P:          0.85,
-  BAND_T2_P:          0.95,
+  BAND_ANGLE_DEG:     10,
+  BAND_LENGTH_SCALE:  2.60,
+  BAND_CORE_WIDTH:    0.06,
+  BAND_FADE_WIDTH:    0.16,
+  BAND_T1_P:          0.90,
+  BAND_T2_P:          0.96,
   BAND_T3_P:          1.00,
 };
