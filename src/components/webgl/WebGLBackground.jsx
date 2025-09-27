@@ -12,6 +12,7 @@ import BeatBus from '@/theater/bus';
 
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
+import { VC } from '@/config/visual-controls.js';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
@@ -130,7 +131,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   };
 
   const applyMetadataColors = (colors) => {
-    if (!Array.isArray(colors) || colors.length === 0) return;
+    const fallback = (Array.isArray(VC?.GENESIS_PALETTE) && VC.GENESIS_PALETTE.length >= 3)
+      ? VC.GENESIS_PALETTE.slice(0, 3)
+      : null;
+    const palette = (Array.isArray(colors) && colors.length >= 3) ? colors : fallback;
+    if (!palette) return;
     const mat = materialRef.current;
     const u = mat?.uniforms;
     if (!u) return;
@@ -146,9 +151,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (target?.set) target.set(value);
       else uniform.value = value;
     };
-    assign(u.uColorCurrent, colors[0]);
-    assign(u.uColorNext, colors[1] ?? colors[0]);
-    assign(u.uColorAccent1, colors[2] ?? colors[0]);
+    assign(u.uColorCurrent, palette[0]);
+    assign(u.uColorNext, palette[1] ?? palette[0]);
+    assign(u.uColorAccent1, palette[2] ?? palette[0]);
     mat.needsUpdate = true;
   };
 

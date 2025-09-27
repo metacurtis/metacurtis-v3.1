@@ -4,7 +4,6 @@
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { VC } from '@/config/visual-controls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import * as THREE from 'three';
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { createSeededRandom } from '../utils/random.js';
@@ -656,6 +655,21 @@ class ConsciousnessEngine {
       tierData[i] = Math.floor(rnd() * 4);
     }
 
+    const metadata = {
+      quality,
+      buildTime: performance.now(),
+    };
+    const genesisPalette = (stageName === 'genesis'
+      && Array.isArray(VC?.GENESIS_PALETTE)
+      && VC.GENESIS_PALETTE.length >= 3)
+      ? VC.GENESIS_PALETTE.slice(0, 3)
+      : null;
+    if (genesisPalette) {
+      metadata.colors = genesisPalette;
+    } else if (Array.isArray(stageConfig?.colors) && stageConfig.colors.length >= 3) {
+      metadata.colors = stageConfig.colors.slice(0, 3);
+    }
+
     return {
       stageName,
       particleCount,
@@ -668,7 +682,7 @@ class ConsciousnessEngine {
       opacityData,
       atlasIndices,
       tierData,
-      metadata: { quality, buildTime: performance.now() },
+      metadata,
     };
   }
 
