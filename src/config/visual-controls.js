@@ -16,9 +16,13 @@ export const VC = {
   VIEW_CAP_HALF_H: 30,   /* VC.VIEW_CAP_HALF_H */
 
   // Starfield fit (as fraction of min(viewWidth, viewHeight))
-  STARFIELD_SCALE: 0.60, /* VC.STARFIELD_SCALE */
-  FIT_FRAC:        0.80, /* VC.FIT_FRAC */
-  ATMO_SCALE:      1.15, /* VC.ATMO_SCALE     */ // atmospheric XY spread vs target (>1 → implosion feel)
+  STARFIELD_SCALE: 0.95, /* VC.STARFIELD_SCALE */
+  FIT_FRAC:        0.92, /* VC.FIT_FRAC */
+  TIER_RATIOS:     [0.65, 0.18, 0.12, 0.05], /* VC.TIER_RATIOS */
+  // Optional: force a final fit in Genesis even if emergence already fitted.
+  // Default false to preserve the emergence band's exact layout.
+  FINAL_FIT_GENESIS: false,
+  ATMO_SCALE:      1.00, /* VC.ATMO_SCALE     */ // atmospheric XY spread vs target (>1 → implosion feel)
   // Use band sampler for atmospheric spawn (instead of ellipse)
   ATMO_USE_BAND:   true, /* VC.ATMO_USE_BAND */
 
@@ -33,28 +37,29 @@ export const VC = {
 
   // Starfield distribution controls (tiers)
   // Percentages still controlled by engine tierRatios; these tune spatial look.
-  T0_SIGMA_Y_FLATTEN: 0.70,  /* VC.T0_SIGMA_Y_FLATTEN */ // flatten outer substrate in Y
+  T0_SIGMA_Y_FLATTEN: 0.60,  /* VC.T0_SIGMA_Y_FLATTEN */ // flatten outer substrate in Y
   T0_Z_JITTER:        4,     /* VC.T0_Z_JITTER       */
+  T0_BAND_P:          0.85,  /* VC.T0_BAND_P        */
 
   T1_Z_JITTER:        3,     /* VC.T1_Z_JITTER       */
+  BAND_T1_P:          0.75,  /* VC.BAND_T1_P        */
 
   T2_CLUSTER_COUNT:   3,     /* VC.T2_CLUSTER_COUNT  */
-  T2_CLUSTER_SIGMA:   0.16,  /* VC.T2_CLUSTER_SIGMA  */ // cluster radius as frac of STARFIELD_SCALE
+  T2_CLUSTER_SIGMA:   0.09,  /* VC.T2_CLUSTER_SIGMA  */ // cluster radius as frac of STARFIELD_SCALE
   T2_Z_JITTER:        2,     /* VC.T2_Z_JITTER       */
+  BAND_T2_P:          0.95,  /* VC.BAND_T2_P        */
 
   // Constellation anchors (Tier-3)
-  USE_T3_TEXT:        true,  /* VC.USE_T3_TEXT       */ // use downsampled text if font loaded
+  USE_T3_TEXT:        false, /* VC.USE_T3_TEXT       */ // use downsampled text if font loaded
   T3_TEXT:            'HELLO CURTIS', /* VC.T3_TEXT */
   T3_TEXT_SCALE:      0.70,  /* VC.T3_TEXT_SCALE     */ // relative to STARFIELD_SCALE
   T3_Z_JITTER:        1.5,   /* VC.T3_Z_JITTER       */
+  BAND_T3_P:          1.00,  /* VC.BAND_T3_P        */
 
   // Band frame controls (Milky Way ribbon mapping)
   BAND_ENABLED:       true,
-  BAND_ANGLE_DEG:     10,
-  BAND_LENGTH_SCALE:  2.60,
+  BAND_ANGLE_DEG:     0,
+  BAND_LENGTH_SCALE:  2.80,
   BAND_CORE_WIDTH:    0.06,
-  BAND_FADE_WIDTH:    0.16,
-  BAND_T1_P:          0.90,
-  BAND_T2_P:          0.96,
-  BAND_T3_P:          1.00,
+  BAND_FADE_WIDTH:    0.25,
 };

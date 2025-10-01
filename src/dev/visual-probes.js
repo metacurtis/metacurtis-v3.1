@@ -1,3 +1,5 @@
+import { VC } from '../config/visual-controls.js';
+
 /* Dynamic visual probes (DEV-only)
  * Answers the questions we keep asking while tuning visuals:
  *  - Is the whole field framed? (AABB ratios)
@@ -13,6 +15,8 @@
   if (typeof window === 'undefined') return;
   if (window.probe && window.probe.__installed) return;
 
+  const DEFAULT_FIT_FRAC = typeof VC?.FIT_FRAC === 'number' ? VC.FIT_FRAC : 0.92;
+
   const getGeo = () => window.__particleGeometry || null;
   const getU = () => window.__consciousnessMaterial && window.__consciousnessMaterial.uniforms || null;
   const getAttr = (name) => {
@@ -27,7 +31,7 @@
     return null;
   };
 
-  function aabb({ source = 'text3DPosition', fitFrac = 0.82 } = {}) {
+  function aabb({ source = 'text3DPosition', fitFrac = DEFAULT_FIT_FRAC } = {}) {
     const arr = getAttr(source);
     if (!arr) return { error: `attribute ${source} missing` };
     let minX = Infinity;
@@ -175,7 +179,7 @@
     return { source, minZ: +minZ.toFixed(2), maxZ: +maxZ.toFixed(2), mean: +mean.toFixed(2) };
   }
 
-  function compareAtmoTarget({ fitFrac = 0.82 } = {}) {
+  function compareAtmoTarget({ fitFrac = DEFAULT_FIT_FRAC } = {}) {
     const atmo = getAttr('atmosphericPosition');
     const target = getAttr('text3DPosition');
     if (!atmo || !target) return { error: 'attributes missing' };

@@ -135,8 +135,8 @@ class TheaterDirector {
   }
 
   async _runSequence() {
-    // Optional prewarm
-    await this.prewarm();
+    // Optional prewarm (disabled during debugging to avoid stale cache)
+    // await this.prewarm();
 
     // ───────────────── Phase 1: Black (2s)
     this.phase = 'black';
@@ -183,7 +183,13 @@ class TheaterDirector {
       target: 'constellation',
       count: 2000,
       tierRatios: [0.5, 0.2, 0.15, 0.15],
-      viewportHint: { width: 120, height: 90, aspect: 4 / 3 },
+      viewportHint: (typeof window !== 'undefined' && window.__viewportHint)
+        ? {
+            width: window.__viewportHint.width,
+            height: window.__viewportHint.height,
+            aspect: window.__viewportHint.aspect,
+          }
+        : undefined,
     });
 
     // Signal overlay to fade

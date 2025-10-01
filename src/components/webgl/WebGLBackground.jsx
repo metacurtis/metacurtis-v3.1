@@ -60,7 +60,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const [atlasTexture, setAtlasTexture] = useState(null);
   const [activeCount, setActiveCount] = useState(0);
 
-  // Point size (once) -- base only; shader multiplies by uDevicePixelRatio
+  // Point size (once) — raw base only; shader multiplies by uDevicePixelRatio
   useEffect(() => {
     const u = materialRef.current?.uniforms;
     if (!u?.uPointSize) return;
@@ -79,7 +79,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
         width: viewWidth, height: viewHeight, aspect: size.width / size.height,
       });
-      // expose last hint for probes (DEV only reads)
+      // expose for TD/CE consumers in DEV and for probes
       if (typeof window !== 'undefined') {
         window.__viewportHint = { width: viewWidth, height: viewHeight, aspect: size.width / size.height };
       }

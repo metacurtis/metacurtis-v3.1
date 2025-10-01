@@ -30,8 +30,62 @@ function makeBandFrame(vc, rnd, gauss) {
   return { sampleBand };
 }
 
+function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
+  if (!fitFrac || fitFrac <= 0) return;
+  const clampOnce = () => {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (let i = 0; i < out.length; i += 3) {
+      const x = out[i];
+      const y = out[i + 1];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    const extX = maxX - minX;
+    const extY = maxY - minY;
+    const halfX = extX * 0.5;
+    const halfY = extY * 0.5;
+    const goalX = vw ? fitFrac * vw : null;
+    const goalY = vh ? fitFrac * vh : null;
+    let scale = 1;
+    if (goalX && halfX > goalX) scale = Math.min(scale, goalX / halfX);
+    if (goalY && halfY > goalY) scale = Math.min(scale, goalY / halfY);
+    if (scale < 1 && scale > 0 && Number.isFinite(scale)) {
+      for (let i = 0; i < out.length; i += 3) {
+        out[i] *= scale;
+        out[i + 1] *= scale;
+      }
+      return true;
+    }
+    return false;
+  };
+  if (clampOnce()) clampOnce();
+}
+
+// helper: measure how much the field fills the view (ratio against width/height caps)
+function aabbRatio(out, vw, vh) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < out.length; i += 3) {
+    const x = out[i], y = out[i + 1];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  const extX = maxX - minX, extY = maxY - minY;
+  const halfX = extX * 0.5;
+  const halfY = extY * 0.5;
+  const ratioX = vw ? halfX / vw : 0;
+  const ratioY = vh ? halfY / vh : 0;
+  return Math.max(ratioX, ratioY);
+}
+
 /** Compute centroid/AABB/fit/anisotropy for a flat Float32Array xyz... */
-export function __computeStarfieldMetrics(arr, hint, fitFrac = VC?.FIT_FRAC ?? 0.78) {
+export function __computeStarfieldMetrics(arr, hint, fitFrac = VC?.FIT_FRAC ?? 0.92) {
   const n = ((arr?.length || 0) / 3) | 0;
   let cx = 0;
   let cy = 0;
@@ -69,7 +123,7 @@ export function __synthesizeBandPositions(N, hint) {
   const clampG = VC?.GAUSS_CLAMP ?? 1.0;
   const vw = (hint?.width ?? 120) * 0.5;
   const vh = (hint?.height ?? 90) * 0.5;
-  const R = (VC?.STARFIELD_SCALE ?? 0.60) * Math.min(vw, vh);
+  const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
   const band = makeBandFrame(VC, rnd, () => {
     let u = 0;
     let v = 0;
@@ -89,17 +143,17 @@ export function __synthesizeBandPositions(N, hint) {
     return [gx, gy];
   };
   // Tier distribution
-  const ratios = [0.5, 0.2, 0.15, 0.15];
+  const ratios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15];
   const tc0 = Math.floor(N * ratios[0]);
   const tc1 = Math.floor(N * ratios[1]);
   const tc2 = Math.floor(N * ratios[2]);
   const tc3 = N - (tc0 + tc1 + tc2);
-  const t0y = VC.T0_SIGMA_Y_FLATTEN ?? 0.70;
+  const t0y = VC.T0_SIGMA_Y_FLATTEN ?? 0.60;
   let k = 0;
   // T0: 85% band-biased
   for (let i = 0; i < tc0; i++, k++) {
     const j = 3 * k;
-    const useBand = (VC?.BAND_ENABLED ?? true) && rnd() < 0.85;
+    const useBand = (VC?.BAND_ENABLED ?? true) && rnd() < (VC?.T0_BAND_P ?? 0.85);
     const [x, y] = useBand
       ? band.sampleBand(1.4, R, R * t0y)
       : sampleEllipse(R, R * t0y);
@@ -147,10 +201,10 @@ export function __synthesizeBandPositions(N, hint) {
     out[j + 2] = 0;
   }
   // recenter + panoramic fit
-  const metrics = __computeStarfieldMetrics(out, hint, VC?.FIT_FRAC ?? 0.78);
+  const metrics = __computeStarfieldMetrics(out, hint, VC?.FIT_FRAC ?? 0.92);
   const minView = Math.min(hint?.width ?? 120, hint?.height ?? 90);
   const currentR = Math.max(metrics.extents.w, metrics.extents.h) * 0.5;
-  const targetR = (VC?.FIT_FRAC ?? 0.78) * minView;
+  const targetR = (VC?.FIT_FRAC ?? 0.92) * minView;
   const scale = currentR > 0 ? targetR / currentR : 1;
   if (scale > 0 && Math.abs(scale - 1) > 1e-3) {
     for (let i = 0; i < out.length; i += 3) {
@@ -292,6 +346,8 @@ class ConsciousnessEngine {
   }
 
   _onPrewarmGenesis() {
+    // Clear stale emergence targets so prewarm rebuilds with current VC tuning
+    this._lastEmergenceTargets = null;
     console.log('🧠 Engine: Prewarming genesis blueprint');
     const key = 'genesis|HIGH';
     if (!this.blueprintCache.has(key)) {
@@ -419,97 +475,40 @@ class ConsciousnessEngine {
       source = 'viewportSpread',
       target = 'constellation',
       count = 2000,
-      tierRatios = [0.5, 0.2, 0.15, 0.15],
-      viewportHint = this._viewportHint
+      tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15],
+      viewportHint = this._viewportHint,
+      quality = 'HIGH',
     } = payload;
-    
-    console.log(`🌟 Building emergence: ${source} → ${target} with ${count} particles`);
-    
-    // Allocate exact size arrays (not maxParticles)
-    const atmosphericPositions = this.generateViewportSpread(count, viewportHint);
-    const text3DPositions = this.generateConstellationFormation(count, tierRatios, viewportHint);
-    
-    // Visual properties - exact size allocation
-    const sizeMultipliers = new Float32Array(count);
-    const opacityData = new Float32Array(count);
-    const atlasIndices = new Float32Array(count);
-    const tierData = new Float32Array(count);
-    const animationSeeds = new Float32Array(count * 3);
 
-    // prefer VC palette for current stage if provided (used by renderer on bind)
-    const stagePalette =
-      (VC?.GENESIS_PALETTE && Array.isArray(VC.GENESIS_PALETTE) && VC.GENESIS_PALETTE.length >= 3)
-        ? VC.GENESIS_PALETTE.slice(0, 3)
-        : null;
-    const rnd = createSeededRandom('emergence');
-    
-    // Assign tier data based on ratios
-    let tierIndex = 0;
-    let tierCounter = 0;
+    console.log(`🌟 Building emergence via canonical blueprint: ${source} → ${target} with ${count} particles`);
+
+    const blueprint = this.buildBlueprint('genesis', {
+      quality,
+      overrideCount: count,
+    });
+
+    if (!blueprint) return null;
+
+    const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
+    const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
+    const fitFrac = VC?.FIT_FRAC ?? 0.92;
+    fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
+    fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
+
     const tierCounts = tierRatios.map(r => Math.floor(count * r));
     tierCounts[3] += count - tierCounts.reduce((a, b) => a + b, 0);
-    
-    for (let i = 0; i < count; i++) {
-      // Assign tier
-      if (tierCounter >= tierCounts[tierIndex] && tierIndex < 3) {
-        tierIndex++;
-        tierCounter = 0;
-      }
-      tierData[i] = tierIndex;
-      tierCounter++;
-      
-      // Size based on tier
-      const tierSizeScale = [1.0, 0.85, 0.7, 0.6][tierIndex];
-      sizeMultipliers[i] = (0.5 + rnd() * 1.0) * tierSizeScale;
-      
-      // Opacity based on tier
-      const tierOpacityRange = [
-        [0.3, 0.6],  // Tier 0: atmospheric
-        [0.4, 0.7],  // Tier 1: spatial
-        [0.5, 0.8],  // Tier 2: anchors
-        [0.6, 0.9],  // Tier 3: core
-      ][tierIndex];
-      opacityData[i] = tierOpacityRange[0] + rnd() * (tierOpacityRange[1] - tierOpacityRange[0]);
-      
-      // Sprite variety based on tier
-      const tierSpriteOptions = [
-        [0, 1, 7],        // Tier 0: soft sprites
-        [0, 1, 2, 7],     // Tier 1: mixed
-        [2, 4, 5],        // Tier 2: structured
-        [4, 5, 11],       // Tier 3: crystalline
-      ][tierIndex];
-      atlasIndices[i] = tierSpriteOptions[Math.floor(rnd() * tierSpriteOptions.length)];
-      
-      // Animation seeds
-      const j = i * 3;
-      animationSeeds[j]     = rnd();
-      animationSeeds[j + 1] = rnd();
-      animationSeeds[j + 2] = rnd();
-    }
-    
-    return {
-      id: 'emergence-canon',
-      mode: 'emergence',
-      stageName: 'genesis',
-      particleCount: count,
-      maxParticles: count,  // Match exact allocation
-      activeCount: count,
-      atmosphericPositions,
-      text3DPositions,
-      animationSeeds,
-      sizeMultipliers,
-      opacityData,
-      atlasIndices,
-      tierData,
-      metadata: {
-        source,
-        target,
-        viewport: viewportHint,
-        tierRatios,
-        tierCounts,
-        colors: stagePalette,
-      },
+
+    blueprint.mode = mode;
+    blueprint.metadata = {
+      ...(blueprint.metadata || {}),
+      source,
+      target,
+      viewport: viewportHint,
+      tierRatios,
+      tierCounts,
     };
+
+    return blueprint;
   }
 
   buildAndEmitBlueprint(stage, quality) {
@@ -523,17 +522,37 @@ class ConsciousnessEngine {
 
     // Post-emergence genesis: use emergence targets as source
     if (stage === 'genesis' && this._lastEmergenceTargets) {
-      console.log('🧠 Engine: Building post-emergence genesis (constellation → text)');
+      console.log('🧠 Engine: Building post-emergence genesis (preserving band)');
 
-      // Build standard genesis blueprint
-      blueprint = this.buildBlueprint(stage, { quality });
+      // Build genesis with SAME count as emergence
+      const emergenceCount = this._lastEmergenceTargets.length / 3;
+      blueprint = this.buildBlueprint(stage, {
+        quality,
+        overrideCount: emergenceCount,
+      });
       
       if (blueprint) {
-        // Use emergence endpoints as atmospheric source
+        // 1) Copy the settled emergence band into BOTH arrays (Genesis shows that band)
         const targets = this._lastEmergenceTargets;
-        const n = Math.min(blueprint.atmosphericPositions.length, targets.length);
-        blueprint.atmosphericPositions.set(targets.subarray(0, n), 0);
-        
+        blueprint.atmosphericPositions.set(targets);
+        blueprint.text3DPositions.set(targets);
+
+        // 2) Only fit if it would overflow the frustum (e.g., after a camera change),
+        //    or if VC explicitly forces a final fit.
+        const vw = (this._viewportHint.width ?? 120) * 0.5;
+        const vh = (this._viewportHint.height ?? 90) * 0.5;
+        const fitFrac = (VC?.FIT_FRAC ?? 0.86);
+        const forceFit = !!VC?.FINAL_FIT_GENESIS;
+        const ratioNow = aabbRatio(blueprint.text3DPositions, vw, vh);
+
+        if (forceFit || ratioNow > fitFrac * 1.05) {
+          console.log('🧠 Engine: Overflow guard triggered (ratio:', ratioNow.toFixed(2), ')');
+          fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
+          fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
+        } else {
+          console.log('🧠 Engine: Band within bounds, preserving emergence positions');
+        }
+
         // Consume targets once
         this._lastEmergenceTargets = null;
 
@@ -543,9 +562,9 @@ class ConsciousnessEngine {
             blueprint,
             stage,
             quality,
-            cached: false,
+            mode: 'post-emergence-guarded',
           });
-          this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence' });
+          this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence-guarded' });
         }
       }
       return;
@@ -611,7 +630,8 @@ class ConsciousnessEngine {
 
     const quality = options.quality || this.currentQuality;
     const baseParticleCount = stageConfig.particleCount || SPEC_COUNTS[stageName] || 5000;
-    const particleCount = this.getParticleCountForQuality(baseParticleCount, quality);
+    const particleCount = options.overrideCount
+      || this.getParticleCountForQuality(baseParticleCount, quality);
 
     console.log(`🧠 Building ${stageName}: ${particleCount} particles`);
 
@@ -731,10 +751,10 @@ class ConsciousnessEngine {
 
     const vw = width * 0.5;
     const vh = height * 0.5;
-    const R = (VC?.STARFIELD_SCALE ?? 0.60) * Math.min(vw, vh);
-    const AT = VC?.ATMO_SCALE ?? 1.15;
+    const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
+    const AT = VC?.ATMO_SCALE ?? 1.0;
     const rx = R * AT;
-    const ry = rx * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70);
+    const ry = R * AT * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60);
     const zMin = -VC.Z_BACK_MAX;
     const zMax = -VC.Z_BACK_MIN;
 
@@ -770,7 +790,7 @@ class ConsciousnessEngine {
     return out;
   }
 
-  generateConstellationFormation(N, tierRatios = [0.5, 0.2, 0.15, 0.15], hint) {
+  generateConstellationFormation(N, tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15], hint) {
     // Starfield (not rings): viewport-scaled, 4 tiers with different spreads/cluster behavior.
     const out = new Float32Array(N * 3);
     const rnd = createSeededRandom('starfield');
@@ -779,10 +799,12 @@ class ConsciousnessEngine {
     const tc1 = Math.floor(N * tierRatios[1]);
     const tc2 = Math.floor(N * tierRatios[2]);
     const tc3 = N - (tc0 + tc1 + tc2);
-    // viewport-based radius
+    
+    // viewport-based radius - use WIDTH for panoramic band
     const vw = (hint?.width ?? this._viewportHint.width) * 0.5;
     const vh = (hint?.height ?? this._viewportHint.height) * 0.5;
-    const R = (VC?.STARFIELD_SCALE ?? 0.60) * Math.min(vw, vh);
+    // Use viewport width for horizontal panoramic effect
+    const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
     // helpers
     // Box-Muller with clamp to bound starfield extent (|g| ≤ 1.2)
     const gauss = () => {
@@ -803,10 +825,10 @@ class ConsciousnessEngine {
     // Tier 0 — diffuse substrate (wider in X, flattened Y)
     for (let i = 0; i < tc0; i++, k++) {
       const j = 3 * k;
-      const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < 0.85);
+      const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < (VC?.T0_BAND_P ?? 0.85));
       const [x, y] = useBand
-        ? band.sampleBand(1.4, R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70))
-        : sampleEllipse(R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.70));
+        ? band.sampleBand(1.4, R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60))
+        : sampleEllipse(R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60));
       out[j] = x;
       out[j + 1] = y;
       out[j + 2] = (rnd() - 0.5) * (VC.T0_Z_JITTER ?? 4);
@@ -824,7 +846,7 @@ class ConsciousnessEngine {
     }
     // Tier 2 — few gaussian clusters
     const cCount = VC.T2_CLUSTER_COUNT ?? 3;
-    const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.14) * R; // slightly tighter clusters
+    const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.09) * R; // slightly tighter clusters
     const clusters = Array.from({ length: cCount }, () => {
       if ((VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
         const [bx, by] = band.sampleBand(0.8, R * 0.66, R * 0.66);
@@ -898,7 +920,7 @@ class ConsciousnessEngine {
     }
 
     // fit panoramic bounds so post-generation spread lands within viewport target
-    const fitFrac = VC?.FIT_FRAC ?? 0.78;
+    const fitFrac = VC?.FIT_FRAC ?? 0.92;
     if (fitFrac > 0) {
       const vwFit = (hint?.width ?? this._viewportHint.width) * 0.5;
       const vhFit = (hint?.height ?? this._viewportHint.height) * 0.5;

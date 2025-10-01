@@ -355,8 +355,8 @@ export default function WebGLCanvas({
         }}
         onError={handleCanvasError}
       >
-        {/* Optimal camera for constellation viewing */}
-        <PerspectiveCamera makeDefault position={[0, 0, 100]} fov={75} near={0.1} far={200} lookAt={[0, 0, 0]} />
+        {/* Wide-angle camera for panoramic Milky Way vista */}
+        <PerspectiveCamera makeDefault position={[0, 0, 50]} fov={100} near={0.1} far={200} lookAt={[0, 0, 0]} />
 
         {/* Minimal lighting for particles */}
         <ambientLight intensity={0.4} />
