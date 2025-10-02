@@ -60,6 +60,19 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const [atlasTexture, setAtlasTexture] = useState(null);
   const [activeCount, setActiveCount] = useState(0);
 
+  const bandScale = VC?.BAND_FADE_WIDTH ?? 0.35;
+  const bandHeightRef = useRef(null);
+  const updateBandHeight = useCallback((viewHeight) => {
+    if (!Number.isFinite(viewHeight) || viewHeight <= 0) return;
+    const scaled = viewHeight * bandScale;
+    bandHeightRef.current = scaled;
+    const mat = materialRef.current;
+    if (mat?.uniforms?.uBandHeight) {
+      mat.uniforms.uBandHeight.value = scaled;
+      mat.uniformsNeedUpdate = true;
+    }
+  }, [bandScale]);
+
   // Point size (once) — raw base only; shader multiplies by uDevicePixelRatio
   useEffect(() => {
     const u = materialRef.current?.uniforms;
@@ -71,23 +84,101 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // Viewport hint from projection matrix
   const emitViewportHint = useCallback(() => {
     try {
-      const m11 = camera?.projectionMatrix?.elements?.[5] || 1; // 1/tan(fov/2)
+      const projection = camera?.projectionMatrix;
+      if (!projection) return;
+
+      const m11 = projection.elements?.[5] || 1; // 1/tan(fov/2)
       const tanHalfFov = 1 / m11;
-      const dist = Math.abs(camera?.position?.z || 1);
-      const viewHeight = 2 * dist * tanHalfFov;
-      const viewWidth  = viewHeight * (size.width / size.height);
-      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
-        width: viewWidth, height: viewHeight, aspect: size.width / size.height,
-      });
+
+      const worldPos = new THREE.Vector3();
+      const distance = (() => {
+        try {
+          camera?.getWorldPosition?.(worldPos);
+          return worldPos.length();
+        } catch {
+          return Math.abs(camera?.position?.z || 1);
+        }
+      })();
+
+      const canvas = gl?.domElement;
+      const rect = canvas?.getBoundingClientRect?.();
+
+      const docWidth = typeof document !== 'undefined' ? document.documentElement?.clientWidth || 0 : 0;
+      const docHeight = typeof document !== 'undefined' ? document.documentElement?.clientHeight || 0 : 0;
+      const windowWidth = typeof window !== 'undefined'
+        ? Math.max(window.innerWidth || 0, docWidth)
+        : docWidth;
+      const windowHeight = typeof window !== 'undefined'
+        ? Math.max(window.innerHeight || 0, docHeight)
+        : docHeight;
+
+      const cssWidth = Math.max(
+        rect?.width || 0,
+        canvas?.clientWidth || 0,
+        size.width || 0,
+        windowWidth || 0,
+        1,
+      );
+      const cssHeight = Math.max(
+        rect?.height || 0,
+        canvas?.clientHeight || 0,
+        size.height || 0,
+        windowHeight || 0,
+        1,
+      );
+
+      let orientation = (windowWidth && windowHeight)
+        ? (windowWidth >= windowHeight ? 'landscape' : 'portrait')
+        : (cssWidth >= cssHeight ? 'landscape' : 'portrait');
+
+      let aspect = Number.isFinite(camera?.aspect) && camera.aspect > 0
+        ? camera.aspect
+        : (cssHeight > 0 ? cssWidth / cssHeight : 1);
+
+      if (!Number.isFinite(aspect) || aspect <= 0) {
+        aspect = 1;
+      }
+
+      const viewHeightRaw = 2 * distance * tanHalfFov;
+      let viewWidth = viewHeightRaw * aspect;
+      let viewHeight = viewHeightRaw;
+
+      if (viewWidth < viewHeight) {
+        [viewWidth, viewHeight] = [viewHeight, viewWidth];
+        aspect = viewWidth / viewHeight;
+        orientation = 'landscape';
+      } else {
+        orientation = 'landscape';
+      }
+
+      const hint = {
+        width: viewWidth,
+        height: viewHeight,
+        aspect,
+        orientation,
+        cssWidth,
+        cssHeight,
+      };
+
+      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, hint);
+      updateBandHeight(viewHeight);
+
       // expose for TD/CE consumers in DEV and for probes
       if (typeof window !== 'undefined') {
-        window.__viewportHint = { width: viewWidth, height: viewHeight, aspect: size.width / size.height };
+        window.__viewportHint = hint;
       }
+
       console.log('📐 Renderer: Sent viewport hint (proj-matrix)', {
-        width: viewWidth.toFixed(1), height: viewHeight.toFixed(1), cameraZ: dist
+        width: viewWidth.toFixed(1),
+        height: viewHeight.toFixed(1),
+        aspect: aspect.toFixed(2),
+        cameraDist: distance.toFixed(2),
+        orientation,
       });
-    } catch (e) { console.warn('Viewport hint emit failed', e); }
-  }, [size.width, size.height, camera]);
+    } catch (e) {
+      console.warn('Viewport hint emit failed', e);
+    }
+  }, [camera, gl, size.width, size.height, updateBandHeight]);
 
   // single emit on mount; microtask-debounced resize (no RAF / no polling timers)
   useEffect(() => {
@@ -218,6 +309,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
       applyMetadataColors(raw?.metadata?.colors);
 
+      const viewportHeight = raw?.metadata?.viewport?.height
+        ?? payload?.viewportHint?.height
+        ?? window?.__viewportHint?.height;
+      if (viewportHeight) updateBandHeight(viewportHeight);
+
       if (geometryRef.current) geometryRef.current.dispose();
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position',            new THREE.BufferAttribute(raw.atmosphericPositions, 3));
@@ -250,7 +346,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
-  }, []);
+  }, [updateBandHeight]);
 
   // build material once atlas+blueprint exist
   useEffect(() => {
@@ -259,6 +355,19 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const { current, next, acc1, acc2 } = pickStageColors(stageName);
     const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
     const POINT_SIZE_DEFAULT = Canonical?.features?.pointSizeDefault ?? 48.0;
+
+    const initialBandHeight = (() => {
+      if (bandHeightRef.current) return bandHeightRef.current;
+      const hintHeight = window?.__viewportHint?.height;
+      if (Number.isFinite(hintHeight) && hintHeight > 0) {
+        const scaled = hintHeight * bandScale;
+        bandHeightRef.current = scaled;
+        return scaled;
+      }
+      const fallback = 40 * bandScale;
+      bandHeightRef.current = fallback;
+      return fallback;
+    })();
 
     const mat = new THREE.ShaderMaterial({
       onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },
@@ -290,6 +399,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         uGaussianSigma: { value: 2.5 },
         uTierHighlight: { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
 
+        uBandHeight: { value: initialBandHeight },
+
         uGaussianFalloff: { value: Canonical?.features?.gaussianFalloff ?? 1.0 },
         uCenterWeighting: { value: Canonical?.features?.centerWeightingTier4 ?? 1.0 },
 
@@ -305,13 +416,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     });
 
     materialRef.current = mat;
+    if (bandHeightRef.current && mat.uniforms?.uBandHeight) {
+      mat.uniforms.uBandHeight.value = bandHeightRef.current;
+    }
     if (typeof window !== 'undefined') {
       window.__webglBackground = { material: mat, meshRef, geometryRef };
       window.__consciousnessMaterial = mat;
+      window.__particleMaterial = mat;
       window.__particleGeometry = geometryRef.current || null;
     }
     __applyStageTint(stageName);
-  }, [atlasTexture, blueprint, stageName, morphProgress, scrollProgress, size.width, size.height, gl, activeCount]);
+  }, [atlasTexture, blueprint, stageName, morphProgress, scrollProgress, size.width, size.height, gl, activeCount, bandScale]);
 
   // keep resolution/DPR updated
   useEffect(() => {

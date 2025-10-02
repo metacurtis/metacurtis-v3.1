@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "version": "3.5.0",
+    "authority": "ABSOLUTE",
+    "lastUpdated": "2025-10-02",
+    "breaking_changes": [
+      "text3DPosition now represents 3D letter volumes",
+      "Camera angles specified per stage for dimensional reveal"
+    ]
+  },
+  "visual": {
+    "system": "3d_kinetic_typography",
+    "letterGeometry": {
+      "genesis": {
+        "word": "HELLO CURTIS",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.3,
+        "particlesPerLetter": 167,
+        "spacing": 1.2,
+        "scale": 1.0
+      },
+      "discipline": {
+        "word": "STRUCTURE",
+        "font": "Inter",
+        "weight": 900,
+        "depth": 0.8,
+        "particlesPerLetter": 333,
+        "spacing": 1.0,
+        "scale": 1.1
+      },
+      "neural": {
+        "word": "AWAKENING",
+        "font": "Playfair Display",
+        "weight": 600,
+        "depth": 0.5,
+        "particlesPerLetter": 556,
+        "spacing": 1.1,
+        "scale": 1.05
+      },
+      "velocity": {
+        "word": "VELOCITY",
+        "font": "Archivo Black",
+        "weight": 900,
+        "depth": 0.4,
+        "particlesPerLetter": 1500,
+        "spacing": 0.95,
+        "scale": 1.15
+      },
+      "architecture": {
+        "word": "SYSTEMS",
+        "font": "JetBrains Mono",
+        "weight": 500,
+        "depth": 0.6,
+        "particlesPerLetter": 1143,
+        "spacing": 1.15,
+        "scale": 1.0
+      },
+      "harmony": {
+        "word": "FLOW STATE",
+        "font": "Cormorant Garamond",
+        "weight": 600,
+        "depth": 0.5,
+        "particlesPerLetter": 1200,
+        "spacing": 1.08,
+        "scale": 1.0
+      },
+      "transcendence": {
+        "word": "CONSCIOUSNESS",
+        "font": "Montserrat",
+        "weight": 300,
+        "depth": 0.7,
+        "particlesPerLetter": 1154,
+        "spacing": 1.05,
+        "scale": 1.2
+      }
+    },
+    "camera": {
+      "genesis": {
+        "initial": { "x": 0, "y": 0, "z": 5 },
+        "reveal": {
+          "timing": 8000,
+          "duration": 2000,
+          "target": { "x": 0.8, "y": 0.5, "z": 4.5 }
+        }
+      },
+      "velocity": {
+        "movement": "dramatic_push",
+        "startZ": 6,
+        "endZ": 4,
+        "shake": { "amplitude": 0.1, "frequency": 5 },
+        "duration": 40000
+      },
+      "discipline": {
+        "angle": { "x": -20, "y": 0, "z": 5 },
+        "movement": "orbit_slow",
+        "degrees": 10
+      }
+    }
+  },
+  "narrative": {
+    "orchestration": {
+      "mode": "narration-driven",
+      "scrollLocked": true,
+      "skipKey": "SPACE"
+    }
+  },
+  "performance": {
+    "frameRate": {
+      "target": 60,
+      "minimum": 55
+    },
+    "particleCount": {
+      "genesis": 2000,
+      "discipline": 3000,
+      "neural": 5000,
+      "velocity": 12000,
+      "architecture": 8000,
+      "harmony": 12000,
+      "transcendence": 15000
+    }
+  }
+}

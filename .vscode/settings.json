@@ -1,2 +1,5 @@
 {
+  "js/ts.implicitProjectConfig.checkJs": true,
+  "javascript.suggest.autoImports": true,
+  "javascript.validate.enable": true
 }

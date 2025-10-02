@@ -22,6 +22,7 @@ uniform float uDevicePixelRatio;
 uniform vec2 uResolution;
 
 // Varyings
+varying vec3 vPosition;
 varying float vBlend;
 varying float vAlpha;
 varying vec2 vAtlasUVOffset;
@@ -88,6 +89,7 @@ void main() {
   // Add movement
   vec3 movement = generateMovement(basePos, animationSeed, uTime, tierData);
   vec3 finalPos = basePos + movement;
+  vPosition = finalPos;
   
   // Transform to screen space
   vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
@@ -97,7 +99,8 @@ void main() {
   float dist = length(mvPosition.xyz);
   // gentler near-camera size; avoid "magnified pixels"
   float attenuation = 180.0 / dist;
-  gl_PointSize = uPointSize * sizeMultiplier * attenuation * uDevicePixelRatio;
+  float tierSizeBoost = tierData < 0.5 ? 1.25 : (tierData > 2.5 ? 1.1 : 1.0);
+  gl_PointSize = uPointSize * sizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
   gl_PointSize = clamp(gl_PointSize, 2.0, 36.0);
   
   // Pass color blend

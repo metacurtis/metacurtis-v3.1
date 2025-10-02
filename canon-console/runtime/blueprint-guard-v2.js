@@ -207,7 +207,7 @@ blueprintGuard.install = function(BeatBus, incidentCollector, EVENTS) {
   // Add validation tap
   if (BeatBus && EVENTS?.BLUEPRINT_READY) {
     BeatBus.on(EVENTS.BLUEPRINT_READY, (payload) => {
-      const validation = __canonBlueprintValidate(payload);
+      const validation = __canonBlueprintValidate(payload?.blueprint ?? payload);
       if (!validation.valid) {
         console.warn('[BlueprintGuard] Validation failed:', validation.issues);
         

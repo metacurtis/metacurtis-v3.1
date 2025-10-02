@@ -43,6 +43,40 @@ class TheaterDirector {
     this.scrollOrchestrator = null;
   }
 
+  async _ensureViewportHint(timeoutMs = 5000) {
+    if (typeof window === 'undefined') return undefined;
+    const sanitize = (hint) => {
+      if (!hint) return hint;
+      const w = Number(hint.width);
+      const h = Number(hint.height);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return hint;
+      if (w >= h) {
+        return { ...hint, width: w, height: h, aspect: w / h, orientation: 'landscape' };
+      }
+      return { ...hint, width: h, height: w, aspect: h / w, orientation: 'landscape' };
+    };
+
+    if (window.__viewportHint) return sanitize(window.__viewportHint);
+
+    const pollInterval = 100;
+    const attempts = Math.max(1, Math.floor(timeoutMs / pollInterval));
+    for (let i = 0; i < attempts; i++) {
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      if (window.__viewportHint) return sanitize(window.__viewportHint);
+    }
+
+    console.warn('🎬 Director: Viewport hint unavailable after wait, applying fallback');
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const aspect = canvas.height ? canvas.width / canvas.height : 16 / 9;
+      const fallback = sanitize({ width: 120, height: 120 / aspect, aspect });
+      window.__viewportHint = fallback;
+      return fallback;
+    }
+
+    return undefined;
+  }
+
   reset() {
     // Clean up
     try {
@@ -177,19 +211,15 @@ class TheaterDirector {
     console.log('   Phase: Particle emergence');
 
     // Build emergence with CORRECTED contract
+    const viewportHint = await this._ensureViewportHint();
+
     BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
       mode: 'emergence',
       source: 'viewportSpread',
       target: 'constellation',
       count: 2000,
-      tierRatios: [0.5, 0.2, 0.15, 0.15],
-      viewportHint: (typeof window !== 'undefined' && window.__viewportHint)
-        ? {
-            width: window.__viewportHint.width,
-            height: window.__viewportHint.height,
-            aspect: window.__viewportHint.aspect,
-          }
-        : undefined,
+      tierRatios: VC?.TIER_RATIOS,
+      viewportHint,
     });
 
     // Signal overlay to fade

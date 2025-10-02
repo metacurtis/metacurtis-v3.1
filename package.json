@@ -66,7 +66,17 @@
     "ci:fencepost:wait": "./scripts/ci/wait-and-test.sh",
     "ci:test:parallel": "npm-run-all --parallel --race dev ci:fencepost:wait",
     "test:all": "npm run canon:critical:verify && npm run test:fencepost",
-    "ci:guards": "node tools/guard-bus-path.cjs && node tools/guard-wbg-policy.cjs"
+    "ci:guards": "node tools/guard-bus-path.cjs && node tools/guard-wbg-policy.cjs",
+    "test:visual": "playwright test tests/visual/",
+    "test:visual:ui": "playwright test tests/visual/ --ui",
+    "test:visual:debug": "playwright test tests/visual/ --debug",
+    "test:report": "playwright show-report",
+    "test:schema": "node sst/tools/test-schema.cjs",
+    "validate-sst": "node sst/tools/validate-sst.cjs",
+    "test:sst-all": "npm run test:schema && npm run validate-sst",
+    "generate-types": "node sst/tools/generate-jsdoc.cjs",
+    "detect-drift": "node sst/tools/detect-drift.cjs",
+    "ai-context": "node sst/tools/ai-context-builder.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -87,11 +97,12 @@
     "@babel/types": "^7.28.2",
     "@eslint/js": "^9.24.0",
     "@lhci/cli": "^0.12.0",
+    "@playwright/test": "^1.55.1",
     "@tailwindcss/postcss": "^4.1.7",
     "@tailwindcss/vite": "^4.1.7",
     "@vitejs/plugin-react": "^4.3.4",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
     "autoprefixer": "^10.4.21",
     "chalk": "^5.6.0",
     "eslint": "^9.24.0",
@@ -112,7 +123,10 @@
     "terser": "^5.39.0",
     "vite": "^6.2.5",
     "vite-plugin-glsl": "^1.4.0",
-    "vitest": "^1.4.0"
+    "vitest": "^1.4.0",
+    "ajv-cli": "^5.0.0",
+    "glob": "^10.3.10",
+    "clipboardy": "^3.0.0"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [

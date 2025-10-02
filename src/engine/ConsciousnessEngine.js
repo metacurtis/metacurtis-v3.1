@@ -299,17 +299,31 @@ class ConsciousnessEngine {
   // --- Event Handlers (stable method references) ---
 
   _onViewportHint(hint = {}) {
-    if (hint.width && hint.height) {
-      this._viewportHint = {
-        width: Number(hint.width),
-        height: Number(hint.height),
-        aspect: Number(hint.aspect || hint.width / hint.height),
-      };
-      this._log('viewport_hint', {
-        width: this._viewportHint.width.toFixed(1),
-        height: this._viewportHint.height.toFixed(1),
-      });
+    let width = Number(hint.width);
+    let height = Number(hint.height);
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+      return;
     }
+
+    let aspect = Number(hint.aspect);
+    if (!Number.isFinite(aspect) || aspect <= 0) {
+      aspect = width / height;
+    }
+
+    if (width < height) {
+      [width, height] = [height, width];
+    }
+
+    aspect = width / height;
+    const orientation = 'landscape';
+
+    this._viewportHint = { width, height, aspect, orientation };
+    this._log('viewport_hint', {
+      width: width.toFixed(1),
+      height: height.toFixed(1),
+      aspect: aspect.toFixed(2),
+      orientation,
+    });
   }
 
   _onEnableScroll() {
@@ -475,7 +489,7 @@ class ConsciousnessEngine {
       source = 'viewportSpread',
       target = 'constellation',
       count = 2000,
-      tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15],
+      tierRatios = undefined,
       viewportHint = this._viewportHint,
       quality = 'HIGH',
     } = payload;
@@ -489,14 +503,54 @@ class ConsciousnessEngine {
 
     if (!blueprint) return null;
 
+    const fallbackRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15];
+    const sourceRatios = Array.isArray(tierRatios) && tierRatios.length === fallbackRatios.length
+      ? tierRatios
+      : fallbackRatios;
+    const sanitizedRatios = (() => {
+      const cleaned = sourceRatios.map((value) => (Number.isFinite(value) && value >= 0 ? value : 0));
+      const total = cleaned.reduce((sum, value) => sum + value, 0);
+      if (total <= 0) return fallbackRatios;
+      return cleaned.map((value) => value / total);
+    })();
+
+    const tierCounts = sanitizedRatios.map(r => Math.floor(count * r));
+    tierCounts[tierCounts.length - 1] += count - tierCounts.reduce((a, b) => a + b, 0);
+
+    // Build constellation field using tuned VC distribution so emergence matches target look
+    const starfield = this.generateConstellationFormation(count, sanitizedRatios, viewportHint);
+    if (starfield && starfield.length === blueprint.text3DPositions.length) {
+      blueprint.text3DPositions.set(starfield);
+      blueprint.atmosphericPositions.set(starfield);
+    } else {
+      console.warn('🧠 Engine: Starfield generation mismatch', {
+        expected: blueprint.text3DPositions.length,
+        received: starfield?.length ?? 0,
+      });
+    }
+
+    // Align tier data with the generated distribution (shader accents depend on tier ids)
+    if (blueprint.tierData?.length === count) {
+      let cursor = 0;
+      for (let tier = 0; tier < tierCounts.length; tier++) {
+        const quota = tierCounts[tier];
+        const end = Math.min(count, cursor + quota);
+        for (let i = cursor; i < end; i++) {
+          blueprint.tierData[i] = tier;
+        }
+        cursor = end;
+      }
+      // If rounding left residual slots, assign them to highest tier to keep ids bounded
+      for (let i = cursor; i < count; i++) {
+        blueprint.tierData[i] = tierCounts.length - 1;
+      }
+    }
+
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
     const fitFrac = VC?.FIT_FRAC ?? 0.92;
     fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
     fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
-
-    const tierCounts = tierRatios.map(r => Math.floor(count * r));
-    tierCounts[3] += count - tierCounts.reduce((a, b) => a + b, 0);
 
     blueprint.mode = mode;
     blueprint.metadata = {
@@ -504,7 +558,7 @@ class ConsciousnessEngine {
       source,
       target,
       viewport: viewportHint,
-      tierRatios,
+      tierRatios: sanitizedRatios,
       tierCounts,
     };
 
@@ -821,53 +875,71 @@ class ConsciousnessEngine {
       return [gx, gy];
     };
     const band = makeBandFrame(VC, rnd, gauss);
+    const bandHeight = Math.max(1, R * (VC?.BAND_FADE_WIDTH ?? 0.35));
+    const t0BandShare = Math.min(1, Math.max(0, VC?.T0_BAND_P ?? 0.3));
+    const scatterWidth = vw * 2.2;
+    const scatterHeight = vh * 2.2;
+    const t0BaseZ = VC.T0_Z_JITTER ?? 4;
+    const t0ScatterZ = t0BaseZ * 1.5;
+
+    const t2Total = tc2;
+    const desiredCoreSeeds = Math.max(12, Math.floor(N * 0.04));
+    const t2CoreSeeds = Math.min(t2Total, Math.min(120, desiredCoreSeeds));
+    const t2ClusterCount = Math.max(0, t2Total - t2CoreSeeds);
+
     let k = 0;
-    // Tier 0 — diffuse substrate (wider in X, flattened Y)
-    for (let i = 0; i < tc0; i++, k++) {
-      const j = 3 * k;
-      const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < (VC?.T0_BAND_P ?? 0.85));
-      const [x, y] = useBand
-        ? band.sampleBand(1.4, R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60))
-        : sampleEllipse(R, R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60));
+    const emit = (x, y, z) => {
+      const j = 3 * k++;
       out[j] = x;
       out[j + 1] = y;
-      out[j + 2] = (rnd() - 0.5) * (VC.T0_Z_JITTER ?? 4);
+      out[j + 2] = z;
+    };
+
+    // Tier 0 — mix of background stars and band followers
+    const t0BandCount = Math.floor(tc0 * t0BandShare);
+    const t0ScatterCount = tc0 - t0BandCount;
+    for (let i = 0; i < t0BandCount; i++) {
+      const [bx, by] = band.sampleBand(1.2, R, bandHeight * 0.9);
+      emit(bx, by, gauss() * t0BaseZ);
     }
-    // Tier 1 — denser substrate (slightly tighter spread)
-    for (let i = 0; i < tc1; i++, k++) {
-      const j = 3 * k;
-      const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < (VC?.BAND_T1_P ?? 0.85));
-      const [x, y] = useBand
-        ? band.sampleBand(1.0, R * 0.75, R * 0.75)
-        : sampleEllipse(R * 0.75, R * 0.75);
-      out[j] = x;
-      out[j + 1] = y;
-      out[j + 2] = (rnd() - 0.5) * (VC.T1_Z_JITTER ?? 3);
+    for (let i = 0; i < t0ScatterCount; i++) {
+      const x = (rnd() - 0.5) * scatterWidth;
+      const y = (rnd() - 0.5) * scatterHeight;
+      emit(x, y, gauss() * t0ScatterZ);
     }
-    // Tier 2 — few gaussian clusters
-    const cCount = VC.T2_CLUSTER_COUNT ?? 3;
-    const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.09) * R; // slightly tighter clusters
+
+    // Tier 1 — tightly bound to the band midline
+    for (let i = 0; i < tc1; i++) {
+      const [x, y] = band.sampleBand(0.8, R * 0.55, bandHeight * 0.4);
+      emit(x, y, (rnd() - 0.5) * (VC.T1_Z_JITTER ?? 3));
+    }
+
+    // Tier 2 — dense clusters hugging band center
+    const cCount = Math.max(1, VC.T2_CLUSTER_COUNT ?? 3);
+    const cSigma = Math.max(1e-3, (VC.T2_CLUSTER_SIGMA ?? 0.04) * R);
     const clusters = Array.from({ length: cCount }, () => {
-      if ((VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
-        const [bx, by] = band.sampleBand(0.8, R * 0.66, R * 0.66);
-        return { cx: bx, cy: by };
-      }
-      const [cx, cy] = sampleEllipse(R * 0.66, R * 0.66);
-      return { cx, cy };
+      const [bx, by] = band.sampleBand(0.5, R * 0.3, bandHeight * 0.18);
+      return { cx: bx, cy: by };
     });
-    for (let i = 0; i < tc2; i++, k++) {
-      const j = 3 * k;
-      const c = clusters[Math.floor(rnd() * clusters.length)];
-      const x = c.cx + gauss() * cSigma;
-      const y = c.cy + gauss() * cSigma;
-      out[j] = x;
-      out[j + 1] = y;
-      out[j + 2] = (rnd() - 0.5) * (VC.T2_Z_JITTER ?? 2);
+
+    // Pre-seed a bright galactic core before building clusters
+    for (let i = 0; i < t2CoreSeeds; i++) {
+      const radius = Math.abs(gauss()) * R * 0.08;
+      const angle = rnd() * Math.PI * 2;
+      const coreX = Math.cos(angle) * radius * 0.85;
+      const coreY = Math.sin(angle) * radius * 0.35;
+      emit(coreX, coreY, gauss() * 0.5);
     }
-    // Tier 3 — constellation anchors: try text formation if font present, else compact cluster
+
+    for (let i = 0; i < t2ClusterCount; i++) {
+      const c = clusters[Math.floor(rnd() * clusters.length)];
+      const x = c.cx + gauss() * cSigma * 0.5;
+      const y = c.cy + gauss() * cSigma * 0.35;
+      emit(x, y, (rnd() - 0.5) * (VC.T2_Z_JITTER ?? 2));
+    }
+    // Tier 3 — anchors clustered tightly around the band core
     if (tc3 > 0 && (VC.USE_T3_TEXT ?? true) && this.font) {
       const pts = this.generate3DTextFormation(VC.T3_TEXT || 'HELLO CURTIS', tc3);
-      // center & scale into frame
       let minX = Number.POSITIVE_INFINITY;
       let maxX = Number.NEGATIVE_INFINITY;
       let minY = Number.POSITIVE_INFINITY;
@@ -880,25 +952,18 @@ class ConsciousnessEngine {
         if (y < minY) minY = y;
         if (y > maxY) maxY = y;
       }
-      const sx = (VC.T3_TEXT_SCALE ?? 0.70) * R / Math.max(1, (maxX - minX) * 0.5);
-      const sy = (VC.T3_TEXT_SCALE ?? 0.70) * R / Math.max(1, (maxY - minY) * 0.5);
-      for (let i = 0; i < tc3; i++, k++) {
-        const j = 3 * k;
-        const s = i * 3;
-        out[j] = pts[s] * sx;
-        out[j + 1] = pts[s + 1] * sy;
-        out[j + 2] = (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 1.5);
+      const sx = (VC.T3_TEXT_SCALE ?? 0.70) * (R * 0.4) / Math.max(1, (maxX - minX) * 0.5);
+      const sy = (VC.T3_TEXT_SCALE ?? 0.70) * (bandHeight * 0.35) / Math.max(1, (maxY - minY) * 0.5);
+      for (let i = 0; i < tc3; i++) {
+        const s = (i % (pts.length / 3)) * 3;
+        const x = pts[s] * sx;
+        const y = pts[s + 1] * sy;
+        emit(x, y, (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 0.5));
       }
     } else {
-      for (let i = 0; i < tc3; i++, k++) {
-        const j = 3 * k;
-        const useBand = (VC?.BAND_ENABLED ?? true) && (rnd() < (VC?.BAND_T3_P ?? 1.0));
-        const [x, y] = useBand
-          ? band.sampleBand(0.6, R * 0.28, R * 0.28)
-          : sampleEllipse(R * 0.28, R * 0.28);
-        out[j] = x;
-        out[j + 1] = y;
-        out[j + 2] = (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 1.5);
+      for (let i = 0; i < tc3; i++) {
+        const [x, y] = band.sampleBand(0.45, R * 0.16, bandHeight * 0.16);
+        emit(x, y, (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 0.5));
       }
     }
 
