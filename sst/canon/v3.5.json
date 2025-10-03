@@ -10,14 +10,21 @@
     "name": "MetaCurtis Consciousness Theater",
     "mode": "TEXT_FIRST_REVEAL",
     "documentStatus": "SINGLE_SOURCE_OF_TRUTH",
-    "date": "2025-09-02"
+    "date": "2025-09-02",
+    "compat": {
+      "accepts": [
+        "3.3",
+        "3.4"
+      ]
+    }
   },
   "features": {
     "gaussianFalloff": 1,
     "centerWeightingTier4": 1,
     "ctfOpening": false,
     "beatGlyph": true,
-    "scrollOrchestrator": true
+    "scrollOrchestrator": true,
+    "openingFencepostContract": true
   },
   "pipeline": {
     "modules": {
@@ -52,7 +59,13 @@
           "particleCount",
           "maxParticles",
           "metadata"
-        ]
+        ],
+        "opening": {
+          "emergence": {
+            "target": "random_to_random_gas_cloud",
+            "blueprintEventMode": "emergence"
+          }
+        }
       },
       "renderer": {
         "role": "dumb_renderer",
@@ -67,8 +80,11 @@
         ],
         "singleWriter": true,
         "emits": [
+          "ENGINE_VIEWPORT_HINT",
           "PARTICLES_EMERGED"
-        ]
+        ],
+        "emitOnceFencepost": true,
+        "notes": "Emit ENGINE_VIEWPORT_HINT at mount/resize; bind emergence/full blueprints; emit PARTICLES_EMERGED exactly once after the first full genesis bind; may apply subtle mesh rotation during chaos window when PARTICLES_START_EMERGING is received."
       },
       "beatBus": {
         "role": "event_bus",
@@ -243,13 +259,50 @@
         "name": "uStageBlend",
         "type": "float",
         "aliasOf": "uScrollProgress"
+      },
+      {
+        "name": "uChaosSpin",
+        "type": "float",
+        "optional": true,
+        "semantics": "radians/sec multiplier during chaos"
+      },
+      {
+        "name": "uTrailIntensity",
+        "type": "float",
+        "optional": true
+      },
+      {
+        "name": "uTrailPersistence",
+        "type": "float",
+        "optional": true
+      },
+      {
+        "name": "uBrightnessBoost",
+        "type": "float",
+        "optional": true
       }
     ]
   },
   "events": [
     {
+      "name": "ENGINE_VIEWPORT_HINT",
+      "emitter": "Renderer",
+      "payload": {
+        "width": "int",
+        "height": "int",
+        "aspect": "float"
+      }
+    },
+    {
       "name": "PREWARM_GENESIS_BLUEPRINT",
       "emitter": "Director"
+    },
+    {
+      "name": "PREWARM_COMPLETE",
+      "emitter": "Engine",
+      "payload": {
+        "key": "string"
+      }
     },
     {
       "name": "AUDIO_COMPUTER_HUM",
@@ -297,7 +350,11 @@
     },
     {
       "name": "BLUEPRINT_READY",
-      "emitter": "Engine"
+      "emitter": "Engine",
+      "payload": {
+        "stage": "string",
+        "mode": "string|null"
+      }
     },
     {
       "name": "PARTICLES_START_EMERGING",
@@ -305,7 +362,8 @@
     },
     {
       "name": "PARTICLES_EMERGED",
-      "emitter": "Renderer"
+      "emitter": "Renderer",
+      "semantics": "emit_once_after_first_full_genesis_bind"
     },
     {
       "name": "STAGE_CHANGE",
@@ -333,6 +391,27 @@
       }
     },
     {
+      "name": "START_NARRATIVE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "AUDIO_START_STAGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "MORPH_TO_BEATGLYPH",
+      "emitter": "Director",
+      "payload": {
+        "text": "string"
+      }
+    },
+    {
       "name": "MEMORY_FRAGMENT_TRIGGER",
       "emitter": "Director",
       "payload": {
@@ -340,6 +419,80 @@
       }
     }
   ],
+  "opening": {
+    "rules": {
+      "startAfterViewportHint": true,
+      "stage0ColorLock": true,
+      "scrollLockedUntil": "ENABLE_SCROLL",
+      "emergenceModeRequired": true
+    },
+    "timeline": {
+      "profile": "chaos_coalesce_settle_v1",
+      "prologue": {
+        "terminalOverlay": true,
+        "fadeOutAtMs": 0
+      },
+      "chaos": {
+        "enabled": true,
+        "durationMs": 1500,
+        "rendererSpin": {
+          "z": 0.55,
+          "y": 0.25
+        }
+      },
+      "coalesce": {
+        "enabled": true,
+        "durationMs": 1500,
+        "morphTo": 0.6
+      },
+      "settle": {
+        "enabled": true,
+        "durationMs": 1000,
+        "morphTo": 1.0,
+        "constellationCoverage": [
+          0.95,
+          0.8,
+          0.6,
+          0.45
+        ]
+      },
+      "narration": {
+        "startAtMs": 4000,
+        "events": [
+          "START_NARRATIVE",
+          "AUDIO_START_STAGE"
+        ]
+      },
+      "beatGlyph": {
+        "revealMs": 6000,
+        "text": "HELLO CURTIS"
+      }
+    },
+    "emergence": {
+      "target": "random_to_random_gas_cloud"
+    }
+  },
+  "openingFencepost": {
+    "order": [
+      "ENGINE_VIEWPORT_HINT (Renderer)",
+      "PREWARM_GENESIS_BLUEPRINT (Director)",
+      "TERMINAL_TYPE / SCREEN_FILL (Director, optional overlay)",
+      "PARTICLES_START_EMERGING (Director)",
+      "BLUEPRINT_READY { mode:'emergence', stage:'genesis' } (Engine)",
+      "BLUEPRINT_READY { stage:'genesis' } full (Engine)",
+      "PARTICLES_EMERGED (Renderer, emit_once)",
+      "STAGE_CHANGE { stage:'genesis' } (Director)",
+      "MORPH_PROGRESS settle \u2192 1.0 (Director)",
+      "ENABLE_SCROLL (Director)",
+      "START_NARRATIVE { stage:'genesis' } & AUDIO_START_STAGE { stage:'genesis' } (Director)"
+    ]
+  },
+  "openingRules": {
+    "startAfterViewportHint": true,
+    "stage0ColorLock": true,
+    "scrollLockedUntil": "ENABLE_SCROLL",
+    "emergenceModeRequired": true
+  },
   "quality": {
     "multipliers": {
       "LOW": 0.3,
@@ -454,6 +607,49 @@
       "audio": {
         "bed": "1980s_computer_hum",
         "narrationCue": "onEmergenceThreshold"
+      },
+      "openingNote": "Opening shot list (implemented using the contracts above)",
+      "openingTimeline": {
+        "profile": "chaos_coalesce_settle_v1",
+        "prologue": {
+          "terminalOverlay": true,
+          "fadeOutAtMs": 0
+        },
+        "chaos": {
+          "enabled": true,
+          "durationMs": 1500,
+          "rendererSpin": {
+            "z": 0.55,
+            "y": 0.25
+          }
+        },
+        "coalesce": {
+          "enabled": true,
+          "durationMs": 1500,
+          "morphTo": 0.6
+        },
+        "settle": {
+          "enabled": true,
+          "durationMs": 1000,
+          "morphTo": 1.0,
+          "constellationCoverage": [
+            0.95,
+            0.8,
+            0.6,
+            0.45
+          ]
+        },
+        "narration": {
+          "startAtMs": 4000,
+          "events": [
+            "START_NARRATIVE",
+            "AUDIO_START_STAGE"
+          ]
+        },
+        "beatGlyph": {
+          "revealMs": 6000,
+          "text": "HELLO CURTIS"
+        }
       }
     },
     "discipline": {
@@ -925,6 +1121,13 @@
       "message": "Renderer must not fabricate targets or read scroll"
     },
     {
+      "id": "EMIT_ONCE_FENCEPOST",
+      "detection": "multiple_particles_emerged_events",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must emit PARTICLES_EMERGED exactly once"
+    },
+    {
       "id": "PERFORMANCE_DEGRADATION",
       "detection": "fps_below_55_for_60_frames",
       "severity": "HIGH",
@@ -965,7 +1168,11 @@
       "deliverables": [
         "v3.3 config loader",
         "Engine text-first blueprints",
-        "Renderer binding + PARTICLES_EMERGED single-source"
+        "Renderer binding + PARTICLES_EMERGED single-source",
+        "v3.4 config loader (fallback to 3.3)",
+        "Engine text-first blueprints (emergence mode:'emergence')",
+        "Renderer binding + PARTICLES_EMERGED single-source (emit-once)",
+        "ENGINE_VIEWPORT_HINT gate"
       ]
     },
     {
@@ -975,7 +1182,8 @@
       "deliverables": [
         "Gaussian falloff",
         "Tier behavior \u2192 glyph mapping",
-        "Sprite atlas verification"
+        "Sprite atlas verification",
+        "Chaos mesh rotation window"
       ]
     },
     {
@@ -985,7 +1193,10 @@
       "deliverables": [
         "Opening beats timing",
         "Memory fragments",
-        "Audio sync to emergence threshold"
+        "Audio sync to emergence threshold",
+        "Opening beats timing (chaos\u2192coalesce\u2192settle)",
+        "START_NARRATIVE + AUDIO_START_STAGE",
+        "BeatGlyph reveal timing"
       ]
     },
     {
@@ -1019,6 +1230,12 @@
     "Preserved: tiers, stage order, palettes, fragments, performance",
     "Clarified: event single-source (Renderer emits PARTICLES_EMERGED)",
     "Renderer: no synthesis, no scroll, no FOV scaling",
-    "Transcendence: word arrival \u2192 galaxy dissolve"
+    "Transcendence: word arrival \u2192 galaxy dissolve",
+    "Added opening fencepost contract and viewport gate",
+    "BLUEPRINT_READY now carries optional mode:'emergence' for emergence blueprints",
+    "Renderer emits ENGINE_VIEWPORT_HINT and PARTICLES_EMERGED (emit-once) by contract",
+    "Stage-0 shot list embedded (chaos\u2192coalesce\u2192settle \u2192 narration \u2192 BeatGlyph)",
+    "Opening rules: settle-before-scroll + Stage-0 color lock",
+    "Optional polish uniforms (uChaosSpin/uTrailIntensity/uTrailPersistence/uBrightnessBoost) are non-breaking"
   ]
 }
