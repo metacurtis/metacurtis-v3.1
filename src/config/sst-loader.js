@@ -1,15 +1,13 @@
-// Example: Using SST with JSDoc type checking
+// ESM-compatible SST loader that keeps default export expectations
 
-const { loadSST } = require('../types/sst-types');
+import sstConfig from '../../sst/canon/v3.5.json' assert { type: 'json' };
 
-/** @type {import('../types/sst-types').SSTConfig} */
-const SST = loadSST();
+/** @typedef {import('../types/sst-types').SSTConfig} SSTConfig */
 
-// IDE autocomplete examples
-console.log(SST.visual.letterGeometry.genesis.word);
-console.log(SST.performance.frameRate.target);
+/**
+ * Load the canonical SST configuration.
+ * @returns {SSTConfig}
+ */
+export const loadSST = () => sstConfig;
 
-const genesisConfig = SST.visual.letterGeometry.genesis;
-console.log(`Genesis: "${genesisConfig.word}" with ${genesisConfig.particlesPerLetter} particles/letter`);
-
-module.exports = SST;
+export default sstConfig;

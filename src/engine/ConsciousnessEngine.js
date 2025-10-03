@@ -6,6 +6,7 @@ import { VC } from '@/config/visual-controls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import SST from '@/config/sst-loader.js'; // keep consistent with ESM imports
 import { createSeededRandom } from '../utils/random.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
@@ -488,7 +489,7 @@ class ConsciousnessEngine {
       mode = 'emergence',
       source = 'viewportSpread',
       target = 'constellation',
-      count = 2000,
+      count = SST?.performance?.particleCount?.genesis ?? 2000,
       tierRatios = undefined,
       viewportHint = this._viewportHint,
       quality = 'HIGH',
@@ -656,26 +657,13 @@ class ConsciousnessEngine {
   }
 
   buildBlueprint(stageName, options = {}) {
-    const STAGE_TEXTS = {
-      genesis: 'HELLO CURTIS',
-      discipline: 'STRUCTURE',
-      neural: 'AWAKENING',
-      velocity: 'VELOCITY',
-      architecture: 'SYSTEMS',
-      harmony: 'FLOW STATE',
-      transcendence: 'CONSCIOUSNESS',
-    };
-
     const stageConfig = Canonical?.stages?.[stageName] || {};
-    const SPEC_COUNTS = {
-      genesis: 2000,
-      discipline: 3000,
-      neural: 5000,
-      velocity: 12000,
-      architecture: 8000,
-      harmony: 12000,
-      transcendence: 15000,
-    };
+    const stageParticleCounts = SST?.performance?.particleCount ?? {};
+    const stageLetterWord = SST?.visual?.letterGeometry?.[stageName]?.word;
+    const stageFallbackWord = SST?.visual?.stageWords?.[stageName];
+    const stageWord = (typeof stageLetterWord === 'string' && stageLetterWord)
+      || (typeof stageFallbackWord === 'string' && stageFallbackWord)
+      || stageName.toUpperCase();
 
     if (!stageConfig) {
       console.error(`Stage ${stageName} not found`);
@@ -683,7 +671,9 @@ class ConsciousnessEngine {
     }
 
     const quality = options.quality || this.currentQuality;
-    const baseParticleCount = stageConfig.particleCount || SPEC_COUNTS[stageName] || 5000;
+    const baseParticleCount = stageConfig.particleCount
+      || stageParticleCounts[stageName]
+      || 5000;
     const particleCount = options.overrideCount
       || this.getParticleCountForQuality(baseParticleCount, quality);
 
@@ -699,7 +689,7 @@ class ConsciousnessEngine {
     const tierData = new Float32Array(particleCount);
 
     const textFormation = this.generate3DTextFormation(
-      STAGE_TEXTS[stageName] || stageName.toUpperCase(),
+      stageWord,
       particleCount
     );
 

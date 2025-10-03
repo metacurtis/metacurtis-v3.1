@@ -75,6 +75,15 @@
         "scale": 1.2
       }
     },
+    "stageWords": {
+      "genesis": "HELLO CURTIS",
+      "discipline": "STRUCTURE",
+      "neural": "AWAKENING",
+      "velocity": "VELOCITY",
+      "architecture": "SYSTEMS",
+      "harmony": "FLOW STATE",
+      "transcendence": "CONSCIOUSNESS"
+    },
     "camera": {
       "genesis": {
         "initial": { "x": 0, "y": 0, "z": 5 },
