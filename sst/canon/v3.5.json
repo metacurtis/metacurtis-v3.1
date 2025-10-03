@@ -6,7 +6,740 @@
     "breaking_changes": [
       "text3DPosition now represents 3D letter volumes",
       "Camera angles specified per stage for dimensional reveal"
+    ],
+    "name": "MetaCurtis Consciousness Theater",
+    "mode": "TEXT_FIRST_REVEAL",
+    "documentStatus": "SINGLE_SOURCE_OF_TRUTH",
+    "date": "2025-09-02"
+  },
+  "features": {
+    "gaussianFalloff": 1,
+    "centerWeightingTier4": 1,
+    "ctfOpening": false,
+    "beatGlyph": true,
+    "scrollOrchestrator": true
+  },
+  "pipeline": {
+    "modules": {
+      "director": {
+        "role": "orchestration",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Prewarm \u2192 terminal \u2192 screen fill \u2192 emergence \u2192 stage change \u2192 enable scroll"
+      },
+      "engine": {
+        "role": "blueprint_author",
+        "writes": [
+          "blueprint"
+        ],
+        "forbidden": [
+          "gpuDraw"
+        ],
+        "blueprintFields": [
+          "atmosphericPositions",
+          "text3DPositions",
+          "tierData",
+          "sizeMultiplier",
+          "opacityData",
+          "atlasIndex",
+          "animationSeed",
+          "activeCount",
+          "particleCount",
+          "maxParticles",
+          "metadata"
+        ]
+      },
+      "renderer": {
+        "role": "dumb_renderer",
+        "writes": [
+          "geometry",
+          "uniforms"
+        ],
+        "forbidden": [
+          "fabricateTargets",
+          "readScroll",
+          "scaleByFov"
+        ],
+        "singleWriter": true,
+        "emits": [
+          "PARTICLES_EMERGED"
+        ]
+      },
+      "beatBus": {
+        "role": "event_bus",
+        "exposedGlobals": [
+          "BeatBus",
+          "EVENTS"
+        ]
+      },
+      "scrollOrchestrator": {
+        "role": "progress_publisher",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Maps window scroll\u2192stage-local progress; publishes MORPH_PROGRESS; emits STAGE_CHANGE at breakpoints and MEMORY_FRAGMENT_TRIGGER from per-stage triggerPercent. Renderer remains a dumb sink."
+      }
+    },
+    "singleWriterRules": [
+      "Renderer is the ONLY geometry/uniform writer",
+      "Engine is the ONLY blueprint author",
+      "Director NEVER writes geometry/uniforms"
     ]
+  },
+  "shaderContract": {
+    "attributes": [
+      {
+        "name": "position",
+        "type": "vec3",
+        "semantics": "current position"
+      },
+      {
+        "name": "atmosphericPosition",
+        "type": "vec3",
+        "semantics": "morph source"
+      },
+      {
+        "name": "text3DPosition",
+        "type": "vec3",
+        "semantics": "morph target (stage word)"
+      },
+      {
+        "name": "tierData",
+        "type": "float",
+        "range": [
+          0,
+          3
+        ],
+        "semantics": "tier id"
+      },
+      {
+        "name": "sizeMultiplier",
+        "type": "float",
+        "semantics": "sprite scaling per particle"
+      },
+      {
+        "name": "opacityData",
+        "type": "float",
+        "semantics": "base opacity per particle"
+      },
+      {
+        "name": "atlasIndex",
+        "type": "float",
+        "semantics": "sprite index in atlas"
+      },
+      {
+        "name": "animationSeed",
+        "type": "vec3",
+        "semantics": "per-particle randomization"
+      },
+      {
+        "name": "particleIndex",
+        "type": "float",
+        "semantics": "0..N-1 (renderer-added)"
+      }
+    ],
+    "uniforms": [
+      {
+        "name": "uTime",
+        "type": "float"
+      },
+      {
+        "name": "uMorphProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ],
+        "semantics": "0=atmospheric,1=text"
+      },
+      {
+        "name": "uScrollProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "uStageIndex",
+        "type": "int"
+      },
+      {
+        "name": "uActiveCount",
+        "type": "int"
+      },
+      {
+        "name": "uTierCutoff",
+        "type": "int"
+      },
+      {
+        "name": "uColorCurrent",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorNext",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent1",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent2",
+        "type": "vec3"
+      },
+      {
+        "name": "uAtlasTexture",
+        "type": "sampler2D"
+      },
+      {
+        "name": "uTotalSprites",
+        "type": "int",
+        "value": 16
+      },
+      {
+        "name": "uPointSize",
+        "type": "float"
+      },
+      {
+        "name": "uDevicePixelRatio",
+        "type": "float"
+      },
+      {
+        "name": "uResolution",
+        "type": "vec2"
+      },
+      {
+        "name": "uGaussianSigma",
+        "type": "float"
+      },
+      {
+        "name": "uTierHighlight",
+        "type": "float[4]"
+      },
+      {
+        "name": "uGaussianFalloff",
+        "type": "float"
+      },
+      {
+        "name": "uCenterWeighting",
+        "type": "float"
+      },
+      {
+        "name": "uStageProgress",
+        "type": "float",
+        "aliasOf": "uMorphProgress"
+      },
+      {
+        "name": "uStageBlend",
+        "type": "float",
+        "aliasOf": "uScrollProgress"
+      }
+    ]
+  },
+  "events": [
+    {
+      "name": "PREWARM_GENESIS_BLUEPRINT",
+      "emitter": "Director"
+    },
+    {
+      "name": "AUDIO_COMPUTER_HUM",
+      "emitter": "Director",
+      "payload": {
+        "volume": "float[0..1]"
+      }
+    },
+    {
+      "name": "CURSOR_SHOW",
+      "emitter": "Director"
+    },
+    {
+      "name": "CURSOR_BLINK",
+      "emitter": "Director",
+      "payload": {
+        "count": "int",
+        "interval": "ms"
+      }
+    },
+    {
+      "name": "TERMINAL_TYPE",
+      "emitter": "Director",
+      "payload": {
+        "lines": "string[]",
+        "typeSpeed": "ms",
+        "lineDelay": "ms"
+      }
+    },
+    {
+      "name": "SCREEN_FILL",
+      "emitter": "Director",
+      "payload": {
+        "text": "string",
+        "scrollSpeed": "ms"
+      }
+    },
+    {
+      "name": "BUILD_EMERGENCE_BLUEPRINT",
+      "emitter": "Director",
+      "payload": {
+        "sourceText": "string",
+        "count": "int"
+      }
+    },
+    {
+      "name": "BLUEPRINT_READY",
+      "emitter": "Engine"
+    },
+    {
+      "name": "PARTICLES_START_EMERGING",
+      "emitter": "Director"
+    },
+    {
+      "name": "PARTICLES_EMERGED",
+      "emitter": "Renderer"
+    },
+    {
+      "name": "STAGE_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "ENABLE_SCROLL",
+      "emitter": "Director"
+    },
+    {
+      "name": "QUALITY_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "tier": "LOW|MEDIUM|HIGH|ULTRA"
+      }
+    },
+    {
+      "name": "MORPH_PROGRESS",
+      "emitter": "Director",
+      "payload": {
+        "value": "float[0..1]"
+      }
+    },
+    {
+      "name": "MEMORY_FRAGMENT_TRIGGER",
+      "emitter": "Director",
+      "payload": {
+        "id": "string"
+      }
+    }
+  ],
+  "quality": {
+    "multipliers": {
+      "LOW": 0.3,
+      "MEDIUM": 0.6,
+      "HIGH": 1,
+      "ULTRA": 1.5
+    },
+    "maxParticles": 15000
+  },
+  "scrollAndMorph": {
+    "stageBreakpointsPercent": [
+      0,
+      14,
+      28,
+      42,
+      56,
+      70,
+      84,
+      100
+    ],
+    "easing": "exponential_inout_edges",
+    "morphResponse": {
+      "speedMultiplier": 2,
+      "smoothing": 0.15,
+      "overshoot": 0.05
+    },
+    "ownership": {
+      "publisher": "Director",
+      "rendererReadsScroll": false
+    }
+  },
+  "spriteSemantics": {
+    "substrate": 7,
+    "spatialCircles": [
+      0,
+      1
+    ],
+    "anchorDiamond": 4,
+    "anchorCrystal": 11,
+    "star": 6,
+    "burst": 13,
+    "galaxy": 15
+  },
+  "stageOrder": [
+    "genesis",
+    "discipline",
+    "neural",
+    "velocity",
+    "architecture",
+    "harmony",
+    "transcendence"
+  ],
+  "stages": {
+    "genesis": {
+      "label": "GENESIS SPARK",
+      "ordinal": 0,
+      "scrollRangePercent": [
+        0,
+        14
+      ],
+      "particlesBase": 2000,
+      "word": "HELLO CURTIS",
+      "palette": [
+        "#00FF00",
+        "#22c55e",
+        "#15803d"
+      ],
+      "tierMix": [
+        0.6,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "drift_perlin_slow",
+        "tier1": "orbital_micro",
+        "tier2": "twinkle_soft",
+        "tier3": "pulse_soft"
+      },
+      "camera": {
+        "movement": "dolly_in",
+        "degrees": 5,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragment": {
+        "id": "genesis_spark",
+        "triggerPercent": 5,
+        "content": "Commodore 64 Terminal",
+        "interaction": "type_enabled",
+        "durationMs": 10000,
+        "effects": {
+          "targetTier": 0,
+          "behavior": "converge",
+          "intensity": 0.7
+        }
+      },
+      "boundaryCues": {
+        "preTransitionPercent": [
+          12,
+          14
+        ],
+        "tintCrossfadeToStage": "discipline"
+      },
+      "audio": {
+        "bed": "1980s_computer_hum",
+        "narrationCue": "onEmergenceThreshold"
+      }
+    },
+    "discipline": {
+      "label": "DISCIPLINE FORGE",
+      "ordinal": 1,
+      "scrollRangePercent": [
+        14,
+        28
+      ],
+      "particlesBase": 3000,
+      "word": "STRUCTURE",
+      "palette": [
+        "#1e40af",
+        "#3b82f6",
+        "#1d4ed8"
+      ],
+      "tierMix": [
+        0.55,
+        0.25,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_drift",
+        "tier1": "column_orbit",
+        "tier2": "pulse_cadence_120bpm",
+        "tier3": "crystalline_authority"
+      },
+      "camera": {
+        "movement": "authority_orbit",
+        "degrees": 10,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragment": {
+        "id": "discipline_motto",
+        "triggerPercent": 20,
+        "content": "Marine Corps EGA",
+        "interaction": "hover_tooltip",
+        "effects": {
+          "allTiers": "snap_to_attention",
+          "durationMs": 800
+        }
+      }
+    },
+    "neural": {
+      "label": "NEURAL AWAKENING",
+      "ordinal": 2,
+      "scrollRangePercent": [
+        28,
+        42
+      ],
+      "particlesBase": 5000,
+      "word": "AWAKENING",
+      "palette": [
+        "#4338ca",
+        "#a855f7",
+        "#7c3aed"
+      ],
+      "tierMix": [
+        0.55,
+        0.2,
+        0.15,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "neural_flow",
+        "tier1": "connection_orbit",
+        "tier2": "synapse_flash_prob_0.02",
+        "tier3": "hub_nodes_temporal"
+      },
+      "camera": {
+        "movement": "discovery_orbit",
+        "degrees": 15,
+        "shake": false
+      },
+      "uniformOverrides": {
+        "uGaussianSigma": 2
+      },
+      "memoryFragment": {
+        "id": "neural_first_ai_chat",
+        "triggerPercent": 35,
+        "content": "Chat transcript",
+        "interaction": "auto_type",
+        "effects": {
+          "sequence": "pathways_light_up"
+        }
+      }
+    },
+    "velocity": {
+      "label": "VELOCITY EXPLOSION",
+      "ordinal": 3,
+      "scrollRangePercent": [
+        42,
+        56
+      ],
+      "particlesBase": 12000,
+      "word": "VELOCITY",
+      "palette": [
+        "#7c3aed",
+        "#9333ea",
+        "#6b21a8"
+      ],
+      "tierMix": [
+        0.45,
+        0.2,
+        0.15,
+        0.2
+      ],
+      "motionBehaviors": {
+        "tier0": "storm_medium",
+        "tier1": "streak_trail",
+        "tier2": "burst_on_beat",
+        "tier3": "lightning_global"
+      },
+      "camera": {
+        "movement": "dramatic_pullback",
+        "degrees": 20,
+        "shake": true
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.5
+        }
+      },
+      "memoryFragment": {
+        "id": "velocity_github_surge",
+        "triggerPercent": 49,
+        "content": "GitHub graph",
+        "interaction": "cursor_trails",
+        "effects": {
+          "acceleration": "toward_cursor"
+        }
+      }
+    },
+    "architecture": {
+      "label": "ARCHITECTURE CONSCIOUSNESS",
+      "ordinal": 4,
+      "scrollRangePercent": [
+        56,
+        70
+      ],
+      "particlesBase": 8000,
+      "word": "SYSTEMS",
+      "palette": [
+        "#0891b2",
+        "#06b6d4",
+        "#0e7490"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_flow",
+        "tier1": "scaffold_layers_3",
+        "tier2": "blueprint_pulse",
+        "tier3": "cornerstone_nodes_frontal"
+      },
+      "camera": {
+        "movement": "calm_track",
+        "degrees": 12,
+        "shake": false
+      },
+      "memoryFragment": {
+        "id": "architecture_perf_breakthrough",
+        "triggerPercent": 63,
+        "content": "15\u219284 FPS metric",
+        "interaction": "click_to_overlay_diagram",
+        "effects": {
+          "form": "temporary_blueprint"
+        }
+      }
+    },
+    "harmony": {
+      "label": "HARMONIC MASTERY",
+      "ordinal": 5,
+      "scrollRangePercent": [
+        70,
+        84
+      ],
+      "particlesBase": 12000,
+      "word": "FLOW STATE",
+      "palette": [
+        "#f59e0b",
+        "#d97706",
+        "#b45309"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "laminar_flow",
+        "tier1": "orbit_sync_groups_4",
+        "tier2": "ballet_fibonacci",
+        "tier3": "conductor_nodes_cerebellar"
+      },
+      "camera": {
+        "movement": "balletic_orbit",
+        "degrees": 25,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
+      },
+      "memoryFragment": {
+        "id": "harmony_conduct",
+        "triggerPercent": 77,
+        "content": "Conduct particles",
+        "interaction": "pointer_conduct",
+        "effects": {
+          "trail_follow": true,
+          "bell_on_perfect": true
+        }
+      }
+    },
+    "transcendence": {
+      "label": "CONSCIOUSNESS TRANSCENDENCE",
+      "ordinal": 6,
+      "scrollRangePercent": [
+        84,
+        100
+      ],
+      "particlesBase": 15000,
+      "word": "CONSCIOUSNESS",
+      "palette": [
+        "#ffffff",
+        "#f59e0b",
+        "#00ffcc"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "cosmic_dust_galaxy",
+        "tier1": "galactic_arm_slow",
+        "tier2": "consciousness_node_unified",
+        "tier3": "transcendent_swarm"
+      },
+      "camera": {
+        "movement": "reverent_orbit",
+        "degrees": 30,
+        "shake": false
+      },
+      "climax": {
+        "arrivalMorph": 1,
+        "dissolveAfterMs": 1800,
+        "dissolveMorph": 0.6,
+        "increaseSwirl": true
+      },
+      "hud": {
+        "liveCounterText": "15,000 conscious moments"
+      },
+      "memoryFragment": {
+        "id": "transcendence_initials",
+        "triggerPercent": 92,
+        "content": "User initials",
+        "interaction": "click",
+        "effects": {
+          "form_initials_brief": true
+        }
+      }
+    }
   },
   "visual": {
     "system": "3d_kinetic_typography",
@@ -86,22 +819,37 @@
     },
     "camera": {
       "genesis": {
-        "initial": { "x": 0, "y": 0, "z": 5 },
+        "initial": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
         "reveal": {
           "timing": 8000,
           "duration": 2000,
-          "target": { "x": 0.8, "y": 0.5, "z": 4.5 }
+          "target": {
+            "x": 0.8,
+            "y": 0.5,
+            "z": 4.5
+          }
         }
       },
       "velocity": {
         "movement": "dramatic_push",
         "startZ": 6,
         "endZ": 4,
-        "shake": { "amplitude": 0.1, "frequency": 5 },
+        "shake": {
+          "amplitude": 0.1,
+          "frequency": 5
+        },
         "duration": 40000
       },
       "discipline": {
-        "angle": { "x": -20, "y": 0, "z": 5 },
+        "angle": {
+          "x": -20,
+          "y": 0,
+          "z": 5
+        },
         "movement": "orbit_slow",
         "degrees": 10
       }
@@ -117,7 +865,10 @@
   "performance": {
     "frameRate": {
       "target": 60,
-      "minimum": 55
+      "targetFps": 60,
+      "minimum": 55,
+      "minFps": 55,
+      "windowFrames": 60
     },
     "particleCount": {
       "genesis": 2000,
@@ -127,6 +878,147 @@
       "architecture": 8000,
       "harmony": 12000,
       "transcendence": 15000
+    },
+    "renderTimeMs": {
+      "target": 16.67,
+      "max": 18,
+      "criticalPath": [
+        "particleUpdate",
+        "shaderExecution",
+        "drawCalls"
+      ]
+    },
+    "memory": {
+      "heapLimitMB": 250,
+      "leakToleranceMBPerMin": 0,
+      "gcPauseMaxMs": 3
+    },
+    "adaptiveQuality": {
+      "order": [
+        "tier3",
+        "tier2",
+        "tier1",
+        "tier0"
+      ],
+      "restoreAfterStableSec": 5
+    },
+    "lodThresholds": {
+      "ultra": 0.9,
+      "high": 0.75,
+      "medium": 0.55,
+      "low": 0.35
     }
-  }
+  },
+  "integrityRules": [
+    {
+      "id": "SINGLE_WRITER_GEOMETRY",
+      "detection": "renderer_not_last_writer",
+      "severity": "CRITICAL",
+      "response": "IMMEDIATE_ROLLBACK",
+      "message": "Geometry/uniforms written outside Renderer"
+    },
+    {
+      "id": "RENDERER_SYNTHESIS",
+      "detection": "renderer_fabricates_targets_or_reads_scroll",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must not fabricate targets or read scroll"
+    },
+    {
+      "id": "PERFORMANCE_DEGRADATION",
+      "detection": "fps_below_55_for_60_frames",
+      "severity": "HIGH",
+      "response": "FEATURE_REDUCTION",
+      "message": "Quality reduced to maintain 60 FPS"
+    },
+    {
+      "id": "NARRATIVE_DESYNC",
+      "detection": "morph_vs_stage_mismatch",
+      "severity": "MEDIUM",
+      "response": "RESYNC_TIMELINE",
+      "message": "Realigning stage, morph, and tint"
+    }
+  ],
+  "successMetrics": {
+    "technical": {
+      "fps": ">=60",
+      "loadTimeSec": "<4",
+      "errorRate": "<0.001%",
+      "memoryStable": true
+    },
+    "experiential": {
+      "completionRate": ">80%",
+      "narrativeClarity": ">90%",
+      "emotionalImpact": "high"
+    },
+    "business": {
+      "shareRate": ">30%",
+      "contactConversion": ">15%",
+      "oneWeekRecall": ">90%"
+    }
+  },
+  "implementationPhases": [
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "duration": "1 day",
+      "deliverables": [
+        "v3.3 config loader",
+        "Engine text-first blueprints",
+        "Renderer binding + PARTICLES_EMERGED single-source"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Visual Polish",
+      "duration": "1 day",
+      "deliverables": [
+        "Gaussian falloff",
+        "Tier behavior \u2192 glyph mapping",
+        "Sprite atlas verification"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Narrative Integration",
+      "duration": "1 day",
+      "deliverables": [
+        "Opening beats timing",
+        "Memory fragments",
+        "Audio sync to emergence threshold"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Performance & Cross-Device",
+      "duration": "1 day",
+      "deliverables": [
+        "60 FPS optimization",
+        "Adaptive quality guardrails",
+        "Mobile DPR/point-size audit"
+      ]
+    }
+  ],
+  "debugSurface": {
+    "exposeGlobals": [
+      "BeatBus",
+      "EVENTS",
+      "__consciousnessMaterial",
+      "__particleGeometry",
+      "consciousnessEngine"
+    ],
+    "devHud": {
+      "stageSelector": true,
+      "morphSlider": true,
+      "pointSizeSlider": true,
+      "perfOverlay": true
+    }
+  },
+  "changeLog": [
+    "Swap: anatomy \u2192 stage words (text3DPositions)",
+    "Preserved: tiers, stage order, palettes, fragments, performance",
+    "Clarified: event single-source (Renderer emits PARTICLES_EMERGED)",
+    "Renderer: no synthesis, no scroll, no FOV scaling",
+    "Transcendence: word arrival \u2192 galaxy dissolve"
+  ]
 }
