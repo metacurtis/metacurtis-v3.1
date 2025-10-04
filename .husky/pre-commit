@@ -2,7 +2,18 @@
 # Get the directory where the script is located, go up one level, then source husky.sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Execute lint-staged
-# lint-staged will read its configuration from package.json
-# and run the specified linters/formatters ONLY on staged files
+echo "🔍 Running SST compliance checks..."
+npm run sst-check
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ SST compliance check failed!"
+  echo "   Fix validation/drift errors before committing."
+  echo "   Run 'npm run sst-check' to see details."
+  exit 1
+fi
+
+echo "✅ SST compliance verified"
+
+# Execute lint-staged for staged file formatting/linting
 npx lint-staged

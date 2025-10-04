@@ -23,7 +23,7 @@
     "validate:sst": "node ./scripts/validate-sst-integration.js",
     "predev": "npm run validate",
     "prebuild": "npm run validate",
-    "prepare": "husky",
+    "prepare": "husky install",
     "fix": "node scripts/apply-fix.js",
     "fix:sst": "node scripts/apply-sst-v3-fixes.js",
     "doctor": "node scripts/render-contract-verify.cjs --fix && node scripts/snapshot-render-stack.cjs",
@@ -76,6 +76,7 @@
     "test:sst-all": "npm run test:schema && npm run validate-sst",
     "generate-types": "node sst/tools/generate-jsdoc.cjs",
     "detect-drift": "node sst/tools/detect-drift.cjs",
+    "sst-check": "npm run validate-sst && npm run detect-drift",
     "ai-context": "node sst/tools/ai-context-builder.cjs"
   },
   "dependencies": {
