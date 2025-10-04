@@ -426,7 +426,31 @@
       "scrollLockedUntil": "ENABLE_SCROLL",
       "emergenceModeRequired": true
     },
+    "skipKey": "SPACE",
+    "totalDurationMs": 12000,
     "timeline": {
+      "blackout": { "durationMs": 2000 },
+      "cursor": { "blinkCount": 2, "intervalMs": 500 },
+      "typing": {
+        "lines": [
+          "READY.",
+          "10 PRINT \"HELLO CURTIS\"",
+          "20 GOTO 10",
+          "RUN"
+        ],
+        "typeSpeed": 50,
+        "lineDelay": 500
+      },
+      "fill": {
+        "text": "HELLO CURTIS ",
+        "scrollSpeed": 50,
+        "durationMs": 2000
+      },
+      "emergence": {
+        "durationMs": 2000,
+        "waitForFencepost": true,
+        "maxWaitMs": 5000
+      },
       "profile": "chaos_coalesce_settle_v1",
       "prologue": {
         "terminalOverlay": true,
@@ -469,7 +493,9 @@
       }
     },
     "emergence": {
-      "target": "random_to_random_gas_cloud"
+      "target": "random_to_random_gas_cloud",
+      "mode": "emergence",
+      "source": "viewportSpread"
     }
   },
   "openingFencepost": {

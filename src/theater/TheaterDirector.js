@@ -1,11 +1,43 @@
-// SST v3.3 BeatGlyph Theater Director — Complete Clean Version
+// SST v3.5 BeatGlyph Theater Director — Complete Clean Version
 // Single source of timeline; Renderer stays single GPU writer; Engine writes blueprints.
 
 import BeatBus from '@/theater/bus';
 
+import SST from '@/config/sst-loader.js';
 import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
+
+const DEFAULT_TYPING_LINES = ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN'];
+
+const DEFAULT_OPENING_TIMELINE = {
+  blackout: { durationMs: 2000 },
+  cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
+  typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500 },
+  fill: { text: 'HELLO CURTIS ', scrollSpeed: 50, durationMs: 2000 },
+  emergence: { durationMs: 2000, waitForFencepost: true, maxWaitMs: 5000 },
+};
+
+const DEFAULT_OPENING_EMERGENCE = {
+  target: 'constellation',
+  mode: 'emergence',
+  source: 'viewportSpread',
+};
+
+const SKIP_KEY_MAP = {
+  SPACE: { codes: ['Space'], keys: [' ', 'Spacebar'] },
+  ENTER: { codes: ['Enter', 'NumpadEnter'], keys: ['Enter'] },
+  ESCAPE: { codes: ['Escape'], keys: ['Escape', 'Esc'] },
+};
+
+function matchesSkipActivation(event, skipKey) {
+  if (!skipKey || !event) return false;
+  const lookup = SKIP_KEY_MAP[String(skipKey).toUpperCase()] ?? null;
+  if (!lookup) return false;
+  if (lookup.codes?.includes(event.code)) return true;
+  if (lookup.keys?.includes(event.key)) return true;
+  return false;
+}
 
 // ── Throttled Morph Emitter (single-writer safe) ─────────────────────────────
 let __lastMorph = -1;
@@ -43,6 +75,100 @@ class TheaterDirector {
     this.scrollOrchestrator = null;
   }
 
+  _getOpeningConfig() {
+    const opening = SST?.narrative?.opening ?? {};
+    const openingTimeline = opening.timeline ?? {};
+
+    const timeline = {
+      blackout: { ...DEFAULT_OPENING_TIMELINE.blackout, ...(openingTimeline.blackout ?? {}) },
+      cursor: { ...DEFAULT_OPENING_TIMELINE.cursor, ...(openingTimeline.cursor ?? {}) },
+      typing: { ...DEFAULT_OPENING_TIMELINE.typing, ...(openingTimeline.typing ?? {}) },
+      fill: { ...DEFAULT_OPENING_TIMELINE.fill, ...(openingTimeline.fill ?? {}) },
+      emergence: { ...DEFAULT_OPENING_TIMELINE.emergence, ...(openingTimeline.emergence ?? {}) },
+    };
+
+    const fallbackSkipKey = 'SPACE';
+
+    return {
+      skipKey:
+        opening.skipKey ??
+        SST?.narrative?.orchestration?.skipKey ??
+        fallbackSkipKey,
+      totalDurationMs: opening.totalDurationMs,
+      timeline,
+      emergence: { ...DEFAULT_OPENING_EMERGENCE, ...(opening.emergence ?? {}) },
+    };
+  }
+
+  _getGenesisParticleCount() {
+    const candidate = Number(SST?.performance?.particleCount?.genesis);
+    if (Number.isFinite(candidate) && candidate > 0) return candidate;
+    return 2000;
+  }
+
+  _calculateTypingDuration(typingConfig) {
+    if (!typingConfig) return 0;
+    const lines = Array.isArray(typingConfig.lines) ? typingConfig.lines : [];
+    const typeSpeed = Number(typingConfig.typeSpeed) || 0;
+    const lineDelay = Number(typingConfig.lineDelay) || 0;
+
+    if (!lines.length || !typeSpeed) return 0;
+
+    let total = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = typeof lines[i] === 'string' ? lines[i] : '';
+      total += line.length * typeSpeed;
+      if (i < lines.length - 1) total += lineDelay;
+    }
+    return total;
+  }
+
+  _attachSkipListener(skipKey) {
+    if (typeof window === 'undefined') return;
+    this._detachSkipListener();
+    if (!skipKey) return;
+
+    this._skipKey = skipKey;
+    const handler = (event) => {
+      if (this.skipRequested || this.cancelled) return;
+      if (!matchesSkipActivation(event, skipKey)) return;
+      try {
+        event.preventDefault?.();
+      } catch {}
+      this._requestSkip('keyboard');
+    };
+
+    window.addEventListener('keydown', handler, { passive: false });
+    this._skipListener = handler;
+  }
+
+  _detachSkipListener() {
+    if (typeof window === 'undefined') return;
+    if (this._skipListener) {
+      window.removeEventListener('keydown', this._skipListener);
+      this._skipListener = null;
+    }
+    this._skipKey = null;
+  }
+
+  _wakeSleepWaiters(reason = 'interrupted') {
+    if (!this._sleepWaiters || this._sleepWaiters.size === 0) return;
+    for (const resolve of Array.from(this._sleepWaiters)) {
+      try {
+        resolve(reason);
+      } catch {}
+    }
+    this._sleepWaiters.clear();
+  }
+
+  _requestSkip(origin = 'keyboard') {
+    if (this.skipRequested) return;
+    this.skipRequested = true;
+    this._skipOrigin = origin;
+    console.log(`🎬 Director: Opening skip requested via ${origin}`);
+    this._wakeSleepWaiters('skipped');
+  }
+
   async _ensureViewportHint(timeoutMs = 5000) {
     if (typeof window === 'undefined') return undefined;
     const sanitize = (hint) => {
@@ -78,6 +204,9 @@ class TheaterDirector {
   }
 
   reset() {
+    this._wakeSleepWaiters('reset');
+    this._detachSkipListener();
+
     // Clean up
     try {
       this.scrollOrchestrator?.stop?.();
@@ -92,6 +221,9 @@ class TheaterDirector {
     this.viewportReady = false;
     this.waitingForViewport = false;
     this.currentStage = null;
+    this.skipRequested = false;
+    this._skipOrigin = null;
+    this._sleepWaiters = new Set();
     
     // Reset global flags
     try {
@@ -151,8 +283,30 @@ class TheaterDirector {
     this.phase = 'starting';
     this.startTime = Date.now();
 
-    console.log('🎬 Director: Starting SST v3.3 BeatGlyph show');
-    console.log('   Timeline: 0s black → 2s cursor → 2.5s typing → 3s fill → 3.7s emergence');
+    const openingSnapshot = this._getOpeningConfig();
+    const snapshotTimeline = openingSnapshot?.timeline ?? {};
+    const snapshotTyping = {
+      ...DEFAULT_OPENING_TIMELINE.typing,
+      ...(snapshotTimeline.typing ?? {}),
+    };
+    snapshotTyping.lines =
+      Array.isArray(snapshotTyping.lines) && snapshotTyping.lines.length
+        ? snapshotTyping.lines
+        : DEFAULT_OPENING_TIMELINE.typing.lines;
+    const snapshotTypingDuration = this._calculateTypingDuration(snapshotTyping);
+
+    const segments = [
+      `black ${snapshotTimeline?.blackout?.durationMs ?? DEFAULT_OPENING_TIMELINE.blackout.durationMs}ms`,
+      `cursor blink x${snapshotTimeline?.cursor?.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount}` +
+        ` @ ${(snapshotTimeline?.cursor?.intervalMs ?? DEFAULT_OPENING_TIMELINE.cursor.intervalMs)}ms`,
+      `typing ~${snapshotTypingDuration}ms`,
+      `fill ${snapshotTimeline?.fill?.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs}ms`,
+      `emergence ${snapshotTimeline?.emergence?.durationMs ?? DEFAULT_OPENING_TIMELINE.emergence.durationMs}ms`,
+    ];
+
+    console.log('🎬 Director: Starting SST v3.5 opening sequence');
+    console.log(`   Skip key: ${openingSnapshot?.skipKey ?? 'SPACE'}`);
+    console.log(`   SST timeline: ${segments.join(' → ')}`);
 
     try {
       await this._runSequence();
@@ -161,6 +315,7 @@ class TheaterDirector {
       this.phase = 'error';
       BeatBus.emit(EVENTS.DIRECTOR_ERROR, { error });
     } finally {
+      this._detachSkipListener();
       this.isRunning = false;
       if (this.phase !== 'cancelled' && this.phase !== 'error') {
         this.hasRun = true;
@@ -172,130 +327,222 @@ class TheaterDirector {
     // Optional prewarm (disabled during debugging to avoid stale cache)
     // await this.prewarm();
 
-    // ───────────────── Phase 1: Black (2s)
-    this.phase = 'black';
-    console.log('   Phase: Black screen (2s)');
-    await this.sleep(2000);
-    if (this.cancelled) return;
+    const opening = this._getOpeningConfig();
+    const { timeline, skipKey, emergence: openingEmergence } = opening ?? {};
 
-    // ───────────────── Phase 2: Cursor (0.5s + 1s)
-    this.phase = 'cursor';
-    console.log('   Phase: Cursor (blinks twice)');
-    BeatBus.emit(EVENTS.CURSOR_SHOW);
-    BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: 0.25 });
-    await this.sleep(500);
-    BeatBus.emit(EVENTS.CURSOR_BLINK, { count: 2, interval: 250 });
-    await this.sleep(1000);
-    if (this.cancelled) return;
+    const blackoutDuration = Math.max(
+      0,
+      Number(timeline?.blackout?.durationMs ?? DEFAULT_OPENING_TIMELINE.blackout.durationMs),
+    );
 
-    // ───────────────── Phase 3: Terminal typing (3.7s)
-    this.phase = 'terminal';
-    console.log('   Phase: Terminal typing');
-    BeatBus.emit(EVENTS.TERMINAL_TYPE, {
-      lines: ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN'],
-      typeSpeed: 50,
-      lineDelay: 300,
-    });
-    await this.sleep(3700);
-    if (this.cancelled) return;
+    const cursorConfig = {
+      ...DEFAULT_OPENING_TIMELINE.cursor,
+      ...(timeline?.cursor ?? {}),
+    };
+    const cursorLeadInMs = Math.max(0, Number(cursorConfig.leadInMs ?? 0));
+    const cursorSettleMs = Math.max(0, Number(cursorConfig.settleMs ?? 0));
+    const cursorBlinkCount = Math.max(0, Number(cursorConfig.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount));
+    const cursorIntervalMs = Math.max(0, Number(cursorConfig.intervalMs ?? DEFAULT_OPENING_TIMELINE.cursor.intervalMs));
+    const cursorHumVolume = Number.isFinite(cursorConfig.humVolume) ? cursorConfig.humVolume : 0.25;
 
-    // ───────────────── Phase 4: Fill (1.5s)
-    this.phase = 'fill';
-    console.log('   Phase: Screen fill');
-    BeatBus.emit(EVENTS.SCREEN_FILL, { text: 'HELLO CURTIS ', scrollSpeed: 50 });
-    await this.sleep(1500);
-    if (this.cancelled) return;
+    const typingConfig = {
+      ...DEFAULT_OPENING_TIMELINE.typing,
+      ...(timeline?.typing ?? {}),
+    };
+    typingConfig.lines =
+      Array.isArray(typingConfig.lines) && typingConfig.lines.length
+        ? typingConfig.lines
+        : DEFAULT_OPENING_TIMELINE.typing.lines;
+    typingConfig.typeSpeed = Math.max(0, Number(typingConfig.typeSpeed ?? DEFAULT_OPENING_TIMELINE.typing.typeSpeed));
+    typingConfig.lineDelay = Math.max(0, Number(typingConfig.lineDelay ?? DEFAULT_OPENING_TIMELINE.typing.lineDelay));
+    const typingDuration = this._calculateTypingDuration(typingConfig);
 
-    // ───────────────── Phase 5: Emergence (viewport → constellation)
-    this.phase = 'emergence';
-    console.log('   Phase: Particle emergence');
-
-    // Build emergence with CORRECTED contract
-    const viewportHint = await this._ensureViewportHint();
-
-    BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
-      mode: 'emergence',
-      source: 'viewportSpread',
-      target: 'constellation',
-      count: 2000,
-      tierRatios: VC?.TIER_RATIOS,
-      viewportHint,
-    });
-
-    // Signal overlay to fade
-    BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
-
-    // Initial visual tune
-    this.emitTune({
-      particleFlash: 1.3,
-      opacityMin: 0.7,
-      opacityMax: 1.0,
-      driftAmp: 1.0,
-      vibeAmp: 0.2,
-      flutterAmp: 0.6,
-      verticalBias: 0.1,
-    });
-
-    // Drive morph 0 → 0.75 during emergence
-    await this._easeMorphTo(VC.MID_MORPH /* 0.85 */, VC.IMPLODE_MS /* 1000 */);
-
-    // Wait for renderer confirmation
-    console.log('   Waiting for renderer fencepost...');
-    const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, 5000);
-    if (!fencepostReceived) {
-      console.warn('   Renderer fencepost timeout, continuing anyway');
+    const fillConfig = {
+      ...DEFAULT_OPENING_TIMELINE.fill,
+      ...(timeline?.fill ?? {}),
+    };
+    fillConfig.durationMs = Math.max(0, Number(fillConfig.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs));
+    fillConfig.scrollSpeed = Math.max(0, Number(fillConfig.scrollSpeed ?? DEFAULT_OPENING_TIMELINE.fill.scrollSpeed));
+    if (typeof fillConfig.text !== 'string' || !fillConfig.text.trim()) {
+      fillConfig.text = DEFAULT_OPENING_TIMELINE.fill.text;
     }
-    if (this.cancelled) return;
 
-    // ───────────────── Phase 6: Genesis handoff
-    const toStage = 'genesis';
-    
-    this.phase = 'genesis';
-    const previousStage = this.currentStage ?? 'emergence';
-    this.currentStage = toStage;
-    console.log('🧬 Phase: Genesis stage handoff');
+    const emergenceTimeline = {
+      ...DEFAULT_OPENING_TIMELINE.emergence,
+      ...(timeline?.emergence ?? {}),
+    };
+    emergenceTimeline.durationMs = Math.max(
+      0,
+      Number(emergenceTimeline.durationMs ?? DEFAULT_OPENING_TIMELINE.emergence.durationMs),
+    );
+    emergenceTimeline.maxWaitMs = Math.max(
+      0,
+      Number(emergenceTimeline.maxWaitMs ?? DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs),
+    );
+    const fencepostWaitMs = emergenceTimeline.maxWaitMs || DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs;
+    const waitForFencepost = emergenceTimeline.waitForFencepost !== false;
 
-    // canonical STAGE_CHANGE shape { from, to }
-    BeatBus.emit(EVENTS.STAGE_CHANGE, { from: previousStage, to: toStage });
-    BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
+    const emergenceConfig = { ...DEFAULT_OPENING_EMERGENCE, ...(openingEmergence ?? {}) };
+    const genesisCount = this._getGenesisParticleCount();
+    const skipLabel = skipKey ?? 'SPACE';
 
-    // Reset scroll position
+    this._attachSkipListener(skipKey);
+
+    let skipTriggered = false;
+
+    const handleWaitResult = (result) => {
+      if (result === 'cancelled' || this.cancelled) return 'cancelled';
+      if (result === 'skipped' || this.skipRequested) skipTriggered = true;
+      return null;
+    };
+
     try {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    } catch {}
+      // ───────────────── Phase 1: Black
+      this.phase = 'black';
+      console.log(`   Phase: Black screen (${blackoutDuration}ms)`);
+      if (blackoutDuration > 0) {
+        const waitResult = await this.sleep(blackoutDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+      if (skipTriggered) {
+        console.log(`   Skip triggered before cursor phase (key: ${skipLabel})`);
+      }
 
-    // Continue morph from 0.75 → 1.0 (NO RESET!)
-    await this._easeMorphTo(1, VC.SETTLE_MS /* 900 */);
+      // ───────────────── Phase 2: Cursor
+      if (!skipTriggered) {
+        this.phase = 'cursor';
+        console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);
+        BeatBus.emit(EVENTS.CURSOR_SHOW);
+        BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });
+        if (cursorLeadInMs > 0) {
+          const waitResult = await this.sleep(cursorLeadInMs);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
+        if (!skipTriggered) {
+          BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
+          if (cursorSettleMs > 0) {
+            const waitResult = await this.sleep(cursorSettleMs);
+            if (handleWaitResult(waitResult) === 'cancelled') return;
+          }
+        }
+      }
 
-    // ───────────────── Visual choreography
-    await this._runVisualSchedule();
+      // ───────────────── Phase 3: Terminal typing
+      if (!skipTriggered) {
+        this.phase = 'terminal';
+        console.log(`   Phase: Terminal typing (~${typingDuration}ms)`);
+        BeatBus.emit(EVENTS.TERMINAL_TYPE, typingConfig);
+        if (typingDuration > 0) {
+          const waitResult = await this.sleep(typingDuration);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
+      }
 
-    // ───────────────── Enable scroll and narrative
-    BeatBus.emit(EVENTS.START_NARRATIVE, { stage: toStage });
-    this.emitTune({
-      breathingAmp: 0.02,
-      breathingPeriodSec: 4,
-      flareProb: 0.02,
-      flareGain: 1.3,
-      tierSpeedScale: [1.0, 0.8, 0.6, 0.4],
-      pulseOnce: 1,
-    });
+      // ───────────────── Phase 4: Fill
+      if (!skipTriggered) {
+        this.phase = 'fill';
+        console.log(`   Phase: Screen fill (${fillConfig.durationMs}ms)`);
+        BeatBus.emit(EVENTS.SCREEN_FILL, { text: fillConfig.text, scrollSpeed: fillConfig.scrollSpeed });
+        if (fillConfig.durationMs > 0) {
+          const waitResult = await this.sleep(fillConfig.durationMs);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
+      }
 
-    BeatBus.emit(EVENTS.ENABLE_SCROLL);
-    
-    // Start scroll orchestrator
-    if (!this.scrollOrchestrator) {
-      this.scrollOrchestrator = new ScrollOrchestrator();
+      if (skipTriggered) {
+        console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
+      }
+
+      // ───────────────── Phase 5: Emergence (viewport → constellation)
+      this.phase = 'emergence';
+      console.log('   Phase: Particle emergence (SST governed)');
+
+      const viewportHint = await this._ensureViewportHint();
+
+      BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+        mode: emergenceConfig.mode,
+        source: emergenceConfig.source,
+        target: emergenceConfig.target,
+        count: genesisCount,
+        tierRatios: VC?.TIER_RATIOS,
+        viewportHint,
+      });
+
+      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
+
+      this.emitTune({
+        particleFlash: 1.3,
+        opacityMin: 0.7,
+        opacityMax: 1.0,
+        driftAmp: 1.0,
+        vibeAmp: 0.2,
+        flutterAmp: 0.6,
+        verticalBias: 0.1,
+      });
+
+      const morphDuration = emergenceTimeline.durationMs || VC.IMPLODE_MS;
+      await this._easeMorphTo(VC.MID_MORPH /* 0.85 */, morphDuration);
+
+      if (waitForFencepost) {
+        console.log(`   Waiting for renderer fencepost (<=${fencepostWaitMs}ms)`);
+        const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, fencepostWaitMs);
+        if (!fencepostReceived) {
+          console.warn('   Renderer fencepost timeout, continuing anyway');
+        }
+        if (this.cancelled) return;
+      }
+
+      // ───────────────── Phase 6: Genesis handoff
+      const toStage = 'genesis';
+      
+      this.phase = 'genesis';
+      const previousStage = this.currentStage ?? 'emergence';
+      this.currentStage = toStage;
+      console.log('🧬 Phase: Genesis stage handoff');
+
+      BeatBus.emit(EVENTS.STAGE_CHANGE, { from: previousStage, to: toStage });
+      BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
+
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch {}
+
+      await this._easeMorphTo(1, VC.SETTLE_MS /* 900 */);
+
+      await this._runVisualSchedule();
+
+      BeatBus.emit(EVENTS.START_NARRATIVE, { stage: toStage });
+      this.emitTune({
+        breathingAmp: 0.02,
+        breathingPeriodSec: 4,
+        flareProb: 0.02,
+        flareGain: 1.3,
+        tierSpeedScale: [1.0, 0.8, 0.6, 0.4],
+        pulseOnce: 1,
+      });
+
+      BeatBus.emit(EVENTS.ENABLE_SCROLL);
+      
+      if (!this.scrollOrchestrator) {
+        this.scrollOrchestrator = new ScrollOrchestrator();
+      }
+      this.scrollOrchestrator.start();
+      this.monitorFragments();
+
+      this.phase = 'complete';
+      const elapsed = Date.now() - this.startTime;
+      console.log('🎬 Director: Opening complete → user-driven experience');
+      if (typeof opening?.totalDurationMs === 'number') {
+        console.log(`   Expected (SST): ~${opening.totalDurationMs}ms, Actual: ${elapsed}ms`);
+      } else {
+        console.log(`   Total opening time: ${elapsed}ms`);
+      }
+      if (skipTriggered) {
+        console.log('   Opening was user-skipped; actual duration shortened.');
+      }
+    } finally {
+      this._detachSkipListener();
     }
-    this.scrollOrchestrator.start();
-    this.monitorFragments();
-
-    // Complete
-    this.phase = 'complete';
-    const elapsed = Date.now() - this.startTime;
-    console.log('🎬 Director: Opening complete → user-driven experience');
-    console.log(`   Total opening time: ${elapsed}ms`);
-    console.log(`   Expected: ~8000ms, Actual: ${elapsed}ms`);
   }
 
   async _runVisualSchedule() {
@@ -323,6 +570,8 @@ class TheaterDirector {
     this.isRunning = false;
     this.phase = 'cancelled';
     this.scrollOrchestrator?.stop();
+    this._wakeSleepWaiters('cancelled');
+    this._detachSkipListener();
     BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
   }
 
@@ -349,7 +598,27 @@ class TheaterDirector {
 
   // Utility methods
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve('elapsed');
+    if (this.cancelled) return Promise.resolve('cancelled');
+    if (this.skipRequested) return Promise.resolve('skipped');
+
+    if (!this._sleepWaiters) this._sleepWaiters = new Set();
+
+    return new Promise((resolve) => {
+      let settled = false;
+      let timeoutId;
+
+      const complete = (reason = 'elapsed') => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        this._sleepWaiters.delete(complete);
+        resolve(reason);
+      };
+
+      timeoutId = setTimeout(() => complete('elapsed'), ms);
+      this._sleepWaiters.add(complete);
+    });
   }
 
   _easeMorphTo(target = 1, duration = 1400) {

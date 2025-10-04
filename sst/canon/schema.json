@@ -71,6 +71,75 @@
             "scrollLocked": { "type": "boolean" },
             "skipKey": { "type": "string", "enum": ["SPACE", "ENTER", "ESCAPE"] }
           }
+        },
+        "opening": {
+          "type": "object",
+          "required": ["timeline", "emergence", "skipKey"],
+          "properties": {
+            "skipKey": { "type": "string", "enum": ["SPACE", "ENTER", "ESCAPE"] },
+            "totalDurationMs": { "type": "integer", "minimum": 0 },
+            "timeline": {
+              "type": "object",
+              "properties": {
+                "blackout": {
+                  "type": "object",
+                  "required": ["durationMs"],
+                  "properties": {
+                    "durationMs": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "cursor": {
+                  "type": "object",
+                  "required": ["blinkCount", "intervalMs"],
+                  "properties": {
+                    "blinkCount": { "type": "integer", "minimum": 0 },
+                    "intervalMs": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "typing": {
+                  "type": "object",
+                  "required": ["lines", "typeSpeed", "lineDelay"],
+                  "properties": {
+                    "lines": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "minItems": 1
+                    },
+                    "typeSpeed": { "type": "integer", "minimum": 0 },
+                    "lineDelay": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "fill": {
+                  "type": "object",
+                  "required": ["text", "scrollSpeed", "durationMs"],
+                  "properties": {
+                    "text": { "type": "string" },
+                    "scrollSpeed": { "type": "integer", "minimum": 0 },
+                    "durationMs": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "emergence": {
+                  "type": "object",
+                  "properties": {
+                    "durationMs": { "type": "integer", "minimum": 0 },
+                    "waitForFencepost": { "type": "boolean" },
+                    "maxWaitMs": { "type": "integer", "minimum": 0 }
+                  },
+                  "required": []
+                }
+              },
+              "additionalProperties": true
+            },
+            "emergence": {
+              "type": "object",
+              "properties": {
+                "target": { "type": "string" },
+                "mode": { "type": "string" },
+                "source": { "type": "string" }
+              }
+            }
+          },
+          "additionalProperties": true
         }
       }
     },
