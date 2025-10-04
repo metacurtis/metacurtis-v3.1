@@ -221,13 +221,18 @@ class ConsciousnessEngine {
   constructor() {
     // Text / font
     this.font = null;
-    this.text3DCache = new Map();
+    this._fontReady = false;
+    this._fontReadyPromise = null;
+    this._text3DCache = new Map();
+    this._lastText3DFallbackUsed = false;
+    this._lastBlueprint = null;
     this.text2DFallback = true;
 
     // State / caches
     this.blueprintCache = new Map();
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
+    this._emergenceActive = false;
     
     // Opening gates
     this._openingPhase = true;
@@ -236,6 +241,7 @@ class ConsciousnessEngine {
     // Emergence memory - store only targets, not full blueprint
     this._lastEmergenceTargets = null;
     this._emergenceRaf = null;
+    this._pendingEmergenceBlueprint = null;
 
     // HMR safety
     this._listeners = [];
@@ -281,6 +287,11 @@ class ConsciousnessEngine {
     );
     this._listeners.push(
       BeatBus.on(this._ev('BUILD_EMERGENCE_BLUEPRINT'), this._onBuildEmergence.bind(this))
+    );
+    this._listeners.push(
+      BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
+        this._emergenceActive = false;
+      })
     );
   }
 
@@ -375,17 +386,18 @@ class ConsciousnessEngine {
     this._log('prewarm_complete', { key });
   }
 
-  _onBuildEmergence(payload = {}) {
+  async _onBuildEmergence(payload = {}) {
     try {
       console.log('🧠 Engine: BUILD_EMERGENCE_BLUEPRINT received', payload);
       
       // Build the emergence blueprint
-      const blueprint = this.buildEmergenceBlueprint(payload);
+      const blueprint = await this.buildEmergenceBlueprint(payload);
       
       // Validate before proceeding
       if (!this._validateBlueprint(blueprint)) {
         console.error('🧠 Engine: Invalid emergence blueprint, not emitting');
         this._log('emergence_validation_failed');
+        this._emergenceActive = false;
         return;
       }
 
@@ -405,27 +417,44 @@ class ConsciousnessEngine {
       this._log('emergence_built', { count: blueprint.particleCount });
 
       // Drive implosion → settle via directives; renderer remains passive
-      this._startEmergenceTimeline(blueprint);
+      if (!this._startEmergenceTimeline(blueprint)) {
+        this._emergenceActive = false;
+      }
 
       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost
 
     } catch (e) {
       console.error('[Engine] BUILD_EMERGENCE_BLUEPRINT error:', e);
       this._log('emergence_error', { error: e.message });
+      this._emergenceActive = false;
     }
   }
 
   _startEmergenceTimeline(bp) {
     const count = bp?.activeCount || bp?.particleCount || 0;
-    if (!count || typeof window === 'undefined' || !performance?.now) return;
+    if (!count || typeof window === 'undefined' || !performance?.now) {
+      this._emergenceActive = false;
+      return false;
+    }
 
-    if (this._emergenceRaf) cancelAnimationFrame(this._emergenceRaf);
+    if (this._emergenceRaf) {
+      cancelAnimationFrame(this._emergenceRaf);
+      this._emergenceRaf = null;
+    }
+
+    this._emergenceActive = true;
 
     const base = Canonical?.features?.pointSizeDefault ?? 48;
     const smooth = (t) => t * t * (3 - 2 * t);
-    const implMs = VC.IMPLODE_MS;
-    const settleMs = VC.SETTLE_MS;
-    const mid = VC.MID_MORPH;
+    const implMsRaw = Number(VC?.IMPLODE_MS);
+    const settleMsRaw = Number(VC?.SETTLE_MS);
+    const midRaw = Number(VC?.MID_MORPH);
+    const implMs = Number.isFinite(implMsRaw) && implMsRaw > 0 ? implMsRaw : 1100;
+    const settleMs = Number.isFinite(settleMsRaw) && settleMsRaw >= 0 ? settleMsRaw : 900;
+    const mid = Math.max(0.05, Math.min(0.95, Number.isFinite(midRaw) ? midRaw : 0.19));
+    if (implMs > 6000 || settleMs > 6000) {
+      console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid });
+    }
 
     const start = performance.now();
     const total = implMs + settleMs;
@@ -476,15 +505,151 @@ class ConsciousnessEngine {
           uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
         });
         this._emergenceRaf = null;
+        this._emergenceActive = false;
       }
     };
 
     this._emergenceRaf = requestAnimationFrame(step);
+    return true;
   }
 
   // --- Blueprint Generation ---
 
-  buildEmergenceBlueprint(payload = {}) {
+  _createEmptyBlueprint(count, { mode, quality } = {}) {
+    const safeCount = Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+    const allocateVec3 = () => new Float32Array(safeCount * 3);
+    const blueprint = {
+      stageName: 'genesis',
+      mode,
+      quality,
+      particleCount: safeCount,
+      maxParticles: safeCount,
+      activeCount: safeCount,
+      atmosphericPositions: allocateVec3(),
+      text3DPositions: allocateVec3(),
+      animationSeeds: allocateVec3(),
+      sizeMultipliers: new Float32Array(safeCount),
+      opacityData: new Float32Array(safeCount),
+      atlasIndices: new Float32Array(safeCount),
+      tierOf: new Uint8Array(safeCount),
+      tierData: new Float32Array(safeCount),
+      metadata: { mode, quality },
+    };
+
+    if (safeCount > 0) {
+      const rnd = createSeededRandom(`emergence-${mode || 'default'}-${quality || 'HIGH'}`);
+      for (let i = 0; i < safeCount; i++) {
+        const j = i * 3;
+        blueprint.animationSeeds[j + 0] = rnd();
+        blueprint.animationSeeds[j + 1] = rnd();
+        blueprint.animationSeeds[j + 2] = rnd();
+        blueprint.sizeMultipliers[i] = 0.5 + rnd() * 1.5;
+        blueprint.opacityData[i] = 0.3 + rnd() * 0.7;
+        blueprint.atlasIndices[i] = Math.floor(rnd() * 8);
+      }
+    }
+
+    return blueprint;
+  }
+
+  /**
+   * Normalize tier ratios (array of numbers) to fractions that sum to 1.0.
+   * Fallback to SST v3.5 spec default [0.5, 0.2, 0.15, 0.15].
+   */
+  _normalizeTierRatios(ratiosIn) {
+    const fallback = [0.5, 0.2, 0.15, 0.15];
+    const arr = Array.isArray(ratiosIn) && ratiosIn.length === 4 ? ratiosIn.slice(0, 4) : fallback.slice();
+    let sum = arr.reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
+    if (!isFinite(sum) || sum <= 0) return fallback;
+    return arr.map(v => (isFinite(v) ? v / sum : 0));
+  }
+
+  /**
+   * Pull tier ratios from SST v3.5 if available.
+   * Preferred order:
+   *   1) SST?.stages?.genesis?.tiers?.ratios
+   *   2) SST?.visual?.tiers?.ratios
+   *   3) fallback [0.5, 0.2, 0.15, 0.15]
+   */
+  _getGenesisTierRatiosFromSST() {
+    const a = SST?.stages?.genesis?.tiers?.ratios;
+    const b = SST?.visual?.tiers?.ratios;
+    return this._normalizeTierRatios(a || b || [0.5, 0.2, 0.15, 0.15]);
+  }
+
+  /**
+   * Generate randomized atmospheric scatter (cube within view-scaled bounds).
+   * Count * 3 float32 output.
+   */
+  _generateRandomAtmosphericScatter(count, viewportHint) {
+    const out = new Float32Array(count * 3);
+    const width = viewportHint?.width ?? viewportHint?.w ?? 16;
+    const height = viewportHint?.height ?? viewportHint?.h ?? 9;
+    const base = Math.max(1.0, Math.min(width, height));
+    const R = base * 0.45;
+    for (let i = 0; i < count; i++) {
+      const o = i * 3;
+      out[o + 0] = (Math.random() * 2 - 1) * R;
+      out[o + 1] = (Math.random() * 2 - 1) * R;
+      out[o + 2] = (Math.random() * 2 - 1) * (R * 0.6);
+    }
+    return out;
+  }
+
+  /**
+   * Given ratios and particle count, compute per-tier counts and a shuffled tier map.
+   * Returns { counts:[c0,c1,c2,c3], tiers:Uint8Array(count) }
+   */
+  _assignTiersShuffled(count, ratios) {
+    const counts = [0, 0, 0, 0];
+    counts[0] = Math.floor(count * ratios[0]);
+    counts[1] = Math.floor(count * ratios[1]);
+    counts[2] = Math.floor(count * ratios[2]);
+    counts[3] = Math.max(0, count - (counts[0] + counts[1] + counts[2]));
+
+    const labels = new Uint8Array(count);
+    let idx = 0;
+    for (let t = 0; t < 4; t++) {
+      const n = counts[t];
+      for (let k = 0; k < n; k++) labels[idx++] = t;
+    }
+    for (let i = count - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      const tmp = labels[i];
+      labels[i] = labels[j];
+      labels[j] = tmp;
+    }
+    return { counts, tiers: labels };
+  }
+
+  /**
+   * Ensure two position arrays (Float32Array) have the same length (count*3).
+   * Currently trims the longer array to the shorter length.
+   */
+  _harmonizeAttributeLengths(a, b) {
+    const n = Math.min(a.length, b.length);
+    if (a.length !== b.length) {
+      const a2 = a.length === n ? a : a.slice(0, n);
+      const b2 = b.length === n ? b : b.slice(0, n);
+      return { a: a2, b: b2 };
+    }
+    return { a, b };
+  }
+
+  _emitBlueprint(blueprint) {
+    this._pendingEmergenceBlueprint = blueprint;
+    this._lastBlueprint = blueprint;
+    return blueprint;
+  }
+
+  _logEmergenceSummary(data) {
+    this._log('emergence_blueprint_summary', data);
+  }
+
+  /**
+   * Build + emit the Emergence blueprint for the opening sequence.
+   */
+  async buildEmergenceBlueprint(options = {}) {
     const {
       mode = 'emergence',
       source = 'viewportSpread',
@@ -493,59 +658,58 @@ class ConsciousnessEngine {
       tierRatios = undefined,
       viewportHint = this._viewportHint,
       quality = 'HIGH',
-    } = payload;
+    } = options || {};
 
-    console.log(`🌟 Building emergence via canonical blueprint: ${source} → ${target} with ${count} particles`);
+    const sanitizedRatios = this._normalizeTierRatios(
+      tierRatios || this._getGenesisTierRatiosFromSST()
+    );
 
-    const blueprint = this.buildBlueprint('genesis', {
-      quality,
-      overrideCount: count,
-    });
-
+    const blueprint = this._createEmptyBlueprint(count, { mode, quality });
     if (!blueprint) return null;
 
-    const fallbackRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15];
-    const sourceRatios = Array.isArray(tierRatios) && tierRatios.length === fallbackRatios.length
-      ? tierRatios
-      : fallbackRatios;
-    const sanitizedRatios = (() => {
-      const cleaned = sourceRatios.map((value) => (Number.isFinite(value) && value >= 0 ? value : 0));
-      const total = cleaned.reduce((sum, value) => sum + value, 0);
-      if (total <= 0) return fallbackRatios;
-      return cleaned.map((value) => value / total);
-    })();
+    const blueprintCount = blueprint.particleCount;
+    const atmospheric = this._generateRandomAtmosphericScatter(blueprintCount, viewportHint);
 
-    const tierCounts = sanitizedRatios.map(r => Math.floor(count * r));
-    tierCounts[tierCounts.length - 1] += count - tierCounts.reduce((a, b) => a + b, 0);
+    // Target: prefer SST kinetic typography (“HELLO CURTIS”) with safe fallback
+    const lg = SST?.visual?.letterGeometry?.genesis || {};
+    const wordRaw = typeof lg.word === 'string' && lg.word.trim() ? lg.word.trim() : 'HELLO CURTIS';
+    const depth = Number.isFinite(lg.depth) && lg.depth > 0 ? lg.depth : 0.3;
+    const use3D = SST?.visual?.system === '3d_kinetic_typography';
 
-    // Build constellation field using tuned VC distribution so emergence matches target look
-    const starfield = this.generateConstellationFormation(count, sanitizedRatios, viewportHint);
-    if (starfield && starfield.length === blueprint.text3DPositions.length) {
-      blueprint.text3DPositions.set(starfield);
-      blueprint.atmosphericPositions.set(starfield);
-    } else {
-      console.warn('🧠 Engine: Starfield generation mismatch', {
-        expected: blueprint.text3DPositions.length,
-        received: starfield?.length ?? 0,
-      });
-    }
+    await this._ensureFontReady(1500);
 
-    // Align tier data with the generated distribution (shader accents depend on tier ids)
-    if (blueprint.tierData?.length === count) {
-      let cursor = 0;
-      for (let tier = 0; tier < tierCounts.length; tier++) {
-        const quota = tierCounts[tier];
-        const end = Math.min(count, cursor + quota);
-        for (let i = cursor; i < end; i++) {
-          blueprint.tierData[i] = tier;
+    let targetPositions;
+    let usedFallback = false;
+    try {
+      if (use3D && typeof this.generate3DTextFormation === 'function') {
+        targetPositions = this.generate3DTextFormation(wordRaw, {
+          depth,
+          particles: blueprintCount,
+          viewportHint,
+        });
+        usedFallback = this._lastText3DFallbackUsed;
+        if (usedFallback) {
+          console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
         }
-        cursor = end;
+      } else {
+        targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint);
+        this._lastText3DFallbackUsed = false;
       }
-      // If rounding left residual slots, assign them to highest tier to keep ids bounded
-      for (let i = cursor; i < count; i++) {
-        blueprint.tierData[i] = tierCounts.length - 1;
-      }
+    } catch (err) {
+      console.warn('⚠️ 3D text formation failed, falling back to constellation:', err);
+      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint);
+      usedFallback = false;
+      this._lastText3DFallbackUsed = false;
     }
+    if (!(targetPositions instanceof Float32Array)) {
+      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint);
+      usedFallback = false;
+      this._lastText3DFallbackUsed = false;
+    }
+
+    const { a: atmH, b: tgtH } = this._harmonizeAttributeLengths(atmospheric, targetPositions);
+    blueprint.atmosphericPositions.set(atmH);
+    blueprint.text3DPositions.set(tgtH);
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
@@ -553,15 +717,31 @@ class ConsciousnessEngine {
     fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
     fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
 
-    blueprint.mode = mode;
+    const { counts, tiers } = this._assignTiersShuffled(blueprintCount, sanitizedRatios);
+    blueprint.tierOf.set(tiers);
+    if (blueprint.tierData?.length === tiers.length) {
+      for (let i = 0; i < tiers.length; i++) {
+        blueprint.tierData[i] = tiers[i];
+      }
+    }
+
     blueprint.metadata = {
-      ...(blueprint.metadata || {}),
+      mode,
       source,
-      target,
-      viewport: viewportHint,
+      target: use3D ? `text3D:${wordRaw}${usedFallback ? ':FALLBACK' : ''}` : target,
       tierRatios: sanitizedRatios,
-      tierCounts,
+      counts,
+      sstVersion: SST?.version || '3.5',
+      viewport: viewportHint,
+      note: usedFallback
+        ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
+        : 'Emergence endpoints separated: random atmospheric → 3D text target',
     };
+
+    blueprint.mode = mode;
+
+    this._emitBlueprint(blueprint);
+    this._logEmergenceSummary({ count: blueprintCount, ratios: sanitizedRatios, counts, quality });
 
     return blueprint;
   }
@@ -571,17 +751,27 @@ class ConsciousnessEngine {
       console.warn('🧠 Engine: Blocked non-genesis during opening:', stage);
       return;
     }
+
+    if (this._emergenceActive && stage !== 'genesis') {
+      console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });
+      this._log('rebuild_blocked_emergence', { stage, quality });
+      return;
+    }
     
     const cacheKey = `${stage}|${quality}`;
     let blueprint = this.blueprintCache.get(cacheKey);
 
     // Post-emergence genesis: use emergence targets as source
     if (stage === 'genesis' && this._lastEmergenceTargets) {
-      console.log('🧠 Engine: Building post-emergence genesis (preserving band)');
+      if (this._lastText3DFallbackUsed) {
+        console.warn('🧠 Engine: Emergence fallback detected; skipping band preservation');
+        this._lastEmergenceTargets = null;
+      } else {
+        console.log('🧠 Engine: Building post-emergence genesis (preserving band)');
 
-      // Build genesis with SAME count as emergence
-      const emergenceCount = this._lastEmergenceTargets.length / 3;
-      blueprint = this.buildBlueprint(stage, {
+        // Build genesis with SAME count as emergence
+        const emergenceCount = this._lastEmergenceTargets.length / 3;
+        blueprint = this.buildBlueprint(stage, {
         quality,
         overrideCount: emergenceCount,
       });
@@ -621,8 +811,9 @@ class ConsciousnessEngine {
           });
           this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence-guarded' });
         }
+        return;
       }
-      return;
+    }
     }
 
     // Normal path: cached or fresh build
@@ -690,7 +881,7 @@ class ConsciousnessEngine {
 
     const textFormation = this.generate3DTextFormation(
       stageWord,
-      particleCount
+      { particles: particleCount }
     );
 
     const rnd = createSeededRandom(stageName);
@@ -929,7 +1120,7 @@ class ConsciousnessEngine {
     }
     // Tier 3 — anchors clustered tightly around the band core
     if (tc3 > 0 && (VC.USE_T3_TEXT ?? true) && this.font) {
-      const pts = this.generate3DTextFormation(VC.T3_TEXT || 'HELLO CURTIS', tc3);
+      const pts = this.generate3DTextFormation(VC.T3_TEXT || 'HELLO CURTIS', { particles: tc3 });
       let minX = Number.POSITIVE_INFINITY;
       let maxX = Number.NEGATIVE_INFINITY;
       let minY = Number.POSITIVE_INFINITY;
@@ -1002,11 +1193,12 @@ class ConsciousnessEngine {
     return out;
   }
 
-  textToParticlePositions(text, count) {
+  textToParticlePositions(text, count, viewportHint) {
     const positions = new Float32Array(count * 3);
-    const charWidth = 8.0, textHeight = 12.0;
+    const charWidth = 8.0;
+    const textHeight = 12.0;
     for (let i = 0; i < count; i++) {
-      const ci = Math.floor(Math.random() * text.length);
+      const ci = Math.floor(Math.random() * Math.max(1, text.length));
       const baseX = (ci - text.length / 2) * charWidth;
       positions[i * 3 + 0] = baseX + (Math.random() - 0.5) * charWidth * 0.8;
       positions[i * 3 + 1] = (Math.random() - 0.5) * textHeight;
@@ -1020,50 +1212,159 @@ class ConsciousnessEngine {
     return Math.min(Math.floor(baseCount * mult), 15000);
   }
 
-  async loadFont() {
+  async loadFont(url = VC?.FONT_URL) {
+    if (this._fontReady) return this.font;
+
+    let primaryUrl = url || '/fonts/CourierPrime_Regular.typeface.json';
+    let backupUrl = null;
     try {
-      const loader = new FontLoader();
-      const response = await fetch('/fonts/helvetiker_bold.typeface.json');
-      if (response.ok) {
-        const fontData = await response.json();
-        this.font = loader.parse(fontData);
-        this.text2DFallback = false;
-        console.log('✅ 3D font loaded');
+      backupUrl = (await import('three/examples/fonts/helvetiker_regular.typeface.json?url')).default;
+    } catch (e) {
+      console.warn('⚠️ Unable to resolve bundled backup font URL', e);
+    }
+
+    try {
+      const res = await fetch(primaryUrl, { method: 'HEAD' });
+      console.log(`🔎 Font HEAD ${res.status} @ ${res.url || primaryUrl}`);
+      if (!res.ok) {
+        console.warn(`⚠️ Primary font not reachable (${res.status}); backup will be used if available.`);
       }
     } catch (e) {
-      console.warn('Using 2D fallback:', e.message);
+      console.warn(`⚠️ Primary font HEAD failed (${primaryUrl})`, e);
     }
+
+    if (!this._fontReadyPromise) {
+      this._fontReadyPromise = new Promise((resolve, reject) => {
+        const loader = new FontLoader();
+
+        const onSuccess = (font, usedUrl) => {
+          this.font = font;
+          this._fontReady = true;
+          const oldSize = this._text3DCache.size;
+          this._text3DCache.clear();
+          console.log(`✅ 3D font loaded from ${usedUrl}; cleared text3D cache (was ${oldSize} entries)`);
+          try {
+            if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
+              console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
+              this.buildEmergenceBlueprint({ mode: 'emergence' });
+            }
+          } catch {}
+          resolve(font);
+        };
+
+        const tryBackup = () => {
+          if (!backupUrl) {
+            console.warn('⚠️ No backup font URL available; remaining on fallback band until primary is served.');
+            reject(new Error('No backup font URL'));
+            return;
+          }
+          loader.load(
+            backupUrl,
+            (font) => onSuccess(font, backupUrl),
+            undefined,
+            (err) => {
+              console.warn('⚠️ Backup font load failed', err);
+              reject(err);
+            }
+          );
+        };
+
+        loader.load(
+          primaryUrl,
+          (font) => onSuccess(font, primaryUrl),
+          undefined,
+          (err) => {
+            console.warn('⚠️ Primary font load failed; trying bundled backup', err);
+            tryBackup();
+          }
+        );
+      });
+    }
+
+    return this._fontReadyPromise;
   }
 
-  generate3DTextFormation(text, count) {
-    const cacheKey = `${text}_${count}`;
-    if (this.text3DCache.has(cacheKey)) return this.text3DCache.get(cacheKey);
-    if (!this.font) return this.textToParticlePositions(text, count);
+  async _ensureFontReady(timeoutMs = 1500) {
+    if (this._fontReady) return true;
+    if (!this._fontReadyPromise) this.loadFont().catch(() => {});
+    if (!this._fontReadyPromise) return false;
 
-    const geometry = new TextGeometry(text, {
+    if (timeoutMs == null) {
+      await this._fontReadyPromise.catch(() => {});
+      return this._fontReady;
+    }
+
+    await Promise.race([
+      this._fontReadyPromise.catch(() => {}),
+      new Promise(r => setTimeout(r, timeoutMs)),
+    ]);
+
+    return this._fontReady;
+  }
+
+  _build3DLetters(word, { particles, depth }) {
+    const geometry = new TextGeometry(word, {
       font: this.font,
-      size: 8,
-      height: 0.5,
+      size: 32,
+      height: 1,
       curveSegments: 4,
       bevelEnabled: false,
     });
     geometry.computeBoundingBox();
     geometry.center();
 
-    const pos = [];
+    const positions = [];
     const attr = geometry.attributes.position;
-    for (let i = 0; i < attr.count && pos.length < count * 3; i++) {
-      pos.push(attr.getX(i), attr.getY(i), attr.getZ(i) * 0.1);
+    for (let i = 0; i < attr.count && positions.length < particles * 3; i++) {
+      positions.push(attr.getX(i), attr.getY(i), attr.getZ(i));
     }
 
-    const result = new Float32Array(count * 3);
-    for (let i = 0; i < count * 3; i++) {
-      result[i] = pos[i] ?? (Math.random() - 0.5) * 10;
+    const out = new Float32Array(particles * 3);
+    for (let i = 0; i < out.length; i += 3) {
+      if (i < positions.length) {
+        out[i] = positions[i];
+        out[i + 1] = positions[i + 1];
+        out[i + 2] = positions[i + 2];
+      } else {
+        out[i] = (Math.random() - 0.5) * 10;
+        out[i + 1] = (Math.random() - 0.5) * 10;
+        out[i + 2] = (Math.random() - 0.5) * depth;
+      }
     }
 
     geometry.dispose();
-    this.text3DCache.set(cacheKey, result);
-    return result;
+
+    if (depth && depth !== 1) {
+      for (let i = 2; i < out.length; i += 3) {
+        out[i] *= depth;
+      }
+    }
+
+    return out;
+  }
+
+  generate3DTextFormation(word, opts = {}) {
+    const { particles = 2000, depth = 0.3, viewportHint } = opts;
+    const key = `${word}_${particles}_${depth}`;
+
+    const cached = this._text3DCache.get(key);
+    if (cached) {
+      this._lastText3DFallbackUsed = !!cached.isFallback;
+      return cached.positions;
+    }
+
+    if (!this.font) {
+      const band = this.textToParticlePositions(word, particles, viewportHint);
+      console.warn('⚠️ text3D fallback (font not ready) — NOT caching fallback');
+      this._lastText3DFallbackUsed = true;
+      return band;
+    }
+
+    const positions = this._build3DLetters(word, { particles, depth });
+    const entry = { positions, isFallback: false };
+    this._text3DCache.set(key, entry);
+    this._lastText3DFallbackUsed = false;
+    return entry.positions;
   }
 
   // --- Diagnostics ---
@@ -1095,7 +1396,8 @@ class ConsciousnessEngine {
   clearCache() {
     this.blueprintCache.clear();
     this._lastEmergenceTargets = null;
-    console.log('🧠 Cache cleared');
+    this._text3DCache.clear();
+    console.log('🧹 ConsciousnessEngine: caches cleared');
   }
 
   // Cleanup for HMR

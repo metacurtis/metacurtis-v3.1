@@ -1,0 +1,40 @@
+--- a/src/engine/ConsciousnessEngine.js
++++ b/src/engine/ConsciousnessEngine.js
+@@
+ constructor() {
+   // ...
++  this._emergenceActive = false;
+ }
+@@
+ async _onBuildEmergence(payload = {}) {
++  this._emergenceActive = true;
+   // ...
+ }
+@@
+ _startEmergenceTimeline(bp) {
+   // ...
+   const step = () => {
+     // ...
+     if (el < total) {
+       this._emergenceRaf = requestAnimationFrame(step);
+     } else {
+       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { morphProgress: 1, drawCount: count, activeCount: count, /* ... */ });
+       this._emergenceRaf = null;
++      this._emergenceActive = false;
+     }
+   };
+   this._emergenceRaf = requestAnimationFrame(step);
+ }
+@@
+ _installListeners() {
+   // ...
++  this._listeners.push(BeatBus.on(this._ev('PARTICLES_EMERGED'), () => { this._emergenceActive = false; }));
+ }
+@@
+ buildAndEmitBlueprint(stage, quality) {
++  if (this._emergenceActive && stage !== 'genesis') {
++    console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });
++    return;
++  }
+   // ...
+ }

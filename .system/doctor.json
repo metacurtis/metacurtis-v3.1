@@ -1,0 +1,34 @@
+{
+  "ok": false,
+  "checks": [
+    {
+      "name": "SST & Drift",
+      "ok": true,
+      "detail": "schema+drift OK",
+      "advice": []
+    },
+    {
+      "name": "Font Asset",
+      "ok": false,
+      "detail": "Missing /public/fonts/CourierPrime_Regular.typeface.json",
+      "advice": [
+        "Add the typeface JSON to /public/fonts or update VC.FONT_URL"
+      ]
+    },
+    {
+      "name": "Single-Writer Policy",
+      "ok": true
+    },
+    {
+      "name": "Emergence Guard",
+      "ok": true
+    },
+    {
+      "name": "Fallback Cache",
+      "ok": true
+    }
+  ],
+  "next": [
+    "Add the typeface JSON to /public/fonts or update VC.FONT_URL"
+  ]
+}

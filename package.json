@@ -77,7 +77,11 @@
     "generate-types": "node sst/tools/generate-jsdoc.cjs",
     "detect-drift": "node sst/tools/detect-drift.cjs",
     "sst-check": "npm run validate-sst && npm run detect-drift",
-    "ai-context": "node sst/tools/ai-context-builder.cjs"
+    "ai-context": "node sst/tools/ai-context-builder.cjs",
+    "system:validate": "node scripts/system.mjs validate",
+    "system:doctor": "node scripts/system.mjs doctor",
+    "system:query": "node scripts/system.mjs query",
+    "system:fix": "node scripts/system.mjs fix"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

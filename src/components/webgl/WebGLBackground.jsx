@@ -453,33 +453,60 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniforms.uTierCutoff.value     = activeCount;
   });
 
-  // RENDER_DIRECTIVE sink (apply data-only; no timers)
+  // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, (d = {}) => {
-      const mat = materialRef.current, geo = geometryRef.current;
+      const mat = materialRef.current;
+      const geo = geometryRef.current;
       if (!mat?.uniforms || !geo) return;
-      const u = mat.uniforms;
-      if (typeof d.morphProgress === 'number' && u.uMorphProgress) {
-        const v = clamp01(d.morphProgress);
-        u.uMorphProgress.value = v;
-        if (u.uStageProgress) u.uStageProgress.value = v;
+
+      const directive = { ...d };
+      if (typeof window !== 'undefined') {
+        window.__lastDirective = directive;
       }
-      if (typeof d.activeCount === 'number') {
-        const n = Math.max(0, d.activeCount | 0);
+
+      const uniforms = mat.uniforms;
+
+      if (typeof directive.morphProgress === 'number' && uniforms.uMorphProgress) {
+        const v = clamp01(directive.morphProgress);
+        uniforms.uMorphProgress.value = v;
+        if (uniforms.uStageProgress) uniforms.uStageProgress.value = v;
+      }
+
+      if (typeof directive.activeCount === 'number') {
+        const n = Math.max(0, directive.activeCount | 0);
         setActiveCount(n);
         geo.setDrawRange(0, n);
-        if (u.uActiveCount) u.uActiveCount.value = n;
-        if (u.uTierCutoff)  u.uTierCutoff.value  = n;
-      } else if (typeof d.drawCount === 'number') {
-        geo.setDrawRange(0, Math.max(0, d.drawCount | 0));
+        if (typeof window !== 'undefined') window.__lastActiveCount = n;
+        if (uniforms.uActiveCount) uniforms.uActiveCount.value = n;
+        if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = n;
+      } else if (typeof directive.drawCount === 'number') {
+        const n = Math.max(0, directive.drawCount | 0);
+        geo.setDrawRange(0, n);
+        if (typeof window !== 'undefined') window.__lastActiveCount = n;
       }
-      if (typeof d.pointSize === 'number'     && u.uPointSize)     u.uPointSize.value     = d.pointSize;
-      if (typeof d.gaussianSigma === 'number' && u.uGaussianSigma) u.uGaussianSigma.value = d.gaussianSigma;
-      if (Array.isArray(d.tierHighlight) && u.uTierHighlight?.value) {
-        const arr = u.uTierHighlight.value;
-        for (let i = 0; i < Math.min(arr.length, d.tierHighlight.length); i++) arr[i] = d.tierHighlight[i];
+
+      if (typeof directive.pointSize === 'number' && uniforms.uPointSize) {
+        uniforms.uPointSize.value = directive.pointSize;
       }
-      if (d.uniforms) for (const k in d.uniforms) if (u[k]) u[k].value = d.uniforms[k];
+      if (typeof directive.gaussianSigma === 'number' && uniforms.uGaussianSigma) {
+        uniforms.uGaussianSigma.value = directive.gaussianSigma;
+      }
+      if (Array.isArray(directive.tierHighlight) && uniforms.uTierHighlight?.value) {
+        const arr = uniforms.uTierHighlight.value;
+        for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
+          arr[i] = directive.tierHighlight[i];
+        }
+      }
+      if (directive.uniforms) {
+        for (const key in directive.uniforms) {
+          if (uniforms[key]) {
+            uniforms[key].value = directive.uniforms[key];
+          }
+        }
+      }
+
+      mat.uniformsNeedUpdate = true;
       mat.needsUpdate = true;
     });
     return () => off && off();

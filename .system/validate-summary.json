@@ -1,0 +1,33 @@
+{
+  "ok": true,
+  "sst": {
+    "validate": true,
+    "drift": true
+  },
+  "checks": [
+    {
+      "name": "SST & Drift",
+      "ok": true,
+      "detail": "schema+drift OK",
+      "advice": []
+    },
+    {
+      "name": "Font Asset",
+      "ok": true,
+      "detail": "Typeface present in /public",
+      "advice": []
+    },
+    {
+      "name": "Single-Writer Policy",
+      "ok": true
+    },
+    {
+      "name": "Emergence Guard",
+      "ok": true
+    },
+    {
+      "name": "Fallback Cache",
+      "ok": true
+    }
+  ]
+}

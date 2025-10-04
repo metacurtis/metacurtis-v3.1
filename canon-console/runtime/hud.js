@@ -384,14 +384,23 @@
 
       case 'fix': {
         try {
-          const geo = window.__particleGeometry || (window.__webglBackground?.geometryRef?.current);
-          const mat = window.__consciousnessMaterial || (window.__webglBackground?.material);
-          const max = geo?.attributes?.position?.count || 0;
-          const activeUniform = mat?.uniforms?.uActiveCount?.value ?? max;
-          const active = Math.min(max, Math.floor(activeUniform));
-          geo?.setDrawRange?.(0, active);
-          window.__canonBridgePush__('DRAW_RANGE_FIX', 'drawRange → ' + active, { active, max });
-        } catch (e) { console.warn('drawRange fix failed', e); }
+          const BeatBus = window.BeatBus;
+          if (!BeatBus?.emit) throw new Error('BeatBus not ready');
+          const fallback = () => {
+            const geo = window.__particleGeometry || (window.__webglBackground?.geometryRef?.current);
+            return Math.max(0, geo?.attributes?.position?.count || 0);
+          };
+          const draw = Math.max(0, Math.floor(
+            window.__lastDirective?.activeCount ??
+            window.__lastDirective?.drawCount ??
+            window.__lastActiveCount ??
+            fallback()
+          ));
+          BeatBus.emit(EVENTS.RENDER_DIRECTIVE || 'RENDER_DIRECTIVE', { drawCount: draw });
+          window.__canonBridgePush__('DRAW_RANGE_FIX_REQUEST', 'Requested renderer drawRange fix', { draw });
+        } catch (e) {
+          console.warn('drawRange fix request failed', e);
+        }
       } break;
 
       default: console.warn('[HUD] Unknown action:', act);
