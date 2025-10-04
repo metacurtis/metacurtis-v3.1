@@ -17,6 +17,10 @@
 ## Non-negotiables
 - One injector • One GPU writer • One timing contract • One fencepost (PARTICLES_EMERGED once after first full bind).
 
+## Legacy Artifacts
+- `canon-archive/` and `canon-console.backup/` remain for reference only. Runtime imports must resolve into `canon-console/`—if a change reintroduces `@/canon/*` paths, reject it and use the rendering playbook (`docs/canon-console-rendering-playbook.md`).
+- The injector now boots the incident store and sinks automatically; confirm `CANON_CONSOLE.stats().loaded.incidents === true` before investigating regressions.
+
 ## Modes & switches
 ```js
 localStorage.setItem('canonBusMode','TELEMETRY'); location.reload(); // tune

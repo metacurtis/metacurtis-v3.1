@@ -95,7 +95,11 @@ class IncidentStore {
   getAll() {
     return Array.from(this.incidents.values()).sort((a, b) => b.lastSeen - a.lastSeen);
   }
-  
+
+  get() {
+    return this.getAll();
+  }
+
   getStats() {
     return { ...this.stats };
   }

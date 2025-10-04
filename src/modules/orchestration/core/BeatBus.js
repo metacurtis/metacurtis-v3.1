@@ -1,6 +1,8 @@
 // __CANON_INSTALLED__
 // Central event bus with canonical enforcement.
-import CANON_CONTRACTS from '@/canon/contracts/events.js';
+import ContractRegistry from '/canon-console/runtime/contracts/registry.js';
+
+const CANON_CONTRACTS = ContractRegistry;
 
 class BeatBus {
   constructor(){

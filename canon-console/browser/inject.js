@@ -26,7 +26,8 @@
   var L = CANON_INJECTOR.loaded || {
     bridge: false, pilot: false, vtap: false, mini: false,
     hud: false, macros: false, steps: false, plays: false,
-    contractTap: false, lifecycleGuards: false, learningSystem: false, blueprintGuard: false
+    contractTap: false, lifecycleGuards: false, learningSystem: false,
+    blueprintGuard: false, incidents: false
   };
   CANON_INJECTOR.loaded = L;
 
@@ -218,6 +219,19 @@
       });
     })
     .then(function () { return imp('runtime/violation-tap.js', 'vtap'); })
+    .then(function () {
+      // Install incident store + sinks
+      return imp('runtime/incidents.js', 'incidents', function (m) {
+        try {
+          if (m?.installIncidentPipeline) {
+            m.installIncidentPipeline(w);
+          }
+        } catch (e) {
+          errors.push(e);
+          console.warn('Incident pipeline error:', e);
+        }
+      });
+    })
     .then(function () {
       // Install Contract-Tap
       return imp('runtime/contract-tap.js', 'contractTap', function (m) {
