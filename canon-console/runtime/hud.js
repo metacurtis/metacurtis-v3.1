@@ -131,8 +131,17 @@
     state.opening.emerged = true; state.opening.tEmerged = performance.now();
     window.__canonFencepostSeen = true; render();
   }));
-  offs.push(on(EVENTS.STAGE_CHANGE || 'STAGE_CHANGE', (p) => { state.stage.name = p?.stage || p?.to || String(p); render(); }));
-  offs.push(on(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', (p) => { state.stage.morph = +((p?.value ?? 0)).toFixed(3); }));
+  offs.push(on(EVENTS.STAGE_CHANGE || 'STAGE_CHANGE', (p) => {
+    state.stage.name = p?.stage || p?.to || String(p);
+    state.stage.morph = 0;
+    state.stage.scroll = 0;
+    render();
+  }));
+  offs.push(on(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', (p) => {
+    const next = Math.max(0, Math.min(1, Number(p?.value ?? 0)));
+    state.stage.morph = +next.toFixed(3);
+    render();
+  }));
 
   function waitForEvent(ev, timeoutMs) {
     return new Promise(res => {
