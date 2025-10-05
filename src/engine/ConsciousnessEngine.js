@@ -445,142 +445,148 @@ class ConsciousnessEngine {
 
   _startEmergenceTimeline(bp) {
     const count = bp?.activeCount || bp?.particleCount || 0;
-    if (!count || typeof window === 'undefined' || !performance?.now) {
+    if (!count || typeof window === 'undefined') {
       this._emergenceActive = false;
       this._emergenceDone = false;
       return false;
     }
 
+    const nowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function')
+      ? performance.now()
+      : Date.now();
+    const schedule = (fn) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(fn) : setTimeout(fn, 16));
+    const cancel = (id) => {
+      if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(id);
+      else clearTimeout(id);
+    };
+
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+    const pointSizeBase = Number.isFinite(VC?.POINT_SIZE_BASE)
+      ? VC.POINT_SIZE_BASE
+      : (Canonical?.features?.pointSizeDefault ?? 48);
+    const sigmaBase = Number.isFinite(VC?.SIGMA_BASE) ? VC.SIGMA_BASE : 2.5;
+    const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : sigmaBase * 1.6;
+    const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) && VC.POINT_SIZE_KICK > 0
+      ? VC.POINT_SIZE_KICK
+      : 1.4;
+    const tierPeak = Number.isFinite(VC?.T4_HI_PEAK) ? VC.T4_HI_PEAK : 1.7;
+    const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
+    const midDefault = clamp(Number.isFinite(VC?.MID_MORPH) ? VC.MID_MORPH : 0.85, 0.05, 0.95);
+
+    const implDefault = (() => {
+      const raw = Number(VC?.IMPLODE_MS);
+      return Number.isFinite(raw) && raw > 0 ? raw : 1100;
+    })();
+    const settleDefault = (() => {
+      const raw = Number(VC?.SETTLE_MS);
+      return Number.isFinite(raw) && raw >= 0 ? raw : 900;
+    })();
+
     const fastForward = !!(bp?.fastForward || bp?.metadata?.fastForward);
+    const fastImpl = (() => {
+      const raw = Number(VC?.SKIP_IMPL_MS);
+      const target = Number.isFinite(raw) && raw > 0 ? raw : 320;
+      return Math.max(120, Math.min(target, implDefault));
+    })();
+    const fastSettle = (() => {
+      const raw = Number(VC?.SKIP_SETTLE_MS);
+      const target = Number.isFinite(raw) && raw >= 0 ? raw : 260;
+      return Math.max(90, Math.min(target, settleDefault));
+    })();
 
     if (this._emergenceRaf) {
-      cancelAnimationFrame(this._emergenceRaf);
+      cancel(this._emergenceRaf);
       this._emergenceRaf = null;
     }
 
-    if (fastForward) {
+    const runTimeline = (implMs, settleMs, midValue) => {
       this._emergenceActive = true;
       this._emergenceDone = false;
 
-      const base = Canonical?.features?.pointSizeDefault ?? 48;
-      const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : (VC?.SIGMA_BASE ?? 2.5) * 1.6;
-      const sigmaBase = VC?.SIGMA_BASE ?? 2.5;
-      const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) ? VC.POINT_SIZE_KICK : 1.4;
-      const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
-      const midMorph = Math.min(0.95, Math.max(0.6, Number(VC?.MID_MORPH) || 0.85));
+      const start = nowMs();
+      const total = Math.max(0, implMs) + Math.max(0, settleMs);
 
-      const emitFinal = () => {
+      const step = () => {
+        const elapsed = nowMs() - start;
+        const inImplosion = implMs > 0 ? elapsed < implMs : false;
+        const implPhase = implMs > 0 ? clamp(elapsed / implMs, 0, 1) : 1;
+        const settleElapsed = elapsed - implMs;
+        const settlePhaseRaw = settleElapsed <= 0 ? 0 : (settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1);
+        const easeImpl = implMs > 0 ? smooth(implPhase) : 1;
+        const easeSettle = settlePhaseRaw <= 0 ? 0 : smooth(settlePhaseRaw);
+
+        const morph = inImplosion
+          ? midValue * easeImpl
+          : midValue + (1 - midValue) * easeSettle;
+
+        const draw = Math.max(1, Math.round(count * (inImplosion ? easeImpl : 1)));
+        const pointSize = inImplosion
+          ? pointSizeBase * (1 + (pointKick - 1) * easeImpl)
+          : pointSizeBase * (pointKick - (pointKick - 1) * easeSettle);
+        const gaussian = inImplosion
+          ? sigmaBase + (sigmaPeak - sigmaBase) * easeImpl
+          : sigmaPeak - (sigmaPeak - sigmaBase) * easeSettle;
+        const tierHi = inImplosion
+          ? tierPeak
+          : tierPeak - (tierPeak - tierSettle) * easeSettle;
+
+        const morphRounded = +morph.toFixed(3);
+
         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          morphProgress: 1,
-          drawCount: count,
-          activeCount: count,
-          pointSize: base,
-          gaussianSigma: sigmaBase,
-          tierHighlight: [1, 1, 1, tierSettle],
-          uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
+          morphProgress: morphRounded,
+          drawCount: draw,
+          activeCount: draw,
+          pointSize,
+          gaussianSigma: gaussian,
+          tierHighlight: [1, 1, 1, tierHi],
         });
-        this._emergenceRaf = null;
-        this._emergenceActive = false;
-        this._emergenceDone = true;
-      };
+        BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: morphRounded });
 
-      const emitMid = () => {
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          morphProgress: midMorph,
-          drawCount: count,
-          activeCount: count,
-          pointSize: base * pointKick,
-          gaussianSigma: sigmaPeak,
-          tierHighlight: [1, 1, 1, VC?.T4_HI_PEAK ?? tierSettle * 1.3],
-        });
-
-        if (typeof requestAnimationFrame === 'function') {
-          requestAnimationFrame(emitFinal);
+        if (elapsed < total) {
+          this._emergenceRaf = schedule(step);
         } else {
-          emitFinal();
+          BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+            morphProgress: 1,
+            drawCount: count,
+            activeCount: count,
+            pointSize: pointSizeBase,
+            gaussianSigma: sigmaBase,
+            tierHighlight: [1, 1, 1, tierSettle],
+            uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
+          });
+          BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 1 });
+          this._emergenceRaf = null;
+          this._emergenceActive = false;
+          this._emergenceDone = true;
         }
       };
 
-      if (typeof requestAnimationFrame === 'function') {
-        this._emergenceRaf = requestAnimationFrame(emitMid);
-      } else {
-        emitMid();
-      }
-
-      return true;
-    }
-
-    this._emergenceActive = true;
-    this._emergenceDone = false;
-
-    const base = Canonical?.features?.pointSizeDefault ?? 48;
-    const smooth = (t) => t * t * (3 - 2 * t);
-    const implMsRaw = Number(VC?.IMPLODE_MS);
-    const settleMsRaw = Number(VC?.SETTLE_MS);
-    const midRaw = Number(VC?.MID_MORPH);
-    const implMs = Number.isFinite(implMsRaw) && implMsRaw > 0 ? implMsRaw : 1100;
-    const settleMs = Number.isFinite(settleMsRaw) && settleMsRaw >= 0 ? settleMsRaw : 900;
-    const mid = Math.max(0.05, Math.min(0.95, Number.isFinite(midRaw) ? midRaw : 0.19));
-    if (implMs > 6000 || settleMs > 6000) {
-      console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid });
-    }
-
-    const start = performance.now();
-    const total = implMs + settleMs;
-
-    const step = () => {
-      const el = performance.now() - start;
-      const tI = Math.min(1, el / implMs);
-      const tS = el <= implMs ? 0 : Math.min(1, (el - implMs) / settleMs);
-
-      const m = el <= implMs ? mid * smooth(tI) : mid + (1 - mid) * smooth(tS);
-      const eI = smooth(tI);
-      const eS = smooth(tS);
-
-      const draw = Math.max(1, Math.round(count * (el <= implMs ? eI : 1)));
-      const ps = base * (el <= implMs
-        ? 1 + (VC.POINT_SIZE_KICK - 1) * eI
-        : VC.POINT_SIZE_KICK - (VC.POINT_SIZE_KICK - 1) * eS);
-
-      const sig = el <= implMs
-        ? VC.SIGMA_BASE + (VC.SIGMA_PEAK - VC.SIGMA_BASE) * eI
-        : VC.SIGMA_PEAK - (VC.SIGMA_PEAK - VC.SIGMA_BASE) * eS;
-
-      const t4 = el <= implMs
-        ? VC.T4_HI_PEAK
-        : VC.T4_HI_PEAK - (VC.T4_HI_PEAK - VC.T4_HI_SETTLE) * eS;
-
+      // Prime listeners with baseline state before the first frame
+      BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });
       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-        morphProgress: +m.toFixed(3),
-        drawCount: draw,
-        activeCount: draw,
-        pointSize: ps,
-        gaussianSigma: sig,
-        tierHighlight: [1, 1, 1, t4],
+        morphProgress: 0,
+        drawCount: Math.max(1, Math.round(count * 0.05)),
+        activeCount: Math.max(1, Math.round(count * 0.05)),
+        pointSize: pointSizeBase,
+        gaussianSigma: sigmaBase,
+        tierHighlight: [1, 1, 1, tierPeak],
       });
 
-      if (el < total) {
-        this._emergenceRaf = requestAnimationFrame(step);
-      } else {
-        // settle: draw everything & reset sizes (prevents stale partial draw ranges)
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          morphProgress: 1,
-          // guarantee full draw; renderer will set geometry drawRange to match
-          drawCount: count,
-          activeCount: count,
-          pointSize: base,
-          gaussianSigma: VC.SIGMA_BASE,
-          tierHighlight: [1, 1, 1, VC.T4_HI_SETTLE],
-          uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
-        });
-        this._emergenceRaf = null;
-        this._emergenceActive = false;
-        this._emergenceDone = true;
-      }
+      step();
+      return true;
     };
 
-    this._emergenceRaf = requestAnimationFrame(step);
-    return true;
+    const midForTimeline = fastForward ? clamp(Math.max(midDefault, 0.65), 0.05, 0.95) : midDefault;
+    const implMs = fastForward ? fastImpl : implDefault;
+    const settleMs = fastForward ? fastSettle : settleDefault;
+
+    if (implMs > 6000 || settleMs > 6000) {
+      console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });
+    }
+
+    return runTimeline(implMs, settleMs, midForTimeline);
   }
 
   // --- Blueprint Generation ---

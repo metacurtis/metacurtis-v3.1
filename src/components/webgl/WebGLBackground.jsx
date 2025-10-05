@@ -348,6 +348,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         emergencePendingRef.current = true;
         emittedEmergedRef.current = false;
+        BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 0 });
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
