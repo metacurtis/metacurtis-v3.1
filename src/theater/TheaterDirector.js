@@ -51,16 +51,16 @@ function __getMorphThrottleMs() {
   }
 }
 
-function __emitMorphThrottled(BeatBus, EVENTS, v) {
+function __emitMorphThrottled(BeatBus, EVENTS, v, { force = false } = {}) {
   try {
     const EPS = 0.005; // 0.5% change threshold
     const now = performance.now();
     const MIN = __getMorphThrottleMs();
     
     if (typeof v !== 'number') return;
-    if (Math.abs(v - __lastMorph) < EPS) return;
-    if (now - __lastMorphEmit < MIN) return;
-    
+    if (!force && Math.abs(v - __lastMorph) < EPS) return;
+    if (!force && now - __lastMorphEmit < MIN) return;
+
     __lastMorph = v;
     __lastMorphEmit = now;
     BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', { value: v });
@@ -466,6 +466,7 @@ class TheaterDirector {
         count: genesisCount,
         tierRatios: VC?.TIER_RATIOS,
         viewportHint,
+        fastForward: skipTriggered,
       });
 
       BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
@@ -622,6 +623,17 @@ class TheaterDirector {
   }
 
   _easeMorphTo(target = 1, duration = 1400) {
+    const clampedTarget = Math.max(0, Math.min(1, Number(target) || 0));
+
+    if (this.cancelled) {
+      return Promise.resolve();
+    }
+
+    if (this.skipRequested || !Number.isFinite(duration) || duration <= 0) {
+      __emitMorphThrottled(BeatBus, EVENTS, clampedTarget, { force: true });
+      return Promise.resolve();
+    }
+
     return new Promise(resolve => {
       const start = performance.now();
       const ease = t => t * t * (3 - 2 * t); // Smooth cubic ease
@@ -629,9 +641,14 @@ class TheaterDirector {
       const step = now => {
         if (this.cancelled) return resolve();
 
+        if (this.skipRequested) {
+          __emitMorphThrottled(BeatBus, EVENTS, clampedTarget, { force: true });
+          return resolve();
+        }
+
         const elapsed = now - start;
         const progress = Math.min(1, elapsed / duration);
-        const easedValue = ease(progress) * target;
+        const easedValue = ease(progress) * clampedTarget;
 
         __emitMorphThrottled(BeatBus, EVENTS, easedValue);
 

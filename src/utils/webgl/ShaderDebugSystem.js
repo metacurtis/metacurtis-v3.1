@@ -164,6 +164,7 @@ class ShaderDebugSystem {
           this.toggleDebugMode();
           event.preventDefault();
           break;
+        case 'Digit0':
         case 'Digit1':
         case 'Digit2':
         case 'Digit3':
@@ -171,8 +172,9 @@ class ShaderDebugSystem {
         case 'Digit5':
         case 'Digit6':
           {
-            /* eslint-disable-next-line no-unused-vars */
-            const mode = parseInt(event.code.replace('Digit', ''));
+            const mode = Number(event.code.replace('Digit', ''));
+            this.setDebugMode(mode);
+            event.preventDefault();
           }
           break;
         case 'KeyO':

@@ -333,6 +333,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (isEmergence) {
         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         emergencePendingRef.current = true;
+        emittedEmergedRef.current = false;
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
@@ -455,41 +456,53 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {
-    const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, (d = {}) => {
+    const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, (directive = {}) => {
       const mat = materialRef.current;
       const geo = geometryRef.current;
       if (!mat?.uniforms || !geo) return;
 
-      const directive = { ...d };
       if (typeof window !== 'undefined') {
         window.__lastDirective = directive;
       }
 
       const uniforms = mat.uniforms;
 
-      if (typeof directive.morphProgress === 'number' && uniforms.uMorphProgress) {
+      // Draw range (single writer)
+      let drawUpdated = false;
+      if (Number.isFinite(directive.activeCount)) {
+        const count = Math.max(0, Math.floor(directive.activeCount));
+        setActiveCount(count);
+        geo.setDrawRange(0, count);
+        if (uniforms.uActiveCount) uniforms.uActiveCount.value = count;
+        if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = count;
+        if (typeof window !== 'undefined') window.__lastActiveCount = count;
+        drawUpdated = true;
+      }
+
+      if (!drawUpdated && Number.isFinite(directive.drawCount)) {
+        const count = Math.max(0, Math.floor(directive.drawCount));
+        geo.setDrawRange(0, count);
+        if (typeof window !== 'undefined') window.__lastActiveCount = count;
+      }
+
+      // Morph progress + fencepost emission
+      if (Number.isFinite(directive.morphProgress) && uniforms.uMorphProgress) {
         const v = clamp01(directive.morphProgress);
         uniforms.uMorphProgress.value = v;
         if (uniforms.uStageProgress) uniforms.uStageProgress.value = v;
+
+        if (emergencePendingRef.current && !emittedEmergedRef.current && v >= 0.995) {
+          emittedEmergedRef.current = true;
+          emergencePendingRef.current = false;
+          const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+          BeatBus.emit(EVENTS.PARTICLES_EMERGED, { at: now, source: 'renderer' });
+        }
       }
 
-      if (typeof directive.activeCount === 'number') {
-        const n = Math.max(0, directive.activeCount | 0);
-        setActiveCount(n);
-        geo.setDrawRange(0, n);
-        if (typeof window !== 'undefined') window.__lastActiveCount = n;
-        if (uniforms.uActiveCount) uniforms.uActiveCount.value = n;
-        if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = n;
-      } else if (typeof directive.drawCount === 'number') {
-        const n = Math.max(0, directive.drawCount | 0);
-        geo.setDrawRange(0, n);
-        if (typeof window !== 'undefined') window.__lastActiveCount = n;
-      }
-
-      if (typeof directive.pointSize === 'number' && uniforms.uPointSize) {
+      if (Number.isFinite(directive.pointSize) && uniforms.uPointSize) {
         uniforms.uPointSize.value = directive.pointSize;
       }
-      if (typeof directive.gaussianSigma === 'number' && uniforms.uGaussianSigma) {
+      if (Number.isFinite(directive.gaussianSigma) && uniforms.uGaussianSigma) {
         uniforms.uGaussianSigma.value = directive.gaussianSigma;
       }
       if (Array.isArray(directive.tierHighlight) && uniforms.uTierHighlight?.value) {
@@ -498,9 +511,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           arr[i] = directive.tierHighlight[i];
         }
       }
-      if (directive.uniforms) {
+      if (directive.uniforms && typeof directive.uniforms === 'object') {
         for (const key in directive.uniforms) {
-          if (uniforms[key]) {
+          if (Object.hasOwn(directive.uniforms, key) && uniforms[key]) {
             uniforms[key].value = directive.uniforms[key];
           }
         }

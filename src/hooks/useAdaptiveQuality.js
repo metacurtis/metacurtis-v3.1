@@ -141,23 +141,13 @@ export function useAdaptiveQuality({
   };
 
   // ✅ ENHANCED: Central Clock integration with proper cleanup
-  useEffect(() => {
-    if (isUnmounted.current) return;
+  useCentralClock('tick', handleClockTick, [clockState, qualityState]);
 
-    // ✅ CENTRAL CLOCK SUBSCRIPTION: Integrate with existing clock system
-    const unsubscribe = // useCentralClock('tick', handleClockTick, [clockState, qualityState]);
-    
+  useEffect(() => {
     if (import.meta.env.DEV) {
       console.log('🔗 useAdaptiveQuality: Central Clock subscription established with atomic integration');
     }
-    
-    // ✅ PROPER CLEANUP: Clean subscription on unmount
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
-  }, []); // ✅ Empty deps prevents re-subscriptions
+  }, []);
 
   // ✅ ATOMIC INITIALIZATION: Seed quality from atomic state
   useEffect(() => {

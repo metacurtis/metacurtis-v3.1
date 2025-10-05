@@ -95,6 +95,9 @@ function updateInjectFile() {
     window.__gpuViolations = [];
     
     const checkCaller = (fnName) => {
+      if (typeof globalThis !== 'undefined' && globalThis.__GPU_WATCHDOG_SUSPEND__ === true) {
+        return;
+      }
       const stack = new Error().stack || '';
       const allowed = allowlist.some(pattern => stack.includes(pattern));
       

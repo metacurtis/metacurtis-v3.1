@@ -19,9 +19,27 @@ function detectGLStrings() {
 
 async function loadProfile(name) {
   try {
-    const mod = await import(`/profiles/gpu/${name}.json`, { assert: { type: 'json' } });
-    return mod.default || mod;
-  } catch { return null; }
+    if (typeof fetch !== 'function' || typeof window === 'undefined') {
+      return null;
+    }
+
+    const baseUrl = import.meta.env.BASE_URL ?? '/';
+    const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const response = await fetch(`${normalizedBase}profiles/gpu/${name}.json`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn(`⚠️ Failed to load GPU profile: ${name}`, error);
+    }
+    return null;
+  }
 }
 
 export async function getGPUProfile() {
@@ -32,7 +50,7 @@ export async function getGPUProfile() {
   let profile = await loadProfile(guessIntelIntegrated ? 'intel_integrated' : 'baseline');
   if (!profile) profile = await loadProfile('baseline');
 
-  cache.profile = { ...profile, vendor, renderer };
+  cache.profile = { ...(profile ?? {}), vendor, renderer };
   if (import.meta.env.DEV) {
     console.log('🧭 GPU Profile', cache.profile);
   }

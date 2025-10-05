@@ -2,8 +2,10 @@
 // Canon-compliant production version with HMR safety, validation, and efficiency
 
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { Mesh, Vector3 } from 'three';
 import { VC } from '@/config/visual-controls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import SST from '@/config/sst-loader.js'; // keep consistent with ESM imports
@@ -233,6 +235,7 @@ class ConsciousnessEngine {
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this._emergenceActive = false;
+    this._emergenceDone = false;
     
     // Opening gates
     this._openingPhase = true;
@@ -291,6 +294,7 @@ class ConsciousnessEngine {
     this._listeners.push(
       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
         this._emergenceActive = false;
+        this._emergenceDone = true;
       })
     );
   }
@@ -390,6 +394,9 @@ class ConsciousnessEngine {
     try {
       console.log('🧠 Engine: BUILD_EMERGENCE_BLUEPRINT received', payload);
       
+      this._emergenceDone = false;
+      this._emergenceActive = false;
+
       // Build the emergence blueprint
       const blueprint = await this.buildEmergenceBlueprint(payload);
       
@@ -398,6 +405,7 @@ class ConsciousnessEngine {
         console.error('🧠 Engine: Invalid emergence blueprint, not emitting');
         this._log('emergence_validation_failed');
         this._emergenceActive = false;
+        this._emergenceDone = false;
         return;
       }
 
@@ -419,6 +427,7 @@ class ConsciousnessEngine {
       // Drive implosion → settle via directives; renderer remains passive
       if (!this._startEmergenceTimeline(blueprint)) {
         this._emergenceActive = false;
+        this._emergenceDone = false;
       }
 
       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost
@@ -427,6 +436,7 @@ class ConsciousnessEngine {
       console.error('[Engine] BUILD_EMERGENCE_BLUEPRINT error:', e);
       this._log('emergence_error', { error: e.message });
       this._emergenceActive = false;
+      this._emergenceDone = false;
     }
   }
 
@@ -434,15 +444,71 @@ class ConsciousnessEngine {
     const count = bp?.activeCount || bp?.particleCount || 0;
     if (!count || typeof window === 'undefined' || !performance?.now) {
       this._emergenceActive = false;
+      this._emergenceDone = false;
       return false;
     }
+
+    const fastForward = !!(bp?.fastForward || bp?.metadata?.fastForward);
 
     if (this._emergenceRaf) {
       cancelAnimationFrame(this._emergenceRaf);
       this._emergenceRaf = null;
     }
 
+    if (fastForward) {
+      this._emergenceActive = true;
+      this._emergenceDone = false;
+
+      const base = Canonical?.features?.pointSizeDefault ?? 48;
+      const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : (VC?.SIGMA_BASE ?? 2.5) * 1.6;
+      const sigmaBase = VC?.SIGMA_BASE ?? 2.5;
+      const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) ? VC.POINT_SIZE_KICK : 1.4;
+      const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
+      const midMorph = Math.min(0.95, Math.max(0.6, Number(VC?.MID_MORPH) || 0.85));
+
+      const emitFinal = () => {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          morphProgress: 1,
+          drawCount: count,
+          activeCount: count,
+          pointSize: base,
+          gaussianSigma: sigmaBase,
+          tierHighlight: [1, 1, 1, tierSettle],
+          uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
+        });
+        this._emergenceRaf = null;
+        this._emergenceActive = false;
+        this._emergenceDone = true;
+      };
+
+      const emitMid = () => {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          morphProgress: midMorph,
+          drawCount: count,
+          activeCount: count,
+          pointSize: base * pointKick,
+          gaussianSigma: sigmaPeak,
+          tierHighlight: [1, 1, 1, VC?.T4_HI_PEAK ?? tierSettle * 1.3],
+        });
+
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(emitFinal);
+        } else {
+          emitFinal();
+        }
+      };
+
+      if (typeof requestAnimationFrame === 'function') {
+        this._emergenceRaf = requestAnimationFrame(emitMid);
+      } else {
+        emitMid();
+      }
+
+      return true;
+    }
+
     this._emergenceActive = true;
+    this._emergenceDone = false;
 
     const base = Canonical?.features?.pointSizeDefault ?? 48;
     const smooth = (t) => t * t * (3 - 2 * t);
@@ -506,6 +572,7 @@ class ConsciousnessEngine {
         });
         this._emergenceRaf = null;
         this._emergenceActive = false;
+        this._emergenceDone = true;
       }
     };
 
@@ -658,6 +725,7 @@ class ConsciousnessEngine {
       tierRatios = undefined,
       viewportHint = this._viewportHint,
       quality = 'HIGH',
+      fastForward = false,
     } = options || {};
 
     const sanitizedRatios = this._normalizeTierRatios(
@@ -733,12 +801,14 @@ class ConsciousnessEngine {
       counts,
       sstVersion: SST?.version || '3.5',
       viewport: viewportHint,
+      fastForward: !!fastForward,
       note: usedFallback
         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
         : 'Emergence endpoints separated: random atmospheric → 3D text target',
     };
 
     blueprint.mode = mode;
+    blueprint.fastForward = !!fastForward;
 
     this._emitBlueprint(blueprint);
     this._logEmergenceSummary({ count: blueprintCount, ratios: sanitizedRatios, counts, quality });
@@ -761,59 +831,59 @@ class ConsciousnessEngine {
     const cacheKey = `${stage}|${quality}`;
     let blueprint = this.blueprintCache.get(cacheKey);
 
-    // Post-emergence genesis: use emergence targets as source
+    // Post-emergence genesis: optionally preserve settled emergence
     if (stage === 'genesis' && this._lastEmergenceTargets) {
       if (this._lastText3DFallbackUsed) {
-        console.warn('🧠 Engine: Emergence fallback detected; skipping band preservation');
+        console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');
         this._lastEmergenceTargets = null;
+        this._emergenceDone = false;
+      } else if (!this._emergenceDone) {
+        console.warn('🧠 Engine: Emergence incomplete; rebuilding genesis cleanly');
+        this._lastEmergenceTargets = null;
+        this._emergenceDone = false;
       } else {
-        console.log('🧠 Engine: Building post-emergence genesis (preserving band)');
+        console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');
 
-        // Build genesis with SAME count as emergence
-        const emergenceCount = this._lastEmergenceTargets.length / 3;
+        const emergenceCount = Math.max(0, Math.floor(this._lastEmergenceTargets.length / 3));
         blueprint = this.buildBlueprint(stage, {
-        quality,
-        overrideCount: emergenceCount,
-      });
-      
-      if (blueprint) {
-        // 1) Copy the settled emergence band into BOTH arrays (Genesis shows that band)
-        const targets = this._lastEmergenceTargets;
-        blueprint.atmosphericPositions.set(targets);
-        blueprint.text3DPositions.set(targets);
+          quality,
+          overrideCount: emergenceCount,
+        });
 
-        // 2) Only fit if it would overflow the frustum (e.g., after a camera change),
-        //    or if VC explicitly forces a final fit.
-        const vw = (this._viewportHint.width ?? 120) * 0.5;
-        const vh = (this._viewportHint.height ?? 90) * 0.5;
-        const fitFrac = (VC?.FIT_FRAC ?? 0.86);
-        const forceFit = !!VC?.FINAL_FIT_GENESIS;
-        const ratioNow = aabbRatio(blueprint.text3DPositions, vw, vh);
+        if (blueprint) {
+          const targets = this._lastEmergenceTargets;
+          blueprint.atmosphericPositions.set(targets);
+          blueprint.text3DPositions.set(targets);
 
-        if (forceFit || ratioNow > fitFrac * 1.05) {
-          console.log('🧠 Engine: Overflow guard triggered (ratio:', ratioNow.toFixed(2), ')');
-          fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
-          fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
-        } else {
-          console.log('🧠 Engine: Band within bounds, preserving emergence positions');
+          const vw = (this._viewportHint.width ?? 120) * 0.5;
+          const vh = (this._viewportHint.height ?? 90) * 0.5;
+          const fitFrac = (VC?.FIT_FRAC ?? 0.86);
+          const forceFit = !!VC?.FINAL_FIT_GENESIS;
+          const ratioNow = aabbRatio(blueprint.text3DPositions, vw, vh);
+
+          if (forceFit || ratioNow > fitFrac * 1.05) {
+            console.log('🧠 Engine: Overflow guard triggered (ratio:', ratioNow.toFixed(2), ')');
+            fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
+            fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
+          } else {
+            console.log('🧠 Engine: Emergence band within bounds, preserve-as-is');
+          }
+
+          this._lastEmergenceTargets = null;
+          this._emergenceDone = false;
+
+          if (this._validateBlueprint(blueprint)) {
+            BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+              blueprint,
+              stage,
+              quality,
+              mode: 'post-emergence-guarded',
+            });
+            this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence-guarded' });
+          }
+          return;
         }
-
-        // Consume targets once
-        this._lastEmergenceTargets = null;
-
-        // Validate and emit
-        if (this._validateBlueprint(blueprint)) {
-          BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-            blueprint,
-            stage,
-            quality,
-            mode: 'post-emergence-guarded',
-          });
-          this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence-guarded' });
-        }
-        return;
       }
-    }
     }
 
     // Normal path: cached or fresh build
@@ -1303,36 +1373,160 @@ class ConsciousnessEngine {
   }
 
   _build3DLetters(word, { particles, depth }) {
-    const geometry = new TextGeometry(word, {
-      font: this.font,
-      size: 32,
-      height: 1,
-      curveSegments: 4,
-      bevelEnabled: false,
-    });
-    geometry.computeBoundingBox();
-    geometry.center();
-
-    const positions = [];
-    const attr = geometry.attributes.position;
-    for (let i = 0; i < attr.count && positions.length < particles * 3; i++) {
-      positions.push(attr.getX(i), attr.getY(i), attr.getZ(i));
+    if (!particles || particles <= 0) {
+      return new Float32Array();
     }
 
-    const out = new Float32Array(particles * 3);
-    for (let i = 0; i < out.length; i += 3) {
-      if (i < positions.length) {
-        out[i] = positions[i];
-        out[i + 1] = positions[i + 1];
-        out[i + 2] = positions[i + 2];
-      } else {
-        out[i] = (Math.random() - 0.5) * 10;
-        out[i + 1] = (Math.random() - 0.5) * 10;
-        out[i + 2] = (Math.random() - 0.5) * depth;
+    const prevSuspend = globalThis.__GPU_WATCHDOG_SUSPEND__ === true;
+    globalThis.__GPU_WATCHDOG_SUSPEND__ = true;
+
+    let geometry;
+    try {
+      geometry = new TextGeometry(word, {
+        font: this.font,
+        size: 32,
+        height: 1,
+        curveSegments: 6,
+        bevelEnabled: false,
+      });
+      geometry.computeBoundingBox();
+      geometry.center();
+
+      const mesh = new Mesh(geometry);
+      const sampler = new MeshSurfaceSampler(mesh).build();
+      const out = new Float32Array(particles * 3);
+      const scratch = new Vector3();
+      const normal = new Vector3();
+
+      const baseDepth = depth ?? 0.3;
+      const thickness = Math.max(0.002, baseDepth * 0.25);
+      const tangentJitter = thickness * 0.4;
+
+      const oversampleFactor = Math.min(6, Math.max(2, Math.ceil(particles <= 1200 ? 4 : 3)));
+      const maxCandidates = Math.max(particles, particles * oversampleFactor);
+      const candidates = new Float32Array(maxCandidates * 3);
+      const candidateWeight = new Float32Array(maxCandidates);
+
+      let filled = 0;
+      const maxAttempts = maxCandidates * 12;
+
+      for (let attempt = 0; attempt < maxAttempts && filled < maxCandidates; attempt++) {
+        sampler.sample(scratch, normal);
+
+        const absNz = Math.abs(normal.z);
+        if (absNz < 0.35 && attempt < maxCandidates * 4) {
+          if (Math.random() < 0.7) continue;
+        }
+
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * tangentJitter;
+        scratch.x += Math.cos(angle) * radius;
+        scratch.y += Math.sin(angle) * radius;
+
+        const jitter = (Math.random() - 0.5) * thickness;
+        scratch.z = jitter;
+
+        const offset = filled * 3;
+        candidates[offset] = scratch.x;
+        candidates[offset + 1] = scratch.y;
+        candidates[offset + 2] = scratch.z;
+        candidateWeight[filled] = absNz;
+        filled++;
       }
+
+    if (filled < particles) {
+      for (let i = 0; i < particles; i++) {
+        sampler.sample(scratch);
+        const offset = i * 3;
+        out[offset] = scratch.x;
+        out[offset + 1] = scratch.y;
+        out[offset + 2] = scratch.z + (Math.random() - 0.5) * thickness;
+      }
+
+      if (depth && depth !== 1) {
+        for (let i = 2; i < out.length; i += 3) {
+          out[i] *= depth;
+        }
+      }
+
+      return out;
     }
 
-    geometry.dispose();
+    const candidateIndices = [];
+    for (let i = 0; i < filled; i++) candidateIndices.push(i);
+
+    let selectedCount = 0;
+    const attemptsPerPick = Math.min(12, Math.max(4, Math.ceil(candidateIndices.length / 400)));
+
+    while (selectedCount < particles && candidateIndices.length) {
+      let bestListIndex = 0;
+      let bestScore = -Infinity;
+      const tries = Math.min(attemptsPerPick, candidateIndices.length);
+
+      for (let t = 0; t < tries; t++) {
+        const listIndex = Math.floor(Math.random() * candidateIndices.length);
+        const candidateIndex = candidateIndices[listIndex];
+        const cx = candidates[candidateIndex * 3];
+        const cy = candidates[candidateIndex * 3 + 1];
+        const cz = candidates[candidateIndex * 3 + 2];
+
+        let minDistSq = Infinity;
+        for (let s = 0; s < selectedCount; s++) {
+          const sx = out[s * 3];
+          const sy = out[s * 3 + 1];
+          const dx = cx - sx;
+          const dy = cy - sy;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < minDistSq) {
+            minDistSq = distSq;
+            if (minDistSq <= bestScore) break;
+          }
+        }
+
+        if (selectedCount === 0) {
+          minDistSq = Infinity;
+        } else {
+          const weight = 0.25 + candidateWeight[candidateIndex] * 0.75;
+          minDistSq *= weight;
+        }
+
+        if (minDistSq > bestScore) {
+          bestScore = minDistSq;
+          bestListIndex = listIndex;
+        }
+      }
+
+      const chosenIndex = candidateIndices[bestListIndex];
+      const dest = selectedCount * 3;
+      out[dest] = candidates[chosenIndex * 3];
+      out[dest + 1] = candidates[chosenIndex * 3 + 1];
+      out[dest + 2] = candidates[chosenIndex * 3 + 2];
+      selectedCount++;
+
+      const last = candidateIndices.length - 1;
+      candidateIndices[bestListIndex] = candidateIndices[last];
+      candidateIndices.pop();
+    }
+
+    if (selectedCount < particles && candidateIndices.length) {
+      for (let i = selectedCount; i < particles; i++) {
+        const fallbackIndex = candidateIndices[i % candidateIndices.length];
+        const dest = i * 3;
+        out[dest] = candidates[fallbackIndex * 3];
+        out[dest + 1] = candidates[fallbackIndex * 3 + 1];
+        out[dest + 2] = candidates[fallbackIndex * 3 + 2];
+      }
+      selectedCount = particles;
+    } else if (selectedCount < particles) {
+      for (let i = selectedCount; i < particles; i++) {
+        sampler.sample(scratch);
+        const dest = i * 3;
+        out[dest] = scratch.x;
+        out[dest + 1] = scratch.y;
+        out[dest + 2] = scratch.z + (Math.random() - 0.5) * thickness;
+      }
+      selectedCount = particles;
+    }
 
     if (depth && depth !== 1) {
       for (let i = 2; i < out.length; i += 3) {
@@ -1341,6 +1535,10 @@ class ConsciousnessEngine {
     }
 
     return out;
+    } finally {
+      if (geometry) geometry.dispose();
+      globalThis.__GPU_WATCHDOG_SUSPEND__ = prevSuspend;
+    }
   }
 
   generate3DTextFormation(word, opts = {}) {
