@@ -18,6 +18,7 @@ import vertexShaderSource from '../../shaders/templates/consciousness-vertex.gls
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
 
 function pickStageColors(stageName) {
   const s = Canonical?.stages?.[stageName] || {};
@@ -50,6 +51,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const meshRef = useRef();
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
+  const renderGuardRef = useRef(false);
 
   const lastBlueprintIdRef = useRef(null);
   const fallbackMorphRef = useRef(0);
@@ -330,6 +332,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       geo.setDrawRange(0, raw.activeCount || raw.particleCount);
       geometryRef.current = geo;
 
+      if (DEV && !geo.__singleWriterPatched) {
+        const rawSetDrawRange = geo.setDrawRange.bind(geo);
+        geo.setDrawRange = (start, count) => {
+          if (!renderGuardRef.current) {
+            console.warn('[SingleWriter] drawRange call blocked outside renderer path');
+            return;
+          }
+          return rawSetDrawRange(start, count);
+        };
+        geo.__singleWriterPatched = true;
+      }
+
       if (isEmergence) {
         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         emergencePendingRef.current = true;
@@ -456,7 +470,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {
-    const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, (directive = {}) => {
+    const handler = (directive = {}) => {
       const mat = materialRef.current;
       const geo = geometryRef.current;
       if (!mat?.uniforms || !geo) return;
@@ -467,61 +481,68 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       const uniforms = mat.uniforms;
 
-      // Draw range (single writer)
-      let drawUpdated = false;
-      if (Number.isFinite(directive.activeCount)) {
-        const count = Math.max(0, Math.floor(directive.activeCount));
-        setActiveCount(count);
-        geo.setDrawRange(0, count);
-        if (uniforms.uActiveCount) uniforms.uActiveCount.value = count;
-        if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = count;
-        if (typeof window !== 'undefined') window.__lastActiveCount = count;
-        drawUpdated = true;
-      }
-
-      if (!drawUpdated && Number.isFinite(directive.drawCount)) {
-        const count = Math.max(0, Math.floor(directive.drawCount));
-        geo.setDrawRange(0, count);
-        if (typeof window !== 'undefined') window.__lastActiveCount = count;
-      }
-
-      // Morph progress + fencepost emission
-      if (Number.isFinite(directive.morphProgress) && uniforms.uMorphProgress) {
-        const v = clamp01(directive.morphProgress);
-        uniforms.uMorphProgress.value = v;
-        if (uniforms.uStageProgress) uniforms.uStageProgress.value = v;
-
-        if (emergencePendingRef.current && !emittedEmergedRef.current && v >= 0.995) {
-          emittedEmergedRef.current = true;
-          emergencePendingRef.current = false;
-          const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-          BeatBus.emit(EVENTS.PARTICLES_EMERGED, { at: now, source: 'renderer' });
+      if (DEV) renderGuardRef.current = true;
+      try {
+        // Draw range (single writer)
+        let drawUpdated = false;
+        if (Number.isFinite(directive.activeCount)) {
+          const count = Math.max(0, Math.floor(directive.activeCount));
+          setActiveCount(count);
+          geo.setDrawRange(0, count);
+          if (uniforms.uActiveCount) uniforms.uActiveCount.value = count;
+          if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = count;
+          if (typeof window !== 'undefined') window.__lastActiveCount = count;
+          drawUpdated = true;
         }
-      }
 
-      if (Number.isFinite(directive.pointSize) && uniforms.uPointSize) {
-        uniforms.uPointSize.value = directive.pointSize;
-      }
-      if (Number.isFinite(directive.gaussianSigma) && uniforms.uGaussianSigma) {
-        uniforms.uGaussianSigma.value = directive.gaussianSigma;
-      }
-      if (Array.isArray(directive.tierHighlight) && uniforms.uTierHighlight?.value) {
-        const arr = uniforms.uTierHighlight.value;
-        for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
-          arr[i] = directive.tierHighlight[i];
+        if (!drawUpdated && Number.isFinite(directive.drawCount)) {
+          const count = Math.max(0, Math.floor(directive.drawCount));
+          geo.setDrawRange(0, count);
+          if (typeof window !== 'undefined') window.__lastActiveCount = count;
         }
-      }
-      if (directive.uniforms && typeof directive.uniforms === 'object') {
-        for (const key in directive.uniforms) {
-          if (Object.hasOwn(directive.uniforms, key) && uniforms[key]) {
-            uniforms[key].value = directive.uniforms[key];
+
+        // Morph progress + fencepost emission
+        if (Number.isFinite(directive.morphProgress) && uniforms.uMorphProgress) {
+          const v = clamp01(directive.morphProgress);
+          uniforms.uMorphProgress.value = v;
+          if (uniforms.uStageProgress) uniforms.uStageProgress.value = v;
+
+          if (emergencePendingRef.current && !emittedEmergedRef.current && v >= 0.995) {
+            emittedEmergedRef.current = true;
+            emergencePendingRef.current = false;
+            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            BeatBus.emit(EVENTS.PARTICLES_EMERGED, { at: now, source: 'renderer' });
           }
         }
-      }
 
-      mat.uniformsNeedUpdate = true;
-      mat.needsUpdate = true;
-    });
+        if (Number.isFinite(directive.pointSize) && uniforms.uPointSize) {
+          uniforms.uPointSize.value = directive.pointSize;
+        }
+        if (Number.isFinite(directive.gaussianSigma) && uniforms.uGaussianSigma) {
+          uniforms.uGaussianSigma.value = directive.gaussianSigma;
+        }
+        if (Array.isArray(directive.tierHighlight) && uniforms.uTierHighlight?.value) {
+          const arr = uniforms.uTierHighlight.value;
+          for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
+            arr[i] = directive.tierHighlight[i];
+          }
+        }
+        if (directive.uniforms && typeof directive.uniforms === 'object') {
+          for (const key in directive.uniforms) {
+            if (Object.hasOwn(directive.uniforms, key) && uniforms[key]) {
+              uniforms[key].value = directive.uniforms[key];
+            }
+          }
+        }
+
+        mat.uniformsNeedUpdate = true;
+        mat.needsUpdate = true;
+      } finally {
+        if (DEV) renderGuardRef.current = false;
+      }
+    };
+
+    const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
     return () => off && off();
   }, []);
 

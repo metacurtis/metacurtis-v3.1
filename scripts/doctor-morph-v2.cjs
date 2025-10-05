@@ -30,7 +30,7 @@ function edit(p, fn){
 function firstExisting(paths){ for (const p of paths) if (fs.existsSync(p)) return p; return null; }
 
 const BUS_SPINE = [
-  "import BeatBus from '@/modules/orchestration/core/BeatBus.js';",
+  "import BeatBus from '@/theater/bus';",
   "if (!globalThis.BeatBus) globalThis.BeatBus = BeatBus;",
   "if (!globalThis.__BeatBus) globalThis.__BeatBus = BeatBus;",
   "export default BeatBus;",
@@ -154,7 +154,7 @@ results.push(edit(bridgeFile, (s)=>{
   if (!/from ['"]@\/theater\/events\.js['"]/.test(o))
     o = "import { EVENTS } from '@/theater/events.js';\n" + o;
   if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(o))
-    o = "import BeatBus from '@/modules/orchestration/core/BeatBus.js';\n" + o;
+    o = "import BeatBus from '@/theater/bus';\n" + o;
 
   if (!/MORPH_V2: stageAtom/.test(o) && !/emit\(\s*EVENTS\.MORPH_PROGRESS/.test(o)){
     o = o + "\n" + MORPH_BRIDGE;
@@ -172,7 +172,7 @@ results.push(edit(bgFile, (s)=>{
   if (!/from ['"]@\/theater\/events\.js['"]/.test(o))
     o = o.replace(/(^import .+\n)+/m, (m)=> m + "import { EVENTS } from '@/theater/events.js';\n");
   if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(o))
-    o = o.replace(/(^import .+\n)+/m, (m)=> m + "import BeatBus from '@/modules/orchestration/core/BeatBus.js';\n");
+    o = o.replace(/(^import .+\n)+/m, (m)=> m + "import BeatBus from '@/theater/bus';\n");
 
   // inject sinks near component start
   if (!/MORPH_V2: uniform sink/.test(o)){
@@ -191,4 +191,3 @@ for (const r of results){
   else if (r.changed)   console.log('✔ patched', r.file, r.bak?('(bak: '+path.basename(r.bak)+')'):'');
   else                  console.log('＝ no change', r.file);
 }
-

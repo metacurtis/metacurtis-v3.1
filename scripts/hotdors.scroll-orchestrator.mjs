@@ -51,7 +51,7 @@ if (!exists(SO_FILE)) {
 // Kinetics: speedMultiplier=2.0, smoothing=0.15, overshoot=0.05 (v3.3 canon)
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 
 const clamp01 = (v)=> Math.max(0, Math.min(1, Number(v)||0));

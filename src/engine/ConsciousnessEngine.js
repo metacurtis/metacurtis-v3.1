@@ -233,9 +233,10 @@ class ConsciousnessEngine {
     // State / caches
     this.blueprintCache = new Map();
     this.currentStage = 'genesis';
-    this.currentQuality = 'HIGH';
-    this._emergenceActive = false;
-    this._emergenceDone = false;
+   this.currentQuality = 'HIGH';
+   this._emergenceActive = false;
+   this._emergenceDone = false;
+    this._rendererFencepostSeen = false;
     
     // Opening gates
     this._openingPhase = true;
@@ -295,6 +296,7 @@ class ConsciousnessEngine {
       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
         this._emergenceActive = false;
         this._emergenceDone = true;
+        this._rendererFencepostSeen = true;
       })
     );
   }
@@ -396,6 +398,7 @@ class ConsciousnessEngine {
       
       this._emergenceDone = false;
       this._emergenceActive = false;
+      this._rendererFencepostSeen = false;
 
       // Build the emergence blueprint
       const blueprint = await this.buildEmergenceBlueprint(payload);
@@ -837,10 +840,17 @@ class ConsciousnessEngine {
         console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');
         this._lastEmergenceTargets = null;
         this._emergenceDone = false;
+        this._rendererFencepostSeen = false;
       } else if (!this._emergenceDone) {
         console.warn('🧠 Engine: Emergence incomplete; rebuilding genesis cleanly');
         this._lastEmergenceTargets = null;
         this._emergenceDone = false;
+        this._rendererFencepostSeen = false;
+      } else if (!this._rendererFencepostSeen) {
+        console.warn('🧠 Engine: Renderer fencepost missing; rebuilding genesis cleanly');
+        this._lastEmergenceTargets = null;
+        this._emergenceDone = false;
+        this._rendererFencepostSeen = false;
       } else {
         console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');
 
@@ -881,6 +891,7 @@ class ConsciousnessEngine {
             });
             this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence-guarded' });
           }
+          this._rendererFencepostSeen = false;
           return;
         }
       }

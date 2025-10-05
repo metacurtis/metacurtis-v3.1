@@ -22,7 +22,7 @@
     "./L1.js"
   ],
   "canon/console/banner.js": [
-    "@/modules/orchestration/core/BeatBus.js"
+    "@/theater/bus"
   ],
   "canon/contracts/events.js": [],
   "canon/contracts/index.js": [],
@@ -32,7 +32,7 @@
   "canon/guard/L1.js": [],
   "canon/guard/L2.js": [
     "@/canon/contracts/events.js",
-    "@/modules/orchestration/core/BeatBus.js"
+    "@/theater/bus"
   ],
   "canon/hud.js": [],
   "canon/init-amplified.js": [
@@ -60,7 +60,7 @@
     "./L1.js"
   ],
   "canon-guard/blueprintGuard.js": [
-    "@/modules/orchestration/core/BeatBus.js",
+    "@/theater/bus",
     "@/theater/events.js"
   ],
   "canon-guard/runtime/DegradePolicy.js": [],
@@ -80,7 +80,7 @@
     "@/components/dev/DevPerformanceMonitor",
     "@/theater/TheaterDirector.js",
     "@/components/theater/OpeningSequence.jsx",
-    "@/modules/orchestration/core/BeatBus.js",
+    "@/theater/bus",
     "@/theater/events.js"
   ],
   "components/dev/DebugExpose.jsx": [
@@ -95,7 +95,7 @@
   ],
   "components/theater/OpeningSequence.jsx": [
     "react",
-    "@/modules/orchestration/core/BeatBus.js",
+    "@/theater/bus",
     "@/theater/events.js"
   ],
   "components/ui/AdvancedContactPortal.jsx": [
@@ -132,7 +132,7 @@
     "react",
     "@react-three/fiber",
     "three",
-    "@/modules/orchestration/core/BeatBus.js",
+    "@/theater/bus",
     "@/theater/events.js"
   ],
   "components/webgl/WebGLBackground.jsx": [
@@ -185,7 +185,7 @@
     "@/config/canonical/canonicalAuthority.js",
     "../utils/random.js",
     "@/components/webgl/consciousness/ConsciousnessPatterns.js",
-    "@/modules/orchestration/core/BeatBus.js",
+    "@/theater/bus",
     "@/theater/events.js",
     "./FormationResolver.js"
   ],
@@ -306,7 +306,7 @@
   "stores/resourceStore.js": [],
   "stores/useInteractionStore.js": [],
   "theater/TheaterDirector.js": [
-    "@/modules/orchestration/core/BeatBus.js",
+    "@/theater/bus",
     "./events.js"
   ],
   "theater/events.js": [],

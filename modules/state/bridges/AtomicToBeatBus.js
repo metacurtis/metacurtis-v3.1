@@ -1,5 +1,5 @@
 // AtomicToBeatBus.js
-import BeatBus from '@/modules/orchestration/core/BeatBus.js';
+import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { stageAtom } from '@/stores/atoms/stageAtom.js';
 
@@ -8,6 +8,10 @@ let wired = false;
 export default function wireAtomicToBeatBus() {
   if (wired) return;
   wired = true;
+
+  if (typeof console !== 'undefined') {
+    console.warn('[Canon] modules/state/bridges/AtomicToBeatBus is deprecated; migrate callers to explicit BeatBus wiring.');
+  }
 
   // 1) Stage changes → tell the orchestra
   let prevStage = stageAtom.getState().currentStage;

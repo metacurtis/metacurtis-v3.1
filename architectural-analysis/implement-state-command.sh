@@ -20,7 +20,7 @@ cat > src/state/commands/StateCommands.js << 'EOF'
 // State Command Layer - Orchestrates complex state operations
 import { batch } from '../atoms/createAtom';
 import * as atoms from '../atoms';
-import { BeatBus } from '@/modules/orchestration/core/BeatBus';
+import { BeatBus } from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
 
 class StateCommands {

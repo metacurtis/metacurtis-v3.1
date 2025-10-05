@@ -120,7 +120,7 @@ results.push(edit(files.bg, (s) => {
     o = o.replace(/(^import .+\n)+/m, (m) => m + `import { EVENTS } from '@/theater/events.js';\n`);
   }
   if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(o)) {
-    o = o.replace(/(^import .+\n)+/m, (m) => m + `import BeatBus from '@/modules/orchestration/core/BeatBus.js';\n`);
+    o = o.replace(/(^import .+\n)+/m, (m) => m + `import BeatBus from '@/theater/bus';\n`);
   }
   if (!/from ['"]three['"]/.test(o)) {
     o = o.replace(/(^import .+\n)+/m, (m) => m + `import * as THREE from 'three';\n`);
@@ -192,7 +192,7 @@ results.push(edit(files.bridge, (s) => {
     o = `import { stageAtom } from '@/stores/atoms/stageAtom.js';\n` + o;
   }
   if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(o)) {
-    o = `import BeatBus from '@/modules/orchestration/core/BeatBus.js';\n` + o;
+    o = `import BeatBus from '@/theater/bus';\n` + o;
   }
   if (!/from ['"]@\/theater\/events\.js['"]/.test(o)) {
     o = `import { EVENTS } from '@/theater/events.js';\n` + o;

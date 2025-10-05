@@ -172,6 +172,16 @@ class BeatBus {
 
 const beatBus = new BeatBus();
 
+// Singleton guard: prevent accidental re-instantiation (DEV fails fast)
+if (typeof globalThis !== 'undefined') {
+  const SYM = '__BEATBUS_SINGLETON__';
+  const existing = globalThis[SYM];
+  if (existing && existing !== beatBus) {
+    throw new Error('[BeatBus] Multiple instances detected');
+  }
+  globalThis[SYM] = beatBus;
+}
+
 // DEV globals (optional)
 if (typeof window !== 'undefined'){
   if (import.meta?.env?.DEV){

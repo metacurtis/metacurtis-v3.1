@@ -74,7 +74,7 @@ function ensureBeatBusImport(code) {
     ''
   );
   if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(o)) {
-    o = o.replace(/(^\s*import .+\n)+/m, (m) => m + "import BeatBus from '@/modules/orchestration/core/BeatBus.js';\n");
+    o = o.replace(/(^\s*import .+\n)+/m, (m) => m + "import BeatBus from '@/theater/bus';\n");
   }
   return o;
 }
@@ -207,7 +207,7 @@ function patchBridge(src) {
       o = "import { EVENTS } from '@/theater/events.js';\n" + o;
     }
     if (!/from ['"]@\/modules\/orchestration\/core\/BeatBus\.js['"]/.test(o)) {
-      o = "import BeatBus from '@/modules/orchestration/core/BeatBus.js';\n" + o;
+      o = "import BeatBus from '@/theater/bus';\n" + o;
     }
     // Add a minimal subscription for stageAtom (we assume it already imports stageAtom here)
     if (!/onStageProgressToMorph/.test(o)) {
@@ -244,4 +244,3 @@ console.log(`\n[ONE-TOUCH] ${WRITE ? 'WRITE' : 'DRY-RUN'}\n`);
 console.table(Object.fromEntries(summary));
 console.log('\nChecks:\n - Director emits EMERGENCE once\n - WebGLBackground listens MORPH + STAGE_CHANGE and tints\n - EVENTS import deduped\n - Bridge emits MORPH (from stageAtom.stageProgress)\n');
 if (!WRITE) console.log('Re-run with --write to apply.\n');
-
