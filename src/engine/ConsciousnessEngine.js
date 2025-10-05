@@ -35,7 +35,8 @@ function makeBandFrame(vc, rnd, gauss) {
 
 function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
   if (!fitFrac || fitFrac <= 0) return;
-  const clampOnce = () => {
+
+  const computeScale = () => {
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
@@ -54,19 +55,28 @@ function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
     const halfY = extY * 0.5;
     const goalX = vw ? fitFrac * vw : null;
     const goalY = vh ? fitFrac * vh : null;
-    let scale = 1;
-    if (goalX && halfX > goalX) scale = Math.min(scale, goalX / halfX);
-    if (goalY && halfY > goalY) scale = Math.min(scale, goalY / halfY);
-    if (scale < 1 && scale > 0 && Number.isFinite(scale)) {
-      for (let i = 0; i < out.length; i += 3) {
-        out[i] *= scale;
-        out[i + 1] *= scale;
-      }
-      return true;
+
+    const ratioX = goalX
+      ? goalX / Math.max(halfX, 1e-6)
+      : Infinity;
+    const ratioY = goalY
+      ? goalY / Math.max(halfY, 1e-6)
+      : Infinity;
+
+    let target = Math.min(ratioX, ratioY);
+    if (!Number.isFinite(target)) {
+      target = 1;
     }
-    return false;
+    return target;
   };
-  if (clampOnce()) clampOnce();
+
+  const scale = computeScale();
+  if (Number.isFinite(scale) && Math.abs(scale - 1) > 1e-3) {
+    for (let i = 0; i < out.length; i += 3) {
+      out[i] *= scale;
+      out[i + 1] *= scale;
+    }
+  }
 }
 
 // helper: measure how much the field fills the view (ratio against width/height caps)
