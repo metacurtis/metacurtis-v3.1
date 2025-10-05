@@ -11,6 +11,7 @@ uniform float uActiveCount;
 uniform float uFadeProgress;
 uniform float uGaussianSigma;
 uniform float uBandHeight;
+uniform float uBandFade;
 
 // Varyings
 varying vec3 vPosition;
@@ -44,11 +45,12 @@ void main() {
   if (sprite.a < 0.01) discard;
 
   // Core glow accent for galactic band feel
+  float fade = clamp(uBandFade, 0.0, 1.0);
   float distFromBandCenter = abs(vPosition.y);
   float bandHalfHeight = max(0.35, uBandHeight * 0.65);
   float bandCurve = smoothstep(bandHalfHeight, 0.0, distFromBandCenter);
-  float coreStrength = pow(bandCurve, 2.0);
-  float haloStrength = 1.0 - smoothstep(0.0, bandHalfHeight * 2.4, distFromBandCenter);
+  float coreStrength = pow(bandCurve, 2.0) * fade;
+  float haloStrength = (1.0 - smoothstep(0.0, bandHalfHeight * 2.4, distFromBandCenter)) * fade;
   float tierGlowBoost = vTierID > 2.5 ? 2.4 : (vTierID > 1.5 ? 1.8 : 1.0);
   vec3 glowGradient = mix(vec3(0.0, 0.95, 0.6), vec3(0.0, 1.0, 0.0), coreStrength);
   
@@ -71,7 +73,7 @@ void main() {
   float twinkle = 1.0 + sin(uTime * 5.0 + vParticleIndex * 0.03) * 0.03;
   vec3 finalColor = color * sprite.rgb * shimmer * twinkle;
   vec3 haloTint = vec3(0.0, 0.7, 0.4);
-  vec3 ambientGlow = vec3(0.0, 0.25, 0.12) * clamp(1.0 - bandCurve, 0.0, 1.0);
+  vec3 ambientGlow = vec3(0.0, 0.25, 0.12) * clamp(1.0 - bandCurve, 0.0, 1.0) * fade;
   finalColor += glowGradient * (coreStrength * tierGlowBoost * 0.5);
   finalColor += haloTint * (haloStrength * 0.25);
   finalColor += ambientGlow;

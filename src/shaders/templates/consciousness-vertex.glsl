@@ -20,6 +20,7 @@ uniform vec3 uColorNext;
 uniform float uTotalSprites;
 uniform float uDevicePixelRatio;
 uniform vec2 uResolution;
+uniform vec2 uViewportFit;
 
 // Varyings
 varying vec3 vPosition;
@@ -89,6 +90,8 @@ void main() {
   // Add movement
   vec3 movement = generateMovement(basePos, animationSeed, uTime, tierData);
   vec3 finalPos = basePos + movement;
+  finalPos.x *= uViewportFit.x;
+  finalPos.y *= uViewportFit.y;
   vPosition = finalPos;
   
   // Transform to screen space

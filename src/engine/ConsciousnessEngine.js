@@ -53,8 +53,26 @@ function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
     const extY = maxY - minY;
     const halfX = extX * 0.5;
     const halfY = extY * 0.5;
-    const goalX = vw ? fitFrac * vw : null;
-    const goalY = vh ? fitFrac * vh : null;
+    let fracX;
+    let fracY;
+
+    if (Array.isArray(fitFrac)) {
+      fracX = Number.isFinite(fitFrac[0]) ? fitFrac[0] : 1;
+      fracY = Number.isFinite(fitFrac[1]) ? fitFrac[1] : fracX;
+    } else if (typeof fitFrac === 'object') {
+      const fallback = Number.isFinite(fitFrac.default) ? fitFrac.default : 1;
+      const resolvedX = fitFrac.x ?? fitFrac.width ?? fitFrac.horizontal ?? fitFrac[0];
+      const resolvedY = fitFrac.y ?? fitFrac.height ?? fitFrac.vertical ?? fitFrac[1];
+      fracX = Number.isFinite(resolvedX) ? resolvedX : fallback;
+      fracY = Number.isFinite(resolvedY) ? resolvedY : (Number.isFinite(resolvedX) ? resolvedX : fallback);
+    } else {
+      const scalar = Number.isFinite(fitFrac) ? fitFrac : 1;
+      fracX = scalar;
+      fracY = scalar;
+    }
+
+    const goalX = vw ? fracX * vw : null;
+    const goalY = vh ? fracY * vh : null;
 
     const ratioX = goalX
       ? goalX / Math.max(halfX, 1e-6)
@@ -511,18 +529,27 @@ class ConsciousnessEngine {
       this._emergenceRaf = null;
     }
 
+    const holdMs = Math.max(0, Number(VC?.MORPH_HOLD_MS ?? 250));
+
     const runTimeline = (implMs, settleMs, midValue) => {
       this._emergenceActive = true;
       this._emergenceDone = false;
 
       const start = nowMs();
-      const total = Math.max(0, implMs) + Math.max(0, settleMs);
+      const totalPhases = Math.max(0, implMs) + Math.max(0, settleMs);
+      const total = holdMs + totalPhases;
 
       const step = () => {
         const elapsed = nowMs() - start;
-        const inImplosion = implMs > 0 ? elapsed < implMs : false;
-        const implPhase = implMs > 0 ? clamp(elapsed / implMs, 0, 1) : 1;
-        const settleElapsed = elapsed - implMs;
+        if (elapsed < holdMs) {
+          this._emergenceRaf = schedule(step);
+          return;
+        }
+
+        const phaseElapsed = elapsed - holdMs;
+        const inImplosion = implMs > 0 ? phaseElapsed < implMs : false;
+        const implPhase = implMs > 0 ? clamp(phaseElapsed / implMs, 0, 1) : 1;
+        const settleElapsed = phaseElapsed - implMs;
         const settlePhaseRaw = settleElapsed <= 0 ? 0 : (settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1);
         const easeImpl = implMs > 0 ? smooth(implPhase) : 1;
         const easeSettle = settlePhaseRaw <= 0 ? 0 : smooth(settlePhaseRaw);
@@ -667,17 +694,45 @@ class ConsciousnessEngine {
    * Generate randomized atmospheric scatter (cube within view-scaled bounds).
    * Count * 3 float32 output.
    */
-  _generateRandomAtmosphericScatter(count, viewportHint) {
+  _generateRandomAtmosphericScatter(count, viewportHint, opts = {}) {
     const out = new Float32Array(count * 3);
     const width = viewportHint?.width ?? viewportHint?.w ?? 16;
     const height = viewportHint?.height ?? viewportHint?.h ?? 9;
     const base = Math.max(1.0, Math.min(width, height));
     const R = base * 0.45;
+
+    const rnd = Math.random;
+    const gauss = () => {
+      let u = 0;
+      let v = 0;
+      while (u === 0) u = rnd();
+      while (v === 0) v = rnd();
+      const g = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      return Math.max(-1.2, Math.min(1.2, g));
+    };
+
+    const useBand = opts.band ?? (VC?.ATMO_USE_BAND ?? true);
+    if (useBand) {
+      const rx = R;
+      const ry = R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60);
+      const zMin = -VC.Z_BACK_MAX;
+      const zMax = -VC.Z_BACK_MIN;
+      const band = makeBandFrame(VC, rnd, gauss);
+      for (let i = 0; i < count; i++) {
+        const j = i * 3;
+        const [x, y] = band.sampleBand(1.0, rx, ry);
+        out[j + 0] = x;
+        out[j + 1] = y;
+        out[j + 2] = zMin + rnd() * (zMax - zMin);
+      }
+      return out;
+    }
+
     for (let i = 0; i < count; i++) {
-      const o = i * 3;
-      out[o + 0] = (Math.random() * 2 - 1) * R;
-      out[o + 1] = (Math.random() * 2 - 1) * R;
-      out[o + 2] = (Math.random() * 2 - 1) * (R * 0.6);
+      const j = i * 3;
+      out[j + 0] = gauss() * R;
+      out[j + 1] = gauss() * R;
+      out[j + 2] = gauss() * (R * 0.6);
     }
     return out;
   }
@@ -755,7 +810,7 @@ class ConsciousnessEngine {
     if (!blueprint) return null;
 
     const blueprintCount = blueprint.particleCount;
-    const atmospheric = this._generateRandomAtmosphericScatter(blueprintCount, viewportHint);
+    const atmospheric = this._generateRandomAtmosphericScatter(blueprintCount, viewportHint, { band: false });
 
     // Target: prefer SST kinetic typography (“HELLO CURTIS”) with safe fallback
     const lg = SST?.visual?.letterGeometry?.genesis || {};
@@ -779,17 +834,17 @@ class ConsciousnessEngine {
           console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
         }
       } else {
-        targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint);
+        targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false });
         this._lastText3DFallbackUsed = false;
       }
     } catch (err) {
       console.warn('⚠️ 3D text formation failed, falling back to constellation:', err);
-      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint);
+      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false });
       usedFallback = false;
       this._lastText3DFallbackUsed = false;
     }
     if (!(targetPositions instanceof Float32Array)) {
-      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint);
+      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false });
       usedFallback = false;
       this._lastText3DFallbackUsed = false;
     }
@@ -800,9 +855,34 @@ class ConsciousnessEngine {
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
-    const fitFrac = VC?.FIT_FRAC ?? 0.92;
-    fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
-    fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
+    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.92;
+    const fitTarget = {
+      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.9,
+      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.8,
+      default: fitDefault,
+    };
+    fitToViewXY(blueprint.text3DPositions, vw, vh, fitTarget);
+    fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitTarget);
+
+    if (import.meta?.env?.DEV) {
+      const aabbExtents = (arr) => {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (let i = 0; i < arr.length; i += 3) {
+          const x = arr[i];
+          const y = arr[i + 1];
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+        return { w: +(maxX - minX).toFixed(2), h: +(maxY - minY).toFixed(2) };
+      };
+      console.debug('[CE] AABB post-fit',
+        { text: aabbExtents(blueprint.text3DPositions) },
+        { atm: aabbExtents(blueprint.atmosphericPositions) },
+        { vw: +vw.toFixed(2), vh: +vh.toFixed(2) }
+      );
+    }
 
     const { counts, tiers } = this._assignTiersShuffled(blueprintCount, sanitizedRatios);
     blueprint.tierOf.set(tiers);
@@ -1022,6 +1102,37 @@ class ConsciousnessEngine {
       metadata.colors = stageConfig.colors.slice(0, 3);
     }
 
+    const vw = (this._viewportHint.width ?? 120) * 0.5;
+    const vh = (this._viewportHint.height ?? 90) * 0.5;
+    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.92;
+    const fitTarget = {
+      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.9,
+      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.8,
+      default: fitDefault,
+    };
+    fitToViewXY(text3DPositions, vw, vh, fitTarget);
+    fitToViewXY(atmosphericPositions, vw, vh, fitTarget);
+
+    if (import.meta?.env?.DEV) {
+      const aabbExtents = (arr) => {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (let i = 0; i < arr.length; i += 3) {
+          const x = arr[i];
+          const y = arr[i + 1];
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+        return { w: +(maxX - minX).toFixed(2), h: +(maxY - minY).toFixed(2) };
+      };
+      console.debug('[CE] AABB stage build', stageName,
+        { text: aabbExtents(text3DPositions) },
+        { atm: aabbExtents(atmosphericPositions) },
+        { vw: +vw.toFixed(2), vh: +vh.toFixed(2) }
+      );
+    }
+
     return {
       stageName,
       particleCount,
@@ -1122,7 +1233,7 @@ class ConsciousnessEngine {
     return out;
   }
 
-  generateConstellationFormation(N, tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15], hint) {
+  generateConstellationFormation(N, tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15], hint, opts = {}) {
     // Starfield (not rings): viewport-scaled, 4 tiers with different spreads/cluster behavior.
     const out = new Float32Array(N * 3);
     const rnd = createSeededRandom('starfield');
@@ -1152,7 +1263,8 @@ class ConsciousnessEngine {
       const gy = gauss() * ry;
       return [gx, gy];
     };
-    const band = makeBandFrame(VC, rnd, gauss);
+    const bandEnabled = opts.band ?? (VC?.BAND_ENABLED ?? true);
+    const band = bandEnabled ? makeBandFrame(VC, rnd, gauss) : null;
     const bandHeight = Math.max(1, R * (VC?.BAND_FADE_WIDTH ?? 0.35));
     const t0BandShare = Math.min(1, Math.max(0, VC?.T0_BAND_P ?? 0.3));
     const scatterWidth = vw * 2.2;
@@ -1174,10 +1286,10 @@ class ConsciousnessEngine {
     };
 
     // Tier 0 — mix of background stars and band followers
-    const t0BandCount = Math.floor(tc0 * t0BandShare);
+    const t0BandCount = bandEnabled ? Math.floor(tc0 * t0BandShare) : 0;
     const t0ScatterCount = tc0 - t0BandCount;
     for (let i = 0; i < t0BandCount; i++) {
-      const [bx, by] = band.sampleBand(1.2, R, bandHeight * 0.9);
+      const [bx, by] = band?.sampleBand(1.2, R, bandHeight * 0.9) ?? sampleEllipse(R, bandHeight * 0.9);
       emit(bx, by, gauss() * t0BaseZ);
     }
     for (let i = 0; i < t0ScatterCount; i++) {
@@ -1188,7 +1300,10 @@ class ConsciousnessEngine {
 
     // Tier 1 — tightly bound to the band midline
     for (let i = 0; i < tc1; i++) {
-      const [x, y] = band.sampleBand(0.8, R * 0.55, bandHeight * 0.4);
+      const useBand = bandEnabled && band && rnd() < (VC?.BAND_T1_P ?? 0.85);
+      const [x, y] = useBand
+        ? band.sampleBand(0.8, R * 0.55, bandHeight * 0.4)
+        : sampleEllipse(R * 0.55, bandHeight * 0.4);
       emit(x, y, (rnd() - 0.5) * (VC.T1_Z_JITTER ?? 3));
     }
 
@@ -1196,8 +1311,12 @@ class ConsciousnessEngine {
     const cCount = Math.max(1, VC.T2_CLUSTER_COUNT ?? 3);
     const cSigma = Math.max(1e-3, (VC.T2_CLUSTER_SIGMA ?? 0.04) * R);
     const clusters = Array.from({ length: cCount }, () => {
-      const [bx, by] = band.sampleBand(0.5, R * 0.3, bandHeight * 0.18);
-      return { cx: bx, cy: by };
+      if (bandEnabled && band && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
+        const [bx, by] = band.sampleBand(0.5, R * 0.3, bandHeight * 0.18);
+        return { cx: bx, cy: by };
+      }
+      const [cx, cy] = sampleEllipse(R * 0.3, bandHeight * 0.18);
+      return { cx, cy };
     });
 
     // Pre-seed a bright galactic core before building clusters
@@ -1208,7 +1327,7 @@ class ConsciousnessEngine {
       const coreY = Math.sin(angle) * radius * 0.35;
       emit(coreX, coreY, gauss() * 0.5);
     }
-
+    
     for (let i = 0; i < t2ClusterCount; i++) {
       const c = clusters[Math.floor(rnd() * clusters.length)];
       const x = c.cx + gauss() * cSigma * 0.5;
@@ -1240,7 +1359,9 @@ class ConsciousnessEngine {
       }
     } else {
       for (let i = 0; i < tc3; i++) {
-        const [x, y] = band.sampleBand(0.45, R * 0.16, bandHeight * 0.16);
+        const [x, y] = bandEnabled && band
+          ? band.sampleBand(0.45, R * 0.16, bandHeight * 0.16)
+          : sampleEllipse(R * 0.16, bandHeight * 0.16);
         emit(x, y, (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 0.5));
       }
     }
