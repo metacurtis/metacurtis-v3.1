@@ -20,7 +20,8 @@ uniform vec3 uColorNext;
 uniform float uTotalSprites;
 uniform float uDevicePixelRatio;
 uniform vec2 uResolution;
-uniform vec2 uViewportFit;
+uniform vec2 uAtmoFit;
+uniform vec2 uTextFit;
 
 // Varyings
 varying vec3 vPosition;
@@ -84,14 +85,19 @@ void main() {
   float col = mod(atlasIndex, spritesPerRow);
   vAtlasUVOffset = vec2(col, row) * spriteSize;
   
-  // Position morphing between atmospheric and text
-  vec3 basePos = mix(atmosphericPosition, text3DPosition, clamp(uMorphProgress, 0.0, 1.0));
+  // Position morphing between atmospheric and text (scale endpoints before mixing)
+  vec3 atmoPos = atmosphericPosition;
+  vec3 textPos = text3DPosition;
+  atmoPos.x *= uAtmoFit.x;
+  atmoPos.y *= uAtmoFit.y;
+  textPos.x *= uTextFit.x;
+  textPos.y *= uTextFit.y;
+
+  vec3 basePos = mix(atmoPos, textPos, clamp(uMorphProgress, 0.0, 1.0));
   
   // Add movement
   vec3 movement = generateMovement(basePos, animationSeed, uTime, tierData);
   vec3 finalPos = basePos + movement;
-  finalPos.x *= uViewportFit.x;
-  finalPos.y *= uViewportFit.y;
   vPosition = finalPos;
   
   // Transform to screen space

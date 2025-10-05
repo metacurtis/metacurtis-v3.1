@@ -44,6 +44,85 @@ function normalizePayload(payload) {
   return { bp, stageName, quality, cached, mode };
 }
 
+const clampFit = (v) => Math.min(5.0, Math.max(0.2, v));
+
+function computeAABB(geo, key) {
+  const attr = geo?.attributes?.[key];
+  if (!attr?.array) return null;
+  const arr = attr.array;
+  if (!arr.length) return null;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < arr.length; i += 3) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  if (minX === Infinity || minY === Infinity) return null;
+  return { extX: (maxX - minX) * 0.5, extY: (maxY - minY) * 0.5 };
+}
+
+function setRendererFits(material, geo, viewport) {
+  if (!material?.uniforms || !geo) return;
+  const resolved = viewport || window?.__viewportHint || {};
+  const vw = Math.max(1, (resolved.width ?? resolved.cssWidth ?? 120) * 0.5);
+  const vh = Math.max(1, (resolved.height ?? resolved.cssHeight ?? 90) * 0.5);
+
+  const atmoTargetX = Number.isFinite(VC?.ATMO_FIT_X) ? VC.ATMO_FIT_X : 0.92;
+  const atmoTargetY = Number.isFinite(VC?.ATMO_FIT_Y) ? VC.ATMO_FIT_Y : 0.85;
+  const textTargetWidth = Number.isFinite(VC?.TEXT_FIT_WIDTH) ? VC.TEXT_FIT_WIDTH : 0.9;
+  const textTargetMaxH  = Number.isFinite(VC?.TEXT_FIT_MAX_H) ? VC.TEXT_FIT_MAX_H : 0.8;
+
+  const atmoAabb = computeAABB(geo, 'atmosphericPosition') || computeAABB(geo, 'position');
+  const textAabb = computeAABB(geo, 'text3DPosition') || computeAABB(geo, 'position');
+  if (!atmoAabb || !textAabb) return;
+
+  const atmoFitX = atmoAabb.extX > 1e-6 ? clampFit((vw * atmoTargetX) / atmoAabb.extX) : 1;
+  const atmoFitY = atmoAabb.extY > 1e-6 ? clampFit((vh * atmoTargetY) / atmoAabb.extY) : 1;
+
+  const textWidthScale = textAabb.extX > 1e-6 ? (vw * textTargetWidth) / textAabb.extX : 1;
+  let textFitY = textWidthScale;
+  if (textAabb.extY > 1e-6) {
+    const maxScaleY = (vh * textTargetMaxH) / textAabb.extY;
+    textFitY = Math.min(textFitY, maxScaleY);
+  }
+  const textFitX = clampFit(textWidthScale);
+  textFitY = clampFit(textFitY);
+
+  const uniforms = material.uniforms;
+  if (uniforms.uAtmoFit?.value?.set) {
+    uniforms.uAtmoFit.value.set(atmoFitX, atmoFitY);
+  } else {
+    uniforms.uAtmoFit = { value: new THREE.Vector2(atmoFitX, atmoFitY) };
+  }
+
+  if (uniforms.uTextFit?.value?.set) {
+    uniforms.uTextFit.value.set(textFitX, textFitY);
+  } else {
+    uniforms.uTextFit = { value: new THREE.Vector2(textFitX, textFitY) };
+  }
+
+  if (uniforms.uBandFade) uniforms.uBandFade.value = 0;
+
+  material.uniformsNeedUpdate = true;
+  material.needsUpdate = true;
+
+  if (DEV) {
+    console.debug('[WBG] renderer fits', {
+      atmoFit: { x: atmoFitX, y: atmoFitY },
+      textFit: { x: textFitX, y: textFitY },
+      atmoAabb,
+      textAabb,
+      viewport: { width: resolved.width, height: resolved.height }
+    });
+  }
+}
+
 function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const emergencePendingRef = useRef(false);
   const emittedEmergedRef   = useRef(false);
@@ -53,69 +132,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const materialRef = useRef(null);
   const renderGuardRef = useRef(false);
   const viewportHintRef = useRef(null);
-  const viewportFitRef = useRef(new THREE.Vector2(1, 1));
-
-  const ensureViewportFitRef = () => viewportFitRef.current;
 
   const { size, gl, camera } = useThree();
-
-  const computeViewportFit = useCallback((geo, hint) => {
-    if (!geo) return null;
-    const attr = geo.attributes?.text3DPosition || geo.attributes?.position;
-    if (!attr?.array) return null;
-
-    const arr = attr.array;
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    for (let i = 0; i < arr.length; i += 3) {
-      const x = arr[i];
-      const y = arr[i + 1];
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-
-    if (minX === Infinity || minY === Infinity) return null;
-
-    const extX = (maxX - minX) * 0.5;
-    const extY = (maxY - minY) * 0.5;
-
-    const hintWidth = Number(hint?.width) || Number(hint?.cssWidth) || size.width || 240;
-    const hintHeight = Number(hint?.height) || Number(hint?.cssHeight) || size.height || 180;
-    const halfWidth = Math.max(1, hintWidth * 0.5);
-    const halfHeight = Math.max(1, hintHeight * 0.5);
-
-    const targetWidthFrac = Number.isFinite(VC?.VIEWPORT_FIT_X) ? VC.VIEWPORT_FIT_X : 0.9;
-    const targetHeightFrac = Number.isFinite(VC?.VIEWPORT_FIT_Y) ? VC.VIEWPORT_FIT_Y : 0.8;
-    const desiredHalfWidth = halfWidth * targetWidthFrac;
-    const desiredHalfHeight = halfHeight * targetHeightFrac;
-
-    const EPS = 1e-6;
-    const S_MIN = 0.2;
-    const S_MAX = 5.0;
-    const fitX = extX > EPS ? Math.max(S_MIN, Math.min(S_MAX, desiredHalfWidth / extX)) : 1;
-    const fitY = extY > EPS ? Math.max(S_MIN, Math.min(S_MAX, desiredHalfHeight / extY)) : 1;
-
-    return new THREE.Vector2(fitX, fitY);
-  }, [size.width, size.height]);
-
-  const applyViewportFit = useCallback((fitVec) => {
-    if (!fitVec) return;
-    const refVec = ensureViewportFitRef();
-    refVec.copy(fitVec);
-    const mat = materialRef.current;
-    if (mat?.uniforms) {
-      if (mat.uniforms.uViewportFit?.value) {
-        mat.uniforms.uViewportFit.value.copy(refVec);
-      } else {
-        mat.uniforms.uViewportFit = { value: refVec.clone() };
-      }
-      mat.uniformsNeedUpdate = true;
-    }
-  }, []);
 
   const lastBlueprintIdRef = useRef(null);
   const fallbackMorphRef = useRef(0);
@@ -229,9 +247,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, hint);
       updateBandHeight(viewHeight);
 
-      if (geometryRef.current) {
-        const fitVec = computeViewportFit(geometryRef.current, hint);
-        applyViewportFit(fitVec);
+      if (geometryRef.current && materialRef.current) {
+        setRendererFits(materialRef.current, geometryRef.current, hint);
       }
 
       // expose for TD/CE consumers in DEV and for probes
@@ -249,7 +266,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     } catch (e) {
       console.warn('Viewport hint emit failed', e);
     }
-  }, [camera, gl, size.width, size.height, updateBandHeight, computeViewportFit, applyViewportFit]);
+  }, [camera, gl, size.width, size.height, updateBandHeight]);
 
   // single emit on mount; microtask-debounced resize (no RAF / no polling timers)
   useEffect(() => {
@@ -404,8 +421,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       geo.setAttribute('particleIndex', new THREE.BufferAttribute(idx, 1));
       geo.setDrawRange(0, raw.activeCount || raw.particleCount);
       geometryRef.current = geo;
-      const fitVec = computeViewportFit(geo, viewportHintRef.current || viewport);
-      applyViewportFit(fitVec);
+      const mat = materialRef.current;
+      if (mat) {
+        setRendererFits(mat, geo, viewportHintRef.current || viewport);
+      }
 
       if (DEV && !geo.__singleWriterPatched) {
         const rawSetDrawRange = geo.setDrawRange.bind(geo);
@@ -420,7 +439,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       const disableBand = isEmergence || (raw.stageName || st) === 'genesis';
-      const mat = materialRef.current;
       if (mat?.uniforms?.uBandFade) {
         mat.uniforms.uBandFade.value = disableBand ? 0 : 1;
         mat.uniformsNeedUpdate = true;
@@ -462,7 +480,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
-  }, [updateBandHeight, computeViewportFit, applyViewportFit]);
+  }, [updateBandHeight]);
 
   // build material once atlas+blueprint exist
   useEffect(() => {
@@ -508,7 +526,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           try { return Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); } catch { return 1; }
         })() },
         uResolution:       { value: new THREE.Vector2(size.width, size.height) },
-        uViewportFit:      { value: ensureViewportFitRef().clone() },
+        uAtmoFit:          { value: new THREE.Vector2(1, 1) },
+        uTextFit:          { value: new THREE.Vector2(1, 1) },
 
         uActiveCount:   { value: activeCount },
         uTierCutoff:    { value: activeCount || 15000 },
@@ -537,7 +556,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (bandHeightRef.current && mat.uniforms?.uBandHeight) {
       mat.uniforms.uBandHeight.value = bandHeightRef.current;
     }
-    applyViewportFit(ensureViewportFitRef());
+    if (geometryRef.current) {
+      setRendererFits(mat, geometryRef.current, viewportHintRef.current);
+    }
     if (typeof window !== 'undefined') {
       window.__webglBackground = { material: mat, meshRef, geometryRef };
       window.__consciousnessMaterial = mat;
@@ -545,7 +566,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       window.__particleGeometry = geometryRef.current || null;
     }
     __applyStageTint(stageName);
-  }, [atlasTexture, blueprint, stageName, morphProgress, scrollProgress, size.width, size.height, gl, activeCount, bandScale, applyViewportFit]);
+  }, [atlasTexture, blueprint, stageName, morphProgress, scrollProgress, size.width, size.height, gl, activeCount, bandScale]);
 
   // keep resolution/DPR updated
   useEffect(() => {
