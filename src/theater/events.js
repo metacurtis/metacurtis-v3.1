@@ -16,6 +16,7 @@ export const EVENTS = {
   BLUEPRINT_READY: 'BLUEPRINT_READY',            // { blueprint, stage?, quality?, mode? }
   PARTICLES_START_EMERGING: 'PARTICLES_START_EMERGING',
   PARTICLES_EMERGED: 'PARTICLES_EMERGED',        // fencepost (emit once)
+  FENCEPOST_LISTENERS_READY: 'FENCEPOST_LISTENERS_READY',
 
   // Renderer tuning & morph
   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }

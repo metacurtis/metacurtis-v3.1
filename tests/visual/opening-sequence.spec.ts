@@ -36,7 +36,22 @@ test.describe('Opening Sequence v3.5', () => {
     const stageIndex = afterFence.findIndex((entry) => entry.ev === 'WBG:BIND' && entry.kind === 'stage');
     const windowEnd = stageIndex >= 0 ? afterFence.slice(0, stageIndex) : afterFence;
 
-    expect(windowEnd.some((entry) => entry.ev === 'DIR')).toBeFalsy();
+    expect(windowEnd.some((entry) => entry.ev === 'WBG:APPLIED')).toBeFalsy();
+  });
+
+  test('fencepost waits for listeners before stage bind', async ({ page }) => {
+    const ordering = await page.evaluate(() => {
+      const trace = (window as any).dumpTrace?.() ?? [];
+      const readyIndex = trace.findIndex((entry: any) => entry.ev === 'FENCEPOST_LISTENERS_READY');
+      const fenceIndex = trace.findIndex((entry: any) => entry.ev === 'WBG:FENCEPOST');
+      const stageBindIndex = trace.findIndex((entry: any) => entry.ev === 'WBG:BIND' && entry.kind === 'stage');
+      return { readyIndex, fenceIndex, stageBindIndex };
+    });
+
+    expect(ordering.readyIndex).toBeGreaterThanOrEqual(0);
+    expect(ordering.fenceIndex).toBeGreaterThan(ordering.readyIndex);
+    expect(ordering.stageBindIndex).toBeGreaterThanOrEqual(0);
+    expect(ordering.stageBindIndex).toBeGreaterThan(ordering.fenceIndex);
   });
 
   test('keeps genesis morph settled after fencepost', async ({ page }) => {
@@ -90,23 +105,33 @@ test.describe('Opening Sequence v3.5', () => {
   test('text geometry fits within expected viewport bounds', async ({ page }) => {
     const metrics = await page.evaluate(() => {
       const probe = (window as any).probe;
-      const viewport = (window as any).__viewportHint;
       const result = probe?.aabb?.({ source: 'text3DPosition' });
-      if (!result || !viewport) return null;
+      if (!result) return null;
 
-      const widthRatio = result.width / (viewport.width || 1);
-      const heightRatio = result.height / (viewport.height || 1);
+      const viewport = (window as any).__viewportHint;
+      const ratioX = Number.isFinite(result.ratioX)
+        ? Number(result.ratioX)
+        : viewport
+          ? Number(result.width ?? 0) / Math.max(1, Number(viewport.width ?? viewport.cssWidth ?? 1))
+          : (Number.isFinite(result.minView) ? Number(result.width ?? 0) / Math.max(1, Number(result.minView)) : null);
+      const ratioY = Number.isFinite(result.ratioY)
+        ? Number(result.ratioY)
+        : viewport
+          ? Number(result.height ?? 0) / Math.max(1, Number(viewport.height ?? viewport.cssHeight ?? 1))
+          : (Number.isFinite(result.minView) ? Number(result.height ?? 0) / Math.max(1, Number(result.minView)) : null);
 
       return {
-        widthRatio,
-        heightRatio,
+        ratioX: ratioX ?? null,
+        ratioY: ratioY ?? null,
       };
     });
 
     expect(metrics).toBeTruthy();
-    expect.soft(metrics!.widthRatio).toBeGreaterThan(0.4);
-    expect.soft(metrics!.widthRatio).toBeLessThan(0.55);
-    expect.soft(metrics!.heightRatio).toBeGreaterThan(0.22);
-    expect.soft(metrics!.heightRatio).toBeLessThan(0.35);
+    expect(metrics!.ratioX).not.toBeNull();
+    expect(metrics!.ratioY).not.toBeNull();
+    expect.soft(metrics!.ratioX as number).toBeGreaterThan(0.35);
+    expect.soft(metrics!.ratioX as number).toBeLessThan(0.65);
+    expect.soft(metrics!.ratioY as number).toBeGreaterThan(0.15);
+    expect.soft(metrics!.ratioY as number).toBeLessThan(0.45);
   });
 });

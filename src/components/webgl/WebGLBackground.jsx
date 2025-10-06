@@ -119,6 +119,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const blueprintRef = useRef(blueprint);
   const fitsLockedRef = useRef(false);
   const ignoreDirectivesRef = useRef(false);
+  const directiveOffRef = useRef(null);
+  const fenceReadyRef = useRef(false);
+  const pendingFencepostRef = useRef(false);
+  const pendingFenceDataRef = useRef(null);
+  const pendingFenceTimeoutRef = useRef(null);
 
   const logBind = useCallback((kind, meta = {}) => {
     const geo = geometryRef.current;
@@ -171,6 +176,62 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     });
   }, []);
 
+  const emitFencepostNow = useCallback((payload) => {
+    if (!payload) return;
+    trace('WBG:FENCEPOST', payload);
+    BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+  }, []);
+
+  const clearPendingFencepost = useCallback(() => {
+    pendingFencepostRef.current = false;
+    pendingFenceDataRef.current = null;
+    if (pendingFenceTimeoutRef.current) {
+      clearTimeout(pendingFenceTimeoutRef.current);
+      pendingFenceTimeoutRef.current = null;
+    }
+  }, []);
+
+  const flushPendingFencepost = useCallback(() => {
+    if (pendingFencepostRef.current && pendingFenceDataRef.current) {
+      emitFencepostNow(pendingFenceDataRef.current);
+      clearPendingFencepost();
+    }
+  }, [clearPendingFencepost, emitFencepostNow]);
+
+  const queueFencepost = useCallback(
+    (payload) => {
+      if (!payload) return;
+
+      if (fenceReadyRef.current) {
+        emitFencepostNow(payload);
+        clearPendingFencepost();
+        return;
+      }
+
+      pendingFencepostRef.current = true;
+      pendingFenceDataRef.current = payload;
+
+      if (pendingFenceTimeoutRef.current) {
+        clearTimeout(pendingFenceTimeoutRef.current);
+      }
+
+      pendingFenceTimeoutRef.current = setTimeout(() => {
+        if (!fenceReadyRef.current) {
+          const pending = pendingFenceDataRef.current;
+          trace('FENCEPOST_LISTENERS_READY', {
+            ...(pending || {}),
+            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            source: pending?.source ?? 'renderer-fallback',
+            fallback: true,
+          });
+          fenceReadyRef.current = true;
+          flushPendingFencepost();
+        }
+      }, 120);
+    },
+    [clearPendingFencepost, emitFencepostNow, flushPendingFencepost]
+  );
+
   const scheduleRuntimeSampling = useCallback(() => {
     for (let i = 0; i < 30; i += 1) {
       setTimeout(() => sampleRuntimeAABBOnce('WBG:RUNTIME'), 16 * i);
@@ -178,6 +239,19 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   }, [sampleRuntimeAABBOnce]);
 
   const { size, gl, camera } = useThree();
+
+  useEffect(() => {
+    const offReady = BeatBus?.on?.(EVENTS.FENCEPOST_LISTENERS_READY, (payload = {}) => {
+      fenceReadyRef.current = true;
+      trace('FENCEPOST_LISTENERS_READY', payload);
+      flushPendingFencepost();
+    });
+    return () => {
+      offReady?.();
+      fenceReadyRef.current = false;
+      clearPendingFencepost();
+    };
+  }, [clearPendingFencepost, flushPendingFencepost]);
 
   const applyRendererFits = useCallback((geo, viewport) => {
     const material = materialRef.current;
@@ -565,6 +639,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       geometryRef.current = geo;
       fitsLockedRef.current = false;
       if (isEmergence) {
+        fenceReadyRef.current = false;
+        clearPendingFencepost();
         ignoreDirectivesRef.current = false;
       }
       const mat = materialRef.current;
@@ -627,10 +703,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
-          trace('WBG:FENCEPOST', {
-            stage: raw.stageName || st || 'genesis',
-            source: 'renderer-blueprint',
-          });
           const mat = materialRef.current;
           const freezeUniform = mat?.uniforms?.uPostMorphFreeze;
           if (freezeUniform && freezeUniform.value !== 1.0) {
@@ -638,7 +710,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             mat.uniformsNeedUpdate = true;
             trace('WBG:FREEZE', { value: 1, source: 'blueprint' });
           }
-          BeatBus.emit(EVENTS.PARTICLES_EMERGED);
+          const payload = {
+            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            source: 'renderer-blueprint',
+            stage: raw.stageName || st || 'genesis',
+          };
+          queueFencepost(payload);
           emittedEmergedRef.current = true;
           emergencePendingRef.current = false;
           console.log('EMERGED once');
@@ -661,7 +738,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
-  }, [updateBandHeight, logBind, scheduleRuntimeSampling]);
+  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost]);
 
   // build material once atlas+blueprint exist
   useEffect(() => {
@@ -821,7 +898,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const currentStage = stageNameRef.current;
 
       trace('DIR', {
-        source: 'WBG',
+        source: 'WBG:APPLIED',
         morph: Number.isFinite(directive.morphProgress) ? clamp01(directive.morphProgress) : null,
         draw: Number.isFinite(directive.drawCount) ? directive.drawCount : null,
         active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
@@ -857,18 +934,23 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             emittedEmergedRef.current = true;
             emergencePendingRef.current = false;
             const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-            trace('WBG:FENCEPOST', {
-              stage: currentStage,
-              source: 'renderer-directive',
-              morph: v,
-            });
             ignoreDirectivesRef.current = true;
+            if (directiveOffRef.current) {
+              directiveOffRef.current();
+              directiveOffRef.current = null;
+            }
             if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
               uniforms.uPostMorphFreeze.value = 1.0;
               mat.uniformsNeedUpdate = true;
               trace('WBG:FREEZE', { value: 1, source: 'directive' });
             }
-            BeatBus.emit(EVENTS.PARTICLES_EMERGED, { at: now, source: 'renderer' });
+            const payload = {
+              at: now,
+              source: 'renderer-directive',
+              stage: currentStage,
+              morph: v,
+            };
+            queueFencepost(payload);
           }
         }
 
@@ -899,7 +981,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     };
 
     const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-    return () => off && off();
+    directiveOffRef.current = off;
+    return () => {
+      if (directiveOffRef.current) {
+        directiveOffRef.current();
+        directiveOffRef.current = null;
+      }
+    };
   }, []);
 
   // early-out fallback if not ready

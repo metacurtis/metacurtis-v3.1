@@ -262,6 +262,7 @@ class TheaterDirector {
     this.skipRequested = false;
     this._skipOrigin = null;
     this._sleepWaiters = new Set();
+    this._fencepostReadyEmitted = false;
 
     try {
       window.__canonFencepostSeen = false;
@@ -319,6 +320,7 @@ class TheaterDirector {
     this.cancelled = false;
     this.phase = 'starting';
     this.startTime = Date.now();
+    this._fencepostReadyEmitted = false;
 
     const openingSnapshot = this._getOpeningConfig();
     const snapshotTimeline = openingSnapshot?.timeline ?? {};
@@ -524,6 +526,14 @@ class TheaterDirector {
 
       if (waitForFencepost) {
         console.log(`   Waiting for renderer fencepost (<=${fencepostWaitMs}ms)`);
+        if (!this._fencepostReadyEmitted) {
+          const readyPayload = {
+            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            phase: 'opening',
+          };
+          BeatBus.emit(EVENTS.FENCEPOST_LISTENERS_READY, readyPayload);
+          this._fencepostReadyEmitted = true;
+        }
         const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, fencepostWaitMs);
         if (!fencepostReceived) {
           console.warn('   Renderer fencepost timeout, continuing anyway');

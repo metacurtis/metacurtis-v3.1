@@ -607,7 +607,7 @@ class ConsciousnessEngine {
           gaussianSigma: gaussian,
           tierHighlight: [1, 1, 1, tierHi],
         });
-        trace('DIR', {
+        trace('CE:DIR', {
           source: 'CE:timeline',
           morph: morphRounded,
           draw,
@@ -632,7 +632,7 @@ class ConsciousnessEngine {
             tierHighlight: [1, 1, 1, tierSettle],
             uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
           });
-          trace('DIR', {
+          trace('CE:DIR', {
             source: 'CE:timeline-final',
             morph: 1,
             draw: count,
@@ -656,7 +656,7 @@ class ConsciousnessEngine {
         gaussianSigma: sigmaBase,
         tierHighlight: [1, 1, 1, tierPeak],
       });
-      trace('DIR', {
+      trace('CE:DIR', {
         source: 'CE:timeline-prime',
         morph: 0,
         draw: Math.max(1, Math.round(count * 0.05)),
