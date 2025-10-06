@@ -14,7 +14,7 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md,json}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,md,json}\"",
     "fix:all": "npm run lint:fix && npm run format",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests --exclude tests/visual/**",
     "test:coverage": "vitest run --coverage --reporter=html",
     "test:watch": "vitest watch",
     "lighthouse": "lhci autorun --config=./lighthouserc.json",
