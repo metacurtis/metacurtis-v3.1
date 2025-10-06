@@ -12,17 +12,12 @@ test.describe('Opening Sequence v3.5', () => {
     await page.waitForFunction(() => Boolean((window as any).theaterDirector), { timeout: 20_000 });
 
     await page.evaluate(() => {
-      if (typeof (window as any).clearTrace === 'function') {
-        (window as any).clearTrace();
-      } else {
-        (window as any).__trace = [];
-      }
+      (window as any).clearTrace?.();
       (window as any).theaterDirector?.reset?.();
       (window as any).theaterDirector?.forceStart?.();
     });
 
     await waitForFencepostAndStage(page);
-    await page.mouse.move(1, 1);
   });
 
   test('no late directives after fencepost', async ({ page }) => {
@@ -55,7 +50,11 @@ test.describe('Opening Sequence v3.5', () => {
   });
 
   test('keeps genesis morph settled after fencepost', async ({ page }) => {
-    await page.waitForFunction(() => Boolean((window as any).__scrollOrchestrator), { timeout: 15_000 });
+    await page.waitForFunction(() => {
+      const orchestrator = (window as any).__scrollOrchestrator;
+      const material = (window as any).__consciousnessMaterial;
+      return Boolean(orchestrator && material?.uniforms?.uMorphProgress);
+    }, { timeout: 15_000 });
 
     const morphState = await page.evaluate(() => {
       const orchestrator = (window as any).__scrollOrchestrator;
@@ -103,28 +102,7 @@ test.describe('Opening Sequence v3.5', () => {
   });
 
   test('text geometry fits within expected viewport bounds', async ({ page }) => {
-    const metrics = await page.evaluate(() => {
-      const probe = (window as any).probe;
-      const result = probe?.aabb?.({ source: 'text3DPosition' });
-      if (!result) return null;
-
-      const viewport = (window as any).__viewportHint;
-      const ratioX = Number.isFinite(result.ratioX)
-        ? Number(result.ratioX)
-        : viewport
-          ? Number(result.width ?? 0) / Math.max(1, Number(viewport.width ?? viewport.cssWidth ?? 1))
-          : (Number.isFinite(result.minView) ? Number(result.width ?? 0) / Math.max(1, Number(result.minView)) : null);
-      const ratioY = Number.isFinite(result.ratioY)
-        ? Number(result.ratioY)
-        : viewport
-          ? Number(result.height ?? 0) / Math.max(1, Number(viewport.height ?? viewport.cssHeight ?? 1))
-          : (Number.isFinite(result.minView) ? Number(result.height ?? 0) / Math.max(1, Number(result.minView)) : null);
-
-      return {
-        ratioX: ratioX ?? null,
-        ratioY: ratioY ?? null,
-      };
-    });
+    const metrics = await sampleTextAabb(page);
 
     expect(metrics).toBeTruthy();
     expect(metrics!.ratioX).not.toBeNull();

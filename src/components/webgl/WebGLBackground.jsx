@@ -241,6 +241,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const { size, gl, camera } = useThree();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    window.__camera = camera;
+    return () => {
+      if (window.__camera === camera) {
+        window.__camera = null;
+      }
+    };
+  }, [camera]);
+
+  useEffect(() => {
     const offReady = BeatBus?.on?.(EVENTS.FENCEPOST_LISTENERS_READY, (payload = {}) => {
       fenceReadyRef.current = true;
       trace('FENCEPOST_LISTENERS_READY', payload);
