@@ -1,61 +1,47 @@
 import { test, expect } from '@playwright/test';
-
-async function waitForOpeningComplete(page: import('@playwright/test').Page) {
-  await page.waitForFunction(() => {
-    const trace = (window as any).__trace;
-    const hasFencepost = Array.isArray(trace) && trace.some((e: any) => e.ev === 'WBG:FENCEPOST');
-    const hasStageBind = Array.isArray(trace) && trace.some((e: any) => e.ev === 'WBG:BIND' && e.kind === 'stage');
-    if (!hasFencepost || !hasStageBind) return false;
-
-    const material = (window as any).__consciousnessMaterial;
-    const orchestrator = (window as any).__scrollOrchestrator;
-    return Boolean(material?.uniforms?.uMorphProgress && orchestrator);
-  }, { timeout: 20000 });
-}
-
-async function sampleTextAabb(page: import('@playwright/test').Page) {
-  return page.evaluate(() => {
-    const probe = (window as any).probe;
-    const result = probe?.aabb?.({ source: 'text3DPosition' });
-    if (!result) return null;
-    return {
-      width: Number(result.width ?? 0),
-      height: Number(result.height ?? 0),
-      depth: Number(result.depth ?? 0),
-      min: result.min ? { x: result.min.x, y: result.min.y, z: result.min.z } : null,
-      max: result.max ? { x: result.max.x, y: result.max.y, z: result.max.z } : null,
-    };
-  });
-}
+import { waitForFencepostAndStage, sampleTextAabb, dumpTrace } from './helpers';
 
 test.describe('Opening Sequence v3.5', () => {
+  test.setTimeout(45_000);
+
   test.beforeEach(async ({ page }) => {
     await page.route('**/*.mp3', (route) => route.fulfill({ status: 204, body: '' }));
-    await page.addInitScript(() => {
-      if (typeof window !== 'undefined') {
+
+    await page.goto('/', { waitUntil: 'networkidle' });
+
+    await page.waitForFunction(() => Boolean((window as any).theaterDirector), { timeout: 20_000 });
+
+    await page.evaluate(() => {
+      if (typeof (window as any).clearTrace === 'function') {
+        (window as any).clearTrace();
+      } else {
         (window as any).__trace = [];
       }
+      (window as any).theaterDirector?.reset?.();
+      (window as any).theaterDirector?.forceStart?.();
     });
-    await page.goto('/');
+
+    await waitForFencepostAndStage(page);
     await page.mouse.move(1, 1);
-    await waitForOpeningComplete(page);
   });
 
   test('no late directives after fencepost', async ({ page }) => {
-    const postFence = await page.evaluate(() => {
-      const trace = (window as any).dumpTrace?.() ?? [];
-      const fenceIndex = trace.findIndex((e: any) => e.ev === 'WBG:FENCEPOST');
-      if (fenceIndex === -1) return [];
-      const tail = trace.slice(fenceIndex + 1);
-      const stageIndex = tail.findIndex((e: any) => e.ev === 'WBG:BIND' && e.kind === 'stage');
-      const windowEnd = stageIndex >= 0 ? tail.slice(0, stageIndex) : tail;
-      return windowEnd.map((e: any) => ({ ev: e.ev, kind: e.kind ?? null }));
-    });
+    const trace = await dumpTrace(page);
+    const fenceIndex = trace.findIndex((entry) => entry.ev === 'WBG:FENCEPOST');
+    if (fenceIndex === -1) {
+      throw new Error('Fencepost event not found in trace');
+    }
 
-    expect(postFence.some((entry: any) => entry.ev === 'DIR')).toBeFalsy();
+    const afterFence = trace.slice(fenceIndex + 1);
+    const stageIndex = afterFence.findIndex((entry) => entry.ev === 'WBG:BIND' && entry.kind === 'stage');
+    const windowEnd = stageIndex >= 0 ? afterFence.slice(0, stageIndex) : afterFence;
+
+    expect(windowEnd.some((entry) => entry.ev === 'DIR')).toBeFalsy();
   });
 
   test('keeps genesis morph settled after fencepost', async ({ page }) => {
+    await page.waitForFunction(() => Boolean((window as any).__scrollOrchestrator), { timeout: 15_000 });
+
     const morphState = await page.evaluate(() => {
       const orchestrator = (window as any).__scrollOrchestrator;
       const material = (window as any).__consciousnessMaterial;
@@ -72,17 +58,17 @@ test.describe('Opening Sequence v3.5', () => {
   });
 
   test('movement freeze toggles around fencepost', async ({ page }) => {
-    const freezeEvents = await page.evaluate(() => {
-      const trace = (window as any).dumpTrace?.() ?? [];
-      return trace.filter((e: any) => e.ev === 'WBG:FREEZE').map((e: any) => ({ value: e.value, source: e.source }));
-    });
+    const trace = await dumpTrace(page);
+    const freezeEvents = trace
+      .filter((entry) => entry.ev === 'WBG:FREEZE')
+      .map((entry) => ({ value: entry.value, source: entry.source }));
 
     expect(freezeEvents.length).toBeGreaterThan(0);
-    expect(freezeEvents.some((event: any) => event.value === 1)).toBeTruthy();
-    expect(freezeEvents.some((event: any) => event.value === 0)).toBeTruthy();
+    expect(freezeEvents.some((event) => event.value === 1)).toBeTruthy();
+    expect(freezeEvents.some((event) => event.value === 0)).toBeTruthy();
 
-    const firstFreeze = freezeEvents.findIndex((event: any) => event.value === 1);
-    const firstRelease = freezeEvents.findIndex((event: any) => event.value === 0);
+    const firstFreeze = freezeEvents.findIndex((event) => event.value === 1);
+    const firstRelease = freezeEvents.findIndex((event) => event.value === 0);
     expect(firstRelease).toBeGreaterThan(firstFreeze);
   });
 
