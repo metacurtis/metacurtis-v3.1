@@ -2,46 +2,100 @@
 // ✅ PHASE 2A OPTIMIZATION: Transition Batching + Update Frequency Optimization
 // ✅ ATOMIC STAGE MANAGEMENT: Zero stale state with intelligent batching
 
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { createAtom } from './createAtom.js';
 
-// ✅ SST v2.1 STAGE DEFINITIONS
-const STAGE_NAMES = ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'];
+// Canonical stage order (v3.5) with fallback
+const CANONICAL_STAGE_ORDER =
+  Array.isArray(Canonical?.stageOrder) && Canonical.stageOrder.length
+    ? Canonical.stageOrder.slice()
+    : Object.keys(Canonical?.stages || {});
+
+const STAGE_NAMES = CANONICAL_STAGE_ORDER.length ? CANONICAL_STAGE_ORDER : ['genesis'];
+const STAGE_SET = new Set(STAGE_NAMES);
 const STAGE_COUNT = STAGE_NAMES.length;
 
-// ✅ ENHANCED: Transition batching configuration
+const CANONICAL_STAGE_MAP = STAGE_NAMES.reduce((acc, name) => {
+  acc[name] = Canonical?.stages?.[name] || null;
+  return acc;
+}, {});
+
+const INITIAL_STAGE_NAME = STAGE_NAMES[0] || 'genesis';
+const INITIAL_STAGE_INDEX = Math.max(0, STAGE_NAMES.indexOf(INITIAL_STAGE_NAME));
+
 const TRANSITION_CONFIG = {
-  batchDelay: 16, // ~60fps batching
-  maxBatchSize: 5, // Maximum transitions in one batch
-  smoothingFactor: 0.8, // Smooth progress updates
-  autoAdvanceInterval: 3000, // 3 seconds between auto advances
-  debounceTimeout: 100, // Debounce rapid stage changes
+  batchDelay: 16,
+  maxBatchSize: 5,
+  smoothingFactor: 0.8,
+  autoAdvanceInterval: 3000,
+  debounceTimeout: 100,
 };
 
-// ✅ INITIAL STATE
-const initialState = {
-  currentStage: 'genesis',
-  stageIndex: 0,
-  stageProgress: 0.0,
-  globalProgress: 0.0,
-  isTransitioning: false,
-  memoryFragmentsUnlocked: [],
-  metacurtisActive: false,
-  metacurtisVoiceLevel: 0.5,
-  lastTransition: 0,
-  autoAdvanceEnabled: false,
-  
-  // ✅ ENHANCED: Transition batching state
-  transitionBatch: [],
-  batchTimeout: null,
-  lastProgressUpdate: 0,
-  smoothedProgress: 0.0,
-  transitionHistory: [],
-  performanceMetrics: {
+function createEmptyPerformanceMetrics() {
+  return {
     transitionsPerSecond: 0,
     averageTransitionTime: 0,
-    totalTransitions: 0
+    totalTransitions: 0,
+    recentTransitions: [],
+    maxRecentTransitions: 10,
+  };
+}
+
+function createInitialState() {
+  return {
+    currentStage: INITIAL_STAGE_NAME,
+    stageIndex: INITIAL_STAGE_INDEX,
+    stageProgress: 0,
+    globalProgress: STAGE_COUNT > 1 ? INITIAL_STAGE_INDEX / (STAGE_COUNT - 1) : 0,
+    isTransitioning: false,
+    memoryFragmentsUnlocked: [],
+    metacurtisActive: false,
+    metacurtisVoiceLevel: 0.5,
+    lastTransition: 0,
+    lastStageChangeTs: 0,
+    autoAdvanceEnabled: false,
+    transitionBatch: [],
+    batchTimeout: null,
+    lastProgressUpdate: 0,
+    smoothedProgress: 0,
+    transitionHistory: [],
+    performanceMetrics: createEmptyPerformanceMetrics(),
+  };
+}
+
+const initialState = createInitialState();
+
+function resolveStageName(input) {
+  if (input == null) return null;
+
+  // Numeric index support (developer tooling)
+  if (typeof input === 'number' && Number.isFinite(input)) {
+    const idx = Math.max(0, Math.min(STAGE_COUNT - 1, Math.round(input)));
+    return STAGE_NAMES[idx] || null;
   }
-};
+
+  if (typeof input === 'string') {
+    const normalized = input.trim();
+    if (STAGE_SET.has(normalized)) return normalized;
+    const lowerMatch = STAGE_NAMES.find((name) => name.toLowerCase() === normalized.toLowerCase());
+    return lowerMatch || null;
+  }
+
+  if (typeof input === 'object') {
+    const candidates = [input.name, input.stage, input.id, input.slug, input.key, input.label];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string') {
+        const resolved = resolveStageName(candidate);
+        if (resolved) return resolved;
+      }
+    }
+
+    const refMatch = STAGE_NAMES.find((name) => CANONICAL_STAGE_MAP[name] === input);
+    if (refMatch) return refMatch;
+  }
+
+  return null;
+}
 
 // ✅ ENHANCED: Transition batching system
 class TransitionBatcher {
@@ -213,13 +267,7 @@ class AutoAdvanceController {
 // ✅ ENHANCED: Performance monitoring for transitions
 class TransitionPerformanceMonitor {
   constructor() {
-    this.metrics = {
-      transitionsPerSecond: 0,
-      averageTransitionTime: 0,
-      totalTransitions: 0,
-      recentTransitions: [],
-      maxRecentTransitions: 10
-    };
+    this.metrics = createEmptyPerformanceMetrics();
   }
   
   recordTransition(startTime, endTime) {
@@ -251,12 +299,7 @@ class TransitionPerformanceMonitor {
   }
   
   reset() {
-    this.metrics = {
-      transitionsPerSecond: 0,
-      averageTransitionTime: 0,
-      totalTransitions: 0,
-      recentTransitions: []
-    };
+    this.metrics = createEmptyPerformanceMetrics();
   }
 }
 
@@ -319,53 +362,59 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
   
   // ✅ STAGE NAVIGATION - Enhanced with batching
   const actions = {
-    setStage: (stageName) => {
-      const state = get();
-      const stageIndex = STAGE_NAMES.indexOf(stageName);
-      
+    setStage: (stageInput) => {
+      const stageName = resolveStageName(stageInput);
+      const stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+
       if (stageIndex === -1) {
-        console.warn(`[stageAtom] Invalid stage: ${stageName}`);
+        console.warn('[stageAtom] Invalid stage input', stageInput);
         return;
       }
-      
+
+      const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
       const updates = {
         currentStage: stageName,
         stageIndex,
-        globalProgress: stageIndex / (STAGE_COUNT - 1),
-        isTransitioning: true
+        globalProgress: progressBase,
+        isTransitioning: true,
+        lastStageChangeTs: timestamp,
       };
-      
+
       batchedSetState(updates, 'setStage');
-      
+
       // Clear transition flag after delay
       setTimeout(() => {
         batchedSetState({ isTransitioning: false }, 'clearTransition');
       }, 200);
-      
+
       if (import.meta.env.DEV) {
         console.log(`🎭 stageAtom: Stage set to ${stageName} (${stageIndex})`);
       }
     },
     
-    jumpToStage: (stageName) => {
-      const state = get();
-      const stageIndex = STAGE_NAMES.indexOf(stageName);
-      
+    jumpToStage: (stageInput) => {
+      const stageName = resolveStageName(stageInput);
+      const stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+
       if (stageIndex === -1) {
-        console.warn(`[stageAtom] Invalid stage: ${stageName}`);
+        console.warn('[stageAtom] Invalid stage input', stageInput);
         return;
       }
-      
+
+      const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
       const updates = {
         currentStage: stageName,
         stageIndex,
-        globalProgress: stageIndex / (STAGE_COUNT - 1),
+        globalProgress: progressBase,
         stageProgress: 0.0,
-        isTransitioning: false
+        isTransitioning: false,
+        lastStageChangeTs: timestamp,
       };
-      
+
       batchedSetState(updates, 'jumpToStage');
-      
+
       if (import.meta.env.DEV) {
         console.log(`🎭 stageAtom: Jumped to stage ${stageName} (${stageIndex})`);
       }
@@ -415,15 +464,28 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
     setGlobalProgress: (progress) => {
       const state = get();
       const clampedProgress = Math.max(0, Math.min(1, progress));
-      const stageIndex = Math.floor(clampedProgress * (STAGE_COUNT - 1));
-      const stageName = STAGE_NAMES[stageIndex];
-      
+      const canonicalStage = Canonical.getStageByScroll?.(clampedProgress);
+      let stageName = resolveStageName(canonicalStage);
+      let stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+
+      if (stageIndex === -1) {
+        stageIndex = Math.floor(clampedProgress * (STAGE_COUNT - 1));
+        stageIndex = Math.max(0, Math.min(STAGE_COUNT - 1, stageIndex));
+        stageName = STAGE_NAMES[stageIndex] || null;
+      }
+
+      if (!stageName) return;
+
       const updates = {
         globalProgress: clampedProgress,
         currentStage: stageName,
-        stageIndex
+        stageIndex,
       };
-      
+
+      if (stageName !== state.currentStage) {
+        updates.lastStageChangeTs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      }
+
       batchedSetState(updates, 'setGlobalProgress');
     },
     
@@ -434,10 +496,8 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
     
     // ✅ ENHANCED: Auto advance with intelligent controller
     setAutoAdvanceEnabled: (enabled) => {
-      const state = get();
-      
       batchedSetState({ autoAdvanceEnabled: enabled }, 'setAutoAdvance');
-      
+
       if (enabled) {
         autoAdvanceController.start();
       } else {
@@ -451,11 +511,13 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
     
     // ✅ ENHANCED: Memory fragments with batching
     unlockMemoryFragment: (fragmentId) => {
+      if (!fragmentId) return;
       const state = get();
-      const newFragments = [...state.memoryFragmentsUnlocked, fragmentId];
-      
+      const fragmentSet = new Set(state.memoryFragmentsUnlocked);
+      fragmentSet.add(fragmentId);
+
       batchedSetState({
-        memoryFragmentsUnlocked: newFragments
+        memoryFragmentsUnlocked: Array.from(fragmentSet)
       }, 'unlockFragment');
     },
     
@@ -477,7 +539,7 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
       autoAdvanceController.stop();
       performanceMonitor.reset();
       
-      setState(initialState, 'reset');
+      setState(createInitialState(), 'reset');
       
       if (import.meta.env.DEV) {
         console.log('🎭 stageAtom: Reset to initial state with cleanup');
@@ -501,6 +563,7 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         totalStages: STAGE_COUNT,
         isTransitioning: state.isTransitioning,
         autoAdvanceEnabled: state.autoAdvanceEnabled,
+        lastStageChangeTs: state.lastStageChangeTs,
         performanceMetrics: state.performanceMetrics,
         transitionHistory: state.transitionHistory
       };
