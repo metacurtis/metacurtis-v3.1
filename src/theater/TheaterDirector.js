@@ -161,6 +161,30 @@ class TheaterDirector {
     this._sleepWaiters.clear();
   }
 
+  _trackTimer(callback, delay = 0) {
+    if (typeof callback !== 'function') return null;
+    const safeDelay = Number.isFinite(delay) && delay > 0 ? delay : 0;
+    const id = setTimeout(() => {
+      this._activeTimers?.delete(id);
+      try {
+        callback();
+      } catch (err) {
+        if (import.meta?.env?.DEV) {
+          console.warn('[Director] timer callback failed', err);
+        }
+      }
+    }, safeDelay);
+    if (!this._activeTimers) this._activeTimers = new Set();
+    this._activeTimers.add(id);
+    return id;
+  }
+
+  _clearTimer(id) {
+    if (id == null) return;
+    clearTimeout(id);
+    this._activeTimers?.delete(id);
+  }
+
   _requestSkip(origin = 'keyboard') {
     if (this.skipRequested) return;
     this.skipRequested = true;
@@ -204,17 +228,31 @@ class TheaterDirector {
   }
 
   reset() {
+    try {
+      if (this.isRunning) this.cancel();
+    } catch (err) {
+      if (import.meta?.env?.DEV) {
+        console.warn('[Director] reset cancel failed', err);
+      }
+    }
+
     this._wakeSleepWaiters('reset');
     this._detachSkipListener();
 
-    // Clean up
+    if (this._activeTimers?.size) {
+      for (const id of this._activeTimers) {
+        clearTimeout(id);
+      }
+    }
+    this._activeTimers = new Set();
+
     try {
       this.scrollOrchestrator?.stop?.();
     } catch {}
-    
-    // Reset state
+
     this.phase = 'idle';
     this.cancelled = false;
+    this.completed = false;
     this.isRunning = false;
     this.hasRun = false;
     this.startTime = null;
@@ -224,12 +262,11 @@ class TheaterDirector {
     this.skipRequested = false;
     this._skipOrigin = null;
     this._sleepWaiters = new Set();
-    
-    // Reset global flags
+
     try {
       window.__canonFencepostSeen = false;
     } catch {}
-    
+
     return this;
   }
 
@@ -256,19 +293,19 @@ class TheaterDirector {
         this.waitingForViewport = false;
         unsubscribe?.();
         // Deferred start to avoid recursion
-        setTimeout(() => {
+        this._trackTimer(() => {
           if (!this.isRunning && !this.hasRun) this.start();
         }, 0);
       });
 
       // Fallback if viewport hint never arrives
-      setTimeout(() => {
+      this._trackTimer(() => {
         if (this.waitingForViewport) {
           console.warn('🎬 Director: Viewport hint timeout, starting anyway');
           this.viewportReady = true;
           this.waitingForViewport = false;
           unsubscribe?.();
-          setTimeout(() => {
+          this._trackTimer(() => {
             if (!this.isRunning && !this.hasRun) this.start();
           }, 0);
         }
@@ -319,6 +356,7 @@ class TheaterDirector {
       this.isRunning = false;
       if (this.phase !== 'cancelled' && this.phase !== 'error') {
         this.hasRun = true;
+        this.completed = true;
       }
     }
   }
@@ -612,12 +650,12 @@ class TheaterDirector {
       const complete = (reason = 'elapsed') => {
         if (settled) return;
         settled = true;
-        clearTimeout(timeoutId);
+        this._clearTimer(timeoutId);
         this._sleepWaiters.delete(complete);
         resolve(reason);
       };
 
-      timeoutId = setTimeout(() => complete('elapsed'), ms);
+      timeoutId = this._trackTimer(() => complete('elapsed'), ms);
       this._sleepWaiters.add(complete);
     });
   }
@@ -668,7 +706,7 @@ class TheaterDirector {
       let timeoutId;
 
       const handler = data => {
-        clearTimeout(timeoutId);
+        this._clearTimer(timeoutId);
         unsubscribe?.();
         console.log(`   Received: ${event}`);
         resolve(data);
@@ -676,7 +714,7 @@ class TheaterDirector {
 
       const unsubscribe = BeatBus.on(event, handler);
 
-      timeoutId = setTimeout(() => {
+      timeoutId = this._trackTimer(() => {
         console.warn(`⚠️ Director: ${event} timed out after ${timeout}ms`);
         unsubscribe?.();
         resolve(null);
@@ -756,7 +794,7 @@ if (typeof window !== 'undefined') {
     });
 
     // Fallback: start after 3 seconds if no viewport hint
-    setTimeout(() => {
+    director._trackTimer(() => {
       if (!director.hasRun && !director.isRunning && !director.viewportReady) {
         console.warn('🎬 Director: No viewport hint after 3s, starting anyway');
         director.forceStart();

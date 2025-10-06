@@ -236,6 +236,24 @@ class WebGLSink {
     this.store.add(incident);
   }
   
+  getErrorNames(gl) {
+    if (!gl) return {};
+    const names = {
+      [gl.NO_ERROR]: 'NO_ERROR',
+      [gl.INVALID_ENUM]: 'INVALID_ENUM',
+      [gl.INVALID_VALUE]: 'INVALID_VALUE',
+      [gl.INVALID_OPERATION]: 'INVALID_OPERATION',
+      [gl.OUT_OF_MEMORY]: 'OUT_OF_MEMORY',
+    };
+    if (typeof gl.INVALID_FRAMEBUFFER_OPERATION === 'number') {
+      names[gl.INVALID_FRAMEBUFFER_OPERATION] = 'INVALID_FRAMEBUFFER_OPERATION';
+    }
+    if (typeof gl.CONTEXT_LOST_WEBGL === 'number') {
+      names[gl.CONTEXT_LOST_WEBGL] = 'CONTEXT_LOST_WEBGL';
+    }
+    return names;
+  }
+  
       hookThree() {
     const sink = this;
     const THREE = window?.THREE;
