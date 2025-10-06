@@ -12,6 +12,7 @@ import SST from '@/config/sst-loader.js'; // keep consistent with ESM imports
 import { createSeededRandom } from '../utils/random.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { trace } from '@/dev/trace.js';
 
 // ===== Band probe helpers (pure, exportable) =================================
 const deg2rad = (d) => (d * Math.PI) / 180;
@@ -113,6 +114,24 @@ function aabbRatio(out, vw, vh) {
   const ratioX = vw ? halfX / vw : 0;
   const ratioY = vh ? halfY / vh : 0;
   return Math.max(ratioX, ratioY);
+}
+
+function aabbOf(arr) {
+  if (!arr || arr.length < 3) return null;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < arr.length; i += 3) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  if (minX === Infinity || minY === Infinity) return null;
+  return { w: maxX - minX, h: maxY - minY };
 }
 
 /** Compute centroid/AABB/fit/anisotropy for a flat Float32Array xyz... */
@@ -322,9 +341,14 @@ class ConsciousnessEngine {
     );
     this._listeners.push(
       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
+        this._rendererFencepostSeen = true;
         this._emergenceActive = false;
         this._emergenceDone = true;
-        this._rendererFencepostSeen = true;
+        if (this._emergenceRaf) {
+          if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this._emergenceRaf);
+          else clearTimeout(this._emergenceRaf);
+          this._emergenceRaf = null;
+        }
       })
     );
   }
@@ -540,6 +564,10 @@ class ConsciousnessEngine {
       const total = holdMs + totalPhases;
 
       const step = () => {
+        if (!this._emergenceActive || this._rendererFencepostSeen) {
+          this._emergenceRaf = null;
+          return;
+        }
         const elapsed = nowMs() - start;
         if (elapsed < holdMs) {
           this._emergenceRaf = schedule(step);
@@ -579,11 +607,22 @@ class ConsciousnessEngine {
           gaussianSigma: gaussian,
           tierHighlight: [1, 1, 1, tierHi],
         });
+        trace('DIR', {
+          source: 'CE:timeline',
+          morph: morphRounded,
+          draw,
+          pointSize,
+          gaussian,
+        });
         BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: morphRounded });
 
         if (elapsed < total) {
           this._emergenceRaf = schedule(step);
         } else {
+          if (!this._emergenceActive || this._rendererFencepostSeen) {
+            this._emergenceRaf = null;
+            return;
+          }
           BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
             morphProgress: 1,
             drawCount: count,
@@ -592,6 +631,13 @@ class ConsciousnessEngine {
             gaussianSigma: sigmaBase,
             tierHighlight: [1, 1, 1, tierSettle],
             uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
+          });
+          trace('DIR', {
+            source: 'CE:timeline-final',
+            morph: 1,
+            draw: count,
+            pointSize: pointSizeBase,
+            gaussian: sigmaBase,
           });
           BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 1 });
           this._emergenceRaf = null;
@@ -609,6 +655,13 @@ class ConsciousnessEngine {
         pointSize: pointSizeBase,
         gaussianSigma: sigmaBase,
         tierHighlight: [1, 1, 1, tierPeak],
+      });
+      trace('DIR', {
+        source: 'CE:timeline-prime',
+        morph: 0,
+        draw: Math.max(1, Math.round(count * 0.05)),
+        pointSize: pointSizeBase,
+        gaussian: sigmaBase,
       });
 
       step();
@@ -834,17 +887,17 @@ class ConsciousnessEngine {
           console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
         }
       } else {
-        targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false });
+        targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false, clampToViewCaps: false });
         this._lastText3DFallbackUsed = false;
       }
     } catch (err) {
       console.warn('⚠️ 3D text formation failed, falling back to constellation:', err);
-      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false });
+      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false, clampToViewCaps: false });
       usedFallback = false;
       this._lastText3DFallbackUsed = false;
     }
     if (!(targetPositions instanceof Float32Array)) {
-      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false });
+      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false, clampToViewCaps: false });
       usedFallback = false;
       this._lastText3DFallbackUsed = false;
     }
@@ -855,14 +908,6 @@ class ConsciousnessEngine {
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
-    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.92;
-    const fitTarget = {
-      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.9,
-      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.8,
-      default: fitDefault,
-    };
-    fitToViewXY(blueprint.text3DPositions, vw, vh, fitTarget);
-    fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitTarget);
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {
@@ -908,6 +953,14 @@ class ConsciousnessEngine {
 
     blueprint.mode = mode;
     blueprint.fastForward = !!fastForward;
+
+    trace('CE:EMIT', {
+      mode,
+      stage: 'genesis',
+      atmoAABB: aabbOf(blueprint.atmosphericPositions),
+      textAABB: aabbOf(blueprint.text3DPositions),
+      note: blueprint.metadata?.note || null,
+    });
 
     this._emitBlueprint(blueprint);
     this._logEmergenceSummary({ count: blueprintCount, ratios: sanitizedRatios, counts, quality });
@@ -960,20 +1013,6 @@ class ConsciousnessEngine {
           const targets = this._lastEmergenceTargets;
           blueprint.atmosphericPositions.set(targets);
           blueprint.text3DPositions.set(targets);
-
-          const vw = (this._viewportHint.width ?? 120) * 0.5;
-          const vh = (this._viewportHint.height ?? 90) * 0.5;
-          const fitFrac = (VC?.FIT_FRAC ?? 0.86);
-          const forceFit = !!VC?.FINAL_FIT_GENESIS;
-          const ratioNow = aabbRatio(blueprint.text3DPositions, vw, vh);
-
-          if (forceFit || ratioNow > fitFrac * 1.05) {
-            console.log('🧠 Engine: Overflow guard triggered (ratio:', ratioNow.toFixed(2), ')');
-            fitToViewXY(blueprint.text3DPositions, vw, vh, fitFrac);
-            fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitFrac);
-          } else {
-            console.log('🧠 Engine: Emergence band within bounds, preserve-as-is');
-          }
 
           this._lastEmergenceTargets = null;
           this._emergenceDone = false;
@@ -1263,6 +1302,7 @@ class ConsciousnessEngine {
       const gy = gauss() * ry;
       return [gx, gy];
     };
+    const clampToCaps = opts.clampToViewCaps !== false;
     const bandEnabled = opts.band ?? (VC?.BAND_ENABLED ?? true);
     const band = bandEnabled ? makeBandFrame(VC, rnd, gauss) : null;
     const bandHeight = Math.max(1, R * (VC?.BAND_FADE_WIDTH ?? 0.35));
@@ -1388,8 +1428,14 @@ class ConsciousnessEngine {
     if (fitFrac > 0) {
       const vwFit = (hint?.width ?? this._viewportHint.width) * 0.5;
       const vhFit = (hint?.height ?? this._viewportHint.height) * 0.5;
-      const rxFit = Math.min(vwFit, VC.VIEW_CAP_HALF_W) * fitFrac;
-      const ryFit = Math.min(vhFit, VC.VIEW_CAP_HALF_H) * fitFrac;
+      const rxLimit = clampToCaps && Number.isFinite(VC.VIEW_CAP_HALF_W)
+        ? Math.min(vwFit, VC.VIEW_CAP_HALF_W)
+        : vwFit;
+      const ryLimit = clampToCaps && Number.isFinite(VC.VIEW_CAP_HALF_H)
+        ? Math.min(vhFit, VC.VIEW_CAP_HALF_H)
+        : vhFit;
+      const rxFit = rxLimit * fitFrac;
+      const ryFit = ryLimit * fitFrac;
       let maxDX = 0;
       let maxDY = 0;
       for (let i = 0; i < out.length; i += 3) {

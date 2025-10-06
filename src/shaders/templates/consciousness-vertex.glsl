@@ -22,6 +22,9 @@ uniform float uDevicePixelRatio;
 uniform vec2 uResolution;
 uniform vec2 uAtmoFit;
 uniform vec2 uTextFit;
+uniform float uMoveDampStart;
+uniform float uMoveDampStartY;
+uniform float uPostMorphFreeze;
 
 // Varyings
 varying vec3 vPosition;
@@ -93,10 +96,24 @@ void main() {
   textPos.x *= uTextFit.x;
   textPos.y *= uTextFit.y;
 
-  vec3 basePos = mix(atmoPos, textPos, clamp(uMorphProgress, 0.0, 1.0));
+  float morph = clamp(uMorphProgress, 0.0, 1.0);
+  vec3 basePos = mix(atmoPos, textPos, morph);
   
   // Add movement
   vec3 movement = generateMovement(basePos, animationSeed, uTime, tierData);
+
+  float freeze = (uPostMorphFreeze > 0.5) ? 0.0 : 1.0;
+  float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morph);
+  float moveGainY = 1.0 - smoothstep(uMoveDampStartY, 1.0, morph);
+
+  movement.x *= moveGain * freeze;
+  movement.y *= moveGainY * freeze;
+  movement.z *= moveGain * freeze;
+
+  if (morph >= 0.985 || uPostMorphFreeze > 0.5) {
+    movement = vec3(0.0);
+  }
+
   vec3 finalPos = basePos + movement;
   vPosition = finalPos;
   
