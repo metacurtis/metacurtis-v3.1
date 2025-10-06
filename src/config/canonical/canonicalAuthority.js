@@ -24,6 +24,7 @@ function buildCanonical(source) {
   // Back-compat aliases for existing code paths
   for (const key of Object.keys(sst.stages || {})) {
     const st = sst.stages[key] || {};
+    if (!st.name) st.name = key;
     if (Array.isArray(st.palette) && !st.colors) st.colors = st.palette.slice(0,3);
     if (typeof st.particlesBase === 'number' && !st.particleCount) st.particleCount = st.particlesBase;
     // 👇 add scrollRange alias for validators/tools that still expect it
@@ -74,10 +75,15 @@ function buildCanonical(source) {
     const name = stageOrder[safe];
     return sst.stages?.[name] ?? null;
   };
-  const getStageByScroll = (progress=0) => {
-    const p = Math.max(0, Math.min(1, Number(progress)||0)) * 100;
+  const getStageByScroll = (progress = 0) => {
+    const raw = Number(progress);
+    const percent = Number.isFinite(raw)
+      ? (Math.abs(raw) > 1 ? Math.max(0, Math.min(100, raw)) : Math.max(0, Math.min(1, raw)) * 100)
+      : 0;
     const bps = sst.scrollAndMorph?.stageBreakpointsPercent || [0,14,28,42,56,70,84,100];
-    for (let i=0;i<bps.length-1;i++){ if (p>=bps[i] && p<bps[i+1]) return getStageByIndex(i); }
+    for (let i = 0; i < bps.length - 1; i++) {
+      if (percent >= bps[i] && percent < bps[i + 1]) return getStageByIndex(i);
+    }
     return getStageByIndex(stageOrder.length-1);
   };
   const isFeatureEnabled = (k) => Boolean(sst.features && sst.features[k]);

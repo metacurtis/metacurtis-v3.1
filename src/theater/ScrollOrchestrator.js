@@ -28,14 +28,14 @@ export default class ScrollOrchestrator {
     this._update = this._update.bind(this);
     this.running = false;
     this.lastStageIndex = -1;
-    this.morph = 0;
-    this.morphTarget = 0;
+    this.morph = 1;
+    this.morphTarget = 1;
     this.fragmentFired = new Set();
   
     this._rafId = 0;
     
     // throttle / change-detect emit guards
-    this._lastEmitVal = -1;
+    this._lastEmitVal = 1;
     this._lastEmitTs = 0;
   }
 
@@ -154,9 +154,13 @@ export default class ScrollOrchestrator {
       const end = bps[stageIdx + 1] ?? 100;
       const local = clamp01((easedPct - start) / Math.max(1, end - start));
 
-      // v3.3 morph: speedMultiplier=2.0
-      const speed = Canonical?.scrollAndMorph?.morphResponse?.speedMultiplier ?? 2.0;
-      this.morphTarget = clamp01(local * speed);
+      // v3.5 adjustment: keep genesis fully formed (no post-emergence un-morph)
+      if (stageIdx === 0) {
+        this.morphTarget = 1;
+      } else {
+        const speed = Canonical?.scrollAndMorph?.morphResponse?.speedMultiplier ?? 2.0;
+        this.morphTarget = clamp01(local * speed);
+      }
       
       // ensure the loop runs to converge to new target
       this._schedule();
@@ -215,11 +219,11 @@ export default class ScrollOrchestrator {
 
   // Reset to initial state
   reset() {
-    this.morph = 0;
-    this.morphTarget = 0;
+    this.morph = 1;
+    this.morphTarget = 1;
     this.lastStageIndex = -1;
     this.fragmentFired.clear();
-    this._lastEmitVal = -1;
+    this._lastEmitVal = 1;
     this._lastEmitTs = 0;
   }
 }
