@@ -118,6 +118,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const stageNameRef = useRef(stageName);
   const blueprintRef = useRef(blueprint);
   const fitsLockedRef = useRef(false);
+  const stageDefaultsAppliedRef = useRef(null);
   const ignoreDirectivesRef = useRef(false);
   const directiveOffRef = useRef(null);
   const fenceReadyRef = useRef(false);
@@ -351,6 +352,76 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     lastFitStampRef.current = { geoId, width, height };
     fitsLockedRef.current = true;
   }, [size.width, size.height]);
+
+  const applyStageDefaults = useCallback((stageKey) => {
+    const defaults = VC?.stageDefaults?.[stageKey];
+    const material = materialRef.current;
+    if (!defaults || !material?.uniforms) return;
+    if (stageDefaultsAppliedRef.current === stageKey) return;
+
+    const uniforms = material.uniforms;
+    let uniformsUpdated = false;
+
+    const applyFit = (fit, uniformKey) => {
+      if (!fit) return;
+      const { width = 1, height = 1 } = fit;
+      const target = uniforms[uniformKey];
+      if (target?.value?.set) {
+        target.value.set(width, height);
+      } else if (target) {
+        target.value = new THREE.Vector2(width, height);
+      } else {
+        uniforms[uniformKey] = { value: new THREE.Vector2(width, height) };
+      }
+      uniformsUpdated = true;
+      if (uniformKey === 'uAtmoFit') {
+        lastUniformsRef.current.atmo = [width, height];
+      }
+      if (uniformKey === 'uTextFit') {
+        lastUniformsRef.current.text = [width, height];
+      }
+    };
+
+    if (defaults.viewportFit) {
+      applyFit(defaults.viewportFit.atmo, 'uAtmoFit');
+      applyFit(defaults.viewportFit.text, 'uTextFit');
+      if (defaults.behaviors?.lockFits) {
+        fitsLockedRef.current = true;
+      }
+    }
+
+    if (typeof defaults.pointPx === 'number' && uniforms.uPointSize) {
+      const current = uniforms.uPointSize.value ?? 1;
+      const next = defaults.sizeMode === 'relative' ? current * defaults.pointPx : defaults.pointPx;
+      uniforms.uPointSize.value = next;
+      uniformsUpdated = true;
+    }
+
+    if (Array.isArray(defaults.tierScale) && uniforms.uTierHighlight?.value) {
+      const base = [1.0, 1.25, 1.5, 1.75];
+      const scaled = base.map((v, index) => v * (defaults.tierScale[index] ?? 1));
+      const target = uniforms.uTierHighlight.value;
+      for (let i = 0; i < Math.min(target.length, scaled.length); i += 1) {
+        target[i] = scaled[i];
+      }
+      uniformsUpdated = true;
+    }
+
+    if (defaults.palette) {
+      const { current, next, accent1, accent2 } = defaults.palette;
+      if (current && uniforms.uColorCurrent?.value?.set) uniforms.uColorCurrent.value.set(current);
+      if (next && uniforms.uColorNext?.value?.set) uniforms.uColorNext.value.set(next);
+      if (accent1 && uniforms.uColorAccent1?.value?.set) uniforms.uColorAccent1.value.set(accent1);
+      if (accent2 && uniforms.uColorAccent2?.value?.set) uniforms.uColorAccent2.value.set(accent2);
+      uniformsUpdated = true;
+    }
+
+    if (uniformsUpdated) {
+      material.uniformsNeedUpdate = true;
+    }
+
+    stageDefaultsAppliedRef.current = stageKey;
+  }, []);
 
   const lastBlueprintIdRef = useRef(null);
   const fallbackMorphRef = useRef(0);
@@ -691,6 +762,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
         emergencePendingRef.current = true;
         emittedEmergedRef.current = false;
+        stageDefaultsAppliedRef.current = null;
         if (DEV) {
           const extent = (key) => {
             const attr = geo.attributes[key];
@@ -730,6 +802,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           emergencePendingRef.current = false;
           console.log('EMERGED once');
         }
+        applyStageDefaults(raw.stageName || st || '');
       }
 
       if (!isEmergence) {
@@ -750,7 +823,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
-  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost]);
+  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, applyRendererFits, applyStageDefaults]);
 
   // build material once atlas+blueprint exist
   useEffect(() => {

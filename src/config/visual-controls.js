@@ -62,4 +62,43 @@ export const VC = {
   BAND_LENGTH_SCALE:  2.80,
   BAND_CORE_WIDTH:    0.06,
   BAND_FADE_WIDTH:    0.35,
+
+  stageDefaults: {
+    genesis: {
+      viewportFit: {
+        atmo: { width: 1.08, height: 1.04 },
+        text: { width: 0.92, height: 0.70 },
+      },
+      pointPx: 48,
+      sizeMode: 'absolute',
+      tierScale: [1.0, 0.92, 0.78, 0.65],
+      palette: {
+        current: '#b9ecff',
+        next: '#ffffff',
+        accent1: '#6cd7ff',
+        accent2: '#f0f6ff',
+      },
+      behaviors: {
+        lockFits: true,
+      },
+    },
+    discipline: {
+      viewportFit: {
+        atmo: { width: 0.96, height: 1.16 },
+        text: { width: 0.84, height: 0.88 },
+      },
+      pointPx: 44,
+      sizeMode: 'absolute',
+      tierScale: [0.96, 1.0, 0.82, 0.70],
+      palette: {
+        current: '#ffe1b8',
+        next: '#fff2cc',
+        accent1: '#ffb74d',
+        accent2: '#ffdeb3',
+      },
+      behaviors: {
+        lockFits: true,
+      },
+    },
+  },
 };
