@@ -31,6 +31,12 @@ const TRANSITION_CONFIG = {
   debounceTimeout: 100,
 };
 
+function getTimestamp() {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+
 function createEmptyPerformanceMetrics() {
   return {
     transitionsPerSecond: 0,
@@ -52,7 +58,7 @@ function createInitialState() {
     metacurtisActive: false,
     metacurtisVoiceLevel: 0.5,
     lastTransition: 0,
-    lastStageChangeTs: 0,
+    lastStageChangeTs: getTimestamp(),
     autoAdvanceEnabled: false,
     transitionBatch: [],
     batchTimeout: null,
@@ -371,14 +377,13 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         return;
       }
 
-      const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
       const updates = {
         currentStage: stageName,
         stageIndex,
         globalProgress: progressBase,
         isTransitioning: true,
-        lastStageChangeTs: timestamp,
+        lastStageChangeTs: getTimestamp(),
       };
 
       batchedSetState(updates, 'setStage');
@@ -402,7 +407,6 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         return;
       }
 
-      const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
       const updates = {
         currentStage: stageName,
@@ -410,7 +414,7 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         globalProgress: progressBase,
         stageProgress: 0.0,
         isTransitioning: false,
-        lastStageChangeTs: timestamp,
+        lastStageChangeTs: getTimestamp(),
       };
 
       batchedSetState(updates, 'jumpToStage');
@@ -483,7 +487,7 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
       };
 
       if (stageName !== state.currentStage) {
-        updates.lastStageChangeTs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        updates.lastStageChangeTs = getTimestamp();
       }
 
       batchedSetState(updates, 'setGlobalProgress');

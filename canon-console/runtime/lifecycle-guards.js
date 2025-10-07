@@ -2,12 +2,41 @@
 // Behavioral contract enforcement for event lifecycles
 // v3.6.1 - Fixed for opening sequence compatibility
 
+const enqueueMicrotask = typeof queueMicrotask === 'function'
+  ? queueMicrotask
+  : (fn) => Promise.resolve().then(fn);
+
+const PHASE_ALLOW_MAP = {
+  BUILD_EMERGENCE_BLUEPRINT: ['opening', 'emergence'],
+  PARTICLES_START_EMERGING: ['opening', 'emergence'],
+  PARTICLES_EMERGED: ['opening', 'emergence'],
+  BLUEPRINT_READY: ['emergence', 'runtime', 'complete'],
+  FENCEPOST_LISTENERS_READY: ['opening', 'emergence'],
+  RENDER_DIRECTIVE: ['emergence', 'runtime', 'complete'],
+  RENDERER_TUNE: ['opening', 'emergence', 'runtime', 'complete'],
+  MORPH_PROGRESS: ['opening', 'emergence', 'runtime', 'complete'],
+  STAGE_CHANGE: ['opening', 'emergence', 'runtime', 'complete'],
+  ENABLE_SCROLL: ['runtime', 'complete'],
+  LIFECYCLE_PHASE: ['*'],
+};
+
+const PIXEL_CRITICAL_EVENTS = new Set([
+  'RENDER_DIRECTIVE',
+  'RENDERER_TUNE',
+  'MORPH_PROGRESS',
+]);
+
 export class LifecycleGuards {
   constructor() {
     this.guards = new Map();
     this.violations = [];
     this.enabled = true;
     this.openingSequenceActive = false;
+    this.currentPhase = 'preload';
+    this.phaseQueue = [];
+    this.allowedPhases = PHASE_ALLOW_MAP;
+    this.beatBus = null;
+    this.emergenceLocked = false;
   }
 
   register(eventName, contract) {
@@ -16,12 +45,82 @@ export class LifecycleGuards {
       occurrences: 0,
       lastEmitter: null,
       lastContext: null,
-      firstOccurrence: null
+      firstOccurrence: null,
+      lastPayload: null
     });
+  }
+
+  isPhaseAllowed(eventName, phase) {
+    const normalized = typeof phase === 'string' ? phase.toLowerCase() : 'runtime';
+    const allowed = this.allowedPhases[eventName];
+    if (!allowed || allowed.includes('*')) return true;
+    if (normalized === 'emergence' && this.emergenceLocked && PIXEL_CRITICAL_EVENTS.has(eventName)) {
+      return false;
+    }
+    return allowed.includes(normalized);
+  }
+
+  _phaseQueueKey(eventName, payload) {
+    const stage = payload?.stage ?? payload?.to ?? payload?.target ?? '';
+    if (eventName === 'RENDER_DIRECTIVE') {
+      return `${eventName}::${stage || 'directive'}`;
+    }
+    if (eventName === 'BLUEPRINT_READY') {
+      return `${eventName}::${stage || ''}::${payload?.mode || ''}`;
+    }
+    return `${eventName}::${stage}`;
+  }
+
+  queueDeferredEvent(eventName, payload) {
+    const key = this._phaseQueueKey(eventName, payload);
+    const entry = { eventName, payload, key };
+    const idx = this.phaseQueue.findIndex((item) => item.key === key);
+    if (idx >= 0) {
+      this.phaseQueue[idx] = entry;
+    } else {
+      this.phaseQueue.push(entry);
+    }
+  }
+
+  flushQueuedEvents() {
+    if (!this.phaseQueue.length || !this.beatBus?.emit) return;
+    const remaining = [];
+    const toReplay = [];
+    for (const entry of this.phaseQueue) {
+      if (this.isPhaseAllowed(entry.eventName, this.currentPhase)) {
+        toReplay.push(entry);
+      } else {
+        remaining.push(entry);
+      }
+    }
+    this.phaseQueue = remaining;
+    toReplay.forEach((entry) => {
+      enqueueMicrotask(() => {
+        try {
+          this.beatBus.emit(entry.eventName, entry.payload);
+        } catch (err) {
+          if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[LifecycleGuard] replay failed for', entry.eventName, err);
+          }
+        }
+      });
+    });
+  }
+
+  updatePhase(phase) {
+    const normalized = typeof phase === 'string' ? phase.toLowerCase() : 'runtime';
+    this.currentPhase = normalized;
+    this.openingSequenceActive = normalized === 'opening' || normalized === 'emergence';
+    if (normalized === 'runtime' || normalized === 'complete' || normalized === 'opening') {
+      this.emergenceLocked = false;
+    }
+    this.flushQueuedEvents();
   }
 
   install(BeatBus, incidentCollector) {
     if (!BeatBus) return;
+
+    this.beatBus = BeatBus;
     
     // Register default guards
     this.registerDefaults();
@@ -30,8 +129,18 @@ export class LifecycleGuards {
     const originalEmit = BeatBus.emit.bind(BeatBus);
     BeatBus.emit = (eventName, payload) => {
       if (this.enabled) {
+        if (eventName === 'BUILD_EMERGENCE_BLUEPRINT' && payload?.fastForward) {
+          this.updatePhase('opening');
+        }
         const context = this.getCurrentContext();
-        const validation = this.validate(eventName, 'BeatBus', context);
+        const phase = this.currentPhase || context?.phase || 'runtime';
+
+        if (!this.isPhaseAllowed(eventName, phase)) {
+          this.queueDeferredEvent(eventName, payload);
+          return;
+        }
+
+        const validation = this.validate(eventName, 'BeatBus', context, payload);
         
         if (!validation.valid) {
           const incident = {
@@ -63,10 +172,17 @@ export class LifecycleGuards {
       return originalEmit(eventName, payload);
     };
     
-    // Monitor for opening sequence
-    BeatBus.on('CURSOR_SHOW', () => this.openingSequenceActive = true);
+    // Monitor for opening sequence / phase transitions
+    BeatBus.on('CURSOR_SHOW', () => this.updatePhase('opening'));
     BeatBus.on('PARTICLES_EMERGED', () => {
-      setTimeout(() => this.openingSequenceActive = false, 1000);
+      this.emergenceLocked = true;
+      this.updatePhase('emergence');
+    });
+    BeatBus.on('ENABLE_SCROLL', () => this.updatePhase('runtime'));
+    BeatBus.on('LIFECYCLE_PHASE', (payload = {}) => {
+      if (payload?.phase) {
+        this.updatePhase(payload.phase);
+      }
     });
     
     console.log('🛡️ Lifecycle Guards installed');
@@ -141,22 +257,12 @@ export class LifecycleGuards {
     });
   }
 
-  validate(eventName, emitter, context) {
+  validate(eventName, emitter, context, payload) {
     const guard = this.guards.get(eventName);
     if (!guard) return { valid: true };
-    
-    // During opening sequence, be more lenient
-    if (this.openingSequenceActive) {
-      const criticalEvents = ['QUALITY_CHANGE']; // Only truly critical events
-      if (!criticalEvents.includes(eventName)) {
-        guard.occurrences++;
-        guard.lastOccurrence = Date.now();
-        return { valid: true }; // Allow during opening
-      }
-    }
-    
+
     const now = Date.now();
-    
+
     // Track first occurrence
     if (!guard.firstOccurrence) {
       guard.firstOccurrence = now;
@@ -176,7 +282,17 @@ export class LifecycleGuards {
     // Check minimum interval
     if (guard.minInterval && guard.lastOccurrence) {
       const interval = now - guard.lastOccurrence;
-      if (interval < guard.minInterval) {
+      let skipIntervalCheck = false;
+
+      if (eventName === 'STAGE_CHANGE' && guard.lastPayload && payload) {
+        const sameDestination = guard.lastPayload?.to === payload?.to;
+        const atomInvolved = guard.lastPayload?.reason === 'atom' || payload?.reason === 'atom';
+        if (sameDestination && atomInvolved) {
+          skipIntervalCheck = true;
+        }
+      }
+
+      if (!skipIntervalCheck && interval < guard.minInterval) {
         return {
           valid: false,
           reason: `Too rapid (interval: ${interval}ms, minimum: ${guard.minInterval}ms)`,
@@ -216,7 +332,8 @@ export class LifecycleGuards {
     guard.lastOccurrence = now;
     guard.lastEmitter = emitter;
     guard.lastContext = context;
-    
+    guard.lastPayload = payload;
+
     return { valid: true };
   }
   
@@ -230,6 +347,7 @@ export class LifecycleGuards {
   }
   
   detectPhase() {
+    if (this.currentPhase) return this.currentPhase;
     // More sophisticated phase detection
     const hasStarted = this.guards.get('CURSOR_SHOW')?.occurrences > 0;
     const hasEmerged = this.guards.get('PARTICLES_EMERGED')?.occurrences > 0;
@@ -243,7 +361,7 @@ export class LifecycleGuards {
   }
   
   setOpeningActive(active) {
-    this.openingSequenceActive = active;
+    this.updatePhase(active ? 'opening' : 'runtime');
     console.log(`[LifecycleGuard] Opening sequence active: ${active}`);
   }
   
@@ -252,9 +370,13 @@ export class LifecycleGuards {
       guard.occurrences = 0;
       guard.firstOccurrence = null;
       guard.lastOccurrence = null;
+      guard.lastPayload = null;
     });
     this.violations = [];
     this.openingSequenceActive = false;
+    this.phaseQueue = [];
+    this.currentPhase = 'preload';
+    this.emergenceLocked = false;
   }
   
   getReport() {

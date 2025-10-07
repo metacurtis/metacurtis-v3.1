@@ -33,10 +33,35 @@ export default class ScrollOrchestrator {
     this.fragmentFired = new Set();
   
     this._rafId = 0;
-    
+    this._offBeatBus = [];
+    this.openingComplete = false;
+    this.currentPhase = 'preload';
+
     // throttle / change-detect emit guards
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
+
+    const lifecycleEvent = EVENTS.LIFECYCLE_PHASE || 'LIFECYCLE_PHASE';
+    if (typeof BeatBus?.on === 'function') {
+      const offPhase = BeatBus.on(lifecycleEvent, (payload = {}) => {
+        if (payload?.phase) {
+          this.currentPhase = payload.phase;
+          if (payload.phase === 'runtime' || payload.phase === 'complete') {
+            this.openingComplete = true;
+            if (this.running) this._onScroll();
+          } else if (payload.phase === 'opening' || payload.phase === 'emergence') {
+            this.openingComplete = false;
+          }
+        }
+      });
+      if (offPhase) this._offBeatBus.push(offPhase);
+
+      const offEnable = BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+        this.openingComplete = true;
+        if (this.running) this._onScroll();
+      });
+      if (offEnable) this._offBeatBus.push(offEnable);
+    }
   }
 
   start() {
@@ -124,6 +149,10 @@ export default class ScrollOrchestrator {
   }
 
   _onScroll() {
+    if (!this.openingComplete) {
+      this.morphTarget = 1;
+      return;
+    }
     try {
       const doc = document.documentElement;
       const denom = Math.max(1, doc.scrollHeight - doc.clientHeight);

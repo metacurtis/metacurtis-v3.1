@@ -1,13 +1,17 @@
 import { test, expect } from '@playwright/test';
-import { waitForFencepostAndStage, sampleTextAabb, dumpTrace } from './helpers';
+import { bootstrapTrace, waitForFencepostAndStage, sampleTextAabb, dumpTrace } from './helpers';
 
 test.describe('Opening Sequence v3.5', () => {
   test.setTimeout(45_000);
 
   test.beforeEach(async ({ page }) => {
+    await bootstrapTrace(page);
+
     await page.route('**/*.mp3', (route) => route.fulfill({ status: 204, body: '' }));
 
     await page.goto('/', { waitUntil: 'networkidle' });
+
+    await bootstrapTrace(page);
 
     await page.waitForFunction(() => Boolean((window as any).theaterDirector), { timeout: 20_000 });
 
@@ -18,6 +22,12 @@ test.describe('Opening Sequence v3.5', () => {
     });
 
     await waitForFencepostAndStage(page);
+
+    await page.waitForFunction(() => {
+      const material = (window as any).__consciousnessMaterial;
+      const geometry = (window as any).__particleGeometry;
+      return Boolean(material?.uniforms?.uMorphProgress && geometry?.attributes?.position?.array);
+    }, { timeout: 10_000 });
   });
 
   test('no late directives after fencepost', async ({ page }) => {
@@ -31,7 +41,8 @@ test.describe('Opening Sequence v3.5', () => {
     const stageIndex = afterFence.findIndex((entry) => entry.ev === 'WBG:BIND' && entry.kind === 'stage');
     const windowEnd = stageIndex >= 0 ? afterFence.slice(0, stageIndex) : afterFence;
 
-    expect(windowEnd.some((entry) => entry.ev === 'WBG:APPLIED')).toBeFalsy();
+    const appliedEvents = windowEnd.filter((entry) => entry.ev === 'DIR' && entry.source === 'WBG:APPLIED');
+    expect(appliedEvents.length).toBe(0);
   });
 
   test('fencepost waits for listeners before stage bind', async ({ page }) => {

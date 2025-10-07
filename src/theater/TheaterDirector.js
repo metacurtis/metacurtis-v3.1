@@ -24,6 +24,8 @@ const DEFAULT_OPENING_EMERGENCE = {
   source: 'viewportSpread',
 };
 
+const LIFECYCLE_PHASE_EVENT = EVENTS.LIFECYCLE_PHASE || 'LIFECYCLE_PHASE';
+
 const SKIP_KEY_MAP = {
   SPACE: { codes: ['Space'], keys: [' ', 'Spacebar'] },
   ENTER: { codes: ['Enter', 'NumpadEnter'], keys: ['Enter'] },
@@ -494,10 +496,17 @@ class TheaterDirector {
       }
 
       // ───────────────── Phase 5: Emergence (viewport → constellation)
-      this.phase = 'emergence';
+      this.phase = 'opening';
+      BeatBus.emit(LIFECYCLE_PHASE_EVENT, { phase: 'opening', source: 'director' });
       console.log('   Phase: Particle emergence (SST governed)');
 
       const viewportHint = await this._ensureViewportHint();
+
+      await Promise.resolve();
+      if (this.cancelled) return;
+
+      this.phase = 'emergence';
+      BeatBus.emit(LIFECYCLE_PHASE_EVENT, { phase: 'emergence', source: 'director' });
 
       BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
         mode: emergenceConfig.mode,
@@ -570,6 +579,8 @@ class TheaterDirector {
         pulseOnce: 1,
       });
 
+      this.phase = 'runtime';
+      BeatBus.emit(LIFECYCLE_PHASE_EVENT, { phase: 'runtime', source: 'director' });
       BeatBus.emit(EVENTS.ENABLE_SCROLL);
       
       if (!this.scrollOrchestrator) {
@@ -579,6 +590,7 @@ class TheaterDirector {
       this.monitorFragments();
 
       this.phase = 'complete';
+      BeatBus.emit(LIFECYCLE_PHASE_EVENT, { phase: 'complete', source: 'director' });
       const elapsed = Date.now() - this.startTime;
       console.log('🎬 Director: Opening complete → user-driven experience');
       if (typeof opening?.totalDurationMs === 'number') {

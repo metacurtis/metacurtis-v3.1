@@ -19,9 +19,13 @@ export const EVENTS = {
   FENCEPOST_LISTENERS_READY: 'FENCEPOST_LISTENERS_READY',
 
   // Renderer tuning & morph
+  RENDER_DIRECTIVE: 'RENDER_DIRECTIVE',          // { morphProgress, drawCount, activeCount, ... }
   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }
   PARTICLE_PHASE: 'PARTICLE_PHASE',              // { name }
   MORPH_PROGRESS: 'MORPH_PROGRESS',              // { value: 0..1 }
+
+  // Lifecycle phases (director → guard)
+  LIFECYCLE_PHASE: 'LIFECYCLE_PHASE',            // { phase: 'preload'|'opening'|'emergence'|'runtime'|'complete', source }
 
   // Stage / narrative control
   START_NARRATIVE: 'START_NARRATIVE',            // { id?, stage? }

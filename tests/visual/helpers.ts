@@ -1,5 +1,82 @@
 import type { Page } from '@playwright/test';
 
+export async function bootstrapTrace(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as any;
+
+    const ensureBuffer = () => {
+      if (!Array.isArray(w.__trace)) {
+        w.__trace = [];
+      }
+      return w.__trace;
+    };
+
+    const createDump = () => () => {
+      const buf = ensureBuffer();
+      return Array.isArray(buf) ? buf.slice() : [];
+    };
+
+    const createClear = () => () => {
+      w.__trace = [];
+      return w.__trace;
+    };
+
+    ensureBuffer();
+
+    if (typeof w.dumpTrace !== 'function') {
+      w.dumpTrace = createDump();
+    }
+
+    if (typeof w.clearTrace !== 'function') {
+      w.clearTrace = createClear();
+    }
+  });
+
+  const url = page.url();
+  if (!url || url === 'about:blank') {
+    // First call executed before navigation; init script will run once the page loads.
+    return;
+  }
+
+  await page.evaluate(() => {
+    const w = window as any;
+
+    const ensureBuffer = () => {
+      if (!Array.isArray(w.__trace)) {
+        w.__trace = [];
+      }
+      return w.__trace;
+    };
+
+    const dump = () => {
+      const buf = ensureBuffer();
+      return Array.isArray(buf) ? buf.slice() : [];
+    };
+
+    const clear = () => {
+      w.__trace = [];
+      return w.__trace;
+    };
+
+    ensureBuffer();
+
+    if (typeof w.dumpTrace !== 'function') {
+      w.dumpTrace = dump;
+    }
+
+    if (typeof w.clearTrace !== 'function') {
+      w.clearTrace = clear;
+    }
+
+    return true;
+  });
+
+  await page.waitForFunction(() => {
+    const w = window as any;
+    return typeof w.dumpTrace === 'function' && typeof w.clearTrace === 'function';
+  }, { timeout: 10_000 });
+}
+
 export async function waitForFencepostAndStage(page: Page, timeout = 30_000) {
   await page.waitForFunction(() => {
     const dump = (window as any).dumpTrace;
@@ -8,11 +85,7 @@ export async function waitForFencepostAndStage(page: Page, timeout = 30_000) {
     const readyIndex = trace.findIndex((entry: any) => entry?.ev === 'FENCEPOST_LISTENERS_READY');
     const fenceIndex = trace.findIndex((entry: any) => entry?.ev === 'WBG:FENCEPOST');
     const stageIndex = trace.findIndex((entry: any) => entry?.ev === 'WBG:BIND' && entry?.kind === 'stage');
-    if (readyIndex < 0 || fenceIndex <= readyIndex || stageIndex <= fenceIndex) return false;
-
-    const material = (window as any).__consciousnessMaterial;
-    const geometry = (window as any).__particleGeometry;
-    return Boolean(material?.uniforms?.uMorphProgress && geometry?.attributes?.position?.array);
+    return readyIndex >= 0 && fenceIndex > readyIndex && stageIndex > fenceIndex;
   }, { timeout });
 }
 

@@ -734,14 +734,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       if (!isEmergence) {
         requestAnimationFrame(() => {
-          const matNext = materialRef.current;
-          const freezeNext = matNext?.uniforms?.uPostMorphFreeze;
-          if (freezeNext && freezeNext.value !== 0.0) {
-            freezeNext.value = 0.0;
-            matNext.uniformsNeedUpdate = true;
-            trace('WBG:FREEZE', { value: 0, source: 'stage' });
-          }
-          ignoreDirectivesRef.current = false;
+          requestAnimationFrame(() => {
+            const matNext = materialRef.current;
+            const freezeNext = matNext?.uniforms?.uPostMorphFreeze;
+            if (freezeNext && freezeNext.value !== 0.0) {
+              freezeNext.value = 0.0;
+              matNext.uniformsNeedUpdate = true;
+              trace('WBG:FREEZE', { value: 0, source: 'stage' });
+            }
+            ignoreDirectivesRef.current = false;
+          });
         });
       }
     };
@@ -785,8 +787,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uResolution:     { value: new THREE.Vector2(1, 1) },
           uAtmoFit:        { value: new THREE.Vector2(1, 1) },
           uTextFit:        { value: new THREE.Vector2(1, 1) },
-          uMoveDampStart:  { value: 0.96 },
-          uMoveDampStartY: { value: 0.9 },
+          uMoveDampStart:  { value: 0.975 },
+          uMoveDampStartY: { value: 0.965 },
           uPostMorphFreeze: { value: 0.0 },
           uActiveCount:    { value: blueprintCount },
           uTierCutoff:     { value: blueprintCount || 15000 },

@@ -110,7 +110,7 @@ void main() {
   movement.y *= moveGainY * freeze;
   movement.z *= moveGain * freeze;
 
-  if (morph >= 0.985 || uPostMorphFreeze > 0.5) {
+  if (morph >= 0.98 || uPostMorphFreeze > 0.5) {
     movement = vec3(0.0);
   }
 
