@@ -12,6 +12,11 @@ uniform float uFadeProgress;
 uniform float uGaussianSigma;
 uniform float uBandHeight;
 uniform float uBandFade;
+uniform float uFlickerProb;
+uniform float uFlickerMs;
+uniform float uLockWobble;
+uniform float uPulseHz;
+uniform float uPulseGain;
 
 // Varyings
 varying vec3 vPosition;
@@ -21,6 +26,11 @@ varying vec2 vAtlasUVOffset;
 varying float vTierID;
 varying float vSizeMultiplier;
 varying float vParticleIndex;
+varying float vTier;
+varying float vPulsePhase;
+
+const float PI = 3.14159265359;
+const float TWO_PI = 6.28318530718;
 
 float gaussianFalloff(vec2 coord, float sigma) {
   vec2 centered = coord - 0.5;
@@ -34,6 +44,10 @@ vec4 sampleAtlas(vec2 uvOffset, vec2 pointCoord) {
   return texture2D(uAtlasTexture, uv);
 }
 
+float rand1(vec2 co) {
+  return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 void main() {
   // Fade particles beyond active count
   if (vParticleIndex >= uActiveCount) {
@@ -44,7 +58,7 @@ void main() {
   vec4 sprite = sampleAtlas(vAtlasUVOffset, gl_PointCoord);
   if (sprite.a < 0.01) discard;
 
-  // Core glow accent for galactic band feel
+  // Band glow accent
   float fade = clamp(uBandFade, 0.0, 1.0);
   float distFromBandCenter = abs(vPosition.y);
   float bandHalfHeight = max(0.35, uBandHeight * 0.65);
@@ -54,21 +68,29 @@ void main() {
   float tierGlowBoost = vTierID > 2.5 ? 2.4 : (vTierID > 1.5 ? 1.8 : 1.0);
   vec3 glowGradient = mix(vec3(0.0, 0.95, 0.6), vec3(0.0, 1.0, 0.0), coreStrength);
   
-  // Mix colors based on scroll progress
+  // Mix base colors
   vec3 color = mix(uColorCurrent, uColorNext, vBlend);
-  
-  // Add tier-based color variation
+
+  // Tier-based palette accents
   if (vTierID > 2.5) {
     color = mix(color, uColorAccent1, 0.3);
   } else if (vTierID > 1.5) {
     color = mix(color, uColorAccent2, 0.2);
   }
-  
-  // Apply gaussian edge falloff
+
+  float tier = clamp(vTier, 0.0, 3.0);
+
+  // Tier 2 structural lock wobble (color space only)
+  if (tier > 1.5 && tier < 2.5) {
+    float wob = sin(uTime * PI * 0.8 + vPosition.x * 0.1);
+    color += color * (uLockWobble * wob);
+  }
+
+  // gaussian sprite falloff
   float sigma = uGaussianSigma > 0.0 ? uGaussianSigma : 2.5;
   float edgeFade = gaussianFalloff(gl_PointCoord, sigma);
 
-  // Add subtle shimmer and additive core glow
+  // base shimmer and additive halo
   float shimmer = 1.0 + sin(uTime * 2.0 + vParticleIndex * 0.1) * 0.05;
   float twinkle = 1.0 + sin(uTime * 5.0 + vParticleIndex * 0.03) * 0.03;
   vec3 finalColor = color * sprite.rgb * shimmer * twinkle;
@@ -78,8 +100,28 @@ void main() {
   finalColor += haloTint * (haloStrength * 0.25);
   finalColor += ambientGlow;
 
+  // Tier 3 vertexPulse — slower but noticeable
+  if (tier > 2.5) {
+    float pulse = 0.5 + 0.5 * sin(uTime * TWO_PI * uPulseHz + vPulsePhase * TWO_PI);
+    finalColor += finalColor * (pulse * uPulseGain);
+  }
+
+  // Tier 1 flicker — slower cadence, more pronounced
+  float brightnessBoost = 1.0;
+  if (tier > 0.5 && tier < 1.5) {
+    float window = max(uFlickerMs, 1.0) * 0.001;
+    float bucket = floor(uTime / window);
+    float r = rand1(gl_FragCoord.xy * 0.071 + bucket * 0.37);
+    if (r < uFlickerProb) {
+      float phase = fract(uTime / window);
+      float envelope = smoothstep(0.0, 0.35, phase) * smoothstep(1.0, 0.65, phase);
+      brightnessBoost += 0.7 * envelope;
+    }
+  }
+  finalColor *= brightnessBoost;
+
   // Slightly elevate starfield opacity for Tier 0
-  float tierOpacityBoost = vTierID < 0.5 ? 1.6 : (vTierID < 1.5 ? 1.1 : 1.0);
+  float tierOpacityBoost = tier < 0.5 ? 1.6 : (tier < 1.5 ? 1.1 : 1.0);
   float baseOpacity = vAlpha * tierOpacityBoost;
   float alpha = baseOpacity * sprite.a * edgeFade * uFadeProgress;
 

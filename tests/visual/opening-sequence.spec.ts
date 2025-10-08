@@ -123,4 +123,27 @@ test.describe('Opening Sequence v3.5', () => {
     expect.soft(metrics!.ratioY as number).toBeGreaterThan(0.15);
     expect.soft(metrics!.ratioY as number).toBeLessThan(0.45);
   });
+
+  test('genesis behavior uniforms set at stage bind', async ({ page }) => {
+    await waitForFencepostAndStage(page);
+    const uniforms = await page.evaluate(() => {
+      const u = (window as any).__consciousnessMaterial?.uniforms || {};
+      return {
+        uDriftAmp: u.uDriftAmp?.value?.toArray?.() || null,
+        uDriftHz: u.uDriftHz?.value?.toArray?.() || null,
+        uFlickerProb: u.uFlickerProb?.value ?? null,
+        uFlickerMs: u.uFlickerMs?.value ?? null,
+        uLockWobble: u.uLockWobble?.value ?? null,
+        uPulseHz: u.uPulseHz?.value ?? null,
+        uPulseGain: u.uPulseGain?.value ?? null,
+      };
+    });
+
+    expect(uniforms.uDriftAmp).toBeTruthy();
+    expect(uniforms.uDriftHz).toBeTruthy();
+    expect(uniforms.uFlickerProb).toBeGreaterThan(0);
+    expect(uniforms.uFlickerMs).toBeGreaterThan(0);
+    expect(uniforms.uPulseHz).toBeGreaterThan(0);
+    expect(uniforms.uPulseGain).toBeGreaterThan(0);
+  });
 });

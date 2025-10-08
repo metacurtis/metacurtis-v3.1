@@ -1039,6 +1039,21 @@
       "harmony": "FLOW STATE",
       "transcendence": "CONSCIOUSNESS"
     },
+    "stageDefaults": {
+      "genesis": {
+        "word": "HELLO CURTIS",
+        "depth": 0.3,
+        "behaviors": {
+          "driftAmp": [0.36, 0.22, 0.0, 0.05],
+          "driftHz": [0.22, 0.24, 0.15, 0.12],
+          "flickerProb": 0.015,
+          "flickerMs": 160,
+          "lockWobble": 0.05,
+          "pulseHz": 0.35,
+          "pulseGain": 0.36
+        }
+      }
+    },
     "camera": {
       "genesis": {
         "initial": {

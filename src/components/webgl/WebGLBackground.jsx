@@ -14,6 +14,7 @@ import { trace } from '@/dev/trace.js';
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
+import SST from '@/config/sst-loader.js';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
@@ -354,9 +355,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   }, [size.width, size.height]);
 
   const applyStageDefaults = useCallback((stageKey) => {
-    const defaults = VC?.stageDefaults?.[stageKey];
+    const fitDefaults = VC?.stageDefaults?.[stageKey];
+    const behaviorDefaults = SST?.visual?.stageDefaults?.[stageKey]?.behaviors;
     const material = materialRef.current;
-    if (!defaults || !material?.uniforms) return;
+    if (!material?.uniforms) return;
     if (stageDefaultsAppliedRef.current === stageKey) return;
 
     const uniforms = material.uniforms;
@@ -364,7 +366,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const applyFit = (fit, uniformKey) => {
       if (!fit) return;
-      const { width = 1, height = 1 } = fit;
+      const width = Number.isFinite(fit.width) ? fit.width : 1;
+      const height = Number.isFinite(fit.height) ? fit.height : 1;
       const target = uniforms[uniformKey];
       if (target?.value?.set) {
         target.value.set(width, height);
@@ -382,24 +385,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
     };
 
-    if (defaults.viewportFit) {
-      applyFit(defaults.viewportFit.atmo, 'uAtmoFit');
-      applyFit(defaults.viewportFit.text, 'uTextFit');
-      if (defaults.behaviors?.lockFits) {
+    if (fitDefaults?.viewportFit) {
+      applyFit(fitDefaults.viewportFit.atmo, 'uAtmoFit');
+      applyFit(fitDefaults.viewportFit.text, 'uTextFit');
+      if (fitDefaults.behaviors?.lockFits) {
         fitsLockedRef.current = true;
       }
     }
 
-    if (typeof defaults.pointPx === 'number' && uniforms.uPointSize) {
+    if (typeof fitDefaults?.pointPx === 'number' && uniforms.uPointSize) {
       const current = uniforms.uPointSize.value ?? 1;
-      const next = defaults.sizeMode === 'relative' ? current * defaults.pointPx : defaults.pointPx;
+      const next = fitDefaults.sizeMode === 'relative' ? current * fitDefaults.pointPx : fitDefaults.pointPx;
       uniforms.uPointSize.value = next;
       uniformsUpdated = true;
     }
 
-    if (Array.isArray(defaults.tierScale) && uniforms.uTierHighlight?.value) {
+    if (Array.isArray(fitDefaults?.tierScale) && uniforms.uTierHighlight?.value) {
       const base = [1.0, 1.25, 1.5, 1.75];
-      const scaled = base.map((v, index) => v * (defaults.tierScale[index] ?? 1));
+      const scaled = base.map((v, index) => v * (fitDefaults.tierScale[index] ?? 1.0));
       const target = uniforms.uTierHighlight.value;
       for (let i = 0; i < Math.min(target.length, scaled.length); i += 1) {
         target[i] = scaled[i];
@@ -407,14 +410,51 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       uniformsUpdated = true;
     }
 
-    if (defaults.palette) {
-      const { current, next, accent1, accent2 } = defaults.palette;
+    if (fitDefaults?.palette) {
+      const { current, next, accent1, accent2 } = fitDefaults.palette;
       if (current && uniforms.uColorCurrent?.value?.set) uniforms.uColorCurrent.value.set(current);
       if (next && uniforms.uColorNext?.value?.set) uniforms.uColorNext.value.set(next);
       if (accent1 && uniforms.uColorAccent1?.value?.set) uniforms.uColorAccent1.value.set(accent1);
       if (accent2 && uniforms.uColorAccent2?.value?.set) uniforms.uColorAccent2.value.set(accent2);
       uniformsUpdated = true;
     }
+
+    const setVec4 = (uniformKey, values, fallback) => {
+      const target = uniforms[uniformKey];
+      const vec = [
+        values?.[0] ?? fallback[0],
+        values?.[1] ?? fallback[1],
+        values?.[2] ?? fallback[2],
+        values?.[3] ?? fallback[3],
+      ];
+      if (target?.value?.set) {
+        target.value.set(vec[0], vec[1], vec[2], vec[3]);
+      } else if (target) {
+        target.value = new THREE.Vector4(vec[0], vec[1], vec[2], vec[3]);
+      } else {
+        uniforms[uniformKey] = { value: new THREE.Vector4(vec[0], vec[1], vec[2], vec[3]) };
+      }
+      uniformsUpdated = true;
+    };
+
+    const setFloat = (uniformKey, value, fallback) => {
+      const next = (value !== undefined && value !== null) ? value : fallback;
+      if (uniforms[uniformKey]) {
+        uniforms[uniformKey].value = next;
+      } else {
+        uniforms[uniformKey] = { value: next };
+      }
+      uniformsUpdated = true;
+    };
+
+    const behaviors = behaviorDefaults || {};
+    setVec4('uDriftAmp', behaviors.driftAmp, [0.36, 0.22, 0.0, 0.05]);
+    setVec4('uDriftHz', behaviors.driftHz, [0.22, 0.24, 0.15, 0.12]);
+    setFloat('uFlickerProb', behaviors.flickerProb, 0.015);
+    setFloat('uFlickerMs', behaviors.flickerMs, 160.0);
+    setFloat('uLockWobble', behaviors.lockWobble, 0.05);
+    setFloat('uPulseHz', behaviors.pulseHz, 0.35);
+    setFloat('uPulseGain', behaviors.pulseGain, 0.36);
 
     if (uniformsUpdated) {
       material.uniformsNeedUpdate = true;
@@ -863,6 +903,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uMoveDampStart:  { value: 0.975 },
           uMoveDampStartY: { value: 0.965 },
           uPostMorphFreeze: { value: 0.0 },
+          uDriftAmp:       { value: new THREE.Vector4(0.36, 0.22, 0.0, 0.05) },
+          uDriftHz:        { value: new THREE.Vector4(0.22, 0.24, 0.15, 0.12) },
+          uFlickerProb:    { value: 0.015 },
+          uFlickerMs:      { value: 160.0 },
+          uLockWobble:     { value: 0.05 },
+          uPulseHz:        { value: 0.35 },
+          uPulseGain:      { value: 0.36 },
           uActiveCount:    { value: blueprintCount },
           uTierCutoff:     { value: blueprintCount || 15000 },
           uFadeProgress:   { value: 1.0 },
