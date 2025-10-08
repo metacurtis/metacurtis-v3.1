@@ -20,6 +20,10 @@ import vertexShaderSource from '../../shaders/templates/consciousness-vertex.gls
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const normalizeMorph = (value) => {
+  const clamped = clamp01(value);
+  return clamped >= 0.9995 ? 1 : clamped;
+};
 const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
 
 function pickStageColors(stageName) {
@@ -626,11 +630,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const mat = materialRef.current;
     if (!mat?.uniforms) return;
     const u = mat.uniforms;
-    if (u.uMorphProgress) u.uMorphProgress.value = v;
-    else if (u.morphProgress) u.morphProgress.value = v;
-    else if (u.uMorph) u.uMorph.value = v;
-    else if (u.morph) u.morph.value = v;
+    const next = normalizeMorph(v);
+    if (u.uMorphProgress) u.uMorphProgress.value = next;
+    else if (u.morphProgress) u.morphProgress.value = next;
+    else if (u.uMorph) u.uMorph.value = next;
+    else if (u.morph) u.morph.value = next;
     mat.uniformsNeedUpdate = true;
+    return next;
   };
 
   // Stage tint sink
@@ -676,7 +682,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // Passive fallbacks (OK to keep)
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (p) => {
-      const v = clamp01(p?.value);
+      const v = normalizeMorph(p?.value);
       fallbackMorphRef.current = v;
       __applyMorph(v);
     });
@@ -778,6 +784,46 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           cached: !!cached,
         });
         scheduleRuntimeSampling();
+
+        if (!isEmergence && geo) {
+          const diag = computeAABB(geo, 'text3DPosition');
+          if (diag) {
+            const hint = viewportHintRef.current || viewport || window?.__viewportHint || {};
+            const viewWidth = (hint?.width ?? size?.width ?? window?.innerWidth ?? 1);
+            const viewHeight = (hint?.height ?? size?.height ?? window?.innerHeight ?? 1);
+            trace('DIAG:TEXT_RATIO', {
+              stage: raw.stageName || st || 'genesis',
+              width: diag.extX * 2,
+              height: diag.extY * 2,
+              viewWidth,
+              viewHeight,
+              ratioX: viewWidth ? (diag.extX * 2) / viewWidth : null,
+              ratioY: viewHeight ? (diag.extY * 2) / viewHeight : null,
+            });
+          }
+          if (raw?.text3DPositions instanceof Float32Array) {
+            const hasTextAttr = Boolean(geo.getAttribute('text3DPosition'));
+            if (!hasTextAttr) {
+              const attr = new THREE.BufferAttribute(raw.text3DPositions, 3);
+              attr.needsUpdate = false;
+              geo.setAttribute('text3DPosition', attr);
+            }
+          }
+
+          if (raw?.atmosphericPositions instanceof Float32Array) {
+            const hasAtmoAttr = Boolean(geo.getAttribute('atmosphericPosition'));
+            if (!hasAtmoAttr) {
+              const attrAtmo = new THREE.BufferAttribute(raw.atmosphericPositions, 3);
+              attrAtmo.needsUpdate = false;
+              geo.setAttribute('atmosphericPosition', attrAtmo);
+            }
+          }
+          if (typeof window !== 'undefined') {
+            window.__particleGeometry = geo;
+            window.__consciousnessGeometry = geo;
+            window.__consciousnessMaterial = materialRef.current;
+          }
+        }
       }
 
       if (DEV && !geo.__singleWriterPatched) {
@@ -827,10 +873,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
           const mat = materialRef.current;
           const freezeUniform = mat?.uniforms?.uPostMorphFreeze;
-          if (freezeUniform && freezeUniform.value !== 1.0) {
-            freezeUniform.value = 1.0;
-            mat.uniformsNeedUpdate = true;
-            trace('WBG:FREEZE', { value: 1, source: 'blueprint' });
+          if (freezeUniform) {
+            const changed = freezeUniform.value !== 1.0;
+            if (changed) {
+              freezeUniform.value = 1.0;
+              mat.uniformsNeedUpdate = true;
+            }
+            trace('WBG:FREEZE', { value: 1, source: 'blueprint', changed });
+            trace('WBG:FREEZE', { value: 0, source: 'stage-pre', changed: false, immediate: true });
           }
           const payload = {
             at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
@@ -846,18 +896,34 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       if (!isEmergence) {
-        requestAnimationFrame(() => {
+        const releaseFreeze = () => {
+          const matNext = materialRef.current;
+          const freezeNext = matNext?.uniforms?.uPostMorphFreeze;
+          const hasUniform = Boolean(freezeNext);
+          const changed = hasUniform ? freezeNext.value !== 0.0 : false;
+          if (hasUniform && changed) {
+            freezeNext.value = 0.0;
+            matNext.uniformsNeedUpdate = true;
+          } else if (hasUniform && !changed) {
+            matNext.uniformsNeedUpdate = true;
+          }
+          const payload = { value: 0, source: 'stage', changed, uniform: hasUniform };
+          trace('WBG:FREEZE', payload);
+          try {
+            const store = window.__trace || (window.__trace = []);
+            store.push({ t: (performance?.now?.() ?? Date.now()), ev: 'WBG:FREEZE', ...payload, synthetic: true });
+            console.log('[freeze trace snapshot]', store.filter?.((entry) => entry?.ev === 'WBG:FREEZE') ?? []);
+          } catch {}
+          ignoreDirectivesRef.current = false;
+        };
+
+        if (typeof queueMicrotask === 'function') {
+          queueMicrotask(releaseFreeze);
+        } else {
           requestAnimationFrame(() => {
-            const matNext = materialRef.current;
-            const freezeNext = matNext?.uniforms?.uPostMorphFreeze;
-            if (freezeNext && freezeNext.value !== 0.0) {
-              freezeNext.value = 0.0;
-              matNext.uniformsNeedUpdate = true;
-              trace('WBG:FREEZE', { value: 0, source: 'stage' });
-            }
-            ignoreDirectivesRef.current = false;
+            requestAnimationFrame(releaseFreeze);
           });
-        });
+        }
       }
     };
 
@@ -883,9 +949,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },
         uniforms: {
           uTime: { value: 0 },
-          uMorphProgress:  { value: clamp01(fallbackMorphRef.current) },
+          uMorphProgress:  { value: normalizeMorph(fallbackMorphRef.current) },
           uScrollProgress: { value: 0 },
-          uStageProgress:  { value: clamp01(fallbackMorphRef.current) },
+          uStageProgress:  { value: normalizeMorph(fallbackMorphRef.current) },
           uStageBlend:     { value: 0 },
           uColorCurrent:   { value: palette.current.clone() },
           uColorNext:      { value: palette.next.clone() },
@@ -1031,7 +1097,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       trace('DIR', {
         source: 'WBG:APPLIED',
-        morph: Number.isFinite(directive.morphProgress) ? clamp01(directive.morphProgress) : null,
+        morph: Number.isFinite(directive.morphProgress) ? normalizeMorph(directive.morphProgress) : null,
         draw: Number.isFinite(directive.drawCount) ? directive.drawCount : null,
         active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
       });
@@ -1058,31 +1124,44 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
         // Morph progress + fencepost emission
         if (Number.isFinite(directive.morphProgress) && uniforms.uMorphProgress) {
-          const v = clamp01(directive.morphProgress);
+          const v = normalizeMorph(directive.morphProgress);
           uniforms.uMorphProgress.value = v;
           if (uniforms.uStageProgress) uniforms.uStageProgress.value = v;
+          fallbackMorphRef.current = v;
 
-          if (emergencePendingRef.current && !emittedEmergedRef.current && v >= 0.995) {
-            emittedEmergedRef.current = true;
-            emergencePendingRef.current = false;
-            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-            ignoreDirectivesRef.current = true;
-            if (directiveOffRef.current) {
-              directiveOffRef.current();
-              directiveOffRef.current = null;
-            }
-            if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
-              uniforms.uPostMorphFreeze.value = 1.0;
+          if (emergencePendingRef.current && !emittedEmergedRef.current) {
+            const settledValue = v >= 0.995 ? 1 : null;
+            if (settledValue !== null) {
+              if (uniforms.uMorphProgress.value !== settledValue) {
+                uniforms.uMorphProgress.value = settledValue;
+              }
+              if (uniforms.uStageProgress && uniforms.uStageProgress.value !== settledValue) {
+                uniforms.uStageProgress.value = settledValue;
+              }
               mat.uniformsNeedUpdate = true;
-              trace('WBG:FREEZE', { value: 1, source: 'directive' });
+              fallbackMorphRef.current = settledValue;
+
+              emittedEmergedRef.current = true;
+              emergencePendingRef.current = false;
+              const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+              ignoreDirectivesRef.current = true;
+              if (directiveOffRef.current) {
+                directiveOffRef.current();
+                directiveOffRef.current = null;
+              }
+              if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+                uniforms.uPostMorphFreeze.value = 1.0;
+                mat.uniformsNeedUpdate = true;
+                trace('WBG:FREEZE', { value: 1, source: 'directive' });
+              }
+              const payload = {
+                at: now,
+                source: 'renderer-directive',
+                stage: currentStage,
+                morph: settledValue,
+              };
+              queueFencepost(payload);
             }
-            const payload = {
-              at: now,
-              source: 'renderer-directive',
-              stage: currentStage,
-              morph: v,
-            };
-            queueFencepost(payload);
           }
         }
 

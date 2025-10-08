@@ -77,7 +77,8 @@ void main() {
   textPos.y *= uTextFit.y;
 
   float morph = clamp(uMorphProgress, 0.0, 1.0);
-  vec3 basePos = mix(atmoPos, textPos, morph);
+  float morphClamped = (morph >= 0.995) ? 1.0 : morph;
+  vec3 basePos = mix(atmoPos, textPos, morphClamped);
 
   float tier = clamp(tierData, 0.0, 3.0);
   vTier = tier;
@@ -105,14 +106,14 @@ void main() {
   vec3 movement = drift;
 
   float freeze = (uPostMorphFreeze > 0.5) ? 0.0 : 1.0;
-  float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morph);
-  float moveGainY = 1.0 - smoothstep(uMoveDampStartY, 1.0, morph);
+  float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morphClamped);
+  float moveGainY = 1.0 - smoothstep(uMoveDampStartY, 1.0, morphClamped);
 
   movement.x *= moveGain * freeze;
   movement.y *= moveGainY * freeze;
   movement.z *= moveGain * freeze;
 
-  if (morph >= 0.98 || uPostMorphFreeze > 0.5) {
+  if (morphClamped >= 1.0 || uPostMorphFreeze > 0.5) {
     movement = vec3(0.0);
   }
 
@@ -134,5 +135,5 @@ void main() {
   vBlend = uScrollProgress;
 
   // Calculate alpha
-  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
+  vAlpha = opacityData * (0.5 + 0.5 * morphClamped);
 }

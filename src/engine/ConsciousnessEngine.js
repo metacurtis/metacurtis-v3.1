@@ -293,10 +293,12 @@ class ConsciousnessEngine {
     this._lastEmergenceTargets = null;
     this._emergenceRaf = null;
     this._pendingEmergenceBlueprint = null;
+    this._autoEmergenceRequested = false;
 
     // HMR safety
     this._listeners = [];
     this._initialized = false;
+    this._formationVersion = null;
 
     // Diagnostics
     this._eventLog = [];
@@ -394,6 +396,36 @@ class ConsciousnessEngine {
       aspect: aspect.toFixed(2),
       orientation,
     });
+
+    if (!this._autoEmergenceRequested
+      && !this._pendingEmergenceBlueprint
+      && !this._emergenceActive
+      && !this._emergenceDone) {
+      this._autoEmergenceRequested = true;
+      this._log('viewport_hint_auto_trigger', {
+        width: width.toFixed(1),
+        height: height.toFixed(1),
+        aspect: aspect.toFixed(2),
+      });
+
+      const emergenceOpts = {
+        mode: 'emergence',
+        source: 'viewport_hint_auto',
+        target: 'constellation',
+        viewportHint: this._viewportHint,
+        fastForward: false,
+      };
+
+      void (async () => {
+        try {
+          await this._onBuildEmergence(emergenceOpts);
+        } finally {
+          if (!this._pendingEmergenceBlueprint && !this._emergenceDone) {
+            this._autoEmergenceRequested = false;
+          }
+        }
+      })();
+    }
   }
 
   _onEnableScroll() {
@@ -442,6 +474,30 @@ class ConsciousnessEngine {
     }
     BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
     this._log('prewarm_complete', { key });
+  }
+
+  _getTextFormationScales() {
+    const base = Number.isFinite(VC?.TEXT_FORMATION_SCALE)
+      ? VC.TEXT_FORMATION_SCALE
+      : 1.0;
+    const x = Number.isFinite(VC?.TEXT_FORMATION_SCALE_X)
+      ? VC.TEXT_FORMATION_SCALE_X
+      : 5.7;
+    const y = Number.isFinite(VC?.TEXT_FORMATION_SCALE_Y)
+      ? VC.TEXT_FORMATION_SCALE_Y
+      : 4.8;
+    const z = Number.isFinite(VC?.TEXT_FORMATION_SCALE_Z)
+      ? VC.TEXT_FORMATION_SCALE_Z
+      : base;
+    return { base, x, y, z };
+  }
+
+  _ensureFormationVersion(scales) {
+    const formationVersion = `${scales.x}|${scales.y}|${scales.z}`;
+    if (this._formationVersion !== formationVersion) {
+      this._formationVersion = formationVersion;
+      this.clearCache();
+    }
   }
 
   async _onBuildEmergence(payload = {}) {
@@ -830,6 +886,91 @@ class ConsciousnessEngine {
     return { a, b };
   }
 
+  _finalizePositionsForViewport(arr, hint, {
+    fitFrac = VC?.FIT_FRAC ?? 0.92,
+    clampToCaps = true,
+    ensureMinHeightRatio = VC?.TEXT_MIN_HEIGHT_RATIO ?? 0.3,
+    maxVerticalStretch = VC?.TEXT_MAX_Y_STRETCH ?? 1.6,
+  } = {}) {
+    if (!(arr instanceof Float32Array) || arr.length < 3) return arr;
+
+    const n = arr.length / 3;
+    let cx = 0;
+    let cy = 0;
+    for (let i = 0; i < arr.length; i += 3) {
+      cx += arr[i];
+      cy += arr[i + 1];
+    }
+    cx /= n;
+    cy /= n;
+    if (cx || cy) {
+      for (let i = 0; i < arr.length; i += 3) {
+        arr[i] -= cx;
+        arr[i + 1] -= cy;
+      }
+    }
+
+    let maxX = 0;
+    let maxY = 0;
+    for (let i = 0; i < arr.length; i += 3) {
+      const ax = Math.abs(arr[i]);
+      const ay = Math.abs(arr[i + 1]);
+      if (ax > maxX) maxX = ax;
+      if (ay > maxY) maxY = ay;
+    }
+
+    const defaultHint = this._viewportHint || {};
+    const halfWBase = (hint?.width ?? defaultHint.width ?? 120) * 0.5;
+    const halfHBase = (hint?.height ?? defaultHint.height ?? 90) * 0.5;
+
+    let halfW = halfWBase;
+    let halfH = halfHBase;
+    if (clampToCaps) {
+      if (Number.isFinite(VC?.VIEW_CAP_HALF_W)) {
+        halfW = Math.min(halfW, VC.VIEW_CAP_HALF_W);
+      }
+      if (Number.isFinite(VC?.VIEW_CAP_HALF_H)) {
+        halfH = Math.min(halfH, VC.VIEW_CAP_HALF_H);
+      }
+    }
+
+    const minHalf = Math.min(halfW, halfH);
+    const targetHalf = minHalf * fitFrac;
+    const targetHalfX = Math.min(halfW * fitFrac, targetHalf);
+    const targetHalfY = Math.min(halfH * fitFrac, targetHalf);
+
+    const scaleX = maxX > 0 ? Math.min(1, targetHalfX / maxX) : 1;
+    let scaleY = maxY > 0 ? Math.min(1, targetHalfY / maxY) : 1;
+
+    if (scaleX !== 1 || scaleY !== 1) {
+      for (let i = 0; i < arr.length; i += 3) {
+        arr[i] *= scaleX;
+        arr[i + 1] *= scaleY;
+      }
+      maxX *= scaleX;
+      maxY *= scaleY;
+    }
+
+    const minDimFull = 2 * Math.min(halfWBase, halfHBase);
+    if (ensureMinHeightRatio && ensureMinHeightRatio > 0 && maxY > 0 && minDimFull > 0) {
+      const currentRatioY = (maxY * 2) / minDimFull;
+      if (currentRatioY < ensureMinHeightRatio) {
+        const neededStretch = ensureMinHeightRatio / Math.max(currentRatioY, 1e-6);
+        const allowedByTarget = maxY > 0 ? targetHalfY / maxY : Infinity;
+        const allowedByConfig = maxVerticalStretch ?? 1.0;
+        const stretch = Math.min(Math.max(neededStretch, 1), allowedByTarget, allowedByConfig);
+        if (stretch > 1 + 1e-3) {
+          for (let i = 1; i < arr.length; i += 3) {
+            arr[i] *= stretch;
+          }
+          maxY *= stretch;
+        }
+      }
+    }
+
+    return arr;
+  }
+
   _emitBlueprint(blueprint) {
     this._pendingEmergenceBlueprint = blueprint;
     this._lastBlueprint = blueprint;
@@ -902,12 +1043,31 @@ class ConsciousnessEngine {
       this._lastText3DFallbackUsed = false;
     }
 
+    const formationScales = this._getTextFormationScales();
+    this._ensureFormationVersion(formationScales);
+    if (targetPositions instanceof Float32Array) {
+      for (let i = 0; i < targetPositions.length; i += 3) {
+        targetPositions[i]     *= formationScales.x;
+        targetPositions[i + 1] *= formationScales.y;
+        targetPositions[i + 2] *= formationScales.z;
+      }
+    }
+
     const { a: atmH, b: tgtH } = this._harmonizeAttributeLengths(atmospheric, targetPositions);
     blueprint.atmosphericPositions.set(atmH);
     blueprint.text3DPositions.set(tgtH);
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
+    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.75;
+    const fitTarget = {
+      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.8,
+      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.45,
+      default: fitDefault,
+    };
+
+    fitToViewXY(blueprint.text3DPositions, vw, vh, fitTarget);
+    fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitTarget);
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {
@@ -1014,6 +1174,35 @@ class ConsciousnessEngine {
           blueprint.atmosphericPositions.set(targets);
           blueprint.text3DPositions.set(targets);
 
+          const vw = (this._viewportHint.width ?? 120) * 0.5;
+          const vh = (this._viewportHint.height ?? 90) * 0.5;
+          const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.75;
+          const fitTarget = {
+            x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.8,
+            y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.45,
+            default: fitDefault,
+          };
+          fitToViewXY(blueprint.text3DPositions, vw, vh, fitTarget);
+          fitToViewXY(blueprint.atmosphericPositions, vw, vh, fitTarget);
+
+          this.blueprintCache.set(cacheKey, blueprint);
+
+          if (typeof console !== 'undefined') {
+            const diag = aabbOf(blueprint.text3DPositions);
+            if (diag) {
+              const viewWidth = 2 * vw;
+              const viewHeight = 2 * vh;
+              const ratioX = viewWidth ? diag.w / viewWidth : null;
+              const ratioY = viewHeight ? diag.h / viewHeight : null;
+              console.log('🧠 Engine: post-emergence genesis fit', {
+                width: +diag.w.toFixed(3),
+                height: +diag.h.toFixed(3),
+                ratioX: ratioX !== null ? +ratioX.toFixed(3) : null,
+                ratioY: ratioY !== null ? +ratioY.toFixed(3) : null,
+              });
+            }
+          }
+
           this._lastEmergenceTargets = null;
           this._emergenceDone = false;
 
@@ -1101,6 +1290,8 @@ class ConsciousnessEngine {
     );
 
     const rnd = createSeededRandom(stageName);
+    const { base: TEXT_FORMATION_SCALE, x: TEXT_FORMATION_SCALE_X, y: TEXT_FORMATION_SCALE_Y, z: TEXT_FORMATION_SCALE_Z } = this._getTextFormationScales();
+    this._ensureFormationVersion({ x: TEXT_FORMATION_SCALE_X, y: TEXT_FORMATION_SCALE_Y, z: TEXT_FORMATION_SCALE_Z });
     for (let i = 0; i < particleCount; i++) {
       const j = i * 3;
 
@@ -1111,9 +1302,9 @@ class ConsciousnessEngine {
 
       // Text formation positions
       if (textFormation && j + 2 < textFormation.length) {
-        text3DPositions[j + 0] = textFormation[j + 0] * 4;
-        text3DPositions[j + 1] = textFormation[j + 1] * 4;
-        text3DPositions[j + 2] = textFormation[j + 2] * 4;
+        text3DPositions[j + 0] = textFormation[j + 0] * TEXT_FORMATION_SCALE_X;
+        text3DPositions[j + 1] = textFormation[j + 1] * TEXT_FORMATION_SCALE_Y;
+        text3DPositions[j + 2] = textFormation[j + 2] * TEXT_FORMATION_SCALE_Z;
       }
 
       animationSeeds[j + 0] = rnd();
@@ -1143,10 +1334,10 @@ class ConsciousnessEngine {
 
     const vw = (this._viewportHint.width ?? 120) * 0.5;
     const vh = (this._viewportHint.height ?? 90) * 0.5;
-    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.92;
+    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.75;
     const fitTarget = {
-      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.9,
-      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.8,
+      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.8,
+      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.45,
       default: fitDefault,
     };
     fitToViewXY(text3DPositions, vw, vh, fitTarget);
@@ -1170,6 +1361,19 @@ class ConsciousnessEngine {
         { atm: aabbExtents(atmosphericPositions) },
         { vw: +vw.toFixed(2), vh: +vh.toFixed(2) }
       );
+    }
+
+    const diag = aabbOf(text3DPositions);
+    if (diag) {
+      const ratioX = vw ? diag.w / (vw * 2) : null;
+      const ratioY = vh ? diag.h / (vh * 2) : null;
+      console.log('🧠 Engine: buildBlueprint AABB', {
+        stage: stageName,
+        width: +diag.w.toFixed(3),
+        height: +diag.h.toFixed(3),
+        ratioX: ratioX !== null ? +ratioX.toFixed(3) : null,
+        ratioY: ratioY !== null ? +ratioY.toFixed(3) : null,
+      });
     }
 
     return {
@@ -1406,54 +1610,12 @@ class ConsciousnessEngine {
       }
     }
 
-    // === recenter to centroid (pre-fit) -- avoids "corner dead space" ===
-    let cx = 0;
-    let cy = 0;
-    const n = out.length / 3 || 1;
-    for (let i = 0; i < out.length; i += 3) {
-      cx += out[i];
-      cy += out[i + 1];
-    }
-    cx /= n;
-    cy /= n;
-    if (cx || cy) {
-      for (let i = 0; i < out.length; i += 3) {
-        out[i] -= cx;
-        out[i + 1] -= cy;
-      }
-    }
-
-    // fit panoramic bounds so post-generation spread lands within viewport target
-    const fitFrac = VC?.FIT_FRAC ?? 0.92;
-    if (fitFrac > 0) {
-      const vwFit = (hint?.width ?? this._viewportHint.width) * 0.5;
-      const vhFit = (hint?.height ?? this._viewportHint.height) * 0.5;
-      const rxLimit = clampToCaps && Number.isFinite(VC.VIEW_CAP_HALF_W)
-        ? Math.min(vwFit, VC.VIEW_CAP_HALF_W)
-        : vwFit;
-      const ryLimit = clampToCaps && Number.isFinite(VC.VIEW_CAP_HALF_H)
-        ? Math.min(vhFit, VC.VIEW_CAP_HALF_H)
-        : vhFit;
-      const rxFit = rxLimit * fitFrac;
-      const ryFit = ryLimit * fitFrac;
-      let maxDX = 0;
-      let maxDY = 0;
-      for (let i = 0; i < out.length; i += 3) {
-        const ax = Math.abs(out[i]);
-        const ay = Math.abs(out[i + 1]);
-        if (ax > maxDX) maxDX = ax;
-        if (ay > maxDY) maxDY = ay;
-      }
-      const sx = maxDX ? rxFit / maxDX : 1;
-      const sy = maxDY ? ryFit / maxDY : 1;
-      const scale = Math.min(sx, sy);
-      if (scale > 0 && scale !== 1) {
-        for (let i = 0; i < out.length; i += 3) {
-          out[i] *= scale;
-          out[i + 1] *= scale;
-        }
-      }
-    }
+    this._finalizePositionsForViewport(out, hint, {
+      fitFrac: VC?.FIT_FRAC ?? 0.92,
+      clampToCaps,
+      ensureMinHeightRatio: null,
+      maxVerticalStretch: VC?.SCATTER_MAX_Y_STRETCH ?? 1.0,
+    });
     return out;
   }
 
@@ -1747,12 +1909,22 @@ class ConsciousnessEngine {
 
     if (!this.font) {
       const band = this.textToParticlePositions(word, particles, viewportHint);
+      this._finalizePositionsForViewport(band, viewportHint, {
+        fitFrac: VC?.FIT_FRAC ?? 0.92,
+        ensureMinHeightRatio: VC?.TEXT_MIN_HEIGHT_RATIO ?? 0.3,
+        maxVerticalStretch: VC?.TEXT_MAX_Y_STRETCH ?? 1.6,
+      });
       console.warn('⚠️ text3D fallback (font not ready) — NOT caching fallback');
       this._lastText3DFallbackUsed = true;
       return band;
     }
 
     const positions = this._build3DLetters(word, { particles, depth });
+    this._finalizePositionsForViewport(positions, viewportHint, {
+      fitFrac: VC?.FIT_FRAC ?? 0.92,
+      ensureMinHeightRatio: VC?.TEXT_MIN_HEIGHT_RATIO ?? 0.3,
+      maxVerticalStretch: VC?.TEXT_MAX_Y_STRETCH ?? 1.6,
+    });
     const entry = { positions, isFallback: false };
     this._text3DCache.set(key, entry);
     this._lastText3DFallbackUsed = false;
