@@ -81,7 +81,8 @@
     "system:validate": "node scripts/system.mjs validate",
     "system:doctor": "node scripts/system.mjs doctor",
     "system:query": "node scripts/system.mjs query",
-    "system:fix": "node scripts/system.mjs fix"
+    "system:fix": "node scripts/system.mjs fix",
+    "test:contracts": "node tests/contracts/blueprint-tests.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
