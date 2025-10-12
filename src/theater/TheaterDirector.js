@@ -13,9 +13,17 @@ const DEFAULT_TYPING_LINES = ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10',
 const DEFAULT_OPENING_TIMELINE = {
   blackout: { durationMs: 2000 },
   cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
-  typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500 },
-  fill: { text: 'HELLO CURTIS ', scrollSpeed: 50, durationMs: 2000 },
-  emergence: { durationMs: 2000, waitForFencepost: true, maxWaitMs: 5000 },
+  typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
+  fill: { text: 'HELLO CURTIS ', scrollSpeed: 100, durationMs: 2000 },
+  emergence: {
+    durationMs: 1500,
+    waitForFencepost: true,
+    maxWaitMs: 5000,
+    stabilizeMs: 500,
+    skipMorphAnimation: true,
+    skipGenesisBlueprint: true,
+    targetState: 'genesis_initial',
+  },
 };
 
 const DEFAULT_OPENING_EMERGENCE = {
@@ -395,6 +403,15 @@ class TheaterDirector {
         : DEFAULT_OPENING_TIMELINE.typing.lines;
     typingConfig.typeSpeed = Math.max(0, Number(typingConfig.typeSpeed ?? DEFAULT_OPENING_TIMELINE.typing.typeSpeed));
     typingConfig.lineDelay = Math.max(0, Number(typingConfig.lineDelay ?? DEFAULT_OPENING_TIMELINE.typing.lineDelay));
+    typingConfig.completionDelayMs = Math.max(
+      0,
+      Number(
+        typingConfig.completionDelayMs ??
+          typingConfig.completionDelay ??
+          DEFAULT_OPENING_TIMELINE.typing.completionDelayMs ??
+          0,
+      ),
+    );
     const typingDuration = this._calculateTypingDuration(typingConfig);
 
     const fillConfig = {
@@ -421,6 +438,13 @@ class TheaterDirector {
     );
     const fencepostWaitMs = emergenceTimeline.maxWaitMs || DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs;
     const waitForFencepost = emergenceTimeline.waitForFencepost !== false;
+    const stabilizeMs = Math.max(
+      0,
+      Number(emergenceTimeline.stabilizeMs ?? DEFAULT_OPENING_TIMELINE.emergence.stabilizeMs ?? 0),
+    );
+    const skipMorphAnimation = emergenceTimeline.skipMorphAnimation === true;
+    const skipGenesisBlueprint = emergenceTimeline.skipGenesisBlueprint !== false;
+    const targetState = emergenceTimeline.targetState || DEFAULT_OPENING_TIMELINE.emergence.targetState;
 
     const emergenceConfig = { ...DEFAULT_OPENING_EMERGENCE, ...(openingEmergence ?? {}) };
     const genesisCount = this._getGenesisParticleCount();
@@ -476,6 +500,10 @@ class TheaterDirector {
           const waitResult = await this.sleep(typingDuration);
           if (handleWaitResult(waitResult) === 'cancelled') return;
         }
+        if (typingConfig.completionDelayMs > 0) {
+          const waitResult = await this.sleep(typingConfig.completionDelayMs);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
       }
 
       // ───────────────── Phase 4: Fill
@@ -506,7 +534,9 @@ class TheaterDirector {
         count: genesisCount,
         tierRatios: VC?.TIER_RATIOS,
         viewportHint,
-        fastForward: skipTriggered,
+        fastForward: skipTriggered || skipMorphAnimation,
+        skipMorphAnimation,
+        targetState,
       });
 
       BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
@@ -541,6 +571,11 @@ class TheaterDirector {
         if (this.cancelled) return;
       }
 
+      if (!skipTriggered && stabilizeMs > 0) {
+        const waitResult = await this.sleep(stabilizeMs);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+
       // ───────────────── Phase 6: Genesis handoff
       const toStage = 'genesis';
       
@@ -549,14 +584,24 @@ class TheaterDirector {
       this.currentStage = toStage;
       console.log('🧬 Phase: Genesis stage handoff');
 
-      BeatBus.emit(EVENTS.STAGE_CHANGE, { from: previousStage, to: toStage });
+      BeatBus.emit(EVENTS.STAGE_CHANGE, {
+        from: previousStage,
+        to: toStage,
+        skipBlueprint: skipGenesisBlueprint,
+        preserveEmergence: true,
+        targetState,
+      });
       BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
 
       try {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       } catch {}
 
-      await this._easeMorphTo(1, VC.SETTLE_MS /* 900 */);
+      if (skipMorphAnimation) {
+        __emitMorphThrottled(BeatBus, EVENTS, 1, { force: true });
+      } else {
+        await this._easeMorphTo(1, VC.SETTLE_MS /* 900 */);
+      }
 
       await this._runVisualSchedule();
 

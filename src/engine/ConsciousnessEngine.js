@@ -405,6 +405,8 @@ class ConsciousnessEngine {
   _onStageChange(payload = {}) {
     const stage = payload.stage ?? payload.to;
     if (!stage) return;
+    const skipBlueprint = payload.skipBlueprint === true;
+    const preserveEmergence = payload.preserveEmergence !== false;
 
     // CRITICAL: Block non-genesis stages during opening
     if (this._openingPhase && stage !== 'genesis') {
@@ -415,6 +417,13 @@ class ConsciousnessEngine {
 
     console.log(`🧠 Engine: Stage -> ${stage}`);
     this.currentStage = stage;
+    if (skipBlueprint) {
+      this._log('stage_change', { stage, skippedBlueprint: true });
+      if (preserveEmergence && stage === 'genesis') {
+        this._log('stage_preserve_emergence', { preserved: !!this._lastEmergenceTargets });
+      }
+      return;
+    }
     this.buildAndEmitBlueprint(stage, this.currentQuality);
     this._log('stage_change', { stage });
   }
@@ -473,7 +482,10 @@ class ConsciousnessEngine {
         stage: 'genesis',
         quality: this.currentQuality,
         mode: 'emergence',
-        cached: false
+        cached: false,
+        skipMorphAnimation: !!payload.skipMorphAnimation,
+        targetState: payload.targetState,
+        fastForward: !!payload.fastForward,
       });
       
       console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
@@ -853,6 +865,8 @@ class ConsciousnessEngine {
       viewportHint = this._viewportHint,
       quality = 'HIGH',
       fastForward = false,
+      skipMorphAnimation = false,
+      targetState = undefined,
     } = options || {};
 
     const sanitizedRatios = this._normalizeTierRatios(
@@ -937,6 +951,8 @@ class ConsciousnessEngine {
       }
     }
 
+    const forwardFlag = !!(fastForward || skipMorphAnimation);
+
     blueprint.metadata = {
       mode,
       source,
@@ -945,14 +961,18 @@ class ConsciousnessEngine {
       counts,
       sstVersion: SST?.version || '3.5',
       viewport: viewportHint,
-      fastForward: !!fastForward,
+      fastForward: forwardFlag,
+      skipMorphAnimation: !!skipMorphAnimation,
+      targetState: targetState || null,
       note: usedFallback
         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
         : 'Emergence endpoints separated: random atmospheric → 3D text target',
     };
 
     blueprint.mode = mode;
-    blueprint.fastForward = !!fastForward;
+    blueprint.fastForward = forwardFlag;
+    if (skipMorphAnimation) blueprint.skipMorphAnimation = true;
+    if (targetState) blueprint.targetState = targetState;
 
     trace('CE:EMIT', {
       mode,
