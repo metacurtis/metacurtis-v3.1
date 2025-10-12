@@ -6,6 +6,40 @@ if (import.meta.env.DEV) {
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/index.css';
+import { showToast } from './utils/toast.js';
+
+// Trace system for dev event monitoring
+if (typeof window !== 'undefined' && !window.__trace) {
+  const traceBuffer = [];
+  const maxTraceLength = 500;
+
+  window.__trace = traceBuffer;
+  window.dumpTrace = () => [...traceBuffer];
+  window.clearTrace = () => {
+    traceBuffer.length = 0;
+    console.log('[TRACE] Cleared');
+  };
+  window.pushTrace = (event = {}) => {
+    traceBuffer.push({
+      t: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+      ...event
+    });
+    if (traceBuffer.length > maxTraceLength) traceBuffer.shift();
+  };
+
+  console.log('✅ Trace system initialized');
+}
+
+if (import.meta.hot) {
+  import.meta.hot.on('glsl-update', (data) => {
+    const file = data?.file || 'shader';
+    console.log(`[HMR] Shader updated: ${file}`);
+    if (typeof showToast === 'function') {
+      const name = file.split('/').pop();
+      showToast(`Shader updated: ${name}`, { type: 'success' });
+    }
+  });
+}
 
 // Initialize state bridge
 import _StateCommands from "@/state/commands/StateCommands";

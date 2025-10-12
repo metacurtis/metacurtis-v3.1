@@ -7,11 +7,31 @@ const __dirname = dirname(__filename);
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+function shaderHMR() {
+  return {
+    name: 'shader-hmr',
+    handleHotUpdate({ file, server }) {
+      if (!file.endsWith('.glsl')) return undefined;
+
+      const fileName = path.basename(file);
+      console.log(`[SHADER HMR] ${fileName} updated (toast notify)`);
+
+      server.ws.send({
+        type: 'custom',
+        event: 'glsl-update',
+        data: { file }
+      });
+
+      return [];
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   esbuild: { target: 'es2022' },
   build: { target: 'es2022' },
-  plugins: [react()],
+  plugins: [react(), shaderHMR()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

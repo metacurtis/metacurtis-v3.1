@@ -138,6 +138,112 @@ function buildCanonical(source) {
 
 export const Canonical = buildCanonical(sstRaw);
 
+/** Probe history with temporal analysis utilities (dev only) */
+function createProbeHistory() {
+  const maxSamples = 300;
+  const samples = [];
+  let isRecording = false;
+  let startTime = null;
+
+  const getDuration = () => (samples[samples.length - 1]?.time ?? 0);
+
+  return {
+    start() {
+      isRecording = true;
+      startTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+      samples.length = 0;
+      console.log('[PROBE HISTORY] Recording started');
+      return this;
+    },
+    stop() {
+      isRecording = false;
+      console.log(`[PROBE HISTORY] Recording stopped (${samples.length} samples)`);
+      return this;
+    },
+    clear() {
+      samples.length = 0;
+      console.log('[PROBE HISTORY] Samples cleared');
+      return this;
+    },
+    record(snapshot = {}) {
+      if (!isRecording) return;
+
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const origin = startTime || 0;
+
+      samples.push({
+        time: now - origin,
+        timestamp: Date.now(),
+        ...snapshot
+      });
+
+      if (samples.length > maxSamples) samples.shift();
+    },
+    get samples() {
+      return [...samples];
+    },
+    query(predicate) {
+      return typeof predicate === 'function' ? samples.filter(predicate) : [];
+    },
+    analyze() {
+      if (!samples.length) return { error: 'No samples recorded' };
+
+      const fpsSamples = samples.map((s) => s.fps).filter((v) => typeof v === 'number');
+      const memorySamples = samples.map((s) => s.memory).filter((v) => typeof v === 'number');
+
+      const fps = fpsSamples.length
+        ? {
+            min: Math.min(...fpsSamples),
+            max: Math.max(...fpsSamples),
+            avg: fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length,
+            drops: fpsSamples.filter((f) => f < 55).length
+          }
+        : null;
+
+      const memory = memorySamples.length
+        ? {
+            min: Math.min(...memorySamples),
+            max: Math.max(...memorySamples),
+            trend: memorySamples[memorySamples.length - 1] > memorySamples[0] ? 'increasing' : 'stable'
+          }
+        : null;
+
+      return {
+        duration: getDuration(),
+        sampleCount: samples.length,
+        fps,
+        memory
+      };
+    },
+    plot(metric = 'fps') {
+      const values = samples.map((s) => s[metric]).filter((v) => typeof v === 'number');
+      if (!values.length) return `No data for metric "${metric}"`;
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = max - min || 1;
+
+      return values
+        .map((value, index) => {
+          const normalized = (value - min) / range;
+          const barLength = Math.floor(normalized * 40);
+          return `${index.toString().padStart(3, ' ')}: ${'='.repeat(barLength)} ${value.toFixed(1)}`;
+        })
+        .join('\n');
+    },
+    export() {
+      return {
+        meta: {
+          startTime,
+          duration: getDuration(),
+          sampleCount: samples.length
+        },
+        samples: [...samples]
+      };
+    }
+  };
+}
+
 // DEV exposure
 const isDev =
   (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
@@ -158,6 +264,41 @@ if (typeof window !== 'undefined' && isDev) {
     console.log(`📋 SST v${Canonical.version} loaded as window.Canonical + window.SST (read-only)`);
   } catch (err) {
     console.warn('Failed to expose SST canonical authority', err);
+  }
+
+  try {
+    if (window.probe) {
+      if (!window.probe.history) {
+        window.probe.history = createProbeHistory();
+      }
+
+      if (typeof window.probe.draw === 'function' && !window.probe.__historyWrapped) {
+        const originalDraw = window.probe.draw;
+        window.probe.draw = function probeDrawWrapper(...args) {
+          const result = originalDraw.apply(this, args);
+          const history = window.probe.history;
+          if (history && typeof history.record === 'function') {
+            const fpsValue = typeof window.probe.fps === 'function' ? window.probe.fps() : undefined;
+            const memoryValue =
+              typeof performance !== 'undefined' && performance.memory
+                ? performance.memory.usedJSHeapSize / 1048576
+                : undefined;
+
+            history.record({
+              fps: typeof fpsValue === 'number' ? fpsValue : undefined,
+              draw: result,
+              memory: memoryValue
+            });
+          }
+          return result;
+        };
+        window.probe.__historyWrapped = true;
+      }
+
+      console.log('✅ Probe History initialized');
+    }
+  } catch (err) {
+    console.warn('Failed to initialize probe history', err);
   }
 }
 

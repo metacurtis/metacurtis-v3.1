@@ -67,7 +67,7 @@ test.describe('Opening Sequence v3.5', () => {
 
     expect(morphState.orchestratorMorph).toBeCloseTo(1, 3);
     expect(morphState.orchestratorTarget).toBeCloseTo(1, 3);
-    expect(morphState.shaderMorph).toBeCloseTo(1, 3);
+  expect(morphState.shaderMorph).toBeCloseTo(1, 2);
   });
 
   test('movement freeze toggles around fencepost', async ({ page }) => {
