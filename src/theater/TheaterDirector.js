@@ -47,34 +47,6 @@ function matchesSkipActivation(event, skipKey) {
   return false;
 }
 
-// ── Throttled Morph Emitter (single-writer safe) ─────────────────────────────
-let __lastMorph = -1;
-let __lastMorphEmit = 0;
-
-function __getMorphThrottleMs() {
-  try {
-    return Math.max(0, parseInt(localStorage.getItem('canonMorphThrottleMs') || '80', 10));
-  } catch {
-    return 80;
-  }
-}
-
-function __emitMorphThrottled(BeatBus, EVENTS, v, { force = false } = {}) {
-  try {
-    const EPS = 0.005; // 0.5% change threshold
-    const now = performance.now();
-    const MIN = __getMorphThrottleMs();
-    
-    if (typeof v !== 'number') return;
-    if (!force && Math.abs(v - __lastMorph) < EPS) return;
-    if (!force && now - __lastMorphEmit < MIN) return;
-
-    __lastMorph = v;
-    __lastMorphEmit = now;
-    BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', { value: v });
-  } catch {}
-}
-
 // ── Theater Director Class ───────────────────────────────────────────────────
 class TheaterDirector {
   constructor() {
@@ -551,9 +523,6 @@ class TheaterDirector {
         verticalBias: 0.1,
       });
 
-      const morphDuration = emergenceTimeline.durationMs || VC.IMPLODE_MS;
-      await this._easeMorphTo(VC.MID_MORPH /* 0.85 */, morphDuration);
-
       if (waitForFencepost) {
         console.log(`   Waiting for renderer fencepost (<=${fencepostWaitMs}ms)`);
         if (!this._fencepostReadyEmitted) {
@@ -596,12 +565,6 @@ class TheaterDirector {
       try {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       } catch {}
-
-      if (skipMorphAnimation) {
-        __emitMorphThrottled(BeatBus, EVENTS, 1, { force: true });
-      } else {
-        await this._easeMorphTo(1, VC.SETTLE_MS /* 900 */);
-      }
 
       await this._runVisualSchedule();
 
@@ -712,47 +675,6 @@ class TheaterDirector {
 
       timeoutId = this._trackTimer(() => complete('elapsed'), ms);
       this._sleepWaiters.add(complete);
-    });
-  }
-
-  _easeMorphTo(target = 1, duration = 1400) {
-    const clampedTarget = Math.max(0, Math.min(1, Number(target) || 0));
-
-    if (this.cancelled) {
-      return Promise.resolve();
-    }
-
-    if (this.skipRequested || !Number.isFinite(duration) || duration <= 0) {
-      __emitMorphThrottled(BeatBus, EVENTS, clampedTarget, { force: true });
-      return Promise.resolve();
-    }
-
-    return new Promise(resolve => {
-      const start = performance.now();
-      const ease = t => t * t * (3 - 2 * t); // Smooth cubic ease
-
-      const step = now => {
-        if (this.cancelled) return resolve();
-
-        if (this.skipRequested) {
-          __emitMorphThrottled(BeatBus, EVENTS, clampedTarget, { force: true });
-          return resolve();
-        }
-
-        const elapsed = now - start;
-        const progress = Math.min(1, elapsed / duration);
-        const easedValue = ease(progress) * clampedTarget;
-
-        __emitMorphThrottled(BeatBus, EVENTS, easedValue);
-
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else {
-          resolve();
-        }
-      };
-
-      requestAnimationFrame(step);
     });
   }
 
