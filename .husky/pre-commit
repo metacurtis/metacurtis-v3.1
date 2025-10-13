@@ -4,4 +4,5 @@
 echo "🔍 Running constitutional validation..."
 npm run validate-sst || exit 1
 npm run detect-drift || exit 1
-npm run lint || exit 1
+npm run test:contracts || exit 1
+echo "✅ Pre-commit validation passed"
