@@ -1035,6 +1035,12 @@
         "scale": 1.2
       }
     },
+    "transitions": {
+      "dissolveDuration": 1500,
+      "reformDuration": 1500,
+      "silenceDuration": 500,
+      "description": "Stage-to-stage morph timings in milliseconds"
+    },
     "stageWords": {
       "genesis": "HELLO CURTIS",
       "discipline": "STRUCTURE",
