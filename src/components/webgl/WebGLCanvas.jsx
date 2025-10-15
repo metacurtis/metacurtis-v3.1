@@ -7,6 +7,8 @@ import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 import DebugExpose from '@/components/dev/DebugExpose';
+import BeatBus from '@/theater/bus';
+import { EVENTS } from '@/theater/events.js';
 
 // Lazy load WebGL components
 const WebGLBackground = lazy(() => import('./WebGLBackground'));
@@ -232,6 +234,32 @@ export default function WebGLCanvas({
       canvas.removeEventListener('webglcontextrestored', handleContextRestored);
     };
   }, [extensionInterference, canvasStrategy, contextPool, addEventLog]);
+
+  // Pointer event system for particle interaction
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handlePointerDown = event => {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      BeatBus.emit?.(EVENTS.PARTICLE_CLICK_REQUEST, {
+        mouse: { x, y },
+        screenX: event.clientX,
+        screenY: event.clientY,
+        timestamp: performance.now(),
+      });
+
+      console.log('🖱️ Particle click request:', { x: x.toFixed(3), y: y.toFixed(3) });
+    };
+
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      canvas.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [canvasRef]);
 
   // Canvas performance monitoring
   useEffect(() => {

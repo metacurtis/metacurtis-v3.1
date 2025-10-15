@@ -10,6 +10,7 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.j
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import SST from '@/config/sst-loader.js'; // keep consistent with ESM imports
 import { createSeededRandom } from '../utils/random.js';
+import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
@@ -1192,7 +1193,7 @@ class ConsciousnessEngine {
       );
     }
 
-    return {
+    const blueprint = {
       stageName,
       particleCount,
       maxParticles: particleCount,  // Match exact allocation
@@ -1206,6 +1207,25 @@ class ConsciousnessEngine {
       tierData,
       metadata,
     };
+
+    try {
+      const hotspotLookup = buildHotspotLookup({
+        stageName,
+        text3DPositions,
+      });
+      blueprint.hotspotLookup = hotspotLookup;
+      blueprint.hotspotMap = hotspotLookup?.indicesByHotspot || {};
+      const hotspotIds = Object.keys(blueprint.hotspotMap || {});
+      if (hotspotIds.length > 0) {
+        console.log(`🗺 Blueprint for ${stageName}: hotspot map attached`, hotspotIds);
+      }
+    } catch (error) {
+      console.error(`[Engine] Hotspot mapping failed for ${stageName}:`, error);
+      blueprint.hotspotLookup = null;
+      blueprint.hotspotMap = {};
+    }
+
+    return blueprint;
   }
 
   // --- Validation ---

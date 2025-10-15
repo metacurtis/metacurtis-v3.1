@@ -19,6 +19,7 @@ export const EVENTS = {
   FENCEPOST_LISTENERS_READY: 'FENCEPOST_LISTENERS_READY',
 
   // Renderer tuning & morph
+  RENDER_DIRECTIVE: 'RENDER_DIRECTIVE',          // renderer draw/morph directives
   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }
   PARTICLE_PHASE: 'PARTICLE_PHASE',              // { name }
   MORPH_PROGRESS: 'MORPH_PROGRESS',              // { value: 0..1 }
@@ -42,6 +43,8 @@ export const EVENTS = {
   MEMORY_FRAGMENT_TRIGGER: 'MEMORY_FRAGMENT_TRIGGER',
   // Back-compat alias (string literal, not self-reference)
   TRIGGER_FRAGMENT: 'MEMORY_FRAGMENT_TRIGGER',
+  PARTICLE_CLICK_REQUEST: 'PARTICLE_CLICK_REQUEST',
+  PARTICLE_CLICK_HIT: 'PARTICLE_CLICK_HIT',
 
   // Audio cues
   AUDIO_START_STAGE: 'AUDIO_START_STAGE',        // { stage }

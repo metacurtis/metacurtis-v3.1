@@ -7,6 +7,12 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 // Provide global THREE for Canon HUD/watchdog hooks
 if (typeof window !== 'undefined' && !window.THREE) window.THREE = THREE;
+if (typeof window !== 'undefined' && !window.RAYCAST_DIAGNOSTIC) {
+  window.RAYCAST_DIAGNOSTIC = {
+    lastTest: null,
+    history: [],
+  };
+}
 import { EVENTS } from '@/theater/events.js';
 import BeatBus from '@/theater/bus';
 import { trace } from '@/dev/trace.js';
@@ -14,11 +20,30 @@ import { trace } from '@/dev/trace.js';
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
+import { particleRaycaster } from '@/utils/particleRaycast.js';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const MORPH_TYPE_ENUM = Object.freeze({
+  steady: 0,
+  dissolve: 1,
+  reform: 2,
+});
+
+const morphTypeToInt = (value) => {
+  if (Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(MORPH_TYPE_ENUM, normalized)) {
+      return MORPH_TYPE_ENUM[normalized];
+    }
+  }
+  return MORPH_TYPE_ENUM.steady;
+};
 const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
 
 function pickStageColors(stageName) {
@@ -117,6 +142,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const lastUniformsRef = useRef({ atmo: [1, 1], text: [1, 1] });
   const stageNameRef = useRef(stageName);
   const blueprintRef = useRef(blueprint);
+  const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
   const ignoreDirectivesRef = useRef(false);
   const directiveOffRef = useRef(null);
@@ -586,6 +612,181 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => off && off();
   }, []);
 
+  // Raycaster: handle click requests from canvas
+  useEffect(() => {
+    const handleClickRequest = (payload = {}) => {
+      const mouse = payload?.mouse;
+      if (!mouse) {
+        console.warn('[WebGLBackground] Invalid click request payload', payload);
+        return;
+      }
+
+      const mesh = meshRef.current;
+      if (!camera) {
+        console.error('[WebGLBackground] Camera not available for raycasting');
+        return;
+      }
+
+      if (!mesh) {
+        console.error('[WebGLBackground] Particle mesh not available for raycasting');
+        return;
+      }
+
+      const positionAttr = mesh?.geometry?.attributes?.position;
+      const particleCount = positionAttr?.count ?? 0;
+      const safeGetParticle = (idx) =>
+        positionAttr && idx < particleCount
+          ? {
+              x: positionAttr.getX(idx),
+              y: positionAttr.getY(idx),
+              z: positionAttr.getZ(idx),
+            }
+          : null;
+      const centerIndex = particleCount > 0 ? Math.min(Math.floor(particleCount / 2), particleCount - 1) : 0;
+      const lastIndex = particleCount > 0 ? particleCount - 1 : 0;
+
+      const diagnostic = {
+        timestamp: Date.now(),
+        camera: camera
+          ? {
+              type: camera.type,
+              position: {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z,
+              },
+              rotation: {
+                x: camera.rotation.x,
+                y: camera.rotation.y,
+                z: camera.rotation.z,
+              },
+              quaternion: {
+                x: camera.quaternion.x,
+                y: camera.quaternion.y,
+                z: camera.quaternion.z,
+                w: camera.quaternion.w,
+              },
+              fov: camera.fov,
+              aspect: camera.aspect,
+              near: camera.near,
+              far: camera.far,
+              zoom: camera.zoom,
+              matrixWorldNeedsUpdate: camera.matrixWorldNeedsUpdate,
+            }
+          : null,
+        mesh: mesh
+          ? {
+              type: mesh.type,
+              visible: mesh.visible,
+              position: {
+                x: mesh.position.x,
+                y: mesh.position.y,
+                z: mesh.position.z,
+              },
+              scale: {
+                x: mesh.scale.x,
+                y: mesh.scale.y,
+                z: mesh.scale.z,
+              },
+              rotation: {
+                x: mesh.rotation.x,
+                y: mesh.rotation.y,
+                z: mesh.rotation.z,
+              },
+              matrixWorldNeedsUpdate: mesh.matrixWorldNeedsUpdate,
+              renderOrder: mesh.renderOrder,
+              frustumCulled: mesh.frustumCulled,
+              geometry: mesh.geometry
+                ? {
+                    type: mesh.geometry.type,
+                    particleCount,
+                    hasPositionAttr: Boolean(positionAttr),
+                    positionNeedsUpdate: positionAttr?.needsUpdate ?? false,
+                    boundingSphere: mesh.geometry.boundingSphere
+                      ? {
+                          centerX: mesh.geometry.boundingSphere.center.x,
+                          centerY: mesh.geometry.boundingSphere.center.y,
+                          centerZ: mesh.geometry.boundingSphere.center.z,
+                          radius: mesh.geometry.boundingSphere.radius,
+                        }
+                      : null,
+                    firstParticle: safeGetParticle(0),
+                    centerParticle: safeGetParticle(centerIndex),
+                    lastParticle: safeGetParticle(lastIndex),
+                  }
+                : null,
+            }
+          : null,
+        mouse: {
+          x: mouse.x,
+          y: mouse.y,
+        },
+        raycaster: {
+          threshold: particleRaycaster.raycaster.params.Points.threshold,
+        },
+      };
+
+      if (typeof window !== 'undefined' && window.RAYCAST_DIAGNOSTIC) {
+        window.RAYCAST_DIAGNOSTIC.lastTest = diagnostic;
+        window.RAYCAST_DIAGNOSTIC.history.push(diagnostic);
+      }
+
+      console.log('🔍 DIAGNOSTIC CAPTURED');
+      console.log('   Run in console: window.RAYCAST_DIAGNOSTIC.lastTest');
+
+      const hit = particleRaycaster.getClosestParticle(mouse, camera, mesh);
+      if (!hit) return;
+
+      const particleIndex = hit.index;
+      console.log(
+        `✨ Particle ${particleIndex} clicked (distance: ${hit.distance.toFixed(2)})`
+      );
+
+      const hotspotMap = hotspotMapRef.current || {};
+      let matchedHotspot = null;
+      for (const [hotspotId, hotspotData] of Object.entries(hotspotMap)) {
+        if (!hotspotData) continue;
+        const { indexSet, indices } = hotspotData;
+        let contains = false;
+        if (indexSet && typeof indexSet.has === 'function') {
+          contains = indexSet.has(particleIndex);
+        } else if (indices && typeof indices.includes === 'function') {
+          contains = indices.includes(particleIndex);
+        }
+        if (contains) {
+          matchedHotspot = { hotspotId, ...hotspotData };
+          break;
+        }
+      }
+
+      if (matchedHotspot) {
+        console.log('🎯 HOTSPOT HIT!', matchedHotspot);
+        if (matchedHotspot.fragmentId) {
+          console.log(`   Fragment: ${matchedHotspot.fragmentId}`);
+          if (window.narrativeAtom?.activateMemoryFragment) {
+            window.narrativeAtom.activateMemoryFragment(matchedHotspot.fragmentId);
+            console.log(`✨ Fragment modal activated: ${matchedHotspot.fragmentId}`);
+          } else {
+            console.warn('[WBG] narrativeAtom.activateMemoryFragment not available');
+          }
+        }
+      } else {
+        console.log(`   Not a hotspot (particle ${particleIndex})`);
+      }
+
+      BeatBus.emit?.(EVENTS.PARTICLE_CLICK_HIT, {
+        particleIndex,
+        distance: hit.distance,
+        point: hit.point,
+        hotspot: matchedHotspot,
+        timestamp: performance.now(),
+      });
+    };
+
+    const off = BeatBus?.on?.(EVENTS.PARTICLE_CLICK_REQUEST, handleClickRequest);
+    return () => off && off();
+  }, [camera, meshRef]);
+
   // BLUEPRINT_READY → bind buffers & EMERGED fencepost (once) on first FULL genesis
   useEffect(() => {
     const handleBlueprint = (payload) => {
@@ -612,6 +813,42 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
       applyMetadataColors(raw?.metadata?.colors);
+
+      const stageForLog = raw.stageName || st || 'genesis';
+      const nextHotspotMap = raw?.hotspotMap
+        || raw?.hotspotLookup?.indicesByHotspot
+        || null;
+      if (nextHotspotMap && typeof nextHotspotMap === 'object') {
+        const hotspotIds = Object.keys(nextHotspotMap);
+        const localizedMap = {};
+        hotspotIds.forEach((id) => {
+          const entry = nextHotspotMap[id];
+          if (!entry) return;
+          localizedMap[id] = {
+            ...entry,
+            indexSet: entry.indices && typeof entry.indices[Symbol.iterator] === 'function'
+              ? new Set(entry.indices)
+              : null,
+          };
+        });
+        hotspotMapRef.current = localizedMap;
+        if (hotspotIds.length > 0) {
+          console.log('🗺️ Renderer: Hotspot map updated', hotspotIds);
+          console.log(`   Stage: ${stageForLog}`);
+          hotspotIds.forEach((id) => {
+            const entry = nextHotspotMap[id];
+            const count = entry?.indices?.length || 0;
+            console.log(`   - ${id}: ${count} particles`);
+          });
+        } else if (!isEmergence) {
+          console.log(`🗺️ Renderer: Hotspot map empty for stage ${stageForLog}`);
+        }
+      } else if (!isEmergence) {
+        hotspotMapRef.current = {};
+        console.log('🗺️ Renderer: No hotspot map in blueprint');
+      } else {
+        hotspotMapRef.current = {};
+      }
 
       const viewport = raw?.metadata?.viewport || payload?.viewportHint || window?.__viewportHint;
       if (viewport) {
@@ -789,6 +1026,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uCenterWeighting: { value: Canonical?.features?.centerWeightingTier4 ?? 1.0 },
           uStageIndex:     { value: stageIndex },
           uBrainRegion:    { value: stageIndex },
+          uSpreadFactor:   { value: 1.0 },
+          uMorphType:      { value: MORPH_TYPE_ENUM.steady },
         },
         vertexShader: vertexShaderSource,
         fragmentShader: fragmentShaderSource,
@@ -801,6 +1040,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
 
     const uniforms = mat.uniforms || {};
+    if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
+    if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
@@ -960,6 +1201,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (Number.isFinite(directive.gaussianSigma) && uniforms.uGaussianSigma) {
           uniforms.uGaussianSigma.value = directive.gaussianSigma;
         }
+        if (Number.isFinite(directive.spreadFactor) && uniforms.uSpreadFactor) {
+          uniforms.uSpreadFactor.value = directive.spreadFactor;
+        }
+        if (directive.morphType !== undefined && directive.morphType !== null && uniforms.uMorphType) {
+          uniforms.uMorphType.value = morphTypeToInt(directive.morphType);
+        }
         if (Array.isArray(directive.tierHighlight) && uniforms.uTierHighlight?.value) {
           const arr = uniforms.uTierHighlight.value;
           for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
@@ -1014,3 +1261,156 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 }
 
 export default React.memo(WebGLBackground);
+
+// Diagnostic analysis (dev only)
+if (typeof window !== 'undefined') {
+  window.analyzeDiagnostic = function analyzeDiagnostic() {
+    const data = window.RAYCAST_DIAGNOSTIC?.lastTest;
+    if (!data) {
+      console.error('No diagnostic data. Click particles first.');
+      return;
+    }
+
+    console.log('==== RAYCASTING DIAGNOSTIC ANALYSIS ====\n');
+
+    const camPos = data.camera?.position || { x: 0, y: 0, z: 0 };
+    const particlePos = data.mesh?.geometry?.firstParticle || { x: 0, y: 0, z: 0 };
+    const distToParticles = Math.sqrt(
+      Math.pow(camPos.x - particlePos.x, 2) +
+        Math.pow(camPos.y - particlePos.y, 2) +
+        Math.pow(camPos.z - particlePos.z, 2)
+    );
+
+    console.log('THEORY 1: Threshold Too Small');
+    console.log(`  Camera distance to particles: ${distToParticles.toFixed(2)} units`);
+    console.log(`  Current threshold: ${data.raycaster.threshold}`);
+    const recommendedThreshold = Math.max(0.5, distToParticles * 0.05);
+    console.log(`  Recommended threshold: ${recommendedThreshold.toFixed(2)}`);
+    console.log(
+      `  LIKELY: ${distToParticles > 20 ? 'YES - camera very far' : 'NO - distance reasonable'}\n`
+    );
+
+    const meshPos = data.mesh?.position || { x: 0, y: 0, z: 0 };
+    const meshScale = data.mesh?.scale || { x: 1, y: 1, z: 1 };
+    const meshRot = data.mesh?.rotation || { x: 0, y: 0, z: 0 };
+    const isIdentityTransform =
+      Math.abs(meshPos.x) < 0.01 &&
+      Math.abs(meshPos.y) < 0.01 &&
+      Math.abs(meshPos.z) < 0.01 &&
+      Math.abs(meshScale.x - 1) < 0.01 &&
+      Math.abs(meshScale.y - 1) < 0.01 &&
+      Math.abs(meshScale.z - 1) < 0.01 &&
+      Math.abs(meshRot.x) < 0.01 &&
+      Math.abs(meshRot.y) < 0.01 &&
+      Math.abs(meshRot.z) < 0.01;
+
+    console.log('THEORY 2: Mesh Transform Issue');
+    console.log(
+      `  Mesh position: (${meshPos.x.toFixed(3)}, ${meshPos.y.toFixed(3)}, ${meshPos.z.toFixed(3)})`
+    );
+    console.log(
+      `  Mesh scale: (${meshScale.x.toFixed(3)}, ${meshScale.y.toFixed(3)}, ${meshScale.z.toFixed(
+        3
+      )})`
+    );
+    console.log(
+      `  Mesh rotation: (${meshRot.x.toFixed(3)}, ${meshRot.y.toFixed(3)}, ${meshRot.z.toFixed(
+        3
+      )})`
+    );
+    console.log(`  Is identity transform: ${isIdentityTransform ? 'YES' : 'NO'}`);
+    console.log(`  Matrix needs update: ${data.mesh?.matrixWorldNeedsUpdate}\n`);
+
+    const particleZ = particlePos?.z ?? 0;
+    const withinFrustum =
+      data.camera && particleZ > -data.camera.far && particleZ < -data.camera.near;
+
+    console.log('THEORY 3: Particles Outside Camera Frustum');
+    console.log(`  Camera near: ${data.camera?.near}`);
+    console.log(`  Camera far: ${data.camera?.far}`);
+    console.log(`  First particle Z: ${particleZ.toFixed(2)}`);
+    console.log(`  Within frustum: ${withinFrustum ? 'YES' : 'NO'}\n`);
+
+    const boundingSphere = data.mesh?.geometry?.boundingSphere;
+    console.log('THEORY 4: Bounding Sphere Missing/Wrong');
+    console.log(`  Has bounding sphere: ${boundingSphere ? 'YES' : 'NO'}`);
+    if (boundingSphere) {
+      console.log(
+        `  Center: (${boundingSphere.centerX.toFixed(2)}, ${boundingSphere.centerY.toFixed(
+          2
+        )}, ${boundingSphere.centerZ.toFixed(2)})`
+      );
+      console.log(`  Radius: ${boundingSphere.radius.toFixed(2)}`);
+      console.log(`  Matches particle spread: ${boundingSphere.radius > 1 ? 'YES' : 'NO'}`);
+    }
+    console.log('');
+
+    console.log('THEORY 5: Matrix World Not Updated');
+    console.log(`  Camera matrix needs update: ${data.camera?.matrixWorldNeedsUpdate}`);
+    console.log(`  Mesh matrix needs update: ${data.mesh?.matrixWorldNeedsUpdate}\n`);
+
+    console.log('==== RECOMMENDATIONS ====\n');
+    const fixes = [];
+
+    if (distToParticles > 20) {
+      fixes.push({
+        priority: 'HIGH',
+        issue: 'Camera far from particle cluster',
+        fix: `particleRaycaster.setThreshold(${recommendedThreshold.toFixed(2)});`,
+      });
+    }
+
+    if (!isIdentityTransform) {
+      fixes.push({
+        priority: 'CRITICAL',
+        issue: 'Mesh has non-identity transform',
+        fix: 'Call mesh.updateMatrixWorld() before raycasting or reset transforms',
+      });
+    }
+
+    if (!withinFrustum) {
+      fixes.push({
+        priority: 'CRITICAL',
+        issue: 'Particles outside camera frustum',
+        fix: 'Adjust camera near/far or particle positions',
+      });
+    }
+
+    if (!boundingSphere) {
+      fixes.push({
+        priority: 'HIGH',
+        issue: 'Geometry missing bounding sphere',
+        fix: 'Call geometry.computeBoundingSphere() before rendering',
+      });
+    }
+
+    if (data.mesh?.matrixWorldNeedsUpdate) {
+      fixes.push({
+        priority: 'HIGH',
+        issue: 'Mesh matrixWorld stale',
+        fix: 'mesh.updateMatrixWorld() before raycasting',
+      });
+    }
+
+    if (fixes.length === 0) {
+      console.log('❓ No obvious issues detected. Possible causes:');
+      console.log('   - Particle buffer format incompatible with Raycaster');
+      console.log('   - Scene/camera mismatch in React Three Fiber');
+      console.log('   - Coordinate conversion issue upstream');
+    } else {
+      fixes.forEach((fix, index) => {
+        console.log(`${index + 1}. [${fix.priority}] ${fix.issue}`);
+        console.log(`   Fix: ${fix.fix}\n`);
+      });
+    }
+
+    console.log('==== FULL DATA AVAILABLE ====');
+    console.log('Inspect window.RAYCAST_DIAGNOSTIC.lastTest for raw values.');
+
+    return fixes;
+  };
+
+  console.log('🧪 Diagnostic analysis ready');
+  console.log('   1. Click particles once');
+  console.log('   2. Run: window.analyzeDiagnostic()');
+}
