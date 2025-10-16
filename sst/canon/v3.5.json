@@ -429,8 +429,13 @@
     "skipKey": "SPACE",
     "totalDurationMs": 12500,
     "timeline": {
-      "blackout": { "durationMs": 2000 },
-      "cursor": { "blinkCount": 2, "intervalMs": 500 },
+      "blackout": {
+        "durationMs": 2000
+      },
+      "cursor": {
+        "blinkCount": 2,
+        "intervalMs": 500
+      },
       "typing": {
         "lines": [
           "READY.",
@@ -616,17 +621,44 @@
           "frequency": 0
         }
       },
-      "memoryFragment": {
-        "id": "genesis_spark",
-        "triggerPercent": 5,
-        "content": "Commodore 64 Terminal",
-        "interaction": "type_enabled",
-        "durationMs": 10000,
-        "effects": {
-          "targetTier": 0,
-          "behavior": "converge",
-          "intensity": 0.7
-        }
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "genesis_context",
+            "triggerPercent": 5,
+            "trigger": {
+              "percent": 5
+            },
+            "position": {
+              "anchor": "bottomLeft"
+            },
+            "content": {
+              "text": "1983 \u2022 Dallas, Texas \u2022 Age 8",
+              "fontSize": 14,
+              "color": "#22c55e"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "genesis_code",
+          "hotspot": "letter_H",
+          "content": {
+            "image": "commodore64-screen.png",
+            "caption": "10 PRINT \"HELLO CURTIS\"\\n20 GOTO 10\\nRUN"
+          },
+          "particleEffect": {
+            "behavior": "crtFlicker",
+            "duration": 1200
+          }
+        },
+        "climax": null
       },
       "boundaryCues": {
         "preTransitionPercent": [
@@ -722,15 +754,44 @@
           "frequency": 0
         }
       },
-      "memoryFragment": {
-        "id": "discipline_motto",
-        "triggerPercent": 20,
-        "content": "Marine Corps EGA",
-        "interaction": "hover_tooltip",
-        "effects": {
-          "allTiers": "snap_to_attention",
-          "durationMs": 800
-        }
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "discipline_context",
+            "triggerPercent": 18,
+            "trigger": {
+              "percent": 18
+            },
+            "position": {
+              "anchor": "topLeft"
+            },
+            "content": {
+              "text": "1998 \u2022 Parris Island \u2022 Discipline Forged",
+              "fontSize": 14,
+              "color": "#3b82f6"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "discipline_emblem",
+          "hotspot": "letter_S",
+          "content": {
+            "image": "discipline-ega.png",
+            "caption": "Honor. Courage. Commitment."
+          },
+          "particleEffect": {
+            "behavior": "snapFormation",
+            "duration": 1000
+          }
+        },
+        "climax": null
       }
     },
     "neural": {
@@ -767,14 +828,44 @@
       "uniformOverrides": {
         "uGaussianSigma": 2
       },
-      "memoryFragment": {
-        "id": "neural_first_ai_chat",
-        "triggerPercent": 35,
-        "content": "Chat transcript",
-        "interaction": "auto_type",
-        "effects": {
-          "sequence": "pathways_light_up"
-        }
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "neural_context",
+            "triggerPercent": 34,
+            "trigger": {
+              "percent": 34
+            },
+            "position": {
+              "anchor": "topRight"
+            },
+            "content": {
+              "text": "2005 \u2022 Austin, Texas \u2022 Neural Spark",
+              "fontSize": 14,
+              "color": "#a855f7"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "neural_interface",
+          "hotspot": "cluster_alpha",
+          "content": {
+            "image": "neural-diagram.png",
+            "caption": "First machine learning prototype came alive in MATLAB."
+          },
+          "particleEffect": {
+            "behavior": "neuralPulse",
+            "duration": 1400
+          }
+        },
+        "climax": null
       }
     },
     "velocity": {
@@ -816,14 +907,44 @@
           "frequency": 0.5
         }
       },
-      "memoryFragment": {
-        "id": "velocity_github_surge",
-        "triggerPercent": 49,
-        "content": "GitHub graph",
-        "interaction": "cursor_trails",
-        "effects": {
-          "acceleration": "toward_cursor"
-        }
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "velocity_context",
+            "triggerPercent": 48,
+            "trigger": {
+              "percent": 48
+            },
+            "position": {
+              "anchor": "bottomRight"
+            },
+            "content": {
+              "text": "2012 \u2022 Silicon Valley \u2022 Launch Velocity",
+              "fontSize": 14,
+              "color": "#9333ea"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "velocity_launch",
+          "hotspot": "orbit_path",
+          "content": {
+            "image": "launch-dashboard.png",
+            "caption": "Realtime analytics firing across 12 markets."
+          },
+          "particleEffect": {
+            "behavior": "hyperdriveBurst",
+            "duration": 1100
+          }
+        },
+        "climax": null
       }
     },
     "architecture": {
@@ -857,14 +978,48 @@
         "degrees": 12,
         "shake": false
       },
-      "memoryFragment": {
-        "id": "architecture_perf_breakthrough",
-        "triggerPercent": 63,
-        "content": "15\u219284 FPS metric",
-        "interaction": "click_to_overlay_diagram",
-        "effects": {
-          "form": "temporary_blueprint"
-        }
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "architecture_context",
+            "triggerPercent": 62,
+            "trigger": {
+              "percent": 62
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 220,
+                "y": 0
+              }
+            },
+            "content": {
+              "text": "2016 \u2022 Seattle \u2022 Systems Reforged",
+              "fontSize": 14,
+              "color": "#06b6d4"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "architecture_blueprint",
+          "hotspot": "pillar_one",
+          "content": {
+            "image": "system-blueprint.png",
+            "caption": "Layered fault-tolerant mesh with self-healing edges."
+          },
+          "particleEffect": {
+            "behavior": "schematicReveal",
+            "duration": 1300
+          }
+        },
+        "climax": null
       }
     },
     "harmony": {
@@ -906,15 +1061,48 @@
           "frequency": 0.2
         }
       },
-      "memoryFragment": {
-        "id": "harmony_conduct",
-        "triggerPercent": 77,
-        "content": "Conduct particles",
-        "interaction": "pointer_conduct",
-        "effects": {
-          "trail_follow": true,
-          "bell_on_perfect": true
-        }
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "harmony_context",
+            "triggerPercent": 78,
+            "trigger": {
+              "percent": 78
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 0,
+                "y": -260
+              }
+            },
+            "content": {
+              "text": "2021 \u2022 Remote \u2022 Human + AI Ensemble",
+              "fontSize": 14,
+              "color": "#f59e0b"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "harmony_resonance",
+          "hotspot": "orbit_chorus",
+          "content": {
+            "image": "harmony-waveform.png",
+            "caption": "Balanced signal routing for conscious UI."
+          },
+          "particleEffect": {
+            "behavior": "resonantGlow",
+            "duration": 1500
+          }
+        },
+        "climax": null
       }
     },
     "transcendence": {
@@ -957,13 +1145,79 @@
       "hud": {
         "liveCounterText": "15,000 conscious moments"
       },
-      "memoryFragment": {
-        "id": "transcendence_initials",
-        "triggerPercent": 92,
-        "content": "User initials",
-        "interaction": "click",
-        "effects": {
-          "form_initials_brief": true
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "transcendence_context",
+            "triggerPercent": 92,
+            "trigger": {
+              "percent": 92
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 0,
+                "y": 220
+              }
+            },
+            "content": {
+              "text": "2025 \u2022 Worldwide \u2022 Conscious Collective",
+              "fontSize": 14,
+              "color": "#00ffcc"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 6000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 6000
+          }
+        ],
+        "interactive": {
+          "id": "transcendence_portal",
+          "hotspot": "galaxy_core",
+          "content": {
+            "image": "transcendence-portal.png",
+            "caption": "Particles align into living memory constellations."
+          },
+          "particleEffect": {
+            "behavior": "starlightCascade",
+            "duration": 1600
+          }
+        },
+        "climax": {
+          "id": "transcendence_reveal",
+          "trigger": {
+            "type": "timeline",
+            "time": 35000
+          },
+          "sequence": [
+            {
+              "action": "dissolve",
+              "duration": 2000
+            },
+            {
+              "action": "formPortrait",
+              "duration": 3000,
+              "hold": 2000
+            },
+            {
+              "action": "reformText",
+              "text": "CURTIS WHORTON",
+              "duration": 2000
+            },
+            {
+              "action": "reformText",
+              "text": "AI-NATIVE ENGINEER",
+              "duration": 2000
+            },
+            {
+              "action": "formQRCode",
+              "url": "https://curtisworton.com",
+              "duration": 3000
+            }
+          ]
         }
       }
     }

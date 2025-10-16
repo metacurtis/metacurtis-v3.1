@@ -165,6 +165,17 @@ export default class ScrollOrchestrator {
       // ensure the loop runs to converge to new target
       this._schedule();
 
+      BeatBus.emit?.(EVENTS.SCROLL_PROGRESS, {
+        scrollPercent: easedPct,
+        rawScrollPercent: rawPct,
+        currentStage: stageName,
+        stageIndex: stageIdx,
+        stageProgress: local * 100,
+        localProgress: local,
+        morphTarget: this.morphTarget,
+        morph: this.morph,
+      });
+
       // stage change event
       if (stageIdx !== this.lastStageIndex && stageName && stageName !== 'unknown') {
         this.lastStageIndex = stageIdx;
@@ -178,16 +189,22 @@ export default class ScrollOrchestrator {
       }
 
       // memory fragment trigger per stage
-      const st = Canonical?.stages?.[stageName] || {};
-      const frag = st.memoryFragment;
-      if (frag && typeof frag.triggerPercent === 'number') {
-        const key = `${stageName}::${frag.triggerPercent}`;
-        if (!this.fragmentFired.has(key) && easedPct >= frag.triggerPercent) {
+      const fragments = Canonical?.getFragmentsForStage?.(stageName) || [];
+      for (const fragment of fragments) {
+        const tier = fragment?.tier || 'unknown';
+        const triggerPercent = typeof fragment?.triggerPercent === 'number'
+          ? fragment.triggerPercent
+          : (typeof fragment?.trigger?.percent === 'number' ? fragment.trigger.percent : null);
+        if (triggerPercent === null) continue;
+
+        const key = `${stageName}::${tier}::${triggerPercent}`;
+        if (!this.fragmentFired.has(key) && easedPct >= triggerPercent) {
           this.fragmentFired.add(key);
-          BeatBus.emit?.(EVENTS.MEMORY_FRAGMENT_TRIGGER, { 
-            stage: stageName, 
-            id: frag.id || key,
-            triggerPercent: frag.triggerPercent
+          BeatBus.emit?.(EVENTS.MEMORY_FRAGMENT_TRIGGER, {
+            stage: stageName,
+            id: fragment.id || key,
+            tier,
+            triggerPercent
           });
           console.log(`📜 Memory fragment triggered: ${key}`);
         }

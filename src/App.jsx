@@ -3,6 +3,8 @@
 
 import React, { useEffect } from 'react';
 import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
+import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManager.jsx';
+import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
 import { clockAtom } from '@/state/atoms';
 
 // Import engine as side-effect to ensure initialization
@@ -47,5 +49,11 @@ export default function App() {
     };
   }, []);
 
-  return <ConsciousnessTheater />;
+  return (
+    <div className="relative min-h-screen">
+      <ConsciousnessTheater />
+      <AmbientFragmentManager />
+      <ClimaxSequenceController />
+    </div>
+  );
 }

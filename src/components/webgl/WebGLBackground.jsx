@@ -790,13 +790,32 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // BLUEPRINT_READY → bind buffers & EMERGED fencepost (once) on first FULL genesis
   useEffect(() => {
     const handleBlueprint = (payload) => {
-      const { bp: raw, stageName: st, quality, cached, mode } = normalizePayload(payload);
-      const id = `${st}-${raw?.count || raw?.particleCount || raw?.activeCount || 0}-${mode || 'default'}`;
+      const normalized = normalizePayload(payload);
+      const raw = normalized.bp;
+      const st = normalized.stageName;
+      const quality = normalized.quality;
+      let cached = normalized.cached;
+      const mode = normalized.mode;
+      const rawMode = raw?.mode;
+      const sequenceId = raw?.climaxSequenceId || raw?.metadata?.climaxSequenceId || null;
+      const stepName = raw?.climaxStep || (rawMode?.includes(':') ? rawMode.split(':')[1] : null);
+      const isClimax = Boolean(rawMode?.startsWith?.('climax')) || Boolean(raw?.climaxStep);
+
+      const id = isClimax
+        ? `${st}-${raw?.particleCount || raw?.activeCount || raw?.maxParticles || 0}-${stepName || 'climax'}-${sequenceId || ''}`
+        : `${st}-${raw?.count || raw?.particleCount || raw?.activeCount || 0}-${mode || 'default'}`;
       if (!raw?.atmosphericPositions || !raw?.text3DPositions) return;
       if (id === lastBlueprintIdRef.current) return;
       lastBlueprintIdRef.current = id;
 
       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
+
+      if (isClimax) {
+        if (cached) {
+          console.log('🎬 Climax detected - forcing fresh blueprint bind');
+        }
+        cached = false;
+      }
 
       // ignore non-genesis full binds while pending (pre-scroll)
       if (!isEmergence && emergencePendingRef.current) {
@@ -939,6 +958,107 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 0 });
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+
+        if (isClimax) {
+          const blueprintForDiag = raw;
+          const geometry = geo;
+          const material = mat;
+          const positionAttr = geometry?.attributes?.position;
+          const positionsArray = positionAttr?.array;
+          const text3DPositions = blueprintForDiag?.text3DPositions;
+          const atmosphericPositions = blueprintForDiag?.atmosphericPositions;
+          const stepName = blueprintForDiag?.climaxStep || blueprintForDiag?.mode?.split?.(':')?.[1] || null;
+          const sample = (arr, start = 0, count = 9) => {
+            if (arr && typeof arr.slice === 'function') {
+              return Array.from(arr.slice(start, start + count));
+            }
+            return 'none';
+          };
+
+          const spreadStats = (arr) => {
+            if (!(arr instanceof Float32Array) || arr.length < 30) {
+              return { avg: 'invalid', min: 'invalid', max: 'invalid' };
+            }
+            let sum = 0;
+            let minDist = Infinity;
+            let maxDist = 0;
+            for (let i = 0; i < 30; i += 3) {
+              const dist = Math.abs(arr[i]) + Math.abs(arr[i + 1]) + Math.abs(arr[i + 2]);
+              sum += dist;
+              if (dist < minDist) minDist = dist;
+              if (dist > maxDist) maxDist = dist;
+            }
+            return {
+              avg: (sum / 10).toFixed(2),
+              min: minDist.toFixed(2),
+              max: maxDist.toFixed(2),
+            };
+          };
+
+          const buffersMatch = (() => {
+            if (!(text3DPositions instanceof Float32Array) || !(positionsArray instanceof Float32Array)) {
+              return 'unknown';
+            }
+            const checks = [0, 99, 999, positionsArray.length - 1].filter((idx) => idx >= 0 && idx < positionsArray.length);
+            return checks.every((idx) => text3DPositions[idx] === positionsArray[idx]);
+          })();
+
+          console.log('🔬 CLIMAX DIAGNOSTIC (ENHANCED):', {
+            climaxStep: stepName,
+            particleCount: blueprintForDiag?.particleCount || 0,
+            hasText3D: text3DPositions instanceof Float32Array,
+            text3DLength: text3DPositions?.length || 0,
+            hasGeometry: positionsArray instanceof Float32Array,
+            geometryLength: positionsArray?.length || 0,
+            text3DStart: sample(text3DPositions, 0, 9),
+            text3DMiddle: sample(text3DPositions, Math.max(0, Math.floor((text3DPositions?.length || 0) / 2) - 4), 9),
+            text3DEnd: sample(text3DPositions, Math.max(0, (text3DPositions?.length || 9) - 9), 9),
+            geometryStart: sample(positionsArray, 0, 9),
+            geometryMiddle: sample(positionsArray, Math.max(0, Math.floor((positionsArray?.length || 0) / 2) - 4), 9),
+            geometryEnd: sample(positionsArray, Math.max(0, (positionsArray?.length || 9) - 9), 9),
+            buffersMatch,
+            shaderMorph: material?.uniforms?.shaderMorph?.value ?? 'undefined',
+            spreadBlueprint: spreadStats(text3DPositions),
+            spreadGeometry: spreadStats(positionsArray),
+          });
+
+          console.log('🔬 SPREAD COMPARISON: Blueprint vs Geometry', {
+            blueprint: spreadStats(text3DPositions),
+            geometry: spreadStats(positionsArray),
+          });
+
+          const posArray = positionsArray;
+          if (posArray && posArray.length >= 30) {
+            let sumX = 0;
+            let sumY = 0;
+            let sumZ = 0;
+            for (let i = 0; i < 30; i += 3) {
+              sumX += Math.abs(posArray[i]);
+              sumY += Math.abs(posArray[i + 1]);
+              sumZ += Math.abs(posArray[i + 2]);
+            }
+            const avgDist = (sumX + sumY + sumZ) / 10;
+            if (avgDist < 0.1) {
+              console.error('🚨 POSITIONS AT ORIGIN! Forming cluster/square');
+            } else {
+              console.log(`✅ Positions spread (avg dist from origin: ${avgDist.toFixed(2)})`);
+            }
+          }
+
+          if (material) {
+            console.log('🔬 SHADER STATE:', {
+              shaderMorph: material?.uniforms?.shaderMorph?.value ?? 'undefined',
+              expectedMorph: 1.0,
+              morphMode: material?.uniforms?.morphMode?.value ?? 'undefined',
+            });
+            if (material?.uniforms?.shaderMorph) {
+              material.uniforms.shaderMorph.value = 1.0;
+              material.uniformsNeedUpdate = true;
+              console.log('✅ Forced shaderMorph = 1.0 for climax');
+            }
+          }
+        }
+
         if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
           const mat = materialRef.current;
           const freezeUniform = mat?.uniforms?.uPostMorphFreeze;

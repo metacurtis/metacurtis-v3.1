@@ -49,11 +49,28 @@ function buildCanonical(source) {
   for (const stageName of stageOrder) {
     const stageNarrative = sst.narrative?.stages?.[stageName] ? clone(sst.narrative.stages[stageName]) : {};
     const stageData = sst.stages?.[stageName] || {};
+    if (stageData.memoryFragments && !stageData.memoryFragment) {
+      stageData.memoryFragment =
+        stageData.memoryFragments.interactive ||
+        stageData.memoryFragments.ambient ||
+        stageData.memoryFragments.climax ||
+        null;
+    }
     if (!stageNarrative.word && letterGeometry?.[stageName]?.word) {
       stageNarrative.word = letterGeometry[stageName].word;
     }
-    if (!stageNarrative.memoryFragment && stageData.memoryFragment) {
-      stageNarrative.memoryFragment = stageData.memoryFragment;
+    if (!stageNarrative.memoryFragments && stageData.memoryFragments) {
+      stageNarrative.memoryFragments = clone(stageData.memoryFragments);
+    }
+    if (!stageNarrative.memoryFragment) {
+      const primary =
+        stageData.memoryFragments?.interactive ||
+        stageData.memoryFragments?.ambient ||
+        stageData.memoryFragment ||
+        null;
+      if (primary) {
+        stageNarrative.memoryFragment = clone(primary);
+      }
     }
     if (!stageNarrative.audio && stageData.audio) {
       stageNarrative.audio = stageData.audio;
@@ -90,7 +107,30 @@ function buildCanonical(source) {
   const getFragmentsForStage = (stage) => {
     const st = getStageByName(stage);
     if (!st) return [];
-    return st.memoryFragment ? [st.memoryFragment] : [];
+    const source =
+      (st.memoryFragments && typeof st.memoryFragments === 'object')
+        ? st.memoryFragments
+        : (st.memoryFragment
+            ? { interactive: st.memoryFragment }
+            : null);
+    if (!source) return [];
+
+    const fragments = [];
+    for (const [tier, fragment] of Object.entries(source)) {
+      if (!fragment || typeof fragment !== 'object') continue;
+      const cloned = clone(fragment);
+      const fallbackName = `${stage} ${tier}`.replace(/_/g, ' ');
+      const normalized = {
+        ...cloned,
+        tier,
+        stage,
+      };
+      if (!normalized.id) normalized.id = `${stage}_${tier}`;
+      if (!normalized.name) normalized.name = normalized.title || fallbackName;
+      if (!normalized.type) normalized.type = tier;
+      fragments.push(normalized);
+    }
+    return fragments;
   };
   const getActiveFragments = (stage /*, scroll */) => getFragmentsForStage(stage);
 

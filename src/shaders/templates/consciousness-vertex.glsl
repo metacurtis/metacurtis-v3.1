@@ -25,6 +25,8 @@ uniform vec2 uTextFit;
 uniform float uMoveDampStart;
 uniform float uMoveDampStartY;
 uniform float uPostMorphFreeze;
+uniform float uSpreadFactor;
+uniform float uMorphType;
 
 // Varyings
 varying vec3 vPosition;
@@ -97,6 +99,22 @@ void main() {
   textPos.y *= uTextFit.y;
 
   float morph = clamp(uMorphProgress, 0.0, 1.0);
+  float spread = max(uSpreadFactor, 0.0);
+  float morphType = uMorphType;
+  float isDissolve = 1.0 - step(0.5, abs(morphType - 1.0));
+  float isReform = 1.0 - step(0.5, abs(morphType - 2.0));
+  float dissolveAmt = clamp(1.0 - morph, 0.0, 1.0);
+  float reformAmt = clamp(morph, 0.0, 1.0);
+
+  if (isDissolve > 0.0) {
+    float dissolveSpread = mix(1.0, clamp(spread, 1.0, 4.0), dissolveAmt);
+    atmoPos.xy *= dissolveSpread;
+  }
+  if (isReform > 0.0) {
+    float reformScale = mix(1.0, clamp(spread, 0.4, 1.0), reformAmt);
+    textPos.xy *= reformScale;
+  }
+
   vec3 basePos = mix(atmoPos, textPos, morph);
   
   // Add movement
@@ -115,6 +133,15 @@ void main() {
   }
 
   vec3 finalPos = basePos + movement;
+  
+  if (isDissolve > 0.0) {
+    vec3 radial = normalize(vec3(basePos.xy, 0.0001));
+    finalPos += radial * (clamp(spread, 1.0, 4.0) - 1.0) * dissolveAmt * 6.0;
+  }
+  if (isReform > 0.0) {
+    vec3 targetDir = normalize(vec3(textPos.xy, 0.0001));
+    finalPos -= targetDir * max(1.0 - clamp(spread, 0.0, 1.0), 0.0) * reformAmt * 4.0;
+  }
   vPosition = finalPos;
   
   // Transform to screen space
