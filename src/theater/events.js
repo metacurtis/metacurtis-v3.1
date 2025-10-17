@@ -31,6 +31,7 @@ export const EVENTS = {
   STAGE_CHANGE: 'STAGE_CHANGE',                  // { from, to } (canonical)
   STAGE_CHANGED: 'STAGE_CHANGED',                // (legacy/compat)
   STAGE_TRANSITION: 'STAGE_TRANSITION',
+  START_CLIMAX: 'START_CLIMAX',                  // Trigger climax sequence
 
   // Quality/tier (canonical: tier)
   QUALITY_CHANGE: 'QUALITY_CHANGE',              // { tier }

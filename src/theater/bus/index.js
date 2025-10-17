@@ -125,6 +125,15 @@ class BeatBus {
   }
 
   emit(evt, payload = {}){
+    if (evt === 'RENDER_DIRECTIVE') {
+      const set = this.listeners.get(evt);
+      console.log('🚌 BeatBus.emit called:', {
+        eventName: evt,
+        hasPayload: !!payload,
+        payloadKeys: payload ? Object.keys(payload) : [],
+        listenerCount: set ? set.size : 0,
+      });
+    }
     const mode = this._mode();
     const { ok:canonOk, out:canonPayload, normalized } = this._canonicalize(evt, payload);
     const { ok:validOk, missing } = this._validate(evt, canonPayload);

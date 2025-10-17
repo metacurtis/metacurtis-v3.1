@@ -10,6 +10,11 @@ import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.j
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import SST from '@/config/sst-loader.js'; // keep consistent with ESM imports
 import { createSeededRandom } from '../utils/random.js';
+import {
+  generatePortraitPositions,
+  generateQRPositions,
+  generateScatterPositions,
+} from '@/utils/portraitPositions.js';
 import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
@@ -281,9 +286,9 @@ class ConsciousnessEngine {
     // State / caches
     this.blueprintCache = new Map();
     this.currentStage = 'genesis';
-   this.currentQuality = 'HIGH';
-   this._emergenceActive = false;
-   this._emergenceDone = false;
+    this.currentQuality = 'HIGH';
+    this._emergenceActive = false;
+    this._emergenceDone = false;
     this._rendererFencepostSeen = false;
     
     // Opening gates
@@ -294,6 +299,19 @@ class ConsciousnessEngine {
     this._lastEmergenceTargets = null;
     this._emergenceRaf = null;
     this._pendingEmergenceBlueprint = null;
+
+    // Climax sequencing
+    this._climaxState = {
+      active: false,
+      currentStep: null,
+      stepIndex: -1,
+      stepStartTime: 0,
+      previousPositions: null,
+      timers: [],
+      transitionHandle: null,
+      transitionUsesRAF: false,
+    };
+    this._climaxSteps = [];
 
     // HMR safety
     this._listeners = [];
@@ -339,6 +357,9 @@ class ConsciousnessEngine {
     );
     this._listeners.push(
       BeatBus.on(this._ev('BUILD_EMERGENCE_BLUEPRINT'), this._onBuildEmergence.bind(this))
+    );
+    this._listeners.push(
+      BeatBus.on(this._ev('START_CLIMAX'), this._handleStartClimax.bind(this))
     );
     this._listeners.push(
       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
@@ -690,6 +711,483 @@ class ConsciousnessEngine {
     }
 
     return runTimeline(implMs, settleMs, midForTimeline);
+  }
+
+  /**
+   * Kick off the climax sequence orchestration.
+   * Engine owns this flow so renderer + diagnostics stay in sync.
+   */
+  _handleStartClimax() {
+    if (typeof window === 'undefined') return;
+    if (this.currentStage !== 'transcendence') {
+      console.warn(`🎬 Climax trigger ignored — current stage is "${this.currentStage}"`);
+      return;
+    }
+    if (this._climaxState.active) {
+      console.warn('🎬 Climax already active, ignoring duplicate trigger');
+      return;
+    }
+
+    this._clearClimaxTimers();
+    this._cancelClimaxTransition();
+
+    const transitions = Canonical?.visual?.transitions || {};
+    const transitionTimings = {
+      dissolveDuration: Number(transitions?.dissolveDuration) || 1500,
+      reformDuration: Number(transitions?.reformDuration) || 1500,
+      silenceDuration: Number(transitions?.silenceDuration) || 500,
+    };
+
+    const canonicalSequence =
+      Canonical?.stages?.transcendence?.memoryFragments?.climax?.sequence;
+
+    const fallbackSequence = [
+      { action: 'dissolve', duration: 2000 },
+      { action: 'formPortrait', duration: 3000 },
+      { action: 'reformText', text: 'CURTIS WHORTON', duration: 2000 },
+      { action: 'reformText', text: 'AI-NATIVE ENGINEER', duration: 2000 },
+      { action: 'formQRCode', url: 'https://curtisworton.com', duration: 3000 },
+    ];
+
+    const sourceSequence =
+      Array.isArray(canonicalSequence) && canonicalSequence.length
+        ? canonicalSequence
+        : fallbackSequence;
+
+    const steps = sourceSequence.map((entry, index) => {
+      const actionType = entry.action || entry.name || `step_${index}`;
+      const holdDuration = Number(entry.duration) || transitionTimings.silenceDuration;
+      const transitionDuration =
+        actionType === 'dissolve'
+          ? transitionTimings.dissolveDuration
+          : transitionTimings.reformDuration;
+
+      let name = actionType;
+      switch (actionType) {
+        case 'formPortrait':
+          name = 'portrait';
+          break;
+        case 'reformText': {
+          const upper = (entry.text || '').toUpperCase();
+          name = upper.includes('ENGINEER') ? 'title' : 'name';
+          break;
+        }
+        case 'formQRCode':
+          name = 'qr';
+          break;
+        case 'dissolve':
+          name = 'dissolve';
+          break;
+        default:
+          name = actionType;
+      }
+
+      return {
+        name,
+        action: actionType,
+        holdDuration,
+        transitionDuration,
+        text: entry.text ?? null,
+        url: entry.url ?? null,
+      };
+    });
+
+    console.log('🎬 ConsciousnessEngine: Starting climax sequence');
+    console.log('🎬 Using SST transition timings:', transitionTimings);
+
+    this._climaxState.active = true;
+    this._climaxState.currentStep = null;
+    this._climaxState.previousPositions = null;
+    this._climaxState.stepIndex = -1;
+    this._climaxState.stepStartTime = performance.now ? performance.now() : Date.now();
+
+    this._climaxSteps = steps;
+    this._log('climax_start', { steps: steps.length });
+
+    this._executeClimaxStep(0);
+  }
+
+  _executeClimaxStep(stepIndex) {
+    if (!this._climaxState.active) return;
+    if (stepIndex >= this._climaxSteps.length) {
+      this._finalizeClimaxSequence();
+      return;
+    }
+
+    const step = this._climaxSteps[stepIndex];
+    const now = performance.now ? performance.now() : Date.now();
+    this._climaxState.stepIndex = stepIndex;
+    this._climaxState.currentStep = step.name;
+    this._climaxState.stepStartTime = now;
+
+    this._log('climax_step', {
+      step: step.name,
+      hold: step.holdDuration,
+      transition: step.transitionDuration,
+      index: stepIndex,
+    });
+    console.log(`🎬 === STEP ${stepIndex}: ${step.name} ===`);
+    console.log(`   Hold: ${step.holdDuration}ms, Transition: ${step.transitionDuration}ms`);
+    console.log(`   Total time: ${step.holdDuration + step.transitionDuration}ms`);
+    console.log(`   Timestamp: ${now.toFixed(0)}`);
+
+    BeatBus.emit(EVENTS.CLIMAX_STEP, {
+      step: step.name,
+      holdDuration: step.holdDuration,
+      transitionDuration: step.transitionDuration,
+      text: step.text ?? null,
+      url: step.url ?? null,
+      stepIndex,
+      timestamp: now,
+    });
+
+    console.log(`📦 Building blueprint for ${step.name}`);
+    this._buildClimaxBlueprint(step);
+
+    console.log(`⏱️ Scheduling ${step.transitionDuration}ms transition in 50ms`);
+    const transitionTimer = setTimeout(() => {
+      if (!this._climaxState.active) return;
+      console.log(`🎬 STARTING TRANSITION for ${step.name}`);
+      this._startClimaxTransition(step.transitionDuration);
+    }, 50);
+    this._climaxState.timers.push(transitionTimer);
+
+    const totalStepTime = step.holdDuration + step.transitionDuration;
+    const nextTimer = setTimeout(() => {
+      this._executeClimaxStep(stepIndex + 1);
+    }, totalStepTime + 50);
+    this._climaxState.timers.push(nextTimer);
+  }
+
+  _buildClimaxBlueprint(step) {
+    const particleCount = this._resolveClimaxParticleCount();
+    if (!particleCount) {
+      console.warn('🧠 Engine: Unable to resolve particle count for climax');
+      return;
+    }
+
+    let positions = null;
+    try {
+      const actionType = step.action || step.name;
+      switch (actionType) {
+        case 'dissolve': {
+          const spread = { x: 60, y: 45, z: 15 };
+          positions = generateScatterPositions(particleCount, spread);
+          break;
+        }
+        case 'formPortrait':
+        case 'portrait':
+          positions = generatePortraitPositions(particleCount);
+          break;
+        case 'reformText':
+        case 'name':
+        case 'title':
+          positions = this._generateClimaxTextPositions(step.text, particleCount) ||
+            generateScatterPositions(particleCount);
+          break;
+        case 'formQRCode':
+        case 'qr':
+          positions = generateQRPositions(particleCount);
+          break;
+        default:
+          positions = generateScatterPositions(particleCount);
+      }
+    } catch (error) {
+      console.error('🧠 Engine: Climax formation generation failed', {
+        step: step.name,
+        action: step.action,
+        error,
+      });
+      positions = generateScatterPositions(particleCount);
+    }
+
+    if (!(positions instanceof Float32Array)) {
+      console.warn('🧠 Engine: Invalid climax positions array, falling back to scatter');
+      positions = generateScatterPositions(particleCount);
+    }
+
+    const blueprint = this._buildClimaxBlueprintFromPositions(step, positions, particleCount);
+    if (!blueprint) return;
+
+    const emitPayload = {
+      stage: 'transcendence',
+      quality: this.currentQuality,
+      blueprint,
+      mode: `climax:${step.name}`,
+      duration: step.holdDuration,
+      transitionDuration: step.transitionDuration,
+      timestamp: performance.now ? performance.now() : Date.now(),
+      text: step.text ?? null,
+      action: step.action ?? step.name,
+      url: step.url ?? null,
+      cached: false,
+    };
+
+    BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
+    this._log('climax_blueprint_emitted', { step: step.name, particleCount });
+  }
+
+  _buildClimaxBlueprintFromPositions(step, targetPositions, particleCount) {
+    const totalFloats = particleCount * 3;
+    if (!(targetPositions instanceof Float32Array) || targetPositions.length !== totalFloats) {
+      console.error('🧠 Engine: Climax blueprint target length mismatch', {
+        expected: totalFloats,
+        received: targetPositions?.length ?? 0,
+        step: step?.name,
+      });
+      return null;
+    }
+
+    const copyFloat32 = (arr) => (arr instanceof Float32Array ? arr.slice() : null);
+    const randomSeeds = (arr) => {
+      for (let i = 0; i < arr.length; i += 1) {
+        arr[i] = Math.random();
+      }
+    };
+    const randomScalar = (arr, base, span) => {
+      for (let i = 0; i < arr.length; i += 1) {
+        arr[i] = base + Math.random() * span;
+      }
+    };
+
+    const source = this._lastBlueprint;
+    let fromPositions = null;
+
+    if (this._climaxState.previousPositions instanceof Float32Array &&
+        this._climaxState.previousPositions.length === totalFloats) {
+      fromPositions = this._climaxState.previousPositions.slice();
+    } else if (source?.text3DPositions instanceof Float32Array &&
+               source.text3DPositions.length === totalFloats) {
+      fromPositions = source.text3DPositions.slice();
+    } else if (source?.atmosphericPositions instanceof Float32Array &&
+               source.atmosphericPositions.length === totalFloats) {
+      fromPositions = source.atmosphericPositions.slice();
+    } else {
+      fromPositions = generateScatterPositions(particleCount);
+    }
+
+    if (fromPositions.length !== totalFloats) {
+      const fallback = new Float32Array(totalFloats);
+      fallback.set(fromPositions.subarray(0, Math.min(fromPositions.length, totalFloats)));
+      fromPositions = fallback;
+    }
+
+    const cloneOrCreate = (attr, length, filler) => {
+      if (attr instanceof Float32Array && attr.length === length) {
+        return attr.slice();
+      }
+      const arr = new Float32Array(length);
+      if (typeof filler === 'function') filler(arr);
+      return arr;
+    };
+
+    const palette = ['#ffffff', '#f59e0b', '#00ffcc'];
+    const animationSeeds = cloneOrCreate(source?.animationSeeds, totalFloats, randomSeeds);
+    const sizeMultipliers = cloneOrCreate(source?.sizeMultipliers, particleCount, (arr) => randomScalar(arr, 0.8, 0.4));
+    const opacityData = cloneOrCreate(source?.opacityData, particleCount, (arr) => randomScalar(arr, 0.55, 0.4));
+    const atlasIndices = cloneOrCreate(source?.atlasIndices, particleCount, (arr) => {
+      for (let i = 0; i < arr.length; i += 1) arr[i] = 0;
+    });
+    const tierData = cloneOrCreate(source?.tierData, particleCount, (arr) => {
+      for (let i = 0; i < arr.length; i += 1) arr[i] = 2;
+    });
+
+    const metadata = {
+      ...(source?.metadata || {}),
+      climaxStep: step.name,
+      climaxAction: step.action ?? step.name,
+      climaxTimestamp: performance.now ? performance.now() : Date.now(),
+      climaxText: step.text ?? null,
+      climaxUrl: step.url ?? null,
+      climaxHoldMs: step.holdDuration,
+      climaxTransitionMs: step.transitionDuration,
+      colors: palette,
+    };
+
+    const blueprint = {
+      stageName: 'transcendence',
+      particleCount,
+      activeCount: particleCount,
+      maxParticles: Math.max(source?.maxParticles || particleCount, particleCount),
+      atmosphericPositions: fromPositions,
+      text3DPositions: targetPositions.slice(),
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      metadata,
+      mode: `climax:${step.name}`,
+      climaxStep: step.name,
+      colors: palette,
+      hotspotMap: {},
+      hotspotLookup: null,
+    };
+
+    this._lastBlueprint = blueprint;
+    this._climaxState.previousPositions = blueprint.text3DPositions.slice();
+    return blueprint;
+  }
+
+  _startClimaxTransition(duration = 800) {
+    if (typeof window === 'undefined') return;
+    const clampedDuration = Math.max(1, Number(duration) || 800);
+    this._cancelClimaxTransition();
+
+    const hasRAF = typeof requestAnimationFrame === 'function';
+    const diagTimestamp = performance.now ? performance.now() : Date.now();
+    console.log('🔍 CLIMAX TRANSITION START DIAGNOSTIC:', {
+      timestamp: typeof diagTimestamp.toFixed === 'function' ? diagTimestamp.toFixed(0) : `${diagTimestamp}`,
+      BeatBusExists: !!BeatBus,
+      BeatBusEmitExists: typeof BeatBus?.emit === 'function',
+      BeatBusOnExists: typeof BeatBus?.on === 'function',
+      climaxStepIndex: this._climaxState?.stepIndex,
+      climaxStepName: this._climaxState?.currentStep,
+    });
+
+    console.log('🧪 TEST: Emitting test directive before animation loop');
+    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+      morphProgress: -0.01,
+      morphType: 0,
+      postMorphFreeze: 0,
+      _test: true,
+    });
+
+    const runAnimation = () => {
+      console.log('🧪 TEST: Starting actual animation loop after 100ms delay');
+      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+        morphProgress: 0,
+        morphType: 0,
+        postMorphFreeze: 0,
+      });
+      console.log(`🎬 Starting ${clampedDuration}ms transition (SST-compliant)`);
+
+      const startTime = performance.now ? performance.now() : Date.now();
+
+      const step = () => {
+        const now = performance.now ? performance.now() : Date.now();
+        const raw = Math.min((now - startTime) / clampedDuration, 1);
+        const eased = raw < 0.5
+          ? 2 * raw * raw
+          : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+
+        if (this._climaxState.stepIndex === 0) {
+          console.log(
+            `🎬 Frame: raw=${(raw * 100).toFixed(1)}% eased=${(eased * 100).toFixed(1)}%`
+          );
+        }
+
+        const directive = {
+          morphProgress: eased,
+          morphType: 0,
+          postMorphFreeze: raw >= 1 ? 1 : 0,
+        };
+
+        if (this._climaxState.stepIndex === 0) {
+          console.log(`📤 ENGINE EMITTING: morphProgress=${(eased * 100).toFixed(1)}%`);
+        }
+
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
+        console.log(
+          `📤 Emitted to event:`,
+          EVENTS.RENDER_DIRECTIVE,
+          '| Value:',
+          String(EVENTS.RENDER_DIRECTIVE)
+        );
+
+        if (raw >= 1) {
+          console.log('✅ Climax transition complete');
+          this._climaxState.transitionHandle = null;
+          this._climaxState.transitionUsesRAF = false;
+          return;
+        }
+
+        if (hasRAF) {
+          this._climaxState.transitionUsesRAF = true;
+          this._climaxState.transitionHandle = requestAnimationFrame(step);
+        } else {
+          this._climaxState.transitionUsesRAF = false;
+          this._climaxState.transitionHandle = setTimeout(step, 16);
+        }
+      };
+
+      if (hasRAF) {
+        this._climaxState.transitionUsesRAF = true;
+        this._climaxState.transitionHandle = requestAnimationFrame(step);
+      } else {
+        this._climaxState.transitionUsesRAF = false;
+        this._climaxState.transitionHandle = setTimeout(step, 16);
+      }
+    };
+
+    const startTimer = setTimeout(runAnimation, 100);
+    this._climaxState.timers.push(startTimer);
+  }
+
+  _clearClimaxTimers() {
+    if (!this._climaxState?.timers) return;
+    this._climaxState.timers.forEach((id) => {
+      if (id != null) clearTimeout(id);
+    });
+    this._climaxState.timers.length = 0;
+  }
+
+  _cancelClimaxTransition() {
+    const state = this._climaxState;
+    if (!state || state.transitionHandle == null) return;
+    if (state.transitionUsesRAF && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(state.transitionHandle);
+    } else {
+      clearTimeout(state.transitionHandle);
+    }
+    state.transitionHandle = null;
+    state.transitionUsesRAF = false;
+  }
+
+  _finalizeClimaxSequence() {
+    this._clearClimaxTimers();
+    this._cancelClimaxTransition();
+
+    this._climaxState.active = false;
+    this._climaxState.currentStep = null;
+    this._climaxState.stepIndex = -1;
+    this._climaxState.stepStartTime = 0;
+    this._climaxState.previousPositions = null;
+
+    this._log('climax_complete');
+    console.log('🎬 Climax sequence complete');
+    BeatBus.emit(EVENTS.CLIMAX_STEP, { step: 'complete', timestamp: performance.now ? performance.now() : Date.now() });
+  }
+
+  _resolveClimaxParticleCount() {
+    const last = this._lastBlueprint;
+    const stageConfig = Canonical?.stages?.transcendence || {};
+    const baseFromStage = Number.isFinite(stageConfig.particleCount)
+      ? stageConfig.particleCount
+      : Number.isFinite(stageConfig.particlesBase)
+        ? stageConfig.particlesBase
+        : 15000;
+    const baseFromLast = Number.isFinite(last?.particleCount) ? last.particleCount : baseFromStage;
+
+    try {
+      return this.getParticleCountForQuality(baseFromLast, this.currentQuality || 'HIGH');
+    } catch (error) {
+      console.warn('🧠 Engine: Unable to scale climax particle count by quality', error);
+      return baseFromLast;
+    }
+  }
+
+  _generateClimaxTextPositions(text, particleCount) {
+    if (!text) return null;
+    try {
+      const positions = this.generate3DTextFormation(text, { particles: particleCount, depth: 0.25 });
+      if (positions instanceof Float32Array && positions.length === particleCount * 3) {
+        return positions;
+      }
+    } catch (error) {
+      console.warn('🧠 Engine: Climax text formation failed', { text, error });
+    }
+    return null;
   }
 
   // --- Blueprint Generation ---
@@ -1834,6 +2332,14 @@ class ConsciousnessEngine {
 
   // Cleanup for HMR
   destroy() {
+    this._clearClimaxTimers();
+    this._cancelClimaxTransition();
+    if (this._climaxState) {
+      this._climaxState.active = false;
+      this._climaxState.currentStep = null;
+      this._climaxState.previousPositions = null;
+      this._climaxState.stepIndex = -1;
+    }
     this._cleanupListeners();
     this.clearCache();
     this._initialized = false;

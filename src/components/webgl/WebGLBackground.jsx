@@ -70,6 +70,34 @@ function normalizePayload(payload) {
   return { bp, stageName, quality, cached, mode };
 }
 
+const directiveBridgeState = { handler: null };
+
+(() => {
+  try {
+    const sym = '__RENDER_DIRECTIVE_BRIDGE__';
+    if (typeof globalThis !== 'undefined') {
+      if (globalThis[sym]) {
+        return;
+      }
+      globalThis[sym] = true;
+    }
+    if (typeof BeatBus?.on === 'function') {
+      BeatBus.on(EVENTS.RENDER_DIRECTIVE, (payload) => {
+        try {
+          directiveBridgeState.handler?.(payload);
+        } catch (error) {
+          console.error('🎯 Renderer bridge handler error', error);
+        }
+      });
+      console.log('🪢 RENDER_DIRECTIVE bridge subscribed (module scope)');
+    } else {
+      console.warn('🪢 BeatBus.on not available at module scope');
+    }
+  } catch (error) {
+    console.error('🪢 Failed to init render directive bridge', error);
+  }
+})();
+
 const clampFit = (v) => Math.min(5.0, Math.max(0.2, v));
 
 function computeAABB(geo, key) {
@@ -144,9 +172,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const blueprintRef = useRef(blueprint);
   const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
-  const ignoreDirectivesRef = useRef(false);
-  const directiveOffRef = useRef(null);
-  const fenceReadyRef = useRef(false);
+  const ignoreDirectivesRef = useRef(false);  const fenceReadyRef = useRef(false);
   const pendingFencepostRef = useRef(false);
   const pendingFenceDataRef = useRef(null);
   const pendingFenceTimeoutRef = useRef(null);
@@ -913,6 +939,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           cached: !!cached,
         });
         scheduleRuntimeSampling();
+        if (mat?.uniforms?.uMorphProgress) {
+          mat.uniforms.uMorphProgress.value = 0;
+          if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+          mat.uniformsNeedUpdate = true;
+        }
+        ignoreDirectivesRef.current = false;
       }
 
       if (DEV && !geo.__singleWriterPatched) {
@@ -1239,9 +1271,23 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniforms.uTierCutoff.value     = activeCount;
   });
 
+  const frameCountRef = useRef(0);
+
   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {
-    const handler = (directive = {}) => {
+    frameCountRef.current = 0;
+    const handler = (payload = {}) => {
+      const directive = payload?.directive || payload || {};
+      const ts =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now().toFixed(0)
+          : Date.now();
+      console.log('📥 RENDERER HANDLER CALLED:', {
+        timestamp: ts,
+        hasMorphProgress: typeof directive?.morphProgress === 'number',
+        morphValue: directive?.morphProgress,
+      });
+
       if (ignoreDirectivesRef.current) {
         if (DEV) console.debug('[WBG] ignoring directive post-fencepost', directive?.morphProgress);
         return;
@@ -1265,6 +1311,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
       });
 
+      if (Number.isFinite(directive?.morphProgress)) {
+        frameCountRef.current += 1;
+        if (frameCountRef.current <= 60) {
+          console.log(
+            `🎨 Renderer frame #${frameCountRef.current}: morphProgress=${(directive.morphProgress * 100).toFixed(1)}%`
+          );
+        } else if (frameCountRef.current % 60 === 0) {
+          console.log(`🎨 Renderer: ${frameCountRef.current} total frames received`);
+        }
+        console.log(`🎨 Renderer received morphProgress: ${(directive.morphProgress * 100).toFixed(0)}%`);
+      }
+
       if (DEV) renderGuardRef.current = true;
       try {
         // Draw range (single writer)
@@ -1286,21 +1344,22 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         }
 
         // Morph progress + fencepost emission
-        if (Number.isFinite(directive.morphProgress) && uniforms.uMorphProgress) {
-          const v = clamp01(directive.morphProgress);
-          uniforms.uMorphProgress.value = v;
-          if (uniforms.uStageProgress) uniforms.uStageProgress.value = v;
+        if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
+          const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+          const newValue = clamp01(directive.morphProgress);
+          uniforms.uMorphProgress.value = newValue;
+          if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
+          if (Math.abs(newValue - oldValue) > 0.001) {
+            console.log(
+              `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
+            );
+          }
 
-          if (emergencePendingRef.current && !emittedEmergedRef.current && v >= 0.995) {
+          if (emergencePendingRef.current && !emittedEmergedRef.current && newValue >= 0.995) {
             emittedEmergedRef.current = true;
             emergencePendingRef.current = false;
             const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-            ignoreDirectivesRef.current = true;
-            if (directiveOffRef.current) {
-              directiveOffRef.current();
-              directiveOffRef.current = null;
-            }
-            if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+            ignoreDirectivesRef.current = true;            if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
               uniforms.uPostMorphFreeze.value = 1.0;
               mat.uniformsNeedUpdate = true;
               trace('WBG:FREEZE', { value: 1, source: 'directive' });
@@ -1309,31 +1368,37 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
               at: now,
               source: 'renderer-directive',
               stage: currentStage,
-              morph: v,
+              morph: newValue,
             };
             queueFencepost(payload);
           }
+        } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
+          console.warn('⚠️ uMorphProgress uniform not found on material!');
         }
 
-        if (Number.isFinite(directive.pointSize) && uniforms.uPointSize) {
+      if (Number.isFinite(directive?.pointSize) && uniforms.uPointSize) {
           uniforms.uPointSize.value = directive.pointSize;
         }
-        if (Number.isFinite(directive.gaussianSigma) && uniforms.uGaussianSigma) {
+        if (Number.isFinite(directive?.gaussianSigma) && uniforms.uGaussianSigma) {
           uniforms.uGaussianSigma.value = directive.gaussianSigma;
         }
-        if (Number.isFinite(directive.spreadFactor) && uniforms.uSpreadFactor) {
+        if (Number.isFinite(directive?.spreadFactor) && uniforms.uSpreadFactor) {
           uniforms.uSpreadFactor.value = directive.spreadFactor;
         }
-        if (directive.morphType !== undefined && directive.morphType !== null && uniforms.uMorphType) {
+        if (directive?.morphType !== undefined && directive?.morphType !== null && uniforms.uMorphType) {
           uniforms.uMorphType.value = morphTypeToInt(directive.morphType);
         }
-        if (Array.isArray(directive.tierHighlight) && uniforms.uTierHighlight?.value) {
+        if (directive?.postMorphFreeze !== undefined && uniforms.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = directive.postMorphFreeze ? 1.0 : 0.0;
+          mat.uniformsNeedUpdate = true;
+        }
+        if (Array.isArray(directive?.tierHighlight) && uniforms.uTierHighlight?.value) {
           const arr = uniforms.uTierHighlight.value;
           for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
             arr[i] = directive.tierHighlight[i];
           }
         }
-        if (directive.uniforms && typeof directive.uniforms === 'object') {
+        if (directive?.uniforms && typeof directive.uniforms === 'object') {
           for (const key in directive.uniforms) {
             if (Object.hasOwn(directive.uniforms, key) && uniforms[key]) {
               uniforms[key].value = directive.uniforms[key];
@@ -1347,14 +1412,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
     };
 
-    const off = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-    directiveOffRef.current = off;
-    return () => {
-      if (directiveOffRef.current) {
-        directiveOffRef.current();
-        directiveOffRef.current = null;
-      }
-    };
+    const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+    console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+    console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+    console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+    if (typeof window !== 'undefined') {
+      window._rendererSubscriptionCheck = () => {
+        console.log('🔍 Subscription check:', {
+          handlerStillExists: typeof handler === 'function',
+          BeatBusExists: typeof BeatBus !== 'undefined',        });
+      };
+    }
   }, []);
 
   // early-out fallback if not ready

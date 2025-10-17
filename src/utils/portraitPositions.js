@@ -1,30 +1,23 @@
-// Import Canonical authority if available
-// Note: This file may be called before Canonical is fully initialized,
-// so we safely access it via window and provide fallbacks
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import SST from '@/config/sst-loader.js';
 
 /**
- * Get canonical particle count for transcendence stage
- * Falls back to 15000 if Canonical not available
+ * Resolve the canonical transcendence particle count from configuration.
+ * Falls back to 15000 if Canonical/SST are not available or not yet initialized.
  */
 function getCanonicalTranscendenceCount() {
-  if (typeof window !== 'undefined' && window.Canonical) {
-    const transcendenceCount =
-      window.Canonical?.performance?.particleCount?.transcendence ||
-      window.Canonical?.stages?.transcendence?.particleCount;
-
-    if (Number.isFinite(transcendenceCount)) {
-      return transcendenceCount;
-    }
+  const canonicalCount =
+    Canonical?.performance?.particleCount?.transcendence ??
+    Canonical?.stages?.transcendence?.particleCount;
+  if (Number.isFinite(canonicalCount)) {
+    return canonicalCount;
   }
 
-  if (typeof window !== 'undefined' && window.SST) {
-    const transcendenceCount =
-      window.SST?.performance?.particleCount?.transcendence ||
-      window.SST?.stages?.transcendence?.particleCount;
-
-    if (Number.isFinite(transcendenceCount)) {
-      return transcendenceCount;
-    }
+  const sstCount =
+    SST?.performance?.particleCount?.transcendence ??
+    SST?.stages?.transcendence?.particleCount;
+  if (Number.isFinite(sstCount)) {
+    return sstCount;
   }
 
   return 15000;
