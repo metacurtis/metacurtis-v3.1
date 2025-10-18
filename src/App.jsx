@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
 import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManager.jsx';
 import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
+import NarrationController from '@/components/narrative/NarrationController.jsx';
 import { clockAtom } from '@/state/atoms';
 
 // Import engine as side-effect to ensure initialization
@@ -54,6 +55,7 @@ export default function App() {
       <ConsciousnessTheater />
       <AmbientFragmentManager />
       <ClimaxSequenceController />
+      <NarrationController />
     </div>
   );
 }

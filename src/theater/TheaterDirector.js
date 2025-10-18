@@ -8,6 +8,8 @@ import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 
+const DEBUG_NARRATION = true;
+
 const DEFAULT_TYPING_LINES = ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN'];
 
 const DEFAULT_OPENING_TIMELINE = {
@@ -53,6 +55,23 @@ class TheaterDirector {
     this.reset();
     this.timeline = {};
     this.scrollOrchestrator = null;
+    this.narrationController = null;
+
+    if (DEBUG_NARRATION) {
+      const stageKeys = Object.keys(SST?.narrative?.beatSheets || {});
+      console.log('🎬 [TheaterDirector] Initializing');
+      console.log('🎬 [TheaterDirector] SST stages:', stageKeys);
+    }
+
+    this._handleStageChangeBound = (payload = {}) => {
+      const targetStage = payload?.to ?? payload?.stage ?? null;
+      if (!targetStage) return;
+      this.handleStageChange(targetStage, payload);
+    };
+
+    if (typeof BeatBus?.on === 'function') {
+      this._stageChangeUnsubscribe = BeatBus.on(EVENTS.STAGE_CHANGE, this._handleStageChangeBound);
+    }
   }
 
   _getOpeningConfig() {
@@ -131,6 +150,15 @@ class TheaterDirector {
     this._skipKey = null;
   }
 
+  _resolveNarrationController() {
+    if (this.narrationController) return this.narrationController;
+    if (typeof window !== 'undefined' && window.narrationController) {
+      this.narrationController = window.narrationController;
+      return this.narrationController;
+    }
+    return this.narrationController;
+  }
+
   _wakeSleepWaiters(reason = 'interrupted') {
     if (!this._sleepWaiters || this._sleepWaiters.size === 0) return;
     for (const resolve of Array.from(this._sleepWaiters)) {
@@ -163,6 +191,64 @@ class TheaterDirector {
     if (id == null) return;
     clearTimeout(id);
     this._activeTimers?.delete(id);
+  }
+
+  handleStageChange(newStage, payload = {}) {
+    if (!newStage) {
+      if (DEBUG_NARRATION) {
+        console.warn('🎬 [STAGE CHANGE] Ignored invalid stage payload', payload);
+      }
+      return;
+    }
+
+    const previousStage = this.currentStage;
+    if (previousStage === newStage) {
+      if (DEBUG_NARRATION) {
+        console.log('🎬 [STAGE CHANGE IGNORED] Duplicate stage event', {
+          stage: newStage,
+          payload,
+        });
+      }
+      return;
+    }
+    const narrationController = this._resolveNarrationController();
+    const beatSheet = SST?.narrative?.beatSheets?.[newStage];
+
+    if (DEBUG_NARRATION) {
+      console.log('🎬 [STAGE CHANGE]', {
+        from: previousStage,
+        to: newStage,
+        hasBeatSheet: !!beatSheet,
+        narrationControllerExists: !!narrationController,
+      });
+    }
+
+    this.currentStage = newStage;
+
+    if (beatSheet) {
+      if (DEBUG_NARRATION) {
+        console.log('🎬 [BEAT SHEET FOUND]', {
+          stage: newStage,
+          beatCount: beatSheet?.beats?.length || 0,
+          duration: beatSheet?.totalDuration || 'unknown',
+        });
+      }
+
+      if (narrationController && typeof narrationController.playNarration === 'function') {
+        if (DEBUG_NARRATION) {
+          console.log('🎬 [TRIGGERING NARRATION]', newStage);
+        }
+        try {
+          narrationController.playNarration(newStage);
+        } catch (error) {
+          console.error('🚨 [NARRATION TRIGGER FAILED]', { stage: newStage, error });
+        }
+      } else if (DEBUG_NARRATION) {
+        console.error('🚨 [NO NARRATION CONTROLLER]');
+      }
+    } else if (DEBUG_NARRATION) {
+      console.warn('⚠️ [NO BEAT SHEET]', newStage);
+    }
   }
 
   _requestSkip(origin = 'keyboard') {
@@ -255,6 +341,15 @@ class TheaterDirector {
     // Strong duplicate protection
     if (this.isRunning) {
       console.log('🎬 Director: Already running, ignoring duplicate start');
+      return;
+    }
+
+    if (this.phase === 'complete' && this.currentStage) {
+      if (DEBUG_NARRATION) {
+        console.log('🎬 Director: Opening already complete, ignoring restart request', {
+          currentStage: this.currentStage,
+        });
+      }
       return;
     }
     
@@ -550,7 +645,6 @@ class TheaterDirector {
       
       this.phase = 'genesis';
       const previousStage = this.currentStage ?? 'emergence';
-      this.currentStage = toStage;
       console.log('🧬 Phase: Genesis stage handoff');
 
       BeatBus.emit(EVENTS.STAGE_CHANGE, {
@@ -587,6 +681,34 @@ class TheaterDirector {
       this.monitorFragments();
 
       this.phase = 'complete';
+
+      if (DEBUG_NARRATION) {
+        const timestamp =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        console.log('✅ [OPENING COMPLETE]', {
+          nextStage: 'discipline',
+          shouldAutoAdvance: true,
+          timestamp,
+        });
+
+        setTimeout(() => {
+          const win = typeof window !== 'undefined' ? window : undefined;
+          const currentStageSnapshot = this.currentStage;
+          const scrollLocked =
+            (win?.scrollOrchestrator && win.scrollOrchestrator.scrollLocked === true) ||
+            (win?.__scrollOrchestrator && win.__scrollOrchestrator.scrollLocked === true) ||
+            false;
+          const narrationController = this._resolveNarrationController();
+          console.log('🔍 [POST-OPENING STATE]', {
+            currentStage: currentStageSnapshot,
+            scrollLocked,
+            narrationPlaying: !!narrationController?.isPlaying,
+          });
+        }, 100);
+      }
+
       const elapsed = Date.now() - this.startTime;
       console.log('🎬 Director: Opening complete → user-driven experience');
       if (typeof opening?.totalDurationMs === 'number') {
@@ -762,19 +884,32 @@ if (typeof window !== 'undefined') {
     console.log('🎬 Director: Installing viewport listener for auto-start');
 
     const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, data => {
-      if (!director.hasRun && !director.isRunning) {
+      if (!director.hasRun && !director.isRunning && director.phase !== 'complete') {
         console.log('🎬 Director: Viewport hint received, auto-starting', data);
         director.viewportReady = true;
         director.start();
+      } else if (DEBUG_NARRATION) {
+        console.log('🎬 Director: Viewport hint received but start skipped', {
+          hasRun: director.hasRun,
+          isRunning: director.isRunning,
+          phase: director.phase,
+        });
       }
       unsubscribe?.();
     });
 
     // Fallback: start after 3 seconds if no viewport hint
     director._trackTimer(() => {
-      if (!director.hasRun && !director.isRunning && !director.viewportReady) {
+      if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
         console.warn('🎬 Director: No viewport hint after 3s, starting anyway');
         director.forceStart();
+      } else if (DEBUG_NARRATION) {
+        console.log('🎬 Director: Auto-start fallback skipped', {
+          hasRun: director.hasRun,
+          isRunning: director.isRunning,
+          viewportReady: director.viewportReady,
+          phase: director.phase,
+        });
       }
     }, 3000);
   };

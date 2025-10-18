@@ -135,6 +135,7 @@ export default function ConsciousnessTheater() {
 
   const startTimeRef = useRef(Date.now());
   const currentStageRef = useRef('genesis');
+  const morphProgressRef = useRef(0);
   const directorStartedRef = useRef(false);
   const viewportReadyRef = useRef(false);
 
@@ -149,6 +150,10 @@ export default function ConsciousnessTheater() {
   } = useMemoryFragments(currentStage, scrollProgress * 100, null);
   const triggerFragmentRef = useRef(triggerFragment);
   triggerFragmentRef.current = triggerFragment;
+
+  useEffect(() => {
+    morphProgressRef.current = morphProgress;
+  }, [morphProgress]);
 
   // ───────────────── Director start AFTER viewport hint; scroll locked until ENABLE_SCROLL
   useEffect(() => {
@@ -224,34 +229,170 @@ export default function ConsciousnessTheater() {
 
   // ───────────────── Keyboard navigation (after handoff)
   useEffect(() => {
-    if (!isInitialized || !scrollEnabled) return;
-    const handleKey = (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-        e.preventDefault(); e.stopPropagation();
+    if (!isInitialized) return;
+
+    const stageNames =
+      Array.isArray(Canonical.stageOrder) && Canonical.stageOrder.length
+        ? Canonical.stageOrder
+        : Object.keys(Canonical.stages || {});
+
+    const skipNarrationIfActive = () => {
+      const controller = typeof window !== 'undefined' ? window.narrationController : null;
+      if (controller?.isPlaying && typeof controller.skipNarration === 'function') {
+        controller.skipNarration();
+        return true;
       }
-      switch (e.key) {
-        case 'ArrowRight': stageAtom.nextStage(); break;
-        case 'ArrowLeft':  stageAtom.prevStage(); break;
-        case 'ArrowUp':    setMorphProgress((p) => Math.min(p + 0.1, 1)); break;
-        case 'ArrowDown':  setMorphProgress((p) => Math.max(p - 0.1, 0)); break;
-        case ' ':          stageAtom.nextStage(); break;
-        case '1': case '2': case '3': case '4': case '5': case '6': case '7': {
-          const idx = parseInt(e.key, 10) - 1;
-          const names = Object.keys(Canonical.stages);
-          if (names[idx]) stageAtom.jumpToStage(names[idx]);
-          break;
+      return false;
+    };
+
+    const handleKey = (e) => {
+      const tagName = e.target?.tagName;
+      if (tagName && ['INPUT', 'TEXTAREA'].includes(tagName)) return;
+
+      const key = e.key;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+        console.log('🔍 [KEY DEBUG]', {
+          key,
+          target: tagName || 'unknown',
+          defaultPrevented: e.defaultPrevented,
+          timestamp: performance.now(),
+        });
+      }
+
+      // Stage navigation keys
+      if (key === 'ArrowRight' || key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        const before = stageAtom.getState?.();
+        const narrationSkipped = skipNarrationIfActive();
+
+        if (key === 'ArrowRight') {
+          stageAtom.nextStage();
+        } else {
+          stageAtom.prevStage();
         }
-        case 'h': case 'H':
-          window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR; window.location.reload(); break;
-        case 'm': case 'M': setMorphProgress((p) => (p > 0.5 ? 0 : 1)); break;
-        case 'r': case 'R': stageAtom.jumpToStage('genesis'); setMorphProgress(0); break;
-        default: break;
+
+        const after = stageAtom.getState?.();
+        console.log('🎬 [KEY NAV]', {
+          key,
+          from: before?.currentStage,
+          to: after?.currentStage,
+          narrationSkipped,
+        });
+        return;
+      }
+
+      // Morph controls (retain existing behaviour)
+      if (key === 'ArrowUp' || key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const current = typeof morphProgressRef.current === 'number' ? morphProgressRef.current : 0;
+        const delta = key === 'ArrowUp' ? 0.1 : -0.1;
+        const next = Math.max(0, Math.min(1, Number((current + delta).toFixed(3))));
+
+        if (next !== current) {
+          setMorphProgress(next);
+          morphProgressRef.current = next;
+
+          const engine = typeof window !== 'undefined' ? window.consciousnessEngine : null;
+          if (engine?.setMorphOverride) {
+            try {
+              engine.setMorphOverride(next);
+            } catch (err) {
+              console.warn('⚠️ [KEY NAV] setMorphOverride failed', err);
+            }
+          }
+
+          BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+            value: next,
+            stage: currentStageRef.current,
+            manual: true,
+          });
+
+          console.log('🎬 [KEY NAV]', {
+            key,
+            action: key === 'ArrowUp' ? 'increase' : 'decrease',
+            from: current.toFixed(2),
+            to: next.toFixed(2),
+          });
+        } else {
+          console.log('🎬 [KEY NAV]', {
+            key,
+            action: key === 'ArrowUp' ? 'increase' : 'decrease',
+            ignored: 'clamped',
+            value: current.toFixed(2),
+          });
+        }
+        return;
+      }
+
+      // Numeric shortcuts
+      if (/^[0-9]$/.test(key)) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const numeric = parseInt(key, 10);
+        const targetIndex =
+          numeric === 0 ? 0 : Math.max(0, Math.min(stageNames.length - 1, numeric - 1));
+        const targetStage = stageNames[targetIndex];
+        if (targetStage) {
+          const before = stageAtom.getState?.();
+          const narrationSkipped = skipNarrationIfActive();
+          stageAtom.jumpToStage(targetStage);
+          const after = stageAtom.getState?.();
+          console.log('🎬 [KEY NAV]', {
+            key,
+            targetStage,
+            from: before?.currentStage,
+            to: after?.currentStage,
+            narrationSkipped,
+          });
+        }
+        return;
+      }
+
+      // Spacebar → next stage (kept for parity with previous behaviour)
+      if (key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        const before = stageAtom.getState?.();
+        const narrationSkipped = skipNarrationIfActive();
+        stageAtom.nextStage();
+        const after = stageAtom.getState?.();
+        console.log('🎬 [KEY NAV]', {
+          key: 'Space',
+          from: before?.currentStage,
+          to: after?.currentStage,
+          narrationSkipped,
+        });
+        return;
+      }
+
+      // Developer toggles / helpers preserved
+      switch (key) {
+        case 'h':
+        case 'H':
+          window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR;
+          window.location.reload();
+          break;
+        case 'm':
+        case 'M':
+          setMorphProgress((p) => (p > 0.5 ? 0 : 1));
+          break;
+        case 'r':
+        case 'R':
+          stageAtom.jumpToStage('genesis');
+          setMorphProgress(0);
+          break;
+        default:
+          break;
       }
     };
+
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isInitialized, scrollEnabled]);
+  }, [isInitialized, setMorphProgress]);
 
   // ───────────────── Stage subscription
   useEffect(() => {

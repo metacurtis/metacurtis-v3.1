@@ -1347,6 +1347,106 @@
       "mode": "narration-driven",
       "scrollLocked": true,
       "skipKey": "SPACE"
+    },
+    "beatSheets": {
+      "genesis": {
+        "totalDuration": 30000,
+        "beats": [
+          {
+            "time": 1000,
+            "narration": {
+              "text": "I was eight years old. End of summer, 1983.",
+              "duration": 3000
+            },
+            "visual": "gentle_drift"
+          },
+          {
+            "time": 4000,
+            "narration": {
+              "text": "The Texas heat was finally breaking, and through my friend's window, that golden hour light made everything feel... possible.",
+              "duration": 6000
+            },
+            "visual": "no_change"
+          },
+          {
+            "time": 10000,
+            "narration": {
+              "text": "His mom had this programming book. The computer - a Commodore 64 - sat there like some kind of oracle. Waiting.",
+              "duration": 6000
+            },
+            "visual": "tier3_subtle_pulse"
+          },
+          {
+            "time": 16000,
+            "narration": {
+              "text": "I typed those lines exactly as the book showed. When I pressed RUN and the screen came alive...",
+              "duration": 5000
+            },
+            "visual": "tier2_flicker_increase"
+          },
+          {
+            "time": 22000,
+            "narration": {
+              "text": "...something lit up inside me. A spark that would wait 39 years to fully ignite.",
+              "duration": 5000
+            },
+            "visual": "tier3_glow_pulse"
+          }
+        ]
+      },
+      "discipline": {
+        "totalDuration": 35000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "That spark? It got buried. Had to.",
+              "duration": 3000
+            },
+            "visual": "reform_as_structure"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "Home was chaos - unpredictable, unsafe. But then came the Marines. Everything changed.",
+              "duration": 6000
+            },
+            "visual": "particles_begin_columns"
+          },
+          {
+            "time": 11000,
+            "narration": {
+              "text": "'Adapt and overcome.' More than a motto - it became my operating system.",
+              "duration": 5000
+            },
+            "visual": "tier2_lock_into_grid"
+          },
+          {
+            "time": 16000,
+            "narration": {
+              "text": "The chaos didn't disappear, but now I had a framework. Structure. Discipline.",
+              "duration": 5000
+            },
+            "visual": "tier3_cadence_pulse"
+          },
+          {
+            "time": 21000,
+            "narration": {
+              "text": "For 39 years, I built systems. Logistics. Finance. Operations. Always solving, always building.",
+              "duration": 6000
+            },
+            "visual": "breathing_rhythm"
+          },
+          {
+            "time": 29000,
+            "narration": {
+              "text": "...that eight-year-old's spark never died. It was just waiting for the right moment to reignite.",
+              "duration": 5000
+            },
+            "visual": "flicker_fade_back_to_blue"
+          }
+        ]
+      }
     }
   },
   "performance": {

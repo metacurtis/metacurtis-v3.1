@@ -7,6 +7,8 @@ import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 
+const DEBUG_SCROLL = true;
+
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 
 // v3.3 easing: soften edges 0..10% and 90..100%
@@ -31,38 +33,56 @@ export default class ScrollOrchestrator {
     this.morph = 1;
     this.morphTarget = 1;
     this.fragmentFired = new Set();
+    this.scrollLocked = false;
   
     this._rafId = 0;
     
     // throttle / change-detect emit guards
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
+    this._lastScrollLogBucket = null;
   }
 
   start() {
     if (this.running) return;
     this.running = true;
     this.fragmentFired.clear();
-    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this.scrollLocked = false;
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', this._onScroll, { passive: true });
+      window.__scrollOrchestrator = this;
+      window.scrollOrchestrator = this;
+    }
     // kick once
     this._onScroll();
     // schedule smoothing loop
     this._schedule();
     // dev
-    if (typeof window !== 'undefined') window.__scrollOrchestrator = this;
-    console.log('📜 ScrollOrchestrator started');
+    if (DEBUG_SCROLL) {
+      console.log('📜 ScrollOrchestrator started');
+    }
   }
 
   stop() {
     if (!this.running) return;
     this.running = false;
-    window.removeEventListener('scroll', this._onScroll);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this._onScroll);
+      if (window.__scrollOrchestrator === this) {
+        window.__scrollOrchestrator = null;
+      }
+      if (window.scrollOrchestrator === this) {
+        window.scrollOrchestrator = null;
+      }
+    }
   
     if (this._rafId) { 
       cancelAnimationFrame(this._rafId); 
       this._rafId = 0; 
     }
-    console.log('📜 ScrollOrchestrator stopped');
+    if (DEBUG_SCROLL) {
+      console.log('📜 ScrollOrchestrator stopped');
+    }
   }
 
   _schedule() {
@@ -129,6 +149,13 @@ export default class ScrollOrchestrator {
       const denom = Math.max(1, doc.scrollHeight - doc.clientHeight);
       const rawPct = (doc.scrollTop / denom) * 100;
       const easedPct = easePercent(rawPct);
+      if (typeof document !== 'undefined') {
+        try {
+          this.scrollLocked = (document.body?.style?.overflow || '') === 'hidden';
+        } catch {
+          this.scrollLocked = false;
+        }
+      }
 
       // stage detection
       const bps = Canonical?.scrollAndMorph?.stageBreakpointsPercent || [0, 100];
@@ -148,6 +175,19 @@ export default class ScrollOrchestrator {
       const stageName = Canonical?.stageOrder?.[stageIdx] || 
                         Object.keys(Canonical.stages || {})[stageIdx] || 
                         'unknown';
+
+      if (DEBUG_SCROLL) {
+        const bucket = Math.floor(easedPct / 10) * 10;
+        if (!Number.isNaN(bucket) && bucket !== this._lastScrollLogBucket) {
+          this._lastScrollLogBucket = bucket;
+          console.log('🎬 [SCROLL]', {
+            percent: Math.round(easedPct),
+            bucket,
+            currentStage: stageName,
+            scrollLocked: !!this.scrollLocked,
+          });
+        }
+      }
 
       // local progress within stage
       const start = bps[stageIdx] ?? 0;
@@ -185,7 +225,10 @@ export default class ScrollOrchestrator {
           scrollPercent: easedPct,
           localProgress: local
         });
-        console.log(`📜 Stage change: ${stageName} (${stageIdx})`);
+        this._lastScrollLogBucket = null;
+        if (DEBUG_SCROLL) {
+          console.log(`📜 Stage change: ${stageName} (${stageIdx})`);
+        }
       }
 
       // memory fragment trigger per stage
