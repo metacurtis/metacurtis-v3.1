@@ -14,6 +14,7 @@ export const EVENTS = {
   // Emergence / blueprint handoff
   BUILD_EMERGENCE_BLUEPRINT: 'BUILD_EMERGENCE_BLUEPRINT',
   BLUEPRINT_READY: 'BLUEPRINT_READY',            // { blueprint, stage?, quality?, mode? }
+  BLUEPRINT_INVALIDATED: 'BLUEPRINT_INVALIDATED',// guard fallback notification
   PARTICLES_START_EMERGING: 'PARTICLES_START_EMERGING',
   PARTICLES_EMERGED: 'PARTICLES_EMERGED',        // fencepost (emit once)
   FENCEPOST_LISTENERS_READY: 'FENCEPOST_LISTENERS_READY',

@@ -11,10 +11,15 @@ export class BlueprintGuardV2 {
       return;
     }
 
-    BeatBus.on(EVENTS.BLUEPRINT_READY, (payload) => {
+    BeatBus.on(EVENTS.BLUEPRINT_READY, (payload = {}) => {
       const validation = this.validate(payload?.blueprint);
       
       if (!validation.ok) {
+        const stage = payload?.stage ?? payload?.blueprint?.stageName ?? null;
+        const quality = payload?.quality ?? payload?.tier ?? null;
+        const cacheKey = payload?.cacheKey ?? (stage ? `${stage}|${quality || 'HIGH'}` : null);
+        const cachedBeforeGuard = !!payload?.cached;
+
         incidentCollector.add({
           code: 'BLUEPRINT_INVALID',
           severity: 'warn',
@@ -22,8 +27,9 @@ export class BlueprintGuardV2 {
           context: {
             errors: validation.errors,
             count: validation.count,
-            stage: payload?.stage,
-            quality: payload?.quality
+            stage,
+            quality,
+            cacheKey
           },
           timestamp: Date.now()
         });
@@ -33,6 +39,10 @@ export class BlueprintGuardV2 {
           payload.blueprint = fallback;
           payload.cached = false;
           payload._guard_fixed = true;
+          payload.guardFallback = true;
+          payload.guardIssues = validation.errors.slice();
+          payload.cacheKey = cacheKey;
+          payload.cachedBeforeGuard = cachedBeforeGuard;
           this.fallbacksApplied++;
           
           incidentCollector.add({
@@ -41,10 +51,29 @@ export class BlueprintGuardV2 {
             message: 'Fallback blueprint applied',
             context: {
               particleCount: fallback.activeCount,
-              originalErrors: validation.errors
+              originalErrors: validation.errors,
+              cacheKey
             },
             timestamp: Date.now()
           });
+
+          if (BeatBus?.emit && EVENTS?.BLUEPRINT_INVALIDATED) {
+            try {
+              BeatBus.emit(EVENTS.BLUEPRINT_INVALIDATED, {
+                stage: stage ?? fallback.stageName ?? null,
+                quality,
+                cacheKey,
+                issues: validation.errors.slice(),
+                fallback: true,
+                guardVersion: 'v2',
+                cachedBeforeGuard,
+                fallbackCount: fallback.activeCount,
+                timestamp: Date.now(),
+              });
+            } catch (error) {
+              console.warn('BlueprintGuardV2: failed to emit BLUEPRINT_INVALIDATED', error);
+            }
+          }
         }
       }
       

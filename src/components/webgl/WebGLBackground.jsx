@@ -65,10 +65,36 @@ function pickStageColors(stageName) {
 function normalizePayload(payload) {
   const bp = payload?.blueprint ?? payload;
   const stageName = bp?.stageName || bp?.stage || payload?.stage || 'genesis';
-  const quality = payload?.quality || 'HIGH';
+  const quality = payload?.quality || payload?.tier || 'HIGH';
   const cached = !!payload?.cached;
   const mode = payload?.mode || bp?.mode;
-  return { bp, stageName, quality, cached, mode };
+  const cacheKey = payload?.cacheKey || bp?.metadata?.cacheKey || null;
+  const fastForward =
+    payload?.fastForward ??
+    bp?.fastForward ??
+    bp?.metadata?.fastForward ??
+    false;
+  const skipMorphAnimation =
+    payload?.skipMorphAnimation ??
+    bp?.skipMorphAnimation ??
+    bp?.metadata?.skipMorphAnimation ??
+    false;
+  const guardFixed = payload?._guard_fixed === true || payload?.guardFallback === true;
+  const guardIssues = payload?.guardIssues || bp?.metadata?.guardIssues || null;
+  const cachedBeforeGuard = payload?.cachedBeforeGuard === true;
+  return {
+    bp,
+    stageName,
+    quality,
+    cached,
+    mode,
+    cacheKey,
+    fastForward: !!fastForward,
+    skipMorphAnimation: !!skipMorphAnimation,
+    guardFixed,
+    guardIssues,
+    cachedBeforeGuard,
+  };
 }
 
 const directiveBridgeState = { handler: null };
@@ -292,6 +318,56 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setTimeout(() => sampleRuntimeAABBOnce('WBG:RUNTIME'), 16 * i);
     }
   }, [sampleRuntimeAABBOnce]);
+
+  const finalizeEmergence = useCallback(
+    (source = 'renderer-fastforward') => {
+      if (!emergencePendingRef.current || emittedEmergedRef.current) {
+        return false;
+      }
+
+      const mat = materialRef.current;
+      const uniforms = mat?.uniforms;
+
+      if (uniforms?.uMorphProgress) {
+        uniforms.uMorphProgress.value = 1.0;
+        if (uniforms.uStageProgress) {
+          uniforms.uStageProgress.value = 1.0;
+        }
+      }
+
+      if (uniforms?.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+        uniforms.uPostMorphFreeze.value = 1.0;
+      }
+
+      if (mat) {
+        mat.uniformsNeedUpdate = true;
+      }
+
+      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 1, source });
+
+      const now =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+
+      emittedEmergedRef.current = true;
+      emergencePendingRef.current = false;
+      ignoreDirectivesRef.current = true;
+
+      const payload = {
+        at: now,
+        source,
+        stage: stageNameRef.current || 'genesis',
+        morph: 1,
+        fastForward: true,
+      };
+
+      queueFencepost(payload);
+      trace('WBG:FAST_FORWARD', payload);
+      return true;
+    },
+    [queueFencepost]
+  );
 
   const { size, gl, camera } = useThree();
 
@@ -826,6 +902,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       let cached = normalized.cached;
       const mode = normalized.mode;
       const rawMode = raw?.mode;
+      const cacheKey = normalized.cacheKey;
+      const fastForwardRequested = normalized.fastForward;
+      const skipMorph = normalized.skipMorphAnimation;
+      const guardFixed = normalized.guardFixed;
+      const guardIssues = normalized.guardIssues;
+      const cachedBeforeGuard = normalized.cachedBeforeGuard;
       const sequenceId = raw?.climaxSequenceId || raw?.metadata?.climaxSequenceId || null;
       const stepName = raw?.climaxStep || (rawMode?.includes(':') ? rawMode.split(':')[1] : null);
       const isClimax = Boolean(rawMode?.startsWith?.('climax')) || Boolean(raw?.climaxStep);
@@ -836,8 +918,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (!raw?.atmosphericPositions || !raw?.text3DPositions) return;
       if (id === lastBlueprintIdRef.current) return;
       lastBlueprintIdRef.current = id;
-
       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
+      const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
+
+      if (guardFixed) {
+        const issues = Array.isArray(guardIssues) ? guardIssues.join(', ') : guardIssues;
+        console.warn('🛡️ Renderer: Guard supplied fallback blueprint', {
+          cacheKey,
+          issues,
+          cachedBeforeGuard,
+        });
+      }
 
       if (isClimax) {
         if (cached) {
@@ -991,6 +1082,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           console.debug('[WBG] AABB bind', { pos: extent('position') }, { atm: extent('atmosphericPosition') }, { tgt: extent('text3DPosition') });
         }
         BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 0 });
+        if (shouldFastForward) {
+          const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
+          if (finalizeEmergence(source)) {
+            console.log('⚡ Renderer: Emergence fast-forward applied', {
+              source,
+              cacheKey,
+              stage: raw.stageName || st || 'genesis',
+            });
+          }
+        }
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
 
@@ -1130,7 +1231,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
-  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost]);
+  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, finalizeEmergence]);
 
   // build material once atlas+blueprint exist
   useEffect(() => {

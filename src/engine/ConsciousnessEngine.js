@@ -337,10 +337,11 @@ class ConsciousnessEngine {
    this.text2DFallback = true;
     this._fontCache = new Map();
     this._activeFontKey = null;
-    this._fontLoadingKey = null;
+   this._fontLoadingKey = null;
 
    // State / caches
    this.blueprintCache = new Map();
+   this._guardInvalidations = [];
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this._emergenceActive = false;
@@ -429,6 +430,9 @@ class ConsciousnessEngine {
         }
       })
     );
+    this._listeners.push(
+      BeatBus.on(this._ev('BLUEPRINT_INVALIDATED'), this._onBlueprintInvalidated.bind(this))
+    );
   }
 
   // Clean up listeners for HMR
@@ -442,6 +446,12 @@ class ConsciousnessEngine {
   // Event name tolerance (accept strings or EVENTS constants)
   _ev(eventName) {
     return EVENTS?.[eventName] || eventName;
+  }
+
+  _cacheKey(stage, quality) {
+    const stageKey = stage || this.currentStage || 'genesis';
+    const qualityKey = quality || this.currentQuality || 'HIGH';
+    return `${stageKey}|${qualityKey}`;
   }
 
   // --- Event Handlers (stable method references) ---
@@ -520,7 +530,7 @@ class ConsciousnessEngine {
     // Clear stale emergence targets so prewarm rebuilds with current VC tuning
     this._lastEmergenceTargets = null;
     console.log('🧠 Engine: Prewarming genesis blueprint');
-    const key = 'genesis|HIGH';
+    const key = this._cacheKey('genesis', 'HIGH');
     if (!this.blueprintCache.has(key)) {
       const bp = this.buildBlueprint('genesis', { quality: 'HIGH' });
       if (bp && this._validateBlueprint(bp)) {
@@ -529,6 +539,42 @@ class ConsciousnessEngine {
     }
     BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
     this._log('prewarm_complete', { key });
+  }
+
+  _onBlueprintInvalidated(payload = {}) {
+    const stage = payload.stage || null;
+    const quality = payload.quality || null;
+    const cacheKey = payload.cacheKey || (stage ? this._cacheKey(stage, quality) : null);
+    const issues = Array.isArray(payload.issues) ? payload.issues.slice(0, 6) : null;
+    const fallback = payload.fallback === true || payload.guardFallback === true;
+    const origin = payload.guardVersion || 'guard-v2';
+
+    if (cacheKey && this.blueprintCache.has(cacheKey)) {
+      this.blueprintCache.delete(cacheKey);
+      console.warn('🧠 Engine: Guard invalidated blueprint cache entry', { cacheKey, stage, quality, issues });
+      this._log('blueprint_guard_invalidate', { cacheKey, stage, quality, issues });
+    } else {
+      this._log('blueprint_guard_miss', { cacheKey, stage, quality, issues });
+    }
+
+    this._guardInvalidations.push({
+      at: typeof performance !== 'undefined' && performance?.now ? performance.now() : Date.now(),
+      stage,
+      quality: quality || null,
+      cacheKey,
+      issues,
+      fallback,
+      origin,
+    });
+    if (this._guardInvalidations.length > 50) {
+      this._guardInvalidations.shift();
+    }
+
+    if (stage === 'genesis' && fallback) {
+      this._lastEmergenceTargets = null;
+      this._emergenceDone = false;
+      this._rendererFencepostSeen = false;
+    }
   }
 
   async _onBuildEmergence(payload = {}) {
@@ -564,6 +610,7 @@ class ConsciousnessEngine {
         skipMorphAnimation: !!payload.skipMorphAnimation,
         targetState: payload.targetState,
         fastForward: !!payload.fastForward,
+        cacheKey: this._cacheKey('genesis', this.currentQuality),
       });
       
       console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
@@ -989,6 +1036,7 @@ class ConsciousnessEngine {
       action: step.action ?? step.name,
       url: step.url ?? null,
       cached: false,
+      cacheKey: this._cacheKey('transcendence', this.currentQuality),
     };
 
     BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
@@ -1573,7 +1621,7 @@ class ConsciousnessEngine {
       return;
     }
     
-    const cacheKey = `${stage}|${quality}`;
+    const cacheKey = this._cacheKey(stage, quality);
     let blueprint = this.blueprintCache.get(cacheKey);
 
     // Post-emergence genesis: optionally preserve settled emergence
@@ -1616,8 +1664,10 @@ class ConsciousnessEngine {
               stage,
               quality,
               mode: 'post-emergence-guarded',
+              cacheKey,
+              preservedEmergence: true,
             });
-            this._log('blueprint_emitted', { stage, quality, mode: 'post-emergence-guarded' });
+            this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
           }
           this._rendererFencepostSeen = false;
           return;
@@ -1634,8 +1684,9 @@ class ConsciousnessEngine {
           stage,
           quality,
           cached: true,
+          cacheKey,
         });
-        this._log('blueprint_emitted', { stage, quality, cached: true });
+        this._log('blueprint_emitted', { stage, quality, cacheKey, cached: true });
       }
       return;
     }
@@ -1651,8 +1702,9 @@ class ConsciousnessEngine {
         stage,
         quality,
         cached: false,
+        cacheKey,
       });
-      this._log('blueprint_emitted', { stage, quality, cached: false });
+      this._log('blueprint_emitted', { stage, quality, cacheKey, cached: false });
     }
   }
 
@@ -2583,6 +2635,7 @@ class ConsciousnessEngine {
       openingPhase: this._openingPhase,
       viewportHint: this._viewportHint,
       hasEmergenceTargets: !!this._lastEmergenceTargets,
+      guardInvalidations: this._guardInvalidations.slice(-10),
       lastEvents: this._eventLog.slice(-20),
     };
   }
