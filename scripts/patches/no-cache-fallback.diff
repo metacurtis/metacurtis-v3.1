@@ -1,0 +1,30 @@
+--- a/src/engine/ConsciousnessEngine.js
++++ b/src/engine/ConsciousnessEngine.js
+@@
+-  const cached = this._text3DCache.get(key);
++  const cached = this._text3DCache.get(key);
+   if (cached) {
+     this._lastText3DFallbackUsed = !!cached.isFallback;
+     return cached.positions;
+   }
+@@
+-  if (!this.font) {
+-    const band = this.textToParticlePositions(word, particles, viewportHint);
+-    const entry = { positions: band, isFallback: true };
+-    this._text3DCache.set(key, entry);
+-    this._lastText3DFallbackUsed = true;
+-    console.warn('⚠️ text3D fallback (font not ready)');
+-    return entry.positions;
+-  } else {
++  if (!this.font) {
++    const band = this.textToParticlePositions(word, particles, viewportHint);
++    console.warn('⚠️ text3D fallback (font not ready) — NOT caching fallback');
++    this._lastText3DFallbackUsed = true;
++    return band;
++  } else {
+     const positions = this._build3DLetters(word, { particles, depth, viewportHint });
+     const entry = { positions, isFallback: false };
+     this._text3DCache.set(key, entry);
+     this._lastText3DFallbackUsed = false;
+     return entry.positions;
+   }

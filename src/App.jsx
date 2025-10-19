@@ -1,84 +1,61 @@
-// src/App.jsx - FIXED VERSION
-import { Suspense, lazy } from 'react';
-import CanvasErrorBoundary from '@/components/ui/CanvasErrorBoundary';
-import Layout from '@/components/ui/Layout';
-import Hero from '@/components/sections/Hero';
-import About from '@/components/sections/About';
-import Features from '@/components/sections/Features';
-import Contact from '@/components/sections/Contact';
-import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
+// src/App.jsx
+// SST v3.0 PRODUCTION - Complete app shell with Canon console
 
-const WebGLCanvas = lazy(() => import('@/components/webgl/WebGLCanvas'));
+import React, { useEffect } from 'react';
+import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
+import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManager.jsx';
+import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
+import NarrationController from '@/components/narrative/NarrationController.jsx';
+import { clockAtom } from '@/state/atoms';
+
+// Import engine as side-effect to ensure initialization
+import './engine/ConsciousnessEngine';
+
+// DEV: Canon Dev-OS injector (idempotent, order-aware)
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+}
 
 export default function App() {
-  const isDevelopment = import.meta.env.DEV;
-  console.log(
-    `App.jsx: isDevelopment = ${isDevelopment}. DevPerformanceMonitor will be rendered if true.`
-  );
+  useEffect(() => {
+    console.log('🚀 App initializing...');
+    
+    // Start the clock atom if not already running
+    const clock = clockAtom.getState();
+    if (!clock.isRunning && typeof clockAtom.start === 'function') {
+      clockAtom.start();
+      console.log('⏰ Clock atom started');
+    }
+    
+    // Log available debug tools
+    console.log('🧬 MetaCurtis Consciousness Theater v3.0');
+    console.log('📊 Debug tools available:');
+    console.log('  - globalThis.qualityControls (performance testing)');
+    console.log('  - window.theaterDirector (opening control)');
+    console.log('  - window.hotdors (renderer diagnostics)');
+    console.log('  - window.CANON_INJECTOR (dev console system)');
+    console.log('  - BeatBus (event system)');
+    console.log('');
+    console.log('🎮 Quick commands:');
+    console.log('  window.theaterDirector.forceStart() - Start opening');
+    console.log('  window.hotdors.selfverifyATS() - Check opening sequence');
+    console.log('  Alt+` - Toggle Canon HUD');
+    
+    // Cleanup on unmount
+    return () => {
+      const currentClock = clockAtom.getState();
+      if (currentClock.isRunning && typeof clockAtom.stop === 'function') {
+        clockAtom.stop();
+        console.log('⏰ Clock atom stopped');
+      }
+    };
+  }, []);
 
   return (
-    <div className="app-container relative">
-      {/* WebGL Particles - Isolated rendering layer */}
-      <div
-        className="webgl-layer"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      >
-        <CanvasErrorBoundary>
-          <Suspense
-            fallback={
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  color: 'white',
-                  fontSize: '18px',
-                  fontFamily: 'monospace',
-                }}
-              >
-                Loading particles...
-              </div>
-            }
-          >
-            <WebGLCanvas />
-          </Suspense>
-        </CanvasErrorBoundary>
-      </div>
-
-      {/* HTML Content Layer - Completely separate rendering */}
-      <div
-        className="html-layer"
-        style={{
-          position: 'relative',
-          zIndex: 10,
-        }}
-      >
-        {/* Hero Section - Full Viewport, HTML only */}
-        <Hero />
-
-        {/* Layout with other sections - HTML only */}
-        <Layout>
-          <div style={{ paddingTop: '100vh' }}>
-            {' '}
-            {/* Offset for full-screen Hero */}
-            <About />
-            <Features />
-            <Contact />
-          </div>
-        </Layout>
-      </div>
-
-      {/* Dev tools */}
-      {isDevelopment && <DevPerformanceMonitor />}
+    <div className="relative min-h-screen">
+      <ConsciousnessTheater />
+      <AmbientFragmentManager />
+      <ClimaxSequenceController />
+      <NarrationController />
     </div>
   );
 }

@@ -1,0 +1,20 @@
+{
+  "version": "v1",
+  "opening": {
+    "timeline": {
+      "minFillVisibleMs": 700,
+      "chaosMs": [700, 1400],
+      "coalesceMs": [600, 1300],
+      "settleMs": [700, 1200]
+    },
+    "chaosSpin": {
+      "zPerSec": [0.0, 0.0],
+      "yPerSec": [0.0, 0.0]
+    },
+    "emergenceCloud": {
+      "gasRadiusFactor": [0.60, 0.95],
+      "expandedRadiusFactor": [0.80, 1.10],
+      "zRange": [50, 140]
+    }
+  }
+}

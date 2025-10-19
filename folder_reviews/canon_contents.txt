@@ -1,0 +1,1096 @@
+==========================================
+CONTENTS OF FOLDER: canon
+PATH: /home/curtis/projects/metacurtis-v3.1/src/canon
+GENERATED: Sat Sep 20 14:36:25 CDT 2025
+==========================================
+
+
+==========================================----
+FILE: console/banner.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/console/banner.js
+SIZE: 836 bytes
+MODIFIED: 2025-09-19 22:26:51.092467417 -0500
+----==========================================
+
+// LEGACY DISABLED: // LEGACY DISABLED: // __CANON_INSTALLED__
+import BeatBus from '@/theater/bus';
+let heartbeatTimer;
+
+export function banner(){
+  try {
+    const info = BeatBus.getDebugInfo();
+    const tag = `Canon v1.0 · mode=${info.mode} · listeners=${Object.keys(info.listeners).length}`;
+    console.log('%c🛡️ Canon active','color:#7ef;font-weight:bold;', tag);
+  } catch (_e) { /* noop */ }
+}
+
+export function heartbeat(periodMs = 45000){
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(()=>{
+    const d = BeatBus.getDebugInfo();
+    const vCount = (globalThis.canon?.guard?.getViolations()?.length) ?? 0;
+    console.log('⏱️ Canon Heartbeat · mode=%s · violations=%d · lastStage=%s · lastQuality=%s',
+      d.mode, vCount, d.last?.stage, d.last?.quality);
+  }, periodMs);
+}
+
+
+
+
+==========================================----
+FILE: console/L2.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/console/L2.js
+SIZE: 189 bytes
+MODIFIED: 2025-09-12 19:22:35.963281083 -0500
+----==========================================
+
+// src/canon/console/L2.js — thin extension (no extra behavior)
+import CanonConsoleL1 from './L1.js';
+export class CanonConsoleL2 extends CanonConsoleL1 {}
+export default CanonConsoleL2;
+
+
+
+
+==========================================----
+FILE: console/L1.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/console/L1.js
+SIZE: 367 bytes
+MODIFIED: 2025-09-18 20:32:29.908013793 -0500
+----==========================================
+
+// src/canon/console/L1.js — stub that delegates to CANON_CONSOLE
+export class CanonConsoleL1 {
+  setLevel(l){ try{ window.CANON_CONSOLE?.setLevel?.(l); }catch{} return l; }
+  mute(p){ try{ return window.CANON_CONSOLE?.mute?.(p); }catch{} return []; }
+  unmute(){ try{ return window.CANON_CONSOLE?.unmute?.(); }catch{} return []; }
+}
+export default CanonConsoleL1;
+
+
+
+
+==========================================----
+FILE: console/L2.js.bak.1757722910
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/console/L2.js.bak.1757722910
+SIZE: 661 bytes
+MODIFIED: 2025-09-12 19:21:50.976007573 -0500
+----==========================================
+
+// [CANON:CONSOLE:L2]
+import { CanonConsoleL1 } from './L1.js';
+export class CanonConsoleL2 extends CanonConsoleL1 {
+  constructor(){ super(); this.context=null; this.filters={}; }
+  setContext(ctx){ this.context=ctx; this.filters = (ctx==='morphing') ? {show:['morph','uniform','progress'], hide:['network']} : {}; }
+  suggestFixFrom(args){
+    const s = String(args?.[0]||'');
+    if (/uniform .* not found/i.test(s)) return { script:'doctor_add_uniforms.cjs', reason:'Missing uniform' };
+    if (/fragmentShaderSource:|vertexShaderSource:/i.test(s)) return { script:'doctor_fix_shader_keys.cjs', reason:'Wrong ShaderMaterial props' };
+    return null;
+  }
+}
+
+
+
+
+==========================================----
+FILE: console/banner.js.bak.1757722911
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/console/banner.js.bak.1757722911
+SIZE: 796 bytes
+MODIFIED: 2025-09-12 19:21:51.006007216 -0500
+----==========================================
+
+// __CANON_INSTALLED__
+import BeatBus from '@/theater/bus';
+let heartbeatTimer;
+
+export function banner(){
+  try {
+    const info = BeatBus.getDebugInfo();
+    const tag = `Canon v1.0 · mode=${info.mode} · listeners=${Object.keys(info.listeners).length}`;
+    console.log('%c🛡️ Canon active','color:#7ef;font-weight:bold;', tag);
+  } catch (_e) { /* noop */ }
+}
+
+export function heartbeat(periodMs = 45000){
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(()=>{
+    const d = BeatBus.getDebugInfo();
+    const vCount = (globalThis.canon?.guard?.getViolations()?.length) ?? 0;
+    console.log('⏱️ Canon Heartbeat · mode=%s · violations=%d · lastStage=%s · lastQuality=%s',
+      d.mode, vCount, d.last?.stage, d.last?.quality);
+  }, periodMs);
+}
+
+
+
+
+==========================================----
+FILE: console/L1.js.bak.1757722910
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/console/L1.js.bak.1757722910
+SIZE: 1056 bytes
+MODIFIED: 2025-09-12 19:21:50.966007692 -0500
+----==========================================
+
+// [CANON:CONSOLE:L1]
+export class CanonConsoleL1 {
+  constructor(){ this.patterns=new Map(); this.verbosity='critical'; this._orig = null; if (import.meta?.env?.DEV) this.hijack(); }
+  hijack(){
+    if (this._orig) return;
+    this._orig = { ...console };
+    const prio = { error:3, warn:2, log:1 }, thresh = ()=>({critical:3, important:2, verbose:1}[this.verbosity]||3);
+    ['log','warn','error'].forEach(m=>{
+      console[m] = (...args)=>{ this.detect(m,args);
+        if (prio[m] >= thresh()) this._orig[m](...args);
+      };
+    });
+    console.info('🖥️  CanonConsole L1 active');
+  }
+  restore(){ if(!this._orig) return; Object.assign(console, this._orig); this._orig=null; }
+  detect(level,args){ const key = this._hash(args); const p = this.patterns.get(key)||{count:0,first:Date.now()}; p.count++; p.last=Date.now(); this.patterns.set(key,p); if (p.count===5) this._orig.warn('CanonConsole: repeating pattern', args[0]); }
+  _hash(args){ try{ return JSON.stringify(args[0]).slice(0,120); }catch{ return String(args[0]).slice(0,120); } }
+}
+
+
+
+
+==========================================----
+FILE: guard/L2.js.bak.1757722911
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/guard/L2.js.bak.1757722911
+SIZE: 918 bytes
+MODIFIED: 2025-09-12 19:21:50.996007341 -0500
+----==========================================
+
+// __CANON_INSTALLED__
+import CANON_CONTRACTS from '@/canon/contracts/events.js';
+import BeatBus from '@/theater/bus';
+
+class CanonGuardL2 {
+  constructor(){
+    this.violations = [];
+    this.version = CANON_CONTRACTS.version;
+    this.events = CANON_CONTRACTS.events;
+    this._wire();
+  }
+  _wire(){
+    Object.keys(this.events).forEach(evt=>{
+      BeatBus.on(evt, (p)=>{
+        // post-emit validation (should already be canonical)
+        const spec = this.events[evt]; const req = spec.required||[];
+        const missing = req.filter(k=> !(k in (p||{})));
+        if (missing.length){
+          const v = { evt, missing, payload: p, t: Date.now() };
+          this.violations.push(v);
+          console.warn('🛡️ CanonGuard violation (post)', v);
+        }
+      });
+    });
+  }
+  getViolations(){ return this.violations.slice(); }
+  clear(){ this.violations.length = 0; }
+}
+
+export default CanonGuardL2;
+
+
+
+
+==========================================----
+FILE: guard/L2.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/guard/L2.js
+SIZE: 174 bytes
+MODIFIED: 2025-09-12 19:22:35.973285429 -0500
+----==========================================
+
+// src/canon/guard/L2.js — legacy stub (no side effects)
+import CanonGuardL1 from './L1.js';
+export class CanonGuardL2 extends CanonGuardL1 {}
+export default CanonGuardL2;
+
+
+
+
+==========================================----
+FILE: guard/L1.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/guard/L1.js
+SIZE: 117 bytes
+MODIFIED: 2025-09-12 19:22:35.963281083 -0500
+----==========================================
+
+// src/canon/guard/L1.js — legacy stub (no side effects)
+export class CanonGuardL1 {}
+export default CanonGuardL1;
+
+
+
+
+==========================================----
+FILE: guard/L1.js.bak.1757722910
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/guard/L1.js.bak.1757722910
+SIZE: 678 bytes
+MODIFIED: 2025-09-12 19:21:50.986007457 -0500
+----==========================================
+
+// [CANON:GUARD:L1]
+export class CanonGuardL1 {
+  constructor(contracts){ this.contracts=contracts||{}; this.violations=[]; }
+  validate(name, payload){
+    const c = this.contracts?.events?.[name];
+    if (!c) return { valid:true };
+    const missing = (c.shape||[]).filter(k => !(k in (payload||{})));
+    if (missing.length){ const v = { component:name, message:`Missing keys: ${missing.join(',')}`, payload, level:'error', t:Date.now() }; this.violations.push(v); if (typeof console!=='undefined') console.warn('CanonGuardL1', v.message, payload); return {valid:false, violations:[v]}; }
+    return { valid:true };
+  }
+  getViolations(){ return this.violations.slice(); }
+}
+
+
+
+
+==========================================----
+FILE: tests/contracts.test.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/tests/contracts.test.js
+SIZE: 2174 bytes
+MODIFIED: 2025-08-30 16:52:05.643361903 -0500
+----==========================================
+
+/**
+ * Contract Tester - emitter + blueprint + morph helpers.
+ */
+import ContractRegistry from '../contracts/registry.js';
+
+export class ContractTester {
+  constructor() {
+    this.results = [];
+    this.covered = new Set();
+  }
+  testEmitter(name, emitFn) {
+    const emitted = [];
+    const mock = { emit: (e, p) => emitted.push({ event: e, payload: p }) };
+    const result = { emitter: name, passed: true, violations: [] };
+    try {
+      emitFn(mock);
+    } catch (e) {
+      result.passed = false;
+      result.error = e.message;
+    }
+    emitted.forEach(({ event, payload }) => {
+      const v = ContractRegistry.validate(event, payload);
+      if (!v.valid) {
+        result.passed = false;
+        result.violations.push({ event, violations: v.violations });
+      }
+      this.covered.add(event);
+    });
+    this.results.push(result);
+    return result;
+  }
+  testBlueprint(bp) {
+    const c = ContractRegistry.blueprints;
+    const res = { type: 'blueprint', passed: true, violations: [] };
+    (c.required || []).forEach(f => {
+      if (!(f in (bp || {}))) {
+        res.passed = false;
+        res.violations.push({ type: 'missing_field', field: f });
+      }
+    });
+    if ('particleCount' in (bp || {})) {
+      const mm = c.constraints.particleCount;
+      if (bp.particleCount < mm.min || bp.particleCount > mm.max) {
+        res.passed = false;
+        res.violations.push({ type: 'constraint_violation', field: 'particleCount' });
+      }
+    }
+    this.results.push(res);
+    return res;
+  }
+  getCoverage() {
+    const total = Object.keys(ContractRegistry.events).length;
+    const tested = this.covered.size;
+    return {
+      total,
+      tested,
+      percentage: total ? ((tested / total) * 100).toFixed(1) + '%' : '0%',
+      missing: Object.keys(ContractRegistry.events).filter(e => !this.covered.has(e)),
+    };
+  }
+  getReport() {
+    const failures = this.results.filter(r => !r.passed);
+    return {
+      total: this.results.length,
+      passed: this.results.length - failures.length,
+      failed: failures.length,
+      coverage: this.getCoverage(),
+      failures: failures.slice(0, 5),
+    };
+  }
+}
+
+export default ContractTester;
+
+
+
+
+==========================================----
+FILE: boundary.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/boundary.js
+SIZE: 2436 bytes
+MODIFIED: 2025-08-30 16:52:05.643361903 -0500
+----==========================================
+
+/**
+ * Canon Bus Boundary Enforcement
+ * Validates all BeatBus.emit payloads against ContractRegistry.
+ */
+import ContractRegistry from './contracts/registry.js';
+
+export const BoundaryModes = { TELEMETRY: 'TELEMETRY', WARN: 'WARN', STRICT: 'STRICT' };
+
+export class BusBoundary {
+  constructor(mode = BoundaryModes.WARN) {
+    this.mode = mode;
+    this.violations = [];
+    this.telemetry = { total: 0, valid: 0, invalid: 0, rejected: 0 };
+  }
+  enforce(BeatBus) {
+    if (!BeatBus || BeatBus.__boundaryEnforced) return;
+    const original = BeatBus.emit.bind(BeatBus);
+    const boundary = this;
+    BeatBus.emit = function (event, payload) {
+      boundary.telemetry.total++;
+      const validation = ContractRegistry.validate(event, payload || {});
+      if (validation.valid) {
+        boundary.telemetry.valid++;
+      } else {
+        boundary.telemetry.invalid++;
+        boundary.violations.push({
+          event,
+          payload: validation.payload,
+          violations: validation.violations,
+          ts: Date.now(),
+        });
+        if (boundary.mode === BoundaryModes.WARN) {
+          console.warn('Canon Boundary: contract violation', event, validation.violations);
+        }
+        if (boundary.mode === BoundaryModes.STRICT) {
+          console.error('Canon Boundary: REJECTED', event, validation.violations);
+          boundary.telemetry.rejected++;
+          const inCI = typeof process !== 'undefined' && process && process.env && process.env.CI;
+          if (inCI) {
+            throw new Error('Contract violation in CI: ' + event);
+          }
+          return;
+        }
+      }
+      if (validation.deprecations && validation.deprecations.length) {
+        console.warn('Canon Boundary: deprecated fields in ' + event, validation.deprecations);
+      }
+      return original(event, validation.payload || payload || {});
+    };
+    BeatBus.__boundaryEnforced = true;
+    console.log('Canon Boundary enforcing in mode', this.mode);
+  }
+  setMode(mode) {
+    if (!Object.values(BoundaryModes).includes(mode)) throw new Error('Invalid mode: ' + mode);
+    this.mode = mode;
+    console.log('Canon Boundary mode ->', mode);
+  }
+  getReport() {
+    const t = this.telemetry;
+    return {
+      mode: this.mode,
+      telemetry: t,
+      violations: this.violations.slice(-10),
+      violationRate: t.total ? ((t.invalid / t.total) * 100).toFixed(1) + '%' : '0%',
+    };
+  }
+}
+
+export default BusBoundary;
+
+
+
+
+==========================================----
+FILE: contracts/registry.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/contracts/registry.js
+SIZE: 3533 bytes
+MODIFIED: 2025-08-30 16:52:05.653349380 -0500
+----==========================================
+
+/**
+ * Canon Contract Registry v1.0.0
+ * Single source of truth for event/data contracts (versioned).
+ */
+export const CONTRACT_VERSION = '1.0.0';
+
+export const ContractRegistry = {
+  version: CONTRACT_VERSION,
+  lastUpdated: '2025-08-19T21-54-34',
+
+  events: {
+    STAGE_CHANGE: {
+      version: '1.0.0',
+      required: ['from', 'to'],
+      optional: ['duration', 'trigger'],
+    },
+    QUALITY_CHANGE: {
+      version: '1.0.0',
+      required: ['tier'],
+      valid: { tier: ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'] },
+      deprecated: { quality: { since: '0.9.0', use: 'tier', removal: '2.0.0' } },
+      migration: payload => {
+        if (payload && 'quality' in payload && !('tier' in payload)) {
+          payload = { ...payload, tier: payload.quality };
+          delete payload.quality;
+        }
+        return payload;
+      },
+    },
+    BLUEPRINT_READY: {
+      version: '1.0.0',
+      required: ['stage', 'quality', 'blueprint'],
+      optional: ['cached', 'buildTime'],
+    },
+  },
+
+  blueprints: {
+    version: '1.0.0',
+    required: ['particleCount', 'atmosphericPositions', 'text3DPositions'],
+    optional: ['tierDistribution', 'behaviorData'],
+    constraints: {
+      particleCount: { min: 100, max: 15000 },
+    },
+  },
+
+  deprecations: {
+    active: [
+      {
+        type: 'field',
+        path: 'QUALITY_CHANGE.quality',
+        since: '0.9.0',
+        removal: '2.0.0',
+        migration: 'Use tier instead',
+      },
+    ],
+    getActive() {
+      return this.active;
+    },
+    check(type, payload) {
+      const out = [];
+      this.active.forEach(d => {
+        if (d.path.split('.')[0] === type) {
+          const field = d.path.split('.').pop();
+          if (payload && field in payload) {
+            out.push({ field, message: d.migration, removal: d.removal });
+          }
+        }
+      });
+      return out;
+    },
+  },
+
+  validate(type, payload) {
+    const contract = this.events[type];
+    if (!contract) return { valid: true, type: 'unknown', payload };
+
+    const result = {
+      valid: true,
+      violations: [],
+      deprecations: this.deprecations.check(type, payload || {}),
+      migrated: false,
+      payload: payload || {},
+    };
+
+    if (typeof contract.migration === 'function') {
+      result.payload = contract.migration({ ...(payload || {}) }) || {};
+      if (JSON.stringify(result.payload) !== JSON.stringify(payload || {})) {
+        result.migrated = true;
+      }
+    }
+
+    const missing = (contract.required || []).filter(f => !(f in (result.payload || {})));
+    if (missing.length) {
+      result.valid = false;
+      result.violations.push({ type: 'missing_required', fields: missing });
+    }
+
+    if (contract.valid) {
+      Object.keys(contract.valid).forEach(field => {
+        const allowed = contract.valid[field];
+        if (field in (result.payload || {}) && !allowed.includes(result.payload[field])) {
+          result.valid = false;
+          result.violations.push({
+            type: 'invalid_value',
+            field,
+            value: result.payload[field],
+            valid: allowed,
+          });
+        }
+      });
+    }
+
+    return result;
+  },
+
+  getDriftReport() {
+    return {
+      version: this.version,
+      deprecations: this.deprecations.getActive(),
+      coverage: this.getCoverage(),
+    };
+  },
+  getCoverage() {
+    const total = Object.keys(this.events).length;
+    const tested = 0;
+    return { total, tested, percentage: total ? ((tested / total) * 100).toFixed(1) + '%' : '0%' };
+  },
+};
+
+export default ContractRegistry;
+
+
+
+
+==========================================----
+FILE: contracts/index.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/contracts/index.js
+SIZE: 541 bytes
+MODIFIED: 2025-09-18 20:32:29.908013793 -0500
+----==========================================
+
+// [CANON:CONTRACTS:L1-L2]
+export const CanonContracts = {
+  morphing: {
+    inputs: ['scrollProgress','morphProgress'],
+    outputs: ['uMorphProgress','uFadeProgress'],
+    validation: { range:[0,1], updateHz:60 }
+  },
+  blueprint: {
+    required: ['particleCount','atmosphericPositions','text3DPositions'],
+    constraints: { particleCount:{min:1,max:15000} }
+  },
+  events: {
+    STAGE_CHANGE: { shape:['from','to'] },
+    QUALITY_CHANGE: { shape:['tier'] },
+    BLUEPRINT_READY: { shape:['blueprint','stage','quality','cached'] }
+  }
+};
+
+
+
+
+==========================================----
+FILE: contracts/events.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/contracts/events.js
+SIZE: 678 bytes
+MODIFIED: 2025-09-19 22:26:51.092467417 -0500
+----==========================================
+
+// __CANON_INSTALLED__
+// Canon event contracts (versioned)
+export const CANON_CONTRACTS = {
+  version: '1.0.0',
+  events: {
+    STAGE_CHANGE: {
+      required: ['from','to'],
+      notes: 'Single canonical shape. No aliases.'
+    },
+    QUALITY_CHANGE: {
+      required: ['tier'],
+      notes: 'Single canonical shape. No aliases.'
+    },
+    BLUEPRINT_READY: {
+      required: ['stage','quality','blueprint'],
+      optional: ['cached'],
+      notes: 'Renderer consumes stage/quality/blueprint; cached is informative.'
+    }
+  },
+  deprecations: {
+    STAGE_CHANGE: { stage: 'deprecated' },
+    QUALITY_CHANGE: { quality: 'deprecated' }
+  }
+};
+export default CANON_CONTRACTS;
+
+
+
+
+==========================================----
+FILE: hud.js.bak.1757722910
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/hud.js.bak.1757722910
+SIZE: 2349 bytes
+MODIFIED: 2025-09-12 19:21:50.936008042 -0500
+----==========================================
+
+/**
+ * Canon HUD - minimal trust signals (DEV only).
+ */
+export class CanonHUD {
+  constructor() {
+    this.element = null;
+    this.stats = { fps: 0 };
+    this._last = 0;
+    this._frames = 0;
+  }
+  init() {
+    if (typeof window === 'undefined' || !import.meta.env || !import.meta.env.DEV) return;
+    if (this.element) return;
+    this.element = document.createElement('div');
+    this.element.id = 'canon-hud';
+    this.element.style.position = 'fixed';
+    this.element.style.top = '10px';
+    this.element.style.right = '10px';
+    this.element.style.background = 'rgba(0,0,0,0.8)';
+    this.element.style.color = '#0f0';
+    this.element.style.padding = '10px';
+    this.element.style.fontFamily = 'monospace';
+    this.element.style.fontSize = '12px';
+    this.element.style.border = '1px solid #0f0';
+    this.element.style.borderRadius = '4px';
+    this.element.style.zIndex = '999999';
+    this.element.style.pointerEvents = 'none';
+    document.body.appendChild(this.element);
+    this._last = performance.now();
+    const tick = () => {
+      const now = performance.now();
+      this._frames++;
+      if (now - this._last >= 1000) {
+        this.stats.fps = Math.round((this._frames * 1000) / (now - this._last));
+        this._frames = 0;
+        this._last = now;
+        this.update();
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    this.update();
+    console.log('CANON HUD active');
+  }
+  update() {
+    if (!this.element || !window.canon) return;
+    const b =
+      window.canon.boundary && window.canon.boundary.getReport
+        ? window.canon.boundary.getReport()
+        : {};
+    const t = b.telemetry || {};
+    const vio = (b.violations || []).length;
+    const fpsColor = this.stats.fps < 30 ? '#f00' : '#0f0';
+    this.element.innerHTML =
+      '' +
+      '<div style="margin-bottom:5px;border-bottom:1px solid #0f0;padding-bottom:5px;"><b>CANON HUD</b></div>' +
+      '<div>FPS: <span style="color:' +
+      fpsColor +
+      '">' +
+      this.stats.fps +
+      '</span></div>' +
+      '<div>Mode: ' +
+      (b.mode || 'WARN') +
+      '</div>' +
+      '<div>Events: ' +
+      (t.total || 0) +
+      '</div>' +
+      '<div>Valid: ' +
+      (t.valid || 0) +
+      '</div>' +
+      '<div>Violations (last 10): ' +
+      (vio || 0) +
+      '</div>';
+  }
+}
+
+export default CanonHUD;
+
+
+
+
+==========================================----
+FILE: init.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/init.js
+SIZE: 259 bytes
+MODIFIED: 2025-09-12 19:22:35.943272400 -0500
+----==========================================
+
+// src/canon/init.js — DEV boot shim (injector v3 only)
+export function bootCanonDevOs() {
+  if (typeof window === 'undefined') return;
+  if (import.meta?.env?.DEV) {
+    import('../../canon-console/browser/inject.js');
+  }
+}
+export default bootCanonDevOs;
+
+
+
+
+==========================================----
+FILE: init.js.bak.1757722910
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/init.js.bak.1757722910
+SIZE: 3401 bytes
+MODIFIED: 2025-09-12 19:21:50.946007923 -0500
+----==========================================
+
+/**
+ * Canon Suite Initialization
+ * Integrates Guard + Console with BeatBus
+ */
+import CanonGuardL2 from '../canon-guard/L2.js';
+import CanonConsoleL2 from '../canon-console/L2.js';
+
+export function initCanon() {
+  if (window.__CANON_INITIALIZED) return;
+  window.__CANON_INITIALIZED = Date.now();
+
+  console.log('🚀 Canon Suite: Initializing...');
+
+  // Initialize components
+  const guard = new CanonGuardL2();
+  const consoleTool = new CanonConsoleL2();
+
+  // Get BeatBus if available
+  const BeatBus = window.BeatBus;
+
+  if (BeatBus) {
+    // Add debug method if missing
+    if (!BeatBus.getDebugInfo) {
+      BeatBus.getDebugInfo = function () {
+        const listeners = {};
+        if (this.listeners) {
+          this.listeners.forEach((set, key) => {
+            listeners[key] = set.size;
+          });
+        }
+        return {
+          listeners,
+          eventLog: this.eventLog || [],
+          lastEmit: this.lastEmit || null,
+        };
+      };
+    }
+
+    // Add event logging
+    if (!BeatBus.__canonPatched) {
+      const originalEmit = BeatBus.emit.bind(BeatBus);
+      BeatBus.emit = function (event, data) {
+        // Log event
+        this.lastEmit = { event, data, timestamp: Date.now() };
+        if (!this.eventLog) this.eventLog = [];
+        this.eventLog.push(this.lastEmit);
+        if (this.eventLog.length > 100) this.eventLog.shift();
+
+        // Validate
+        guard.validate(event, data);
+
+        // Call original
+        return originalEmit(event, data);
+      };
+      BeatBus.__canonPatched = true;
+    }
+
+    // Auto-protect events
+    guard.autoProtect(BeatBus);
+
+    // Add global tap helper
+    if (!window.busTap) {
+      window.busTap = (event, fn) => BeatBus.on(event, fn);
+    }
+
+    console.log('✅ Canon Suite: BeatBus integration complete');
+  } else {
+    console.warn('⚠️ Canon Suite: BeatBus not found, running standalone');
+  }
+
+  // Expose Canon API
+  window.canon = {
+    guard,
+    console: consoleTool,
+
+    // Quick access methods
+    validate: (type, data) => guard.validate(type, data),
+    violations: () => guard.getViolations(),
+    patterns: () => guard.getPatterns(),
+    analyze: () => ({
+      guard: guard.analyze(),
+      console: consoleTool.analyze(),
+    }),
+
+    // Console control
+    setVerbosity: level => consoleTool.setVerbosity(level),
+    setContext: ctx => consoleTool.setContext(ctx),
+
+    // Status
+    status: () => ({
+      initialized: window.__CANON_INITIALIZED,
+      guard: {
+        active: true,
+        stats: guard.getStats(),
+      },
+      console: {
+        active: true,
+        stats: consoleTool.getStats(),
+      },
+      beatbus: BeatBus ? BeatBus.getDebugInfo() : null,
+    }),
+  };
+
+  // Set flags
+  window.__CANON_GUARD_ACTIVE = true;
+  window.__CANON_CONSOLE_ACTIVE = true;
+
+  // Show status
+  console.log('✅ Canon Suite L1/L2: FULLY ACTIVE');
+  console.log('📊 Status:', window.canon.status());
+  console.log('🎮 Commands:');
+  console.log('  canon.status()         - System status');
+  console.log('  canon.violations()     - Contract violations');
+  console.log('  canon.analyze()        - Full analysis');
+  console.log('  canon.setContext(ctx)  - Filter by context');
+  console.log('  canon.setVerbosity(v)  - Set log level');
+
+  return { guard, console: consoleTool };
+}
+
+// Auto-initialize in DEV
+if (import.meta.env.DEV) {
+  initCanon();
+}
+
+export default initCanon;
+
+
+
+
+==========================================----
+FILE: deprecation.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/deprecation.js
+SIZE: 1959 bytes
+MODIFIED: 2025-08-30 16:52:05.673324340 -0500
+----==========================================
+
+/** Canon Deprecation Protocol (phased) */
+export class DeprecationManager {
+  constructor() {
+    this.schedule = new Map();
+    this.telemetry = new Map();
+    this.phases = { TELEMETRY: 'TELEMETRY', WARN: 'WARN', STRICT: 'STRICT' };
+  }
+  register(d) {
+    this.schedule.set(d.id, { ...d, currentPhase: this.phases.TELEMETRY, violators: new Set() });
+    console.log('Deprecation registered:', d.id);
+  }
+  check(id, source) {
+    const dep = this.schedule.get(id);
+    if (!dep) return null;
+    dep.violators.add(source);
+    const c = (this.telemetry.get(id) || 0) + 1;
+    this.telemetry.set(id, c);
+    if (dep.currentPhase === this.phases.WARN) console.warn('Deprecated:', dep.old, '->', dep.new);
+    if (dep.currentPhase === this.phases.STRICT) throw new Error('Deprecated API used: ' + dep.old);
+    return { phase: dep.currentPhase };
+  }
+  advancePhase(id) {
+    const dep = this.schedule.get(id);
+    if (!dep) return;
+    const order = [this.phases.TELEMETRY, this.phases.WARN, this.phases.STRICT];
+    const idx = order.indexOf(dep.currentPhase);
+    if (idx < order.length - 1) {
+      if (order[idx + 1] === this.phases.STRICT && dep.violators.size) {
+        console.warn('Cannot move to STRICT — violators remain:', dep.violators.size);
+        dep.currentPhase = this.phases.WARN;
+      } else {
+        dep.currentPhase = order[idx + 1];
+      }
+      console.log('Deprecation phase ->', dep.currentPhase);
+    }
+  }
+  getReport() {
+    const active = [];
+    const blockers = [];
+    const ready = [];
+    const tel = {};
+    this.schedule.forEach((dep, id) => {
+      active.push({ id, phase: dep.currentPhase, violators: dep.violators.size });
+      tel[id] = this.telemetry.get(id) || 0;
+      if (dep.violators.size) blockers.push({ id, violators: Array.from(dep.violators) });
+      else ready.push(id);
+    });
+    return { active, telemetry: tel, readyForNextPhase: ready, blockers };
+  }
+}
+export default DeprecationManager;
+
+
+
+
+==========================================----
+FILE: hud.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/hud.js
+SIZE: 435 bytes
+MODIFIED: 2025-09-18 20:32:29.908013793 -0500
+----==========================================
+
+// src/canon/hud.js — legacy HUD neutralizer (no-op; idempotent)
+(function () {
+  if (typeof window === 'undefined') return;
+  const hide = () => { try { const el = document.getElementById('canon-hud'); if (el) el.style.display = 'none'; } catch {} };
+  if (window.__canonHudV2__) { hide(); return; }
+  hide();
+  if (!window.LegacyCanonHud) window.LegacyCanonHud = { show:()=>{}, hide, isActive:()=>false };
+})();
+export default {};
+
+
+
+
+==========================================----
+FILE: init-amplified.js.bak.1757722910
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/init-amplified.js.bak.1757722910
+SIZE: 2518 bytes
+MODIFIED: 2025-09-12 19:21:50.956007807 -0500
+----==========================================
+
+/** Canon Suite Amplified Initialization */
+import ContractRegistry from './contracts/registry.js';
+import BusBoundary, { BoundaryModes } from './boundary.js';
+import CanonHUD from './hud.js';
+import ContractTester from './tests/contracts.test.js';
+import DeprecationManager from './deprecation.js';
+
+import CanonGuardL2 from '../canon-guard/L2.js';
+import CanonConsoleL2 from '../canon-console/L2.js';
+
+export function initCanonAmplified() {
+  if (typeof window === 'undefined') return;
+  if (window.__CANON_AMPLIFIED) return;
+  window.__CANON_AMPLIFIED = Date.now();
+  console.log('Canon Suite: Initializing AMPLIFIED...');
+  const contracts = ContractRegistry;
+  const boundary = new BusBoundary(
+    import.meta.env && import.meta.env.DEV ? BoundaryModes.WARN : BoundaryModes.TELEMETRY
+  );
+  const hud = new CanonHUD();
+  const tester = new ContractTester();
+  const deprecation = new DeprecationManager();
+  deprecation.register({
+    id: 'quality-to-tier',
+    type: 'field',
+    old: 'quality',
+    new: 'tier',
+    since: '0.9.0',
+    phases: { telemetry: 't1', warn: 't2', strict: 't3' },
+  });
+  const guard = new CanonGuardL2();
+  const consoleTool = new CanonConsoleL2();
+  const BB = window.BeatBus;
+  if (BB) {
+    boundary.enforce(BB);
+    guard.autoProtect(BB);
+  } else {
+    console.warn('Canon: BeatBus not found at init (will retry)');
+    setTimeout(() => {
+      if (window.BeatBus) {
+        boundary.enforce(window.BeatBus);
+        guard.autoProtect(window.BeatBus);
+        console.log('Canon: Late enforcement applied');
+      }
+    }, 100);
+  }
+  if (import.meta.env && import.meta.env.DEV) hud.init();
+  window.canon = {
+    contracts,
+    boundary,
+    hud,
+    tester,
+    deprecation,
+    guard,
+    console: consoleTool,
+    status: () => ({
+      version: contracts.version,
+      mode: boundary.mode,
+      initialized: window.__CANON_AMPLIFIED,
+      components: {
+        boundary: boundary.getReport(),
+        guard: guard.getStats(),
+        console: consoleTool.getStats(),
+        deprecations: deprecation.getReport(),
+      },
+    }),
+    setMode: m => boundary.setMode(m),
+    getDriftReport: () => contracts.getDriftReport(),
+  };
+  window.__CANON_GUARD_ACTIVE = true;
+  window.__CANON_CONSOLE_ACTIVE = true;
+  window.__CANON_CONTRACTS_ACTIVE = true;
+  window.__CANON_BOUNDARY_ACTIVE = true;
+  console.log('Canon Suite AMPLIFIED ready');
+}
+
+if (typeof window !== 'undefined') {
+  if (!window.__CANON_AMPLIFIED) initCanonAmplified();
+}
+
+export default initCanonAmplified;
+
+
+
+
+==========================================----
+FILE: doctor/base.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/doctor/base.js
+SIZE: 1001 bytes
+MODIFIED: 2025-08-30 16:52:05.683311816 -0500
+----==========================================
+
+/** Canon Doctor Base (governance scaffold) */
+export class CanonDoctor {
+  constructor(cfg) {
+    this.name = cfg.name;
+    this.description = cfg.description || '';
+    this.riskScore = cfg.riskScore || 'LOW';
+    this.blastRadius = cfg.blastRadius || [];
+    this.verifications = cfg.verifications || [];
+    this.dryRun = false;
+    this.changes = [];
+  }
+  async preflight() {
+    console.log('CANON DOCTOR:', this.name, '| Risk:', this.riskScore);
+    return true;
+  }
+  async preview() {
+    this.dryRun = true;
+    return [];
+  }
+  async operate() {
+    throw new Error('override operate()');
+  }
+  async verify() {
+    return { passed: true, results: [] };
+  }
+  async rollback() {
+    console.log('rollback (noop)');
+  }
+  async execute() {
+    await this.preflight();
+    await this.preview();
+    this.dryRun = false;
+    const changes = await this.operate();
+    const v = await this.verify();
+    return { success: v.passed, changes, verification: v };
+  }
+}
+export default CanonDoctor;
+
+
+
+
+==========================================----
+FILE: init-amplified.js
+FULL PATH: /home/curtis/projects/metacurtis-v3.1/src/canon/init-amplified.js
+SIZE: 55 bytes
+MODIFIED: 2025-09-12 19:22:35.953276742 -0500
+----==========================================
+
+export { bootCanonDevOs as default } from './init.js';
+
+
+

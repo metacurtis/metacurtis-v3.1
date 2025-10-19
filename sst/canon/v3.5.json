@@ -1,0 +1,2109 @@
+{
+  "meta": {
+    "version": "3.5.0",
+    "authority": "ABSOLUTE",
+    "lastUpdated": "2025-10-02",
+    "breaking_changes": [
+      "text3DPosition now represents 3D letter volumes",
+      "Camera angles specified per stage for dimensional reveal"
+    ],
+    "name": "MetaCurtis Consciousness Theater",
+    "mode": "TEXT_FIRST_REVEAL",
+    "documentStatus": "SINGLE_SOURCE_OF_TRUTH",
+    "date": "2025-09-02",
+    "compat": {
+      "accepts": [
+        "3.3",
+        "3.4"
+      ]
+    }
+  },
+  "features": {
+    "gaussianFalloff": 1,
+    "centerWeightingTier4": 1,
+    "ctfOpening": false,
+    "beatGlyph": true,
+    "scrollOrchestrator": true,
+    "openingFencepostContract": true
+  },
+  "pipeline": {
+    "modules": {
+      "director": {
+        "role": "orchestration",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Prewarm \u2192 terminal \u2192 screen fill \u2192 emergence \u2192 stage change \u2192 enable scroll"
+      },
+      "engine": {
+        "role": "blueprint_author",
+        "writes": [
+          "blueprint"
+        ],
+        "forbidden": [
+          "gpuDraw"
+        ],
+        "blueprintFields": [
+          "atmosphericPositions",
+          "text3DPositions",
+          "tierData",
+          "sizeMultiplier",
+          "opacityData",
+          "atlasIndex",
+          "animationSeed",
+          "activeCount",
+          "particleCount",
+          "maxParticles",
+          "metadata"
+        ],
+        "opening": {
+          "emergence": {
+            "target": "random_to_random_gas_cloud",
+            "blueprintEventMode": "emergence"
+          }
+        }
+      },
+      "renderer": {
+        "role": "dumb_renderer",
+        "writes": [
+          "geometry",
+          "uniforms"
+        ],
+        "forbidden": [
+          "fabricateTargets",
+          "readScroll",
+          "scaleByFov"
+        ],
+        "singleWriter": true,
+        "emits": [
+          "ENGINE_VIEWPORT_HINT",
+          "PARTICLES_EMERGED"
+        ],
+        "emitOnceFencepost": true,
+        "notes": "Emit ENGINE_VIEWPORT_HINT at mount/resize; bind emergence/full blueprints; emit PARTICLES_EMERGED exactly once after the first full genesis bind; may apply subtle mesh rotation during chaos window when PARTICLES_START_EMERGING is received."
+      },
+      "beatBus": {
+        "role": "event_bus",
+        "exposedGlobals": [
+          "BeatBus",
+          "EVENTS"
+        ]
+      },
+      "scrollOrchestrator": {
+        "role": "progress_publisher",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Maps window scroll\u2192stage-local progress; publishes MORPH_PROGRESS; emits STAGE_CHANGE at breakpoints and MEMORY_FRAGMENT_TRIGGER from per-stage triggerPercent. Renderer remains a dumb sink."
+      }
+    },
+    "singleWriterRules": [
+      "Renderer is the ONLY geometry/uniform writer",
+      "Engine is the ONLY blueprint author",
+      "Director NEVER writes geometry/uniforms"
+    ]
+  },
+  "shaderContract": {
+    "attributes": [
+      {
+        "name": "position",
+        "type": "vec3",
+        "semantics": "current position"
+      },
+      {
+        "name": "atmosphericPosition",
+        "type": "vec3",
+        "semantics": "morph source"
+      },
+      {
+        "name": "text3DPosition",
+        "type": "vec3",
+        "semantics": "morph target (stage word)"
+      },
+      {
+        "name": "tierData",
+        "type": "float",
+        "range": [
+          0,
+          3
+        ],
+        "semantics": "tier id"
+      },
+      {
+        "name": "sizeMultiplier",
+        "type": "float",
+        "semantics": "sprite scaling per particle"
+      },
+      {
+        "name": "opacityData",
+        "type": "float",
+        "semantics": "base opacity per particle"
+      },
+      {
+        "name": "atlasIndex",
+        "type": "float",
+        "semantics": "sprite index in atlas"
+      },
+      {
+        "name": "animationSeed",
+        "type": "vec3",
+        "semantics": "per-particle randomization"
+      },
+      {
+        "name": "particleIndex",
+        "type": "float",
+        "semantics": "0..N-1 (renderer-added)"
+      }
+    ],
+    "uniforms": [
+      {
+        "name": "uTime",
+        "type": "float"
+      },
+      {
+        "name": "uMorphProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ],
+        "semantics": "0=atmospheric,1=text"
+      },
+      {
+        "name": "uScrollProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "uStageIndex",
+        "type": "int"
+      },
+      {
+        "name": "uActiveCount",
+        "type": "int"
+      },
+      {
+        "name": "uTierCutoff",
+        "type": "int"
+      },
+      {
+        "name": "uColorCurrent",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorNext",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent1",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent2",
+        "type": "vec3"
+      },
+      {
+        "name": "uAtlasTexture",
+        "type": "sampler2D"
+      },
+      {
+        "name": "uTotalSprites",
+        "type": "int",
+        "value": 16
+      },
+      {
+        "name": "uPointSize",
+        "type": "float"
+      },
+      {
+        "name": "uDevicePixelRatio",
+        "type": "float"
+      },
+      {
+        "name": "uResolution",
+        "type": "vec2"
+      },
+      {
+        "name": "uGaussianSigma",
+        "type": "float"
+      },
+      {
+        "name": "uTierHighlight",
+        "type": "float[4]"
+      },
+      {
+        "name": "uGaussianFalloff",
+        "type": "float"
+      },
+      {
+        "name": "uCenterWeighting",
+        "type": "float"
+      },
+      {
+        "name": "uStageProgress",
+        "type": "float",
+        "aliasOf": "uMorphProgress"
+      },
+      {
+        "name": "uStageBlend",
+        "type": "float",
+        "aliasOf": "uScrollProgress"
+      },
+      {
+        "name": "uChaosSpin",
+        "type": "float",
+        "optional": true,
+        "semantics": "radians/sec multiplier during chaos"
+      },
+      {
+        "name": "uTrailIntensity",
+        "type": "float",
+        "optional": true
+      },
+      {
+        "name": "uTrailPersistence",
+        "type": "float",
+        "optional": true
+      },
+      {
+        "name": "uBrightnessBoost",
+        "type": "float",
+        "optional": true
+      }
+    ]
+  },
+  "events": [
+    {
+      "name": "ENGINE_VIEWPORT_HINT",
+      "emitter": "Renderer",
+      "payload": {
+        "width": "int",
+        "height": "int",
+        "aspect": "float"
+      }
+    },
+    {
+      "name": "PREWARM_GENESIS_BLUEPRINT",
+      "emitter": "Director"
+    },
+    {
+      "name": "PREWARM_COMPLETE",
+      "emitter": "Engine",
+      "payload": {
+        "key": "string"
+      }
+    },
+    {
+      "name": "AUDIO_COMPUTER_HUM",
+      "emitter": "Director",
+      "payload": {
+        "volume": "float[0..1]"
+      }
+    },
+    {
+      "name": "CURSOR_SHOW",
+      "emitter": "Director"
+    },
+    {
+      "name": "CURSOR_BLINK",
+      "emitter": "Director",
+      "payload": {
+        "count": "int",
+        "interval": "ms"
+      }
+    },
+    {
+      "name": "TERMINAL_TYPE",
+      "emitter": "Director",
+      "payload": {
+        "lines": "string[]",
+        "typeSpeed": "ms",
+        "lineDelay": "ms"
+      }
+    },
+    {
+      "name": "SCREEN_FILL",
+      "emitter": "Director",
+      "payload": {
+        "text": "string",
+        "scrollSpeed": "ms"
+      }
+    },
+    {
+      "name": "BUILD_EMERGENCE_BLUEPRINT",
+      "emitter": "Director",
+      "payload": {
+        "sourceText": "string",
+        "count": "int"
+      }
+    },
+    {
+      "name": "BLUEPRINT_READY",
+      "emitter": "Engine",
+      "payload": {
+        "stage": "string",
+        "mode": "string|null"
+      }
+    },
+    {
+      "name": "PARTICLES_START_EMERGING",
+      "emitter": "Director"
+    },
+    {
+      "name": "PARTICLES_EMERGED",
+      "emitter": "Renderer",
+      "semantics": "emit_once_after_first_full_genesis_bind"
+    },
+    {
+      "name": "STAGE_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "ENABLE_SCROLL",
+      "emitter": "Director"
+    },
+    {
+      "name": "QUALITY_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "tier": "LOW|MEDIUM|HIGH|ULTRA"
+      }
+    },
+    {
+      "name": "MORPH_PROGRESS",
+      "emitter": "Director",
+      "payload": {
+        "value": "float[0..1]"
+      }
+    },
+    {
+      "name": "START_NARRATIVE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "AUDIO_START_STAGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "MORPH_TO_BEATGLYPH",
+      "emitter": "Director",
+      "payload": {
+        "text": "string"
+      }
+    },
+    {
+      "name": "MEMORY_FRAGMENT_TRIGGER",
+      "emitter": "Director",
+      "payload": {
+        "id": "string"
+      }
+    }
+  ],
+  "opening": {
+    "rules": {
+      "startAfterViewportHint": true,
+      "stage0ColorLock": true,
+      "scrollLockedUntil": "ENABLE_SCROLL",
+      "emergenceModeRequired": true
+    },
+    "skipKey": "SPACE",
+    "totalDurationMs": 12500,
+    "timeline": {
+      "blackout": {
+        "durationMs": 2000
+      },
+      "cursor": {
+        "blinkCount": 2,
+        "intervalMs": 500
+      },
+      "typing": {
+        "lines": [
+          "READY.",
+          "10 PRINT \"HELLO CURTIS\"",
+          "20 GOTO 10",
+          "RUN"
+        ],
+        "typeSpeed": 50,
+        "lineDelay": 500,
+        "completionDelayMs": 800
+      },
+      "fill": {
+        "text": "HELLO CURTIS ",
+        "scrollSpeed": 100,
+        "durationMs": 2000
+      },
+      "emergence": {
+        "durationMs": 1500,
+        "waitForFencepost": true,
+        "maxWaitMs": 5000,
+        "stabilizeMs": 500,
+        "skipMorphAnimation": true,
+        "skipGenesisBlueprint": true,
+        "targetState": "genesis_initial"
+      },
+      "profile": "chaos_coalesce_settle_v1",
+      "prologue": {
+        "terminalOverlay": true,
+        "fadeOutAtMs": 0
+      },
+      "chaos": {
+        "enabled": true,
+        "durationMs": 1500,
+        "rendererSpin": {
+          "z": 0.55,
+          "y": 0.25
+        }
+      },
+      "coalesce": {
+        "enabled": true,
+        "durationMs": 1500,
+        "morphTo": 0.6
+      },
+      "settle": {
+        "enabled": true,
+        "durationMs": 1000,
+        "morphTo": 1.0,
+        "constellationCoverage": [
+          0.95,
+          0.8,
+          0.6,
+          0.45
+        ]
+      },
+      "narration": {
+        "startAtMs": 4000,
+        "events": [
+          "START_NARRATIVE",
+          "AUDIO_START_STAGE"
+        ]
+      },
+      "beatGlyph": {
+        "revealMs": 6000,
+        "text": "HELLO CURTIS"
+      }
+    },
+    "emergence": {
+      "target": "random_to_random_gas_cloud",
+      "mode": "emergence",
+      "source": "viewportSpread"
+    }
+  },
+  "openingFencepost": {
+    "order": [
+      "ENGINE_VIEWPORT_HINT (Renderer)",
+      "PREWARM_GENESIS_BLUEPRINT (Director)",
+      "TERMINAL_TYPE / SCREEN_FILL (Director, optional overlay)",
+      "PARTICLES_START_EMERGING (Director)",
+      "BLUEPRINT_READY { mode:'emergence', stage:'genesis' } (Engine)",
+      "BLUEPRINT_READY { stage:'genesis' } full (Engine)",
+      "PARTICLES_EMERGED (Renderer, emit_once)",
+      "STAGE_CHANGE { stage:'genesis' } (Director)",
+      "MORPH_PROGRESS settle \u2192 1.0 (Director)",
+      "ENABLE_SCROLL (Director)",
+      "START_NARRATIVE { stage:'genesis' } & AUDIO_START_STAGE { stage:'genesis' } (Director)"
+    ]
+  },
+  "openingRules": {
+    "startAfterViewportHint": true,
+    "stage0ColorLock": true,
+    "scrollLockedUntil": "ENABLE_SCROLL",
+    "emergenceModeRequired": true
+  },
+  "quality": {
+    "multipliers": {
+      "LOW": 0.3,
+      "MEDIUM": 0.6,
+      "HIGH": 1,
+      "ULTRA": 1.5
+    },
+    "maxParticles": 15000
+  },
+  "scrollAndMorph": {
+    "stageBreakpointsPercent": [
+      0,
+      14,
+      28,
+      42,
+      56,
+      70,
+      84,
+      100
+    ],
+    "easing": "exponential_inout_edges",
+    "morphResponse": {
+      "speedMultiplier": 2,
+      "smoothing": 0.15,
+      "overshoot": 0.05
+    },
+    "ownership": {
+      "publisher": "Director",
+      "rendererReadsScroll": false
+    }
+  },
+  "spriteSemantics": {
+    "substrate": 7,
+    "spatialCircles": [
+      0,
+      1
+    ],
+    "anchorDiamond": 4,
+    "anchorCrystal": 11,
+    "star": 6,
+    "burst": 13,
+    "galaxy": 15
+  },
+  "stageOrder": [
+    "genesis",
+    "discipline",
+    "neural",
+    "velocity",
+    "architecture",
+    "harmony",
+    "transcendence"
+  ],
+  "stages": {
+    "genesis": {
+      "label": "GENESIS SPARK",
+      "ordinal": 0,
+      "scrollRangePercent": [
+        0,
+        14
+      ],
+      "particlesBase": 2000,
+      "word": "HELLO CURTIS",
+      "palette": [
+        "#00FF00",
+        "#22c55e",
+        "#15803d"
+      ],
+      "tierMix": [
+        0.6,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "drift_perlin_slow",
+        "tier1": "orbital_micro",
+        "tier2": "twinkle_soft",
+        "tier3": "pulse_soft"
+      },
+      "camera": {
+        "movement": "dolly_in",
+        "degrees": 5,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "genesis_context",
+            "triggerPercent": 5,
+            "trigger": {
+              "percent": 5
+            },
+            "position": {
+              "anchor": "bottomLeft"
+            },
+            "content": {
+              "text": "1983 \u2022 Dallas, Texas \u2022 Age 8",
+              "fontSize": 14,
+              "color": "#22c55e"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "genesis_code",
+          "hotspot": "letter_H",
+          "content": {
+            "image": "commodore64-screen.png",
+            "caption": "10 PRINT \"HELLO CURTIS\"\\n20 GOTO 10\\nRUN"
+          },
+          "particleEffect": {
+            "behavior": "crtFlicker",
+            "duration": 1200
+          }
+        },
+        "climax": null
+      },
+      "boundaryCues": {
+        "preTransitionPercent": [
+          12,
+          14
+        ],
+        "tintCrossfadeToStage": "discipline"
+      },
+      "audio": {
+        "bed": "1980s_computer_hum",
+        "narrationCue": "onEmergenceThreshold"
+      },
+      "openingNote": "Opening shot list (implemented using the contracts above)",
+      "openingTimeline": {
+        "profile": "chaos_coalesce_settle_v1",
+        "prologue": {
+          "terminalOverlay": true,
+          "fadeOutAtMs": 0
+        },
+        "chaos": {
+          "enabled": true,
+          "durationMs": 1500,
+          "rendererSpin": {
+            "z": 0.55,
+            "y": 0.25
+          }
+        },
+        "coalesce": {
+          "enabled": true,
+          "durationMs": 1500,
+          "morphTo": 0.6
+        },
+        "settle": {
+          "enabled": true,
+          "durationMs": 1000,
+          "morphTo": 1.0,
+          "constellationCoverage": [
+            0.95,
+            0.8,
+            0.6,
+            0.45
+          ]
+        },
+        "narration": {
+          "startAtMs": 4000,
+          "events": [
+            "START_NARRATIVE",
+            "AUDIO_START_STAGE"
+          ]
+        },
+        "beatGlyph": {
+          "revealMs": 6000,
+          "text": "HELLO CURTIS"
+        }
+      }
+    },
+    "discipline": {
+      "label": "DISCIPLINE FORGE",
+      "ordinal": 1,
+      "scrollRangePercent": [
+        14,
+        28
+      ],
+      "particlesBase": 3000,
+      "word": "STRUCTURE",
+      "palette": [
+        "#1e40af",
+        "#3b82f6",
+        "#1d4ed8"
+      ],
+      "tierMix": [
+        0.55,
+        0.25,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_drift",
+        "tier1": "column_orbit",
+        "tier2": "pulse_cadence_120bpm",
+        "tier3": "crystalline_authority"
+      },
+      "camera": {
+        "movement": "authority_orbit",
+        "degrees": 10,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "discipline_context",
+            "triggerPercent": 18,
+            "trigger": {
+              "percent": 18
+            },
+            "position": {
+              "anchor": "topLeft"
+            },
+            "content": {
+              "text": "1998 \u2022 Parris Island \u2022 Discipline Forged",
+              "fontSize": 14,
+              "color": "#3b82f6"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "discipline_emblem",
+          "hotspot": "letter_S",
+          "content": {
+            "image": "discipline-ega.png",
+            "caption": "Honor. Courage. Commitment."
+          },
+          "particleEffect": {
+            "behavior": "snapFormation",
+            "duration": 1000
+          }
+        },
+        "climax": null
+      }
+    },
+    "neural": {
+      "label": "NEURAL AWAKENING",
+      "ordinal": 2,
+      "scrollRangePercent": [
+        28,
+        42
+      ],
+      "particlesBase": 5000,
+      "word": "AWAKENING",
+      "palette": [
+        "#4338ca",
+        "#a855f7",
+        "#7c3aed"
+      ],
+      "tierMix": [
+        0.55,
+        0.2,
+        0.15,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "neural_flow",
+        "tier1": "connection_orbit",
+        "tier2": "synapse_flash_prob_0.02",
+        "tier3": "hub_nodes_temporal"
+      },
+      "camera": {
+        "movement": "discovery_orbit",
+        "degrees": 15,
+        "shake": false
+      },
+      "uniformOverrides": {
+        "uGaussianSigma": 2
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "neural_context",
+            "triggerPercent": 34,
+            "trigger": {
+              "percent": 34
+            },
+            "position": {
+              "anchor": "topRight"
+            },
+            "content": {
+              "text": "2005 \u2022 Austin, Texas \u2022 Neural Spark",
+              "fontSize": 14,
+              "color": "#a855f7"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "neural_interface",
+          "hotspot": "cluster_alpha",
+          "content": {
+            "image": "neural-diagram.png",
+            "caption": "First machine learning prototype came alive in MATLAB."
+          },
+          "particleEffect": {
+            "behavior": "neuralPulse",
+            "duration": 1400
+          }
+        },
+        "climax": null
+      }
+    },
+    "velocity": {
+      "label": "VELOCITY EXPLOSION",
+      "ordinal": 3,
+      "scrollRangePercent": [
+        42,
+        56
+      ],
+      "particlesBase": 12000,
+      "word": "VELOCITY",
+      "palette": [
+        "#7c3aed",
+        "#9333ea",
+        "#6b21a8"
+      ],
+      "tierMix": [
+        0.45,
+        0.2,
+        0.15,
+        0.2
+      ],
+      "motionBehaviors": {
+        "tier0": "storm_medium",
+        "tier1": "streak_trail",
+        "tier2": "burst_on_beat",
+        "tier3": "lightning_global"
+      },
+      "camera": {
+        "movement": "dramatic_pullback",
+        "degrees": 20,
+        "shake": true
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.5
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "velocity_context",
+            "triggerPercent": 48,
+            "trigger": {
+              "percent": 48
+            },
+            "position": {
+              "anchor": "bottomRight"
+            },
+            "content": {
+              "text": "2012 \u2022 Silicon Valley \u2022 Launch Velocity",
+              "fontSize": 14,
+              "color": "#9333ea"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "velocity_launch",
+          "hotspot": "orbit_path",
+          "content": {
+            "image": "launch-dashboard.png",
+            "caption": "Realtime analytics firing across 12 markets."
+          },
+          "particleEffect": {
+            "behavior": "hyperdriveBurst",
+            "duration": 1100
+          }
+        },
+        "climax": null
+      }
+    },
+    "architecture": {
+      "label": "ARCHITECTURE CONSCIOUSNESS",
+      "ordinal": 4,
+      "scrollRangePercent": [
+        56,
+        70
+      ],
+      "particlesBase": 8000,
+      "word": "SYSTEMS",
+      "palette": [
+        "#0891b2",
+        "#06b6d4",
+        "#0e7490"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_flow",
+        "tier1": "scaffold_layers_3",
+        "tier2": "blueprint_pulse",
+        "tier3": "cornerstone_nodes_frontal"
+      },
+      "camera": {
+        "movement": "calm_track",
+        "degrees": 12,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "architecture_context",
+            "triggerPercent": 62,
+            "trigger": {
+              "percent": 62
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 220,
+                "y": 0
+              }
+            },
+            "content": {
+              "text": "2016 \u2022 Seattle \u2022 Systems Reforged",
+              "fontSize": 14,
+              "color": "#06b6d4"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "architecture_blueprint",
+          "hotspot": "pillar_one",
+          "content": {
+            "image": "system-blueprint.png",
+            "caption": "Layered fault-tolerant mesh with self-healing edges."
+          },
+          "particleEffect": {
+            "behavior": "schematicReveal",
+            "duration": 1300
+          }
+        },
+        "climax": null
+      }
+    },
+    "harmony": {
+      "label": "HARMONIC MASTERY",
+      "ordinal": 5,
+      "scrollRangePercent": [
+        70,
+        84
+      ],
+      "particlesBase": 12000,
+      "word": "FLOW STATE",
+      "palette": [
+        "#f59e0b",
+        "#d97706",
+        "#b45309"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "laminar_flow",
+        "tier1": "orbit_sync_groups_4",
+        "tier2": "ballet_fibonacci",
+        "tier3": "conductor_nodes_cerebellar"
+      },
+      "camera": {
+        "movement": "balletic_orbit",
+        "degrees": 25,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "harmony_context",
+            "triggerPercent": 78,
+            "trigger": {
+              "percent": 78
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 0,
+                "y": -260
+              }
+            },
+            "content": {
+              "text": "2021 \u2022 Remote \u2022 Human + AI Ensemble",
+              "fontSize": 14,
+              "color": "#f59e0b"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "harmony_resonance",
+          "hotspot": "orbit_chorus",
+          "content": {
+            "image": "harmony-waveform.png",
+            "caption": "Balanced signal routing for conscious UI."
+          },
+          "particleEffect": {
+            "behavior": "resonantGlow",
+            "duration": 1500
+          }
+        },
+        "climax": null
+      }
+    },
+    "transcendence": {
+      "label": "CONSCIOUSNESS TRANSCENDENCE",
+      "ordinal": 6,
+      "scrollRangePercent": [
+        84,
+        100
+      ],
+      "particlesBase": 15000,
+      "word": "CONSCIOUSNESS",
+      "palette": [
+        "#ffffff",
+        "#f59e0b",
+        "#00ffcc"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "cosmic_dust_galaxy",
+        "tier1": "galactic_arm_slow",
+        "tier2": "consciousness_node_unified",
+        "tier3": "transcendent_swarm"
+      },
+      "camera": {
+        "movement": "reverent_orbit",
+        "degrees": 30,
+        "shake": false
+      },
+      "climax": {
+        "arrivalMorph": 1,
+        "dissolveAfterMs": 1800,
+        "dissolveMorph": 0.6,
+        "increaseSwirl": true
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
+      },
+      "hud": {
+        "liveCounterText": "15,000 conscious moments"
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "transcendence_context",
+            "triggerPercent": 92,
+            "trigger": {
+              "percent": 92
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 0,
+                "y": 220
+              }
+            },
+            "content": {
+              "text": "2025 \u2022 Worldwide \u2022 Conscious Collective",
+              "fontSize": 14,
+              "color": "#00ffcc"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 6000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 6000
+          }
+        ],
+        "interactive": {
+          "id": "transcendence_portal",
+          "hotspot": "galaxy_core",
+          "content": {
+            "image": "transcendence-portal.png",
+            "caption": "Particles align into living memory constellations."
+          },
+          "particleEffect": {
+            "behavior": "starlightCascade",
+            "duration": 1600
+          }
+        },
+        "climax": {
+          "id": "transcendence_reveal",
+          "trigger": {
+            "type": "timeline",
+            "time": 35000
+          },
+          "sequence": [
+            {
+              "action": "dissolve",
+              "duration": 2000
+            },
+            {
+              "action": "formPortrait",
+              "duration": 3000,
+              "hold": 2000
+            },
+            {
+              "action": "reformText",
+              "text": "CURTIS WHORTON",
+              "duration": 2000
+            },
+            {
+              "action": "reformText",
+              "text": "AI-NATIVE ENGINEER",
+              "duration": 2000
+            },
+            {
+              "action": "formQRCode",
+              "url": "https://curtisworton.com",
+              "duration": 3000
+            }
+          ]
+        }
+      }
+    }
+  },
+  "visual": {
+    "system": "3d_kinetic_typography",
+    "letterGeometry": {
+      "genesis": {
+        "word": "HELLO CURTIS",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.3,
+        "particlesPerLetter": 167,
+        "spacing": 1.2,
+        "scale": 1.0
+      },
+      "discipline": {
+        "word": "STRUCTURE",
+        "font": "Inter",
+        "weight": 900,
+        "depth": 0.8,
+        "particlesPerLetter": 333,
+        "spacing": 1.0,
+        "scale": 1.1
+      },
+      "neural": {
+        "word": "AWAKENING",
+        "font": "Playfair Display",
+        "weight": 600,
+        "depth": 0.5,
+        "particlesPerLetter": 556,
+        "spacing": 1.1,
+        "scale": 1.05
+      },
+      "velocity": {
+        "word": "VELOCITY",
+        "font": "Archivo Black",
+        "weight": 900,
+        "depth": 0.4,
+        "particlesPerLetter": 1500,
+        "spacing": 0.95,
+        "scale": 1.15
+      },
+      "architecture": {
+        "word": "SYSTEMS",
+        "font": "JetBrains Mono",
+        "weight": 500,
+        "depth": 0.6,
+        "particlesPerLetter": 1143,
+        "spacing": 1.15,
+        "scale": 1.0
+      },
+      "harmony": {
+        "word": "FLOW STATE",
+        "font": "Cormorant Garamond",
+        "weight": 600,
+        "depth": 0.5,
+        "particlesPerLetter": 1200,
+        "spacing": 1.08,
+        "scale": 1.0
+      },
+      "transcendence": {
+        "word": "CONSCIOUSNESS",
+        "font": "Montserrat",
+        "weight": 300,
+        "depth": 0.7,
+        "particlesPerLetter": 1154,
+        "spacing": 1.05,
+        "scale": 1.2
+      }
+    },
+    "transitions": {
+      "dissolveDuration": 1500,
+      "reformDuration": 1500,
+      "silenceDuration": 500,
+      "description": "Stage-to-stage morph timings in milliseconds"
+    },
+    "stageWords": {
+      "genesis": "HELLO CURTIS",
+      "discipline": "STRUCTURE",
+      "neural": "AWAKENING",
+      "velocity": "VELOCITY",
+      "architecture": "SYSTEMS",
+      "harmony": "FLOW STATE",
+      "transcendence": "CONSCIOUSNESS"
+    },
+    "camera": {
+      "genesis": {
+        "initial": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "reveal": {
+          "timing": 8000,
+          "duration": 2000,
+          "target": {
+            "x": 0.8,
+            "y": 0.5,
+            "z": 4.5
+          }
+        }
+      },
+      "velocity": {
+        "movement": "dramatic_push",
+        "startZ": 6,
+        "endZ": 4,
+        "shake": {
+          "amplitude": 0.1,
+          "frequency": 5
+        },
+        "duration": 40000
+      },
+      "discipline": {
+        "angle": {
+          "x": -20,
+          "y": 0,
+          "z": 5
+        },
+        "movement": "orbit_slow",
+        "degrees": 10
+      }
+    }
+  },
+  "narrative": {
+    "orchestration": {
+      "mode": "narration-driven",
+      "scrollLocked": true,
+      "skipKey": "SPACE"
+    },
+    "beatSheets": {
+      "genesis": {
+        "totalDuration": 30000,
+        "beats": [
+          {
+            "time": 1000,
+            "narration": {
+              "text": "I was eight years old. End of summer, 1983.",
+              "duration": 3000
+            },
+            "visual": "gentle_drift"
+          },
+          {
+            "time": 4000,
+            "narration": {
+              "text": "The Texas heat was finally breaking, and through my friend's window, that golden hour light made everything feel... possible.",
+              "duration": 6000
+            },
+            "visual": "no_change"
+          },
+          {
+            "time": 10000,
+            "narration": {
+              "text": "His mom had this programming book. The computer - a Commodore 64 - sat there like some kind of oracle. Waiting.",
+              "duration": 6000
+            },
+            "visual": "tier3_subtle_pulse"
+          },
+          {
+            "time": 16000,
+            "narration": {
+              "text": "I typed those lines exactly as the book showed. When I pressed RUN and the screen came alive...",
+              "duration": 5000
+            },
+            "visual": "tier2_flicker_increase"
+          },
+          {
+            "time": 22000,
+            "narration": {
+              "text": "...something lit up inside me. A spark that would wait 39 years to fully ignite.",
+              "duration": 5000
+            },
+            "visual": "tier3_glow_pulse"
+          }
+        ]
+      },
+      "discipline": {
+        "totalDuration": 35000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "That spark? It got buried. Had to.",
+              "duration": 3000
+            },
+            "visual": "reform_as_structure"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "Home was chaos - unpredictable, unsafe. But then came the Marines. Everything changed.",
+              "duration": 6000
+            },
+            "visual": "particles_begin_columns"
+          },
+          {
+            "time": 11000,
+            "narration": {
+              "text": "'Adapt and overcome.' More than a motto - it became my operating system.",
+              "duration": 5000
+            },
+            "visual": "tier2_lock_into_grid"
+          },
+          {
+            "time": 16000,
+            "narration": {
+              "text": "The chaos didn't disappear, but now I had a framework. Structure. Discipline.",
+              "duration": 5000
+            },
+            "visual": "tier3_cadence_pulse"
+          },
+          {
+            "time": 21000,
+            "narration": {
+              "text": "For 39 years, I built systems. Logistics. Finance. Operations. Always solving, always building.",
+              "duration": 6000
+            },
+            "visual": "breathing_rhythm"
+          },
+          {
+            "time": 29000,
+            "narration": {
+              "text": "...that eight-year-old's spark never died. It was just waiting for the right moment to reignite.",
+              "duration": 5000
+            },
+            "visual": "flicker_fade_back_to_blue"
+          }
+        ]
+      },
+      "neural": {
+        "totalDuration": 40000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "February 2022. I'm sitting in front of my laptop, staring at ChatGPT for the first time.",
+              "duration": 5000
+            },
+            "visual": "reform_as_flow"
+          },
+          {
+            "time": 7000,
+            "narration": {
+              "text": "It answered a question I'd been wrestling with for weeks. Not just answered - understood. Anticipated. Expanded.",
+              "duration": 7000
+            },
+            "visual": "neural_pathways_light"
+          },
+          {
+            "time": 14000,
+            "narration": {
+              "text": "Something fundamental shifted in that moment. This wasn't just a tool. This was a partner.",
+              "duration": 5000
+            },
+            "visual": "tier3_synaptic_flash"
+          },
+          {
+            "time": 19000,
+            "narration": {
+              "text": "I spent the next three years learning to think with AI. Not using it - thinking WITH it.",
+              "duration": 6000
+            },
+            "visual": "connection_strengthen"
+          },
+          {
+            "time": 25000,
+            "narration": {
+              "text": "Every project became a conversation. Every problem became a collaboration. Every solution emerged from synthesis.",
+              "duration": 7000
+            },
+            "visual": "tier2_pulse_sync"
+          },
+          {
+            "time": 32000,
+            "narration": {
+              "text": "That eight-year-old's dream? It was finally coming true - but bigger than I ever imagined.",
+              "duration": 6000
+            },
+            "visual": "genesis_callback_purple"
+          }
+        ]
+      },
+      "velocity": {
+        "totalDuration": 45000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "Then came the explosion.",
+              "duration": 3000
+            },
+            "visual": "particles_accelerate"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "Projects that used to take six weeks? Done in six hours. Systems I'd spent months designing? Architected in an afternoon.",
+              "duration": 7000
+            },
+            "visual": "streak_trails_form"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "February 2025. The breakthrough came with a single question to Claude: 'How would you architect this entire system?'",
+              "duration": 7000
+            },
+            "visual": "tier3_lightning_burst"
+          },
+          {
+            "time": 19000,
+            "narration": {
+              "text": "What emerged wasn't my system or Claude's system. It was OUR system - something neither of us could have built alone.",
+              "duration": 7000
+            },
+            "visual": "fusion_pattern"
+          },
+          {
+            "time": 26000,
+            "narration": {
+              "text": "Questions led to insights. Insights led to patterns. Patterns led to architectures. Every answer opened ten new doors.",
+              "duration": 8000
+            },
+            "visual": "cascade_acceleration"
+          },
+          {
+            "time": 34000,
+            "narration": {
+              "text": "I wasn't just moving faster. I was thinking differently. The constraint wasn't time anymore - it was imagination.",
+              "duration": 8000
+            },
+            "visual": "velocity_peak"
+          }
+        ]
+      },
+      "architecture": {
+        "totalDuration": 42000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "But speed without structure is just chaos.",
+              "duration": 4000
+            },
+            "visual": "blueprint_grid_emerge"
+          },
+          {
+            "time": 6000,
+            "narration": {
+              "text": "I started seeing patterns everywhere. Not just in code - in systems, in processes, in how information flows.",
+              "duration": 7000
+            },
+            "visual": "isometric_view_rotate"
+          },
+          {
+            "time": 13000,
+            "narration": {
+              "text": "The Marine Corps taught me tactical systems. Business taught me operational systems. AI taught me cognitive systems.",
+              "duration": 7000
+            },
+            "visual": "layer_stack_reveal"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "March 2025. I documented the entire MetaCurtis architecture in a Single Source of Truth. Every decision traceable. Every component validated.",
+              "duration": 8000
+            },
+            "visual": "blueprint_complete"
+          },
+          {
+            "time": 28000,
+            "narration": {
+              "text": "Constitutional Development Protocol. Velocity Stack. Probe History. Not just tools - a methodology. A way of building that guarantees quality at speed.",
+              "duration": 9000
+            },
+            "visual": "tier3_construction_guide"
+          },
+          {
+            "time": 37000,
+            "narration": {
+              "text": "This wasn't just software architecture anymore. This was a blueprint for human-AI collaboration.",
+              "duration": 5000
+            },
+            "visual": "master_plan_glow"
+          }
+        ]
+      },
+      "harmony": {
+        "totalDuration": 38000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "And then something unexpected happened. Flow state.",
+              "duration": 4000
+            },
+            "visual": "golden_ratio_spiral"
+          },
+          {
+            "time": 6000,
+            "narration": {
+              "text": "The boundaries started dissolving. Not between me and the AI - between thinking and building.",
+              "duration": 6000
+            },
+            "visual": "orbit_sync_begin"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "I'd describe a vision, Claude would architect it, I'd refine the architecture, Claude would implement it. Back and forth, faster and faster.",
+              "duration": 8000
+            },
+            "visual": "ballet_choreography"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "Until it wasn't back and forth anymore. It was just... flow. One continuous creative process.",
+              "duration": 6000
+            },
+            "visual": "phase_lock_achieve"
+          },
+          {
+            "time": 26000,
+            "narration": {
+              "text": "Three years of collaboration compressed into pure creative velocity. Building, testing, refining - all in harmony.",
+              "duration": 7000
+            },
+            "visual": "laminar_flow_perfect"
+          },
+          {
+            "time": 33000,
+            "narration": {
+              "text": "This is what mastery feels like in the age of AI. Not replacing human creativity - amplifying it to impossible levels.",
+              "duration": 5000
+            },
+            "visual": "golden_ratio_complete"
+          }
+        ]
+      },
+      "transcendence": {
+        "totalDuration": 50000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "And here we are. October 2025.",
+              "duration": 3000
+            },
+            "visual": "cosmic_dust_swirl"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "From that eight-year-old typing 'HELLO CURTIS' on a Commodore 64, to this moment - building impossible things with AI.",
+              "duration": 7000
+            },
+            "visual": "consciousness_nodes_pulse"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "Every experience led here. The Marine Corps discipline. The business systems. The AI partnership. The velocity breakthroughs.",
+              "duration": 8000
+            },
+            "visual": "all_stages_echo"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "This visualization you're experiencing? Built with Claude in six weeks. Traditional team? Six months, maybe more.",
+              "duration": 7000
+            },
+            "visual": "galactic_arm_rotate"
+          },
+          {
+            "time": 27000,
+            "narration": {
+              "text": "But it's not about speed. It's about what becomes possible when human creativity and AI capability truly merge.",
+              "duration": 7000
+            },
+            "visual": "unified_field"
+          },
+          {
+            "time": 34000,
+            "narration": {
+              "text": "I'm not a traditional developer. I'm something new - an AI-native engineer. And this is just the beginning.",
+              "duration": 7000
+            },
+            "visual": "transcendent_integration"
+          },
+          {
+            "time": 41000,
+            "narration": {
+              "text": "What impossible thing can we build together?",
+              "duration": 5000
+            },
+            "visual": "question_expand"
+          }
+        ]
+      }
+    }
+  },
+  "visualEffects": {
+    "description": "Mapping of beat sheet visual verbs to camera/particle directives",
+    "version": "1.0.0",
+    "particleEffects": {
+      "no_change": {
+        "type": "static",
+        "description": "Maintain current state"
+      },
+      "gentle_drift": {
+        "type": "motion",
+        "tiers": [
+          0,
+          1
+        ],
+        "behavior": "perlin_drift",
+        "speed": 0.2,
+        "amplitude": 0.3
+      },
+      "tier2_flicker_increase": {
+        "type": "flicker",
+        "tiers": [
+          2
+        ],
+        "probability": 0.05,
+        "duration": 200
+      },
+      "tier3_subtle_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 0.3,
+        "intensity": 0.2
+      },
+      "tier3_sparkle": {
+        "type": "sparkle",
+        "tiers": [
+          3
+        ],
+        "count": 50,
+        "duration": 500
+      },
+      "tier3_glow_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 0.5,
+        "intensity": 0.6,
+        "glow": true
+      },
+      "settle_to_form": {
+        "type": "converge",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad"
+      },
+      "static_hold": {
+        "type": "lock",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "rigidity": 1
+      },
+      "particles_begin_columns": {
+        "type": "formation",
+        "pattern": "column",
+        "tiers": [
+          1,
+          2
+        ],
+        "duration": 1500
+      },
+      "tier2_lock_into_grid": {
+        "type": "grid_snap",
+        "tiers": [
+          2
+        ],
+        "gridSize": 2,
+        "duration": 800
+      },
+      "tier3_cadence_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 2,
+        "intensity": 0.4,
+        "bpm": 120
+      },
+      "breathing_rhythm": {
+        "type": "breathe",
+        "tiers": [
+          0,
+          1,
+          2
+        ],
+        "speed": 0.05,
+        "amplitude": 0.1
+      },
+      "prepare_flicker": {
+        "type": "prime",
+        "tiers": [
+          2,
+          3
+        ],
+        "anticipation": 500
+      },
+      "green_flicker": {
+        "type": "color_flash",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "color": "#00FF00",
+        "duration": 300
+      },
+      "flicker_fade_back_to_blue": {
+        "type": "color_transition",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fromColor": "#00FF00",
+        "toColor": "#3b82f6",
+        "duration": 1000
+      }
+    },
+    "cameraEffects": {
+      "no_change": {
+        "type": "static"
+      },
+      "orbit_slow": {
+        "type": "orbit",
+        "degrees": 10,
+        "duration": 35000,
+        "axis": "y"
+      },
+      "orbit_discovery": {
+        "type": "orbit",
+        "degrees": 15,
+        "speed": 0.3,
+        "axis": "y"
+      },
+      "dramatic_push": {
+        "type": "dolly",
+        "startZ": 6,
+        "endZ": 4,
+        "duration": 40000,
+        "shake": {
+          "amplitude": 0.1,
+          "frequency": 5
+        }
+      },
+      "calm_track": {
+        "type": "orbit",
+        "degrees": 12,
+        "duration": 45000
+      },
+      "balletic_orbit": {
+        "type": "orbit",
+        "degrees": 25,
+        "speed": 0.2,
+        "smooth": 0.98
+      },
+      "reverent_orbit": {
+        "type": "orbit",
+        "degrees": 30,
+        "pullback": {
+          "from": 5,
+          "to": 7,
+          "duration": 10000
+        }
+      }
+    }
+  },
+  "performance": {
+    "frameRate": {
+      "target": 60,
+      "targetFps": 60,
+      "minimum": 55,
+      "minFps": 55,
+      "windowFrames": 60
+    },
+    "particleCount": {
+      "genesis": 2000,
+      "discipline": 3000,
+      "neural": 5000,
+      "velocity": 12000,
+      "architecture": 8000,
+      "harmony": 12000,
+      "transcendence": 15000
+    },
+    "renderTimeMs": {
+      "target": 16.67,
+      "max": 18,
+      "criticalPath": [
+        "particleUpdate",
+        "shaderExecution",
+        "drawCalls"
+      ]
+    },
+    "memory": {
+      "heapLimitMB": 250,
+      "leakToleranceMBPerMin": 0,
+      "gcPauseMaxMs": 3
+    },
+    "adaptiveQuality": {
+      "order": [
+        "tier3",
+        "tier2",
+        "tier1",
+        "tier0"
+      ],
+      "restoreAfterStableSec": 5
+    },
+    "lodThresholds": {
+      "ultra": 0.9,
+      "high": 0.75,
+      "medium": 0.55,
+      "low": 0.35
+    }
+  },
+  "integrityRules": [
+    {
+      "id": "SINGLE_WRITER_GEOMETRY",
+      "detection": "renderer_not_last_writer",
+      "severity": "CRITICAL",
+      "response": "IMMEDIATE_ROLLBACK",
+      "message": "Geometry/uniforms written outside Renderer"
+    },
+    {
+      "id": "RENDERER_SYNTHESIS",
+      "detection": "renderer_fabricates_targets_or_reads_scroll",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must not fabricate targets or read scroll"
+    },
+    {
+      "id": "EMIT_ONCE_FENCEPOST",
+      "detection": "multiple_particles_emerged_events",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must emit PARTICLES_EMERGED exactly once"
+    },
+    {
+      "id": "PERFORMANCE_DEGRADATION",
+      "detection": "fps_below_55_for_60_frames",
+      "severity": "HIGH",
+      "response": "FEATURE_REDUCTION",
+      "message": "Quality reduced to maintain 60 FPS"
+    },
+    {
+      "id": "NARRATIVE_DESYNC",
+      "detection": "morph_vs_stage_mismatch",
+      "severity": "MEDIUM",
+      "response": "RESYNC_TIMELINE",
+      "message": "Realigning stage, morph, and tint"
+    }
+  ],
+  "successMetrics": {
+    "technical": {
+      "fps": ">=60",
+      "loadTimeSec": "<4",
+      "errorRate": "<0.001%",
+      "memoryStable": true
+    },
+    "experiential": {
+      "completionRate": ">80%",
+      "narrativeClarity": ">90%",
+      "emotionalImpact": "high"
+    },
+    "business": {
+      "shareRate": ">30%",
+      "contactConversion": ">15%",
+      "oneWeekRecall": ">90%"
+    }
+  },
+  "implementationPhases": [
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "duration": "1 day",
+      "deliverables": [
+        "v3.3 config loader",
+        "Engine text-first blueprints",
+        "Renderer binding + PARTICLES_EMERGED single-source",
+        "v3.4 config loader (fallback to 3.3)",
+        "Engine text-first blueprints (emergence mode:'emergence')",
+        "Renderer binding + PARTICLES_EMERGED single-source (emit-once)",
+        "ENGINE_VIEWPORT_HINT gate"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Visual Polish",
+      "duration": "1 day",
+      "deliverables": [
+        "Gaussian falloff",
+        "Tier behavior \u2192 glyph mapping",
+        "Sprite atlas verification",
+        "Chaos mesh rotation window"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Narrative Integration",
+      "duration": "1 day",
+      "deliverables": [
+        "Opening beats timing",
+        "Memory fragments",
+        "Audio sync to emergence threshold",
+        "Opening beats timing (chaos\u2192coalesce\u2192settle)",
+        "START_NARRATIVE + AUDIO_START_STAGE",
+        "BeatGlyph reveal timing"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Performance & Cross-Device",
+      "duration": "1 day",
+      "deliverables": [
+        "60 FPS optimization",
+        "Adaptive quality guardrails",
+        "Mobile DPR/point-size audit"
+      ]
+    }
+  ],
+  "debugSurface": {
+    "exposeGlobals": [
+      "BeatBus",
+      "EVENTS",
+      "__consciousnessMaterial",
+      "__particleGeometry",
+      "consciousnessEngine"
+    ],
+    "devHud": {
+      "stageSelector": true,
+      "morphSlider": true,
+      "pointSizeSlider": true,
+      "perfOverlay": true
+    }
+  },
+  "changeLog": [
+    "Swap: anatomy \u2192 stage words (text3DPositions)",
+    "Preserved: tiers, stage order, palettes, fragments, performance",
+    "Clarified: event single-source (Renderer emits PARTICLES_EMERGED)",
+    "Renderer: no synthesis, no scroll, no FOV scaling",
+    "Transcendence: word arrival \u2192 galaxy dissolve",
+    "Added opening fencepost contract and viewport gate",
+    "BLUEPRINT_READY now carries optional mode:'emergence' for emergence blueprints",
+    "Renderer emits ENGINE_VIEWPORT_HINT and PARTICLES_EMERGED (emit-once) by contract",
+    "Stage-0 shot list embedded (chaos\u2192coalesce\u2192settle \u2192 narration \u2192 BeatGlyph)",
+    "Opening rules: settle-before-scroll + Stage-0 color lock",
+    "Optional polish uniforms (uChaosSpin/uTrailIntensity/uTrailPersistence/uBrightnessBoost) are non-breaking"
+  ]
+}

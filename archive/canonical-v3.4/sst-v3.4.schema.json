@@ -1,0 +1,371 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metacurtis.com/schemas/sst-v3x.schema.json",
+  "type": "object",
+  "required": [
+    "meta",
+    "features",
+    "pipeline",
+    "shaderContract",
+    "events",
+    "quality",
+    "scrollAndMorph",
+    "spriteSemantics",
+    "stageOrder",
+    "stages",
+    "performance",
+    "integrityRules",
+    "successMetrics",
+    "implementationPhases",
+    "debugSurface",
+    "changeLog"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["version", "authority", "mode"],
+      "properties": {
+        "version": { "enum": ["3.3", "3.4"] },
+        "authority": { "const": "ABSOLUTE" },
+        "mode": { "const": "TEXT_FIRST_REVEAL" },
+        "compat": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+
+    "pipeline": {
+      "type": "object",
+      "required": ["modules", "singleWriterRules"],
+      "properties": {
+        "modules": {
+          "type": "object",
+          "required": ["director", "engine", "renderer", "beatBus", "scrollOrchestrator"],
+          "properties": {
+            "director": { "type": "object" },
+            "engine": {
+              "type": "object",
+              "properties": {
+                "opening": {
+                  "type": "object",
+                  "properties": {
+                    "emergence": {
+                      "type": "object",
+                      "properties": {
+                        "target": { "type": "string" },
+                        "blueprintEventMode": { "type": "string" }
+                      },
+                      "required": ["target", "blueprintEventMode"],
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "renderer": {
+              "type": "object",
+              "properties": {
+                "emits": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "minItems": 1
+                },
+                "emitOnceFencepost": { "type": "boolean" }
+              },
+              "additionalProperties": true
+            },
+            "beatBus": { "type": "object" },
+            "scrollOrchestrator": { "type": "object" }
+          },
+          "additionalProperties": true
+        },
+        "singleWriterRules": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "shaderContract": { "type": "object" },
+    "features": { "type": "object" },
+    "quality": { "type": "object" },
+    "scrollAndMorph": { "type": "object" },
+    "spriteSemantics": { "type": "object" },
+    "performance": { "type": "object" },
+    "integrityRules": { "type": "array" },
+    "successMetrics": { "type": "object" },
+    "implementationPhases": { "type": "array" },
+    "debugSurface": { "type": "object" },
+    "changeLog": { "type": "array" },
+
+    "events": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+
+    "stageOrder": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "genesis",
+          "discipline",
+          "neural",
+          "velocity",
+          "architecture",
+          "harmony",
+          "transcendence"
+        ]
+      },
+      "minItems": 7,
+      "maxItems": 7
+    },
+
+    "stages": {
+      "type": "object",
+      "required": [
+        "genesis",
+        "discipline",
+        "neural",
+        "velocity",
+        "architecture",
+        "harmony",
+        "transcendence"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(genesis|discipline|neural|velocity|architecture|harmony|transcendence)$": {
+          "type": "object",
+          "required": ["word", "particlesBase", "palette", "tierMix", "scrollRangePercent"],
+          "properties": {
+            "word": { "type": "string", "minLength": 1 },
+            "particlesBase": { "type": "integer", "minimum": 1 },
+            "palette": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "tierMix": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "scrollRangePercent": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+
+            "openingTimeline": {
+              "type": "object",
+              "required": ["profile", "chaos", "coalesce", "settle", "narration", "beatGlyph"],
+              "properties": {
+                "profile": { "type": "string" },
+                "prologue": {
+                  "type": "object",
+                  "properties": {
+                    "terminalOverlay": { "type": "boolean" },
+                    "fadeOutAtMs": { "type": "integer", "minimum": 0 }
+                  },
+                  "additionalProperties": true
+                },
+                "chaos": {
+                  "type": "object",
+                  "required": ["enabled", "durationMs"],
+                  "properties": {
+                    "enabled": { "type": "boolean" },
+                    "durationMs": { "type": "integer", "minimum": 0 },
+                    "rendererSpin": {
+                      "type": "object",
+                      "properties": {
+                        "z": { "type": "number" },
+                        "y": { "type": "number" }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "coalesce": {
+                  "type": "object",
+                  "required": ["enabled", "durationMs", "morphTo"],
+                  "properties": {
+                    "enabled": { "type": "boolean" },
+                    "durationMs": { "type": "integer", "minimum": 0 },
+                    "morphTo": { "type": "number", "minimum": 0, "maximum": 1 }
+                  },
+                  "additionalProperties": false
+                },
+                "settle": {
+                  "type": "object",
+                  "required": ["enabled", "durationMs", "morphTo"],
+                  "properties": {
+                    "enabled": { "type": "boolean" },
+                    "durationMs": { "type": "integer", "minimum": 0 },
+                    "morphTo": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "constellationCoverage": {
+                      "type": "array",
+                      "items": { "type": "number" },
+                      "minItems": 4,
+                      "maxItems": 4
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "narration": {
+                  "type": "object",
+                  "required": ["startAtMs", "events"],
+                  "properties": {
+                    "startAtMs": { "type": "integer", "minimum": 0 },
+                    "events": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "minItems": 1
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "beatGlyph": {
+                  "type": "object",
+                  "required": ["revealMs", "text"],
+                  "properties": {
+                    "revealMs": { "type": "integer", "minimum": 0 },
+                    "text": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+
+    "openingFencepost": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 5
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "openingRules": {
+      "type": "object",
+      "properties": {
+        "startAfterViewportHint": { "type": "boolean" },
+        "stage0ColorLock": { "type": "boolean" },
+        "scrollLockedUntil": { "type": "string" },
+        "emergenceModeRequired": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "meta": { "properties": { "version": { "const": "3.4" } } }
+        }
+      },
+      "then": {
+        "required": ["openingRules", "openingFencepost"],
+        "properties": {
+          "pipeline": {
+            "properties": {
+              "modules": {
+                "properties": {
+                  "renderer": {
+                    "properties": {
+                      "emits": {
+                        "allOf": [
+                          { "contains": { "const": "ENGINE_VIEWPORT_HINT" } },
+                          { "contains": { "const": "PARTICLES_EMERGED" } }
+                        ]
+                      },
+                      "emitOnceFencepost": { "const": true }
+                    },
+                    "required": ["emits", "emitOnceFencepost"]
+                  },
+                  "engine": {
+                    "properties": {
+                      "opening": {
+                        "properties": {
+                          "emergence": {
+                            "properties": {
+                              "target": { "const": "random_to_random_gas_cloud" },
+                              "blueprintEventMode": { "const": "emergence" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "events": {
+            "allOf": [
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "name": { "const": "ENGINE_VIEWPORT_HINT" } },
+                  "required": ["name"]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "name": { "const": "START_NARRATIVE" } },
+                  "required": ["name"]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "name": { "const": "AUDIO_START_STAGE" } },
+                  "required": ["name"]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "name": { "const": "PREWARM_COMPLETE" } },
+                  "required": ["name"]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "const": "BLUEPRINT_READY" },
+                    "payload": {
+                      "type": "object",
+                      "required": ["stage"],
+                      "properties": {
+                        "mode": { "type": ["string", "null"] }
+                      }
+                    }
+                  },
+                  "required": ["name", "payload"]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

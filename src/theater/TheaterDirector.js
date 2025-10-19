@@ -1,0 +1,1066 @@
+// SST v3.5 BeatGlyph Theater Director — Complete Clean Version
+// Single source of timeline; Renderer stays single GPU writer; Engine writes blueprints.
+
+import BeatBus from '@/theater/bus';
+
+import SST from '@/config/sst-loader.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { VC } from '@/config/visual-controls.js';
+import { EVENTS } from '@/theater/events.js';
+import ScrollOrchestrator from './ScrollOrchestrator.js';
+
+const DEBUG_NARRATION = true;
+
+const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
+const DEFAULT_TYPING_LINES = [
+  'READY.',
+  `10 PRINT "${GENESIS_STAGE_WORD}"`,
+  '20 GOTO 10',
+  'RUN',
+];
+
+const DEFAULT_OPENING_TIMELINE = {
+  blackout: { durationMs: 2000 },
+  cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
+  typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
+  fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
+  chaos: { enabled: true, durationMs: 1500, rendererSpin: { z: 0.5, y: 0.2 } },
+  coalesce: { enabled: true, durationMs: 1500, morphTo: 0.6 },
+  settle: { enabled: true, durationMs: 1000, morphTo: 1.0 },
+  emergence: {
+    durationMs: 1500,
+    waitForFencepost: true,
+    maxWaitMs: 5000,
+    stabilizeMs: 500,
+    skipMorphAnimation: true,
+    skipGenesisBlueprint: true,
+    targetState: 'genesis_initial',
+  },
+};
+
+const DEFAULT_OPENING_EMERGENCE = {
+  target: 'constellation',
+  mode: 'emergence',
+  source: 'viewportSpread',
+};
+
+const SKIP_KEY_MAP = {
+  SPACE: { codes: ['Space'], keys: [' ', 'Spacebar'] },
+  ENTER: { codes: ['Enter', 'NumpadEnter'], keys: ['Enter'] },
+  ESCAPE: { codes: ['Escape'], keys: ['Escape', 'Esc'] },
+};
+
+function matchesSkipActivation(event, skipKey) {
+  if (!skipKey || !event) return false;
+  const lookup = SKIP_KEY_MAP[String(skipKey).toUpperCase()] ?? null;
+  if (!lookup) return false;
+  if (lookup.codes?.includes(event.code)) return true;
+  if (lookup.keys?.includes(event.key)) return true;
+  return false;
+}
+
+// ── Theater Director Class ───────────────────────────────────────────────────
+class TheaterDirector {
+  constructor() {
+    this.reset();
+    this.timeline = {};
+    this.scrollOrchestrator = null;
+    this.narrationController = null;
+
+    if (DEBUG_NARRATION) {
+      const stageKeys = Object.keys(SST?.narrative?.beatSheets || {});
+      console.log('🎬 [TheaterDirector] Initializing');
+      console.log('🎬 [TheaterDirector] SST stages:', stageKeys);
+    }
+
+    this._handleStageChangeBound = (payload = {}) => {
+      const targetStage = payload?.to ?? payload?.stage ?? null;
+      if (!targetStage) return;
+      this.handleStageChange(targetStage, payload);
+    };
+
+    if (typeof BeatBus?.on === 'function') {
+      this._stageChangeUnsubscribe = BeatBus.on(EVENTS.STAGE_CHANGE, this._handleStageChangeBound);
+    }
+  }
+
+  _getOpeningConfig() {
+    const opening = SST?.narrative?.opening ?? {};
+    const openingTimeline = opening.timeline ?? {};
+    const stageTimeline = SST?.stages?.genesis?.openingTimeline ?? {};
+
+    const timeline = {
+      blackout: {
+        ...DEFAULT_OPENING_TIMELINE.blackout,
+        ...(openingTimeline.blackout ?? {}),
+        ...(stageTimeline.blackout ?? {}),
+      },
+      cursor: {
+        ...DEFAULT_OPENING_TIMELINE.cursor,
+        ...(openingTimeline.cursor ?? {}),
+        ...(stageTimeline.cursor ?? {}),
+      },
+      typing: {
+        ...DEFAULT_OPENING_TIMELINE.typing,
+        ...(openingTimeline.typing ?? {}),
+        ...(stageTimeline.typing ?? {}),
+      },
+      fill: {
+        ...DEFAULT_OPENING_TIMELINE.fill,
+        ...(openingTimeline.fill ?? {}),
+        ...(stageTimeline.fill ?? {}),
+      },
+      chaos: {
+        ...DEFAULT_OPENING_TIMELINE.chaos,
+        ...(openingTimeline.chaos ?? {}),
+        ...(stageTimeline.chaos ?? {}),
+      },
+      coalesce: {
+        ...DEFAULT_OPENING_TIMELINE.coalesce,
+        ...(openingTimeline.coalesce ?? {}),
+        ...(stageTimeline.coalesce ?? {}),
+      },
+      settle: {
+        ...DEFAULT_OPENING_TIMELINE.settle,
+        ...(openingTimeline.settle ?? {}),
+        ...(stageTimeline.settle ?? {}),
+      },
+      profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
+      narration: stageTimeline.narration ?? openingTimeline.narration ?? null,
+      beatGlyph: stageTimeline.beatGlyph ?? openingTimeline.beatGlyph ?? null,
+    };
+
+    const emergenceTimeline = stageTimeline.emergence ?? openingTimeline.emergence ?? {};
+
+    const fallbackSkipKey = 'SPACE';
+
+    return {
+      skipKey:
+        stageTimeline.skipKey ??
+        opening.skipKey ??
+        SST?.narrative?.orchestration?.skipKey ??
+        fallbackSkipKey,
+      totalDurationMs: stageTimeline.totalDurationMs ?? opening.totalDurationMs ?? null,
+      timeline,
+      emergence: { ...DEFAULT_OPENING_EMERGENCE, ...emergenceTimeline },
+    };
+  }
+
+  _getGenesisParticleCount() {
+    const candidate = Number(SST?.performance?.particleCount?.genesis);
+    if (Number.isFinite(candidate) && candidate > 0) return candidate;
+    return 2000;
+  }
+
+  _calculateTypingDuration(typingConfig) {
+    if (!typingConfig) return 0;
+    const lines = Array.isArray(typingConfig.lines) ? typingConfig.lines : [];
+    const typeSpeed = Number(typingConfig.typeSpeed) || 0;
+    const lineDelay = Number(typingConfig.lineDelay) || 0;
+
+    if (!lines.length || !typeSpeed) return 0;
+
+    let total = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = typeof lines[i] === 'string' ? lines[i] : '';
+      total += line.length * typeSpeed;
+      if (i < lines.length - 1) total += lineDelay;
+    }
+    return total;
+  }
+
+  _attachSkipListener(skipKey) {
+    if (typeof window === 'undefined') return;
+    this._detachSkipListener();
+    if (!skipKey) return;
+
+    this._skipKey = skipKey;
+    const handler = (event) => {
+      if (this.skipRequested || this.cancelled) return;
+      if (!matchesSkipActivation(event, skipKey)) return;
+      try {
+        event.preventDefault?.();
+      } catch {}
+      this._requestSkip('keyboard');
+    };
+
+    window.addEventListener('keydown', handler, { passive: false });
+    this._skipListener = handler;
+  }
+
+  _detachSkipListener() {
+    if (typeof window === 'undefined') return;
+    if (this._skipListener) {
+      window.removeEventListener('keydown', this._skipListener);
+      this._skipListener = null;
+    }
+    this._skipKey = null;
+  }
+
+  _resolveNarrationController() {
+    if (this.narrationController) return this.narrationController;
+    if (typeof window !== 'undefined' && window.narrationController) {
+      this.narrationController = window.narrationController;
+      return this.narrationController;
+    }
+    return this.narrationController;
+  }
+
+  _wakeSleepWaiters(reason = 'interrupted') {
+    if (!this._sleepWaiters || this._sleepWaiters.size === 0) return;
+    for (const resolve of Array.from(this._sleepWaiters)) {
+      try {
+        resolve(reason);
+      } catch {}
+    }
+    this._sleepWaiters.clear();
+  }
+
+  _trackTimer(callback, delay = 0) {
+    if (typeof callback !== 'function') return null;
+    const safeDelay = Number.isFinite(delay) && delay > 0 ? delay : 0;
+    const id = setTimeout(() => {
+      this._activeTimers?.delete(id);
+      try {
+        callback();
+      } catch (err) {
+        if (import.meta?.env?.DEV) {
+          console.warn('[Director] timer callback failed', err);
+        }
+      }
+    }, safeDelay);
+    if (!this._activeTimers) this._activeTimers = new Set();
+    this._activeTimers.add(id);
+    return id;
+  }
+
+  _clearTimer(id) {
+    if (id == null) return;
+    clearTimeout(id);
+    this._activeTimers?.delete(id);
+  }
+
+  handleStageChange(newStage, payload = {}) {
+    if (!newStage) {
+      if (DEBUG_NARRATION) {
+        console.warn('🎬 [STAGE CHANGE] Ignored invalid stage payload', payload);
+      }
+      return;
+    }
+
+    const previousStage = this.currentStage;
+    if (previousStage === newStage) {
+      if (DEBUG_NARRATION) {
+        console.log('🎬 [STAGE CHANGE IGNORED] Duplicate stage event', {
+          stage: newStage,
+          payload,
+        });
+      }
+      return;
+    }
+    const narrationController = this._resolveNarrationController();
+    const beatSheet = SST?.narrative?.beatSheets?.[newStage];
+
+    if (DEBUG_NARRATION) {
+      console.log('🎬 [STAGE CHANGE]', {
+        from: previousStage,
+        to: newStage,
+        hasBeatSheet: !!beatSheet,
+        narrationControllerExists: !!narrationController,
+      });
+    }
+
+    this.currentStage = newStage;
+
+    if (beatSheet) {
+      if (DEBUG_NARRATION) {
+        console.log('🎬 [BEAT SHEET FOUND]', {
+          stage: newStage,
+          beatCount: beatSheet?.beats?.length || 0,
+          duration: beatSheet?.totalDuration || 'unknown',
+        });
+      }
+
+      if (narrationController && typeof narrationController.playNarration === 'function') {
+        if (DEBUG_NARRATION) {
+          console.log('🎬 [TRIGGERING NARRATION]', newStage);
+        }
+        try {
+          narrationController.playNarration(newStage);
+        } catch (error) {
+          console.error('🚨 [NARRATION TRIGGER FAILED]', { stage: newStage, error });
+        }
+      } else if (DEBUG_NARRATION) {
+        console.error('🚨 [NO NARRATION CONTROLLER]');
+      }
+    } else if (DEBUG_NARRATION) {
+      console.warn('⚠️ [NO BEAT SHEET]', newStage);
+    }
+  }
+
+  _requestSkip(origin = 'keyboard') {
+    if (this.skipRequested) return;
+    this.skipRequested = true;
+    this._skipOrigin = origin;
+    console.log(`🎬 Director: Opening skip requested via ${origin}`);
+    this._wakeSleepWaiters('skipped');
+  }
+
+  async _ensureViewportHint(timeoutMs = 5000) {
+    if (typeof window === 'undefined') return undefined;
+    const sanitize = (hint) => {
+      if (!hint) return hint;
+      const w = Number(hint.width);
+      const h = Number(hint.height);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return hint;
+      if (w >= h) {
+        return { ...hint, width: w, height: h, aspect: w / h, orientation: 'landscape' };
+      }
+      return { ...hint, width: h, height: w, aspect: h / w, orientation: 'landscape' };
+    };
+
+    if (window.__viewportHint) return sanitize(window.__viewportHint);
+
+    const pollInterval = 100;
+    const attempts = Math.max(1, Math.floor(timeoutMs / pollInterval));
+    for (let i = 0; i < attempts; i++) {
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      if (window.__viewportHint) return sanitize(window.__viewportHint);
+    }
+
+    console.warn('🎬 Director: Viewport hint unavailable after wait, applying fallback');
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+      const aspect = canvas.height ? canvas.width / canvas.height : 16 / 9;
+      const fallback = sanitize({ width: 120, height: 120 / aspect, aspect });
+      window.__viewportHint = fallback;
+      return fallback;
+    }
+
+    return undefined;
+  }
+
+  reset() {
+    try {
+      if (this.isRunning) this.cancel();
+    } catch (err) {
+      if (import.meta?.env?.DEV) {
+        console.warn('[Director] reset cancel failed', err);
+      }
+    }
+
+    this._wakeSleepWaiters('reset');
+    this._detachSkipListener();
+
+    if (this._activeTimers?.size) {
+      for (const id of this._activeTimers) {
+        clearTimeout(id);
+      }
+    }
+    this._activeTimers = new Set();
+
+    try {
+      this.scrollOrchestrator?.stop?.();
+    } catch {}
+
+    this.phase = 'idle';
+    this.cancelled = false;
+    this.completed = false;
+    this.isRunning = false;
+    this.hasRun = false;
+    this.startTime = null;
+    this.viewportReady = false;
+    this.waitingForViewport = false;
+    this.currentStage = null;
+    this.skipRequested = false;
+    this._skipOrigin = null;
+    this._sleepWaiters = new Set();
+    this._fencepostReadyEmitted = false;
+
+    try {
+      window.__canonFencepostSeen = false;
+    } catch {}
+
+    return this;
+  }
+
+  async start() {
+    // Strong duplicate protection
+    if (this.isRunning) {
+      console.log('🎬 Director: Already running, ignoring duplicate start');
+      return;
+    }
+
+    if (this.phase === 'complete' && this.currentStage) {
+      if (DEBUG_NARRATION) {
+        console.log('🎬 Director: Opening already complete, ignoring restart request', {
+          currentStage: this.currentStage,
+        });
+      }
+      return;
+    }
+    
+    if (this.hasRun) {
+      console.log('🎬 Director: Already completed, ignoring restart');
+      return;
+    }
+
+    // Wait for viewport (non-recursive)
+    if (!this.viewportReady && !this.waitingForViewport) {
+      console.log('🎬 Director: Waiting for ENGINE_VIEWPORT_HINT...');
+      this.waitingForViewport = true;
+
+      const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, (data) => {
+        console.log('🎬 Director: Viewport ready', data);
+        this.viewportReady = true;
+        this.waitingForViewport = false;
+        unsubscribe?.();
+        // Deferred start to avoid recursion
+        this._trackTimer(() => {
+          if (!this.isRunning && !this.hasRun) this.start();
+        }, 0);
+      });
+
+      // Fallback if viewport hint never arrives
+      this._trackTimer(() => {
+        if (this.waitingForViewport) {
+          console.warn('🎬 Director: Viewport hint timeout, starting anyway');
+          this.viewportReady = true;
+          this.waitingForViewport = false;
+          unsubscribe?.();
+          this._trackTimer(() => {
+            if (!this.isRunning && !this.hasRun) this.start();
+          }, 0);
+        }
+      }, 2000);
+      
+      return;
+    }
+
+    // Begin execution
+    this.isRunning = true;
+    this.cancelled = false;
+    this.phase = 'starting';
+    this.startTime = Date.now();
+    this._fencepostReadyEmitted = false;
+
+    const openingSnapshot = this._getOpeningConfig();
+    const snapshotTimeline = openingSnapshot?.timeline ?? {};
+    const snapshotTyping = {
+      ...DEFAULT_OPENING_TIMELINE.typing,
+      ...(snapshotTimeline.typing ?? {}),
+    };
+    snapshotTyping.lines =
+      Array.isArray(snapshotTyping.lines) && snapshotTyping.lines.length
+        ? snapshotTyping.lines
+        : DEFAULT_OPENING_TIMELINE.typing.lines;
+    const snapshotTypingDuration = this._calculateTypingDuration(snapshotTyping);
+
+    const segments = [
+      `black ${snapshotTimeline?.blackout?.durationMs ?? DEFAULT_OPENING_TIMELINE.blackout.durationMs}ms`,
+      `cursor blink x${snapshotTimeline?.cursor?.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount}` +
+        ` @ ${(snapshotTimeline?.cursor?.intervalMs ?? DEFAULT_OPENING_TIMELINE.cursor.intervalMs)}ms`,
+      `typing ~${snapshotTypingDuration}ms`,
+      `fill ${snapshotTimeline?.fill?.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs}ms`,
+      `emergence ${snapshotTimeline?.emergence?.durationMs ?? DEFAULT_OPENING_TIMELINE.emergence.durationMs}ms`,
+    ];
+
+    console.log('🎬 Director: Starting SST v3.5 opening sequence');
+    console.log(`   Skip key: ${openingSnapshot?.skipKey ?? 'SPACE'}`);
+    console.log(`   SST timeline: ${segments.join(' → ')}`);
+
+    try {
+      await this._runSequence();
+    } catch (error) {
+      console.error('🎬 Director error:', error);
+      this.phase = 'error';
+      BeatBus.emit(EVENTS.DIRECTOR_ERROR, { error });
+    } finally {
+      this._detachSkipListener();
+      this.isRunning = false;
+      if (this.phase !== 'cancelled' && this.phase !== 'error') {
+        this.hasRun = true;
+        this.completed = true;
+      }
+    }
+  }
+
+  async _runSequence() {
+    // Optional prewarm (disabled during debugging to avoid stale cache)
+    // await this.prewarm();
+
+    const opening = this._getOpeningConfig();
+    const { timeline, skipKey, emergence: openingEmergence } = opening ?? {};
+
+    const blackoutDuration = Math.max(
+      0,
+      Number(timeline?.blackout?.durationMs ?? DEFAULT_OPENING_TIMELINE.blackout.durationMs),
+    );
+
+    const cursorConfig = {
+      ...DEFAULT_OPENING_TIMELINE.cursor,
+      ...(timeline?.cursor ?? {}),
+    };
+    const cursorLeadInMs = Math.max(0, Number(cursorConfig.leadInMs ?? 0));
+    const cursorSettleMs = Math.max(0, Number(cursorConfig.settleMs ?? 0));
+    const cursorBlinkCount = Math.max(0, Number(cursorConfig.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount));
+    const cursorIntervalMs = Math.max(0, Number(cursorConfig.intervalMs ?? DEFAULT_OPENING_TIMELINE.cursor.intervalMs));
+    const cursorHumVolume = Number.isFinite(cursorConfig.humVolume) ? cursorConfig.humVolume : 0.25;
+
+    const typingConfig = {
+      ...DEFAULT_OPENING_TIMELINE.typing,
+      ...(timeline?.typing ?? {}),
+    };
+    typingConfig.lines =
+      Array.isArray(typingConfig.lines) && typingConfig.lines.length
+        ? typingConfig.lines
+        : DEFAULT_OPENING_TIMELINE.typing.lines;
+    typingConfig.typeSpeed = Math.max(0, Number(typingConfig.typeSpeed ?? DEFAULT_OPENING_TIMELINE.typing.typeSpeed));
+    typingConfig.lineDelay = Math.max(0, Number(typingConfig.lineDelay ?? DEFAULT_OPENING_TIMELINE.typing.lineDelay));
+    typingConfig.completionDelayMs = Math.max(
+      0,
+      Number(
+        typingConfig.completionDelayMs ??
+          typingConfig.completionDelay ??
+          DEFAULT_OPENING_TIMELINE.typing.completionDelayMs ??
+          0,
+      ),
+    );
+    const typingDuration = this._calculateTypingDuration(typingConfig);
+
+    const fillConfig = {
+      ...DEFAULT_OPENING_TIMELINE.fill,
+      ...(timeline?.fill ?? {}),
+    };
+    fillConfig.durationMs = Math.max(0, Number(fillConfig.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs));
+    fillConfig.scrollSpeed = Math.max(0, Number(fillConfig.scrollSpeed ?? DEFAULT_OPENING_TIMELINE.fill.scrollSpeed));
+    if (typeof fillConfig.text !== 'string' || !fillConfig.text.trim()) {
+      const canonicalFillWord = Canonical?.visual?.letterGeometry?.genesis?.word || GENESIS_STAGE_WORD;
+      fillConfig.text = `${canonicalFillWord} `;
+    }
+
+    const chaosConfig = timeline?.chaos || {};
+    const coalesceConfig = timeline?.coalesce || {};
+    const settleConfig = timeline?.settle || {};
+
+    const emergenceTimeline = {
+      ...DEFAULT_OPENING_TIMELINE.emergence,
+      ...(timeline?.emergence ?? {}),
+    };
+    emergenceTimeline.durationMs = Math.max(
+      0,
+      Number(emergenceTimeline.durationMs ?? DEFAULT_OPENING_TIMELINE.emergence.durationMs),
+    );
+    emergenceTimeline.maxWaitMs = Math.max(
+      0,
+      Number(emergenceTimeline.maxWaitMs ?? DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs),
+    );
+    const fencepostWaitMs = emergenceTimeline.maxWaitMs || DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs;
+    const waitForFencepost = emergenceTimeline.waitForFencepost !== false;
+    const stabilizeMs = Math.max(
+      0,
+      Number(emergenceTimeline.stabilizeMs ?? DEFAULT_OPENING_TIMELINE.emergence.stabilizeMs ?? 0),
+    );
+    const skipMorphAnimation = emergenceTimeline.skipMorphAnimation === true;
+    const skipGenesisBlueprint = emergenceTimeline.skipGenesisBlueprint !== false;
+    const targetState = emergenceTimeline.targetState || DEFAULT_OPENING_TIMELINE.emergence.targetState;
+
+    const emergenceConfig = { ...DEFAULT_OPENING_EMERGENCE, ...(openingEmergence ?? {}) };
+    const genesisCount = this._getGenesisParticleCount();
+    const skipLabel = skipKey ?? 'SPACE';
+
+    this._attachSkipListener(skipKey);
+
+    let skipTriggered = false;
+
+    const handleWaitResult = (result) => {
+      if (result === 'cancelled' || this.cancelled) return 'cancelled';
+      if (result === 'skipped' || this.skipRequested) skipTriggered = true;
+      return null;
+    };
+
+    try {
+      // ───────────────── Phase 1: Black
+      this.phase = 'black';
+      console.log(`   Phase: Black screen (${blackoutDuration}ms)`);
+      if (blackoutDuration > 0) {
+        const waitResult = await this.sleep(blackoutDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+      if (skipTriggered) {
+        console.log(`   Skip triggered before cursor phase (key: ${skipLabel})`);
+      }
+
+      // ───────────────── Phase 2: Cursor
+      if (!skipTriggered) {
+        this.phase = 'cursor';
+        console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);
+        BeatBus.emit(EVENTS.CURSOR_SHOW);
+        BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });
+        if (cursorLeadInMs > 0) {
+          const waitResult = await this.sleep(cursorLeadInMs);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
+        if (!skipTriggered) {
+          BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
+          if (cursorSettleMs > 0) {
+            const waitResult = await this.sleep(cursorSettleMs);
+            if (handleWaitResult(waitResult) === 'cancelled') return;
+          }
+        }
+      }
+
+      // ───────────────── Phase 3: Terminal typing
+      if (!skipTriggered) {
+        this.phase = 'terminal';
+        console.log(`   Phase: Terminal typing (~${typingDuration}ms)`);
+        BeatBus.emit(EVENTS.TERMINAL_TYPE, typingConfig);
+        if (typingDuration > 0) {
+          const waitResult = await this.sleep(typingDuration);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
+        if (typingConfig.completionDelayMs > 0) {
+          const waitResult = await this.sleep(typingConfig.completionDelayMs);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    // ───────────────── Phase 4: Fill
+    if (!skipTriggered) {
+      this.phase = 'fill';
+      console.log(`   Phase: Screen fill (${fillConfig.durationMs}ms)`);
+      BeatBus.emit(EVENTS.SCREEN_FILL, { text: fillConfig.text, scrollSpeed: fillConfig.scrollSpeed });
+      if (fillConfig.durationMs > 0) {
+        const waitResult = await this.sleep(fillConfig.durationMs);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    if (!skipTriggered && chaosConfig?.enabled !== false) {
+      const chaosDuration = Math.max(0, Number(chaosConfig.durationMs) || 0);
+      this.phase = 'chaos';
+      console.log(`   Phase: Chaos (${chaosDuration}ms)`);
+      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+        name: 'chaos',
+        duration: chaosDuration,
+        rendererSpin: chaosConfig.rendererSpin || null,
+      });
+      if (chaosDuration > 0) {
+        const waitResult = await this.sleep(chaosDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    if (!skipTriggered && coalesceConfig?.enabled !== false) {
+      const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);
+      this.phase = 'coalesce';
+      console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
+      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+        name: 'coalesce',
+        duration: coalesceDuration,
+        morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
+      });
+      if (typeof coalesceConfig.morphTo === 'number') {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          source: 'director:coalesce',
+          morphProgress: coalesceConfig.morphTo,
+          durationMs: coalesceDuration,
+        });
+      }
+      if (coalesceDuration > 0) {
+        const waitResult = await this.sleep(coalesceDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    if (!skipTriggered && settleConfig?.enabled !== false) {
+      const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
+      this.phase = 'settle';
+      console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+        name: 'settle',
+        duration: settleDuration,
+        morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+      });
+      if (typeof settleConfig.morphTo === 'number') {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          source: 'director:settle',
+          morphProgress: settleConfig.morphTo,
+          durationMs: settleDuration,
+        });
+      }
+      if (settleDuration > 0) {
+        const waitResult = await this.sleep(settleDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    if (skipTriggered) {
+      console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
+    }
+
+      // ───────────────── Phase 5: Emergence (viewport → constellation)
+      this.phase = 'emergence';
+      console.log('   Phase: Particle emergence (SST governed)');
+
+      const viewportHint = await this._ensureViewportHint();
+
+      BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+        mode: emergenceConfig.mode,
+        source: emergenceConfig.source,
+        target: emergenceConfig.target,
+        count: genesisCount,
+        tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
+          ? Canonical.stages.genesis.tierMix
+          : VC?.TIER_RATIOS,
+        viewportHint,
+        fastForward: skipTriggered || skipMorphAnimation,
+        skipMorphAnimation,
+        targetState,
+      });
+
+      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
+
+      this.emitTune({
+        particleFlash: 1.3,
+        opacityMin: 0.7,
+        opacityMax: 1.0,
+        driftAmp: 1.0,
+        vibeAmp: 0.2,
+        flutterAmp: 0.6,
+        verticalBias: 0.1,
+      });
+
+      if (waitForFencepost) {
+        console.log(`   Waiting for renderer fencepost (<=${fencepostWaitMs}ms)`);
+        if (!this._fencepostReadyEmitted) {
+          const readyPayload = {
+            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            phase: 'opening',
+          };
+          BeatBus.emit(EVENTS.FENCEPOST_LISTENERS_READY, readyPayload);
+          this._fencepostReadyEmitted = true;
+        }
+        const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, fencepostWaitMs);
+        if (!fencepostReceived) {
+          console.warn('   Renderer fencepost timeout, continuing anyway');
+        }
+        if (this.cancelled) return;
+      }
+
+      if (!skipTriggered && stabilizeMs > 0) {
+        const waitResult = await this.sleep(stabilizeMs);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+
+      // ───────────────── Phase 6: Genesis handoff
+      const toStage = 'genesis';
+      
+      this.phase = 'genesis';
+      const previousStage = this.currentStage ?? 'emergence';
+      console.log('🧬 Phase: Genesis stage handoff');
+
+      BeatBus.emit(EVENTS.STAGE_CHANGE, {
+        from: previousStage,
+        to: toStage,
+        skipBlueprint: skipGenesisBlueprint,
+        preserveEmergence: true,
+        targetState,
+      });
+      BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
+
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch {}
+
+      await this._runVisualSchedule();
+
+      BeatBus.emit(EVENTS.START_NARRATIVE, { stage: toStage });
+      this.emitTune({
+        breathingAmp: 0.02,
+        breathingPeriodSec: 4,
+        flareProb: 0.02,
+        flareGain: 1.3,
+        tierSpeedScale: [1.0, 0.8, 0.6, 0.4],
+        pulseOnce: 1,
+      });
+
+      BeatBus.emit(EVENTS.ENABLE_SCROLL);
+      
+      if (!this.scrollOrchestrator) {
+        this.scrollOrchestrator = new ScrollOrchestrator();
+      }
+      this.scrollOrchestrator.start();
+      this.monitorFragments();
+
+      this.phase = 'complete';
+
+      if (DEBUG_NARRATION) {
+        const timestamp =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        console.log('✅ [OPENING COMPLETE]', {
+          nextStage: 'discipline',
+          shouldAutoAdvance: true,
+          timestamp,
+        });
+
+        setTimeout(() => {
+          const win = typeof window !== 'undefined' ? window : undefined;
+          const currentStageSnapshot = this.currentStage;
+          const scrollLocked =
+            (win?.scrollOrchestrator && win.scrollOrchestrator.scrollLocked === true) ||
+            (win?.__scrollOrchestrator && win.__scrollOrchestrator.scrollLocked === true) ||
+            false;
+          const narrationController = this._resolveNarrationController();
+          console.log('🔍 [POST-OPENING STATE]', {
+            currentStage: currentStageSnapshot,
+            scrollLocked,
+            narrationPlaying: !!narrationController?.isPlaying,
+          });
+        }, 100);
+      }
+
+      const elapsed = Date.now() - this.startTime;
+      console.log('🎬 Director: Opening complete → user-driven experience');
+      if (typeof opening?.totalDurationMs === 'number') {
+        console.log(`   Expected (SST): ~${opening.totalDurationMs}ms, Actual: ${elapsed}ms`);
+      } else {
+        console.log(`   Total opening time: ${elapsed}ms`);
+      }
+      if (skipTriggered) {
+        console.log('   Opening was user-skipped; actual duration shortened.');
+      }
+    } finally {
+      this._detachSkipListener();
+    }
+  }
+
+  async _runVisualSchedule() {
+    // Visual schedule disabled for VC/band opening (renderer is passive)
+    return;
+  }
+
+  cancel() {
+    if (!this.isRunning) {
+      console.log('🎬 Director: Not running, cancel ignored');
+      return;
+    }
+
+    // Warn about early cancellation in development
+    if (import.meta?.env?.DEV) {
+      if (this.phase === 'black' || this.phase === 'cursor' || this.phase === 'terminal') {
+        console.warn('🎬 Director: WARNING - Cancelling during early phase:', this.phase);
+        console.warn('   This may be caused by HMR or effect cleanup');
+        console.trace('Cancel call stack');
+      }
+    }
+
+    console.log('🎬 Director: Cancelling show at phase:', this.phase);
+    this.cancelled = true;
+    this.isRunning = false;
+    this.phase = 'cancelled';
+    this.scrollOrchestrator?.stop();
+    this._wakeSleepWaiters('cancelled');
+    this._detachSkipListener();
+    BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
+  }
+
+  async prewarm() {
+    try {
+      console.log('   Prewarming genesis blueprint...');
+      BeatBus.emit(EVENTS.PREWARM_GENESIS_BLUEPRINT);
+      await this.once(EVENTS.PREWARM_COMPLETE, 1500);
+      console.log('   Prewarm complete');
+    } catch {
+      console.log('   Prewarm timeout (non-fatal)');
+    }
+  }
+
+  monitorFragments() {
+    console.log('   Fragment monitoring enabled');
+    // Fragment monitoring implementation would go here
+  }
+
+  emitTune(payload) {
+    console.log('   RENDERER_TUNE:', payload);
+    BeatBus.emit(EVENTS.RENDERER_TUNE, payload || {});
+  }
+
+  // Utility methods
+  sleep(ms) {
+    if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve('elapsed');
+    if (this.cancelled) return Promise.resolve('cancelled');
+    if (this.skipRequested) return Promise.resolve('skipped');
+
+    if (!this._sleepWaiters) this._sleepWaiters = new Set();
+
+    return new Promise((resolve) => {
+      let settled = false;
+      let timeoutId;
+
+      const complete = (reason = 'elapsed') => {
+        if (settled) return;
+        settled = true;
+        this._clearTimer(timeoutId);
+        this._sleepWaiters.delete(complete);
+        resolve(reason);
+      };
+
+      timeoutId = this._trackTimer(() => complete('elapsed'), ms);
+      this._sleepWaiters.add(complete);
+    });
+  }
+
+  once(event, timeout = 5000) {
+    return new Promise(resolve => {
+      let timeoutId;
+
+      const handler = data => {
+        this._clearTimer(timeoutId);
+        unsubscribe?.();
+        console.log(`   Received: ${event}`);
+        resolve(data);
+      };
+
+      const unsubscribe = BeatBus.on(event, handler);
+
+      timeoutId = this._trackTimer(() => {
+        console.warn(`⚠️ Director: ${event} timed out after ${timeout}ms`);
+        unsubscribe?.();
+        resolve(null);
+      }, timeout);
+    });
+  }
+
+  getStatus() {
+    return {
+      phase: this.phase,
+      elapsed: this.startTime ? Date.now() - this.startTime : 0,
+      cancelled: this.cancelled,
+      isRunning: this.isRunning,
+      hasRun: this.hasRun,
+      viewportReady: this.viewportReady,
+      currentStage: this.currentStage,
+    };
+  }
+
+  forceStart() {
+    console.log('🎬 Director: Force starting (bypassing viewport wait)');
+    this.viewportReady = true;
+    this.waitingForViewport = false;
+    return this.start();
+  }
+}
+
+// ── Singleton Instance & Dev Tools ───────────────────────────────────────────
+const director = new TheaterDirector();
+
+if (typeof window !== 'undefined') {
+  window.theaterDirector = director;
+
+  if (import.meta?.env?.DEV) {
+    // Wrap cancel to track callers in development
+    const originalCancel = director.cancel.bind(director);
+    director.cancel = function (...args) {
+      console.warn('🎬 Director: cancel() called - tracking caller');
+      console.trace('Cancel caller stack trace');
+      return originalCancel(...args);
+    };
+
+    // Development shortcuts
+    window.theaterStatus = () => director.getStatus();
+    window.emit = (e, p) => BeatBus.emit(e, p);
+    window.on = (e, h) => BeatBus.on(e, h);
+    window.emitViewportHint = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width: w, height: h, aspect: w / h });
+    };
+
+    console.log('🎬 Director: Development helpers installed');
+    console.log('   Commands available:');
+    console.log('   - window.theaterDirector.start()       // Start with viewport wait');
+    console.log('   - window.theaterDirector.forceStart()  // Start immediately');
+    console.log('   - window.theaterStatus()               // Get current status');
+    console.log('   - emit("ENGINE_VIEWPORT_HINT", {...})  // Emit any event');
+    console.log('   - emitViewportHint()                   // Emit current viewport hint');
+  }
+
+  // Auto-start listener (once)
+  let viewportListenerInstalled = false;
+  const installViewportListener = () => {
+    if (viewportListenerInstalled) return;
+    viewportListenerInstalled = true;
+
+    console.log('🎬 Director: Installing viewport listener for auto-start');
+
+    const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, data => {
+      if (!director.hasRun && !director.isRunning && director.phase !== 'complete') {
+        console.log('🎬 Director: Viewport hint received, auto-starting', data);
+        director.viewportReady = true;
+        director.start();
+      } else if (DEBUG_NARRATION) {
+        console.log('🎬 Director: Viewport hint received but start skipped', {
+          hasRun: director.hasRun,
+          isRunning: director.isRunning,
+          phase: director.phase,
+        });
+      }
+      unsubscribe?.();
+    });
+
+    // Fallback: start after 3 seconds if no viewport hint
+    director._trackTimer(() => {
+      if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
+        console.warn('🎬 Director: No viewport hint after 3s, starting anyway');
+        director.forceStart();
+      } else if (DEBUG_NARRATION) {
+        console.log('🎬 Director: Auto-start fallback skipped', {
+          hasRun: director.hasRun,
+          isRunning: director.isRunning,
+          viewportReady: director.viewportReady,
+          phase: director.phase,
+        });
+      }
+    }, 3000);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installViewportListener);
+  } else {
+    installViewportListener();
+  }
+}
+
+export default director;
+
+// ── Event Contracts ──────────────────────────────────────────────────────────
+export const CANON_CONTRACTS = {
+  version: '1.0.1',
+  events: {
+    STAGE_CHANGE: {
+      required: ['from', 'to'],
+      notes: 'Canonical shape. Old `{stage}` payload is deprecated.',
+    },
+    QUALITY_CHANGE: {
+      required: ['tier'],
+      notes: 'Canonical shape. Old `{quality}` payload is deprecated.',
+    },
+    BLUEPRINT_READY: {
+      required: ['stage', 'quality', 'blueprint'],
+      optional: ['cached', 'mode'],
+      notes: 'Renderer consumes stage/quality/blueprint; mode=emergence for special handling.',
+    },
+    BUILD_EMERGENCE_BLUEPRINT: {
+      required: ['mode', 'source', 'target', 'count'],
+      optional: ['tierRatios', 'viewportHint'],
+      notes: 'Corrected contract for viewport spread → constellation emergence.',
+    },
+  },
+  deprecations: {
+    STAGE_CHANGE: { stage: 'deprecated' },
+    QUALITY_CHANGE: { quality: 'deprecated' },
+  },
+};

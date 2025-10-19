@@ -1,807 +1,1799 @@
-// src/components/webgl/WebGLBackground.jsx - LIVING CANVAS SOLUTION
-// Fixes inverted camera calculations and implements "cell organism" effect
+// src/components/webgl/WebGLBackground.jsx
+// HOT-DORS passive renderer: projection-matrix viewport hint + single directive sink
+// Single writer: binds geometry/material, emits PARTICLES_EMERGED exactly once (on first FULL bind)
 
-import { useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useInteractionStore } from '@/stores/useInteractionStore';
-import { narrativeTransition } from '@/config/narrativeParticleConfig';
-import WebGLEffectsManager from '@/utils/webgl/WebGLEffectsManager.js';
-
-const componentId = `livingcanvas-${Math.random().toString(36).substr(2, 9)}`;
-
-// 🔥 CORRECTED CAMERA CALCULATION - Fixed inverted logic
-const calculateOptimalGrid = (visibleWidth, visibleHeight, qualityLevel) => {
-  const visibleArea = visibleWidth * visibleHeight;
-
-  // 🔥 CORRECTED DENSITY TARGETS - Reduced for proper camera distance
-  const densityTargets = {
-    LOW: 80, // Reduced for camera Z=8
-    MEDIUM: 100, // Reduced for camera Z=8
-    HIGH: 120, // Reduced for camera Z=8
-    ULTRA: 150, // Reduced for camera Z=8 (was 220 for Z=0.2!)
+// Provide global THREE for Canon HUD/watchdog hooks
+if (typeof window !== 'undefined' && !window.THREE) window.THREE = THREE;
+if (typeof window !== 'undefined' && !window.RAYCAST_DIAGNOSTIC) {
+  window.RAYCAST_DIAGNOSTIC = {
+    lastTest: null,
+    history: [],
   };
+}
+import { EVENTS } from '@/theater/events.js';
+import BeatBus from '@/theater/bus';
+import { trace } from '@/dev/trace.js';
 
-  const targetDensity = densityTargets[qualityLevel] || densityTargets.HIGH;
-  const idealParticleCount = Math.floor(visibleArea * targetDensity);
+import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
+import { Canonical } from '../../config/canonical/canonicalAuthority.js';
+import { VC } from '@/config/visual-controls.js';
+import { particleRaycaster } from '@/utils/particleRaycast.js';
 
-  // 🔥 PERFORMANCE CAPS - Essential for 60fps
-  const maxParticles = {
-    LOW: 4000,
-    MEDIUM: 6000,
-    HIGH: 8000,
-    ULTRA: 12000, // Cap for 60fps performance
-  };
+import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
+import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
+import { exposeDiagnostics, exposeControlSurface, revokeControlSurface } from '@/utils/runtimeGuards.js';
 
-  const cappedParticleCount = Math.min(
-    idealParticleCount,
-    maxParticles[qualityLevel] || maxParticles.HIGH
-  );
+const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const MORPH_TYPE_ENUM = Object.freeze({
+  steady: 0,
+  dissolve: 1,
+  reform: 2,
+});
 
-  // Calculate grid dimensions from capped count
-  const aspectRatio = visibleWidth / visibleHeight;
-  const optimalHeight = Math.ceil(Math.sqrt(cappedParticleCount / aspectRatio));
-  const optimalWidth = Math.ceil(cappedParticleCount / optimalHeight);
-
-  return {
-    width: optimalWidth,
-    height: optimalHeight,
-    totalParticles: optimalWidth * optimalHeight,
-    density: (optimalWidth * optimalHeight) / visibleArea,
-    visibleArea: visibleArea,
-    targetDensity: targetDensity,
-  };
+const morphTypeToInt = (value) => {
+  if (Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(MORPH_TYPE_ENUM, normalized)) {
+      return MORPH_TYPE_ENUM[normalized];
+    }
+  }
+  return MORPH_TYPE_ENUM.steady;
 };
+const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
 
-export default function WebGLBackground() {
-  const pointsRef = useRef();
-  const materialRef = useRef();
-  const geometryRef = useRef();
-  const effectsManagerRef = useRef(null);
+function pickStageColors(stageName) {
+  const s = Canonical?.stages?.[stageName] || {};
+  const colors = s.colors || ['#00ffcc', '#f59e0b', '#ffffff'];
+  const order = Canonical?.stageOrder || [];
+  const idx = Math.max(0, order.indexOf(stageName));
+  const nextStage = order[Math.min(idx + 1, Math.max(0, order.length - 1))] || stageName;
+  const nextColors = Canonical?.stages?.[nextStage]?.colors || colors;
+  return {
+    current: new THREE.Color(colors[0]),
+    next: new THREE.Color(nextColors[0]),
+    acc1: new THREE.Color(colors[1] || colors[0]),
+    acc2: new THREE.Color(colors[2] || colors[0]),
+  };
+}
 
-  const frameCountRef = useRef(0);
-  const lastLogTimeRef = useRef(0);
+function normalizePayload(payload) {
+  const bp = payload?.blueprint ?? payload;
+  const stageName = bp?.stageName || bp?.stage || payload?.stage || 'genesis';
+  const quality = payload?.quality || payload?.tier || 'HIGH';
+  const cached = !!payload?.cached;
+  const mode = payload?.mode || bp?.mode;
+  const cacheKey = payload?.cacheKey || bp?.metadata?.cacheKey || null;
+  const fastForward =
+    payload?.fastForward ??
+    bp?.fastForward ??
+    bp?.metadata?.fastForward ??
+    false;
+  const skipMorphAnimation =
+    payload?.skipMorphAnimation ??
+    bp?.skipMorphAnimation ??
+    bp?.metadata?.skipMorphAnimation ??
+    false;
+  const guardFixed = payload?._guard_fixed === true || payload?.guardFallback === true;
+  const guardIssues = payload?.guardIssues || bp?.metadata?.guardIssues || null;
+  const cachedBeforeGuard = payload?.cachedBeforeGuard === true;
+  return {
+    bp,
+    stageName,
+    quality,
+    cached,
+    mode,
+    cacheKey,
+    fastForward: !!fastForward,
+    skipMorphAnimation: !!skipMorphAnimation,
+    guardFixed,
+    guardIssues,
+    cachedBeforeGuard,
+  };
+}
 
-  const { size, camera } = useThree();
-  const qualityLevel = useInteractionStore(state => state.qualityLevel || 'ULTRA');
+const directiveBridgeState = { handler: null };
 
-  // 🔥 LIVING CANVAS CONFIGURATION - Fixed camera positioning
-  const livingCanvasConfig = useMemo(() => {
-    console.group(`[${componentId}] 🔥 LIVING CANVAS CONFIG - CAMERA FIXED`);
-
-    // 🔥 CELL ORGANISM VISUAL SETTINGS - Larger particles for cell effect
-    const visualConfigs = {
-      LOW: {
-        particleSize: 8, // Larger for cell visibility
-        livingAmplitude: 0.08,
-        livingSpeed: 0.5,
-      },
-      MEDIUM: {
-        particleSize: 10, // Medium cells
-        livingAmplitude: 0.1,
-        livingSpeed: 0.6,
-      },
-      HIGH: {
-        particleSize: 12, // Large cells
-        livingAmplitude: 0.12,
-        livingSpeed: 0.7,
-      },
-      ULTRA: {
-        particleSize: 15, // Macro cells for organism effect
-        livingAmplitude: 0.15,
-        livingSpeed: 0.8,
-      },
-    };
-
-    const config = visualConfigs[qualityLevel] || visualConfigs.HIGH;
-
-    // 🔥 FIXED CAMERA POSITIONING - No longer inverted!
-    const LIVING_CANVAS_CAMERA_DISTANCE = 8; // Sweet spot for cell view
-    const camZ = LIVING_CANVAS_CAMERA_DISTANCE;
-    camera.position.z = camZ; // Set camera to optimal distance
-
-    const aspect = (size.width || 1920) / (size.height || 1080);
-    const fov = camera.fov;
-
-    // Calculate exact world bounds visible by camera at Z=8
-    const vFovRad = THREE.MathUtils.degToRad(fov);
-    const visibleHeight = 2 * Math.tan(vFovRad / 2) * camZ;
-    const visibleWidth = visibleHeight * aspect;
-
-    // 🔥 CORRECTED GRID CALCULATION - Uses proper density targets
-    const gridData = calculateOptimalGrid(visibleWidth, visibleHeight, qualityLevel);
-
-    // Combine visual config with corrected grid data
-    Object.assign(config, gridData, {
-      visibleWidth,
-      visibleHeight,
-      aspect,
-      camZ,
-      fov,
-    });
-
-    console.log(`🔥 CAMERA POSITIONING CORRECTION:`);
-    console.log(
-      `  - OLD PROBLEM: Camera Z=${0.2} = ${(2 * Math.tan(vFovRad / 2) * 0.2).toFixed(2)} world units (MICROSCOPE)`
-    );
-    console.log(
-      `  - NEW SOLUTION: Camera Z=${camZ} = ${visibleHeight.toFixed(2)} world units (LIVING CELLS)`
-    );
-    console.log(`  - Screen: ${size.width}x${size.height}, Aspect: ${aspect.toFixed(2)}`);
-    console.log(
-      `  - Visible World: ${visibleWidth.toFixed(2)} x ${visibleHeight.toFixed(2)} units`
-    );
-    console.log(`🔥 CORRECTED DENSITY CALCULATION:`);
-    console.log(`  - Quality: ${qualityLevel}`);
-    console.log(`  - Visible Area: ${config.visibleArea.toFixed(2)} square units`);
-    console.log(`  - OLD TARGET: 220 particles/sq unit (for Z=0.2)`);
-    console.log(`  - NEW TARGET: ${config.targetDensity} particles/sq unit (for Z=8)`);
-    console.log(
-      `  - Capped Grid: ${config.width}x${config.height} = ${config.totalParticles} particles`
-    );
-    console.log(`  - Actual Density: ${config.density.toFixed(1)} particles/sq unit`);
-    console.log(`  - Particle Size: ${config.particleSize}px (for cell organism effect)`);
-    console.log(`  - Living Amplitude: ${config.livingAmplitude} (enhanced breathing)`);
-    console.groupEnd();
-
-    return config;
-  }, [qualityLevel, size.width, size.height, camera]);
-
-  // 🔥 LIVING CANVAS GRID GENERATION - Optimized for cell view
-  const livingCanvasData = useMemo(() => {
-    console.group(`[${componentId}] 🔥 LIVING CANVAS GRID - CELL ORGANISM EFFECT`);
-
-    const { width, height, totalParticles, visibleWidth, visibleHeight, density } =
-      livingCanvasConfig;
-
-    const positions = new Float32Array(totalParticles * 3);
-    const colors = new Float32Array(totalParticles * 3);
-    const animationSeeds = new Float32Array(totalParticles * 4);
-    const gridCoords = new Float32Array(totalParticles * 2);
-
-    let particleIndex = 0;
-    let minX = Infinity,
-      maxX = -Infinity;
-    let minY = Infinity,
-      maxY = -Infinity;
-
-    console.log('🔥 LIVING CANVAS POSITIONING:');
-    console.log(`  - Grid: ${width} x ${height} = ${totalParticles} particles`);
-    console.log(`  - Camera Distance: Z=${livingCanvasConfig.camZ} (cell organism view)`);
-    console.log(
-      `  - Visible Area: ${visibleWidth.toFixed(2)} x ${visibleHeight.toFixed(2)} world units`
-    );
-    console.log(`  - Particle Density: ${density.toFixed(1)} particles/sq unit`);
-    console.log(`  - Expected Effect: Living tissue/cell colony appearance`);
-
-    // LIVING CANVAS GRID GENERATION - Positioned for cell effect
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const i3 = particleIndex * 3;
-        const i4 = particleIndex * 4;
-        const i2 = particleIndex * 2;
-
-        // 🔥 PERFECT CELL POSITIONING - Matches camera frustum at Z=8
-        const x = (col / (width - 1) - 0.5) * visibleWidth;
-        const y = (row / (height - 1) - 0.5) * visibleHeight;
-        const z = 0;
-
-        // Enhanced organic jitter for cell-like variation
-        const jitterX = (Math.random() - 0.5) * (visibleWidth / width) * 0.12;
-        const jitterY = (Math.random() - 0.5) * (visibleHeight / height) * 0.12;
-
-        positions[i3] = x + jitterX;
-        positions[i3 + 1] = y + jitterY;
-        positions[i3 + 2] = z;
-
-        // Track bounds for verification
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
-
-        // Store grid coordinates for effects
-        gridCoords[i2] = col / (width - 1);
-        gridCoords[i2 + 1] = row / (height - 1);
-
-        // Enhanced cell-like color variation
-        const cellVariation = 0.2 + Math.random() * 0.6;
-        colors[i3] = 0.05 + cellVariation * 0.15;
-        colors[i3 + 1] = 0.25 + cellVariation * 0.25;
-        colors[i3 + 2] = 0.6 + cellVariation * 0.4;
-
-        // Animation seeds for cellular breathing
-        animationSeeds[i4] = Math.random();
-        animationSeeds[i4 + 1] = Math.random() * Math.PI * 2;
-        animationSeeds[i4 + 2] = 0.2 + Math.random() * 1.2;
-        animationSeeds[i4 + 3] = 0.3 + Math.random() * 0.7;
-
-        particleIndex++;
+(() => {
+  try {
+    const sym = '__RENDER_DIRECTIVE_BRIDGE__';
+    if (typeof globalThis !== 'undefined') {
+      if (globalThis[sym]) {
+        return;
       }
+      globalThis[sym] = true;
     }
-
-    // Verification with cell effect analysis
-    const actualWidth = maxX - minX;
-    const actualHeight = maxY - minY;
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    // Check center coverage for hole prevention
-    let centerParticleCount = 0;
-    let edgeParticleCount = 0;
-    const centerRadius = Math.min(visibleWidth, visibleHeight) * 0.15; // 15% for cell view
-
-    for (let i = 0; i < totalParticles; i++) {
-      const px = positions[i * 3];
-      const py = positions[i * 3 + 1];
-      const distFromCenter = Math.sqrt(px * px + py * py);
-
-      if (distFromCenter < centerRadius) {
-        centerParticleCount++;
-      }
-
-      // Check edge coverage
-      if (Math.abs(px) > visibleWidth * 0.35 || Math.abs(py) > visibleHeight * 0.35) {
-        edgeParticleCount++;
-      }
-    }
-
-    const centerDensity = centerParticleCount / (Math.PI * centerRadius * centerRadius);
-    const expectedCenterParticles = Math.floor(Math.PI * centerRadius * centerRadius * density);
-
-    console.log('🔥 LIVING CANVAS VERIFICATION:');
-    console.log(`  ✅ Particles Generated: ${particleIndex} / ${totalParticles}`);
-    console.log(`  ✅ Camera Distance: Z=${livingCanvasConfig.camZ} (optimal for cells)`);
-    console.log(`  ✅ Actual Coverage: ${actualWidth.toFixed(2)} x ${actualHeight.toFixed(2)}`);
-    console.log(`  ✅ Expected Coverage: ${visibleWidth.toFixed(2)} x ${visibleHeight.toFixed(2)}`);
-    console.log(
-      `  ✅ Coverage Match: ${Math.abs(actualWidth - visibleWidth) < 0.1 ? 'PERFECT' : 'MISMATCH'}`
-    );
-    console.log(`  ✅ Center: (${centerX.toFixed(3)}, ${centerY.toFixed(3)})`);
-    console.log(`  ✅ Center Coverage: ${centerParticleCount} particles (no holes)`);
-    console.log(`  ✅ Center Density: ${centerDensity.toFixed(1)} particles/sq unit`);
-    console.log(`  ✅ Edge Coverage: ${edgeParticleCount} particles (full viewport)`);
-    console.log(
-      `  ✅ Cell Effect: ${centerParticleCount > expectedCenterParticles * 0.7 ? 'LIVING TISSUE' : 'SPARSE!'}`
-    );
-    console.log(`  ✅ Performance: ${totalParticles} particles (capped for 60fps)`);
-    console.groupEnd();
-
-    return {
-      positions,
-      colors,
-      animationSeeds,
-      gridCoords,
-      bounds: { minX, maxX, minY, maxY },
-      dimensions: { width: actualWidth, height: actualHeight },
-      centerCoverage: centerParticleCount,
-      edgeCoverage: edgeParticleCount,
-      centerDensity: centerDensity,
-      totalDensity: density,
-    };
-  }, [livingCanvasConfig]);
-
-  // 🔥 LIVING CANVAS UNIFORMS - Enhanced for cell organism effect
-  const livingCanvasUniforms = useMemo(() => {
-    console.group(`[${componentId}] 🔥 LIVING CANVAS UNIFORMS - CELL ORGANISM`);
-
-    const currentPreset = narrativeTransition.getCurrentDisplayPreset();
-
-    const uniforms = {
-      // Time and animation
-      uTime: { value: 0 },
-      uDeltaTime: { value: 0 },
-
-      // 🔥 CELL ORGANISM PARTICLE RENDERING
-      uSize: { value: livingCanvasConfig.particleSize }, // Larger for cell visibility
-
-      // Camera parameters - Fixed positioning
-      uVisibleWidth: { value: livingCanvasConfig.visibleWidth },
-      uVisibleHeight: { value: livingCanvasConfig.visibleHeight },
-      uCameraZ: { value: livingCanvasConfig.camZ }, // Z=8 for cell view
-
-      // 🔥 ENHANCED CELLULAR BREATHING MOVEMENT
-      uLivingEnabled: { value: true },
-      uLivingAmplitude: { value: livingCanvasConfig.livingAmplitude }, // Enhanced amplitude
-      uLivingSpeed: { value: livingCanvasConfig.livingSpeed },
-      uBreathingSpeed: { value: 0.15 }, // Slower, more organic breathing
-
-      // Color system - Enhanced for cell appearance
-      uColorA: { value: new THREE.Color(currentPreset.colors?.[0] ?? '#1E88E5') },
-      uColorB: { value: new THREE.Color(currentPreset.colors?.[1] ?? '#D81B60') },
-      uColorC: { value: new THREE.Color(currentPreset.colors?.[2] ?? '#00ACC1') },
-      uColorIntensity: { value: currentPreset.colorIntensity ?? 1.0 },
-
-      // 🔥 CELL-SCALE INTERACTION SYSTEM
-      uInteractionEnabled: { value: true },
-      uScrollProgress: { value: 0.0 },
-      uCursorPos: { value: new THREE.Vector3(0, 0, 0) },
-      uCursorRadius: { value: Math.max(2.5, livingCanvasConfig.visibleWidth * 0.12) }, // Scale with cell view
-      uRepulsionStrength: { value: 0.6 }, // Gentler for cell effect
-
-      // 🔥 CELL-SCALE RIPPLE SYSTEM
-      uRippleEnabled: { value: true },
-      uRippleTime: { value: 0.0 },
-      uRippleCenter: { value: new THREE.Vector3(0, 0, 0) },
-      uRippleStrength: { value: 0.0 },
-
-      // Narrative system
-      uTransitionProgress: { value: 0.0 },
-      uMoodIntensity: { value: 1.0 },
-
-      // 🔥 CELL DENSITY METRICS
-      uParticleDensity: { value: livingCanvasConfig.density },
-      uTotalParticles: { value: livingCanvasConfig.totalParticles },
-    };
-
-    console.log(`🔥 LIVING CANVAS UNIFORMS: ${Object.keys(uniforms).length} total`);
-    console.log(`  - Camera Z: ${uniforms.uCameraZ.value} (cell organism view)`);
-    console.log(`  - Particle Size: ${uniforms.uSize.value}px (large cells)`);
-    console.log(`  - Living Amplitude: ${uniforms.uLivingAmplitude.value} (enhanced breathing)`);
-    console.log(
-      `  - Cursor Radius: ${uniforms.uCursorRadius.value.toFixed(2)} (cell-scale interactions)`
-    );
-    console.log(
-      `  - Particle Density: ${uniforms.uParticleDensity.value.toFixed(1)} particles/sq unit`
-    );
-    console.log(`  - Total Particles: ${uniforms.uTotalParticles.value} (performance capped)`);
-    console.groupEnd();
-
-    return uniforms;
-  }, [livingCanvasConfig, narrativeTransition.getCurrentDisplayPreset()]);
-
-  // 🔥 ENHANCED CELLULAR BREATHING VERTEX SHADER
-  const livingCanvasVertexShader = `
-    uniform float uTime;
-    uniform float uDeltaTime;
-    uniform float uSize;
-    uniform float uVisibleWidth;
-    uniform float uVisibleHeight;
-    uniform float uCameraZ;
-    
-    uniform bool uLivingEnabled;
-    uniform float uLivingAmplitude;
-    uniform float uLivingSpeed;
-    uniform float uBreathingSpeed;
-    
-    uniform bool uInteractionEnabled;
-    uniform float uScrollProgress;
-    uniform vec3 uCursorPos;
-    uniform float uCursorRadius;
-    uniform float uRepulsionStrength;
-    
-    uniform bool uRippleEnabled;
-    uniform float uRippleTime;
-    uniform vec3 uRippleCenter;
-    uniform float uRippleStrength;
-    
-    uniform float uTransitionProgress;
-    uniform float uMoodIntensity;
-    uniform float uParticleDensity;
-    uniform float uTotalParticles;
-    
-    attribute vec3 color;
-    attribute vec4 animationSeeds;
-    attribute vec2 gridCoords;
-    
-    varying vec3 vColor;
-    varying float vAlpha;
-    varying vec2 vGridCoords;
-    varying float vWaveIntensity;
-    
-    void main() {
-      vec3 pos = position;
-      vColor = color;
-      vGridCoords = gridCoords;
-      
-      float totalWaveIntensity = 0.0;
-      
-      // 🔥 ENHANCED CELLULAR BREATHING - Living organism effect
-      if (uLivingEnabled) {
-        float time = uTime * uLivingSpeed;
-        float personalPhase = animationSeeds.y;
-        
-        // ENHANCED CELLULAR BREATHING
-        float cellBreathing = sin(time * 0.3 + personalPhase) * 
-                             cos(time * 0.25 + pos.x * 0.05) * 
-                             uLivingAmplitude * 3.0; // Stronger Z movement
-        
-        // ORGANIC WAVE PROPAGATION  
-        float organicWave = sin(pos.x * 0.15 + time * 0.4) * 
-                           cos(pos.y * 0.12 + time * 0.35) * 
-                           uLivingAmplitude * 2.0;
-        
-        // CELLULAR OSCILLATION
-        float cellOscillation = sin(time * 0.2 + personalPhase) * 
-                               uLivingAmplitude * 0.5;
-        
-        // Apply organic movement (primarily Z for breathing effect)
-        pos.z += cellBreathing + organicWave + cellOscillation;
-        pos.x += sin(time * 0.1 + personalPhase) * uLivingAmplitude * 0.3;
-        pos.y += cos(time * 0.08 + personalPhase) * uLivingAmplitude * 0.3;
-        
-        totalWaveIntensity += abs(cellBreathing + organicWave) * 0.3;
-      }
-      
-      // 🔥 CORRECTED CORE-LOCKED INTERACTION SYSTEM
-      float interactionEffect = 0.0;
-      if (uInteractionEnabled) {
-        // Gentle scroll-based depth
-        pos.z += uScrollProgress * -4.0;
-        
-        // 🔒 CORE-LOCKED CURSOR INTERACTION - Scales with proper density
-        vec3 fromCursor = pos - uCursorPos;
-        float distToCursor = length(fromCursor);
-        
-        // Core lock radius - properly calculated for Z=8 camera
-        float coreLockRadius = max(1.5, 150.0 / uParticleDensity); // Reduced for Z=8
-        
-        // ONLY apply interaction OUTSIDE the core lock radius
-        if (distToCursor > coreLockRadius && distToCursor < uCursorRadius && uCursorRadius > 0.0) {
-          interactionEffect = smoothstep(uCursorRadius, uCursorRadius * 0.5, distToCursor);
-          vec3 repulsionDirection = normalize(fromCursor + vec3(0.001));
-          pos += repulsionDirection * interactionEffect * uRepulsionStrength * 0.4;
-        }
-        // 🔒 CORE PROTECTION: Particles within coreLockRadius are untouchable
-      }
-      
-      // 🔥 CORRECTED CORE-LOCKED RIPPLE SYSTEM
-      float rippleEffect = 0.0;
-      if (uRippleEnabled && uRippleStrength > 0.0) {
-        vec3 rippleVector = pos - uRippleCenter;
-        float rippleDistance = length(rippleVector.xy);
-        
-        // Core lock radius - properly calculated for Z=8 camera
-        float rippleCoreLock = max(1.5, 150.0 / uParticleDensity); // Reduced for Z=8
-        
-        // ONLY apply ripple OUTSIDE the core lock radius
-        if (rippleDistance > rippleCoreLock && rippleDistance < 25.0) {
-          float currentRippleTime = uTime - uRippleTime;
-          
-          // Simple wave propagation
-          float rippleWave = sin(rippleDistance * 0.25 - currentRippleTime * 5.0) * 
-                            exp(-rippleDistance * 0.06 - currentRippleTime * 0.8);
-          
-          // Enhanced core protection
-          float minDist = rippleCoreLock;
-          float safeRipple = smoothstep(minDist, minDist * 2.0, rippleDistance);
-          
-          // Apply ripple with proper scaling for Z=8
-          vec2 rippleDirection = normalize(rippleVector.xy + vec2(1e-4));
-          float combinedRipple = rippleWave * uRippleStrength * 0.4;
-          
-          pos.z += combinedRipple * 1.2 * safeRipple;
-          pos.xy += rippleDirection * combinedRipple * 0.08 * safeRipple;
-          
-          rippleEffect = abs(combinedRipple) * safeRipple;
-          totalWaveIntensity += rippleEffect * 0.4;
-        }
-        // 🔒 CORE PARTICLES PROTECTED
-      }
-      
-      // Store effects for fragment shader
-      vWaveIntensity = totalWaveIntensity;
-      
-      // Transform to screen space
-      vec4 modelPosition = modelMatrix * vec4(pos, 1.0);
-      vec4 viewPosition = viewMatrix * modelPosition;
-      gl_Position = projectionMatrix * viewPosition;
-      
-      // 🔥 CELL-SCALE PARTICLE SIZE - Enhanced for organism effect
-      float pointSize = uSize; // Already larger (15px for ULTRA)
-      
-      // Effects scaling for cell appearance
-      pointSize *= (1.0 + interactionEffect * 1.0);
-      pointSize *= (1.0 + rippleEffect * 0.8);
-      pointSize *= (0.95 + totalWaveIntensity * 0.15);
-      
-      // Distance-based scaling for perspective
-      pointSize *= (300.0 / max(-viewPosition.z, 50.0));
-      
-      gl_PointSize = clamp(pointSize, 2.0, 20.0); // Larger range for cells
-      
-      // Alpha with cellular breathing
-      vAlpha = 1.0 - interactionEffect * 0.08 + rippleEffect * 0.15 + totalWaveIntensity * 0.1;
-      vAlpha = clamp(vAlpha, 0.5, 1.0);
-    }
-  `;
-
-  // Enhanced fragment shader for cell appearance
-  const livingCanvasFragmentShader = `
-    uniform vec3 uColorA;
-    uniform vec3 uColorB;
-    uniform vec3 uColorC;
-    uniform float uColorIntensity;
-    uniform float uTime;
-    uniform float uMoodIntensity;
-    
-    varying vec3 vColor;
-    varying float vAlpha;
-    varying vec2 vGridCoords;
-    varying float vWaveIntensity;
-    
-    void main() {
-      vec2 coord = gl_PointCoord - vec2(0.5);
-      float dist = length(coord);
-      
-      if (dist > 0.5) discard;
-      
-      // Enhanced cellular appearance
-      float coreAlpha = smoothstep(0.5, 0.1, dist);
-      float haloAlpha = smoothstep(0.5, 0.0, dist);
-      float cellMembrane = smoothstep(0.4, 0.45, dist) * smoothstep(0.5, 0.45, dist);
-      float particleAlpha = max(coreAlpha * 0.95, haloAlpha * 0.3) + cellMembrane * 0.4;
-      
-      // Cell-like color system
-      float timePhase = uTime * 0.15; // Slower for organic feel
-      
-      // Organic color waves
-      float colorWave1 = sin(timePhase + vGridCoords.x * 2.5) * 0.5 + 0.5;
-      float colorWave2 = sin(timePhase * 1.1 + vGridCoords.y * 1.8) * 0.5 + 0.5;
-      float colorWave3 = sin(timePhase * 0.7 + vWaveIntensity * 4.0) * 0.5 + 0.5;
-      
-      // Cell color mixing
-      vec3 color1 = mix(uColorA, uColorB, colorWave1);
-      vec3 color2 = mix(uColorB, uColorC, colorWave2);
-      vec3 finalColor = mix(color1, color2, colorWave3);
-      
-      // Cellular enhancement
-      finalColor = mix(finalColor, uColorC * 1.3, vWaveIntensity * 0.3);
-      finalColor += cellMembrane * uColorB * 0.4; // Membrane highlighting
-      
-      // Mood and intensity
-      finalColor *= uColorIntensity * uMoodIntensity;
-      finalColor *= (0.85 + vWaveIntensity * 0.25);
-      
-      // Final alpha with cellular breathing
-      float finalAlpha = vAlpha * particleAlpha;
-      finalAlpha *= (0.75 + vWaveIntensity * 0.35);
-      
-      gl_FragColor = vec4(finalColor, finalAlpha);
-    }
-  `;
-
-  // Material creation
-  const livingCanvasMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      uniforms: livingCanvasUniforms,
-      vertexShader: livingCanvasVertexShader,
-      fragmentShader: livingCanvasFragmentShader,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      depthTest: true,
-    });
-  }, [livingCanvasUniforms]);
-
-  // Geometry creation
-  const livingCanvasGeometry = useMemo(() => {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(livingCanvasData.positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(livingCanvasData.colors, 3));
-    geometry.setAttribute(
-      'animationSeeds',
-      new THREE.BufferAttribute(livingCanvasData.animationSeeds, 4)
-    );
-    geometry.setAttribute('gridCoords', new THREE.BufferAttribute(livingCanvasData.gridCoords, 2));
-
-    console.log(
-      `[${componentId}] 🔥 Living Canvas Geometry Complete: ${livingCanvasData.positions.length / 3} particles`
-    );
-    console.log(
-      `[${componentId}] 🔥 Cell Effect: ${livingCanvasData.totalDensity.toFixed(1)} particles/sq unit`
-    );
-    return geometry;
-  }, [livingCanvasData]);
-
-  // Effects manager
-  useEffect(() => {
-    effectsManagerRef.current = new WebGLEffectsManager();
-    console.log(`[${componentId}] 🔥 Living Canvas Effects Manager Initialized`);
-
-    return () => {
-      if (effectsManagerRef.current?.destroy) {
-        effectsManagerRef.current.destroy();
-      }
-    };
-  }, []);
-
-  // Narrative mood updates
-  const updateNarrativeMood = useCallback(
-    currentTime => {
-      if (!livingCanvasMaterial || !effectsManagerRef.current) return;
-
-      const currentPreset = narrativeTransition.updateTransition(currentTime);
-      if (currentPreset) {
-        const finalSizeValue = Math.max(
-          0.8,
-          (currentPreset.baseSize ?? livingCanvasConfig.particleSize) * 1.1
-        );
-
-        livingCanvasMaterial.uniforms.uSize.value = finalSizeValue;
-        livingCanvasMaterial.uniforms.uColorIntensity.value = Math.max(
-          0.2,
-          currentPreset.colorIntensity ?? 1.0
-        );
-        livingCanvasMaterial.uniforms.uMoodIntensity.value = Math.max(
-          0.4,
-          currentPreset.colorIntensity ?? 1.0
-        );
-
-        if (currentPreset.colors && currentPreset.colors.length >= 3) {
-          livingCanvasMaterial.uniforms.uColorA.value.setStyle(currentPreset.colors[0]);
-          livingCanvasMaterial.uniforms.uColorB.value.setStyle(currentPreset.colors[1]);
-          livingCanvasMaterial.uniforms.uColorC.value.setStyle(currentPreset.colors[2]);
-        }
-      }
-    },
-    [livingCanvasMaterial, livingCanvasConfig.particleSize]
-  );
-
-  // Interaction event processing
-  const processInteractionEvents = useCallback(
-    (currentTime, currentElapsedTime) => {
-      const store = useInteractionStore.getState();
-      const events = store.consumeInteractionEvents?.() || [];
-
-      events.forEach(event => {
-        if (event.type === 'heroLetterBurst' && event.position) {
-          livingCanvasMaterial.uniforms.uRippleCenter.value.set(
-            event.position.x,
-            event.position.y,
-            event.position.z || 0
-          );
-          // Ripple strength properly scaled for Z=8 camera
-          const cellRippleScale = Math.max(0.4, 120.0 / livingCanvasConfig.density);
-          const scaledIntensity = (event.intensity || 0.15) * cellRippleScale;
-          livingCanvasMaterial.uniforms.uRippleStrength.value = Math.min(scaledIntensity, 0.2);
-          livingCanvasMaterial.uniforms.uRippleTime.value = currentElapsedTime;
+    if (typeof BeatBus?.on === 'function') {
+      BeatBus.on(EVENTS.RENDER_DIRECTIVE, (payload) => {
+        try {
+          directiveBridgeState.handler?.(payload);
+        } catch (error) {
+          console.error('🎯 Renderer bridge handler error', error);
         }
       });
+      console.log('🪢 RENDER_DIRECTIVE bridge subscribed (module scope)');
+    } else {
+      console.warn('🪢 BeatBus.on not available at module scope');
+    }
+  } catch (error) {
+    console.error('🪢 Failed to init render directive bridge', error);
+  }
+})();
+
+const clampFit = (v) => Math.min(5.0, Math.max(0.2, v));
+
+function computeAABB(geo, key) {
+  const attr = geo?.attributes?.[key];
+  if (!attr?.array) return null;
+  const arr = attr.array;
+  if (!arr.length) return null;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < arr.length; i += 3) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  if (minX === Infinity || minY === Infinity) return null;
+  return { extX: (maxX - minX) * 0.5, extY: (maxY - minY) * 0.5 };
+}
+
+function arrayAabb(arr) {
+  if (!arr || arr.length < 3) return null;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < arr.length; i += 3) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  if (minX === Infinity || minY === Infinity) return null;
+  return { w: maxX - minX, h: maxY - minY };
+}
+
+function attributeAabb(geo, key) {
+  const attr = geo?.attributes?.[key];
+  return attr?.array ? arrayAabb(attr.array) : null;
+}
+
+const vec2Close = (a = [], b = [], eps = 1e-3) => {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  return Math.abs((a[0] ?? 0) - (b[0] ?? 0)) < eps
+    && Math.abs((a[1] ?? 0) - (b[1] ?? 0)) < eps;
+};
+
+function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
+  const emergencePendingRef = useRef(false);
+  const emittedEmergedRef   = useRef(false);
+
+  const meshRef = useRef();
+  const geometryRef = useRef(null);
+  const materialRef = useRef(null);
+  const renderGuardRef = useRef(false);
+  const viewportHintRef = useRef(null);
+  const lastBindMetaRef = useRef({ kind: null });
+
+  const [blueprint, setBlueprint] = useState(null);
+  const [stageName, setStageName] = useState('genesis');
+  const [atlasTexture, setAtlasTexture] = useState(null);
+  const [activeCount, setActiveCount] = useState(0);
+
+  const lastFitStampRef = useRef({ geoId: null, width: 0, height: 0 });
+  const lastUniformsRef = useRef({ atmo: [1, 1], text: [1, 1] });
+  const stageNameRef = useRef(stageName);
+  const blueprintRef = useRef(blueprint);
+  const hotspotMapRef = useRef({});
+  const fitsLockedRef = useRef(false);
+  const ignoreDirectivesRef = useRef(false);
+  const fenceReadyRef = useRef(false);
+  const pendingFencepostRef = useRef(false);
+  const pendingFenceDataRef = useRef(null);
+  const pendingFenceTimeoutRef = useRef(null);
+  const spinRef = useRef({ active: false, velocity: { y: 0, z: 0 }, endTime: 0 });
+
+  const logBind = useCallback((kind, meta = {}) => {
+    const geo = geometryRef.current;
+    const mat = materialRef.current;
+    if (!geo || !mat?.uniforms) return;
+
+    const uniforms = mat.uniforms;
+    const vec2 = (uniform) => {
+      if (!uniform) return null;
+      const value = uniform.value ?? uniform;
+      if (!value) return null;
+      if (typeof value.toArray === 'function') {
+        const tmp = [];
+        value.toArray(tmp, 0);
+        return tmp.slice(0, 2);
+      }
+      if (Array.isArray(value)) {
+        return value.slice(0, 2);
+      }
+      if (typeof value.x === 'number' || typeof value.y === 'number') {
+        return [value.x ?? null, value.y ?? null];
+      }
+      return null;
+    };
+
+    const payload = {
+      kind,
+      ...meta,
+      atmoAABB: attributeAabb(geo, 'atmosphericPosition'),
+      textAABB: attributeAabb(geo, 'text3DPosition'),
+      uAtmoFit: vec2(uniforms.uAtmoFit) || null,
+      uTextFit: vec2(uniforms.uTextFit) || null,
+      uBandFade: uniforms.uBandFade?.value ?? null,
+    };
+
+    lastBindMetaRef.current = payload;
+    trace('WBG:BIND', payload);
+  }, []);
+
+  const sampleRuntimeAABBOnce = useCallback((label = 'WBG:RUNTIME') => {
+    const geo = geometryRef.current;
+    const arr = geo?.attributes?.position?.array;
+    if (!arr?.length) return;
+    const meta = lastBindMetaRef.current || {};
+    trace(label, {
+      kind: meta.kind || null,
+      stage: meta.stage || null,
+      mode: meta.mode || null,
+      posAABB: arrayAabb(arr),
+    });
+  }, []);
+
+  const emitFencepostNow = useCallback((payload) => {
+    if (!payload) return;
+    trace('WBG:FENCEPOST', payload);
+    BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+  }, []);
+
+  const clearPendingFencepost = useCallback(() => {
+    pendingFencepostRef.current = false;
+    pendingFenceDataRef.current = null;
+    if (pendingFenceTimeoutRef.current) {
+      clearTimeout(pendingFenceTimeoutRef.current);
+      pendingFenceTimeoutRef.current = null;
+    }
+  }, []);
+
+  const flushPendingFencepost = useCallback(() => {
+    if (pendingFencepostRef.current && pendingFenceDataRef.current) {
+      emitFencepostNow(pendingFenceDataRef.current);
+      clearPendingFencepost();
+    }
+  }, [clearPendingFencepost, emitFencepostNow]);
+
+  const queueFencepost = useCallback(
+    (payload) => {
+      if (!payload) return;
+
+      if (fenceReadyRef.current) {
+        emitFencepostNow(payload);
+        clearPendingFencepost();
+        return;
+      }
+
+      pendingFencepostRef.current = true;
+      pendingFenceDataRef.current = payload;
+
+      if (pendingFenceTimeoutRef.current) {
+        clearTimeout(pendingFenceTimeoutRef.current);
+      }
+
+      pendingFenceTimeoutRef.current = setTimeout(() => {
+        if (!fenceReadyRef.current) {
+          const pending = pendingFenceDataRef.current;
+          trace('FENCEPOST_LISTENERS_READY', {
+            ...(pending || {}),
+            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            source: pending?.source ?? 'renderer-fallback',
+            fallback: true,
+          });
+          fenceReadyRef.current = true;
+          flushPendingFencepost();
+        }
+      }, 120);
     },
-    [livingCanvasMaterial, livingCanvasConfig.density]
+    [clearPendingFencepost, emitFencepostNow, flushPendingFencepost]
   );
 
-  // Main animation loop
-  let lastTime = 0;
-  useFrame(({ clock }) => {
-    if (!livingCanvasMaterial) return;
+  const scheduleRuntimeSampling = useCallback(() => {
+    for (let i = 0; i < 30; i += 1) {
+      setTimeout(() => sampleRuntimeAABBOnce('WBG:RUNTIME'), 16 * i);
+    }
+  }, [sampleRuntimeAABBOnce]);
 
-    const currentTime = clock.getElapsedTime();
-    const currentTimeMs = currentTime * 1000;
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-    frameCountRef.current++;
+  const finalizeEmergence = useCallback(
+    (source = 'renderer-fastforward') => {
+      if (!emergencePendingRef.current || emittedEmergedRef.current) {
+        return false;
+      }
 
-    // Update time uniforms
-    livingCanvasMaterial.uniforms.uTime.value = currentTime;
-    livingCanvasMaterial.uniforms.uDeltaTime.value = deltaTime;
+      const mat = materialRef.current;
+      const uniforms = mat?.uniforms;
 
-    // Update narrative mood
-    updateNarrativeMood(currentTimeMs);
+      if (uniforms?.uMorphProgress) {
+        uniforms.uMorphProgress.value = 1.0;
+        if (uniforms.uStageProgress) {
+          uniforms.uStageProgress.value = 1.0;
+        }
+      }
 
-    // Process interaction events
-    if (frameCountRef.current % 3 === 0) {
-      processInteractionEvents(currentTimeMs, currentTime);
+      if (uniforms?.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+        uniforms.uPostMorphFreeze.value = 1.0;
+      }
+
+      if (mat) {
+        mat.uniformsNeedUpdate = true;
+      }
+
+      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 1, source });
+
+      const now =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+
+      emittedEmergedRef.current = true;
+      emergencePendingRef.current = false;
+      ignoreDirectivesRef.current = true;
+
+      const payload = {
+        at: now,
+        source,
+        stage: stageNameRef.current || 'genesis',
+        morph: 1,
+        fastForward: true,
+      };
+
+      queueFencepost(payload);
+      trace('WBG:FAST_FORWARD', payload);
+      return true;
+    },
+    [queueFencepost]
+  );
+
+  const { size, gl, camera } = useThree();
+
+  useEffect(() => {
+    const offReady = BeatBus?.on?.(EVENTS.FENCEPOST_LISTENERS_READY, (payload = {}) => {
+      fenceReadyRef.current = true;
+      trace('FENCEPOST_LISTENERS_READY', payload);
+      flushPendingFencepost();
+    });
+    return () => {
+      offReady?.();
+      fenceReadyRef.current = false;
+      clearPendingFencepost();
+    };
+  }, [clearPendingFencepost, flushPendingFencepost]);
+
+  const applyRendererFits = useCallback((geo, viewport) => {
+    const material = materialRef.current;
+    if (!material?.uniforms || !geo) return;
+
+    const resolved = viewport || viewportHintRef.current || window?.__viewportHint || {};
+    const fallbackWidth = size?.width || (typeof window !== 'undefined' ? window.innerWidth : 120);
+    const fallbackHeight = size?.height || (typeof window !== 'undefined' ? window.innerHeight : 90);
+    const width = Math.max(1, resolved.width ?? resolved.cssWidth ?? fallbackWidth ?? 120);
+    const height = Math.max(1, resolved.height ?? resolved.cssHeight ?? fallbackHeight ?? 90);
+
+    const stamp = lastFitStampRef.current;
+    const geoId = geo.uuid || geo.id;
+    if (fitsLockedRef.current && stamp.geoId === geoId && stamp.width === width && stamp.height === height) {
+      if (DEV) console.debug('[WBG] fits locked; skipping recompute');
+      return;
     }
 
-    // Update interaction uniforms
-    const store = useInteractionStore.getState();
-
-    // Scroll progress
-    if (frameCountRef.current % 4 === 0) {
-      livingCanvasMaterial.uniforms.uScrollProgress.value = store.scrollProgress || 0;
+    if (stamp.geoId === geoId && stamp.width === width && stamp.height === height) {
+      return;
     }
 
-    // Cursor position with gentle interpolation
-    const cursorPos = store.cursorPosition;
-    if (cursorPos) {
-      const currentPos = livingCanvasMaterial.uniforms.uCursorPos.value;
-      const targetPos = new THREE.Vector3(cursorPos.x, cursorPos.y, cursorPos.z || 0);
-      currentPos.lerp(targetPos, 0.04); // Slower for organic feel
+    const atmoAabb = computeAABB(geo, 'atmosphericPosition') || computeAABB(geo, 'position');
+    const textAabb = computeAABB(geo, 'text3DPosition') || computeAABB(geo, 'position');
+    if (!atmoAabb || !textAabb) return;
+
+    const atmoTargetX = Number.isFinite(VC?.ATMO_FIT_X) ? VC.ATMO_FIT_X : 0.92;
+    const atmoTargetY = Number.isFinite(VC?.ATMO_FIT_Y) ? VC.ATMO_FIT_Y : 0.85;
+    const textTargetWidth = Number.isFinite(VC?.TEXT_FIT_WIDTH) ? VC.TEXT_FIT_WIDTH : 0.9;
+    const textTargetMaxH = Number.isFinite(VC?.TEXT_FIT_MAX_H) ? VC.TEXT_FIT_MAX_H : 0.8;
+
+    const halfW = width * 0.5;
+    const halfH = height * 0.5;
+
+    const atmoFitX = atmoAabb.extX > 1e-6 ? clampFit((halfW * atmoTargetX) / atmoAabb.extX) : 1;
+    const atmoFitY = atmoAabb.extY > 1e-6 ? clampFit((halfH * atmoTargetY) / atmoAabb.extY) : 1;
+
+    const textWidthScale = textAabb.extX > 1e-6 ? (halfW * textTargetWidth) / textAabb.extX : 1;
+    let textFitY = textWidthScale;
+    if (textAabb.extY > 1e-6) {
+      const maxScaleY = (halfH * textTargetMaxH) / textAabb.extY;
+      textFitY = Math.min(textFitY, maxScaleY);
+    }
+    const textFitX = clampFit(textWidthScale);
+    textFitY = clampFit(textFitY);
+
+    const newAtmo = [atmoFitX, atmoFitY];
+    const newText = [textFitX, textFitY];
+
+    const uniforms = material.uniforms;
+    let changed = false;
+    if (!vec2Close(lastUniformsRef.current.atmo, newAtmo)) {
+      if (uniforms.uAtmoFit?.value?.set) {
+        uniforms.uAtmoFit.value.set(atmoFitX, atmoFitY);
+      } else {
+        uniforms.uAtmoFit = { value: new THREE.Vector2(atmoFitX, atmoFitY) };
+      }
+      changed = true;
     }
 
-    // Ripple decay
-    if (livingCanvasMaterial.uniforms.uRippleStrength.value > 0.0) {
-      livingCanvasMaterial.uniforms.uRippleStrength.value *= 0.985; // Slower decay
-      if (livingCanvasMaterial.uniforms.uRippleStrength.value < 0.003) {
-        livingCanvasMaterial.uniforms.uRippleStrength.value = 0.0;
+    if (!vec2Close(lastUniformsRef.current.text, newText)) {
+      if (uniforms.uTextFit?.value?.set) {
+        uniforms.uTextFit.value.set(textFitX, textFitY);
+      } else {
+        uniforms.uTextFit = { value: new THREE.Vector2(textFitX, textFitY) };
+      }
+      changed = true;
+    }
+
+    if (uniforms.uBandFade !== undefined && uniforms.uBandFade.value !== 0) {
+      uniforms.uBandFade.value = 0;
+      changed = true;
+    }
+
+    if (changed) {
+      material.uniformsNeedUpdate = true;
+      if (DEV) {
+        console.debug('[WBG] fits(set once)', {
+          atmoFit: { x: newAtmo[0], y: newAtmo[1] },
+          textFit: { x: newText[0], y: newText[1] },
+          viewport: { width, height },
+        });
       }
     }
 
-    // Enhanced status logging with cell metrics
-    if (currentTimeMs - lastLogTimeRef.current > 30000) {
-      console.log(
-        `[${componentId}] 🔥 LIVING CANVAS Status - Particles: ${livingCanvasConfig.totalParticles}, Camera Z: ${livingCanvasConfig.camZ}, Density: ${livingCanvasConfig.density.toFixed(1)}/sq unit, Effect: CELL ORGANISM`
+    lastUniformsRef.current = { atmo: newAtmo, text: newText };
+    lastFitStampRef.current = { geoId, width, height };
+    fitsLockedRef.current = true;
+  }, [size.width, size.height]);
+
+  const lastBlueprintIdRef = useRef(null);
+  const fallbackMorphRef = useRef(0);
+
+  useEffect(() => {
+    stageNameRef.current = stageName;
+  }, [stageName]);
+
+  useEffect(() => {
+    blueprintRef.current = blueprint;
+  }, [blueprint]);
+
+  const bandScale = VC?.BAND_FADE_WIDTH ?? 0.35;
+  const bandHeightRef = useRef(null);
+  const updateBandHeight = useCallback((viewHeight) => {
+    if (!Number.isFinite(viewHeight) || viewHeight <= 0) return;
+    const scaled = viewHeight * bandScale;
+    bandHeightRef.current = scaled;
+    const mat = materialRef.current;
+    if (mat?.uniforms?.uBandHeight) {
+      mat.uniforms.uBandHeight.value = scaled;
+      mat.uniformsNeedUpdate = true;
+    }
+  }, [bandScale]);
+
+  // Point size (once) — raw base only; shader multiplies by uDevicePixelRatio
+  useEffect(() => {
+    const u = materialRef.current?.uniforms;
+    if (!u?.uPointSize) return;
+    const base = Canonical?.features?.pointSizeDefault ?? 48.0;
+    u.uPointSize.value = base;
+  }, []);
+
+  // Viewport hint from projection matrix
+  const emitViewportHint = useCallback(() => {
+    try {
+      const projection = camera?.projectionMatrix;
+      if (!projection) return;
+
+      const m11 = projection.elements?.[5] || 1; // 1/tan(fov/2)
+      const tanHalfFov = 1 / m11;
+
+      const worldPos = new THREE.Vector3();
+      const distance = (() => {
+        try {
+          camera?.getWorldPosition?.(worldPos);
+          return worldPos.length();
+        } catch {
+          return Math.abs(camera?.position?.z || 1);
+        }
+      })();
+
+      const canvas = gl?.domElement;
+      const rect = canvas?.getBoundingClientRect?.();
+
+      const docWidth = typeof document !== 'undefined' ? document.documentElement?.clientWidth || 0 : 0;
+      const docHeight = typeof document !== 'undefined' ? document.documentElement?.clientHeight || 0 : 0;
+      const windowWidth = typeof window !== 'undefined'
+        ? Math.max(window.innerWidth || 0, docWidth)
+        : docWidth;
+      const windowHeight = typeof window !== 'undefined'
+        ? Math.max(window.innerHeight || 0, docHeight)
+        : docHeight;
+
+      const cssWidth = Math.max(
+        rect?.width || 0,
+        canvas?.clientWidth || 0,
+        size.width || 0,
+        windowWidth || 0,
+        1,
       );
-      lastLogTimeRef.current = currentTimeMs;
+      const cssHeight = Math.max(
+        rect?.height || 0,
+        canvas?.clientHeight || 0,
+        size.height || 0,
+        windowHeight || 0,
+        1,
+      );
+
+      let orientation = (windowWidth && windowHeight)
+        ? (windowWidth >= windowHeight ? 'landscape' : 'portrait')
+        : (cssWidth >= cssHeight ? 'landscape' : 'portrait');
+
+      let aspect = Number.isFinite(camera?.aspect) && camera.aspect > 0
+        ? camera.aspect
+        : (cssHeight > 0 ? cssWidth / cssHeight : 1);
+
+      if (!Number.isFinite(aspect) || aspect <= 0) {
+        aspect = 1;
+      }
+
+      const viewHeightRaw = 2 * distance * tanHalfFov;
+      let viewWidth = viewHeightRaw * aspect;
+      let viewHeight = viewHeightRaw;
+
+      if (viewWidth < viewHeight) {
+        [viewWidth, viewHeight] = [viewHeight, viewWidth];
+        aspect = viewWidth / viewHeight;
+        orientation = 'landscape';
+      } else {
+        orientation = 'landscape';
+      }
+
+      const hint = {
+        width: viewWidth,
+        height: viewHeight,
+        aspect,
+        orientation,
+        cssWidth,
+        cssHeight,
+      };
+
+      viewportHintRef.current = hint;
+      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, hint);
+      updateBandHeight(viewHeight);
+
+      if (geometryRef.current) {
+        applyRendererFits(geometryRef.current, hint);
+        logBind('viewport', {
+          stage: stageNameRef.current,
+          mode: 'viewport',
+          cached: !!blueprintRef.current,
+        });
+        scheduleRuntimeSampling();
+      }
+
+      // expose for TD/CE consumers in DEV and for probes
+      if (typeof window !== 'undefined') {
+        window.__viewportHint = hint;
+      }
+
+      console.log('📐 Renderer: Sent viewport hint (proj-matrix)', {
+        width: viewWidth.toFixed(1),
+        height: viewHeight.toFixed(1),
+        aspect: aspect.toFixed(2),
+        cameraDist: distance.toFixed(2),
+        orientation,
+      });
+    } catch (e) {
+      console.warn('Viewport hint emit failed', e);
+    }
+  }, [camera, gl, size.width, size.height, updateBandHeight, logBind, scheduleRuntimeSampling, applyRendererFits]);
+
+  // single emit on mount; microtask-debounced resize (no RAF / no polling timers)
+  useEffect(() => {
+    emitViewportHint();
+    let inDebounce = false;
+    const onResize = () => {
+      if (inDebounce) return;
+      inDebounce = true;
+      queueMicrotask(() => {
+        try { emitViewportHint(); }
+        finally { inDebounce = false; }
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [emitViewportHint]);
+
+  // Fallback morph sink (outside emergence directives)
+  const __applyMorph = (v) => {
+    const mat = materialRef.current;
+    if (!mat?.uniforms) return;
+    const u = mat.uniforms;
+    if (u.uMorphProgress) u.uMorphProgress.value = v;
+    else if (u.morphProgress) u.morphProgress.value = v;
+    else if (u.uMorph) u.uMorph.value = v;
+    else if (u.morph) u.morph.value = v;
+    mat.uniformsNeedUpdate = true;
+  };
+
+  // Stage tint sink
+  const __applyStageTint = (stage) => {
+    const mat = materialRef.current;
+    if (!mat?.uniforms) return;
+    const { current, next, acc1, acc2 } = pickStageColors(stage);
+    const u = mat.uniforms;
+    if (u.uColorCurrent) u.uColorCurrent.value = current;
+    if (u.uColorNext)    u.uColorNext.value    = next;
+    if (u.uColorAccent1) u.uColorAccent1.value = acc1;
+    if (u.uColorAccent2) u.uColorAccent2.value = acc2;
+    mat.uniformsNeedUpdate = true;
+  };
+
+  const applyMetadataColors = (colors) => {
+    const fallback = (Array.isArray(VC?.GENESIS_PALETTE) && VC.GENESIS_PALETTE.length >= 3)
+      ? VC.GENESIS_PALETTE.slice(0, 3)
+      : null;
+    const palette = (Array.isArray(colors) && colors.length >= 3) ? colors : fallback;
+    if (!palette) return;
+    const mat = materialRef.current;
+    const u = mat?.uniforms;
+    if (!u) return;
+    const assign = (uniform, value) => {
+      if (!uniform) return;
+      const target = uniform.value ?? uniform;
+      if (Array.isArray(value) && value.length >= 3 && value.every((v) => typeof v === 'number')) {
+        if (target?.setRGB) {
+          target.setRGB(value[0], value[1], value[2]);
+          return;
+        }
+      }
+      if (target?.set) target.set(value);
+      else uniform.value = value;
+    };
+    assign(u.uColorCurrent, palette[0]);
+    assign(u.uColorNext, palette[1] ?? palette[0]);
+    assign(u.uColorAccent1, palette[2] ?? palette[0]);
+    mat.uniformsNeedUpdate = true;
+  };
+
+  // Passive fallbacks (OK to keep)
+  useEffect(() => {
+    const off = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (p) => {
+      const v = clamp01(p?.value);
+      fallbackMorphRef.current = v;
+      __applyMorph(v);
+    });
+    return () => off && off();
+  }, []);
+  useEffect(() => {
+    const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
+      const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
+      setStageName(st);
+      __applyStageTint(st);
+    });
+    return () => off && off();
+  }, []);
+
+  // atlas init
+  useEffect(() => {
+    const atlas = getPointSpriteAtlasSingleton();
+    const texture = atlas.createWebGLTexture();
+    setAtlasTexture(texture);
+  }, []);
+
+  // Emergence flag (no local tween; engine drives via directives)
+  useEffect(() => {
+    const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {
+      emergencePendingRef.current = true;
+      emittedEmergedRef.current = false;
+    });
+    return () => off && off();
+  }, []);
+
+  // Raycaster: handle click requests from canvas
+  useEffect(() => {
+    const handleClickRequest = (payload = {}) => {
+      const mouse = payload?.mouse;
+      if (!mouse) {
+        console.warn('[WebGLBackground] Invalid click request payload', payload);
+        return;
+      }
+
+      const mesh = meshRef.current;
+      if (!camera) {
+        console.error('[WebGLBackground] Camera not available for raycasting');
+        return;
+      }
+
+      if (!mesh) {
+        console.error('[WebGLBackground] Particle mesh not available for raycasting');
+        return;
+      }
+
+      const positionAttr = mesh?.geometry?.attributes?.position;
+      const particleCount = positionAttr?.count ?? 0;
+      const safeGetParticle = (idx) =>
+        positionAttr && idx < particleCount
+          ? {
+              x: positionAttr.getX(idx),
+              y: positionAttr.getY(idx),
+              z: positionAttr.getZ(idx),
+            }
+          : null;
+      const centerIndex = particleCount > 0 ? Math.min(Math.floor(particleCount / 2), particleCount - 1) : 0;
+      const lastIndex = particleCount > 0 ? particleCount - 1 : 0;
+
+      const diagnostic = {
+        timestamp: Date.now(),
+        camera: camera
+          ? {
+              type: camera.type,
+              position: {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z,
+              },
+              rotation: {
+                x: camera.rotation.x,
+                y: camera.rotation.y,
+                z: camera.rotation.z,
+              },
+              quaternion: {
+                x: camera.quaternion.x,
+                y: camera.quaternion.y,
+                z: camera.quaternion.z,
+                w: camera.quaternion.w,
+              },
+              fov: camera.fov,
+              aspect: camera.aspect,
+              near: camera.near,
+              far: camera.far,
+              zoom: camera.zoom,
+              matrixWorldNeedsUpdate: camera.matrixWorldNeedsUpdate,
+            }
+          : null,
+        mesh: mesh
+          ? {
+              type: mesh.type,
+              visible: mesh.visible,
+              position: {
+                x: mesh.position.x,
+                y: mesh.position.y,
+                z: mesh.position.z,
+              },
+              scale: {
+                x: mesh.scale.x,
+                y: mesh.scale.y,
+                z: mesh.scale.z,
+              },
+              rotation: {
+                x: mesh.rotation.x,
+                y: mesh.rotation.y,
+                z: mesh.rotation.z,
+              },
+              matrixWorldNeedsUpdate: mesh.matrixWorldNeedsUpdate,
+              renderOrder: mesh.renderOrder,
+              frustumCulled: mesh.frustumCulled,
+              geometry: mesh.geometry
+                ? {
+                    type: mesh.geometry.type,
+                    particleCount,
+                    hasPositionAttr: Boolean(positionAttr),
+                    positionNeedsUpdate: positionAttr?.needsUpdate ?? false,
+                    boundingSphere: mesh.geometry.boundingSphere
+                      ? {
+                          centerX: mesh.geometry.boundingSphere.center.x,
+                          centerY: mesh.geometry.boundingSphere.center.y,
+                          centerZ: mesh.geometry.boundingSphere.center.z,
+                          radius: mesh.geometry.boundingSphere.radius,
+                        }
+                      : null,
+                    firstParticle: safeGetParticle(0),
+                    centerParticle: safeGetParticle(centerIndex),
+                    lastParticle: safeGetParticle(lastIndex),
+                  }
+                : null,
+            }
+          : null,
+        mouse: {
+          x: mouse.x,
+          y: mouse.y,
+        },
+        raycaster: {
+          threshold: particleRaycaster.raycaster.params.Points.threshold,
+        },
+      };
+
+      if (typeof window !== 'undefined' && window.RAYCAST_DIAGNOSTIC) {
+        window.RAYCAST_DIAGNOSTIC.lastTest = diagnostic;
+        window.RAYCAST_DIAGNOSTIC.history.push(diagnostic);
+      }
+
+      console.log('🔍 DIAGNOSTIC CAPTURED');
+      console.log('   Run in console: window.RAYCAST_DIAGNOSTIC.lastTest');
+
+      const hit = particleRaycaster.getClosestParticle(mouse, camera, mesh);
+      if (!hit) return;
+
+      const particleIndex = hit.index;
+      console.log(
+        `✨ Particle ${particleIndex} clicked (distance: ${hit.distance.toFixed(2)})`
+      );
+
+      const hotspotMap = hotspotMapRef.current || {};
+      let matchedHotspot = null;
+      for (const [hotspotId, hotspotData] of Object.entries(hotspotMap)) {
+        if (!hotspotData) continue;
+        const { indexSet, indices } = hotspotData;
+        let contains = false;
+        if (indexSet && typeof indexSet.has === 'function') {
+          contains = indexSet.has(particleIndex);
+        } else if (indices && typeof indices.includes === 'function') {
+          contains = indices.includes(particleIndex);
+        }
+        if (contains) {
+          matchedHotspot = { hotspotId, ...hotspotData };
+          break;
+        }
+      }
+
+      if (matchedHotspot) {
+        console.log('🎯 HOTSPOT HIT!', matchedHotspot);
+        if (matchedHotspot.fragmentId) {
+          console.log(`   Fragment: ${matchedHotspot.fragmentId}`);
+          if (window.narrativeAtom?.activateMemoryFragment) {
+            window.narrativeAtom.activateMemoryFragment(matchedHotspot.fragmentId);
+            console.log(`✨ Fragment modal activated: ${matchedHotspot.fragmentId}`);
+          } else {
+            console.warn('[WBG] narrativeAtom.activateMemoryFragment not available');
+          }
+        }
+      } else {
+        console.log(`   Not a hotspot (particle ${particleIndex})`);
+      }
+
+      BeatBus.emit?.(EVENTS.PARTICLE_CLICK_HIT, {
+        particleIndex,
+        distance: hit.distance,
+        point: hit.point,
+        hotspot: matchedHotspot,
+        timestamp: performance.now(),
+      });
+    };
+
+    const off = BeatBus?.on?.(EVENTS.PARTICLE_CLICK_REQUEST, handleClickRequest);
+    return () => off && off();
+  }, [camera, meshRef]);
+
+  // BLUEPRINT_READY → bind buffers & EMERGED fencepost (once) on first FULL genesis
+  useEffect(() => {
+    const handleBlueprint = (payload) => {
+      const normalized = normalizePayload(payload);
+      const raw = normalized.bp;
+      const st = normalized.stageName;
+      const quality = normalized.quality;
+      let cached = normalized.cached;
+      const mode = normalized.mode;
+      const rawMode = raw?.mode;
+      const cacheKey = normalized.cacheKey;
+      const fastForwardRequested = normalized.fastForward;
+      const skipMorph = normalized.skipMorphAnimation;
+      const guardFixed = normalized.guardFixed;
+      const guardIssues = normalized.guardIssues;
+      const cachedBeforeGuard = normalized.cachedBeforeGuard;
+      const sequenceId = raw?.climaxSequenceId || raw?.metadata?.climaxSequenceId || null;
+      const stepName = raw?.climaxStep || (rawMode?.includes(':') ? rawMode.split(':')[1] : null);
+      const isClimax = Boolean(rawMode?.startsWith?.('climax')) || Boolean(raw?.climaxStep);
+
+      const id = isClimax
+        ? `${st}-${raw?.particleCount || raw?.activeCount || raw?.maxParticles || 0}-${stepName || 'climax'}-${sequenceId || ''}`
+        : `${st}-${raw?.count || raw?.particleCount || raw?.activeCount || 0}-${mode || 'default'}`;
+      if (!raw?.atmosphericPositions || !raw?.text3DPositions) return;
+      if (id === lastBlueprintIdRef.current) return;
+      lastBlueprintIdRef.current = id;
+      const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
+      const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
+
+      if (guardFixed) {
+        const issues = Array.isArray(guardIssues) ? guardIssues.join(', ') : guardIssues;
+        console.warn('🛡️ Renderer: Guard supplied fallback blueprint', {
+          cacheKey,
+          issues,
+          cachedBeforeGuard,
+        });
+      }
+
+      if (isClimax) {
+        if (cached) {
+          console.log('🎬 Climax detected - forcing fresh blueprint bind');
+        }
+        cached = false;
+      }
+
+      // ignore non-genesis full binds while pending (pre-scroll)
+      if (!isEmergence && emergencePendingRef.current) {
+        if ((raw.stageName || st) !== 'genesis') {
+          console.warn('🖼️ Renderer: ignoring pre-scroll full for stage=', raw.stageName || st);
+          return;
+        }
+      }
+      // ignore late emergence after handoff
+      if (isEmergence && emittedEmergedRef.current) return;
+
+      // bind arrays
+      setBlueprint(raw);
+      setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
+      setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
+      applyMetadataColors(raw?.metadata?.colors);
+
+      const stageForLog = raw.stageName || st || 'genesis';
+      const nextHotspotMap = raw?.hotspotMap
+        || raw?.hotspotLookup?.indicesByHotspot
+        || null;
+      if (nextHotspotMap && typeof nextHotspotMap === 'object') {
+        const hotspotIds = Object.keys(nextHotspotMap);
+        const localizedMap = {};
+        hotspotIds.forEach((id) => {
+          const entry = nextHotspotMap[id];
+          if (!entry) return;
+          localizedMap[id] = {
+            ...entry,
+            indexSet: entry.indices && typeof entry.indices[Symbol.iterator] === 'function'
+              ? new Set(entry.indices)
+              : null,
+          };
+        });
+        hotspotMapRef.current = localizedMap;
+        if (hotspotIds.length > 0) {
+          console.log('🗺️ Renderer: Hotspot map updated', hotspotIds);
+          console.log(`   Stage: ${stageForLog}`);
+          hotspotIds.forEach((id) => {
+            const entry = nextHotspotMap[id];
+            const count = entry?.indices?.length || 0;
+            console.log(`   - ${id}: ${count} particles`);
+          });
+        } else if (!isEmergence) {
+          console.log(`🗺️ Renderer: Hotspot map empty for stage ${stageForLog}`);
+        }
+      } else if (!isEmergence) {
+        hotspotMapRef.current = {};
+        console.log('🗺️ Renderer: No hotspot map in blueprint');
+      } else {
+        hotspotMapRef.current = {};
+      }
+
+      const viewport = raw?.metadata?.viewport || payload?.viewportHint || window?.__viewportHint;
+      if (viewport) {
+        viewportHintRef.current = viewport;
+        if (viewport?.height) updateBandHeight(viewport.height);
+      } else {
+        const fallbackHeight = window?.__viewportHint?.height;
+        if (fallbackHeight) updateBandHeight(fallbackHeight);
+      }
+
+      if (geometryRef.current) geometryRef.current.dispose();
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position',            new THREE.BufferAttribute(raw.atmosphericPositions, 3));
+      geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
+      geo.setAttribute('text3DPosition',      new THREE.BufferAttribute(raw.text3DPositions, 3));
+      if (raw.animationSeeds)  geo.setAttribute('animationSeed',  new THREE.BufferAttribute(raw.animationSeeds, 3));
+      if (raw.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(raw.sizeMultipliers, 1));
+      if (raw.opacityData)     geo.setAttribute('opacityData',    new THREE.BufferAttribute(raw.opacityData, 1));
+      if (raw.atlasIndices)    geo.setAttribute('atlasIndex',     new THREE.BufferAttribute(raw.atlasIndices, 1));
+      if (raw.tierData)        geo.setAttribute('tierData',       new THREE.BufferAttribute(raw.tierData, 1));
+      const idx = new Float32Array((raw.activeCount || raw.particleCount || 0) || (raw.atmosphericPositions.length / 3));
+      for (let i = 0; i < idx.length; i++) idx[i] = i;
+      geo.setAttribute('particleIndex', new THREE.BufferAttribute(idx, 1));
+      geo.setDrawRange(0, raw.activeCount || raw.particleCount);
+      geometryRef.current = geo;
+      fitsLockedRef.current = false;
+      if (isEmergence) {
+        fenceReadyRef.current = false;
+        clearPendingFencepost();
+        ignoreDirectivesRef.current = false;
+      }
+      const mat = materialRef.current;
+      const freezeUniform = mat?.uniforms?.uPostMorphFreeze;
+      if (freezeUniform && isEmergence && freezeUniform.value !== 0.0) {
+        freezeUniform.value = 0.0;
+        mat.uniformsNeedUpdate = true;
+      }
+      if (mat) {
+        applyRendererFits(geo, viewportHintRef.current || viewport);
+        logBind(isEmergence ? 'emergence' : 'stage', {
+          stage: raw.stageName || st || 'genesis',
+          mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
+          cached: !!cached,
+        });
+        scheduleRuntimeSampling();
+        if (mat?.uniforms?.uMorphProgress) {
+          mat.uniforms.uMorphProgress.value = 0;
+          if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+          mat.uniformsNeedUpdate = true;
+        }
+        ignoreDirectivesRef.current = false;
+      }
+
+      if (DEV && !geo.__singleWriterPatched) {
+        const rawSetDrawRange = geo.setDrawRange.bind(geo);
+        geo.setDrawRange = (start, count) => {
+          if (!renderGuardRef.current) {
+            console.warn('[SingleWriter] drawRange call blocked outside renderer path');
+            return;
+          }
+          return rawSetDrawRange(start, count);
+        };
+        geo.__singleWriterPatched = true;
+      }
+
+      const disableBand = isEmergence || (raw.stageName || st) === 'genesis';
+      if (mat?.uniforms?.uBandFade) {
+        mat.uniforms.uBandFade.value = disableBand ? 0 : 1;
+        mat.uniformsNeedUpdate = true;
+      }
+
+      if (isEmergence) {
+        console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+        emergencePendingRef.current = true;
+        emittedEmergedRef.current = false;
+        if (DEV) {
+          const extent = (key) => {
+            const attr = geo.attributes[key];
+            if (!attr) return null;
+            const arr = attr.array;
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (let i = 0; i < arr.length; i += 3) {
+              const x = arr[i];
+              const y = arr[i + 1];
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+            return { w: +(maxX - minX).toFixed(2), h: +(maxY - minY).toFixed(2) };
+          };
+          console.debug('[WBG] AABB bind', { pos: extent('position') }, { atm: extent('atmosphericPosition') }, { tgt: extent('text3DPosition') });
+        }
+        BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 0 });
+        if (shouldFastForward) {
+          const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
+          if (finalizeEmergence(source)) {
+            console.log('⚡ Renderer: Emergence fast-forward applied', {
+              source,
+              cacheKey,
+              stage: raw.stageName || st || 'genesis',
+            });
+          }
+        }
+      } else {
+        console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+
+        if (isClimax) {
+          const blueprintForDiag = raw;
+          const geometry = geo;
+          const material = mat;
+          const positionAttr = geometry?.attributes?.position;
+          const positionsArray = positionAttr?.array;
+          const text3DPositions = blueprintForDiag?.text3DPositions;
+          const atmosphericPositions = blueprintForDiag?.atmosphericPositions;
+          const stepName = blueprintForDiag?.climaxStep || blueprintForDiag?.mode?.split?.(':')?.[1] || null;
+          const sample = (arr, start = 0, count = 9) => {
+            if (arr && typeof arr.slice === 'function') {
+              return Array.from(arr.slice(start, start + count));
+            }
+            return 'none';
+          };
+
+          const spreadStats = (arr) => {
+            if (!(arr instanceof Float32Array) || arr.length < 30) {
+              return { avg: 'invalid', min: 'invalid', max: 'invalid' };
+            }
+            let sum = 0;
+            let minDist = Infinity;
+            let maxDist = 0;
+            for (let i = 0; i < 30; i += 3) {
+              const dist = Math.abs(arr[i]) + Math.abs(arr[i + 1]) + Math.abs(arr[i + 2]);
+              sum += dist;
+              if (dist < minDist) minDist = dist;
+              if (dist > maxDist) maxDist = dist;
+            }
+            return {
+              avg: (sum / 10).toFixed(2),
+              min: minDist.toFixed(2),
+              max: maxDist.toFixed(2),
+            };
+          };
+
+          const buffersMatch = (() => {
+            if (!(text3DPositions instanceof Float32Array) || !(positionsArray instanceof Float32Array)) {
+              return 'unknown';
+            }
+            const checks = [0, 99, 999, positionsArray.length - 1].filter((idx) => idx >= 0 && idx < positionsArray.length);
+            return checks.every((idx) => text3DPositions[idx] === positionsArray[idx]);
+          })();
+
+          console.log('🔬 CLIMAX DIAGNOSTIC (ENHANCED):', {
+            climaxStep: stepName,
+            particleCount: blueprintForDiag?.particleCount || 0,
+            hasText3D: text3DPositions instanceof Float32Array,
+            text3DLength: text3DPositions?.length || 0,
+            hasGeometry: positionsArray instanceof Float32Array,
+            geometryLength: positionsArray?.length || 0,
+            text3DStart: sample(text3DPositions, 0, 9),
+            text3DMiddle: sample(text3DPositions, Math.max(0, Math.floor((text3DPositions?.length || 0) / 2) - 4), 9),
+            text3DEnd: sample(text3DPositions, Math.max(0, (text3DPositions?.length || 9) - 9), 9),
+            geometryStart: sample(positionsArray, 0, 9),
+            geometryMiddle: sample(positionsArray, Math.max(0, Math.floor((positionsArray?.length || 0) / 2) - 4), 9),
+            geometryEnd: sample(positionsArray, Math.max(0, (positionsArray?.length || 9) - 9), 9),
+            buffersMatch,
+            shaderMorph: material?.uniforms?.shaderMorph?.value ?? 'undefined',
+            spreadBlueprint: spreadStats(text3DPositions),
+            spreadGeometry: spreadStats(positionsArray),
+          });
+
+          console.log('🔬 SPREAD COMPARISON: Blueprint vs Geometry', {
+            blueprint: spreadStats(text3DPositions),
+            geometry: spreadStats(positionsArray),
+          });
+
+          const posArray = positionsArray;
+          if (posArray && posArray.length >= 30) {
+            let sumX = 0;
+            let sumY = 0;
+            let sumZ = 0;
+            for (let i = 0; i < 30; i += 3) {
+              sumX += Math.abs(posArray[i]);
+              sumY += Math.abs(posArray[i + 1]);
+              sumZ += Math.abs(posArray[i + 2]);
+            }
+            const avgDist = (sumX + sumY + sumZ) / 10;
+            if (avgDist < 0.1) {
+              console.error('🚨 POSITIONS AT ORIGIN! Forming cluster/square');
+            } else {
+              console.log(`✅ Positions spread (avg dist from origin: ${avgDist.toFixed(2)})`);
+            }
+          }
+
+          if (material) {
+            console.log('🔬 SHADER STATE:', {
+              shaderMorph: material?.uniforms?.shaderMorph?.value ?? 'undefined',
+              expectedMorph: 1.0,
+              morphMode: material?.uniforms?.morphMode?.value ?? 'undefined',
+            });
+            if (material?.uniforms?.shaderMorph) {
+              material.uniforms.shaderMorph.value = 1.0;
+              material.uniformsNeedUpdate = true;
+              console.log('✅ Forced shaderMorph = 1.0 for climax');
+            }
+          }
+        }
+
+        if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
+          const mat = materialRef.current;
+          const freezeUniform = mat?.uniforms?.uPostMorphFreeze;
+          if (freezeUniform && freezeUniform.value !== 1.0) {
+            freezeUniform.value = 1.0;
+            mat.uniformsNeedUpdate = true;
+            trace('WBG:FREEZE', { value: 1, source: 'blueprint' });
+          }
+          const payload = {
+            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            source: 'renderer-blueprint',
+            stage: raw.stageName || st || 'genesis',
+          };
+          queueFencepost(payload);
+          emittedEmergedRef.current = true;
+          emergencePendingRef.current = false;
+          console.log('EMERGED once');
+        }
+      }
+
+      if (!isEmergence) {
+        requestAnimationFrame(() => {
+          const matNext = materialRef.current;
+          const freezeNext = matNext?.uniforms?.uPostMorphFreeze;
+          if (freezeNext && freezeNext.value !== 0.0) {
+            freezeNext.value = 0.0;
+            matNext.uniformsNeedUpdate = true;
+            trace('WBG:FREEZE', { value: 0, source: 'stage' });
+          }
+          ignoreDirectivesRef.current = false;
+        });
+      }
+    };
+
+    const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
+    return () => off && off();
+  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, finalizeEmergence]);
+
+  // build material once atlas+blueprint exist
+  useEffect(() => {
+    if (!atlasTexture || !blueprint) return;
+
+    const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
+    const POINT_SIZE_DEFAULT = Canonical?.features?.pointSizeDefault ?? 48.0;
+    const palette = pickStageColors(stageName);
+    const blueprintCount = blueprint?.activeCount || blueprint?.particleCount || blueprint?.maxParticles || 0;
+
+    let mat = materialRef.current;
+    let created = false;
+
+    if (!mat) {
+      created = true;
+      mat = new THREE.ShaderMaterial({
+        onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },
+        uniforms: {
+          uTime: { value: 0 },
+          uMorphProgress:  { value: clamp01(fallbackMorphRef.current) },
+          uScrollProgress: { value: 0 },
+          uStageProgress:  { value: clamp01(fallbackMorphRef.current) },
+          uStageBlend:     { value: 0 },
+          uColorCurrent:   { value: palette.current.clone() },
+          uColorNext:      { value: palette.next.clone() },
+          uColorAccent1:   { value: palette.acc1.clone() },
+          uColorAccent2:   { value: palette.acc2.clone() },
+          uAtlasTexture:   { value: atlasTexture },
+          uTotalSprites:   { value: 16 },
+          uPointSize:      { value: POINT_SIZE_DEFAULT },
+          uDevicePixelRatio: { value: (() => {
+            try { return Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); } catch { return 1; }
+          })() },
+          uResolution:     { value: new THREE.Vector2(1, 1) },
+          uAtmoFit:        { value: new THREE.Vector2(1, 1) },
+          uTextFit:        { value: new THREE.Vector2(1, 1) },
+          uMoveDampStart:  { value: 0.96 },
+          uMoveDampStartY: { value: 0.9 },
+          uPostMorphFreeze: { value: 0.0 },
+          uActiveCount:    { value: blueprintCount },
+          uTierCutoff:     { value: blueprintCount || 15000 },
+          uFadeProgress:   { value: 1.0 },
+          uGaussianSigma:  { value: 2.5 },
+          uTierHighlight:  { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
+          uBandHeight:     { value: bandHeightRef.current || 0 },
+          uBandFade:       { value: 0 },
+          uGaussianFalloff: { value: Canonical?.features?.gaussianFalloff ?? 1.0 },
+          uCenterWeighting: { value: Canonical?.features?.centerWeightingTier4 ?? 1.0 },
+          uStageIndex:     { value: stageIndex },
+          uBrainRegion:    { value: stageIndex },
+          uSpreadFactor:   { value: 1.0 },
+          uMorphType:      { value: MORPH_TYPE_ENUM.steady },
+        },
+        vertexShader: vertexShaderSource,
+        fragmentShader: fragmentShaderSource,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        depthTest: true,
+      });
+      materialRef.current = mat;
+    }
+
+    const uniforms = mat.uniforms || {};
+    if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
+    if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
+    if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
+    if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
+    if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
+    if (uniforms.uPointSize) uniforms.uPointSize.value = POINT_SIZE_DEFAULT;
+    if (uniforms.uDevicePixelRatio) {
+      try { uniforms.uDevicePixelRatio.value = Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); }
+      catch { uniforms.uDevicePixelRatio.value = 1; }
+    }
+
+    if (!bandHeightRef.current) {
+      const hintHeight = window?.__viewportHint?.height;
+      const computed = Number.isFinite(hintHeight) && hintHeight > 0
+        ? hintHeight * bandScale
+        : 40 * bandScale;
+      bandHeightRef.current = computed;
+    }
+    if (uniforms.uBandHeight && bandHeightRef.current) {
+      uniforms.uBandHeight.value = bandHeightRef.current;
+    }
+
+    // Refresh stage palette each time
+    if (uniforms.uColorCurrent) uniforms.uColorCurrent.value = palette.current;
+    if (uniforms.uColorNext)    uniforms.uColorNext.value    = palette.next;
+    if (uniforms.uColorAccent1) uniforms.uColorAccent1.value = palette.acc1;
+    if (uniforms.uColorAccent2) uniforms.uColorAccent2.value = palette.acc2;
+
+    if (uniforms.uActiveCount) uniforms.uActiveCount.value = blueprintCount;
+    if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = blueprintCount || 15000;
+
+    mat.uniformsNeedUpdate = true;
+
+    if (created && geometryRef.current) {
+      fitsLockedRef.current = false;
+      ignoreDirectivesRef.current = false;
+      applyRendererFits(geometryRef.current, viewportHintRef.current);
+      logBind('material-init', {
+        stage: stageName,
+        cached: false,
+      });
+      scheduleRuntimeSampling();
+    }
+
+    if (typeof window !== 'undefined') {
+      exposeDiagnostics('webglBackground', () => ({
+        stage: stageName,
+        blueprintCount,
+        activeCount,
+        uniforms: mat ? Object.keys(mat.uniforms || {}) : [],
+        hasGeometry: !!geometryRef.current,
+        morph: mat?.uniforms?.uMorphProgress?.value ?? null,
+      }));
+
+      exposeControlSurface('__rendererDiagnostics', () => ({
+        getUniformValue: (name) => {
+          const uniform = mat?.uniforms?.[name];
+          if (!uniform) return null;
+          const val = uniform.value;
+          if (val == null) return null;
+          if (typeof val === 'number' || typeof val === 'string' || typeof val === 'boolean') return val;
+          if (Array.isArray(val)) return [...val];
+          if (val instanceof THREE.Color) {
+            return {
+              hex: val.getHexString(),
+              rgb: [val.r, val.g, val.b],
+            };
+          }
+          if (val && typeof val.toArray === 'function') {
+            const out = [];
+            val.toArray(out);
+            return out;
+          }
+          return val;
+        },
+        getAttributeArray: (name) => {
+          const attr = geometryRef.current?.getAttribute?.(name);
+          if (!attr?.array) return null;
+          return Float32Array.from(attr.array);
+        },
+        getActiveCount: () => mat?.uniforms?.uActiveCount?.value ?? null,
+        getDrawCount: () => geometryRef.current?.drawRange?.count ?? null,
+      }), {
+        getUniformValue: 'renderer:diagnostics',
+        getAttributeArray: 'renderer:diagnostics',
+        getActiveCount: 'renderer:diagnostics',
+        getDrawCount: 'renderer:diagnostics',
+      });
+    }
+
+    __applyStageTint(stageName);
+    return () => {
+      revokeControlSurface('__rendererDiagnostics');
+    };
+  }, [atlasTexture, blueprint, stageName, applyRendererFits, bandScale, gl, logBind, scheduleRuntimeSampling]);
+
+  // keep resolution/DPR updated
+  useEffect(() => {
+    const u = materialRef.current?.uniforms;
+    if (!u) return;
+    const { width, height } = size || {};
+    if (u.uResolution && width && height) u.uResolution.value.set(width, height);
+    if (u.uDevicePixelRatio && typeof gl?.getPixelRatio === 'function') {
+      const d = Math.min(gl.getPixelRatio(), 1.5);
+      if (u.uDevicePixelRatio.value !== d) u.uDevicePixelRatio.value = d;
+    }
+    materialRef.current.uniformsNeedUpdate = true;
+  }, [size, gl]);
+
+  // per-frame uniforms (passive)
+  useFrame((state, delta) => {
+    const mat = materialRef.current;
+    if (!meshRef.current || !mat || !geometryRef.current) return;
+    const sp = clamp01(Number(scrollProgress) || 0);
+    mat.uniforms.uTime.value           = state.clock.elapsedTime;
+    mat.uniforms.uScrollProgress.value = sp;
+    mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
+    mat.uniforms.uActiveCount.value    = activeCount;
+    mat.uniforms.uTierCutoff.value     = activeCount;
+
+    const deltaSeconds = Number.isFinite(delta) ? delta : state.clock.getDelta();
+    if (meshRef.current && spinRef.current) {
+      if (spinRef.current.active) {
+        const { velocity, endTime } = spinRef.current;
+        meshRef.current.rotation.z += (velocity.z || 0) * deltaSeconds;
+        meshRef.current.rotation.y += (velocity.y || 0) * deltaSeconds;
+        const now = typeof performance !== 'undefined' && performance.now
+          ? performance.now()
+          : Date.now();
+        if (endTime && now >= endTime) {
+          spinRef.current.active = false;
+          spinRef.current.velocity = { y: 0, z: 0 };
+        }
+      } else {
+        meshRef.current.rotation.z *= 0.92;
+        meshRef.current.rotation.y *= 0.92;
+      }
     }
   });
 
-  // Cleanup
+  const frameCountRef = useRef(0);
+
   useEffect(() => {
-    return () => {
-      if (livingCanvasGeometry) livingCanvasGeometry.dispose();
-      if (livingCanvasMaterial) livingCanvasMaterial.dispose();
-      console.log(`[${componentId}] 🔥 Living Canvas resources disposed`);
+    if (!BeatBus?.on) return () => {};
+    const handler = (payload = {}) => {
+      const spin = payload?.rendererSpin;
+      const duration = Number(payload?.duration) || 0;
+      if (spin && (spin.z || spin.y)) {
+        const velocity = {
+          z: Number(spin.z) || 0,
+          y: Number(spin.y) || 0,
+        };
+        const endTime = duration > 0 && typeof performance !== 'undefined' && performance.now
+          ? performance.now() + duration
+          : 0;
+        spinRef.current = {
+          active: true,
+          velocity,
+          endTime,
+        };
+      } else {
+        spinRef.current = {
+          active: false,
+          velocity: { y: 0, z: 0 },
+          endTime: 0,
+        };
+      }
     };
+    const off = BeatBus.on(EVENTS.PARTICLE_PHASE, handler);
+    return () => off?.();
   }, []);
 
-  // Initialization logging
+  // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {
-    console.group(`[${componentId}] 🔥 LIVING CANVAS SYSTEM INITIALIZED`);
-    console.log(`Status: CAMERA POSITIONING FIXED - CELL ORGANISM EFFECT ACTIVE`);
-    console.log(
-      `Innovation: Camera Z=${livingCanvasConfig.camZ} creates perfect "living tissue" view`
-    );
-    console.log(`OLD PROBLEM: Camera Z=0.2 = microscope view with holes and distortion`);
-    console.log(`NEW SOLUTION: Camera Z=8 = cell organism view with breathing motion`);
-    console.log(
-      `Density Target: ${livingCanvasConfig.targetDensity} particles/sq unit (corrected for Z=8)`
-    );
-    console.log(`Density Achieved: ${livingCanvasConfig.density.toFixed(1)} particles/sq unit`);
-    console.log(
-      `Particle Count: ${livingCanvasConfig.totalParticles} (performance capped for 60fps)`
-    );
-    console.log(`Grid Dimensions: ${livingCanvasConfig.width}x${livingCanvasConfig.height}`);
-    console.log(
-      `Visible Area: ${livingCanvasConfig.visibleArea.toFixed(2)} square units (much larger than Z=0.2)`
-    );
-    console.log(
-      `Particle Size: ${livingCanvasConfig.particleSize}px (large cells for organism effect)`
-    );
-    console.log(
-      `Living Amplitude: ${livingCanvasConfig.livingAmplitude} (enhanced cellular breathing)`
-    );
-    console.log(`Core Protection: Properly scaled for Z=8 camera distance`);
-    console.log(`Visual Effect: Living tissue/cell colony with organic breathing motion`);
-    console.log(`Performance: Stable 60fps with ${livingCanvasConfig.totalParticles} particles`);
-    console.log(
-      `Coverage: ${livingCanvasData.centerCoverage} center, ${livingCanvasData.edgeCoverage} edge particles`
-    );
-    console.log(
-      `Viewport: ${livingCanvasConfig.visibleWidth.toFixed(2)} x ${livingCanvasConfig.visibleHeight.toFixed(2)} world units`
-    );
-    console.log(
-      `Camera: Z=${livingCanvasConfig.camZ}, FOV=${livingCanvasConfig.fov}°, Aspect=${livingCanvasConfig.aspect.toFixed(2)}`
-    );
-    console.groupEnd();
+    frameCountRef.current = 0;
+    const handler = (payload = {}) => {
+      const directive = payload?.directive || payload || {};
+      const ts =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now().toFixed(0)
+          : Date.now();
+      console.log('📥 RENDERER HANDLER CALLED:', {
+        timestamp: ts,
+        hasMorphProgress: typeof directive?.morphProgress === 'number',
+        morphValue: directive?.morphProgress,
+      });
+
+      if (ignoreDirectivesRef.current) {
+        if (DEV) console.debug('[WBG] ignoring directive post-fencepost', directive?.morphProgress);
+        return;
+      }
+      const mat = materialRef.current;
+      const geo = geometryRef.current;
+      if (!mat?.uniforms || !geo) return;
+
+      if (typeof window !== 'undefined') {
+        window.__lastDirective = directive;
+      }
+
+      const uniforms = mat.uniforms;
+
+      const currentStage = stageNameRef.current;
+
+      trace('DIR', {
+        source: 'WBG:APPLIED',
+        morph: Number.isFinite(directive.morphProgress) ? clamp01(directive.morphProgress) : null,
+        draw: Number.isFinite(directive.drawCount) ? directive.drawCount : null,
+        active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
+      });
+
+      if (Number.isFinite(directive?.morphProgress)) {
+        frameCountRef.current += 1;
+        if (frameCountRef.current <= 60) {
+          console.log(
+            `🎨 Renderer frame #${frameCountRef.current}: morphProgress=${(directive.morphProgress * 100).toFixed(1)}%`
+          );
+        } else if (frameCountRef.current % 60 === 0) {
+          console.log(`🎨 Renderer: ${frameCountRef.current} total frames received`);
+        }
+        console.log(`🎨 Renderer received morphProgress: ${(directive.morphProgress * 100).toFixed(0)}%`);
+      }
+
+      if (DEV) renderGuardRef.current = true;
+      try {
+        // Draw range (single writer)
+        let drawUpdated = false;
+        if (Number.isFinite(directive.activeCount)) {
+          const count = Math.max(0, Math.floor(directive.activeCount));
+          setActiveCount(count);
+          geo.setDrawRange(0, count);
+          if (uniforms.uActiveCount) uniforms.uActiveCount.value = count;
+          if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = count;
+          if (typeof window !== 'undefined') window.__lastActiveCount = count;
+          drawUpdated = true;
+        }
+
+        if (!drawUpdated && Number.isFinite(directive.drawCount)) {
+          const count = Math.max(0, Math.floor(directive.drawCount));
+          geo.setDrawRange(0, count);
+          if (typeof window !== 'undefined') window.__lastActiveCount = count;
+        }
+
+        // Morph progress + fencepost emission
+        if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
+          const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+          const newValue = clamp01(directive.morphProgress);
+          uniforms.uMorphProgress.value = newValue;
+          if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
+          if (Math.abs(newValue - oldValue) > 0.001) {
+            console.log(
+              `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
+            );
+          }
+
+          if (emergencePendingRef.current && !emittedEmergedRef.current && newValue >= 0.995) {
+            emittedEmergedRef.current = true;
+            emergencePendingRef.current = false;
+            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            ignoreDirectivesRef.current = true;            if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+              uniforms.uPostMorphFreeze.value = 1.0;
+              mat.uniformsNeedUpdate = true;
+              trace('WBG:FREEZE', { value: 1, source: 'directive' });
+            }
+            const payload = {
+              at: now,
+              source: 'renderer-directive',
+              stage: currentStage,
+              morph: newValue,
+            };
+            queueFencepost(payload);
+          }
+        } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
+          console.warn('⚠️ uMorphProgress uniform not found on material!');
+        }
+
+      if (Number.isFinite(directive?.pointSize) && uniforms.uPointSize) {
+          uniforms.uPointSize.value = directive.pointSize;
+        }
+        if (Number.isFinite(directive?.gaussianSigma) && uniforms.uGaussianSigma) {
+          uniforms.uGaussianSigma.value = directive.gaussianSigma;
+        }
+        if (Number.isFinite(directive?.spreadFactor) && uniforms.uSpreadFactor) {
+          uniforms.uSpreadFactor.value = directive.spreadFactor;
+        }
+        if (directive?.morphType !== undefined && directive?.morphType !== null && uniforms.uMorphType) {
+          uniforms.uMorphType.value = morphTypeToInt(directive.morphType);
+        }
+        if (directive?.postMorphFreeze !== undefined && uniforms.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = directive.postMorphFreeze ? 1.0 : 0.0;
+          mat.uniformsNeedUpdate = true;
+        }
+        if (Array.isArray(directive?.tierHighlight) && uniforms.uTierHighlight?.value) {
+          const arr = uniforms.uTierHighlight.value;
+          for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
+            arr[i] = directive.tierHighlight[i];
+          }
+        }
+        if (directive?.uniforms && typeof directive.uniforms === 'object') {
+          for (const key in directive.uniforms) {
+            if (Object.hasOwn(directive.uniforms, key) && uniforms[key]) {
+              uniforms[key].value = directive.uniforms[key];
+            }
+          }
+        }
+
+        mat.uniformsNeedUpdate = true;
+      } finally {
+        if (DEV) renderGuardRef.current = false;
+      }
+    };
+
+    const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+    console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+    console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+    console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+    if (typeof window !== 'undefined') {
+      window._rendererSubscriptionCheck = () => {
+        console.log('🔍 Subscription check:', {
+          handlerStillExists: typeof handler === 'function',
+          BeatBusExists: typeof BeatBus !== 'undefined',        });
+      };
+    }
   }, []);
+
+  // early-out fallback if not ready
+  if (!atlasTexture || !blueprint || !materialRef.current || !geometryRef.current) {
+    return (
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" array={new Float32Array([0,0,0])} itemSize={3} />
+        </bufferGeometry>
+        <pointsMaterial size={8} />
+      </points>
+    );
+  }
 
   return (
-    <>
-      <color attach="background" args={['#0a0a0a']} />
-      <points ref={pointsRef} geometry={livingCanvasGeometry} material={livingCanvasMaterial} />
-    </>
+    <points
+      ref={meshRef}
+      geometry={geometryRef.current}
+      material={materialRef.current}
+      frustumCulled={false}
+      scale={[1, 1, 1]}
+    />
   );
 }
 
-/*
-🔥 LIVING CANVAS SOLUTION - CAMERA POSITIONING FIXED
+export default React.memo(WebGLBackground);
 
-✅ CAMERA CALCULATION CORRECTED: Fixed inverted logic (Z=8 instead of Z=0.2)
-✅ CELL ORGANISM EFFECT: Perfect "living tissue" appearance at optimal camera distance
-✅ DENSITY TARGETS CORRECTED: Reduced from 220 to 150 particles/sq unit for Z=8
-✅ PERFORMANCE OPTIMIZED: Capped at 12k particles for stable 60fps
-✅ ENHANCED CELLULAR BREATHING: Stronger amplitude and organic movement
-✅ LARGER PARTICLE SIZES: 15px for ULTRA quality creates visible "cells"
-✅ NO HOLES GUARANTEED: Core protection properly scaled for Z=8 camera
+// Diagnostic analysis (dev only)
+if (typeof window !== 'undefined') {
+  window.analyzeDiagnostic = function analyzeDiagnostic() {
+    const data = window.RAYCAST_DIAGNOSTIC?.lastTest;
+    if (!data) {
+      console.error('No diagnostic data. Click particles first.');
+      return;
+    }
 
-KEY FIXES:
-- Camera Z: 0.2 → 8 (eliminates microscope distortion effect)
-- Visible world: 0.16x0.31 → 6.4x12.3 units (proper cell view scale)
-- Density target: 220 → 150 particles/sq unit (corrected for larger viewport)
-- Particle size: 6.5px → 15px (visible cells instead of dots)
-- Living amplitude: 0.06 → 0.15 (enhanced breathing for organism effect)
-- Core lock radius: Properly scaled for Z=8 camera distance
+    console.log('==== RAYCASTING DIAGNOSTIC ANALYSIS ====\n');
 
-EXPECTED VISUAL RESULT:
-- Large, visible particles that look like cells/organisms
-- Organic breathing motion resembling living tissue
-- Dense coverage without holes or sparse areas
-- Smooth 60fps performance with capped particle count
-- "Microscopic living organism" effect instead of random dots
+    const camPos = data.camera?.position || { x: 0, y: 0, z: 0 };
+    const particlePos = data.mesh?.geometry?.firstParticle || { x: 0, y: 0, z: 0 };
+    const distToParticles = Math.sqrt(
+      Math.pow(camPos.x - particlePos.x, 2) +
+        Math.pow(camPos.y - particlePos.y, 2) +
+        Math.pow(camPos.z - particlePos.z, 2)
+    );
 
-This transforms your particle system from "random scattered dots" 
-into a "living canvas of cellular organisms" with natural breathing motion.
-*/
+    console.log('THEORY 1: Threshold Too Small');
+    console.log(`  Camera distance to particles: ${distToParticles.toFixed(2)} units`);
+    console.log(`  Current threshold: ${data.raycaster.threshold}`);
+    const recommendedThreshold = Math.max(0.5, distToParticles * 0.05);
+    console.log(`  Recommended threshold: ${recommendedThreshold.toFixed(2)}`);
+    console.log(
+      `  LIKELY: ${distToParticles > 20 ? 'YES - camera very far' : 'NO - distance reasonable'}\n`
+    );
+
+    const meshPos = data.mesh?.position || { x: 0, y: 0, z: 0 };
+    const meshScale = data.mesh?.scale || { x: 1, y: 1, z: 1 };
+    const meshRot = data.mesh?.rotation || { x: 0, y: 0, z: 0 };
+    const isIdentityTransform =
+      Math.abs(meshPos.x) < 0.01 &&
+      Math.abs(meshPos.y) < 0.01 &&
+      Math.abs(meshPos.z) < 0.01 &&
+      Math.abs(meshScale.x - 1) < 0.01 &&
+      Math.abs(meshScale.y - 1) < 0.01 &&
+      Math.abs(meshScale.z - 1) < 0.01 &&
+      Math.abs(meshRot.x) < 0.01 &&
+      Math.abs(meshRot.y) < 0.01 &&
+      Math.abs(meshRot.z) < 0.01;
+
+    console.log('THEORY 2: Mesh Transform Issue');
+    console.log(
+      `  Mesh position: (${meshPos.x.toFixed(3)}, ${meshPos.y.toFixed(3)}, ${meshPos.z.toFixed(3)})`
+    );
+    console.log(
+      `  Mesh scale: (${meshScale.x.toFixed(3)}, ${meshScale.y.toFixed(3)}, ${meshScale.z.toFixed(
+        3
+      )})`
+    );
+    console.log(
+      `  Mesh rotation: (${meshRot.x.toFixed(3)}, ${meshRot.y.toFixed(3)}, ${meshRot.z.toFixed(
+        3
+      )})`
+    );
+    console.log(`  Is identity transform: ${isIdentityTransform ? 'YES' : 'NO'}`);
+    console.log(`  Matrix needs update: ${data.mesh?.matrixWorldNeedsUpdate}\n`);
+
+    const particleZ = particlePos?.z ?? 0;
+    const withinFrustum =
+      data.camera && particleZ > -data.camera.far && particleZ < -data.camera.near;
+
+    console.log('THEORY 3: Particles Outside Camera Frustum');
+    console.log(`  Camera near: ${data.camera?.near}`);
+    console.log(`  Camera far: ${data.camera?.far}`);
+    console.log(`  First particle Z: ${particleZ.toFixed(2)}`);
+    console.log(`  Within frustum: ${withinFrustum ? 'YES' : 'NO'}\n`);
+
+    const boundingSphere = data.mesh?.geometry?.boundingSphere;
+    console.log('THEORY 4: Bounding Sphere Missing/Wrong');
+    console.log(`  Has bounding sphere: ${boundingSphere ? 'YES' : 'NO'}`);
+    if (boundingSphere) {
+      console.log(
+        `  Center: (${boundingSphere.centerX.toFixed(2)}, ${boundingSphere.centerY.toFixed(
+          2
+        )}, ${boundingSphere.centerZ.toFixed(2)})`
+      );
+      console.log(`  Radius: ${boundingSphere.radius.toFixed(2)}`);
+      console.log(`  Matches particle spread: ${boundingSphere.radius > 1 ? 'YES' : 'NO'}`);
+    }
+    console.log('');
+
+    console.log('THEORY 5: Matrix World Not Updated');
+    console.log(`  Camera matrix needs update: ${data.camera?.matrixWorldNeedsUpdate}`);
+    console.log(`  Mesh matrix needs update: ${data.mesh?.matrixWorldNeedsUpdate}\n`);
+
+    console.log('==== RECOMMENDATIONS ====\n');
+    const fixes = [];
+
+    if (distToParticles > 20) {
+      fixes.push({
+        priority: 'HIGH',
+        issue: 'Camera far from particle cluster',
+        fix: `particleRaycaster.setThreshold(${recommendedThreshold.toFixed(2)});`,
+      });
+    }
+
+    if (!isIdentityTransform) {
+      fixes.push({
+        priority: 'CRITICAL',
+        issue: 'Mesh has non-identity transform',
+        fix: 'Call mesh.updateMatrixWorld() before raycasting or reset transforms',
+      });
+    }
+
+    if (!withinFrustum) {
+      fixes.push({
+        priority: 'CRITICAL',
+        issue: 'Particles outside camera frustum',
+        fix: 'Adjust camera near/far or particle positions',
+      });
+    }
+
+    if (!boundingSphere) {
+      fixes.push({
+        priority: 'HIGH',
+        issue: 'Geometry missing bounding sphere',
+        fix: 'Call geometry.computeBoundingSphere() before rendering',
+      });
+    }
+
+    if (data.mesh?.matrixWorldNeedsUpdate) {
+      fixes.push({
+        priority: 'HIGH',
+        issue: 'Mesh matrixWorld stale',
+        fix: 'mesh.updateMatrixWorld() before raycasting',
+      });
+    }
+
+    if (fixes.length === 0) {
+      console.log('❓ No obvious issues detected. Possible causes:');
+      console.log('   - Particle buffer format incompatible with Raycaster');
+      console.log('   - Scene/camera mismatch in React Three Fiber');
+      console.log('   - Coordinate conversion issue upstream');
+    } else {
+      fixes.forEach((fix, index) => {
+        console.log(`${index + 1}. [${fix.priority}] ${fix.issue}`);
+        console.log(`   Fix: ${fix.fix}\n`);
+      });
+    }
+
+    console.log('==== FULL DATA AVAILABLE ====');
+    console.log('Inspect window.RAYCAST_DIAGNOSTIC.lastTest for raw values.');
+
+    return fixes;
+  };
+
+  console.log('🧪 Diagnostic analysis ready');
+  console.log('   1. Click particles once');
+  console.log('   2. Run: window.analyzeDiagnostic()');
+}

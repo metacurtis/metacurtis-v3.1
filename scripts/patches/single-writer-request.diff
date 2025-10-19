@@ -1,0 +1,27 @@
+--- a/canon-console/runtime/hud.js
++++ b/canon-console/runtime/hud.js
+@@
+-geometry.setDrawRange(0, desired); // ❌ direct GPU write from HUD
++BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { activeCount: desired }); // ✅ request; renderer performs write
+
+--- a/src/components/webgl/WebGLBackground.jsx
++++ b/src/components/webgl/WebGLBackground.jsx
+@@
+ function onRenderDirective(d){
+   const { morphProgress, drawCount, activeCount, pointSize, gaussianSigma, tierHighlight, uniforms } = d;
+-  // (previous)
++  // Single-writer enforcement
++  if (Number.isFinite(activeCount)) {
++    const count = Math.max(0, Math.floor(activeCount));
++    geometry.setDrawRange(0, count);
++  }
++  if (material?.uniforms) {
++    if (Number.isFinite(morphProgress)) material.uniforms.uMorphProgress.value = morphProgress;
++    if (Number.isFinite(gaussianSigma)) material.uniforms.uGaussianSigma.value = gaussianSigma;
++    if (Array.isArray(tierHighlight))   material.uniforms.uTierHighlight.value = tierHighlight;
++    if (uniforms) for (const k in uniforms) if (material.uniforms[k]) material.uniforms[k].value = uniforms[k];
++  }
++  if (Number.isFinite(pointSize) && material.uniforms?.uPointSize) {
++    material.uniforms.uPointSize.value = pointSize;
++  }
+ }

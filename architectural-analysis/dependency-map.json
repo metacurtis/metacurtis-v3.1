@@ -1,0 +1,332 @@
+{
+  "App.jsx": [
+    "react",
+    "./components/consciousness/ConsciousnessTheater",
+    "./stores/atoms/clockAtom",
+    "./engine/ConsciousnessEngine"
+  ],
+  "__tests__/smoke.test.js": [
+    "vitest"
+  ],
+  "assets/paths/hello-curtis-d.js": [],
+  "bootstrap/wireSSTv3.js": [
+    "@/engine/NarrativeController.js",
+    "@/engine/MemoryFragmentController.js",
+    "@/stores/atoms/narrativeAtom.js"
+  ],
+  "canon/boundary.js": [
+    "./contracts/registry.js"
+  ],
+  "canon/console/L1.js": [],
+  "canon/console/L2.js": [
+    "./L1.js"
+  ],
+  "canon/console/banner.js": [
+    "@/theater/bus"
+  ],
+  "canon/contracts/events.js": [],
+  "canon/contracts/index.js": [],
+  "canon/contracts/registry.js": [],
+  "canon/deprecation.js": [],
+  "canon/doctor/base.js": [],
+  "canon/guard/L1.js": [],
+  "canon/guard/L2.js": [
+    "@/canon/contracts/events.js",
+    "@/theater/bus"
+  ],
+  "canon/hud.js": [],
+  "canon/init-amplified.js": [
+    "./contracts/registry.js",
+    "./boundary.js",
+    "./hud.js",
+    "./tests/contracts.test.js",
+    "./deprecation.js",
+    "../canon-guard/L2.js",
+    "../canon-console/L2.js"
+  ],
+  "canon/init.js": [
+    "../canon-guard/L2.js",
+    "../canon-console/L2.js"
+  ],
+  "canon/tests/contracts.test.js": [
+    "../contracts/registry.js"
+  ],
+  "canon-console/L1.js": [],
+  "canon-console/L2.js": [
+    "./L1.js"
+  ],
+  "canon-guard/L1.js": [],
+  "canon-guard/L2.js": [
+    "./L1.js"
+  ],
+  "canon-guard/blueprintGuard.js": [
+    "@/theater/bus",
+    "@/theater/events.js"
+  ],
+  "canon-guard/runtime/DegradePolicy.js": [],
+  "canon-guard/runtime/GuardRuntimeInject.js": [
+    "./DegradePolicy.js"
+  ],
+  "components/common/ErrorBoundary.jsx": [
+    "react"
+  ],
+  "components/consciousness/ConsciousnessTheater.jsx": [
+    "react",
+    "@/config/canonical/canonicalAuthority.js",
+    "@/stores/atoms/stageAtom.js",
+    "@/stores/atoms/qualityAtom.js",
+    "@/hooks/useMemoryFragments.js",
+    "@/components/webgl/WebGLCanvas.jsx",
+    "@/components/dev/DevPerformanceMonitor",
+    "@/theater/TheaterDirector.js",
+    "@/components/theater/OpeningSequence.jsx",
+    "@/theater/bus",
+    "@/theater/events.js"
+  ],
+  "components/dev/DebugExpose.jsx": [
+    "@react-three/fiber",
+    "react"
+  ],
+  "components/dev/DevPerformanceMonitor.jsx": [
+    "react",
+    "@/stores/atoms/qualityAtom",
+    "@/stores/atoms/clockAtom",
+    "@/stores/atoms/stageAtom"
+  ],
+  "components/theater/OpeningSequence.jsx": [
+    "react",
+    "@/theater/bus",
+    "@/theater/events.js"
+  ],
+  "components/ui/AdvancedContactPortal.jsx": [
+    "react",
+    "react-dom",
+    "@/stores/narrativeStore"
+  ],
+  "components/ui/CanvasErrorBoundary.jsx": [
+    "react"
+  ],
+  "components/ui/Footer.jsx": [],
+  "components/ui/Layout.jsx": [
+    "prop-types"
+  ],
+  "components/ui/NarrativeUIControls.jsx": [
+    "react"
+  ],
+  "components/ui/ResourceMonitor.jsx": [
+    "@/stores/resourceStore.js"
+  ],
+  "components/ui/Typewriter.jsx": [
+    "react",
+    "../../stores/useInteractionStore"
+  ],
+  "components/ui/narrative/MemoryFragments.jsx": [
+    "react",
+    "@/stores/narrativeStore",
+    "@/config/narrativeParticleConfig"
+  ],
+  "components/ui/narrative/StageNavigation.jsx": [
+    "@/stores/narrativeStore"
+  ],
+  "components/webgl/CTFOverlay.jsx": [
+    "react",
+    "@react-three/fiber",
+    "three",
+    "@/theater/bus",
+    "@/theater/events.js"
+  ],
+  "components/webgl/WebGLBackground.jsx": [
+    "react",
+    "@react-three/fiber",
+    "three",
+    "@/theater/events.js",
+    "@modules/orchestration/core/BeatBus.js",
+    "./consciousness/PointSpriteAtlas.js",
+    "../../config/canonical/canonicalAuthority.js",
+    "../../shaders/templates/consciousness-vertex.glsl?raw",
+    "../../shaders/templates/consciousness-fragment.glsl?raw"
+  ],
+  "components/webgl/WebGLCanvas.jsx": [
+    "react",
+    "@react-three/fiber",
+    "./CTFOverlay",
+    "@react-three/drei",
+    "@/components/dev/DevPerformanceMonitor",
+    "@/components/dev/DebugExpose"
+  ],
+  "components/webgl/consciousness/ConsciousnessPatterns.js": [],
+  "components/webgl/consciousness/PointSpriteAtlas.js": [
+    "three"
+  ],
+  "config/canonical/canonicalAuthority.js": [
+    "../sst3/sst-v3.0-config.js",
+    "../sst3/tier-behaviors.js",
+    "../sst3/narrative-dialogue.js",
+    "../sst3/memory-fragments.js"
+  ],
+  "config/canonical/contaminationScan.js": [],
+  "config/sst3/memory-fragments.js": [],
+  "config/sst3/narrative-dialogue.js": [],
+  "config/sst3/sst-v3.0-config.js": [],
+  "config/sst3/tier-behaviors.js": [],
+  "console-shim.js": [],
+  "contracts/OptimizedContracts.js": [
+    "crypto"
+  ],
+  "core/CentralEventClock.js": [
+    "mitt"
+  ],
+  "core/index.js": [],
+  "dev/BlueprintTap.js": [],
+  "dev/RenderApplyShim.js": [],
+  "dev/RenderDiagnostic.js": [],
+  "dev/renderHealthcheck.js": [],
+  "engine/ConsciousnessEngine.js": [
+    "@/config/canonical/canonicalAuthority.js",
+    "../utils/random.js",
+    "@/components/webgl/consciousness/ConsciousnessPatterns.js",
+    "@/theater/bus",
+    "@/theater/events.js",
+    "./FormationResolver.js"
+  ],
+  "engine/FormationResolver.js": [
+    "@/assets/paths/hello-curtis-d.js"
+  ],
+  "engine/MemoryFragmentController.js": [],
+  "engine/NarrativeController.js": [],
+  "engine/TierSystem.js": [
+    "@/config/sst3/sst-v3.0-config.js",
+    "@/config/sst3/tier-behaviors.js"
+  ],
+  "hooks/atoms/useInteractionStore.js": [
+    "@/stores/atoms/createAtom",
+    "@/stores/atoms/interactionAtom"
+  ],
+  "hooks/atoms/useNarrativeStore.js": [
+    "@/stores/atoms/createAtom",
+    "@/stores/atoms/narrativeAtom"
+  ],
+  "hooks/atoms/usePerformanceStore.js": [
+    "@/stores/atoms/createAtom",
+    "@/stores/atoms/performanceAtom"
+  ],
+  "hooks/atoms/useResourceStore.js": [
+    "@/stores/atoms/createAtom",
+    "@/stores/atoms/resourceAtom"
+  ],
+  "hooks/useAdaptiveQuality.js": [
+    "react",
+    "@/hooks/useCentralClock",
+    "@/utils/performance/AdaptiveQualitySystem.js",
+    "@/stores/atoms/qualityAtom",
+    "@/stores/atoms/clockAtom"
+  ],
+  "hooks/useCentralClock.js": [
+    "react",
+    "@/core/CentralEventClock"
+  ],
+  "hooks/useIdle.js": [
+    "react"
+  ],
+  "hooks/useMemoryFragments.js": [
+    "react",
+    "@/config/canonical/canonicalAuthority.js"
+  ],
+  "hooks/useResourceTracker.js": [
+    "react",
+    "@/utils/webgl/ResourceTracker.js"
+  ],
+  "main.jsx": [
+    "react",
+    "react-dom/client",
+    "./App.jsx",
+    "../modules/state/bridges/AtomicToBeatBus.js"
+  ],
+  "modules/orchestration/core/BeatBus.js": [
+    "@/canon/contracts/events.js"
+  ],
+  "modules/orchestration/core/BeatBusAdapter.js": [],
+  "orchestration/bus-spine.js": [
+    "@modules/orchestration/core/BeatBus.js"
+  ],
+  "runtime/gpuProfile.js": [
+    "three"
+  ],
+  "runtime/materialFactory.js": [
+    "three",
+    "./gpuProfile.js"
+  ],
+  "sections/About.jsx": [
+    "react",
+    "gsap",
+    "gsap/ScrollTrigger",
+    "@/components/ui/Typewriter"
+  ],
+  "sections/Contact.jsx": [
+    "react",
+    "gsap",
+    "gsap/ScrollTrigger"
+  ],
+  "sections/Features.jsx": [
+    "react",
+    "gsap",
+    "gsap/ScrollTrigger"
+  ],
+  "stores/atoms/clockAtom.js": [],
+  "stores/atoms/createAtom.js": [
+    "react"
+  ],
+  "stores/atoms/index.js": [
+    "./narrativeAtom",
+    "./performanceAtom",
+    "./interactionAtom",
+    "./resourceAtom"
+  ],
+  "stores/atoms/interactionAtom.js": [
+    "./createAtom"
+  ],
+  "stores/atoms/narrativeAtom.js": [
+    "./createAtom"
+  ],
+  "stores/atoms/performanceAtom.js": [
+    "./createAtom"
+  ],
+  "stores/atoms/qualityAtom.js": [
+    "./createAtom.js",
+    "@/config/canonical/canonicalAuthority.js"
+  ],
+  "stores/atoms/resourceAtom.js": [
+    "./createAtom"
+  ],
+  "stores/atoms/stageAtom.js": [
+    "./createAtom.js"
+  ],
+  "stores/narrativeStore.js": [],
+  "stores/performanceStore.js": [],
+  "stores/resourceStore.js": [],
+  "stores/useInteractionStore.js": [],
+  "theater/TheaterDirector.js": [
+    "@/theater/bus",
+    "./events.js"
+  ],
+  "theater/events.js": [],
+  "utils/featureFlags.js": [],
+  "utils/performance/AdaptiveQualitySystem.js": [],
+  "utils/performance/DeviceCapabilities.js": [],
+  "utils/performance/PerformanceMetrics.js": [],
+  "utils/performance/ResourceMetrics.js": [
+    "@/utils/webgl/ResourceRegistry.js"
+  ],
+  "utils/random.js": [
+    "@/utils/random.js"
+  ],
+  "utils/shaderUtils.js": [],
+  "utils/webgl/FrustumAwareParticleGenerator.js": [
+    "three"
+  ],
+  "utils/webgl/ResourceRegistry.js": [],
+  "utils/webgl/ResourceTracker.js": [],
+  "utils/webgl/ShaderDebugSystem.js": [
+    "three"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["meta","features","pipeline","shaderContract","events","quality","scrollAndMorph","spriteSemantics","stageOrder","stages","performance","integrityRules","successMetrics","implementationPhases","debugSurface","changeLog"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["version","authority","mode"],
+      "properties": {
+        "version": { "const": "3.3" },
+        "authority": { "const": "ABSOLUTE" },
+        "mode": { "const": "TEXT_FIRST_REVEAL" }
+      }
+    },
+    "stageOrder": {
+      "type": "array",
+      "items": { "enum": ["genesis","discipline","neural","velocity","architecture","harmony","transcendence"] },
+      "minItems": 7,
+      "maxItems": 7
+    },
+    "stages": {
+      "type": "object",
+      "required": ["genesis","discipline","neural","velocity","architecture","harmony","transcendence"],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(genesis|discipline|neural|velocity|architecture|harmony|transcendence)$": {
+          "type": "object",
+          "required": ["word","particlesBase","palette","tierMix","scrollRangePercent"],
+          "properties": {
+            "word": { "type": "string", "minLength": 1 },
+            "particlesBase": { "type": "integer", "minimum": 1 },
+            "palette": { "type": "array", "items": { "type": "string", "pattern": "^#([0-9a-fA-F]{6})$" }, "minItems": 3, "maxItems": 3 },
+            "tierMix": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 },
+            "scrollRangePercent": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+          }
+        }
+      }
+    }
+  }
+}

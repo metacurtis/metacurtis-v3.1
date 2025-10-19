@@ -1,0 +1,22 @@
+{
+  "phase": "4b",
+  "timestamp": "2025-08-21T17:58:24.929Z",
+  "canonicalBus": "src/src/modules/orchestration/core/BeatBus.js",
+  "instanceCount": 1,
+  "hasGlobalExport": true,
+  "hasCanonCalls": true,
+  "disposeDebt": 18,
+  "patchesApplied": true,
+  "remainingIssues": 0,
+  "hmr_pre": {
+    "listeners": 33,
+    "debt": 28
+  },
+  "hmr_post": {
+    "listeners": 33,
+    "captured": 6,
+    "debt": 28
+  },
+  "bridges_cleaned": 1,
+  "idempotent": true
+}

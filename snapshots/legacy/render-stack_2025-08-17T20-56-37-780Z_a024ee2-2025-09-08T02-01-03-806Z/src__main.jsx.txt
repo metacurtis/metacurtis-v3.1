@@ -1,0 +1,57 @@
+// src/main.jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './styles/index.css';
+
+const rootEl = document.getElementById('root');
+
+if (!rootEl) {
+  console.error('❌ Could not find #root element');
+} else {
+  const root = ReactDOM.createRoot(rootEl);
+  // 🔥 No React.StrictMode wrapper here to avoid double-mount in DEV
+  root.render(<App />);
+}
+
+if (import.meta.env.DEV) {
+  // Canon Console L2 (dev runtime)
+  import(/* @vite-ignore */ '../console/runtime/inject.js')
+    .then(()=>console.log('✅ Canon L2 injected'))
+    .catch((err)=>console.warn('Canon L2 not found (optional):', err));
+  import('./dev/renderHealthcheck.js')
+    .then(()=>console.log('✅ Render Healthcheck loaded'))
+    .catch(()=>console.warn('Healthcheck not loaded (dev-only).'));
+  import('./canon-guard/blueprintGuard.js')
+    .then(()=>console.log('✅ Canon Guard loaded'))
+    .catch(()=>console.warn('Canon Guard not found (dev-only).'));
+  // Optionally load Canon Console in development.
+  // Using /* @vite-ignore */ keeps this optional — if the file doesn't exist,
+  // Vite won't fail the build; the dynamic import will just reject.
+  const injectPath = '../canon-console/browser/inject.js';
+  import(/* @vite-ignore */ injectPath)
+    .then(() => console.log('✅ Canon Console loaded'))
+    .catch((err) => {
+      const msg = String(err?.message || err);
+      if (
+        msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('ERR_MODULE_NOT_FOUND') ||
+        msg.includes('404')
+      ) {
+        console.warn('ℹ️ Canon Console not found (optional). Skipping.');
+      } else {
+        console.error('❌ Canon Console failed to load:', err);
+      }
+    });
+}
+
+
+// CanonFinisher:dev-injectors
+
+if (import.meta.env.DEV) {
+  // ensure Canon Console injector (if present)
+  try { import(/* @vite-ignore */ '../canon-console/browser/inject.js'); } catch {}
+  // Guard runtime (L2→L3)
+  try { import("@/canon-guard/runtime/GuardRuntimeInject.js"); } catch {}
+}
+  

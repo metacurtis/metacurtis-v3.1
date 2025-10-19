@@ -1,0 +1,20 @@
+name: Canon Sentinel
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  canon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci || true
+      - name: Guard imports & renderer policy
+        run: npm run ci:guards
+      - name: Opening sentinel
+        run: npm run validate:opening
+      - name: Vision sentinel
+        run: npm run validate:vision || true

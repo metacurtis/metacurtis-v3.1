@@ -1,0 +1,330 @@
+// src/stores/narrativeStore.atomic.js
+// ✅ COMPATIBILITY SHIM: Drop-in replacement for useNarrativeStore using atomic pattern
+// Revolutionary Implementation Session 2 - Phase 1
+
+import { useSyncExternalStore } from 'react';
+import { clockAtom } from './atoms/clockAtom.js';
+import { stageAtom } from './atoms/stageAtom.js';
+import { qualityAtom } from './atoms/qualityAtom.js';
+
+// ✅ SST v2.0: Preserved stage definitions for compatibility
+const NARRATIVE_STAGES = {
+  0: {
+    name: 'genesis', title: 'Genesis Spark',
+    description: '1983: Age 8 - The Genesis Code',
+    narrative: 'A single spark of curiosity on a Commodore 64',
+    scrollRange: [0, 14],
+  },
+  1: {
+    name: 'discipline', title: 'Discipline Forge',
+    description: '1983-2022: The Silent Years - Discipline Forged',
+    narrative: '39 years in business, logistics, and finance',
+    scrollRange: [14, 28],
+  },
+  2: {
+    name: 'neural', title: 'Neural Awakening',
+    description: '2022-2025: AI Foundation - Mathematical Mastery',
+    narrative: 'AI partnership consciousness emerging',
+    scrollRange: [28, 42],
+  },
+  3: {
+    name: 'velocity', title: 'Velocity Explosion',
+    description: 'February 2025: "Teach me to code" - Velocity Unleashed',
+    narrative: 'Global electrical storm constellation',
+    scrollRange: [42, 56],
+  },
+  4: {
+    name: 'architecture', title: 'Architecture Consciousness',
+    description: 'March 2025: WebGL Crisis → Architecture Awakening',
+    narrative: 'Analytical grid constellations forming order from chaos',
+    scrollRange: [56, 70],
+  },
+  5: {
+    name: 'harmony', title: 'Harmonic Mastery',
+    description: 'March 2025: Systems Choreography - Code as Dance',
+    narrative: 'Golden balletic constellation flows',
+    scrollRange: [70, 84],
+  },
+  6: {
+    name: 'transcendence', title: 'Consciousness Transcendence',
+    description: 'Present: Digital Consciousness - Proven Mastery',
+    narrative: 'Unified golden galaxy constellation',
+    scrollRange: [84, 100],
+  },
+};
+
+// ✅ ATOMIC INTEGRATION: Concurrent-safe store composition
+const createAtomicNarrativeStore = () => {
+  return {
+    // ✅ PROXY: Stage state from stageAtom
+    get currentStage() { return stageAtom.getState().currentStage; },
+    get stageProgress() { return stageAtom.getState().stageProgress; },
+    get globalProgress() { return stageAtom.getState().globalProgress; },
+    get isTransitioning() { return stageAtom.getState().isTransitioning; },
+    get memoryFragmentsUnlocked() { return stageAtom.getState().memoryFragmentsUnlocked; },
+    get metacurtisActive() { return stageAtom.getState().metacurtisActive; },
+    get metacurtisVoiceLevel() { return stageAtom.getState().metacurtisVoiceLevel; },
+    
+    // ✅ PROXY: Performance state from clockAtom
+    get performanceMetrics() {
+      const clock = clockAtom.getState();
+      return {
+        fps: clock.fps,
+        deltaMs: clock.deltaMs,
+        frameTime: clock.averageFrameTime,
+        jankCount: clock.jankCount,
+        performanceGrade: clock.performanceGrade,
+      };
+    },
+    
+    // ✅ PROXY: Quality state from qualityAtom
+    get qualityConfig() { return qualityAtom.getState().getQualityConfig(); },
+    
+    // ✅ COMPATIBILITY: Preserved legacy properties
+    stageData: NARRATIVE_STAGES,
+    enableNarrativeMode: true,
+    autoAdvanceEnabled: false,
+    activeMemoryFragment: null,
+    
+    // Mock user engagement for compatibility
+    userEngagement: {
+      hasScrolled: false,
+      hasInteracted: false,
+      timeOnPage: 0,
+      fragmentsExplored: [],
+      scrollVelocity: 0,
+    },
+    
+    scrollState: {
+      lastScrollTime: 0,
+      scrollVelocity: 0,
+      isScrolling: false,
+      throttleMs: 16,
+    },
+    
+    // ✅ ACTIONS: Proxy to atomic stores
+    setStage: (stage) => stageAtom.getState().setStage(stage),
+    jumpToStage: (stage) => stageAtom.getState().jumpToStage(stage),
+    nextStage: () => stageAtom.getState().nextStage(),
+    prevStage: () => stageAtom.getState().prevStage(),
+    setGlobalProgress: (progress) => stageAtom.getState().setGlobalProgress(progress),
+    setStageProgress: (progress) => stageAtom.getState().setStageProgress(progress),
+    
+    // ✅ FEATURE GATES: Proxy to stageAtom
+    isStageFeatureEnabled: (featureKey) => stageAtom.getState().isFeatureUnlocked(featureKey),
+    
+    // ✅ NAVIGATION: Enhanced with atomic state
+    getNavigationState: () => {
+      const stage = stageAtom.getState().getNavigationState();
+      const quality = qualityAtom.getState().getQualityConfig();
+      
+      return {
+        ...stage,
+        qualityTier: quality.tier,
+        particleBudget: quality.particles,
+        enableNarrativeMode: true,
+      };
+    },
+    
+    // ✅ COMPATIBILITY: Preserved methods with atomic backend
+    getCurrentStageData: () => {
+      const stageIndex = stageAtom.getState().stageIndex;
+      return NARRATIVE_STAGES[stageIndex] || NARRATIVE_STAGES[0];
+    },
+    
+    getStageTitle: () => {
+      const stageIndex = stageAtom.getState().stageIndex;
+      return NARRATIVE_STAGES[stageIndex]?.title || 'Genesis Spark';
+    },
+    
+    getStageDescription: () => {
+      const stageIndex = stageAtom.getState().stageIndex;
+      return NARRATIVE_STAGES[stageIndex]?.description || '1983: Age 8 - The Genesis Code';
+    },
+    
+    isStageUnlocked: (stage) => {
+      const currentIndex = stageAtom.getState().stageIndex;
+      const targetIndex = typeof stage === 'string' ? 
+        ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'].indexOf(stage) : 
+        stage;
+      return targetIndex <= currentIndex;
+    },
+    
+    // ✅ PRESERVED: Legacy methods with no-op implementation
+    triggerTransition: (targetStage) => stageAtom.getState().jumpToStage(targetStage),
+    activateMemoryFragment: () => {}, // No-op for compatibility
+    deactivateMemoryFragment: () => {}, // No-op for compatibility
+    updateEngagement: () => {}, // No-op for compatibility
+    toggleNarrativeMode: () => {}, // No-op for compatibility
+    resetNarrative: () => stageAtom.getState().resetStage(),
+    
+    // ✅ PRESERVED: Feature gating with atomic backend
+    getEnabledFeatures: () => {
+      const stageIndex = stageAtom.getState().stageIndex;
+      const features = ['terminalBoot', 'scrollHints', 'stageNavigation'];
+      
+      if (stageIndex >= 1) features.push('particleInteraction');
+      if (stageIndex >= 2) features.push('memoryFragments', 'metacurtisEmergence');
+      if (stageIndex >= 3) features.push('metacurtisDialogue', 'visualOverrides');
+      if (stageIndex >= 4) features.push('architecturalDebug', 'performanceMetrics');
+      if (stageIndex >= 5) features.push('harmonicEffects');
+      if (stageIndex >= 6) features.push('fullAIInteraction', 'contactPortal');
+      
+      return features;
+    },
+    
+    areAllFeaturesEnabled: (featureKeys) => {
+      return featureKeys.every(key => stageAtom.getState().isFeatureUnlocked(key));
+    },
+    
+    // ✅ ENHANCED: Atomic-powered debugging
+    getNarrativeSnapshot: () => {
+      const stage = stageAtom.getState();
+      const clock = clockAtom.getState();
+      const quality = qualityAtom.getState();
+      
+      return {
+        stage: stage.currentStage,
+        stageIndex: stage.stageIndex,
+        progress: {
+          stage: stage.stageProgress,
+          global: stage.globalProgress,
+        },
+        performance: {
+          fps: clock.fps,
+          grade: clock.performanceGrade,
+          headroom: clock.fpsHeadroom,
+        },
+        quality: {
+          tier: quality.currentTier,
+          particles: quality.particleBudget,
+          canScale: quality.canScaleToUltraB,
+        },
+        features: {
+          memoryFragmentsUnlocked: stage.memoryFragmentsUnlocked,
+          metacurtisActive: stage.metacurtisActive,
+          enabledFeatures: ['stageNavigation'], // Simplified for compatibility
+        },
+        system: {
+          atomicStores: true,
+          totalStages: 7,
+        },
+        timestamp: Date.now(),
+      };
+    },
+    
+    getProgressionAnalysis: () => {
+      const snapshot = createAtomicNarrativeStore().getNarrativeSnapshot();
+      const stage = stageAtom.getState();
+      
+      return {
+        ...snapshot,
+        analysis: {
+          completionPercent: Math.round(stage.globalProgress * 100),
+          nextMilestone: stage.stageIndex < 6 ? NARRATIVE_STAGES[stage.stageIndex + 1].title : 'Complete',
+          userEngagementLevel: 'Active',
+        },
+      };
+    },
+    
+    // ✅ DEVELOPMENT: Enhanced atomic debugging
+    devJumpToStage: (stage) => {
+      if (process.env.NODE_ENV === 'development') {
+        stageAtom.getState().jumpToStage(stage);
+        console.log(`🚀 Atomic: Jumped to stage ${stage}`);
+      }
+    },
+    
+    devGetState: () => {
+      if (process.env.NODE_ENV === 'development') {
+        return createAtomicNarrativeStore().getNarrativeSnapshot();
+      }
+    },
+    
+    devTestFeature: (featureKey) => {
+      if (process.env.NODE_ENV === 'development') {
+        const enabled = stageAtom.getState().isFeatureUnlocked(featureKey);
+        console.log(`🧪 Atomic Feature '${featureKey}': ${enabled ? 'ENABLED' : 'DISABLED'}`);
+        return enabled;
+      }
+    },
+  };
+};
+
+// ✅ REACT INTEGRATION: useSyncExternalStore for concurrent safety
+export const useNarrativeStore = (selector = (state) => state) => {
+  return useSyncExternalStore(
+    // Subscribe: Listen to all relevant atoms
+    (callback) => {
+      const unsubscribeStage = stageAtom.subscribe(callback);
+      const unsubscribeClock = clockAtom.subscribe(callback);
+      const unsubscribeQuality = qualityAtom.subscribe(callback);
+      
+      return () => {
+        unsubscribeStage();
+        unsubscribeClock();
+        unsubscribeQuality();
+      };
+    },
+    // Get snapshot: Create composed state
+    () => {
+      const atomicStore = createAtomicNarrativeStore();
+      return selector(atomicStore);
+    },
+    // Server snapshot: Return initial state
+    () => {
+      const initialState = createAtomicNarrativeStore();
+      return selector(initialState);
+    }
+  );
+};
+
+// ✅ COMPATIBILITY: Export mappings for external use
+export { NARRATIVE_STAGES };
+
+// ✅ SCROLL BINDING: Enhanced with atomic backend
+export const createScrollBinding = () => {
+  let ticking = false;
+
+  const handleScroll = () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+        const maxScroll = Math.max(
+          document.body.scrollHeight - window.innerHeight,
+          document.documentElement.scrollHeight - window.innerHeight,
+          1
+        );
+
+        const globalProgress = Math.min(scrollY / maxScroll, 1);
+        stageAtom.getState().setGlobalProgress(globalProgress);
+
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  return () => window.removeEventListener('scroll', handleScroll);
+};
+
+// ✅ DEVELOPMENT: Global access with atomic backend
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  window.narrativeStoreAtomic = createAtomicNarrativeStore();
+  window.narrativeNavigationAtomic = {
+    jumpToStage: (stage) => stageAtom.getState().jumpToStage(stage),
+    nextStage: () => stageAtom.getState().nextStage(),
+    prevStage: () => stageAtom.getState().prevStage(),
+    getCurrentStage: () => stageAtom.getState().currentStage,
+    getNavigationState: () => stageAtom.getState().getNavigationState(),
+    getAllStages: () => ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'],
+    getQualityStatus: () => qualityAtom.getState().getScalingStatus(),
+    enableShowcase: () => qualityAtom.getState().enableShowcaseMode(),
+  };
+  
+  console.log('⚛️ narrativeStore.atomic: Compatibility shim active');
+  console.log('🔄 Available: window.narrativeStoreAtomic, window.narrativeNavigationAtomic');
+}
+
+export default useNarrativeStore;

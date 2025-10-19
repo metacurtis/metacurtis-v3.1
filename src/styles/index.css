@@ -32,3 +32,6 @@ body,
   font-family: var(--font-sans-css);
   /* ... other global styles ... */
 }
+/* Auto-added viewport/base styles */
+html, body, #root { height: 100%; margin: 0; background: #000; }
+canvas { display: block; }

@@ -1,0 +1,682 @@
+{
+  "summary": {
+    "mode": "WRITE",
+    "totalFiles": 111,
+    "considered": 111,
+    "skipped": 0,
+    "touched": 110,
+    "written": 110,
+    "focus": [
+      "src/components/theater/OpeningSequence.jsx",
+      "src/engine/ConsciousnessEngine.js",
+      "src/components/consciousness/ConsciousnessTheater.jsx"
+    ],
+    "timestamp": "2025-08-21T18:07:05.960Z"
+  },
+  "results": [
+    {
+      "file": "src/App.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "App.jsx.bak"
+    },
+    {
+      "file": "src/__tests__/smoke.test.js",
+      "edits": 1,
+      "written": true,
+      "backup": "smoke.test.js.bak"
+    },
+    {
+      "file": "src/bootstrap/wireSSTv3.js",
+      "edits": 5,
+      "written": true,
+      "backup": "wireSSTv3.js.bak"
+    },
+    {
+      "file": "src/canon/boundary.js",
+      "edits": 1,
+      "written": true,
+      "backup": "boundary.js.bak"
+    },
+    {
+      "file": "src/canon/console/L1.js",
+      "edits": 1,
+      "written": true,
+      "backup": "L1.js.bak"
+    },
+    {
+      "file": "src/canon/console/L2.js",
+      "edits": 1,
+      "written": true,
+      "backup": "L2.js.bak"
+    },
+    {
+      "file": "src/canon/console/banner.js",
+      "edits": 1,
+      "written": true,
+      "backup": "banner.js.bak"
+    },
+    {
+      "file": "src/canon/contracts/events.js",
+      "edits": 1,
+      "written": true,
+      "backup": "events.js.bak"
+    },
+    {
+      "file": "src/canon/contracts/index.js",
+      "edits": 1,
+      "written": true,
+      "backup": "index.js.bak"
+    },
+    {
+      "file": "src/canon/contracts/registry.js",
+      "edits": 1,
+      "written": true,
+      "backup": "registry.js.bak"
+    },
+    {
+      "file": "src/canon/deprecation.js",
+      "edits": 1,
+      "written": true,
+      "backup": "deprecation.js.bak"
+    },
+    {
+      "file": "src/canon/doctor/base.js",
+      "edits": 1,
+      "written": true,
+      "backup": "base.js.bak"
+    },
+    {
+      "file": "src/canon/guard/L1.js",
+      "edits": 1,
+      "written": true,
+      "backup": "L1.js.bak"
+    },
+    {
+      "file": "src/canon/guard/L2.js",
+      "edits": 3,
+      "written": true,
+      "backup": "L2.js.bak"
+    },
+    {
+      "file": "src/canon/hud.js",
+      "edits": 1,
+      "written": true,
+      "backup": "hud.js.bak"
+    },
+    {
+      "file": "src/canon/init-amplified.js",
+      "edits": 1,
+      "written": true,
+      "backup": "init-amplified.js.bak"
+    },
+    {
+      "file": "src/canon/init.js",
+      "edits": 3,
+      "written": true,
+      "backup": "init.js.bak"
+    },
+    {
+      "file": "src/canon/tests/contracts.test.js",
+      "edits": 1,
+      "written": true,
+      "backup": "contracts.test.js.bak"
+    },
+    {
+      "file": "src/canon-console/L1.js",
+      "edits": 1,
+      "written": true,
+      "backup": "L1.js.bak"
+    },
+    {
+      "file": "src/canon-console/L2.js",
+      "edits": 1,
+      "written": true,
+      "backup": "L2.js.bak"
+    },
+    {
+      "file": "src/canon-guard/L1.js",
+      "edits": 1,
+      "written": true,
+      "backup": "L1.js.bak"
+    },
+    {
+      "file": "src/canon-guard/L2.js",
+      "edits": 3,
+      "written": true,
+      "backup": "L2.js.bak"
+    },
+    {
+      "file": "src/canon-guard/blueprintGuard.js",
+      "edits": 1,
+      "written": true,
+      "backup": "blueprintGuard.js.bak"
+    },
+    {
+      "file": "src/canon-guard/runtime/DegradePolicy.js",
+      "edits": 1,
+      "written": true,
+      "backup": "DegradePolicy.js.bak"
+    },
+    {
+      "file": "src/canon-guard/runtime/GuardRuntimeInject.js",
+      "edits": 5,
+      "written": true,
+      "backup": "GuardRuntimeInject.js.bak"
+    },
+    {
+      "file": "src/components/common/ErrorBoundary.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "ErrorBoundary.jsx.bak"
+    },
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "edits": 5,
+      "written": true,
+      "backup": "ConsciousnessTheater.jsx.bak"
+    },
+    {
+      "file": "src/components/dev/DebugExpose.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "DebugExpose.jsx.bak"
+    },
+    {
+      "file": "src/components/dev/DevPerformanceMonitor.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "DevPerformanceMonitor.jsx.bak"
+    },
+    {
+      "file": "src/components/theater/OpeningSequence.jsx",
+      "edits": 8,
+      "written": true,
+      "backup": "OpeningSequence.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/AdvancedContactPortal.jsx",
+      "edits": 2,
+      "written": true,
+      "backup": "AdvancedContactPortal.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/CanvasErrorBoundary.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "CanvasErrorBoundary.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/Footer.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "Footer.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/Layout.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "Layout.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/NarrativeUIControls.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "NarrativeUIControls.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/ResourceMonitor.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "ResourceMonitor.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/Typewriter.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "Typewriter.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/narrative/MemoryFragments.jsx",
+      "edits": 2,
+      "written": true,
+      "backup": "MemoryFragments.jsx.bak"
+    },
+    {
+      "file": "src/components/ui/narrative/StageNavigation.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "StageNavigation.jsx.bak"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "edits": 2,
+      "written": true,
+      "backup": "WebGLBackground.jsx.bak"
+    },
+    {
+      "file": "src/components/webgl/WebGLCanvas.jsx",
+      "edits": 3,
+      "written": true,
+      "backup": "WebGLCanvas.jsx.bak"
+    },
+    {
+      "file": "src/components/webgl/consciousness/ConsciousnessPatterns.js",
+      "edits": 1,
+      "written": true,
+      "backup": "ConsciousnessPatterns.js.bak"
+    },
+    {
+      "file": "src/components/webgl/consciousness/PointSpriteAtlas.js",
+      "edits": 1,
+      "written": true,
+      "backup": "PointSpriteAtlas.js.bak"
+    },
+    {
+      "file": "src/config/canonical/canonicalAuthority.js",
+      "edits": 1,
+      "written": true,
+      "backup": "canonicalAuthority.js.bak"
+    },
+    {
+      "file": "src/config/canonical/contaminationScan.js",
+      "edits": 1,
+      "written": true,
+      "backup": "contaminationScan.js.bak"
+    },
+    {
+      "file": "src/config/sst3/memory-fragments.js",
+      "edits": 1,
+      "written": true,
+      "backup": "memory-fragments.js.bak"
+    },
+    {
+      "file": "src/config/sst3/narrative-dialogue.js",
+      "edits": 1,
+      "written": true,
+      "backup": "narrative-dialogue.js.bak"
+    },
+    {
+      "file": "src/config/sst3/sst-v3.0-config.js",
+      "edits": 1,
+      "written": true,
+      "backup": "sst-v3.0-config.js.bak"
+    },
+    {
+      "file": "src/config/sst3/tier-behaviors.js",
+      "edits": 1,
+      "written": true,
+      "backup": "tier-behaviors.js.bak"
+    },
+    {
+      "file": "src/console-shim.js",
+      "edits": 1,
+      "written": true,
+      "backup": "console-shim.js.bak"
+    },
+    {
+      "file": "src/core/CentralEventClock.js",
+      "edits": 4,
+      "written": true,
+      "backup": "CentralEventClock.js.bak"
+    },
+    {
+      "file": "src/core/index.js",
+      "edits": 1,
+      "written": true,
+      "backup": "index.js.bak"
+    },
+    {
+      "file": "src/dev/boundarySentinel.js",
+      "edits": 2,
+      "written": true,
+      "backup": "boundarySentinel.js.bak"
+    },
+    {
+      "file": "src/dev/renderHealthcheck.js",
+      "edits": 1,
+      "written": true,
+      "backup": "renderHealthcheck.js.bak"
+    },
+    {
+      "file": "src/dev/renderProbe.js",
+      "edits": 1,
+      "written": true,
+      "backup": "renderProbe.js.bak"
+    },
+    {
+      "file": "src/dev/unlockConsole.js",
+      "edits": 2,
+      "written": true,
+      "backup": "unlockConsole.js.bak"
+    },
+    {
+      "file": "src/engine/ConsciousnessEngine.js",
+      "edits": 0
+    },
+    {
+      "file": "src/engine/MemoryFragmentController.js",
+      "edits": 1,
+      "written": true,
+      "backup": "MemoryFragmentController.js.bak"
+    },
+    {
+      "file": "src/engine/NarrativeController.js",
+      "edits": 1,
+      "written": true,
+      "backup": "NarrativeController.js.bak"
+    },
+    {
+      "file": "src/engine/TierSystem.js",
+      "edits": 1,
+      "written": true,
+      "backup": "TierSystem.js.bak"
+    },
+    {
+      "file": "src/hooks/atoms/useInteractionStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useInteractionStore.js.bak"
+    },
+    {
+      "file": "src/hooks/atoms/useNarrativeStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useNarrativeStore.js.bak"
+    },
+    {
+      "file": "src/hooks/atoms/usePerformanceStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "usePerformanceStore.js.bak"
+    },
+    {
+      "file": "src/hooks/atoms/useResourceStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useResourceStore.js.bak"
+    },
+    {
+      "file": "src/hooks/useAdaptiveQuality.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useAdaptiveQuality.js.bak"
+    },
+    {
+      "file": "src/hooks/useCentralClock.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useCentralClock.js.bak"
+    },
+    {
+      "file": "src/hooks/useIdle.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useIdle.js.bak"
+    },
+    {
+      "file": "src/hooks/useMemoryFragments.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useMemoryFragments.js.bak"
+    },
+    {
+      "file": "src/hooks/useResourceTracker.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useResourceTracker.js.bak"
+    },
+    {
+      "file": "src/main.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "main.jsx.bak"
+    },
+    {
+      "file": "src/src/modules/orchestration/core/BeatBus.js",
+      "edits": 1,
+      "written": true,
+      "backup": "BeatBus.js.bak"
+    },
+    {
+      "file": "src/modules/orchestration/core/BeatBusAdapter.js",
+      "edits": 1,
+      "written": true,
+      "backup": "BeatBusAdapter.js.bak"
+    },
+    {
+      "file": "src/modules/state/BeatBusBridge.js",
+      "edits": 2,
+      "written": true,
+      "backup": "BeatBusBridge.js.bak"
+    },
+    {
+      "file": "src/modules/state/StateCore.js",
+      "edits": 2,
+      "written": true,
+      "backup": "StateCore.js.bak"
+    },
+    {
+      "file": "src/modules/state/StateCoreCanonValidator.js",
+      "edits": 1,
+      "written": true,
+      "backup": "StateCoreCanonValidator.js.bak"
+    },
+    {
+      "file": "src/modules/state/eventMappings.js",
+      "edits": 1,
+      "written": true,
+      "backup": "eventMappings.js.bak"
+    },
+    {
+      "file": "src/modules/state/index.js",
+      "edits": 1,
+      "written": true,
+      "backup": "index.js.bak"
+    },
+    {
+      "file": "src/modules/state/sstV3Config.js",
+      "edits": 1,
+      "written": true,
+      "backup": "sstV3Config.js.bak"
+    },
+    {
+      "file": "src/runtime/gpuProfile.js",
+      "edits": 1,
+      "written": true,
+      "backup": "gpuProfile.js.bak"
+    },
+    {
+      "file": "src/runtime/materialFactory.js",
+      "edits": 1,
+      "written": true,
+      "backup": "materialFactory.js.bak"
+    },
+    {
+      "file": "src/sections/About.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "About.jsx.bak"
+    },
+    {
+      "file": "src/sections/Contact.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "Contact.jsx.bak"
+    },
+    {
+      "file": "src/sections/Features.jsx",
+      "edits": 1,
+      "written": true,
+      "backup": "Features.jsx.bak"
+    },
+    {
+      "file": "src/stores/atoms/clockAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "clockAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/createAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "createAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/index.js",
+      "edits": 1,
+      "written": true,
+      "backup": "index.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/interactionAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "interactionAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/narrativeAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "narrativeAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/performanceAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "performanceAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/qualityAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "qualityAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/resourceAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "resourceAtom.js.bak"
+    },
+    {
+      "file": "src/stores/atoms/stageAtom.js",
+      "edits": 1,
+      "written": true,
+      "backup": "stageAtom.js.bak"
+    },
+    {
+      "file": "src/stores/narrativeStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "narrativeStore.js.bak"
+    },
+    {
+      "file": "src/stores/performanceStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "performanceStore.js.bak"
+    },
+    {
+      "file": "src/stores/resourceStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "resourceStore.js.bak"
+    },
+    {
+      "file": "src/stores/useInteractionStore.js",
+      "edits": 1,
+      "written": true,
+      "backup": "useInteractionStore.js.bak"
+    },
+    {
+      "file": "src/theater/TheaterDirector.js",
+      "edits": 1,
+      "written": true,
+      "backup": "TheaterDirector.js.bak"
+    },
+    {
+      "file": "src/theater/events.js",
+      "edits": 1,
+      "written": true,
+      "backup": "events.js.bak"
+    },
+    {
+      "file": "src/utils/featureFlags.js",
+      "edits": 1,
+      "written": true,
+      "backup": "featureFlags.js.bak"
+    },
+    {
+      "file": "src/utils/performance/AdaptiveQualitySystem.js",
+      "edits": 1,
+      "written": true,
+      "backup": "AdaptiveQualitySystem.js.bak"
+    },
+    {
+      "file": "src/utils/performance/DeviceCapabilities.js",
+      "edits": 1,
+      "written": true,
+      "backup": "DeviceCapabilities.js.bak"
+    },
+    {
+      "file": "src/utils/performance/PerformanceMetrics.js",
+      "edits": 1,
+      "written": true,
+      "backup": "PerformanceMetrics.js.bak"
+    },
+    {
+      "file": "src/utils/performance/ResourceMetrics.js",
+      "edits": 1,
+      "written": true,
+      "backup": "ResourceMetrics.js.bak"
+    },
+    {
+      "file": "src/utils/random.js",
+      "edits": 1,
+      "written": true,
+      "backup": "random.js.bak"
+    },
+    {
+      "file": "src/utils/shaderUtils.js",
+      "edits": 1,
+      "written": true,
+      "backup": "shaderUtils.js.bak"
+    },
+    {
+      "file": "src/utils/webgl/FrustumAwareParticleGenerator.js",
+      "edits": 1,
+      "written": true,
+      "backup": "FrustumAwareParticleGenerator.js.bak"
+    },
+    {
+      "file": "src/utils/webgl/ResourceRegistry.js",
+      "edits": 1,
+      "written": true,
+      "backup": "ResourceRegistry.js.bak"
+    },
+    {
+      "file": "src/utils/webgl/ResourceTracker.js",
+      "edits": 1,
+      "written": true,
+      "backup": "ResourceTracker.js.bak"
+    },
+    {
+      "file": "src/utils/webgl/ShaderDebugSystem.js",
+      "edits": 2,
+      "written": true,
+      "backup": "ShaderDebugSystem.js.bak"
+    },
+    {
+      "file": "src/webgl/WebGLBootstrap.js",
+      "edits": 4,
+      "written": true,
+      "backup": "WebGLBootstrap.js.bak"
+    },
+    {
+      "file": "src/webgl/verifyWebGL.js",
+      "edits": 1,
+      "written": true,
+      "backup": "verifyWebGL.js.bak"
+    }
+  ]
+}

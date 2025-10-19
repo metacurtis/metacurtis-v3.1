@@ -1,88 +1,53 @@
-// vite.config.js
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import glsl from 'vite-plugin-glsl'; // Your existing plugin
-import tailwindcss from '@tailwindcss/vite'; // Import Tailwind Vite plugin
-import path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
+function shaderHMR() {
+  return {
+    name: 'shader-hmr',
+    handleHotUpdate({ file, server }) {
+      if (!file.endsWith('.glsl')) return undefined;
+
+      const fileName = path.basename(file);
+      console.log(`[SHADER HMR] ${fileName} updated (toast notify)`);
+
+      server.ws.send({
+        type: 'custom',
+        event: 'glsl-update',
+        data: { file }
+      });
+
+      return [];
+    }
+  };
+}
+
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    glsl(), // Your existing plugin
-    tailwindcss(), // Add Tailwind Vite plugin, relies on auto-detection for CSS-based config.
-  ],
+  esbuild: { target: 'es2022' },
+  build: { target: 'es2022' },
+  plugins: [react(), shaderHMR()],
   resolve: {
-    // Your existing resolve aliases
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
-      '@webgl': path.resolve(__dirname, './src/components/webgl'),
       '@stores': path.resolve(__dirname, './src/stores'),
-      '@utils': path.resolve(__dirname, './src/utils'),
+      '@config': path.resolve(__dirname, './src/config'),
+      '@engine': path.resolve(__dirname, './src/engine'),
+      '@theater': path.resolve(__dirname, './src/theater'),
       '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@assets': path.resolve(__dirname, './src/assets'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@modules': path.resolve(__dirname, './modules'),
     },
-  },
-  // Remove or comment out the explicit css.postcss configuration
-  // if your postcss.config.js was mainly for Tailwind.
-  // The @tailwindcss/vite plugin handles PostCSS for Tailwind internally.
-  // css: {
-  //   postcss: './postcss.config.js',
-  // },
-  build: {
-    // Your existing build configurations
-    target: 'esnext',
-    minify: 'terser',
-    terserOptions: { compress: { drop_console: false, drop_debugger: true } },
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('three')) return 'three-vendor';
-            if (id.includes('gsap')) return 'gsap-vendor';
-            if (id.includes('@react-three')) return 'drei-vendor';
-            if (id.includes('zustand')) return 'zustand-vendor';
-            if (id.includes('react')) return 'react-vendor';
-            return 'vendor';
-          }
-        },
-      },
-    },
-    sourcemap: true,
-    cssCodeSplit: true,
-    assetsInlineLimit: 4096,
   },
   server: {
-    // Your existing server configurations
-    host: true,
+    port: 5173,
     open: true,
-    hmr: { overlay: true },
-  },
-  optimizeDeps: {
-    // Your existing optimizeDeps
-    include: [
-      'react',
-      'react-dom',
-      'three',
-      '@react-three/fiber',
-      '@react-three/drei',
-      'gsap',
-      'zustand',
-    ],
-  },
-  test: {
-    // Your existing test configurations
-    passWithNoTests: true,
-    environment: 'jsdom',
-    globals: true,
-    include: ['src/**/*.test.{js,jsx}', 'src/**/*.spec.{js,jsx}'],
-    coverage: {
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/assets/'],
-    },
-    deps: { optimizer: { web: { include: ['@react-three/fiber', '@react-three/drei'] } } },
   },
 });

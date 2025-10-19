@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MetaCurtis SST v3.5 Schema",
+  "type": "object",
+  "required": ["meta", "visual", "narrative", "performance"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["version", "authority", "lastUpdated"],
+      "properties": {
+        "version": { "type": "string", "pattern": "^3\\.5\\.\\d+$" },
+        "authority": { "type": "string", "enum": ["ABSOLUTE"] },
+        "lastUpdated": { "type": "string", "format": "date" },
+        "breaking_changes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "visual": {
+      "type": "object",
+      "required": ["system", "letterGeometry"],
+      "properties": {
+        "system": { "type": "string", "enum": ["3d_kinetic_typography"] },
+        "letterGeometry": {
+          "type": "object",
+          "required": [
+            "genesis",
+            "discipline",
+            "neural",
+            "velocity",
+            "architecture",
+            "harmony",
+            "transcendence"
+          ],
+          "patternProperties": {
+            "^(genesis|discipline|neural|velocity|architecture|harmony|transcendence)$": {
+              "type": "object",
+              "required": [
+                "word",
+                "font",
+                "weight",
+                "depth",
+                "particlesPerLetter",
+                "spacing",
+                "scale"
+              ],
+              "properties": {
+                "word": { "type": "string", "minLength": 1 },
+                "font": { "type": "string", "minLength": 1 },
+                "weight": { "type": "integer", "minimum": 100, "maximum": 900 },
+                "depth": { "type": "number", "minimum": 0.1, "maximum": 2.0 },
+                "particlesPerLetter": { "type": "integer", "minimum": 50 },
+                "spacing": { "type": "number", "minimum": 0.5, "maximum": 2.0 },
+                "scale": { "type": "number", "minimum": 0.5, "maximum": 2.0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "object",
+      "required": ["orchestration"],
+      "properties": {
+        "orchestration": {
+          "type": "object",
+          "required": ["mode", "scrollLocked", "skipKey"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["narration-driven", "scroll-driven"] },
+            "scrollLocked": { "type": "boolean" },
+            "skipKey": { "type": "string", "enum": ["SPACE", "ENTER", "ESCAPE"] }
+          }
+        },
+        "opening": {
+          "type": "object",
+          "required": ["timeline", "emergence", "skipKey"],
+          "properties": {
+            "skipKey": { "type": "string", "enum": ["SPACE", "ENTER", "ESCAPE"] },
+            "totalDurationMs": { "type": "integer", "minimum": 0 },
+            "timeline": {
+              "type": "object",
+              "properties": {
+                "blackout": {
+                  "type": "object",
+                  "required": ["durationMs"],
+                  "properties": {
+                    "durationMs": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "cursor": {
+                  "type": "object",
+                  "required": ["blinkCount", "intervalMs"],
+                  "properties": {
+                    "blinkCount": { "type": "integer", "minimum": 0 },
+                    "intervalMs": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "typing": {
+                  "type": "object",
+                  "required": ["lines", "typeSpeed", "lineDelay"],
+                  "properties": {
+                    "lines": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "minItems": 1
+                    },
+                    "typeSpeed": { "type": "integer", "minimum": 0 },
+                    "lineDelay": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "fill": {
+                  "type": "object",
+                  "required": ["text", "scrollSpeed", "durationMs"],
+                  "properties": {
+                    "text": { "type": "string" },
+                    "scrollSpeed": { "type": "integer", "minimum": 0 },
+                    "durationMs": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "emergence": {
+                  "type": "object",
+                  "properties": {
+                    "durationMs": { "type": "integer", "minimum": 0 },
+                    "waitForFencepost": { "type": "boolean" },
+                    "maxWaitMs": { "type": "integer", "minimum": 0 }
+                  },
+                  "required": []
+                }
+              },
+              "additionalProperties": true
+            },
+            "emergence": {
+              "type": "object",
+              "properties": {
+                "target": { "type": "string" },
+                "mode": { "type": "string" },
+                "source": { "type": "string" }
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "required": ["frameRate", "particleCount"],
+      "properties": {
+        "frameRate": {
+          "type": "object",
+          "required": ["target", "minimum"],
+          "properties": {
+            "target": { "type": "integer", "enum": [60] },
+            "minimum": { "type": "integer", "minimum": 50, "maximum": 60 }
+          }
+        },
+        "particleCount": {
+          "type": "object",
+          "required": [
+            "genesis",
+            "discipline",
+            "neural",
+            "velocity",
+            "architecture",
+            "harmony",
+            "transcendence"
+          ],
+          "properties": {
+            "genesis": { "type": "integer", "minimum": 1000, "maximum": 5000 },
+            "discipline": { "type": "integer", "minimum": 2000, "maximum": 5000 },
+            "neural": { "type": "integer", "minimum": 4000, "maximum": 8000 },
+            "velocity": { "type": "integer", "minimum": 10000, "maximum": 15000 },
+            "architecture": { "type": "integer", "minimum": 6000, "maximum": 10000 },
+            "harmony": { "type": "integer", "minimum": 10000, "maximum": 15000 },
+            "transcendence": { "type": "integer", "minimum": 15000, "maximum": 15000 }
+          }
+        }
+      }
+    }
+  }
+}

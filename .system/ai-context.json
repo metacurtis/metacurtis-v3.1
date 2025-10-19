@@ -1,0 +1,71 @@
+{
+  "issue": "morph frozen at 0.19",
+  "failingChecks": [
+    "Font Asset"
+  ],
+  "sstExcerpt": {
+    "performance": {
+      "frameRate": {
+        "target": 60,
+        "targetFps": 60,
+        "minimum": 55,
+        "minFps": 55,
+        "windowFrames": 60
+      },
+      "particleCount": {
+        "genesis": 2000,
+        "discipline": 3000,
+        "neural": 5000,
+        "velocity": 12000,
+        "architecture": 8000,
+        "harmony": 12000,
+        "transcendence": 15000
+      },
+      "renderTimeMs": {
+        "target": 16.67,
+        "max": 18,
+        "criticalPath": [
+          "particleUpdate",
+          "shaderExecution",
+          "drawCalls"
+        ]
+      },
+      "memory": {
+        "heapLimitMB": 250,
+        "leakToleranceMBPerMin": 0,
+        "gcPauseMaxMs": 3
+      },
+      "adaptiveQuality": {
+        "order": [
+          "tier3",
+          "tier2",
+          "tier1",
+          "tier0"
+        ],
+        "restoreAfterStableSec": 5
+      },
+      "lodThresholds": {
+        "ultra": 0.9,
+        "high": 0.75,
+        "medium": 0.55,
+        "low": 0.35
+      }
+    },
+    "genesis": {
+      "word": "HELLO CURTIS",
+      "font": "Courier Prime",
+      "weight": 400,
+      "depth": 0.3,
+      "particlesPerLetter": 167,
+      "spacing": 1.2,
+      "scale": 1
+    }
+  },
+  "likelyFiles": [
+    "src/engine/ConsciousnessEngine.js",
+    "src/components/webgl/WebGLBackground.jsx",
+    "src/theater/TheaterDirector.js",
+    "src/config/visual-controls.js"
+  ],
+  "recommendedPatches": []
+}

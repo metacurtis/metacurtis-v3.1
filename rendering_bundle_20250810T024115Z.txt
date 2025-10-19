@@ -1,0 +1,3121 @@
+# Rendering/View Bundle (SST v3.0)
+Generated: 2025-08-10T02:41:15Z
+
+
+---
+# src/components/webgl/WebGLCanvas.jsx
+// src/components/webgl/WebGLCanvas.jsx
+// SST v3.0 COMPLIANT - Props-driven renderer
+
+import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { PerspectiveCamera } from '@react-three/drei';
+import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
+import DebugExpose from '@/components/dev/DebugExpose';
+
+// Lazy load WebGL components
+const WebGLBackground = lazy(() => import('./WebGLBackground'));
+
+// WebGL context pool class
+class WebGLContextPool {
+  constructor() {
+    this.contextPool = [];
+    this.maxPoolSize = 3;
+    this.activeContexts = new Set();
+    this.contextStats = {
+      created: 0,
+      reused: 0,
+      disposed: 0,
+      maxConcurrent: 0,
+    };
+    this.stateCache = new Map();
+  }
+
+  createOptimizedContext(canvas, contextAttributes = {}) {
+    const optimizedAttributes = {
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance',
+      failIfMajorPerformanceCaveat: false,
+      premultipliedAlpha: false,
+      stencil: false,
+      depth: true,
+      ...contextAttributes,
+    };
+
+    let context = null;
+    try {
+      context =
+        canvas.getContext('webgl2', optimizedAttributes) ||
+        canvas.getContext('webgl', optimizedAttributes);
+    } catch (error) {
+      console.error('WebGLContextPool: Context creation failed:', error);
+    }
+
+    if (context) {
+      this.contextStats.created++;
+      this.activeContexts.add(context);
+    }
+
+    return context;
+  }
+
+  cacheWebGLState(context) {
+    if (!context) return;
+    this.stateCache.set(context, {
+      timestamp: Date.now(),
+    });
+  }
+
+  getStats() {
+    return { ...this.contextStats };
+  }
+
+  clearPool() {
+    this.contextPool = [];
+    this.stateCache.clear();
+  }
+}
+
+// Performance monitor class
+class CanvasPerformanceMonitor {
+  constructor() {
+    this.metrics = {
+      frameRate: 0,
+      renderTime: 0,
+      memoryUsage: 0,
+      lastUpdate: 0,
+    };
+  }
+
+  updateMetrics(data) {
+    Object.assign(this.metrics, data, { lastUpdate: Date.now() });
+  }
+
+  getPerformanceGrade() {
+    if (this.metrics.frameRate >= 55) return 'A';
+    if (this.metrics.frameRate >= 45) return 'B';
+    if (this.metrics.frameRate >= 30) return 'C';
+    return 'D';
+  }
+}
+
+// Extension interference detection
+const detectAdvancedExtensionInterference = () => {
+  try {
+    const testCanvas = document.createElement('canvas');
+    const ctx = testCanvas.getContext('webgl');
+    const interference = !ctx || typeof ctx.TRIANGLES !== 'number';
+    testCanvas.remove();
+
+    return {
+      interference,
+      type: interference ? 'webgl_blocked' : 'none',
+    };
+  } catch (error) {
+    return {
+      interference: true,
+      type: 'detection_failed',
+      error: error.message,
+    };
+  }
+};
+
+// ===== MAIN COMPONENT WITH PROPS =====
+export default function WebGLCanvas({
+  stage = 'genesis',
+  morphProgress = 0,
+  scrollProgress = 0,
+  quality = 'HIGH',
+  particleCount = 5000,
+  webglEnabled = true,
+  fps = 60,
+  frameTime = 16.67,
+}) {
+  // Canvas reference
+  const canvasRef = useRef(null);
+
+  // Component state
+  const [webglSupported, setWebglSupported] = useState(true);
+  const [contextLost, setContextLost] = useState(false);
+  const [extensionInterference, setExtensionInterference] = useState(null);
+  const [canvasStrategy, setCanvasStrategy] = useState(0);
+
+  // Initialize systems with useMemo
+  const contextPool = useMemo(() => new WebGLContextPool(), []);
+  const performanceMonitor = useMemo(() => new CanvasPerformanceMonitor(), []);
+
+  // Update performance monitor with props
+  useEffect(() => {
+    performanceMonitor.updateMetrics({
+      frameRate: fps,
+      renderTime: frameTime,
+    });
+  }, [fps, frameTime, performanceMonitor]);
+
+  // Event logging
+  const addEventLog = useCallback(
+    (eventName, payload) => {
+      performanceMonitor.updateMetrics({
+        lastEvent: eventName,
+        eventTimestamp: Date.now(),
+        ...payload,
+      });
+
+      if (import.meta.env.DEV) {
+        console.log(`🎯 Canvas Event: ${eventName}`, payload);
+      }
+    },
+    [performanceMonitor]
+  );
+
+  // Extension interference detection
+  useEffect(() => {
+    const interference = detectAdvancedExtensionInterference();
+    setExtensionInterference(interference);
+    if (interference.interference) {
+      console.warn('[WebGLCanvas] Extension interference detected:', interference);
+      addEventLog('extension_interference_detected', interference);
+    }
+  }, [addEventLog]);
+
+  // Canvas error handler
+  const handleCanvasError = useCallback(
+    error => {
+      console.error('[WebGLCanvas] Canvas creation failed:', error);
+      addEventLog('webgl_canvas_error', {
+        error: error.message,
+        strategy: canvasStrategy,
+        extensionInterference: extensionInterference?.interference,
+        contextPoolStats: contextPool.getStats(),
+      });
+
+      if (canvasStrategy < 2) {
+        console.log(`[WebGLCanvas] Trying fallback strategy ${canvasStrategy + 1}`);
+        setCanvasStrategy(canvasStrategy + 1);
+      } else {
+        console.error('[WebGLCanvas] All strategies failed, disabling WebGL');
+        setWebglSupported(false);
+        contextPool.clearPool();
+      }
+    },
+    [canvasStrategy, extensionInterference, contextPool, addEventLog]
+  );
+
+  // Context loss handling
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleContextLost = event => {
+      event.preventDefault();
+      setContextLost(true);
+      console.warn('[WebGLCanvas] WebGL context lost, initiating recovery...');
+      addEventLog('webgl_context_lost', {
+        recovery: 'initiated',
+        extensionInterference: extensionInterference?.interference,
+        contextPoolStats: contextPool.getStats(),
+      });
+    };
+
+    const handleContextRestored = () => {
+      setContextLost(false);
+      console.log('[WebGLCanvas] WebGL context restored successfully');
+      addEventLog('webgl_context_restored', {
+        status: 'success',
+        strategy: canvasStrategy,
+        contextPoolStats: contextPool.getStats(),
+      });
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [extensionInterference, canvasStrategy, contextPool, addEventLog]);
+
+  // Canvas performance monitoring
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        performanceMonitor.updateMetrics({
+          canvasWidth: width,
+          canvasHeight: height,
+          pixelCount: width * height,
+        });
+      }
+    });
+
+    resizeObserver.observe(canvas);
+    return () => resizeObserver.disconnect();
+  }, [performanceMonitor]);
+
+  // Canvas configuration
+  const canvasConfig = useMemo(() => {
+    const baseConfig = {
+      className: 'w-full h-full',
+      gl: {
+        antialias: quality !== 'LOW',
+        alpha: true,
+        preserveDrawingBuffer: false,
+        powerPreference: 'high-performance',
+        failIfMajorPerformanceCaveat: false,
+      },
+    };
+
+    switch (canvasStrategy) {
+      case 1:
+        baseConfig.gl.powerPreference = 'default';
+        break;
+      case 2:
+        baseConfig.gl.antialias = false;
+        baseConfig.gl.alpha = false;
+        break;
+    }
+
+    return baseConfig;
+  }, [quality, canvasStrategy]);
+
+  // Fallback renders
+  if (!webglSupported) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="absolute inset-0 opacity-30">
+          <div className="w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]" />
+        </div>
+        <div className="absolute bottom-4 right-4 bg-black/80 border border-red-600 rounded-lg p-3 text-red-400 font-mono text-sm">
+          <div className="font-bold mb-2">⚛️ WebGL Not Supported</div>
+          <div>Stage: {stage}</div>
+          <div>Progress: {Math.round(scrollProgress * 100)}%</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (contextLost) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-green-400 text-lg font-mono">Restoring WebGL context...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 w-full h-full">
+      <Canvas
+        ref={canvasRef}
+        {...canvasConfig}
+        onCreated={({ gl, scene, camera, size }) => {
+          const startTime = performance.now();
+
+          // Access canvas element
+          const canvasElement = canvasRef.current;
+          if (canvasElement) {
+            canvasElement.setAttribute('data-webgl-version', gl.capabilities.isWebGL2 ? '2' : '1');
+            canvasElement.setAttribute('data-quality-tier', quality);
+            canvasElement.setAttribute('data-particle-count', particleCount.toString());
+          }
+
+          // Context optimization
+          const context = gl.getContext();
+          contextPool.cacheWebGLState(context);
+
+          // Optimal WebGL settings
+          gl.setClearColor('#000000', 1);
+          gl.shadowMap.enabled = false;
+          scene.fog = null;
+
+          // Check point size range
+          const glContext = gl.getContext();
+          const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
+
+          const setupTime = performance.now() - startTime;
+
+          console.log('[WebGLCanvas] Canvas created with constellation optimization', {
+            renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
+            maxTextures: gl.capabilities.maxTextures,
+            maxVertexAttributes: gl.capabilities.maxVertexAttributes,
+            pointSizeRange: pointSizeRange,
+            canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
+            setupTime: setupTime.toFixed(2) + 'ms',
+            contextPoolStats: contextPool.getStats(),
+            quality: quality,
+            particles: particleCount,
+            stage: stage,
+            strategy: canvasStrategy,
+          });
+
+          addEventLog('webgl_canvas_created', {
+            webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
+            point_size_range: pointSizeRange,
+            setup_time: setupTime,
+          });
+        }}
+        onError={handleCanvasError}
+      >
+        {/* Optimal camera for constellation viewing */}
+        <PerspectiveCamera makeDefault position={[0, 0, 80]} fov={75} near={0.1} far={200} />
+
+        {/* Minimal lighting for particles */}
+        <ambientLight intensity={0.4} />
+
+        {/* Dev tools */}
+        {import.meta.env.DEV && <DebugExpose />}
+
+        {/* Main particle system WITH PROPS */}
+        <Suspense fallback={null}>
+          {webglEnabled && (
+            <WebGLBackground
+              stage={stage}
+              morphProgress={morphProgress}
+              scrollProgress={scrollProgress}
+            />
+          )}
+        </Suspense>
+      </Canvas>
+
+      {/* Performance monitoring */}
+      <DevPerformanceMonitor />
+
+      {/* Debug overlay */}
+      {false &&import.meta.env.DEV && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: 'rgba(0,0,0,0.9)',
+            color: '#00ff88',
+            padding: '16px',
+            borderRadius: '8px',
+            fontFamily: 'Courier New, monospace',
+            fontSize: '12px',
+            border: '1px solid #00ff88',
+            zIndex: 1000,
+            minWidth: '300px',
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#00ffcc' }}>
+            🌌 CONSTELLATION STATUS
+          </div>
+          <div>Stage: {stage}</div>
+          <div>Progress: {Math.round(scrollProgress * 100)}%</div>
+          <div>Morph: {Math.round(morphProgress * 100)}%</div>
+          <div>Quality: {quality}</div>
+          <div>Particles: {particleCount}</div>
+          <div>WebGL: {webglEnabled ? '✓' : '✗'}</div>
+          <div>Canvas: {canvasRef.current ? '✓' : '✗'}</div>
+          <div>Context: {contextLost ? '✗' : '✓'}</div>
+
+          <div
+            style={{
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <div style={{ color: '#00ccff', fontWeight: 'bold', marginBottom: '4px' }}>
+              Performance:
+            </div>
+            <div>Grade: {performanceMonitor.getPerformanceGrade()}</div>
+            <div>FPS: {fps.toFixed(1)}</div>
+            <div>Frame Time: {frameTime.toFixed(1)}ms</div>
+          </div>
+
+          {/* SST v3.0 Props */}
+          <div
+            style={{
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <div style={{ color: '#ffff00', fontWeight: 'bold', marginBottom: '4px' }}>
+              SST v3.0 Props:
+            </div>
+            <div>Stage: {stage}</div>
+            <div>Morph: {morphProgress.toFixed(2)}</div>
+            <div>Scroll: {scrollProgress.toFixed(2)}</div>
+          </div>
+
+          {/* Debug controls */}
+          <div
+            style={{
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <button
+              onClick={() => {
+                window.location.hash = '#debug-particles';
+                window.location.reload();
+              }}
+              style={{
+                background: '#00ff88',
+                color: '#000',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                marginRight: '8px',
+              }}
+            >
+              Debug Mode
+            </button>
+            <button
+              onClick={() => {
+                const event = new CustomEvent('webgl-force-init', {
+                  detail: { stage: stage, reason: 'manual_test' },
+                });
+                window.dispatchEvent(event);
+              }}
+              style={{
+                background: '#00ccff',
+                color: '#000',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+              }}
+            >
+              Force Render
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Global debug access
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.canvasDebug = {
+    getCanvasElement: () => document.querySelector('canvas'),
+
+    getCanvasInfo: () => {
+      const canvas = document.querySelector('canvas');
+      if (!canvas) return 'No canvas found';
+
+      return {
+        width: canvas.width,
+        height: canvas.height,
+        clientWidth: canvas.clientWidth,
+        clientHeight: canvas.clientHeight,
+        webglVersion: canvas.getAttribute('data-webgl-version'),
+        qualityTier: canvas.getAttribute('data-quality-tier'),
+        particleCount: canvas.getAttribute('data-particle-count'),
+      };
+    },
+
+    testContextPooling: () => {
+      console.log('🧪 Testing WebGL context pooling...');
+      const testCanvas = document.createElement('canvas');
+      const contextPool = new WebGLContextPool();
+      const ctx = contextPool.createOptimizedContext(testCanvas);
+      const stats = contextPool.getStats();
+      testCanvas.remove();
+      return stats;
+    },
+
+    detectInterference: () => detectAdvancedExtensionInterference(),
+
+    testWebGLSupport: () => {
+      const canvas = document.createElement('canvas');
+      const webgl2 = canvas.getContext('webgl2');
+      const webgl1 = canvas.getContext('webgl');
+
+      const support = {
+        webgl2: !!webgl2,
+        webgl1: !!webgl1,
+        pointSizeRange: webgl2
+          ? webgl2.getParameter(webgl2.ALIASED_POINT_SIZE_RANGE)
+          : webgl1
+            ? webgl1.getParameter(webgl1.ALIASED_POINT_SIZE_RANGE)
+            : null,
+      };
+
+      canvas.remove();
+      console.log('🧪 WebGL Support Test:', support);
+      return support;
+    },
+  };
+
+  console.log('🎯 Enhanced Canvas Debug Tools Available:');
+  console.log('🧪 Test context pooling: window.canvasDebug.testContextPooling()');
+  console.log('🔍 Detect interference: window.canvasDebug.detectInterference()');
+  console.log('🧪 Test WebGL support: window.canvasDebug.testWebGLSupport()');
+  console.log('📊 Get canvas info: window.canvasDebug.getCanvasInfo()');
+}
+
+
+---
+# src/components/webgl/WebGLBackground.jsx
+// src/components/webgl/WebGLBackground.jsx
+// SST v3.0 COMPLIANT - Pure event-driven renderer
+// OPTIMIZED: No unnecessary re-renders or material recreations
+
+import React, { useRef, useMemo, useEffect, useState } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import { getPointSpriteAtlasSingleton } from "./consciousness/PointSpriteAtlas.js";
+import { Canonical } from "../../config/canonical/canonicalAuthority.js";
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from "../../theater/events.js";
+
+// Shaders
+import vertexShaderSource from "../../shaders/templates/consciousness-vertex.glsl?raw";
+import fragmentShaderSource from "../../shaders/templates/consciousness-fragment.glsl?raw";
+
+// --- helpers ----------------------------------------------------
+
+function pickStageColors(stageName) {
+  const s = Canonical?.stages?.[stageName] || {};
+  const colors = s.colors || ["#00ffcc", "#f59e0b", "#ffffff"];
+  return {
+    current: new THREE.Color(colors[0]),
+    next: new THREE.Color((Canonical?.stages?.[Canonical?.stageOrder?.[Math.min((Canonical?.stageOrder || []).indexOf(stageName), (Canonical?.stageOrder || []).length - 1) + 1]]?.colors || [colors[0]])[0]),
+    acc1: new THREE.Color(colors[1] || colors[0]),
+    acc2: new THREE.Color(colors[2] || colors[0]),
+  };
+}
+
+function normalizePayload(payload) {
+  const bp = payload?.blueprint ?? payload;
+  const stageName = bp?.stageName || bp?.stage || payload?.stage || "genesis";
+  const quality = payload?.quality || "HIGH";
+  const cached = !!payload?.cached;
+  return { bp, stageName, quality, cached };
+}
+
+function ensureArraysFromEmergence(bp) {
+  if (bp.atmosphericPositions && bp.allenAtlasPositions) return bp;
+
+  const positions = bp.positions;
+  if (!positions) return bp;
+
+  const count = bp.count ?? (positions.length / 3) | 0;
+  const tiersU8 = bp.tiers || new Uint8Array(count);
+
+  const sizeByTier = [0.6, 0.8, 1.2, 1.5];
+  const opacityByTier = [0.5, 0.6, 0.75, 0.9];
+  const atlasByTier = [7, 1, 4, 1];
+
+  const sizeMultipliers = new Float32Array(count);
+  const opacityData = new Float32Array(count);
+  const atlasIndices = new Float32Array(count);
+  const tierData = new Float32Array(count);
+  const animationSeeds = new Float32Array(count * 3);
+
+  for (let i = 0; i < count; i++) {
+    const t = tiersU8[i] | 0;
+    tierData[i] = t;
+    sizeMultipliers[i] = sizeByTier[t] || 1.0;
+    opacityData[i] = opacityByTier[t] || 0.8;
+    atlasIndices[i] = atlasByTier[t] || 1;
+    const r = Math.random, j = i * 3;
+    animationSeeds[j + 0] = r();
+    animationSeeds[j + 1] = r();
+    animationSeeds[j + 2] = r();
+  }
+
+  const atmosphericPositions = positions;
+  const allenAtlasPositions = positions.slice ? positions.slice() : new Float32Array(positions);
+
+  return {
+    ...bp,
+    stageName: bp.stageName || "genesis",
+    maxParticles: count,
+    particleCount: count,
+    activeCount: count,
+    atmosphericPositions,
+    allenAtlasPositions,
+    animationSeeds,
+    sizeMultipliers,
+    opacityData,
+    atlasIndices,
+    tierData,
+  };
+}
+
+// --- component --------------------------------------------------
+
+function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
+  const meshRef = useRef();
+  const geometryRef = useRef();
+  const materialRef = useRef();
+  const lastBlueprintIdRef = useRef(null);
+  const { size, gl } = useThree();
+
+  // State
+  const [blueprint, setBlueprint] = useState(null);
+  const [stageName, setStageName] = useState("genesis");
+  const [atlasTexture, setAtlasTexture] = useState(null);
+  const [activeCount, setActiveCount] = useState(0);
+
+  // Atlas once
+  useEffect(() => {
+    const atlas = getPointSpriteAtlasSingleton();
+    const texture = atlas.createWebGLTexture();
+    setAtlasTexture(texture);
+  }, []);
+
+  // Subscribe to BLUEPRINT_READY with deduplication
+  // Register immediately to catch early events
+  useEffect(() => {
+    const handleBlueprint = (payload) => {
+      const { bp: raw, stageName: st, quality, cached } = normalizePayload(payload);
+      const bp = ensureArraysFromEmergence(raw);
+      if (!bp) return;
+
+      // Create unique ID for this blueprint to prevent duplicate processing
+      const id = `${bp.mode || 'stage'}|${bp.stageName}|${bp.particleCount}|${bp.metadata?.sourceText || ''}`;
+      
+      // Ignore duplicate blueprints
+      if (lastBlueprintIdRef.current === id) {
+        console.log('📋 Ignoring duplicate blueprint:', id);
+        return;
+      }
+      lastBlueprintIdRef.current = id;
+
+      setBlueprint(bp);
+      setStageName(bp.stageName || st || "genesis");
+      setActiveCount(bp.activeCount || bp.particleCount || bp.maxParticles || 0);
+
+      console.log(
+        `✅ Renderer: ${cached ? "cached" : "new"} BLUEPRINT_READY`,
+        `stage=${bp.stageName || st}, count=${bp.particleCount || bp.maxParticles || bp.count}, quality=${quality}`
+      );
+
+      // If this is "emergence", confirm once spawned
+      if (bp.mode === "emergence") {
+        setTimeout(() => {
+          BeatBus.emit(EVENTS.PARTICLES_EMERGED);
+        }, 1200);
+      }
+    };
+
+    const off = BeatBus.on(EVENTS.BLUEPRINT_READY, handleBlueprint);
+    return () => off && off();
+  }, []);
+
+  // Geometry - memo only on blueprint change
+  const geometry = useMemo(() => {
+    if (!blueprint) return null;
+
+    const count =
+      blueprint.maxParticles ||
+      blueprint.particleCount ||
+      blueprint.activeCount ||
+      (blueprint.positions ? (blueprint.positions.length / 3) | 0 : 0);
+
+    if (!count) return null;
+
+    const geo = new THREE.BufferGeometry();
+
+    const atmos = blueprint.atmosphericPositions;
+    const allen = blueprint.allenAtlasPositions;
+
+    if (!atmos || !allen) return null;
+
+    geo.setAttribute("position", new THREE.BufferAttribute(atmos, 3));
+    geo.setAttribute("atmosphericPosition", new THREE.BufferAttribute(atmos, 3));
+    geo.setAttribute("allenAtlasPosition", new THREE.BufferAttribute(allen, 3));
+
+    if (blueprint.animationSeeds)
+      geo.setAttribute("animationSeed", new THREE.BufferAttribute(blueprint.animationSeeds, 3));
+    if (blueprint.sizeMultipliers)
+      geo.setAttribute("sizeMultiplier", new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
+    if (blueprint.opacityData)
+      geo.setAttribute("opacityData", new THREE.BufferAttribute(blueprint.opacityData, 1));
+    if (blueprint.atlasIndices)
+      geo.setAttribute("atlasIndex", new THREE.BufferAttribute(blueprint.atlasIndices, 1));
+    if (blueprint.tierData)
+      geo.setAttribute("tierData", new THREE.BufferAttribute(blueprint.tierData, 1));
+
+    const idx = new Float32Array(count);
+    for (let i = 0; i < count; i++) idx[i] = i;
+    geo.setAttribute("particleIndex", new THREE.BufferAttribute(idx, 1));
+
+    geo.setDrawRange(0, count);
+
+    // Dispose previous
+    if (geometryRef.current) geometryRef.current.dispose();
+    geometryRef.current = geo;
+    return geo;
+  }, [blueprint]); // Only on blueprint change!
+
+  // Material - memo without morph/scroll/activeCount
+  const material = useMemo(() => {
+    if (!atlasTexture || !blueprint) return null;
+
+    const { current, next, acc1, acc2 } = pickStageColors(stageName);
+    const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
+
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { uStageProgress: { value: 0 }, uStageBlend: { value: 0 }, uTierCutoff: { value: 1e9 },
+        // Time & morph - will be updated in useFrame
+        uTime: { value: 0 },
+        uMorphProgress: { value: 0 },
+        uScrollProgress: { value: 0 },
+
+        // Colors
+        uColorCurrent: { value: current },
+        uColorNext: { value: next },
+        uColorAccent1: { value: acc1 },
+        uColorAccent2: { value: acc2 },
+
+        // Atlas
+        uAtlasTexture: { value: atlasTexture },
+        uTotalSprites: { value: 16 },
+
+        // Display
+        uPointSize: { value: 30.0 },
+        uDevicePixelRatio: { value: gl.getPixelRatio() },
+        uResolution: { value: new THREE.Vector2(size.width, size.height) },
+
+        // Tier & fade
+        uActiveCount: { value: 0 },
+        uFadeProgress: { value: 1.0 },
+
+        // Feature toggles
+        uGaussianFalloff: { value: Canonical?.features?.gaussianFalloff ? 1.0 : 0.0 },
+        uCenterWeighting: { value: Canonical?.features?.centerWeightingTier4 ? 1.0 : 0.0 },
+
+        // Stage meta
+        uStageIndex: { value: stageIndex },
+        uBrainRegion: { value: stageIndex },
+      },
+      vertexShader: vertexShaderSource,
+      fragmentShader: fragmentShaderSource,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true,
+    });
+
+    mat.uniformsNeedUpdate = true;
+    materialRef.current = mat;
+    return mat;
+  }, [atlasTexture, blueprint, stageName, size, gl]); // No morph/scroll/activeCount!
+
+  // Update draw range when activeCount changes
+  useEffect(() => {
+    if (geometryRef.current && activeCount > 0) {
+      geometryRef.current.setDrawRange(0, activeCount);
+    }
+  }, [activeCount]);
+
+  // On resize
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uResolution.value.set(size.width, size.height);
+    materialRef.current.uniforms.uDevicePixelRatio.value = gl.getPixelRatio();
+    materialRef.current.uniformsNeedUpdate = true;
+  }, [size, gl]);
+
+  // RAF - Update uniforms every frame
+  useFrame((state) => {
+    const mat = materialRef.current;
+    if (!meshRef.current || !mat || !blueprint) return;
+
+    // Update uniforms that change frequently
+    mat.uniforms.uTime.value = state.clock.elapsedTime;
+    // sync shader-expected names
+    if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = morphProgress;
+    if (mat.uniforms.uStageBlend)    mat.uniforms.uStageBlend.value    = scrollProgress;
+    if (mat.uniforms.uTierCutoff)    mat.uniforms.uTierCutoff.value    = activeCount;
+    mat.uniforms.uMorphProgress.value = morphProgress;
+    mat.uniforms.uScrollProgress.value = scrollProgress;
+    mat.uniforms.uActiveCount.value = activeCount;
+
+    // Camera choreography
+    const camCfg = Canonical?.stages?.[stageName]?.camera;
+    if (camCfg?.movement === "balletic_orbit") {
+      const t = state.clock.elapsedTime * 0.1;
+      meshRef.current.rotation.y = Math.sin(t) * 0.5;
+      meshRef.current.rotation.x = Math.sin(t * 2) * 0.1;
+    } else if (camCfg?.movement === "dramatic_pullback" && camCfg?.shake) {
+      const shake = Math.sin(state.clock.elapsedTime * 10) * 0.01;
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02 + shake;
+      meshRef.current.rotation.x = shake * 0.5;
+    } else if (camCfg?.movement === "reverent_orbit") {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.01;
+      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
+    } else {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+    }
+  });
+
+  if (!geometry || !material || !blueprint) return null;
+
+  return (
+    <points ref={meshRef} geometry={geometry} material={material} frustumCulled={false} />
+  );
+}
+
+export default React.memo(WebGLBackground);
+
+
+---
+# src/components/webgl/consciousness/PointSpriteAtlas.js
+// src/components/webgl/consciousness/PointSpriteAtlas.js
+// 🎨 POINT-SPRITE ATLAS GENERATOR - MetaCurtis Brain Morphing Enhancement
+// ✅ CHECKPOINT 1B: Complete 256×256 texture atlas with contextual sprite selection
+
+import * as THREE from 'three';
+
+export class PointSpriteAtlas {
+  constructor() {
+    this.atlasSize = 256;
+    this.spriteSize = 64; // 4×4 grid = 16 sprites
+    this.spritesPerRow = 4;
+    this.totalSprites = 16;
+    
+    this.canvas = null;
+    this.ctx = null;
+    this.texture = null;
+    this.indexCache = new Map(); // ✅ Performance: Pre-cached indices
+    
+    if (import.meta.env.DEV) {
+      console.log('🎨 PointSpriteAtlas: Initializing 256×256 atlas with 16 contextual sprites');
+    }
+  }
+
+  // Generate the complete 256×256 atlas texture
+  generateAtlas() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = this.atlasSize;
+    this.canvas.height = this.atlasSize;
+    this.ctx = this.canvas.getContext('2d');
+    
+    // Clear with transparent background
+    this.ctx.clearRect(0, 0, this.atlasSize, this.atlasSize);
+    
+    // Generate 16 different particle sprites in 4×4 grid
+    for (let i = 0; i < this.totalSprites; i++) {
+      const row = Math.floor(i / this.spritesPerRow);
+      const col = i % this.spritesPerRow;
+      const x = col * this.spriteSize;
+      const y = row * this.spriteSize;
+      
+      this.generateSprite(i, x, y);
+    }
+    
+    if (import.meta.env.DEV) {
+      console.log('✅ PointSpriteAtlas: Generated 256×256 atlas with 16 consciousness-themed sprites');
+    }
+    
+    return this.canvas;
+  }
+
+  // Generate individual sprite based on index (consciousness-themed)
+  generateSprite(index, x, y) {
+    const ctx = this.ctx;
+    const size = this.spriteSize;
+    const radius = size * 0.4;
+    const centerX = x + size * 0.5;
+    const centerY = y + size * 0.5;
+    
+    ctx.save();
+    
+    switch (index) {
+      case 0: // Solid circle - basic consciousness particle
+        this.drawSolidCircle(centerX, centerY, radius, 'rgba(255,255,255,0.8)');
+        break;
+        
+      case 1: // Gradient circle - consciousness core
+        this.drawGradientCircle(centerX, centerY, radius);
+        break;
+        
+      case 2: // Ring - neural connection
+        this.drawRing(centerX, centerY, radius * 0.8, radius * 0.4);
+        break;
+        
+      case 3: // Cross - synaptic junction
+        this.drawCross(centerX, centerY, radius);
+        break;
+        
+      case 4: // Diamond - memory node (perfect for genesis/discipline)
+        this.drawDiamond(centerX, centerY, radius);
+        break;
+        
+      case 5: // Hexagon - brain cell structure
+        this.drawHexagon(centerX, centerY, radius);
+        break;
+        
+      case 6: // Star - consciousness spark (velocity stage)
+        this.drawStar(centerX, centerY, radius, 5);
+        break;
+        
+      case 7: // Soft glow - atmospheric dust
+        this.drawSoftGlow(centerX, centerY, radius * 1.2);
+        break;
+        
+      case 8: // Pulse ring - neural activity
+        this.drawPulseRing(centerX, centerY, radius);
+        break;
+        
+      case 9: // Spiral - consciousness evolution
+        this.drawSpiral(centerX, centerY, radius);
+        break;
+        
+      case 10: // Network node - connectivity (neural stage)
+        this.drawNetworkNode(centerX, centerY, radius);
+        break;
+        
+      case 11: // Crystalline - structured thought (architecture)
+        this.drawCrystalline(centerX, centerY, radius);
+        break;
+        
+      case 12: // Flowing wave - consciousness stream
+        this.drawFlowingWave(centerX, centerY, radius);
+        break;
+        
+      case 13: // Burst - breakthrough moment (velocity)
+        this.drawBurst(centerX, centerY, radius);
+        break;
+        
+      case 14: // Mandala - unified consciousness (harmony)
+        this.drawMandala(centerX, centerY, radius);
+        break;
+        
+      case 15: // Galaxy - transcendence
+        this.drawGalaxy(centerX, centerY, radius);
+        break;
+    }
+    
+    ctx.restore();
+  }
+
+  // Drawing helper methods
+  drawSolidCircle(x, y, radius, color = 'rgba(255,255,255,0.8)') {
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = color;
+    this.ctx.fill();
+  }
+
+  drawGradientCircle(x, y, radius) {
+    const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, 'rgba(255,255,255,1.0)');
+    gradient.addColorStop(0.5, 'rgba(255,255,255,0.6)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0.0)');
+    
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = gradient;
+    this.ctx.fill();
+  }
+
+  drawRing(x, y, outerRadius, innerRadius) {
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, outerRadius, 0, Math.PI * 2);
+    this.ctx.arc(x, y, innerRadius, 0, Math.PI * 2, true);
+    this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    this.ctx.fill();
+  }
+
+  drawCross(x, y, size) {
+    const thickness = size * 0.2;
+    this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    this.ctx.fillRect(x - size, y - thickness, size * 2, thickness * 2);
+    this.ctx.fillRect(x - thickness, y - size, thickness * 2, size * 2);
+  }
+
+  drawDiamond(x, y, size) {
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y - size);
+    this.ctx.lineTo(x + size, y);
+    this.ctx.lineTo(x, y + size);
+    this.ctx.lineTo(x - size, y);
+    this.ctx.closePath();
+    this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    this.ctx.fill();
+  }
+
+  drawHexagon(x, y, radius) {
+    this.ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      const hx = x + radius * Math.cos(angle);
+      const hy = y + radius * Math.sin(angle);
+      if (i === 0) this.ctx.moveTo(hx, hy);
+      else this.ctx.lineTo(hx, hy);
+    }
+    this.ctx.closePath();
+    this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    this.ctx.fill();
+  }
+
+  drawStar(x, y, radius, points = 5) {
+    const outerRadius = radius;
+    const innerRadius = radius * 0.5;
+    
+    this.ctx.beginPath();
+    for (let i = 0; i < points * 2; i++) {
+      const angle = (i * Math.PI) / points;
+      const r = i % 2 === 0 ? outerRadius : innerRadius;
+      const sx = x + r * Math.cos(angle - Math.PI / 2);
+      const sy = y + r * Math.sin(angle - Math.PI / 2);
+      if (i === 0) this.ctx.moveTo(sx, sy);
+      else this.ctx.lineTo(sx, sy);
+    }
+    this.ctx.closePath();
+    this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    this.ctx.fill();
+  }
+
+  drawSoftGlow(x, y, radius) {
+    const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+    gradient.addColorStop(0, 'rgba(255,255,255,0.4)');
+    gradient.addColorStop(0.3, 'rgba(255,255,255,0.2)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0.0)');
+    
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = gradient;
+    this.ctx.fill();
+  }
+
+  drawPulseRing(x, y, radius) {
+    // Inner bright ring
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2);
+    this.ctx.arc(x, y, radius * 0.3, 0, Math.PI * 2, true);
+    this.ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    this.ctx.fill();
+    
+    // Outer faint ring
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.arc(x, y, radius * 0.8, 0, Math.PI * 2, true);
+    this.ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    this.ctx.fill();
+  }
+
+  drawSpiral(x, y, radius) {
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    this.ctx.lineWidth = 2;
+    
+    for (let angle = 0; angle < Math.PI * 4; angle += 0.1) {
+      const r = (radius * angle) / (Math.PI * 4);
+      const sx = x + r * Math.cos(angle);
+      const sy = y + r * Math.sin(angle);
+      if (angle === 0) this.ctx.moveTo(sx, sy);
+      else this.ctx.lineTo(sx, sy);
+    }
+    this.ctx.stroke();
+  }
+
+  drawNetworkNode(x, y, radius) {
+    // Central node
+    this.drawSolidCircle(x, y, radius * 0.3, 'rgba(255,255,255,0.9)');
+    
+    // Connection lines
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    this.ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, y);
+      this.ctx.lineTo(
+        x + radius * 0.8 * Math.cos(angle),
+        y + radius * 0.8 * Math.sin(angle)
+      );
+      this.ctx.stroke();
+    }
+  }
+
+  drawCrystalline(x, y, radius) {
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    this.ctx.lineWidth = 1.5;
+    
+    // Crystalline structure
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, y);
+      this.ctx.lineTo(
+        x + radius * Math.cos(angle),
+        y + radius * Math.sin(angle)
+      );
+      this.ctx.stroke();
+    }
+    
+    // Central diamond
+    this.drawDiamond(x, y, radius * 0.3);
+  }
+
+  drawFlowingWave(x, y, radius) {
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    this.ctx.lineWidth = 2;
+    
+    for (let wave = 0; wave < 3; wave++) {
+      this.ctx.beginPath();
+      for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+        const r = radius * (0.3 + 0.2 * wave + 0.1 * Math.sin(angle * 3));
+        const wx = x + r * Math.cos(angle);
+        const wy = y + r * Math.sin(angle);
+        if (angle === 0) this.ctx.moveTo(wx, wy);
+        else this.ctx.lineTo(wx, wy);
+      }
+      this.ctx.closePath();
+      this.ctx.stroke();
+    }
+  }
+
+  drawBurst(x, y, radius) {
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    this.ctx.lineWidth = 2;
+    
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * Math.PI) / 6;
+      const length = radius * (0.6 + 0.4 * Math.random());
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, y);
+      this.ctx.lineTo(
+        x + length * Math.cos(angle),
+        y + length * Math.sin(angle)
+      );
+      this.ctx.stroke();
+    }
+    
+    // Central bright core
+    this.drawSolidCircle(x, y, radius * 0.2, 'rgba(255,255,255,1.0)');
+  }
+
+  drawMandala(x, y, radius) {
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    this.ctx.lineWidth = 1;
+    
+    // Outer ring
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.stroke();
+    
+    // Inner patterns
+    for (let ring = 1; ring <= 3; ring++) {
+      const r = radius * (ring / 4);
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, r, 0, Math.PI * 2);
+      this.ctx.stroke();
+      
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI) / 4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + r * 0.5 * Math.cos(angle), y + r * 0.5 * Math.sin(angle));
+        this.ctx.lineTo(x + r * Math.cos(angle), y + r * Math.sin(angle));
+        this.ctx.stroke();
+      }
+    }
+  }
+
+  drawGalaxy(x, y, radius) {
+    // Spiral arms
+    this.ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    this.ctx.lineWidth = 1.5;
+    
+    for (let arm = 0; arm < 3; arm++) {
+      this.ctx.beginPath();
+      for (let angle = 0; angle < Math.PI * 3; angle += 0.1) {
+        const armOffset = (arm * Math.PI * 2) / 3;
+        const r = (radius * angle) / (Math.PI * 3);
+        const gx = x + r * Math.cos(angle + armOffset);
+        const gy = y + r * Math.sin(angle + armOffset);
+        if (angle === 0) this.ctx.moveTo(gx, gy);
+        else this.ctx.lineTo(gx, gy);
+      }
+      this.ctx.stroke();
+    }
+    
+    // Bright core
+    const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius * 0.3);
+    gradient.addColorStop(0, 'rgba(255,255,255,1.0)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0.2)');
+    
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, radius * 0.3, 0, Math.PI * 2);
+    this.ctx.fillStyle = gradient;
+    this.ctx.fill();
+  }
+
+  // ✅ CONTEXTUAL SPRITE SELECTION: Different sprites for different consciousness stages
+  getContextualSpriteIndex(stage, particleIndex) {
+    const stageMapping = {
+      genesis: [0, 1, 7], // Solid, gradient, soft glow - genesis memory formation
+      discipline: [4, 5, 11], // Diamond, hexagon, crystalline - structured discipline
+      neural: [2, 3, 10], // Ring, cross, network node - neural connections
+      velocity: [6, 13, 14], // Star, burst, mandala - breakthrough velocity
+      architecture: [4, 11, 12], // Diamond, crystalline, flowing wave - architectural systems
+      harmony: [8, 9, 15], // Pulse ring, spiral, galaxy - harmonic coordination
+      transcendence: [14, 15, 1] // Mandala, galaxy, gradient - unified transcendence
+    };
+    
+    const sprites = stageMapping[stage] || [0, 1, 2];
+    return sprites[particleIndex % sprites.length];
+  }
+
+  // ✅ PERFORMANCE: Pre-cached atlas indices 
+  generateAtlasIndices(particleCount, stage) {
+    const cacheKey = `${stage}-${particleCount}`;
+    
+    if (this.indexCache.has(cacheKey)) {
+      return this.indexCache.get(cacheKey).slice(); // Return cloned cached array
+    }
+    
+    const atlasIndices = new Float32Array(particleCount);
+    
+    for (let i = 0; i < particleCount; i++) {
+      atlasIndices[i] = this.getContextualSpriteIndex(stage, i);
+    }
+    
+    // Cache for reuse
+    this.indexCache.set(cacheKey, atlasIndices);
+    
+    if (import.meta.env.DEV) {
+      console.log(`✅ PointSpriteAtlas: Cached indices for ${stage} (${particleCount} particles)`);
+    }
+    
+    return atlasIndices.slice(); // Return clone
+  }
+
+  // Create WebGL texture with proper settings
+  createWebGLTexture() {
+    if (!this.canvas) {
+      this.generateAtlas();
+    }
+    
+    // ✅ CORRECTED: Enable mipmaps for better quality at various sizes
+    this.texture = new THREE.CanvasTexture(this.canvas);
+    this.texture.generateMipmaps = true;
+    this.texture.minFilter = THREE.LinearMipmapLinearFilter;
+    this.texture.magFilter = THREE.LinearFilter;
+    this.texture.format = THREE.RGBAFormat;
+    this.texture.flipY = false; // Important for point sprites
+    
+    // ✅ CORRECTED: Mark texture as needing update
+    this.texture.needsUpdate = true;
+    
+    if (import.meta.env.DEV) {
+      console.log('✅ PointSpriteAtlas: WebGL texture created with mipmaps and proper settings');
+    }
+    
+    return this.texture;
+  }
+
+  // Get UV coordinates for sprite index (for debugging)
+  getUVForSprite(index) {
+    const row = Math.floor(index / this.spritesPerRow);
+    const col = index % this.spritesPerRow;
+    const uvSize = 1.0 / this.spritesPerRow;
+    
+    return {
+      u: col * uvSize,
+      v: row * uvSize,
+      uvSize: uvSize
+    };
+  }
+
+  // Dispose resources
+  dispose() {
+    if (this.texture) {
+      this.texture.dispose();
+      this.texture = null;
+    }
+    
+    if (this.indexCache) {
+      this.indexCache.clear();
+    }
+    
+    this.canvas = null;
+    this.ctx = null;
+  }
+}
+
+// Export default class
+export default PointSpriteAtlas;
+
+// ✅ CRITICAL FIX 4: HMR-Safe PointSpriteAtlas singleton
+export function getPointSpriteAtlasSingleton() {
+  const g = globalThis;
+  if (!g.__POINT_SPRITE_ATLAS__) {
+    console.log('🎨 Creating new PointSpriteAtlas singleton');
+    g.__POINT_SPRITE_ATLAS__ = new PointSpriteAtlas();
+  } else {
+    console.log('🎨 Reusing existing PointSpriteAtlas singleton (HMR safe)');
+  }
+  return g.__POINT_SPRITE_ATLAS__;
+}
+
+
+// ✅ DEVELOPMENT ACCESS
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.PointSpriteAtlas = PointSpriteAtlas;
+  
+  window.testAtlasGeneration = () => {
+    const atlas = new PointSpriteAtlas();
+    const canvas = atlas.generateAtlas();
+    
+    // Create downloadable link for inspection
+    const link = document.createElement('a');
+    link.download = 'metacurtis-brain-particle-atlas.png';
+    link.href = canvas.toDataURL();
+    link.click();
+    
+    console.log('🎨 Brain particle atlas downloaded for inspection');
+    return canvas;
+  };
+  
+  window.testContextualSelection = () => {
+    const atlas = new PointSpriteAtlas();
+    const stages = ['genesis', 'discipline', 'neural', 'velocity', 'architecture', 'harmony', 'transcendence'];
+    
+    stages.forEach(stage => {
+      const indices = [];
+      for (let i = 0; i < 5; i++) {
+        indices.push(atlas.getContextualSpriteIndex(stage, i));
+      }
+      console.log(`${stage}: sprites ${indices.join(', ')}`);
+    });
+    
+    return 'Contextual sprite selection tested for all stages';
+  };
+  
+  console.log('🎨 PointSpriteAtlas: Development tools ready');
+  console.log('🔧 Test atlas: window.testAtlasGeneration()');
+  console.log('🧪 Test selection: window.testContextualSelection()');
+}
+
+---
+# src/engine/ConsciousnessEngine.js
+// src/engine/ConsciousnessEngine.js
+// SST v3.0 COMPLIANT - Integrated Stage/Quality + Emergence blueprint generation
+
+import { Canonical } from '@config/canonical/canonicalAuthority.js';
+import { createSeededRandom } from '../utils/random.js';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events.js';
+
+class ConsciousnessEngine {
+  constructor() {
+    this.blueprintCache = new Map();
+    this.currentStage = 'genesis';
+    this.currentQuality = 'HIGH';
+    this.isInitialized = false;
+
+    this.initializeBeatBusListeners();
+    console.log('🧠 ConsciousnessEngine initialized with BeatBus integration (SST v3.0 compliant)');
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // BeatBus Event Listeners
+  // ————————————————————————————————————————————————————————————————
+  initializeBeatBusListeners() {
+    // Stage changes from UI/scroll
+    BeatBus.on(EVENTS.STAGE_CHANGE, ({ stage }) => {
+      if (!stage) return;
+      console.log(`🧠 Engine: Stage change to ${stage}`);
+      this.currentStage = stage;
+      this.buildAndEmitBlueprint(stage, this.currentQuality);
+    });
+
+    // Quality changes from TAQS
+    BeatBus.on(EVENTS.QUALITY_CHANGE, ({ tier }) => {
+      if (!tier) return;
+      console.log(`🧠 Engine: Quality change to ${tier}`);
+      this.currentQuality = tier;
+      this.buildAndEmitBlueprint(this.currentStage, tier);
+    });
+
+    // Director: Prewarm genesis for emergence (SST v3.0 opening)
+    BeatBus.on(EVENTS.PREWARM_GENESIS_BLUEPRINT, () => {
+      console.log('🧠 Engine: Prewarming genesis blueprint for emergence');
+      const key = this._emergenceKey('HELLO CURTIS', 2000);
+
+      if (!this.blueprintCache.has(key)) {
+        const bp = this.buildEmergenceBlueprint({
+          text: 'HELLO CURTIS',
+          count: 2000, // SST v3.0: Genesis has 2000 particles
+        });
+        this.blueprintCache.set(key, bp);
+      }
+
+      // Notify Director that prewarm is complete
+      BeatBus.emit(EVENTS.PREWARM_COMPLETE, { key });
+    });
+
+    // Director: Build emergence blueprint (particles from text)
+    BeatBus.on(EVENTS.BUILD_EMERGENCE_BLUEPRINT, (opts = {}) => {
+      console.log('🧠 Engine: Building emergence blueprint');
+
+      const text = opts.sourceText || 'HELLO CURTIS';
+      const count = opts.count || 2000; // SST v3.0 Genesis particle count
+      const tierBehaviors = opts.tierBehaviors || {
+        tier1: { behavior: 'drift', ratio: 0.5 },
+        tier2: { behavior: 'orbital', ratio: 0.2 },
+        tier3: { behavior: 'twinkle', ratio: 0.15 },
+        tier4: { behavior: 'prominent', ratio: 0.15 },
+      };
+
+      const key = this._emergenceKey(text, count);
+      let bp = this.blueprintCache.get(key);
+      const cached = !!bp;
+
+      if (!bp) {
+        bp = this.buildEmergenceBlueprint({ text, count, tierBehaviors });
+        this.blueprintCache.set(key, bp);
+      }
+
+      // Emit blueprint - WebGLBackground expects this format
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+        blueprint: bp,
+        stage: 'genesis',
+        quality: this.currentQuality,
+        cached,
+      });
+    });
+
+    // Initial blueprint request after components mount
+    setTimeout(() => {
+      console.log('🧠 Engine: Requesting initial state...');
+      this.buildAndEmitBlueprint(this.currentStage, this.currentQuality);
+    }, 500); // Give renderer time to mount
+  }
+
+  _emergenceKey(text, count) {
+    return `emergence|${text}|${count}`;
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Build and emit stage blueprints
+  // ————————————————————————————————————————————————————————————————
+  buildAndEmitBlueprint(stage, quality) {
+    const cacheKey = `${stage}|${quality}`;
+
+    if (this.blueprintCache.has(cacheKey)) {
+      console.log(`🔨 Engine: Using cached blueprint for ${stage}|${quality}`);
+      const cachedBlueprint = this.blueprintCache.get(cacheKey);
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+        blueprint: cachedBlueprint,
+        stage,
+        quality,
+        cached: true,
+      });
+      return;
+    }
+
+    console.log(`🔨 Engine: Building new blueprint for ${stage}|${quality}`);
+    const blueprint = this.buildBlueprint(stage, { quality });
+
+    if (blueprint) {
+      this.blueprintCache.set(cacheKey, blueprint);
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+        blueprint,
+        stage,
+        quality,
+        cached: false,
+      });
+    }
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Standard stage blueprint (atmospheric → brain morphing)
+  // ————————————————————————————————————————————————————————————————
+  buildBlueprint(stageName, options = {}) {
+    const startTime = performance.now();
+
+    const stageConfig = Canonical.stages[stageName];
+    if (!stageConfig) {
+      console.error(`Stage ${stageName} not found in canonical config`);
+      return null;
+    }
+
+    const quality = options.quality || this.currentQuality;
+    const baseParticleCount = stageConfig.particleCount;
+    const particleCount = this.getParticleCountForQuality(baseParticleCount, quality);
+
+    console.log(
+      `🧠 Building blueprint for ${stageName} with ${particleCount} particles (quality: ${quality})`
+    );
+
+    // SST v3.0: Maximum 15,000 particles
+    const maxParticles = 15000;
+
+    // Allocate arrays
+    const atmosphericPositions = new Float32Array(maxParticles * 3);
+    const allenAtlasPositions = new Float32Array(maxParticles * 3);
+    const animationSeeds = new Float32Array(maxParticles * 3);
+    const sizeMultipliers = new Float32Array(maxParticles);
+    const opacityData = new Float32Array(maxParticles);
+    const atlasIndices = new Float32Array(maxParticles);
+    const tierData = new Float32Array(maxParticles);
+
+    // SST v3.0 Tier Distribution
+    const tierConfig = stageConfig.tierDistribution || {
+      tier1: {
+        ratio: 0.5,
+        sizeRange: [0.5, 0.7],
+        opacityRange: [0.3, 0.7],
+        behavior: 'drift',
+      },
+      tier2: {
+        ratio: 0.2,
+        sizeRange: [0.7, 0.9],
+        opacityRange: [0.5, 0.8],
+        behavior: 'orbital',
+      },
+      tier3: {
+        ratio: 0.15,
+        sizeRange: [1.0, 1.3],
+        opacityRange: [0.7, 0.9],
+        behavior: 'twinkle',
+      },
+      tier4: {
+        ratio: 0.15,
+        sizeRange: [1.3, 2.0],
+        opacityRange: [0.8, 1.0],
+        behavior: 'prominent',
+      },
+    };
+
+    // Calculate tier particle counts
+    const t1 = Math.floor(particleCount * tierConfig.tier1.ratio);
+    const t2 = Math.floor(particleCount * tierConfig.tier2.ratio);
+    const t3 = Math.floor(particleCount * tierConfig.tier3.ratio);
+    const t4 = particleCount - t1 - t2 - t3;
+
+    // Generate particles for each tier
+    let particleIndex = 0;
+
+    this._generateTierParticles(
+      atmosphericPositions,
+      allenAtlasPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      particleIndex,
+      t1,
+      0,
+      tierConfig.tier1,
+      stageConfig
+    );
+    particleIndex += t1;
+
+    this._generateTierParticles(
+      atmosphericPositions,
+      allenAtlasPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      particleIndex,
+      t2,
+      1,
+      tierConfig.tier2,
+      stageConfig
+    );
+    particleIndex += t2;
+
+    this._generateTierParticles(
+      atmosphericPositions,
+      allenAtlasPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      particleIndex,
+      t3,
+      2,
+      tierConfig.tier3,
+      stageConfig
+    );
+    particleIndex += t3;
+
+    this._generateTierParticles(
+      atmosphericPositions,
+      allenAtlasPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      particleIndex,
+      t4,
+      3,
+      tierConfig.tier4,
+      stageConfig
+    );
+
+    const buildTime = performance.now() - startTime;
+    console.log(`✅ Blueprint built in ${buildTime.toFixed(2)}ms`);
+
+    return {
+      stageName,
+      particleCount,
+      maxParticles,
+      activeCount: particleCount,
+      atmosphericPositions,
+      allenAtlasPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      metadata: {
+        quality,
+        buildTime,
+        tierCounts: { tier1: t1, tier2: t2, tier3: t3, tier4: t4 },
+      },
+    };
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Emergence blueprint (text → particles for SST v3.0 opening)
+  // ————————————————————————————————————————————————————————————————
+  buildEmergenceBlueprint({ text = 'HELLO CURTIS', count = 2000, tierBehaviors = {} } = {}) {
+    console.log(`🌟 Building emergence blueprint: "${text}" with ${count} particles`);
+
+    // Generate positions from text
+    const positions = this.textToParticlePositions(text, count);
+
+    // SST v3.0 Genesis tier distribution: 60/20/10/10
+    const tiers = new Uint8Array(count);
+    const tierCounts = [
+      Math.floor(count * 0.6), // Tier 1: 60% drift
+      Math.floor(count * 0.2), // Tier 2: 20% orbital
+      Math.floor(count * 0.1), // Tier 3: 10% twinkle
+      Math.floor(count * 0.1), // Tier 4: 10% prominent
+    ];
+
+    // Adjust for rounding
+    const totalAssigned = tierCounts.reduce((a, b) => a + b, 0);
+    if (totalAssigned < count) {
+      tierCounts[0] += count - totalAssigned;
+    }
+
+    // Fill tier array
+    let idx = 0;
+    for (let tier = 0; tier < 4; tier++) {
+      for (let i = 0; i < tierCounts[tier] && idx < count; i++) {
+        tiers[idx++] = tier;
+      }
+    }
+
+    // Shuffle for random distribution
+    for (let i = count - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tiers[i], tiers[j]] = [tiers[j], tiers[i]];
+    }
+
+    // Return minimal blueprint - WebGLBackground will synthesize the rest
+    return {
+      id: 'emergence-genesis',
+      mode: 'emergence',
+      stageName: 'genesis',
+      count,
+      particleCount: count,
+      maxParticles: count,
+      activeCount: count,
+      positions, // Start positions (from text)
+      tiers, // Tier assignments
+      metadata: {
+        sourceText: text,
+        tierBehaviors,
+        createdAt: Date.now(),
+      },
+    };
+  }
+
+  textToParticlePositions(text, count) {
+    // Create positions that form text shape
+    const positions = new Float32Array(count * 3);
+
+    // Text dimensions in world space
+    const charWidth = 8.0; // enlarged for emergence visibility
+    const _textWidth = text.length * charWidth;
+    const textHeight = 10.0; // taller for emergence
+    const _centerX = 0;
+    const centerY = 0;
+
+    for (let i = 0; i < count; i++) {
+      // Distribute particles across text area
+      const charIndex = Math.floor(Math.random() * text.length);
+      const baseX = (charIndex - text.length / 2) * charWidth;
+
+      // Add variation within character bounds
+      const x = baseX + (Math.random() - 0.5) * charWidth * 0.8;
+      const y = centerY + (Math.random() - 0.5) * textHeight;
+      const z = (Math.random() - 0.5) * 2.0; // More depth so highlights pop
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+    }
+
+    return positions;
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Helper: Generate tier-specific particles
+  // ————————————————————————————————————————————————————————————————
+  _generateTierParticles(
+    atmosphericPositions,
+    allenAtlasPositions,
+    animationSeeds,
+    sizeMultipliers,
+    opacityData,
+    atlasIndices,
+    tierData,
+    startIndex,
+    count,
+    tierIndex,
+    tierCfg,
+    stageCfg
+  ) {
+    const rnd = createSeededRandom(`${stageCfg.name}-tier${tierIndex}`);
+
+    // SST v3.0 sprite assignments per tier
+    const tierSprites = {
+      0: [7], // Tier 1: Soft glow (sprite 7)
+      1: [0, 1], // Tier 2: Basic circle, gradient
+      2: [4], // Tier 3: Diamond
+      3: [1], // Tier 4: Gradient
+    };
+
+    const availableSprites = tierSprites[tierIndex] || [0];
+
+    for (let i = 0; i < count; i++) {
+      const idx = (startIndex + i) * 3;
+      const idx1 = startIndex + i;
+
+      // Atmospheric positions (cloud-like)
+      const r = rnd() * 80 + 40;
+      const theta = rnd() * Math.PI * 2;
+      const phi = Math.acos(2 * rnd() - 1);
+
+      atmosphericPositions[idx] = r * Math.sin(phi) * Math.cos(theta);
+      atmosphericPositions[idx + 1] = r * Math.sin(phi) * Math.sin(theta);
+      atmosphericPositions[idx + 2] = r * Math.cos(phi);
+
+      // Allen Atlas positions (brain structure)
+      const brainR = 20 + rnd() * 15;
+      allenAtlasPositions[idx] = brainR * Math.sin(phi) * Math.cos(theta);
+      allenAtlasPositions[idx + 1] = brainR * Math.sin(phi) * Math.sin(theta);
+      allenAtlasPositions[idx + 2] = brainR * Math.cos(phi);
+
+      // Animation seeds
+      animationSeeds[idx] = rnd();
+      animationSeeds[idx + 1] = rnd();
+      animationSeeds[idx + 2] = rnd();
+
+      // Tier-specific properties
+      const [sizeMin, sizeMax] = tierCfg.sizeRange || [1.0, 1.0];
+      const [opacityMin, opacityMax] = tierCfg.opacityRange || [0.8, 1.0];
+
+      sizeMultipliers[idx1] = sizeMin + rnd() * (sizeMax - sizeMin);
+      opacityData[idx1] = opacityMin + rnd() * (opacityMax - opacityMin);
+      atlasIndices[idx1] = availableSprites[Math.floor(rnd() * availableSprites.length)];
+      tierData[idx1] = tierIndex;
+    }
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Quality management (SST v3.0 tiers)
+  // ————————————————————————————————————————————————————————————————
+  getParticleCountForQuality(baseCount, quality) {
+    const multipliers = {
+      LOW: 0.3, // 30% of base
+      MEDIUM: 0.6, // 60% of base
+      HIGH: 1.0, // 100% of base
+      ULTRA: 1.5, // 150% of base (up to 15,000 max)
+    };
+
+    const count = Math.floor(baseCount * (multipliers[quality] || 1.0));
+    return Math.min(count, 15000); // SST v3.0 cap
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Cache management
+  // ————————————————————————————————————————————————————————————————
+  clearCache() {
+    this.blueprintCache.clear();
+    console.log('🧠 Blueprint cache cleared');
+  }
+
+  getCacheStats() {
+    return {
+      size: this.blueprintCache.size,
+      keys: Array.from(this.blueprintCache.keys()),
+      stages: Array.from(this.blueprintCache.keys())
+        .filter(k => !k.startsWith('emergence'))
+        .map(k => k.split('|')[0]),
+      emergenceKeys: Array.from(this.blueprintCache.keys()).filter(k => k.startsWith('emergence')),
+    };
+  }
+
+  forceRebuild(stage, quality) {
+    const key = `${stage}|${quality}`;
+    this.blueprintCache.delete(key);
+    console.log(`🧠 Force rebuilding ${key}`);
+    this.buildAndEmitBlueprint(stage, quality);
+  }
+}
+
+// Create singleton instance
+const engine = new ConsciousnessEngine();
+
+// Debug interface
+if (typeof window !== 'undefined') {
+  window.engineDebug = {
+    getCacheStats: () => engine.getCacheStats(),
+    clearCache: () => engine.clearCache(),
+    preGenerate: () => {
+      const stages = Object.keys(Canonical.stages);
+      const qualities = ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
+      stages.forEach(stage => {
+        qualities.forEach(quality => {
+          engine.buildAndEmitBlueprint(stage, quality);
+        });
+      });
+      console.log('🧠 Pre-generated all stage/quality combinations');
+    },
+    forceRebuild: (stage, quality) => engine.forceRebuild(stage, quality),
+  };
+}
+
+export default engine;
+
+
+---
+# src/theater/TheaterDirector.js
+// src/theater/TheaterDirector.js
+// SST v3.0 Compliant Theater Director - Fixed singleton pattern
+
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from './events.js';
+
+class TheaterDirector {
+  constructor() {
+    this.phase = 'idle';
+    this.cancelled = false;
+    this.isRunning = false;
+    this.hasRun = false; // Track if it has ever run
+    this.startTime = null;
+    this.timeline = {};
+  }
+
+  async start() {
+    // Only block if currently running, not if it has run before
+    if (this.isRunning) {
+      console.log('🎬 Director: Already running, ignoring duplicate start');
+      return;
+    }
+
+    // Reset state for new run
+    this.isRunning = true;
+    this.cancelled = false;
+    this.phase = 'starting';
+    this.startTime = Date.now();
+    
+    console.log('🎬 Director: Starting SST v3.0 compliant show');
+
+    try {
+      // Prewarm assets
+      await this.prewarm();
+      
+      // Phase 1: Black screen (2 seconds)
+      this.phase = 'black';
+      console.log('   Phase: Black screen (2s)');
+      await this.sleep(2000);
+      if (this.cancelled) return;
+
+      // Phase 2: Cursor appears and blinks twice
+      this.phase = 'cursor';
+      console.log('   Phase: Cursor (blinks twice)');
+      BeatBus.emit(EVENTS.CURSOR_SHOW);
+      await this.sleep(500);
+      BeatBus.emit(EVENTS.CURSOR_BLINK, { count: 2, interval: 500 });
+      await this.sleep(2500);
+      if (this.cancelled) return;
+
+      // Phase 3: Terminal typing
+      this.phase = 'terminal';
+      console.log('   Phase: Terminal typing');
+      BeatBus.emit(EVENTS.TERMINAL_TYPE, {
+        lines: [
+          'READY.',
+          '10 PRINT "HELLO CURTIS"',
+          '20 GOTO 10',
+          'RUN'
+        ],
+        typeSpeed: 100,
+        lineDelay: 500
+      });
+      
+      // Emit key clicks during typing
+      for (let i = 0; i < 4; i++) {
+        await this.sleep(500);
+        BeatBus.emit(EVENTS.AUDIO_KEY_CLICK);
+      }
+      
+      await this.sleep(3800);
+      if (this.cancelled) return;
+
+      // Phase 4: Screen fills with "HELLO CURTIS"
+      this.phase = 'fill';
+      console.log('   Phase: Screen fill');
+      BeatBus.emit(EVENTS.SCREEN_FILL, {
+        text: 'HELLO CURTIS ',
+        scrollSpeed: 50
+      });
+      await this.sleep(3000);
+      if (this.cancelled) return;
+
+      // Phase 5: Particles emerge from text
+      this.phase = 'emergence';
+      console.log('🌟 Phase: Emergence - particles from text');
+      BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+        sourceText: 'HELLO CURTIS',
+        count: 2000
+      });
+      
+      // Tell opening sequence to start fading
+      await this.sleep(500);
+      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
+      
+      // Wait for particles to emerge
+      await this.once(EVENTS.PARTICLES_EMERGED, 4000);
+      if (this.cancelled) return;
+
+      // Phase 6: Start narrative and enable scroll
+      this.phase = 'genesis';
+      console.log('🧬 Phase: Genesis - narrative begins');
+      BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: 'genesis' });
+      BeatBus.emit(EVENTS.START_NARRATIVE, { stage: 'genesis' });
+      BeatBus.emit(EVENTS.ENABLE_SCROLL);
+
+      // Monitor for memory fragments
+      this.monitorFragments();
+
+      // Complete
+      this.phase = 'complete';
+      const elapsed = Date.now() - this.startTime;
+      console.log('🎬 Director: Hand-off complete → user-driven experience');
+      console.log(`   Total opening time: ${elapsed}ms`);
+      
+      this.hasRun = true;
+      this.isRunning = false;
+
+    } catch (error) {
+      console.error('Director error:', error);
+      this.isRunning = false;
+      this.phase = 'error';
+    }
+  }
+
+  async prewarm() {
+    console.log('🔥 Director: Prewarming assets...');
+    BeatBus.emit(EVENTS.PREWARM_GENESIS_BLUEPRINT);
+    
+    // Start audio
+    BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: 0.3 });
+    
+    // Wait for prewarm or timeout
+    await this.once(EVENTS.PREWARM_COMPLETE, 2000);
+  }
+
+  monitorFragments() {
+    console.log('📍 Director: Monitoring for memory fragments');
+    
+    // Set up fragment triggers based on scroll percentage
+    const _fragmentTriggers = [
+      { stage: 'genesis', percent: 5 },
+      { stage: 'discipline', percent: 20 },
+      { stage: 'neural', percent: 35 },
+      { stage: 'velocity', percent: 49 },
+      { stage: 'architecture', percent: 63 },
+      { stage: 'harmony', percent: 77 },
+      { stage: 'transcendence', percent: 92 }
+    ];
+    
+    // Note: Actual implementation would monitor scroll and trigger fragments
+    // For now, this is a placeholder
+  }
+
+  cancel() {
+    if (!this.isRunning) return;
+    
+    console.log('🎬 Director: Cancelling show');
+    this.cancelled = true;
+    this.isRunning = false;
+    this.phase = 'cancelled';
+    BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  once(event, timeout = 5000) {
+    return new Promise((resolve) => {
+      let timeoutId;
+      
+      const handler = (data) => {
+        clearTimeout(timeoutId);
+        unsubscribe();
+        resolve(data);
+      };
+      
+      const unsubscribe = BeatBus.on(event, handler);
+      
+      timeoutId = setTimeout(() => {
+        console.warn(`⚠️ Director: ${event} timed out after ${timeout}ms`);
+        unsubscribe();
+        resolve(null);
+      }, timeout);
+    });
+  }
+
+  getStatus() {
+    return {
+      phase: this.phase,
+      elapsed: this.startTime ? Date.now() - this.startTime : 0,
+      cancelled: this.cancelled,
+      isRunning: this.isRunning,
+      hasRun: this.hasRun,
+      timeline: this.timeline
+    };
+  }
+}
+
+// Create singleton instance
+const director = new TheaterDirector();
+
+// Expose for debugging
+if (typeof window !== 'undefined') {
+  window.theaterDirector = director;
+}
+
+export default director;
+
+
+---
+# src/components/theater/OpeningSequence.jsx
+// src/components/theater/OpeningSequence.jsx
+// SST v3.0 100% Compliant Opening Sequence - Exact specifications
+
+import { useEffect, useRef, useState } from 'react';
+import BeatBus from '@modules/orchestration/core/BeatBus';
+import { EVENTS } from '@theater/events.js';
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+export default function OpeningSequence() {
+  const [visible, setVisible] = useState(false);
+  const [phase, setPhase] = useState('black'); // black | cursor | typing | fill
+  const [cursorVisible, setCursorVisible] = useState(false);
+  const [lines, setLines] = useState([]);
+  const [currentTypingLine, setCurrentTypingLine] = useState(-1);
+  const [screenFillLines, setScreenFillLines] = useState([]);
+
+  // Audio refs
+  const humAudioRef = useRef(null);
+  const keyClickAudioRef = useRef(null);
+
+  // Cleanup tracking
+  const timers = useRef(new Set());
+  const intervals = useRef(new Set());
+  const typingToken = useRef(0);
+  const mounted = useRef(true);
+
+  const addTimeout = (fn, ms) => {
+    const id = setTimeout(fn, ms);
+    timers.current.add(id);
+    return id;
+  };
+
+  const addInterval = (fn, ms) => {
+    const id = setInterval(fn, ms);
+    intervals.current.add(id);
+    return id;
+  };
+
+  const clearAllTimers = () => {
+    for (const id of timers.current) clearTimeout(id);
+    for (const id of intervals.current) clearInterval(id);
+    timers.current.clear();
+    intervals.current.clear();
+  };
+
+  useEffect(() => {
+    mounted.current = true;
+    setVisible(true); // Show overlay when component mounts
+    console.log('🎬 OpeningSequence: Ready for Director signals');
+
+    const eventHandlers = [
+      // ========== CURSOR SHOW ==========
+      BeatBus.on(EVENTS.CURSOR_SHOW, () => {
+        console.log('   OpeningSequence: CURSOR_SHOW received');
+        setPhase('cursor');
+        setCursorVisible(true);
+      }),
+
+      // ========== CURSOR BLINK (Must blink TWICE per SST v3.0) ==========
+      BeatBus.on(EVENTS.CURSOR_BLINK, async ({ count = 2, interval = 500 } = {}) => {
+        console.log(`   OpeningSequence: CURSOR_BLINK received (${count} times)`);
+
+        // Blink exactly N times
+        for (let i = 0; i < count && mounted.current; i++) {
+          setCursorVisible(false);
+          await sleep(interval);
+          if (!mounted.current) break;
+          setCursorVisible(true);
+          await sleep(interval);
+        }
+
+        setCursorVisible(false); // Hide cursor after blinking
+      }),
+
+      // ========== TERMINAL TYPE (SST v3.0 exact text) ==========
+      BeatBus.on(
+        EVENTS.TERMINAL_TYPE,
+        async ({ lines: toType = [], typeSpeed = 50, lineDelay = 300 } = {}) => {
+          console.log('   OpeningSequence: TERMINAL_TYPE received');
+          setPhase('typing');
+          setCursorVisible(false);
+          typingToken.current += 1;
+          const token = typingToken.current;
+
+          // Clear previous content
+          setLines([]);
+
+          // Type each line character by character
+          for (let lineIdx = 0; lineIdx < toType.length; lineIdx++) {
+            if (!mounted.current || token !== typingToken.current) return;
+
+            const line = toType[lineIdx];
+            setCurrentTypingLine(lineIdx);
+            let currentText = '';
+
+            // Add empty line first
+            setLines(prev => [...prev, '']);
+
+            // Type character by character
+            for (let charIdx = 0; charIdx < line.length; charIdx++) {
+              if (!mounted.current || token !== typingToken.current) return;
+
+              currentText += line[charIdx];
+
+              // Trigger key click sound for each character
+              if (keyClickAudioRef.current) {
+                keyClickAudioRef.current.currentTime = 0;
+                keyClickAudioRef.current.play().catch(() => {});
+              }
+
+              // Update the current line
+              setLines(prev => {
+                const updated = [...prev];
+                updated[lineIdx] = currentText;
+                return updated;
+              });
+
+              await sleep(typeSpeed);
+            }
+
+            // Pause between lines
+            if (lineIdx < toType.length - 1) {
+              await sleep(lineDelay);
+            }
+          }
+
+          setCurrentTypingLine(-1);
+        }
+      ),
+
+      // ========== SCREEN FILL (Scrolling "HELLO CURTIS") ==========
+      BeatBus.on(
+        EVENTS.SCREEN_FILL,
+        ({
+          text = 'HELLO CURTIS ', // FIXED: Correct spelling
+          scrollSpeed = 50,
+        } = {}) => {
+          console.log('   OpeningSequence: SCREEN_FILL received');
+          setPhase('fill');
+
+          // Fill screen with scrolling text
+          const fillText = text.repeat(10); // Repeat across width
+          setScreenFillLines([fillText]);
+
+          // Add new lines progressively
+          addInterval(() => {
+            setScreenFillLines(prev => {
+              if (prev.length >= 30) {
+                // Screen is full
+                // Scroll effect: remove first, add new at bottom
+                return [...prev.slice(1), fillText];
+              }
+              return [...prev, fillText];
+            });
+          }, scrollSpeed);
+        }
+      ),
+
+      // ========== AUDIO: COMPUTER HUM ==========
+      BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {
+        console.log(`   OpeningSequence: Computer hum at volume ${volume}`);
+        if (!humAudioRef.current) {
+          humAudioRef.current = new Audio('/audio/computer-hum.mp3');
+          humAudioRef.current.loop = true;
+          humAudioRef.current.volume = volume;
+        }
+        humAudioRef.current
+          .play()
+          .catch(e => console.log('Audio playback requires user interaction:', e));
+      }),
+
+      // ========== AUDIO: KEY CLICKS ==========
+      BeatBus.on(EVENTS.AUDIO_KEY_CLICK, () => {
+        if (!keyClickAudioRef.current) {
+          keyClickAudioRef.current = new Audio('/audio/key-click.mp3');
+          keyClickAudioRef.current.volume = 0.5;
+        }
+        keyClickAudioRef.current.currentTime = 0;
+        keyClickAudioRef.current.play().catch(() => {});
+      }),
+
+      // ========== PARTICLES EMERGING (Fade out) ==========
+      BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
+        console.log('   OpeningSequence: Particles emerging, fading out');
+
+        // Fade out gracefully
+        addTimeout(() => {
+          setVisible(false);
+
+          // Cleanup after fade
+          addTimeout(() => {
+            setPhase('complete');
+            clearAllTimers();
+
+            // Stop audio
+            if (humAudioRef.current) {
+              humAudioRef.current.pause();
+              humAudioRef.current = null;
+            }
+          }, 700);
+        }, 100);
+      }),
+
+      // ========== DIRECTOR CANCEL ==========
+      BeatBus.on(EVENTS.DIRECTOR_CANCEL, () => {
+        console.log('   OpeningSequence: Director cancelled');
+        setVisible(false);
+        setPhase('complete');
+        clearAllTimers();
+
+        // Stop all audio
+        if (humAudioRef.current) {
+          humAudioRef.current.pause();
+          humAudioRef.current = null;
+        }
+        if (keyClickAudioRef.current) {
+          keyClickAudioRef.current.pause();
+          keyClickAudioRef.current = null;
+        }
+      }),
+    ];
+
+    // Cleanup
+    return () => {
+      mounted.current = false;
+      clearAllTimers();
+      eventHandlers.forEach(off => off && off());
+
+      // Stop audio on unmount
+      if (humAudioRef.current) {
+        humAudioRef.current.pause();
+      }
+      if (keyClickAudioRef.current) {
+        keyClickAudioRef.current.pause();
+      }
+    };
+  }, []);
+
+  // Don't render if complete
+  if (phase === 'complete') {
+    return null;
+  }
+
+  return (
+    <div className="opening-sequence"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#000000',
+        color: '#00FF00', // SST v3.0 exact green
+        fontFamily: "'Courier New', monospace",
+        fontSize: '1.5rem',
+        lineHeight: 1.4,
+        zIndex: 9999,
+        overflow: 'hidden',
+        transition: 'opacity 0.7s',
+        opacity: visible ? 1 : 0,
+      }}
+    >
+      {/* BLACK SCREEN PHASE */}
+      {phase === 'black' && (
+        <div style={{ width: '100%', height: '100%', backgroundColor: '#000000' }} />
+      )}
+
+      {/* CURSOR PHASE - Blinks exactly twice */}
+      {phase === 'cursor' && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: '2rem',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '2rem',
+              color: '#00FF00',
+              opacity: cursorVisible ? 1 : 0,
+              textShadow: cursorVisible ? '0 0 10px #00FF00' : 'none',
+              transition: 'opacity 100ms',
+            }}
+          >
+            _
+          </span>
+        </div>
+      )}
+
+      {/* TERMINAL TYPING PHASE - SST v3.0 exact text */}
+      {phase === 'typing' && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: '2rem',
+          }}
+        >
+          <div style={{ maxWidth: '800px', width: '100%' }}>
+            <pre
+              style={{
+                color: '#00FF00',
+                fontFamily: "'Courier New', monospace",
+                fontSize: '1.5rem',
+                lineHeight: 1.6,
+                textShadow: '0 0 5px #00FF00',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {lines.map((line, idx) => (
+                <div key={idx}>
+                  {line}
+                  {idx === currentTypingLine && (
+                    <span
+                      style={{
+                        animation: 'blink 1s step-end infinite',
+                        textShadow: '0 0 10px #00FF00',
+                      }}
+                    >
+                      _
+                    </span>
+                  )}
+                </div>
+              ))}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* SCREEN FILL PHASE - Scrolling "HELLO CURTIS" */}
+      {phase === 'fill' && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            padding: '1rem',
+            overflow: 'hidden',
+            background: 'linear-gradient(180deg, rgba(0,255,0,0.1) 0%, rgba(0,0,0,0.9) 100%)',
+          }}
+        >
+          <pre
+            style={{
+              color: '#00FF00',
+              fontFamily: "'Courier New', monospace",
+              fontSize: '1.2rem',
+              lineHeight: 1.2,
+              opacity: 0.8,
+              textShadow: '0 0 3px #00FF00',
+              whiteSpace: 'pre',
+            }}
+          >
+            {screenFillLines.map((line, idx) => (
+              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
+                {line}
+              </div>
+            ))}
+          </pre>
+        </div>
+      )}
+
+      {/* Inline styles for animations */}
+      <style>{`
+        @keyframes blink {
+          50% { opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+---
+# src/theater/events.js
+// src/theater/events.js
+// SST v3.0 Complete Event Catalog - All requirements included
+
+export const EVENTS = {
+  // Opening phases (SST v3.0 compliant)
+  CURSOR_SHOW: 'CURSOR_SHOW',
+  CURSOR_BLINK: 'CURSOR_BLINK', // Controls exact blink count
+  TERMINAL_TYPE: 'TERMINAL_TYPE',
+  SCREEN_FILL: 'SCREEN_FILL',
+
+  // Critical emergence handoff
+  BUILD_EMERGENCE_BLUEPRINT: 'BUILD_EMERGENCE_BLUEPRINT',
+  PARTICLES_START_EMERGING: 'PARTICLES_START_EMERGING',
+  PARTICLES_EMERGED: 'PARTICLES_EMERGED',
+
+  // Narrative control
+  START_NARRATIVE: 'START_NARRATIVE',
+  NARRATIVE_STAGE_CHANGE: 'NARRATIVE_STAGE_CHANGE',
+  NARRATIVE_LINE: 'NARRATIVE_LINE',
+
+  // Memory fragments (SST v3.0 scroll percentages)
+  ENABLE_SCROLL: 'ENABLE_SCROLL',
+  MEMORY_FRAGMENT_CHECK: 'MEMORY_FRAGMENT_CHECK',
+  TRIGGER_FRAGMENT: 'TRIGGER_FRAGMENT',
+
+  // Audio system (SST v3.0 requirements)
+  AUDIO_START_STAGE: 'AUDIO_START_STAGE',
+  AUDIO_KEY_CLICK: 'AUDIO_KEY_CLICK',
+  AUDIO_COMPUTER_HUM: 'AUDIO_COMPUTER_HUM',
+  AUDIO_CROSSFADE: 'AUDIO_CROSSFADE',
+
+  // Tier behaviors (SST v3.0 specifications)
+  TIER_BEHAVIOR_UPDATE: 'TIER_BEHAVIOR_UPDATE',
+
+  // Stage management
+  STAGE_CHANGE: 'STAGE_CHANGE',
+  QUALITY_CHANGE: 'QUALITY_CHANGE',
+  BLUEPRINT_READY: 'BLUEPRINT_READY',
+
+  // Prewarm
+  PREWARM_GENESIS_BLUEPRINT: 'PREWARM_GENESIS_BLUEPRINT',
+  PREWARM_COMPLETE: 'PREWARM_COMPLETE',
+
+  // Director control
+  DIRECTOR_CANCEL: 'DIRECTOR_CANCEL',
+};
+
+// SST v3.0 Memory Fragment trigger points
+export const FRAGMENT_TRIGGERS = {
+  genesis: 5, // Commodore 64 at 5%
+  discipline: 20, // Marine emblem at 20%
+  neural: 35, // Chat interface at 35%
+  velocity: 49, // GitHub graph at 49%
+  architecture: 63, // FPS counter at 63%
+  harmony: 77, // Live code at 77%
+  transcendence: 92, // Particle count at 92%
+};
+
+// SST v3.0 Stage audio mappings
+export const STAGE_AUDIO = {
+  genesis: 'genesis-hum.mp3', // 1980s computer hum
+  discipline: 'discipline-march.mp3', // Military rhythm
+  neural: 'neural-synapse.mp3', // Digital awakening
+  velocity: 'velocity-thunder.mp3', // Electronic acceleration
+  architecture: 'architecture-build.mp3', // Construction sounds
+  harmony: 'harmony-flow.mp3', // Flow state tones
+  transcendence: 'transcendence-cosmos.mp3', // Cosmic harmony
+};
+
+export default EVENTS;
+
+
+---
+# src/App.jsx
+// src/App.jsx
+// SST v3.0 PRODUCTION - Minimal app shell
+
+import React, { useEffect } from 'react';
+import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
+import { clockAtom } from './stores/atoms/clockAtom';
+import consciousnessEngine from './engine/ConsciousnessEngine'; // Import to initialize
+
+export default function App() {
+  useEffect(() => {
+    const clock = clockAtom.getState();
+    if (!clock.isRunning) {
+      clockAtom.start?.();
+    }
+
+    // Engine initializes itself on import
+    console.log('🚀 App initialized with ConsciousnessEngine');
+
+    return () => {
+      if (clockAtom.getState().isRunning) {
+        clockAtom.stop?.();
+      }
+    };
+  }, []);
+
+  return <ConsciousnessTheater />;
+}
+
+
+---
+# src/shaders/templates/consciousness-vertex.glsl
+precision mediump float;
+
+// ✅ NEW: Add particle index attribute for WebGL 1 compatibility
+attribute float particleIndex;
+
+// ✅ SST v2.0 UNIFORMS - Enhanced with tier support
+uniform float uTime;
+uniform float uStageProgress;
+uniform float uPointSize;
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform float uStageBlend;
+uniform float uTotalSprites;
+uniform float uFadeNear;
+uniform float uFadeFar;
+uniform float uDevicePixelRatio;
+uniform vec2 uResolution;
+
+// ✅ SST v2.0 ATTRIBUTES - Enhanced tier system
+attribute vec3 atmosphericPosition;
+attribute vec3 allenAtlasPosition;
+attribute vec3 animationSeed;
+attribute float atlasIndex;      // ✅ FIXED: float type for shader compatibility
+attribute float sizeMultiplier;  // ✅ NEW: Tier-based size control
+attribute float tierData;        // ✅ FIXED: float type for tier identification
+attribute float opacityData;     // ✅ NEW: Tier-based opacity
+
+// ✅ SST v2.0 VARYINGS - Enhanced with tier data
+varying float vBlend;
+varying float vAlpha;
+varying vec2 vAtlasUVOffset;
+varying float vTierID;          // ✅ NEW: Pass tier to fragment shader
+varying float vSizeMultiplier;  // ✅ NEW: Pass size multiplier for edge calculation
+
+// ✅ NEW: Pass particle index to fragment shader
+varying float vParticleIndex;
+
+const float PI = 3.14159265359;
+const float TWO_PI = 6.28318530718;
+
+// ✅ ENHANCED: Tier-specific movement patterns
+vec3 generateConsciousnessMovement(vec3 basePos, vec3 seeds, float time, float progress, float tier) {
+  float personalPhase = seeds.x * TWO_PI;
+  float movementStyle = seeds.y;
+  float breathingRate = seeds.z;
+  
+  float viewportScale = max(uResolution.x, uResolution.y) / 1000.0;
+  
+  // ✅ TIER 1: Atmospheric drift with noise clustering
+  if (tier < 1.5) {
+    vec3 atmosphericDrift = vec3(
+      sin(basePos.x * 0.3 + time * 0.8 + personalPhase) * 0.12 * viewportScale,
+      cos(basePos.y * 0.25 + time * 0.64 + personalPhase * 0.7) * 0.12 * viewportScale,
+      sin(time * 0.6 + breathingRate * TWO_PI) * 0.06
+    );
+    
+    // Subtle clustering movement
+    float clusterPhase = sin(basePos.x * 0.1 + basePos.y * 0.1) * 0.5 + 0.5;
+    atmosphericDrift *= 0.8 + clusterPhase * 0.4;
+    
+    return atmosphericDrift;
+  }
+  
+  // ✅ TIER 2: Minimal spatial movement
+  else if (tier < 2.5) {
+    return vec3(
+      sin(time * 0.3 + personalPhase) * 0.04 * viewportScale,
+      cos(time * 0.25 + personalPhase * 0.8) * 0.04 * viewportScale,
+      sin(time * 0.4 + breathingRate * TWO_PI) * 0.02
+    );
+  }
+  
+  // ✅ TIER 3: Twinkling oscillation
+  else if (tier < 3.5) {
+    float twinkleSpeed = 2.0 + movementStyle * 2.0;
+    float twinkleAmount = 0.05 + sin(time * twinkleSpeed + personalPhase) * 0.03;
+    
+    return vec3(
+      sin(time * 0.5 + personalPhase) * twinkleAmount * viewportScale,
+      cos(time * 0.4 + personalPhase * 1.1) * twinkleAmount * viewportScale,
+      sin(time * 0.6 + breathingRate * TWO_PI) * 0.03
+    );
+  }
+  
+  // ✅ TIER 4: Prominent constellation movement
+  else {
+    // Sine wave oscillation for prominence
+    float prominencePhase = sin(time * 1.5 + personalPhase) * 0.5 + 0.5;
+    float prominenceScale = 0.03 + prominencePhase * 0.02;
+    
+    vec3 constellationMovement = vec3(
+      sin(basePos.x * 0.2 + time * 0.6 + personalPhase) * prominenceScale,
+      cos(basePos.y * 0.15 + time * 0.5 + personalPhase * 0.9) * prominenceScale,
+      sin(time * 0.7 + breathingRate * TWO_PI) * 0.02
+    );
+    
+    // Center-weighted stability
+    float distanceFromCenter = length(basePos.xy);
+    float centerStability = 1.0 - smoothstep(0.0, 30.0, distanceFromCenter);
+    constellationMovement *= (1.0 - centerStability * 0.5);
+    
+    return constellationMovement;
+  }
+}
+
+// ✅ ENHANCED: Tier-aware point sizing
+float calculatePointSize(vec3 worldPos, float baseScale, float progress, vec3 seeds, float sizeMultiplier, float tier) {
+  float distance = length(worldPos);
+  
+  // Base size with tier multiplier
+  float tierScale = baseScale * sizeMultiplier;
+  
+  // Distance-based scaling
+  float distanceScale = tierScale * (300.0 / max(distance, 1.0));
+  
+  // Tier-specific size behaviors
+  float minSize = 2.0;
+  float maxSize = 30.0;
+  
+  if (tier < 1.5) {
+    // Tier 1: Smallest, subtle variation
+    minSize = 1.5;
+    maxSize = 15.0;
+  } else if (tier < 2.5) {
+    // Tier 2: Medium, stable size
+    minSize = 2.0;
+    maxSize = 20.0;
+  } else if (tier < 3.5) {
+    // Tier 3: Large with twinkling
+    minSize = 3.0;
+    maxSize = 25.0;
+    float twinkle = sin(uTime * 3.0 + seeds.x * TWO_PI) * 0.1 + 0.9;
+    distanceScale *= twinkle;
+  } else {
+    // Tier 4: Largest, prominent
+    minSize = 4.0;
+    maxSize = 35.0; // ✅ Increased for Intel iGPU visibility
+  }
+  
+  float finalSize = clamp(distanceScale, minSize, maxSize);
+  
+  // ✅ FIX: Ensure minimum size for Intel iGPU
+  return max(finalSize, 3.0);
+}
+
+// ✅ ENHANCED: Tier-based alpha calculation
+float calculateAlpha(float progress, vec3 seeds, float distanceFromCenter, float opacityData, float tier) {
+  // Base alpha from tier opacity data
+  float baseAlpha = opacityData;
+  
+  // Tier-specific alpha behaviors
+  if (tier < 1.5) {
+    // Tier 1: Soft atmospheric fade
+    baseAlpha *= 0.8 + progress * 0.2;
+  } else if (tier < 2.5) {
+    // Tier 2: Stable medium opacity
+    baseAlpha *= 0.9;
+  } else if (tier < 3.5) {
+    // Tier 3: Twinkling alpha
+    float twinkleAlpha = 0.8 + sin(uTime * 2.5 + seeds.y * TWO_PI) * 0.2;
+    baseAlpha *= twinkleAlpha;
+  } else {
+    // Tier 4: Maximum visibility
+    baseAlpha *= 0.95 + sin(uTime * 1.0 + seeds.z * TWO_PI) * 0.05;
+  }
+  
+  // Distance fade
+  float distanceFade = 1.0 - smoothstep(25.0, 40.0, distanceFromCenter);
+  
+  return baseAlpha * distanceFade;
+}
+
+void main() {
+  // ✅ NEW: Pass particle index to fragment shader
+  vParticleIndex = particleIndex;
+  
+  // ✅ ATLAS INTEGRATION - Point-sprite texture coordinates
+  float spritesPerRow = 4.0;
+  float spriteSize = 1.0 / spritesPerRow;
+  float row = floor(atlasIndex / spritesPerRow);
+  float col = mod(atlasIndex, spritesPerRow);
+  vAtlasUVOffset = vec2(col, row) * spriteSize;
+  
+  // Pass tier data to fragment shader
+  vTierID = tierData;
+  vSizeMultiplier = sizeMultiplier;
+  
+  // ✅ BRAIN MORPHING - Atmospheric dust → Allen Atlas coordinates
+  vec3 basePos = mix(atmosphericPosition, allenAtlasPosition, clamp(uStageProgress, 0.0, 1.0));
+  
+  // Apply tier-specific consciousness movement
+  vec3 drift = generateConsciousnessMovement(basePos, animationSeed, uTime, uStageProgress, tierData);
+  vec3 finalPos = basePos + drift;
+  
+  // Calculate final position
+  vec4 worldPosition = modelViewMatrix * vec4(finalPos, 1.0);
+  gl_Position = projectionMatrix * worldPosition;
+  
+  // ✅ ENHANCED: Tier-aware point sizing
+  float pointSize = calculatePointSize(
+    worldPosition.xyz, 
+    uPointSize, 
+    uStageProgress, 
+    animationSeed, 
+    sizeMultiplier,
+    tierData
+  );
+  gl_PointSize = pointSize;
+  
+  // ✅ COLOR BLENDING
+  vBlend = uStageBlend;
+  
+  // ✅ ENHANCED: Tier-based alpha calculation
+  float distanceFromCenter = length(finalPos.xy);
+  vAlpha = calculateAlpha(uStageProgress, animationSeed, distanceFromCenter, opacityData, tierData);
+}
+
+---
+# src/shaders/templates/consciousness-fragment.glsl
+precision mediump float;
+
+// ✅ SST v2.0 UNIFORMS - Enhanced with tier support
+uniform sampler2D uAtlasTexture;
+uniform float uTime;
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+
+// ✅ NEW: Tier fade uniforms
+uniform float uTierCutoff;
+uniform float uFadeProgress;
+
+// ✅ SST v2.0 VARYINGS - Enhanced tier system
+varying float vBlend;
+varying float vAlpha;
+varying vec2 vAtlasUVOffset;
+varying float vTierID;
+varying float vSizeMultiplier;
+
+// ✅ NEW: Receive particle index from vertex shader
+varying float vParticleIndex;
+
+// ✅ PROFESSIONAL GAUSSIAN FALLOFF
+float gaussianFalloff(vec2 coord, float sigma) {
+  vec2 center = coord - 0.5;
+  float distance = length(center);
+  return exp(-pow(distance * sigma, 2.0));
+}
+
+// ✅ HSV COLOR SYSTEM - Enhanced vibrancy
+vec3 rgb2hsv(vec3 rgb) {
+  float maxVal = max(rgb.r, max(rgb.g, rgb.b));
+  float minVal = min(rgb.r, min(rgb.g, rgb.b));
+  float delta = maxVal - minVal;
+  
+  float hue = 0.0;
+  if (delta > 0.0) {
+    if (maxVal == rgb.r) hue = mod((rgb.g - rgb.b) / delta, 6.0);
+    else if (maxVal == rgb.g) hue = (rgb.b - rgb.r) / delta + 2.0;
+    else hue = (rgb.r - rgb.g) / delta + 4.0;
+  }
+  
+  float saturation = maxVal > 0.0 ? delta / maxVal : 0.0;
+  return vec3(hue / 6.0, saturation, maxVal);
+}
+
+vec3 hsv2rgb(vec3 hsv) {
+  vec3 rgb = clamp(abs(mod(hsv.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+  return hsv.z * mix(vec3(1.0), rgb, hsv.y);
+}
+
+// ✅ ATLAS TEXTURE SAMPLING
+vec4 sampleAtlasTexture(vec2 uvOffset, vec2 pointCoord) {
+  float spriteSize = 0.25;
+  vec2 atlasUV = uvOffset + pointCoord * spriteSize;
+  return texture2D(uAtlasTexture, atlasUV);
+}
+
+// ✅ TIER-SPECIFIC SHIMMER
+float generateShimmer(vec2 coord, float time, float tier) {
+  if (tier < 1.5) {
+    // Tier 1: Very subtle shimmer
+    return 1.0 + sin(coord.x * 4.0 + time * 1.0) * 0.03;
+  } else if (tier < 2.5) {
+    // Tier 2: Minimal shimmer
+    return 1.0 + sin(coord.y * 3.0 + time * 0.8) * 0.04;
+  } else if (tier < 3.5) {
+    // Tier 3: Twinkling shimmer
+    float shimmer1 = sin(coord.x * 8.0 + time * 2.0) * 0.08;
+    float shimmer2 = cos(coord.y * 6.0 + time * 1.5) * 0.06;
+    return 1.0 + shimmer1 + shimmer2;
+  } else {
+    // Tier 4: Prominent shimmer
+    float shimmer1 = sin(coord.x * 10.0 + time * 1.8) * 0.1;
+    float shimmer2 = cos(coord.y * 8.0 + time * 1.4) * 0.08;
+    float radialShimmer = sin(length(coord - 0.5) * 15.0 + time * 2.5) * 0.05;
+    return 1.0 + shimmer1 + shimmer2 + radialShimmer;
+  }
+}
+
+void main() {
+  vec2 particleCoord = gl_PointCoord;
+  
+  // ✅ FIX: Debug mode for testing
+  #ifdef DEBUG_PARTICLES
+    gl_FragColor = vec4(1.0, 0.1, 0.9, 1.0);
+    return;
+  #endif
+  
+  // ✅ NEW: Calculate tier-based fade using vParticleIndex instead of gl_VertexID
+  float tierFade = 1.0;
+  
+  // Smooth fade for particles beyond cutoff
+  if (vParticleIndex >= uTierCutoff) {
+    float fadeDistance = vParticleIndex - uTierCutoff;
+    float fadeRange = 1000.0; // Fade over 1000 particles
+    tierFade = 1.0 - smoothstep(0.0, fadeRange, fadeDistance);
+    tierFade *= uFadeProgress;
+  }
+  
+  // Early discard for fully faded particles
+  if (tierFade < 0.001) discard;
+  
+  // Sample atlas texture
+  vec4 atlasColor = sampleAtlasTexture(vAtlasUVOffset, particleCoord);
+  
+  if (atlasColor.a < 0.001) discard;
+  
+  // ✅ COLOR INTERPOLATION with tier enhancement
+  vec3 currentHSV = rgb2hsv(uColorCurrent);
+  vec3 nextHSV = rgb2hsv(uColorNext);
+  
+  // Tier-based saturation boost
+  float saturationBoost = 1.0;
+  if (vTierID > 3.5) {
+    saturationBoost = 1.2; // Tier 4: More vibrant
+  } else if (vTierID > 2.5) {
+    saturationBoost = 1.1; // Tier 3: Slightly vibrant
+  }
+  
+  vec3 blendedHSV = vec3(
+    mix(currentHSV.x, nextHSV.x, vBlend),
+    min(1.0, mix(currentHSV.y, nextHSV.y, vBlend) * saturationBoost),
+    mix(currentHSV.z, nextHSV.z, vBlend)
+  );
+  
+  vec3 vibrantColor = hsv2rgb(blendedHSV);
+  
+  // Combine with atlas texture
+  vec3 finalColor = mix(vibrantColor, vibrantColor * atlasColor.rgb, 0.6);
+  
+  // Apply tier fade to alpha
+  float finalAlpha = vAlpha * atlasColor.a * tierFade;
+  
+  // ✅ ENHANCED: Tier-specific shimmer
+  float shimmer = generateShimmer(particleCoord, uTime, vTierID);
+  finalColor *= shimmer;
+  
+  // ✅ PROFESSIONAL GAUSSIAN FALLOFF
+  float gaussianSigma = 2.5;
+  if (vTierID < 1.5) {
+    gaussianSigma = 3.0; // Softer edges for atmospheric dust
+  } else if (vTierID > 3.5) {
+    gaussianSigma = 2.0; // Sharper edges for constellation points
+  }
+  
+  float edgeFalloff = gaussianFalloff(particleCoord, gaussianSigma);
+  finalAlpha *= edgeFalloff;
+  
+  // ✅ Subtle breathing pulse
+  float pulseSpeed = vTierID > 3.5 ? 0.8 : 1.2;
+  float pulse = 1.0 + 0.05 * sin(uTime * pulseSpeed);
+  finalColor *= pulse;
+  
+  gl_FragColor = vec4(finalColor, finalAlpha);
+}
+
+---
+# vite.config.js
+import { defineConfig } from 'vite';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@config': path.resolve(__dirname, './src/config'),
+      '@engine': path.resolve(__dirname, './src/engine'),
+      '@theater': path.resolve(__dirname, './src/theater'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@styles': path.resolve(__dirname, './src/styles'),
+      '@modules': path.resolve(__dirname, './modules'),
+    },
+  },
+  server: {
+    port: 5173,
+    open: true,
+  },
+});
+
+
+---
+# jsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@stores/*": ["src/stores/*"],
+      "@config/*": ["src/config/*"],
+      "@engine/*": ["src/engine/*"],
+      "@theater/*": ["src/theater/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@utils/*": ["src/utils/*"],
+      "@styles/*": ["src/styles/*"],
+      "@modules/*": ["modules/*"]
+    },
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*", "modules/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+
+
+---
+# package.json
+{
+  "name": "metacurtis-v3.1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite preview --port=5000 --strictPort",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --max-warnings 0",
+    "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md,json}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,md,json}\"",
+    "fix:all": "npm run lint:fix && npm run format",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --reporter=html",
+    "test:watch": "vitest watch",
+    "lighthouse": "lhci autorun --config=./lighthouserc.json",
+    "lighthouse:full": "npm run build && npm run lighthouse",
+    "validate": "node scripts/validate-sst.js",
+    "validate:sst": "node ./scripts/validate-sst-integration.js",
+    "predev": "npm run validate",
+    "prebuild": "npm run validate",
+    "prepare": "husky install",
+    "fix": "node scripts/apply-fix.js"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.0.7",
+    "@react-three/fiber": "^9.1.2",
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.511.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "seedrandom": "^3.0.5",
+    "three": "^0.175.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@lhci/cli": "^0.12.0",
+    "@tailwindcss/postcss": "^4.1.7",
+    "@tailwindcss/vite": "^4.1.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "husky": "^8.0.3",
+    "jsdom": "^26.0.0",
+    "lint-staged": "^15.2.7",
+    "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.7",
+    "terser": "^5.39.0",
+    "vite": "^6.2.5",
+    "vite-plugin-glsl": "^1.4.0",
+    "vitest": "^1.4.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,md,json}": [
+      "prettier --write"
+    ]
+  }
+}
