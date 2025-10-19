@@ -1994,6 +1994,41 @@
         "fromColor": "#00FF00",
         "toColor": "#3b82f6",
         "duration": 1000
+      },
+      "reform_as_structure": {
+        "type": "formation",
+        "pattern": "structure",
+        "tiers": [
+          1,
+          2
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad",
+        "description": "Particles reform from chaos into structured geometry"
+      },
+      "particles_accelerate": {
+        "type": "acceleration",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "speed": 2.5,
+        "direction": "forward",
+        "duration": 1500,
+        "description": "All particles rapidly accelerate forward"
+      },
+      "streak_trails_form": {
+        "type": "trail",
+        "tiers": [
+          1,
+          2
+        ],
+        "trailLength": 3,
+        "fadeSpeed": 0.7,
+        "duration": 2000,
+        "description": "Motion blur trails appear behind moving particles"
       }
     },
     "cameraEffects": {
