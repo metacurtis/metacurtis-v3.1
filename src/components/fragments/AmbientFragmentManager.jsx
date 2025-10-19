@@ -51,10 +51,23 @@ export default function AmbientFragmentManager() {
       .filter((fragment) => fragment && fragment.content);
 
     setFragments(normalized);
-    console.log(
-      `🗺️ Ambient fragments for ${currentStage}:`,
-      normalized.length
-    );
+
+    const scrollRange =
+      typeof window !== 'undefined'
+        ? Math.max(1, document.body.scrollHeight - window.innerHeight)
+        : 1;
+    const scrollPercent =
+      typeof window !== 'undefined'
+        ? Math.round((window.scrollY / scrollRange) * 100)
+        : 0;
+
+    console.log('🗺️ [FRAGMENT ACTIVATION]', {
+      stage: currentStage,
+      fragmentsAvailable: normalized.length,
+      scrollPercent,
+      triggeredBy: 'CHECKING_SOURCE',
+      timestamp: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+    });
   }, [currentStage]);
 
   if (!fragments.length) return null;

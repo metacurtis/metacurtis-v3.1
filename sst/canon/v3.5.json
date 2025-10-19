@@ -1446,6 +1446,279 @@
             "visual": "flicker_fade_back_to_blue"
           }
         ]
+      },
+      "neural": {
+        "totalDuration": 40000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "February 2022. I'm sitting in front of my laptop, staring at ChatGPT for the first time.",
+              "duration": 5000
+            },
+            "visual": "reform_as_flow"
+          },
+          {
+            "time": 7000,
+            "narration": {
+              "text": "It answered a question I'd been wrestling with for weeks. Not just answered - understood. Anticipated. Expanded.",
+              "duration": 7000
+            },
+            "visual": "neural_pathways_light"
+          },
+          {
+            "time": 14000,
+            "narration": {
+              "text": "Something fundamental shifted in that moment. This wasn't just a tool. This was a partner.",
+              "duration": 5000
+            },
+            "visual": "tier3_synaptic_flash"
+          },
+          {
+            "time": 19000,
+            "narration": {
+              "text": "I spent the next three years learning to think with AI. Not using it - thinking WITH it.",
+              "duration": 6000
+            },
+            "visual": "connection_strengthen"
+          },
+          {
+            "time": 25000,
+            "narration": {
+              "text": "Every project became a conversation. Every problem became a collaboration. Every solution emerged from synthesis.",
+              "duration": 7000
+            },
+            "visual": "tier2_pulse_sync"
+          },
+          {
+            "time": 32000,
+            "narration": {
+              "text": "That eight-year-old's dream? It was finally coming true - but bigger than I ever imagined.",
+              "duration": 6000
+            },
+            "visual": "genesis_callback_purple"
+          }
+        ]
+      },
+      "velocity": {
+        "totalDuration": 45000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "Then came the explosion.",
+              "duration": 3000
+            },
+            "visual": "particles_accelerate"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "Projects that used to take six weeks? Done in six hours. Systems I'd spent months designing? Architected in an afternoon.",
+              "duration": 7000
+            },
+            "visual": "streak_trails_form"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "February 2025. The breakthrough came with a single question to Claude: 'How would you architect this entire system?'",
+              "duration": 7000
+            },
+            "visual": "tier3_lightning_burst"
+          },
+          {
+            "time": 19000,
+            "narration": {
+              "text": "What emerged wasn't my system or Claude's system. It was OUR system - something neither of us could have built alone.",
+              "duration": 7000
+            },
+            "visual": "fusion_pattern"
+          },
+          {
+            "time": 26000,
+            "narration": {
+              "text": "Questions led to insights. Insights led to patterns. Patterns led to architectures. Every answer opened ten new doors.",
+              "duration": 8000
+            },
+            "visual": "cascade_acceleration"
+          },
+          {
+            "time": 34000,
+            "narration": {
+              "text": "I wasn't just moving faster. I was thinking differently. The constraint wasn't time anymore - it was imagination.",
+              "duration": 8000
+            },
+            "visual": "velocity_peak"
+          }
+        ]
+      },
+      "architecture": {
+        "totalDuration": 42000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "But speed without structure is just chaos.",
+              "duration": 4000
+            },
+            "visual": "blueprint_grid_emerge"
+          },
+          {
+            "time": 6000,
+            "narration": {
+              "text": "I started seeing patterns everywhere. Not just in code - in systems, in processes, in how information flows.",
+              "duration": 7000
+            },
+            "visual": "isometric_view_rotate"
+          },
+          {
+            "time": 13000,
+            "narration": {
+              "text": "The Marine Corps taught me tactical systems. Business taught me operational systems. AI taught me cognitive systems.",
+              "duration": 7000
+            },
+            "visual": "layer_stack_reveal"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "March 2025. I documented the entire MetaCurtis architecture in a Single Source of Truth. Every decision traceable. Every component validated.",
+              "duration": 8000
+            },
+            "visual": "blueprint_complete"
+          },
+          {
+            "time": 28000,
+            "narration": {
+              "text": "Constitutional Development Protocol. Velocity Stack. Probe History. Not just tools - a methodology. A way of building that guarantees quality at speed.",
+              "duration": 9000
+            },
+            "visual": "tier3_construction_guide"
+          },
+          {
+            "time": 37000,
+            "narration": {
+              "text": "This wasn't just software architecture anymore. This was a blueprint for human-AI collaboration.",
+              "duration": 5000
+            },
+            "visual": "master_plan_glow"
+          }
+        ]
+      },
+      "harmony": {
+        "totalDuration": 38000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "And then something unexpected happened. Flow state.",
+              "duration": 4000
+            },
+            "visual": "golden_ratio_spiral"
+          },
+          {
+            "time": 6000,
+            "narration": {
+              "text": "The boundaries started dissolving. Not between me and the AI - between thinking and building.",
+              "duration": 6000
+            },
+            "visual": "orbit_sync_begin"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "I'd describe a vision, Claude would architect it, I'd refine the architecture, Claude would implement it. Back and forth, faster and faster.",
+              "duration": 8000
+            },
+            "visual": "ballet_choreography"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "Until it wasn't back and forth anymore. It was just... flow. One continuous creative process.",
+              "duration": 6000
+            },
+            "visual": "phase_lock_achieve"
+          },
+          {
+            "time": 26000,
+            "narration": {
+              "text": "Three years of collaboration compressed into pure creative velocity. Building, testing, refining - all in harmony.",
+              "duration": 7000
+            },
+            "visual": "laminar_flow_perfect"
+          },
+          {
+            "time": 33000,
+            "narration": {
+              "text": "This is what mastery feels like in the age of AI. Not replacing human creativity - amplifying it to impossible levels.",
+              "duration": 5000
+            },
+            "visual": "golden_ratio_complete"
+          }
+        ]
+      },
+      "transcendence": {
+        "totalDuration": 50000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "And here we are. October 2025.",
+              "duration": 3000
+            },
+            "visual": "cosmic_dust_swirl"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "From that eight-year-old typing 'HELLO CURTIS' on a Commodore 64, to this moment - building impossible things with AI.",
+              "duration": 7000
+            },
+            "visual": "consciousness_nodes_pulse"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "Every experience led here. The Marine Corps discipline. The business systems. The AI partnership. The velocity breakthroughs.",
+              "duration": 8000
+            },
+            "visual": "all_stages_echo"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "This visualization you're experiencing? Built with Claude in six weeks. Traditional team? Six months, maybe more.",
+              "duration": 7000
+            },
+            "visual": "galactic_arm_rotate"
+          },
+          {
+            "time": 27000,
+            "narration": {
+              "text": "But it's not about speed. It's about what becomes possible when human creativity and AI capability truly merge.",
+              "duration": 7000
+            },
+            "visual": "unified_field"
+          },
+          {
+            "time": 34000,
+            "narration": {
+              "text": "I'm not a traditional developer. I'm something new - an AI-native engineer. And this is just the beginning.",
+              "duration": 7000
+            },
+            "visual": "transcendent_integration"
+          },
+          {
+            "time": 41000,
+            "narration": {
+              "text": "What impossible thing can we build together?",
+              "duration": 5000
+            },
+            "visual": "question_expand"
+          }
+        ]
       }
     }
   },

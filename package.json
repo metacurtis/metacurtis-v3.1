@@ -76,6 +76,7 @@
     "test:sst-all": "npm run test:schema && npm run validate-sst",
     "generate-types": "node sst/tools/generate-jsdoc.cjs",
     "detect-drift": "node sst/tools/detect-drift.cjs",
+    "audit-orchestration": "node scripts/validate-sst-orchestration.cjs",
     "sst-check": "npm run validate-sst && npm run detect-drift",
     "ai-context": "node sst/tools/ai-context-builder.cjs",
     "system:validate": "node scripts/system.mjs validate",

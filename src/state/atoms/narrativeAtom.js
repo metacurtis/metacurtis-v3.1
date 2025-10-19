@@ -67,6 +67,14 @@ const STAGE_ORDER = [
 export const narrativeAtom = createAtom(initialState, (get, set) => ({
   // ===== STAGE NAVIGATION =====
   jumpToStage: stage => {
+    console.log('🚨 [NARRATIVEATOM BYPASS]', {
+      function: 'jumpToStage',
+      targetStage: stage,
+      caller: new Error().stack.split('\n')[2].trim(),
+      bypassesOrchestration: true,
+      timestamp: performance.now(),
+    });
+
     if (!STAGE_ORDER.includes(stage)) {
       console.warn(`Invalid stage: ${stage}`);
       return;
@@ -102,6 +110,14 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
   },
 
   nextStage: () => {
+    console.log('🚨 [NARRATIVEATOM BYPASS]', {
+      function: 'nextStage',
+      currentStage: get().currentStage,
+      caller: new Error().stack.split('\n')[2].trim(),
+      bypassesOrchestration: true,
+      timestamp: performance.now(),
+    });
+
     const current = get().currentStage;
     const currentIndex = STAGE_ORDER.indexOf(current);
     if (currentIndex < STAGE_ORDER.length - 1) {
@@ -110,6 +126,14 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
   },
 
   prevStage: () => {
+    console.log('🚨 [NARRATIVEATOM BYPASS]', {
+      function: 'prevStage',
+      currentStage: get().currentStage,
+      caller: new Error().stack.split('\n')[2].trim(),
+      bypassesOrchestration: true,
+      timestamp: performance.now(),
+    });
+
     const current = get().currentStage;
     const currentIndex = STAGE_ORDER.indexOf(current);
     if (currentIndex > 0) {

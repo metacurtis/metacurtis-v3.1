@@ -702,9 +702,21 @@ class ConsciousnessEngine {
       return true;
     };
 
-    const midForTimeline = fastForward ? clamp(Math.max(midDefault, 0.65), 0.05, 0.95) : midDefault;
     const implMs = fastForward ? fastImpl : implDefault;
     const settleMs = fastForward ? fastSettle : settleDefault;
+
+    const midForTimeline = fastForward
+      ? clamp(Math.min(midDefault, 0.35), 0.05, 0.5)
+      : midDefault;
+
+    console.log('🎨 [EMERGENCE TIMELINE]', {
+      fastForward,
+      midDefault,
+      midForTimeline,
+      implMs,
+      settleMs,
+      holdMs,
+    });
 
     if (implMs > 6000 || settleMs > 6000) {
       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });

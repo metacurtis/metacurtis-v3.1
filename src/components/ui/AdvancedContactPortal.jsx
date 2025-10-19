@@ -1,10 +1,12 @@
 // src/components/ui/AdvancedContactPortal.jsx
 // ✅ CONSOLIDATED ARCHITECTURE - MC3V Digital Awakening Compliant
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import unifiedNav from '@/theater/UnifiedNavigationAPI';
 import { narrativeAtom } from '@/state/atoms';
-import { useAtom } from "@/hooks/useAtom";
+
+const PORTAL_STAGE_FEATURES = narrativeAtom.getState().stageFeatures;
 
 function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence' }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -15,11 +17,55 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
   const modalRef = useRef(null);
 
   // ✅ CONSOLIDATED ARCHITECTURE: Use single source of truth
-  const { jumpToStage, isStageFeatureEnabled, currentStage, trackUserEngagement } =
-    useNarrativeStore();
+  const resolveInitialStage = () => {
+    if (typeof unifiedNav?.getCurrentStage === 'function') {
+      const stage = unifiedNav.getCurrentStage();
+      if (stage) return stage;
+    }
+    return narrativeAtom.getState().currentStage;
+  };
+
+  const [currentStage, setCurrentStage] = useState(resolveInitialStage);
+  const trackUserEngagement = useCallback((action, data) => {
+    narrativeAtom.trackUserEngagement(action, data);
+  }, []);
+
+  useEffect(() => {
+    if (typeof unifiedNav?.onStageChange === 'function') {
+      const unsubscribe = unifiedNav.onStageChange(payload => {
+        const nextStage =
+          payload?.to || payload?.stage || payload?.currentStage || payload?.name || payload;
+        if (typeof nextStage === 'string') {
+          setCurrentStage(nextStage);
+        }
+      });
+      return () => {
+        if (typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      };
+    }
+  }, []);
+
+  const stageFeatureList = PORTAL_STAGE_FEATURES?.[currentStage] || [];
+  const isContactPortalEnabled = Array.isArray(stageFeatureList)
+    ? stageFeatureList.includes('contactPortal')
+    : false;
 
   // ✅ FEATURE GATE: Only render if contact portal is unlocked
-  const isContactPortalEnabled = isStageFeatureEnabled('contactPortal');
+  const handleNavigateToStage = useCallback(() => {
+    console.log('🎛️ [PORTAL NAV]', {
+      component: 'AdvancedContactPortal',
+      targetStage: triggerStage,
+      method: 'UNIFIED_ORCHESTRATED',
+      timestamp: performance.now(),
+    });
+    unifiedNav.navigateToStage(triggerStage, {
+      smooth: true,
+      skipNarration: false,
+      source: 'portal',
+    });
+  }, [triggerStage]);
 
   // Create portal container with defensive mounting
   useEffect(() => {
@@ -56,7 +102,7 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
       setIsAnimating(true);
 
       // ✅ CONSOLIDATED ARCHITECTURE: Use Zustand store for stage transitions
-      jumpToStage(triggerStage);
+      handleNavigateToStage();
 
       // ✅ ANALYTICS: Track portal opening in store
       trackUserEngagement('contact_portal_opened', {
@@ -96,14 +142,7 @@ function AdvancedContactPortal({ isOpen, onClose, triggerStage = 'transcendence'
         }
       }, 300);
     }
-  }, [
-    isOpen,
-    isContactPortalEnabled,
-    triggerStage,
-    jumpToStage,
-    trackUserEngagement,
-    currentStage,
-  ]);
+  }, [isOpen, isContactPortalEnabled, triggerStage, trackUserEngagement, currentStage, handleNavigateToStage]);
 
   // Keyboard escape handling + basic tab management
   useEffect(() => {
@@ -520,9 +559,9 @@ export default AdvancedContactPortal;
 🚀 CONSOLIDATED ARCHITECTURE COMPLIANCE ✅
 
 ✅ SINGLE SOURCE OF TRUTH:
-- Uses only useNarrativeStore for all state management
+- Uses narrative atom state for gating + analytics
 - Eliminates deprecated narrativeTransition dependency
-- Syncs all navigation through canonical Zustand store
+- Routes navigation through UnifiedNavigationAPI
 
 ✅ FEATURE GATES:
 - Only renders when isStageFeatureEnabled('contactPortal') is true

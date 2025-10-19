@@ -117,7 +117,18 @@ export default function NarrativeUIControls() {
           }}
         >
           <button
-            onClick={() => window.narrativeNavigation?.prevStage()}
+            onClick={() => {
+              console.log('🎛️ [UI CONTROLS]', {
+                action: 'prevStage',
+                method: 'UNIFIED_ORCHESTRATED',
+                timestamp: performance.now(),
+              });
+              if (window.unifiedNav) {
+                window.unifiedNav.prevStage({ source: 'ui_controls' });
+              } else {
+                window.narrativeNavigation?.prevStage();
+              }
+            }}
             disabled={!navState.canGoPrev || navState.isTransitioning}
             style={{
               background: 'rgba(255, 255, 255, 0.1)',
@@ -133,7 +144,18 @@ export default function NarrativeUIControls() {
           </button>
 
           <button
-            onClick={() => window.narrativeNavigation?.nextStage()}
+            onClick={() => {
+              console.log('🎛️ [UI CONTROLS]', {
+                action: 'nextStage',
+                method: 'UNIFIED_ORCHESTRATED',
+                timestamp: performance.now(),
+              });
+              if (window.unifiedNav) {
+                window.unifiedNav.nextStage({ source: 'ui_controls' });
+              } else {
+                window.narrativeNavigation?.nextStage();
+              }
+            }}
             disabled={!navState.canGoNext || navState.isTransitioning}
             style={{
               background: 'rgba(255, 255, 255, 0.1)',

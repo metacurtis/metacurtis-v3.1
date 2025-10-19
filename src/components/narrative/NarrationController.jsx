@@ -159,12 +159,31 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
   const startNarration = useCallback(
     (stageName) => {
-      if (!stageName) return;
+      if (!stageName && !currentStage) return;
 
-      const stageKey = stageName in NARRATIVE_DIALOGUE ? stageName : currentStage;
+      const normalizedStage = typeof stageName === 'string' ? stageName.trim() : '';
+      const stageKey =
+        (normalizedStage && normalizedStage in NARRATIVE_DIALOGUE
+          ? normalizedStage
+          : currentStage) || 'genesis';
       const stageConfig = NARRATIVE_DIALOGUE[stageKey];
       const segments = normalizeSegments(stageConfig?.narration?.segments);
       if (!segments.length) return;
+
+      const beatSheet = stageConfig?.narration || {};
+      const normalizedBeats = Array.isArray(beatSheet?.beats)
+        ? beatSheet.beats
+        : Array.isArray(beatSheet?.segments)
+          ? beatSheet.segments
+          : [];
+      const beatCount = normalizedBeats.length || segments.length;
+      const firstBeatText =
+        normalizedBeats?.[0]?.narration?.text ??
+        normalizedBeats?.[0]?.text ??
+        segments?.[0]?.text ??
+        null;
+      const activeStage = stageKey;
+      const resolvedStageForLog = normalizedStage || stageName || activeStage;
 
       resetState({ preserveStage: true });
       activeStageRef.current = stageKey;
@@ -174,12 +193,19 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
       if (DEBUG_NARRATION) {
         console.log('🎙️ [NarrationController] Playing beat sheet:', {
-          stage: stageKey,
-          segmentCount: segments.length,
+          stage: activeStage,
+          beatSheetStage: beatSheet?.stage ?? null,
+          totalDuration: beatSheet?.totalDuration ?? null,
+          beatCount,
+          firstBeatText: firstBeatText
+            ? `${firstBeatText.slice(0, 50)}${firstBeatText.length > 50 ? '…' : ''}`
+            : null,
           isPlaying: true,
           defaultCharsPerSecond,
+          requestedStage: stageName || null,
+          normalizedStage: normalizedStage || null,
         });
-        console.log(`📖 Starting narration for: ${stageKey}`);
+        console.log('📖 Starting narration for:', resolvedStageForLog);
       }
       lockScroll();
 

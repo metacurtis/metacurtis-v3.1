@@ -16,6 +16,41 @@ import { EVENTS } from '@/theater/events.js';
 
 console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe cancel)');
 
+// Debounce helper to prevent rapid-fire navigation (default 150ms)
+function createDebouncer(minInterval = 150) {
+  let lastCall = 0;
+  let timeoutId = null;
+
+  return function debounce(fn) {
+    const now = performance.now();
+    const timeSinceLastCall = now - lastCall;
+
+    if (timeSinceLastCall < minInterval) {
+      if (timeoutId) clearTimeout(timeoutId);
+
+      const remainingTime = minInterval - timeSinceLastCall;
+      timeoutId = setTimeout(() => {
+        lastCall = performance.now();
+        fn();
+      }, remainingTime);
+
+      console.log('⏱️ [DEBOUNCE]', {
+        action: 'delayed',
+        timeSinceLastCall: Math.round(timeSinceLastCall),
+        remainingTime: Math.round(remainingTime),
+      });
+
+      return false;
+    }
+
+    if (timeoutId) clearTimeout(timeoutId);
+    lastCall = now;
+    fn();
+
+    return true;
+  };
+}
+
 const NarrationOverlay = ({ segment }) => {
   if (!segment) return null;
   return (
@@ -138,6 +173,7 @@ export default function ConsciousnessTheater() {
   const morphProgressRef = useRef(0);
   const directorStartedRef = useRef(false);
   const viewportReadyRef = useRef(false);
+  const arrowKeyDebounce = useRef(createDebouncer(150)).current;
 
   const _stageConfig = Canonical.stages[currentStage];
   const narrative = Canonical.dialogue?.[currentStage];
@@ -263,21 +299,57 @@ export default function ConsciousnessTheater() {
       if (key === 'ArrowRight' || key === 'ArrowLeft') {
         e.preventDefault();
         e.stopPropagation();
-        const before = stageAtom.getState?.();
-        const narrationSkipped = skipNarrationIfActive();
 
-        if (key === 'ArrowRight') {
-          stageAtom.nextStage();
-        } else {
-          stageAtom.prevStage();
-        }
+        arrowKeyDebounce(() => {
+          const state = stageAtom.getState?.();
+          const activeStage = state?.currentStage || currentStageRef.current || stageNames[0];
+          const currentIndex = Math.max(0, stageNames.indexOf(activeStage));
+          const maxIndex = stageNames.length - 1;
+          const targetIndex =
+            key === 'ArrowRight'
+              ? Math.min(currentIndex + 1, maxIndex)
+              : Math.max(currentIndex - 1, 0);
 
-        const after = stageAtom.getState?.();
-        console.log('🎬 [KEY NAV]', {
-          key,
-          from: before?.currentStage,
-          to: after?.currentStage,
-          narrationSkipped,
+          if (targetIndex === currentIndex) {
+            return;
+          }
+
+          const targetStage = stageNames[targetIndex];
+          const targetScrollPercent =
+            maxIndex > 0 ? (targetIndex / maxIndex) * 100 : 0;
+
+          const narrationSkipped = skipNarrationIfActive();
+
+          console.log('🎹 [UNIFIED NAV]', {
+            key,
+            from: activeStage,
+            to: targetStage,
+            targetScrollPercent: `${targetScrollPercent.toFixed(1)}%`,
+            method: 'ORCHESTRATED_JUMP',
+            narrationSkipped,
+          });
+
+          const scrollRange =
+            typeof window !== 'undefined'
+              ? Math.max(1, document.body.scrollHeight - window.innerHeight)
+              : 1;
+          const scrollTarget = (targetScrollPercent / 100) * scrollRange;
+
+          if (typeof window !== 'undefined') {
+            window.scrollTo({
+              top: scrollTarget,
+              behavior: 'smooth',
+            });
+          }
+
+          console.log('🎬 [KEY NAV]', {
+            key,
+            from: activeStage,
+            to: targetStage,
+            targetScrollPercent: `${targetScrollPercent.toFixed(1)}%`,
+            narrationSkipped,
+            debounced: true,
+          });
         });
         return;
       }
@@ -328,7 +400,7 @@ export default function ConsciousnessTheater() {
       }
 
       // Numeric shortcuts
-      if (/^[0-9]$/.test(key)) {
+      if (/^[0-6]$/.test(key)) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -336,18 +408,26 @@ export default function ConsciousnessTheater() {
         const targetIndex =
           numeric === 0 ? 0 : Math.max(0, Math.min(stageNames.length - 1, numeric - 1));
         const targetStage = stageNames[targetIndex];
+
         if (targetStage) {
-          const before = stageAtom.getState?.();
           const narrationSkipped = skipNarrationIfActive();
-          stageAtom.jumpToStage(targetStage);
-          const after = stageAtom.getState?.();
-          console.log('🎬 [KEY NAV]', {
+          console.log('🎹 [NUMBER KEY NAV]', {
             key,
             targetStage,
-            from: before?.currentStage,
-            to: after?.currentStage,
+            method: 'UNIFIED_ORCHESTRATED',
+            timestamp: performance.now(),
             narrationSkipped,
           });
+
+          if (window.unifiedNav) {
+            window.unifiedNav.navigateToStage(targetStage, {
+              smooth: true,
+              skipNarration: false,
+              source: 'number_key',
+            });
+          } else {
+            stageAtom.jumpToStage(targetStage);
+          }
         }
         return;
       }

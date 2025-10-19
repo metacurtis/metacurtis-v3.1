@@ -76,24 +76,26 @@ export function wireSSTv3() {
     unsubscribers.push(unsubscribeQuality);
   }
 
-  // Always subscribe to narrative atom
+  // Always subscribe to narrative atom (DISABLED)
+  console.log('🔗 [WIRESSST] narrativeAtom bridge DISABLED - using UnifiedNavigationAPI');
+
+  /*
   const unsubscribeNarrative = narrativeAtom.subscribe(state => {
-    window.dispatchEvent(
-      new CustomEvent('sst:narrativeChange', {
-        detail: {
-          stage: state.currentStage,
-          progress: state.globalProgress,
-          morphProgress: state.morphProgress,
-        },
-      })
-    );
+    console.log('🔗 [WIRESSST BRIDGE - DISABLED]', {
+      event: 'narrativeAtom → stageAtom sync',
+      newStage: state.currentStage,
+      note: 'This bridge is disabled. Use window.unifiedNav instead.',
+      timestamp: performance.now(),
+    });
 
     // If stageAtom exists, sync with it
     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
-      stageAtom.jumpToStage(state.currentStage);
+      // DISABLED: This bypasses orchestration
+      // stageAtom.jumpToStage(state.currentStage);
     }
   });
   unsubscribers.push(unsubscribeNarrative);
+  */
 
   // Cleanup function
   const cleanup = () => {

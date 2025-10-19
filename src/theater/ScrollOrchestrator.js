@@ -28,6 +28,7 @@ export default class ScrollOrchestrator {
   constructor() {
     this._onScroll = this._onScroll.bind(this);
     this._update = this._update.bind(this);
+    this._ensureScrollableArea = this._ensureScrollableArea.bind(this);
     this.running = false;
     this.lastStageIndex = -1;
     this.morph = 1;
@@ -36,11 +37,18 @@ export default class ScrollOrchestrator {
     this.scrollLocked = false;
   
     this._rafId = 0;
+    this._resizeHandlerBound = null;
     
     // throttle / change-detect emit guards
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
     this._lastScrollLogBucket = null;
+
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      this._ensureScrollableArea('constructor');
+      this._resizeHandlerBound = event => this._ensureScrollableArea(event);
+      window.addEventListener('resize', this._resizeHandlerBound, { passive: true });
+    }
   }
 
   start() {
@@ -49,9 +57,14 @@ export default class ScrollOrchestrator {
     this.fragmentFired.clear();
     this.scrollLocked = false;
     if (typeof window !== 'undefined') {
+      if (!this._resizeHandlerBound) {
+        this._resizeHandlerBound = event => this._ensureScrollableArea(event);
+        window.addEventListener('resize', this._resizeHandlerBound, { passive: true });
+      }
       window.addEventListener('scroll', this._onScroll, { passive: true });
       window.__scrollOrchestrator = this;
       window.scrollOrchestrator = this;
+      this._ensureScrollableArea('start');
     }
     // kick once
     this._onScroll();
@@ -68,6 +81,10 @@ export default class ScrollOrchestrator {
     this.running = false;
     if (typeof window !== 'undefined') {
       window.removeEventListener('scroll', this._onScroll);
+      if (this._resizeHandlerBound) {
+        window.removeEventListener('resize', this._resizeHandlerBound);
+        this._resizeHandlerBound = null;
+      }
       if (window.__scrollOrchestrator === this) {
         window.__scrollOrchestrator = null;
       }
@@ -141,6 +158,61 @@ export default class ScrollOrchestrator {
         stageIndex: this.lastStageIndex
       });
     }
+  }
+
+  _ensureScrollableArea(originOrEvent = 'runtime') {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const origin =
+      typeof originOrEvent === 'string'
+        ? originOrEvent
+        : (originOrEvent && typeof originOrEvent.type === 'string'
+            ? `event:${originOrEvent.type}`
+            : 'runtime');
+
+    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
+    const stageCount =
+      stageOrder.length ||
+      Object.keys(Canonical?.stages || {}).length ||
+      1;
+
+    const windowHeight = Math.max(window.innerHeight || document.documentElement?.clientHeight || 0, 1);
+    const totalHeight = Math.max(windowHeight, stageCount * windowHeight);
+
+    const body = document.body;
+    const html = document.documentElement;
+    if (!body || !html) return;
+
+    console.log('📜 [SCROLL SETUP]', {
+      origin,
+      stageCount,
+      windowHeight,
+      totalHeight,
+      currentBodyHeight: body.scrollHeight,
+    });
+
+    body.style.minHeight = `${totalHeight}px`;
+    body.style.height = `${totalHeight}px`;
+    html.style.minHeight = `${totalHeight}px`;
+    html.style.height = `${totalHeight}px`;
+
+    requestAnimationFrame(() => {
+      const bodyHeight = document.body.scrollHeight;
+      const maxScroll = bodyHeight - window.innerHeight;
+      console.log('📜 [SCROLL SETUP] Verification:', {
+        origin,
+        bodyHeight,
+        maxScroll,
+        isScrollable: maxScroll > 0,
+      });
+      if (maxScroll <= 0) {
+        console.error('🚨 [SCROLL SETUP] FAILED - Page not scrollable!', {
+          origin,
+          bodyHeight,
+          windowHeight: window.innerHeight,
+        });
+      }
+    });
   }
 
   _onScroll() {
@@ -219,6 +291,14 @@ export default class ScrollOrchestrator {
       // stage change event
       if (stageIdx !== this.lastStageIndex && stageName && stageName !== 'unknown') {
         this.lastStageIndex = stageIdx;
+        console.log('📜 [SCROLL PATH]', {
+          scrollPercent: Math.round(easedPct),
+          targetStage: stageName,
+          path: 'SCROLL_ORCHESTRATED',
+          willTriggerFragments: true,
+          willTriggerMorph: true,
+          timestamp: performance.now(),
+        });
         BeatBus.emit?.(EVENTS.STAGE_CHANGE, { 
           stage: stageName, 
           index: stageIdx,
