@@ -86,6 +86,60 @@ function buildCanonical(source) {
     stages: narrativeStages
   };
 
+  const visualEffects = clone(sst.visualEffects || {});
+
+  const getVisualEffect = (visualVerb, type = 'particle') => {
+    if (!visualVerb || visualVerb === 'no_change') return null;
+
+    const effectKey = type === 'camera' ? 'cameraEffects' : 'particleEffects';
+    const effects = visualEffects?.[effectKey];
+
+    if (!effects) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] No ${effectKey} registry found`);
+      }
+      return null;
+    }
+
+    const effect = effects[visualVerb];
+
+    if (!effect) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] Unknown visual verb: "${visualVerb}" (type: ${type})`);
+      }
+      return null;
+    }
+
+    if (typeof console !== 'undefined' && typeof console.log === 'function') {
+      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, effect);
+    }
+    return effect;
+  };
+
+  const getBeatSheet = (stageName) => {
+    if (!stageName) return null;
+
+    const beatSheets = sst.narrative?.beatSheets;
+    if (!beatSheets) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn('🎨 [Canonical] No beat sheets found');
+      }
+      return null;
+    }
+
+    const key = String(stageName);
+    const beatSheet = beatSheets[key];
+
+    if (!beatSheet) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] No beat sheet for stage: "${key}"`);
+      }
+      return null;
+    }
+
+    return clone(beatSheet);
+  };
+
   const getStageByName = (name) => sst.stages?.[name] ?? null;
   const getStageByIndex = (index) => {
     const safe = Math.max(0, Math.min(stageOrder.length - 1, Number(index) | 0));
@@ -169,8 +223,10 @@ function buildCanonical(source) {
     debugSurface: sst.debugSurface || {},
     changeLog: sst.changeLog || [],
     dialogue: narrative.stages || {},
+    visualEffects,
     getStageByName, getStageByIndex, getStageByScroll,
     isFeatureEnabled, getFragmentsForStage, getActiveFragments,
+    getVisualEffect, getBeatSheet,
     SYSTEM_CONSTANTS
   };
   return deepFreeze(Canonical);

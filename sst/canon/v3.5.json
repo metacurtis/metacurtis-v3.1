@@ -978,6 +978,14 @@
         "degrees": 12,
         "shake": false
       },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
       "memoryFragments": {
         "ambient": [
           {
@@ -1141,6 +1149,14 @@
         "dissolveAfterMs": 1800,
         "dissolveMorph": 0.6,
         "increaseSwirl": true
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
       },
       "hud": {
         "liveCounterText": "15,000 conscious moments"
@@ -1719,6 +1735,194 @@
             "visual": "question_expand"
           }
         ]
+      }
+    }
+  },
+  "visualEffects": {
+    "description": "Mapping of beat sheet visual verbs to camera/particle directives",
+    "version": "1.0.0",
+    "particleEffects": {
+      "no_change": {
+        "type": "static",
+        "description": "Maintain current state"
+      },
+      "gentle_drift": {
+        "type": "motion",
+        "tiers": [
+          0,
+          1
+        ],
+        "behavior": "perlin_drift",
+        "speed": 0.2,
+        "amplitude": 0.3
+      },
+      "tier2_flicker_increase": {
+        "type": "flicker",
+        "tiers": [
+          2
+        ],
+        "probability": 0.05,
+        "duration": 200
+      },
+      "tier3_subtle_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 0.3,
+        "intensity": 0.2
+      },
+      "tier3_sparkle": {
+        "type": "sparkle",
+        "tiers": [
+          3
+        ],
+        "count": 50,
+        "duration": 500
+      },
+      "tier3_glow_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 0.5,
+        "intensity": 0.6,
+        "glow": true
+      },
+      "settle_to_form": {
+        "type": "converge",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad"
+      },
+      "static_hold": {
+        "type": "lock",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "rigidity": 1
+      },
+      "particles_begin_columns": {
+        "type": "formation",
+        "pattern": "column",
+        "tiers": [
+          1,
+          2
+        ],
+        "duration": 1500
+      },
+      "tier2_lock_into_grid": {
+        "type": "grid_snap",
+        "tiers": [
+          2
+        ],
+        "gridSize": 2,
+        "duration": 800
+      },
+      "tier3_cadence_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 2,
+        "intensity": 0.4,
+        "bpm": 120
+      },
+      "breathing_rhythm": {
+        "type": "breathe",
+        "tiers": [
+          0,
+          1,
+          2
+        ],
+        "speed": 0.05,
+        "amplitude": 0.1
+      },
+      "prepare_flicker": {
+        "type": "prime",
+        "tiers": [
+          2,
+          3
+        ],
+        "anticipation": 500
+      },
+      "green_flicker": {
+        "type": "color_flash",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "color": "#00FF00",
+        "duration": 300
+      },
+      "flicker_fade_back_to_blue": {
+        "type": "color_transition",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fromColor": "#00FF00",
+        "toColor": "#3b82f6",
+        "duration": 1000
+      }
+    },
+    "cameraEffects": {
+      "no_change": {
+        "type": "static"
+      },
+      "orbit_slow": {
+        "type": "orbit",
+        "degrees": 10,
+        "duration": 35000,
+        "axis": "y"
+      },
+      "orbit_discovery": {
+        "type": "orbit",
+        "degrees": 15,
+        "speed": 0.3,
+        "axis": "y"
+      },
+      "dramatic_push": {
+        "type": "dolly",
+        "startZ": 6,
+        "endZ": 4,
+        "duration": 40000,
+        "shake": {
+          "amplitude": 0.1,
+          "frequency": 5
+        }
+      },
+      "calm_track": {
+        "type": "orbit",
+        "degrees": 12,
+        "duration": 45000
+      },
+      "balletic_orbit": {
+        "type": "orbit",
+        "degrees": 25,
+        "speed": 0.2,
+        "smooth": 0.98
+      },
+      "reverent_orbit": {
+        "type": "orbit",
+        "degrees": 30,
+        "pullback": {
+          "from": 5,
+          "to": 7,
+          "duration": 10000
+        }
       }
     }
   },
