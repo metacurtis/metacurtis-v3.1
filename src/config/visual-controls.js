@@ -1,6 +1,10 @@
 // src/config/visual-controls.js
 // Visual Controls (Data-first tuning) — sentinel comments mark safe literals
 
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+
+const GENESIS_WORD = (Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS').toUpperCase();
+
 export const VC = {
   // Emergence pacing
   IMPLODE_MS: 1100,      /* VC.IMPLODE_MS */   // 7.7–8.7s (implosion)
@@ -51,7 +55,7 @@ export const VC = {
 
   // Constellation anchors (Tier-3)
   USE_T3_TEXT:        false, /* VC.USE_T3_TEXT       */ // use downsampled text if font loaded
-  T3_TEXT:            'HELLO CURTIS', /* VC.T3_TEXT */
+  T3_TEXT:            GENESIS_WORD, /* VC.T3_TEXT */
   T3_TEXT_SCALE:      0.70,  /* VC.T3_TEXT_SCALE     */ // relative to STARFIELD_SCALE
   T3_Z_JITTER:        0.5,   /* VC.T3_Z_JITTER       */
   BAND_T3_P:          1.00,  /* VC.BAND_T3_P        */

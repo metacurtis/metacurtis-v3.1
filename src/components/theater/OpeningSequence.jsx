@@ -4,8 +4,10 @@
 import { useEffect, useRef, useState } from 'react';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
 
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(false);
@@ -144,7 +146,7 @@ export default function OpeningSequence() {
       }),
 
       // SCREEN FILL
-      BeatBus.on(EVENTS.SCREEN_FILL, ({ text = 'HELLO CURTIS ', scrollSpeed = 50 } = {}) => {
+      BeatBus.on(EVENTS.SCREEN_FILL, ({ text = `${GENESIS_STAGE_WORD} `, scrollSpeed = 50 } = {}) => {
         console.log('   OpeningSequence: SCREEN_FILL received');
         setPhase('fill');
 

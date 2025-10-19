@@ -1,5 +1,7 @@
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import SST from '@/config/sst-loader.js';
+import portraitPointCloud from '@/assets/climax/portrait-pointcloud.json';
+import qrPointCloud from '@/assets/climax/qr-curtis.json';
 
 /**
  * Resolve the canonical transcendence particle count from configuration.
@@ -28,31 +30,38 @@ function getCanonicalTranscendenceCount() {
  * @param {number} count - Number of particles (defaults to transcendence count from Canonical)
  * @returns {Float32Array} Position data [x,y,z,x,y,z,...]
  */
-export function generatePortraitPositions(count = getCanonicalTranscendenceCount()) {
+function resamplePointCloud(points = [], count = 0) {
   const safeCount = Math.max(0, Math.floor(count));
-  const positions = new Float32Array(safeCount * 3);
+  const out = new Float32Array(safeCount * 3);
+  const baseCount = Math.floor(points.length / 3);
+  if (safeCount === 0 || baseCount === 0) return out;
 
-  if (safeCount === 0) return positions;
-
-  const layers = Math.max(1, Math.min(6, Math.round(Math.sqrt(safeCount / 1500))));
-  const particlesPerLayer = Math.max(1, Math.floor(safeCount / layers));
-
+  const step = baseCount / safeCount;
+  let cursor = 0;
   for (let i = 0; i < safeCount; i++) {
-    const layer = Math.min(layers - 1, Math.floor(i / particlesPerLayer));
-    const layerRatio = layers > 1 ? layer / (layers - 1) : 0;
-    const radius = 2.5 + layerRatio * 2.0 + (Math.random() - 0.5) * 0.25;
-    const angle = ((i % particlesPerLayer) / particlesPerLayer) * Math.PI * 2;
-
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius;
-    const z = (Math.random() - 0.5) * 0.75;
-
-    positions[i * 3] = x;
-    positions[i * 3 + 1] = y;
-    positions[i * 3 + 2] = z;
+    const index = Math.min(baseCount - 1, Math.floor(cursor));
+    const src = index * 3;
+    const dst = i * 3;
+    out[dst] = points[src];
+    out[dst + 1] = points[src + 1];
+    out[dst + 2] = points[src + 2];
+    cursor += step;
   }
+  return out;
+}
 
-  console.log('🎨 Generated portrait positions (placeholder concentric circles)', { count: safeCount });
+export function generatePortraitPositions(count = getCanonicalTranscendenceCount()) {
+  const basePoints = Array.isArray(portraitPointCloud?.points)
+    ? portraitPointCloud.points
+    : [];
+  const safeCount = Math.max(0, Math.floor(count));
+  const positions = resamplePointCloud(basePoints, safeCount);
+  if (safeCount && import.meta?.env?.DEV) {
+    console.debug('🎨 Using portrait point cloud asset', {
+      requested: safeCount,
+      baseCount: Math.floor(basePoints.length / 3),
+    });
+  }
   return positions;
 }
 
@@ -62,35 +71,16 @@ export function generatePortraitPositions(count = getCanonicalTranscendenceCount
  * @param {number} size - Grid size (e.g., 50 = 50×50 grid)
  * @returns {Float32Array} Position data [x,y,z,x,y,z,...]
  */
-export function generateQRPositions(count = getCanonicalTranscendenceCount(), size = 50) {
+export function generateQRPositions(count = getCanonicalTranscendenceCount()) {
+  const basePoints = Array.isArray(qrPointCloud?.points) ? qrPointCloud.points : [];
   const safeCount = Math.max(0, Math.floor(count));
-  const positions = new Float32Array(safeCount * 3);
-  if (safeCount === 0) return positions;
-
-  const gridSize = size;
-  const cellSize = 0.16;
-  const usable = Math.min(safeCount, gridSize * gridSize);
-
-  for (let i = 0; i < usable; i++) {
-    const row = Math.floor(i / gridSize);
-    const col = i % gridSize;
-
-    positions[i * 3] = (col - gridSize / 2) * cellSize;
-    positions[i * 3 + 1] = (row - gridSize / 2) * cellSize;
-    positions[i * 3 + 2] = 0;
+  const positions = resamplePointCloud(basePoints, safeCount);
+  if (safeCount && import.meta?.env?.DEV) {
+    console.debug('🎨 Using QR point cloud asset', {
+      requested: safeCount,
+      baseCount: Math.floor(basePoints.length / 3),
+    });
   }
-
-  for (let i = usable; i < safeCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * gridSize * cellSize;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * gridSize * cellSize;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * cellSize * 4;
-  }
-
-  console.log('🎨 Generated QR code positions (placeholder grid)', {
-    count: safeCount,
-    usable,
-    gridSize,
-  });
   return positions;
 }
 

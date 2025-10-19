@@ -24,6 +24,7 @@ import { particleRaycaster } from '@/utils/particleRaycast.js';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
+import { exposeDiagnostics, exposeControlSurface, revokeControlSurface } from '@/utils/runtimeGuards.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const MORPH_TYPE_ENUM = Object.freeze({
@@ -172,10 +173,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const blueprintRef = useRef(blueprint);
   const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
-  const ignoreDirectivesRef = useRef(false);  const fenceReadyRef = useRef(false);
+  const ignoreDirectivesRef = useRef(false);
+  const fenceReadyRef = useRef(false);
   const pendingFencepostRef = useRef(false);
   const pendingFenceDataRef = useRef(null);
   const pendingFenceTimeoutRef = useRef(null);
+  const spinRef = useRef({ active: false, velocity: { y: 0, z: 0 }, endTime: 0 });
 
   const logBind = useCallback((kind, meta = {}) => {
     const geo = geometryRef.current;
@@ -1237,13 +1240,55 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
 
     if (typeof window !== 'undefined') {
-      window.__webglBackground = { material: mat, meshRef, geometryRef };
-      window.__consciousnessMaterial = mat;
-      window.__particleMaterial = mat;
-      window.__particleGeometry = geometryRef.current || null;
+      exposeDiagnostics('webglBackground', () => ({
+        stage: stageName,
+        blueprintCount,
+        activeCount,
+        uniforms: mat ? Object.keys(mat.uniforms || {}) : [],
+        hasGeometry: !!geometryRef.current,
+        morph: mat?.uniforms?.uMorphProgress?.value ?? null,
+      }));
+
+      exposeControlSurface('__rendererDiagnostics', () => ({
+        getUniformValue: (name) => {
+          const uniform = mat?.uniforms?.[name];
+          if (!uniform) return null;
+          const val = uniform.value;
+          if (val == null) return null;
+          if (typeof val === 'number' || typeof val === 'string' || typeof val === 'boolean') return val;
+          if (Array.isArray(val)) return [...val];
+          if (val instanceof THREE.Color) {
+            return {
+              hex: val.getHexString(),
+              rgb: [val.r, val.g, val.b],
+            };
+          }
+          if (val && typeof val.toArray === 'function') {
+            const out = [];
+            val.toArray(out);
+            return out;
+          }
+          return val;
+        },
+        getAttributeArray: (name) => {
+          const attr = geometryRef.current?.getAttribute?.(name);
+          if (!attr?.array) return null;
+          return Float32Array.from(attr.array);
+        },
+        getActiveCount: () => mat?.uniforms?.uActiveCount?.value ?? null,
+        getDrawCount: () => geometryRef.current?.drawRange?.count ?? null,
+      }), {
+        getUniformValue: 'renderer:diagnostics',
+        getAttributeArray: 'renderer:diagnostics',
+        getActiveCount: 'renderer:diagnostics',
+        getDrawCount: 'renderer:diagnostics',
+      });
     }
 
     __applyStageTint(stageName);
+    return () => {
+      revokeControlSurface('__rendererDiagnostics');
+    };
   }, [atlasTexture, blueprint, stageName, applyRendererFits, bandScale, gl, logBind, scheduleRuntimeSampling]);
 
   // keep resolution/DPR updated
@@ -1260,7 +1305,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   }, [size, gl]);
 
   // per-frame uniforms (passive)
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !geometryRef.current) return;
     const sp = clamp01(Number(scrollProgress) || 0);
@@ -1269,9 +1314,58 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value    = activeCount;
     mat.uniforms.uTierCutoff.value     = activeCount;
+
+    const deltaSeconds = Number.isFinite(delta) ? delta : state.clock.getDelta();
+    if (meshRef.current && spinRef.current) {
+      if (spinRef.current.active) {
+        const { velocity, endTime } = spinRef.current;
+        meshRef.current.rotation.z += (velocity.z || 0) * deltaSeconds;
+        meshRef.current.rotation.y += (velocity.y || 0) * deltaSeconds;
+        const now = typeof performance !== 'undefined' && performance.now
+          ? performance.now()
+          : Date.now();
+        if (endTime && now >= endTime) {
+          spinRef.current.active = false;
+          spinRef.current.velocity = { y: 0, z: 0 };
+        }
+      } else {
+        meshRef.current.rotation.z *= 0.92;
+        meshRef.current.rotation.y *= 0.92;
+      }
+    }
   });
 
   const frameCountRef = useRef(0);
+
+  useEffect(() => {
+    if (!BeatBus?.on) return () => {};
+    const handler = (payload = {}) => {
+      const spin = payload?.rendererSpin;
+      const duration = Number(payload?.duration) || 0;
+      if (spin && (spin.z || spin.y)) {
+        const velocity = {
+          z: Number(spin.z) || 0,
+          y: Number(spin.y) || 0,
+        };
+        const endTime = duration > 0 && typeof performance !== 'undefined' && performance.now
+          ? performance.now() + duration
+          : 0;
+        spinRef.current = {
+          active: true,
+          velocity,
+          endTime,
+        };
+      } else {
+        spinRef.current = {
+          active: false,
+          velocity: { y: 0, z: 0 },
+          endTime: 0,
+        };
+      }
+    };
+    const off = BeatBus.on(EVENTS.PARTICLE_PHASE, handler);
+    return () => off?.();
+  }, []);
 
   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {

@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, stageAtom } from '@/state/atoms';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
-import { NARRATIVE_DIALOGUE } from '@/config/sst3/narrative-dialogue.js';
+import { getNarrationSegments, getNarrativeForStage } from '@/config/sst3/narrative-dialogue.js';
+import {
+  exposeControlSurface,
+  exposeDiagnostics,
+  revokeControlSurface,
+  isControlAllowed,
+} from '@/utils/runtimeGuards.js';
 import { NarrationFragment } from '../fragments/NarrationFragment.jsx';
 
 const DEBUG_NARRATION = true;
@@ -158,32 +164,46 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   );
 
   const startNarration = useCallback(
-    (stageName) => {
-      if (!stageName && !currentStage) return;
+    (stageName, origin = 'internal') => {
+      if (origin !== 'internal' && !isControlAllowed('narration:control')) {
+        if (DEBUG_NARRATION) {
+          console.warn('🎙️ [NarrationController] External play blocked by runtime guard');
+        }
+        return;
+      }
 
       const normalizedStage = typeof stageName === 'string' ? stageName.trim() : '';
-      const stageKey =
-        (normalizedStage && normalizedStage in NARRATIVE_DIALOGUE
-          ? normalizedStage
-          : currentStage) || 'genesis';
-      const stageConfig = NARRATIVE_DIALOGUE[stageKey];
-      const segments = normalizeSegments(stageConfig?.narration?.segments);
-      if (!segments.length) return;
+      let stageKey = normalizedStage || currentStage || 'genesis';
 
-      const beatSheet = stageConfig?.narration || {};
-      const normalizedBeats = Array.isArray(beatSheet?.beats)
-        ? beatSheet.beats
-        : Array.isArray(beatSheet?.segments)
-          ? beatSheet.segments
-          : [];
-      const beatCount = normalizedBeats.length || segments.length;
+      let narrative = getNarrativeForStage(stageKey);
+      if (!narrative && stageKey !== 'genesis') {
+        narrative = getNarrativeForStage('genesis');
+        if (narrative) {
+          stageKey = 'genesis';
+        }
+      }
+      if (!narrative) {
+        if (DEBUG_NARRATION) {
+          console.warn('🎙️ [NarrationController] No canonical narration available for stage', stageKey);
+        }
+        return;
+      }
+
+      const segments = normalizeSegments(getNarrationSegments(stageKey));
+      if (!segments.length) {
+        if (DEBUG_NARRATION) {
+          console.warn('🎙️ [NarrationController] Stage has empty narration segments', stageKey);
+        }
+        return;
+      }
+
+      const beatCount = Array.isArray(narrative.beats) ? narrative.beats.length : segments.length;
       const firstBeatText =
-        normalizedBeats?.[0]?.narration?.text ??
-        normalizedBeats?.[0]?.text ??
-        segments?.[0]?.text ??
+        narrative?.beats?.[0]?.narration?.text ??
+        narrative?.beats?.[0]?.text ??
+        segments[0]?.text ??
         null;
-      const activeStage = stageKey;
-      const resolvedStageForLog = normalizedStage || stageName || activeStage;
+      const resolvedStageForLog = normalizedStage || stageName || stageKey;
 
       resetState({ preserveStage: true });
       activeStageRef.current = stageKey;
@@ -192,10 +212,10 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       skipRequestedRef.current = false;
 
       if (DEBUG_NARRATION) {
-        console.log('🎙️ [NarrationController] Playing beat sheet:', {
-          stage: activeStage,
-          beatSheetStage: beatSheet?.stage ?? null,
-          totalDuration: beatSheet?.totalDuration ?? null,
+        console.log('🎙️ [NarrationController] Playing canonical beat sheet:', {
+          stage: stageKey,
+          totalDuration: narrative?.totalDuration ?? null,
+          startOffset: narrative?.startOffset ?? 0,
           beatCount,
           firstBeatText: firstBeatText
             ? `${firstBeatText.slice(0, 50)}${firstBeatText.length > 50 ? '…' : ''}`
@@ -216,6 +236,12 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
   const skipNarration = useCallback(
     (origin = 'skip') => {
+      if (origin === 'external' && !isControlAllowed('narration:control')) {
+        if (DEBUG_NARRATION) {
+          console.warn('🎙️ [NarrationController] External skip blocked by runtime guard');
+        }
+        return;
+      }
       if (!activeStageRef.current) return;
       const stageName = activeStageRef.current;
       skipRequestedRef.current = true;
@@ -228,38 +254,53 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+    if (typeof window === 'undefined') return () => {};
 
-    const startNarrationHandler = startNarration;
-    const skipNarrationHandler = skipNarration;
-
-    const controllerApi = {
-      playNarration: (stage) => {
-        startNarrationHandler(stage);
-      },
-      skipNarration: () => {
-        skipNarrationHandler('external');
-      },
+    const controllerFactory = () => {
+      const surface = {};
+      Object.defineProperties(surface, {
+        playNarration: {
+          value: (stage) => startNarration(stage, 'external'),
+          enumerable: true,
+        },
+        skipNarration: {
+          value: () => skipNarration('external'),
+          enumerable: true,
+        },
+        isPlaying: {
+          enumerable: true,
+          get() {
+            return activeStageRef.current !== null;
+          },
+        },
+        currentStage: {
+          enumerable: true,
+          get() {
+            return activeStageRef.current;
+          },
+        },
+        completedSegments: {
+          enumerable: true,
+          get() {
+            return completedSegmentsRef.current;
+          },
+        },
+        totalSegments: {
+          enumerable: true,
+          get() {
+            return totalSegmentsRef.current;
+          },
+        },
+      });
+      return surface;
     };
 
-    Object.defineProperties(controllerApi, {
-      isPlaying: {
-        enumerable: true,
-        get() {
-          return activeStageRef.current !== null;
-        },
-      },
-      currentStage: {
-        enumerable: true,
-        get() {
-          return activeStageRef.current;
-        },
-      },
+    exposeControlSurface('narrationController', controllerFactory, {
+      playNarration: 'narration:control',
+      skipNarration: 'narration:control',
     });
 
-    window.narrationController = controllerApi;
-
-    const statusFn = () => ({
+    exposeDiagnostics('narration', () => ({
       isPlaying: activeStageRef.current !== null,
       activeStage: activeStageRef.current,
       completedSegments: completedSegmentsRef.current,
@@ -268,23 +309,14 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         typeof document !== 'undefined'
           ? (document.body?.style?.overflow || '') === 'hidden'
           : false,
-    });
-    window.narrationStatus = statusFn;
+    }));
 
     if (DEBUG_NARRATION) {
-      console.log('🎙️ [NarrationController] Exposed controller API');
+      console.log('🎙️ [NarrationController] Guarded controller API exposed');
     }
 
     return () => {
-      if (window.narrationController === controllerApi) {
-        window.narrationController = null;
-        if (DEBUG_NARRATION) {
-          console.log('🎙️ [NarrationController] Controller API removed');
-        }
-      }
-      if (window.narrationStatus === statusFn) {
-        window.narrationStatus = undefined;
-      }
+      revokeControlSurface('narrationController');
     };
   }, [skipNarration, startNarration]);
 

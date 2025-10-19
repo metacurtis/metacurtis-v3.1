@@ -16,6 +16,8 @@ import { EVENTS } from '@/theater/events.js';
 
 console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe cancel)');
 
+const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
+
 // Debounce helper to prevent rapid-fire navigation (default 150ms)
 function createDebouncer(minInterval = 150) {
   let lastCall = 0;
@@ -126,12 +128,12 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
               }}
             >
               READY.<br />
-              10 PRINT &quot;HELLO CURTIS&quot;<br />
-              20 GOTO 10<br />
+              {'10 PRINT "'}{GENESIS_STAGE_WORD}{'"'}<br />
+              {'20 GOTO 10'}<br />
               RUN<br />
               <div style={{ marginTop: '10px', opacity: 0.7 }}>
                 {Array(5)
-                  .fill('HELLO CURTIS ')
+                  .fill(`${GENESIS_STAGE_WORD} `)
                   .join('')}
                 ...
               </div>

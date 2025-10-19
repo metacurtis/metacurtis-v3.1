@@ -17,12 +17,51 @@ import { VC } from '../config/visual-controls.js';
 
   const DEFAULT_FIT_FRAC = typeof VC?.FIT_FRAC === 'number' ? VC.FIT_FRAC : 0.92;
 
-  const getGeo = () => window.__particleGeometry || null;
-  const getU = () => window.__consciousnessMaterial && window.__consciousnessMaterial.uniforms || null;
+  const getDiagnostics = () => {
+    if (typeof window === 'undefined') return null;
+    return window.__rendererDiagnostics || null;
+  };
+
   const getAttr = (name) => {
-    const geo = getGeo();
+    const diag = getDiagnostics();
+    if (diag && typeof diag.getAttributeArray === 'function') {
+      const arr = diag.getAttributeArray(name);
+      if (arr) return arr;
+    }
+    if (typeof window === 'undefined') return null;
+    const geo = window.__particleGeometry;
     return geo && geo.getAttribute ? geo.getAttribute(name)?.array || null : null;
   };
+
+  const getUniformValue = (name) => {
+    const diag = getDiagnostics();
+    if (diag && typeof diag.getUniformValue === 'function') {
+      const value = diag.getUniformValue(name);
+      return value && value.value !== undefined ? value.value : value;
+    }
+    if (typeof window === 'undefined') return null;
+    const mat = window.__consciousnessMaterial;
+    return mat?.uniforms?.[name]?.value ?? null;
+  };
+
+  const getActiveCount = () => {
+    const diag = getDiagnostics();
+    if (diag && typeof diag.getActiveCount === 'function') {
+      return diag.getActiveCount();
+    }
+    return getUniformValue('uActiveCount');
+  };
+
+  const getDrawCount = () => {
+    const diag = getDiagnostics();
+    if (diag && typeof diag.getDrawCount === 'function') {
+      return diag.getDrawCount();
+    }
+    if (typeof window === 'undefined') return null;
+    const geo = window.__particleGeometry;
+    return geo?.drawRange?.count ?? null;
+  };
+
   const getHint = () => {
     if (window.__viewportHint) return window.__viewportHint;
     if (window.__consciousnessEngine && window.__consciousnessEngine._viewportHint) {
@@ -79,19 +118,16 @@ import { VC } from '../config/visual-controls.js';
   }
 
   function draw() {
-    const g = getGeo();
-    const u = getU();
-    if (!g || !u) return { error: 'missing geometry/material' };
-    const drawCount = g.drawRange?.count ?? null;
-    const active = u.uActiveCount?.value ?? null;
+    const positions = getAttr('position');
+    const active = getActiveCount();
+    if (!positions) return { error: 'missing geometry/material' };
+    const drawCount = getDrawCount();
     return { draw: drawCount, active, match: drawCount === active };
   }
 
   function dpi() {
-    const u = getU();
-    if (!u) return { error: 'no material uniforms' };
-    const up = u.uPointSize?.value ?? null;
-    const dpr = u.uDevicePixelRatio?.value ?? null;
+    const up = getUniformValue('uPointSize');
+    const dpr = getUniformValue('uDevicePixelRatio');
     return { uPointSize: up, uDevicePixelRatio: dpr, combined: up && dpr ? up * dpr : null };
   }
 
@@ -147,10 +183,9 @@ import { VC } from '../config/visual-controls.js';
 
   function sizeHist({ bins = 8 } = {}) {
     const mul = getAttr('sizeMultiplier');
-    const u = getU();
-    if (!mul || !u) return { error: 'no sizeMultiplier/uniforms' };
-    const base = u.uPointSize?.value ?? 48;
-    const dpr = u.uDevicePixelRatio?.value ?? 1;
+    if (!mul) return { error: 'no sizeMultiplier attribute' };
+    const base = getUniformValue('uPointSize') ?? 48;
+    const dpr = getUniformValue('uDevicePixelRatio') ?? 1;
     const values = Array.from(mul, (m) => m * base * dpr);
     const min = Math.min(...values);
     const max = Math.max(...values);

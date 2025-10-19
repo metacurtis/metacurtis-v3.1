@@ -4,19 +4,29 @@
 import BeatBus from '@/theater/bus';
 
 import SST from '@/config/sst-loader.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 
 const DEBUG_NARRATION = true;
 
-const DEFAULT_TYPING_LINES = ['READY.', '10 PRINT "HELLO CURTIS"', '20 GOTO 10', 'RUN'];
+const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
+const DEFAULT_TYPING_LINES = [
+  'READY.',
+  `10 PRINT "${GENESIS_STAGE_WORD}"`,
+  '20 GOTO 10',
+  'RUN',
+];
 
 const DEFAULT_OPENING_TIMELINE = {
   blackout: { durationMs: 2000 },
   cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
-  fill: { text: 'HELLO CURTIS ', scrollSpeed: 100, durationMs: 2000 },
+  fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
+  chaos: { enabled: true, durationMs: 1500, rendererSpin: { z: 0.5, y: 0.2 } },
+  coalesce: { enabled: true, durationMs: 1500, morphTo: 0.6 },
+  settle: { enabled: true, durationMs: 1000, morphTo: 1.0 },
   emergence: {
     durationMs: 1500,
     waitForFencepost: true,
@@ -77,25 +87,62 @@ class TheaterDirector {
   _getOpeningConfig() {
     const opening = SST?.narrative?.opening ?? {};
     const openingTimeline = opening.timeline ?? {};
+    const stageTimeline = SST?.stages?.genesis?.openingTimeline ?? {};
 
     const timeline = {
-      blackout: { ...DEFAULT_OPENING_TIMELINE.blackout, ...(openingTimeline.blackout ?? {}) },
-      cursor: { ...DEFAULT_OPENING_TIMELINE.cursor, ...(openingTimeline.cursor ?? {}) },
-      typing: { ...DEFAULT_OPENING_TIMELINE.typing, ...(openingTimeline.typing ?? {}) },
-      fill: { ...DEFAULT_OPENING_TIMELINE.fill, ...(openingTimeline.fill ?? {}) },
-      emergence: { ...DEFAULT_OPENING_TIMELINE.emergence, ...(openingTimeline.emergence ?? {}) },
+      blackout: {
+        ...DEFAULT_OPENING_TIMELINE.blackout,
+        ...(openingTimeline.blackout ?? {}),
+        ...(stageTimeline.blackout ?? {}),
+      },
+      cursor: {
+        ...DEFAULT_OPENING_TIMELINE.cursor,
+        ...(openingTimeline.cursor ?? {}),
+        ...(stageTimeline.cursor ?? {}),
+      },
+      typing: {
+        ...DEFAULT_OPENING_TIMELINE.typing,
+        ...(openingTimeline.typing ?? {}),
+        ...(stageTimeline.typing ?? {}),
+      },
+      fill: {
+        ...DEFAULT_OPENING_TIMELINE.fill,
+        ...(openingTimeline.fill ?? {}),
+        ...(stageTimeline.fill ?? {}),
+      },
+      chaos: {
+        ...DEFAULT_OPENING_TIMELINE.chaos,
+        ...(openingTimeline.chaos ?? {}),
+        ...(stageTimeline.chaos ?? {}),
+      },
+      coalesce: {
+        ...DEFAULT_OPENING_TIMELINE.coalesce,
+        ...(openingTimeline.coalesce ?? {}),
+        ...(stageTimeline.coalesce ?? {}),
+      },
+      settle: {
+        ...DEFAULT_OPENING_TIMELINE.settle,
+        ...(openingTimeline.settle ?? {}),
+        ...(stageTimeline.settle ?? {}),
+      },
+      profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
+      narration: stageTimeline.narration ?? openingTimeline.narration ?? null,
+      beatGlyph: stageTimeline.beatGlyph ?? openingTimeline.beatGlyph ?? null,
     };
+
+    const emergenceTimeline = stageTimeline.emergence ?? openingTimeline.emergence ?? {};
 
     const fallbackSkipKey = 'SPACE';
 
     return {
       skipKey:
+        stageTimeline.skipKey ??
         opening.skipKey ??
         SST?.narrative?.orchestration?.skipKey ??
         fallbackSkipKey,
-      totalDurationMs: opening.totalDurationMs,
+      totalDurationMs: stageTimeline.totalDurationMs ?? opening.totalDurationMs ?? null,
       timeline,
-      emergence: { ...DEFAULT_OPENING_EMERGENCE, ...(opening.emergence ?? {}) },
+      emergence: { ...DEFAULT_OPENING_EMERGENCE, ...emergenceTimeline },
     };
   }
 
@@ -488,8 +535,13 @@ class TheaterDirector {
     fillConfig.durationMs = Math.max(0, Number(fillConfig.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs));
     fillConfig.scrollSpeed = Math.max(0, Number(fillConfig.scrollSpeed ?? DEFAULT_OPENING_TIMELINE.fill.scrollSpeed));
     if (typeof fillConfig.text !== 'string' || !fillConfig.text.trim()) {
-      fillConfig.text = DEFAULT_OPENING_TIMELINE.fill.text;
+      const canonicalFillWord = Canonical?.visual?.letterGeometry?.genesis?.word || GENESIS_STAGE_WORD;
+      fillConfig.text = `${canonicalFillWord} `;
     }
+
+    const chaosConfig = timeline?.chaos || {};
+    const coalesceConfig = timeline?.coalesce || {};
+    const settleConfig = timeline?.settle || {};
 
     const emergenceTimeline = {
       ...DEFAULT_OPENING_TIMELINE.emergence,
@@ -570,23 +622,82 @@ class TheaterDirector {
         if (typingConfig.completionDelayMs > 0) {
           const waitResult = await this.sleep(typingConfig.completionDelayMs);
           if (handleWaitResult(waitResult) === 'cancelled') return;
-        }
       }
+    }
 
-      // ───────────────── Phase 4: Fill
-      if (!skipTriggered) {
-        this.phase = 'fill';
-        console.log(`   Phase: Screen fill (${fillConfig.durationMs}ms)`);
-        BeatBus.emit(EVENTS.SCREEN_FILL, { text: fillConfig.text, scrollSpeed: fillConfig.scrollSpeed });
-        if (fillConfig.durationMs > 0) {
-          const waitResult = await this.sleep(fillConfig.durationMs);
-          if (handleWaitResult(waitResult) === 'cancelled') return;
-        }
+    // ───────────────── Phase 4: Fill
+    if (!skipTriggered) {
+      this.phase = 'fill';
+      console.log(`   Phase: Screen fill (${fillConfig.durationMs}ms)`);
+      BeatBus.emit(EVENTS.SCREEN_FILL, { text: fillConfig.text, scrollSpeed: fillConfig.scrollSpeed });
+      if (fillConfig.durationMs > 0) {
+        const waitResult = await this.sleep(fillConfig.durationMs);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
       }
+    }
 
-      if (skipTriggered) {
-        console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
+    if (!skipTriggered && chaosConfig?.enabled !== false) {
+      const chaosDuration = Math.max(0, Number(chaosConfig.durationMs) || 0);
+      this.phase = 'chaos';
+      console.log(`   Phase: Chaos (${chaosDuration}ms)`);
+      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+        name: 'chaos',
+        duration: chaosDuration,
+        rendererSpin: chaosConfig.rendererSpin || null,
+      });
+      if (chaosDuration > 0) {
+        const waitResult = await this.sleep(chaosDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
       }
+    }
+
+    if (!skipTriggered && coalesceConfig?.enabled !== false) {
+      const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);
+      this.phase = 'coalesce';
+      console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
+      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+        name: 'coalesce',
+        duration: coalesceDuration,
+        morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
+      });
+      if (typeof coalesceConfig.morphTo === 'number') {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          source: 'director:coalesce',
+          morphProgress: coalesceConfig.morphTo,
+          durationMs: coalesceDuration,
+        });
+      }
+      if (coalesceDuration > 0) {
+        const waitResult = await this.sleep(coalesceDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    if (!skipTriggered && settleConfig?.enabled !== false) {
+      const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
+      this.phase = 'settle';
+      console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+        name: 'settle',
+        duration: settleDuration,
+        morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+      });
+      if (typeof settleConfig.morphTo === 'number') {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          source: 'director:settle',
+          morphProgress: settleConfig.morphTo,
+          durationMs: settleDuration,
+        });
+      }
+      if (settleDuration > 0) {
+        const waitResult = await this.sleep(settleDuration);
+        if (handleWaitResult(waitResult) === 'cancelled') return;
+      }
+    }
+
+    if (skipTriggered) {
+      console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
+    }
 
       // ───────────────── Phase 5: Emergence (viewport → constellation)
       this.phase = 'emergence';
@@ -599,7 +710,9 @@ class TheaterDirector {
         source: emergenceConfig.source,
         target: emergenceConfig.target,
         count: genesisCount,
-        tierRatios: VC?.TIER_RATIOS,
+        tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
+          ? Canonical.stages.genesis.tierMix
+          : VC?.TIER_RATIOS,
         viewportHint,
         fastForward: skipTriggered || skipMorphAnimation,
         skipMorphAnimation,

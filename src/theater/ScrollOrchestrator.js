@@ -6,6 +6,12 @@
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import {
+  exposeDiagnostics,
+  exposeControlSurface,
+  revokeControlSurface,
+  isControlAllowed,
+} from '@/utils/runtimeGuards.js';
 
 const DEBUG_SCROLL = true;
 
@@ -62,8 +68,15 @@ export default class ScrollOrchestrator {
         window.addEventListener('resize', this._resizeHandlerBound, { passive: true });
       }
       window.addEventListener('scroll', this._onScroll, { passive: true });
-      window.__scrollOrchestrator = this;
-      window.scrollOrchestrator = this;
+      revokeControlSurface('__scrollOrchestrator');
+      revokeControlSurface('scrollOrchestrator');
+      exposeControlSurface('__scrollOrchestrator', () => this._createControlSurface(), {
+        setMorph: 'scroll:setMorph',
+      });
+      exposeControlSurface('scrollOrchestrator', () => this._createControlSurface(), {
+        setMorph: 'scroll:setMorph',
+      });
+      exposeDiagnostics('scrollOrchestrator', () => this.getState());
       this._ensureScrollableArea('start');
     }
     // kick once
@@ -85,12 +98,8 @@ export default class ScrollOrchestrator {
         window.removeEventListener('resize', this._resizeHandlerBound);
         this._resizeHandlerBound = null;
       }
-      if (window.__scrollOrchestrator === this) {
-        window.__scrollOrchestrator = null;
-      }
-      if (window.scrollOrchestrator === this) {
-        window.scrollOrchestrator = null;
-      }
+      revokeControlSurface('__scrollOrchestrator');
+      revokeControlSurface('scrollOrchestrator');
     }
   
     if (this._rafId) { 
@@ -100,6 +109,38 @@ export default class ScrollOrchestrator {
     if (DEBUG_SCROLL) {
       console.log('📜 ScrollOrchestrator stopped');
     }
+  }
+
+  _createControlSurface() {
+    const self = this;
+    const surface = {};
+    Object.defineProperties(surface, {
+      getState: {
+        value: () => self.getState(),
+        enumerable: true,
+      },
+      running: {
+        get: () => self.running,
+        enumerable: true,
+      },
+      scrollLocked: {
+        get: () => self.scrollLocked,
+        enumerable: true,
+      },
+      morph: {
+        get: () => self.morph,
+        enumerable: true,
+      },
+      morphTarget: {
+        get: () => self.morphTarget,
+        enumerable: true,
+      },
+      setMorph: {
+        value: (value) => self.setMorph(value, { origin: 'external' }),
+        enumerable: true,
+      },
+    });
+    return surface;
   }
 
   _schedule() {
@@ -350,7 +391,12 @@ export default class ScrollOrchestrator {
   }
 
   // Force a specific morph value (for testing)
-  setMorph(value) {
+  setMorph(value, options = {}) {
+    const origin = options.origin || 'internal';
+    if (origin !== 'internal' && !isControlAllowed('scroll:setMorph')) {
+      console.warn('[ScrollOrchestrator] Unauthorized setMorph attempt blocked');
+      return;
+    }
     this.morph = clamp01(value);
     this.morphTarget = this.morph;
     this._lastEmitVal = -1; // Force emit on next update

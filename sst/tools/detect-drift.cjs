@@ -14,13 +14,11 @@ const colors = {
 const SST = require('../canon/v3.5.json');
 
 const allowList = [
-  /src\/engine\/ConsciousnessEngine\.js$/,
-  /src\/config\/visual-controls\.js$/,
   /src\/components\/webgl\/WebGLCanvas\.jsx$/,
   /src\/core\/CentralEventClock\.js$/,
   /src\/hooks\/useAdaptiveQuality\.js$/,
   /src\/state\/atoms\/qualityAtom\.js$/,
-  /src\/theater\/TheaterDirector\.js$/
+  /src\/config\/sst3\/sst-v3\.0-config\.js$/
 ];
 
 const driftPatterns = [
@@ -91,6 +89,39 @@ const driftPatterns = [
       }
       return null;
     }
+  },
+  {
+    name: 'Hardcoded Tier Mix',
+    regex: /tierMix\s*[:=]\s*\[(.*?)\]/gis,
+    check: (match, file) => {
+      if (/canonical|sst\/canon/.test(file)) return null;
+      return {
+        issue: `Hardcoded tierMix detected: [${match[1]}]`,
+        fix: 'Derive tier mix from Canonical.stages[stage].tierMix',
+      };
+    },
+  },
+  {
+    name: 'Hardcoded Motion Behavior',
+    regex: /(drift_perlin_slow|orbital_micro|twinkle_soft|pulse_soft|breathing_rhythm|tier2_lock_into_grid|tier3_cadence_pulse)/gi,
+    check: (match, file) => {
+      if (/canonical|sst\/canon/.test(file)) return null;
+      return {
+        issue: `Hardcoded motion behavior "${match[1]}"`,
+        fix: 'Read motionBehaviors from Canonical.stages[stage].motionBehaviors',
+      };
+    },
+  },
+  {
+    name: 'Hardcoded Camera Cue',
+    regex: /camera\s*[:=]\s*\{[^}]*movement\s*:\s*["'`](.+?)["'`]/gis,
+    check: (match, file) => {
+      if (/canonical|sst\/canon/.test(file)) return null;
+      return {
+        issue: `Hardcoded camera movement "${match[1]}"`,
+        fix: 'Reference Canonical.visual.camera[stage] or Canonical.stages[stage].camera',
+      };
+    },
   }
 ];
 

@@ -140,6 +140,59 @@ function aabbOf(arr) {
   return { w: maxX - minX, h: maxY - minY };
 }
 
+function safeClone(value) {
+  if (value == null) return null;
+  try {
+    return structuredClone(value);
+  } catch {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+}
+
+function distributeParticles(total, ratios = []) {
+  const normalized = Array.isArray(ratios) && ratios.length === 4
+    ? ratios.slice()
+    : [0.7, 0.12, 0.13, 0.05];
+  const counts = normalized.map((ratio) => Math.max(0, Math.floor(total * ratio)));
+  let remainder = total - counts.reduce((sum, count) => sum + count, 0);
+  let index = 0;
+  while (remainder > 0) {
+    counts[index % counts.length] += 1;
+    remainder -= 1;
+    index += 1;
+  }
+  return counts;
+}
+
+function pickTextParticleIndices(tiers, count, rng) {
+  if (!Array.isArray(tiers) || count <= 0) return [];
+  const entries = tiers.map((tier, index) => ({
+    tier,
+    index,
+    jitter: typeof rng === 'function' ? rng() : Math.random(),
+  }));
+  entries.sort((a, b) => {
+    if (b.tier !== a.tier) return b.tier - a.tier;
+    return a.jitter - b.jitter;
+  });
+  return entries.slice(0, Math.min(count, entries.length)).map((entry) => entry.index);
+}
+
+const FONT_RESOLVERS = {
+  'Courier Prime': () => '/fonts/CourierPrime_Regular.typeface.json',
+  'JetBrains Mono': () => '/fonts/CourierPrime_Regular.typeface.json',
+  Inter: () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
+  'Archivo Black': () => '/fonts/helvetiker_bold.typeface.json',
+  Montserrat: () => '/fonts/helvetiker_bold.typeface.json',
+  'Playfair Display': () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
+  'Cormorant Garamond': () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
+  default: () => '/fonts/CourierPrime_Regular.typeface.json',
+};
+
 /** Compute centroid/AABB/fit/anisotropy for a flat Float32Array xyz... */
 export function __computeStarfieldMetrics(arr, hint, fitFrac = VC?.FIT_FRAC ?? 0.92) {
   const n = ((arr?.length || 0) / 3) | 0;
@@ -276,15 +329,18 @@ class ConsciousnessEngine {
   constructor() {
     // Text / font
     this.font = null;
-    this._fontReady = false;
-    this._fontReadyPromise = null;
-    this._text3DCache = new Map();
-    this._lastText3DFallbackUsed = false;
-    this._lastBlueprint = null;
-    this.text2DFallback = true;
+   this._fontReady = false;
+   this._fontReadyPromise = null;
+   this._text3DCache = new Map();
+   this._lastText3DFallbackUsed = false;
+   this._lastBlueprint = null;
+   this.text2DFallback = true;
+    this._fontCache = new Map();
+    this._activeFontKey = null;
+    this._fontLoadingKey = null;
 
-    // State / caches
-    this.blueprintCache = new Map();
+   // State / caches
+   this.blueprintCache = new Map();
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this._emergenceActive = false;
@@ -1392,7 +1448,13 @@ class ConsciousnessEngine {
 
     // Target: prefer SST kinetic typography (“HELLO CURTIS”) with safe fallback
     const lg = SST?.visual?.letterGeometry?.genesis || {};
-    const wordRaw = typeof lg.word === 'string' && lg.word.trim() ? lg.word.trim() : 'HELLO CURTIS';
+    const canonicalWord = Canonical?.visual?.letterGeometry?.genesis?.word;
+    const stageWordFallback = typeof canonicalWord === 'string' && canonicalWord.trim()
+      ? canonicalWord.trim()
+      : 'GENESIS';
+    const wordRaw = typeof lg.word === 'string' && lg.word.trim()
+      ? lg.word.trim()
+      : stageWordFallback;
     const depth = Number.isFinite(lg.depth) && lg.depth > 0 ? lg.depth : 0.3;
     const use3D = SST?.visual?.system === '3d_kinetic_typography';
 
@@ -1596,28 +1658,68 @@ class ConsciousnessEngine {
 
   buildBlueprint(stageName, options = {}) {
     const stageConfig = Canonical?.stages?.[stageName] || {};
-    const stageParticleCounts = SST?.performance?.particleCount ?? {};
-    const stageLetterWord = SST?.visual?.letterGeometry?.[stageName]?.word;
-    const stageFallbackWord = SST?.visual?.stageWords?.[stageName];
-    const stageWord = (typeof stageLetterWord === 'string' && stageLetterWord)
-      || (typeof stageFallbackWord === 'string' && stageFallbackWord)
-      || stageName.toUpperCase();
-
     if (!stageConfig) {
       console.error(`Stage ${stageName} not found`);
       return null;
     }
 
+    const stageParticleCounts = SST?.performance?.particleCount ?? {};
     const quality = options.quality || this.currentQuality;
-    const baseParticleCount = stageConfig.particleCount
-      || stageParticleCounts[stageName]
-      || 5000;
-    const particleCount = options.overrideCount
-      || this.getParticleCountForQuality(baseParticleCount, quality);
+    const baseParticleCount = stageConfig.particleCount || stageParticleCounts[stageName] || 5000;
+    const particleCount = options.overrideCount || this.getParticleCountForQuality(baseParticleCount, quality);
 
     console.log(`🧠 Building ${stageName}: ${particleCount} particles`);
 
-    // EXACT SIZE ALLOCATION - not maxParticles
+    const fallbackWord = SST?.visual?.stageWords?.[stageName];
+    const typographyDef = Canonical?.visual?.letterGeometry?.[stageName] || {};
+    const typography = {
+      word:
+        (typeof typographyDef.word === 'string' && typographyDef.word) ||
+        (typeof fallbackWord === 'string' && fallbackWord) ||
+        stageName.toUpperCase(),
+      font: typographyDef.font || null,
+      depth: Number(typographyDef.depth) || 0.3,
+      spacing: Number(typographyDef.spacing) || 1,
+      scale: Number(typographyDef.scale) || 1,
+      particlesPerLetter: Number(typographyDef.particlesPerLetter) || null,
+    };
+
+    if (typography.font) {
+      this._ensureFontForStage(stageName, typography.font);
+    }
+
+    const glyphLetterCount = typography.word.replace(/\s+/g, '').length || typography.word.length || 1;
+    const desiredTextParticles = typography.particlesPerLetter
+      ? Math.min(
+          particleCount,
+          Math.max(1, Math.round(typography.particlesPerLetter * glyphLetterCount))
+        )
+      : Math.min(particleCount, Math.max(1, Math.round(particleCount * 0.55)));
+
+    const tierMix =
+      Array.isArray(stageConfig?.tierMix) && stageConfig.tierMix.length === 4
+        ? stageConfig.tierMix.slice(0, 4)
+        : Array.isArray(VC?.TIER_RATIOS)
+        ? VC.TIER_RATIOS.slice(0, 4)
+        : [0.7, 0.12, 0.13, 0.05];
+    const tierCounts = distributeParticles(particleCount, tierMix);
+    const tierAssignments = new Array(particleCount);
+    let tierCursor = 0;
+    for (let tier = 0; tier < tierCounts.length; tier++) {
+      const count = tierCounts[tier];
+      for (let n = 0; n < count && tierCursor < particleCount; n += 1, tierCursor += 1) {
+        tierAssignments[tierCursor] = tier;
+      }
+    }
+    while (tierCursor < particleCount) {
+      tierAssignments[tierCursor++] = tierCounts.length - 1;
+    }
+    const tierShuffleRandom = createSeededRandom(`${stageName}|tierShuffle`);
+    for (let i = tierAssignments.length - 1; i > 0; i--) {
+      const swapIndex = Math.floor(tierShuffleRandom() * (i + 1));
+      [tierAssignments[i], tierAssignments[swapIndex]] = [tierAssignments[swapIndex], tierAssignments[i]];
+    }
+
     const atmosphericPositions = new Float32Array(particleCount * 3);
     const text3DPositions = new Float32Array(particleCount * 3);
     const animationSeeds = new Float32Array(particleCount * 3);
@@ -1626,46 +1728,98 @@ class ConsciousnessEngine {
     const atlasIndices = new Float32Array(particleCount);
     const tierData = new Float32Array(particleCount);
 
-    const textFormation = this.generate3DTextFormation(
-      stageWord,
-      { particles: particleCount }
-    );
+    const rng = createSeededRandom(`${stageName}|scatter`);
+    const tierSpread = [
+      { x: 120, y: 90, z: 40 },
+      { x: 95, y: 70, z: 32 },
+      { x: 72, y: 56, z: 28 },
+      { x: 48, y: 38, z: 22 },
+    ];
+    const sizeBase = [0.55, 0.75, 1.05, 1.35];
+    const opacityRanges = [
+      [0.32, 0.6],
+      [0.45, 0.78],
+      [0.6, 0.9],
+      [0.7, 1.0],
+    ];
 
-    const rnd = createSeededRandom(stageName);
-    for (let i = 0; i < particleCount; i++) {
-      const j = i * 3;
+    for (let i = 0; i < particleCount; i += 1) {
+      const tier = tierAssignments[i];
+      const spread = tierSpread[tier] || tierSpread[0];
+      const baseIndex = i * 3;
 
-      // Default atmospheric positions
-      atmosphericPositions[j + 0] = (rnd() - 0.5) * 120;
-      atmosphericPositions[j + 1] = (rnd() - 0.5) * 90;
-      atmosphericPositions[j + 2] = (rnd() - 0.5) * 40;
+      atmosphericPositions[baseIndex] = (rng() - 0.5) * spread.x;
+      atmosphericPositions[baseIndex + 1] = (rng() - 0.5) * spread.y;
+      atmosphericPositions[baseIndex + 2] = (rng() - 0.5) * spread.z;
 
-      // Text formation positions
-      if (textFormation && j + 2 < textFormation.length) {
-        text3DPositions[j + 0] = textFormation[j + 0] * 4;
-        text3DPositions[j + 1] = textFormation[j + 1] * 4;
-        text3DPositions[j + 2] = textFormation[j + 2] * 4;
+      text3DPositions[baseIndex] = atmosphericPositions[baseIndex];
+      text3DPositions[baseIndex + 1] = atmosphericPositions[baseIndex + 1];
+      text3DPositions[baseIndex + 2] = atmosphericPositions[baseIndex + 2];
+
+      animationSeeds[baseIndex] = rng();
+      animationSeeds[baseIndex + 1] = rng();
+      animationSeeds[baseIndex + 2] = rng();
+
+      const sizeScalar = sizeBase[tier] || sizeBase[0];
+      sizeMultipliers[i] = sizeScalar * (0.85 + rng() * 0.3);
+
+      const [opacityMin, opacityMax] = opacityRanges[tier] || opacityRanges[0];
+      opacityData[i] = opacityMin + rng() * (opacityMax - opacityMin);
+
+      atlasIndices[i] = Math.min(15, Math.floor(rng() * 4) + tier * 4);
+      tierData[i] = tier;
+    }
+
+    const textFormation = this.generate3DTextFormation(typography.word, {
+      particles: desiredTextParticles,
+      depth: typography.depth,
+      letterSpacing: typography.spacing,
+      scale: typography.scale,
+      fontKey: typography.font,
+      stage: stageName,
+      viewportHint: this._viewportHint,
+    });
+
+    let assignedTextParticles = 0;
+    if (textFormation && textFormation.length >= 3) {
+      const textSelectRandom = createSeededRandom(`${stageName}|textSelect`);
+      const assignableCount = Math.min(desiredTextParticles, Math.floor(textFormation.length / 3));
+      const selectedIndices = pickTextParticleIndices(tierAssignments, assignableCount, textSelectRandom);
+
+      assignedTextParticles = selectedIndices.length;
+      for (let idx = 0; idx < selectedIndices.length; idx += 1) {
+        const particleIndex = selectedIndices[idx];
+        const src = idx * 3;
+        if (src + 2 >= textFormation.length) break;
+        const baseIndex = particleIndex * 3;
+        text3DPositions[baseIndex] = textFormation[src];
+        text3DPositions[baseIndex + 1] = textFormation[src + 1];
+        text3DPositions[baseIndex + 2] = textFormation[src + 2];
       }
-
-      animationSeeds[j + 0] = rnd();
-      animationSeeds[j + 1] = rnd();
-      animationSeeds[j + 2] = rnd();
-
-      sizeMultipliers[i] = 0.5 + rnd() * 1.5;
-      opacityData[i] = 0.3 + rnd() * 0.7;
-      atlasIndices[i] = Math.floor(rnd() * 8);
-      tierData[i] = Math.floor(rnd() * 4);
     }
 
     const metadata = {
       quality,
       buildTime: performance.now(),
+      stage: stageName,
+      tierMix,
+      tierCounts,
+      motionBehaviors: safeClone(stageConfig.motionBehaviors) || null,
+      typography: {
+        ...typography,
+        assignedTextParticles,
+      },
+      camera: {
+        stage: safeClone(stageConfig.camera) || null,
+        visual: safeClone(Canonical?.visual?.camera?.[stageName]) || null,
+      },
     };
-    const genesisPalette = (stageName === 'genesis'
-      && Array.isArray(VC?.GENESIS_PALETTE)
-      && VC.GENESIS_PALETTE.length >= 3)
-      ? VC.GENESIS_PALETTE.slice(0, 3)
-      : null;
+    const genesisPalette =
+      stageName === 'genesis' &&
+      Array.isArray(VC?.GENESIS_PALETTE) &&
+      VC.GENESIS_PALETTE.length >= 3
+        ? VC.GENESIS_PALETTE.slice(0, 3)
+        : null;
     if (genesisPalette) {
       metadata.colors = genesisPalette;
     } else if (Array.isArray(stageConfig?.colors) && stageConfig.colors.length >= 3) {
@@ -1685,7 +1839,10 @@ class ConsciousnessEngine {
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        let minX = Infinity,
+          maxX = -Infinity,
+          minY = Infinity,
+          maxY = -Infinity;
         for (let i = 0; i < arr.length; i += 3) {
           const x = arr[i];
           const y = arr[i + 1];
@@ -1706,7 +1863,7 @@ class ConsciousnessEngine {
     const blueprint = {
       stageName,
       particleCount,
-      maxParticles: particleCount,  // Match exact allocation
+      maxParticles: particleCount,
       activeCount: particleCount,
       atmosphericPositions,
       text3DPositions,
@@ -1926,7 +2083,10 @@ class ConsciousnessEngine {
     }
     // Tier 3 — anchors clustered tightly around the band core
     if (tc3 > 0 && (VC.USE_T3_TEXT ?? true) && this.font) {
-      const pts = this.generate3DTextFormation(VC.T3_TEXT || 'HELLO CURTIS', { particles: tc3 });
+      const tierWord = (typeof VC?.T3_TEXT === 'string' && VC.T3_TEXT.trim())
+        ? VC.T3_TEXT.trim()
+        : (Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS');
+      const pts = this.generate3DTextFormation(tierWord, { particles: tc3 });
       let minX = Number.POSITIVE_INFINITY;
       let maxX = Number.NEGATIVE_INFINITY;
       let minY = Number.POSITIVE_INFINITY;
@@ -2007,16 +2167,21 @@ class ConsciousnessEngine {
     return out;
   }
 
-  textToParticlePositions(text, count, viewportHint) {
+  textToParticlePositions(text, count, viewportHint, options = {}) {
+    const { letterSpacing = 1, scale = 1 } = options;
     const positions = new Float32Array(count * 3);
-    const charWidth = 8.0;
-    const textHeight = 12.0;
+    const charWidth = 8.0 * letterSpacing * scale;
+    const textHeight = 12.0 * scale;
+    const depthJitter = 0.5 * scale;
+    const length = Math.max(1, text.length);
+    const halfLength = length / 2;
+
     for (let i = 0; i < count; i++) {
-      const ci = Math.floor(Math.random() * Math.max(1, text.length));
-      const baseX = (ci - text.length / 2) * charWidth;
+      const ci = Math.floor(Math.random() * length);
+      const baseX = (ci - halfLength) * charWidth;
       positions[i * 3 + 0] = baseX + (Math.random() - 0.5) * charWidth * 0.8;
       positions[i * 3 + 1] = (Math.random() - 0.5) * textHeight;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * depthJitter;
     }
     return positions;
   }
@@ -2116,7 +2281,41 @@ class ConsciousnessEngine {
     return this._fontReady;
   }
 
-  _build3DLetters(word, { particles, depth }) {
+  _ensureFontForStage(stageKey, fontName) {
+    if (!fontName) return;
+    this._fontCache = this._fontCache || new Map();
+    if (this._fontCache.has(fontName) && this._fontCache.get(fontName)) {
+      this.font = this._fontCache.get(fontName);
+      this._activeFontKey = fontName;
+      this._fontReady = true;
+      return;
+    }
+    if (this._fontLoadingKey === fontName) return;
+
+    const resolver = FONT_RESOLVERS[fontName] || FONT_RESOLVERS.default;
+    const loadPromise = Promise.resolve(
+      typeof resolver === 'function' ? resolver({ stage: stageKey }) : resolver
+    )
+      .then((url) => this.loadFont(url))
+      .then((font) => {
+        if (font) {
+          this._fontCache.set(fontName, font);
+          this._activeFontKey = fontName;
+        }
+      })
+      .catch((error) => {
+        console.warn(`⚠️ Font load failed for "${fontName}" (stage ${stageKey})`, error);
+        this._fontCache.set(fontName, null);
+      })
+      .finally(() => {
+        this._fontLoadingKey = null;
+      });
+
+    this._fontLoadingKey = fontName;
+    return loadPromise;
+  }
+
+  _build3DLetters(word, { particles, depth, letterSpacing = 1, scale = 1 }) {
     if (!particles || particles <= 0) {
       return new Float32Array();
     }
@@ -2190,6 +2389,20 @@ class ConsciousnessEngine {
       if (depth && depth !== 1) {
         for (let i = 2; i < out.length; i += 3) {
           out[i] *= depth;
+        }
+      }
+
+      if (letterSpacing && letterSpacing !== 1) {
+        for (let i = 0; i < out.length; i += 3) {
+          out[i] *= letterSpacing;
+        }
+      }
+
+      if (scale && scale !== 1) {
+        for (let i = 0; i < out.length; i += 3) {
+          out[i] *= scale;
+          out[i + 1] *= scale;
+          out[i + 2] *= scale;
         }
       }
 
@@ -2278,6 +2491,20 @@ class ConsciousnessEngine {
       }
     }
 
+    if (letterSpacing && letterSpacing !== 1) {
+      for (let i = 0; i < out.length; i += 3) {
+        out[i] *= letterSpacing;
+      }
+    }
+
+    if (scale && scale !== 1) {
+      for (let i = 0; i < out.length; i += 3) {
+        out[i] *= scale;
+        out[i + 1] *= scale;
+        out[i + 2] *= scale;
+      }
+    }
+
     return out;
     } finally {
       if (geometry) geometry.dispose();
@@ -2286,8 +2513,16 @@ class ConsciousnessEngine {
   }
 
   generate3DTextFormation(word, opts = {}) {
-    const { particles = 2000, depth = 0.3, viewportHint } = opts;
-    const key = `${word}_${particles}_${depth}`;
+    const {
+      particles = 2000,
+      depth = 0.3,
+      viewportHint,
+      letterSpacing = 1,
+      scale = 1,
+      fontKey = null,
+      stage = null,
+    } = opts;
+    const key = `${word}_${particles}_${depth}_${letterSpacing}_${scale}_${fontKey || 'default'}`;
 
     const cached = this._text3DCache.get(key);
     if (cached) {
@@ -2295,14 +2530,31 @@ class ConsciousnessEngine {
       return cached.positions;
     }
 
+    if (fontKey) {
+      this._ensureFontForStage(stage || 'stage', fontKey);
+      if (this._fontCache?.has(fontKey) && this._fontCache.get(fontKey)) {
+        this.font = this._fontCache.get(fontKey);
+        this._activeFontKey = fontKey;
+        this._fontReady = true;
+      }
+    }
+
     if (!this.font) {
-      const band = this.textToParticlePositions(word, particles, viewportHint);
+      const band = this.textToParticlePositions(word, particles, viewportHint, {
+        letterSpacing,
+        scale,
+      });
       console.warn('⚠️ text3D fallback (font not ready) — NOT caching fallback');
       this._lastText3DFallbackUsed = true;
       return band;
     }
 
-    const positions = this._build3DLetters(word, { particles, depth });
+    const positions = this._build3DLetters(word, {
+      particles,
+      depth,
+      letterSpacing,
+      scale,
+    });
     const entry = { positions, isFallback: false };
     this._text3DCache.set(key, entry);
     this._lastText3DFallbackUsed = false;
