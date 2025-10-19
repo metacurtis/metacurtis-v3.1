@@ -7,6 +7,9 @@ import { stageAtom } from '@/state/atoms/stageAtom.js';
 import { qualityAtom } from '@/state/atoms/qualityAtom.js';
 import { useMemoryFragments } from '@/hooks/useMemoryFragments.js';
 import WebGLCanvas from '@/components/webgl/WebGLCanvas.jsx';
+import { useAtomValue } from '@/state/atoms/createAtom.js';
+import { narrativeAtom } from '@/state/atoms/narrativeAtom.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 // import _DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor'; // optional
 
 import director from '@/theater/TheaterDirector.js';
@@ -161,17 +164,17 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
 };
 
 export default function ConsciousnessTheater() {
-  const [currentStage, setCurrentStage] = useState('genesis');
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [morphProgress, setMorphProgress] = useState(0);
+  const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+  const scrollProgress = useAtomValue(narrativeAtom, (state) => state.scrollProgress);
+  const morphProgress = useAtomValue(narrativeAtom, (state) => state.morphProgress);
   const [isInitialized, setIsInitialized] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
   const [narrativeEnabled, setNarrativeEnabled] = useState(false);
   const [activeNarrative, setActiveNarrative] = useState(null);
-  const [showCanvas] = useState(true);
+  const showCanvas = true;
 
   const startTimeRef = useRef(Date.now());
-  const currentStageRef = useRef('genesis');
+  const currentStageRef = useRef(currentStage || 'genesis');
   const morphProgressRef = useRef(0);
   const directorStartedRef = useRef(false);
   const viewportReadyRef = useRef(false);
@@ -192,6 +195,14 @@ export default function ConsciousnessTheater() {
   useEffect(() => {
     morphProgressRef.current = morphProgress;
   }, [morphProgress]);
+
+  useEffect(() => {
+    if (!currentStage) return;
+    currentStageRef.current = currentStage;
+    if (typeof qualityAtom.updateParticleBudget === 'function') {
+      qualityAtom.updateParticleBudget(currentStage);
+    }
+  }, [currentStage]);
 
   // ───────────────── Director start AFTER viewport hint; scroll locked until ENABLE_SCROLL
   useEffect(() => {
@@ -366,29 +377,13 @@ export default function ConsciousnessTheater() {
         const next = Math.max(0, Math.min(1, Number((current + delta).toFixed(3))));
 
         if (next !== current) {
-          setMorphProgress(next);
-          morphProgressRef.current = next;
-
-          const engine = typeof window !== 'undefined' ? window.consciousnessEngine : null;
-          if (engine?.setMorphOverride) {
-            try {
-              engine.setMorphOverride(next);
-            } catch (err) {
-              console.warn('⚠️ [KEY NAV] setMorphOverride failed', err);
-            }
-          }
-
-          BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
-            value: next,
-            stage: currentStageRef.current,
-            manual: true,
-          });
-
+          const updated = stateCommands.setMorphProgress(next, { origin: 'keyboard' });
+          morphProgressRef.current = updated;
           console.log('🎬 [KEY NAV]', {
             key,
             action: key === 'ArrowUp' ? 'increase' : 'decrease',
             from: current.toFixed(2),
-            to: next.toFixed(2),
+            to: updated.toFixed(2),
           });
         } else {
           console.log('🎬 [KEY NAV]', {
@@ -459,13 +454,18 @@ export default function ConsciousnessTheater() {
           window.location.reload();
           break;
         case 'm':
-        case 'M':
-          setMorphProgress((p) => (p > 0.5 ? 0 : 1));
+        case 'M': {
+          const current = morphProgressRef.current ?? 0;
+          const target = current > 0.5 ? 0 : 1;
+          morphProgressRef.current = stateCommands.setMorphProgress(target, {
+            origin: 'developer-toggle',
+          });
           break;
+        }
         case 'r':
         case 'R':
           stageAtom.jumpToStage('genesis');
-          setMorphProgress(0);
+          morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
           break;
         default:
           break;
@@ -474,19 +474,7 @@ export default function ConsciousnessTheater() {
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isInitialized, setMorphProgress]);
-
-  // ───────────────── Stage subscription
-  useEffect(() => {
-    const unsubscribe = stageAtom.subscribe((state) => {
-      if (state.currentStage !== currentStageRef.current) {
-        currentStageRef.current = state.currentStage;
-        setCurrentStage(state.currentStage);
-        qualityAtom.updateParticleBudget(state.currentStage);
-      }
-    });
-    return unsubscribe;
-  }, []);
+  }, [isInitialized]);
 
   // ───────────────── Scroll → morph/stage (after handoff)
   useEffect(() => {
@@ -500,15 +488,8 @@ export default function ConsciousnessTheater() {
       );
       const progress = Math.min(scrollTop / scrollHeight, 1);
 
-      setScrollProgress(progress);
-      setMorphProgress(Math.min(progress * 2, 1)); // 0–50% maps to 0–1
-
-      const stageProgress = progress * 100;
-      const newStageCfg = Canonical.getStageByScroll?.(stageProgress);
-      const atomStage = stageAtom.getState().currentStage;
-      if (newStageCfg && newStageCfg.name !== atomStage) {
-        stageAtom.jumpToStage(newStageCfg.name);
-      }
+      stateCommands.setScrollProgress(progress, { origin: 'scroll' });
+      stateCommands.setMorphProgress(Math.min(progress * 2, 1), { origin: 'scroll' });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });

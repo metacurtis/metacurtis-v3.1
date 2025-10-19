@@ -32,6 +32,13 @@ function __emitMorphThrottled(BeatBus, EVENTS, v) {
 import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom } from '../atoms';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+
+const clamp01 = (value) => {
+  const num = Number.isFinite(value) ? value : Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Math.max(0, Math.min(1, num));
+};
 
 class StateCommands {
   constructor() {
@@ -152,6 +159,46 @@ class StateCommands {
     if (qualitySub) this.subscriptions.push(qualitySub);
   }
 
+  setMorphProgress(value, options = {}) {
+    const morph = clamp01(value);
+    narrativeAtom.setMorphProgress?.(morph);
+
+    this.morphState = {
+      value: morph,
+      origin: options.origin || 'command',
+      updatedAt: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+    };
+
+    return morph;
+  }
+
+  adjustMorph(delta, options = {}) {
+    const current = narrativeAtom.getState?.()?.morphProgress ?? 0;
+    return this.setMorphProgress(current + delta, options);
+  }
+
+  setScrollProgress(progress, options = {}) {
+    const clamped = clamp01(progress);
+    const prev = narrativeAtom.getState?.()?.scrollProgress ?? 0;
+    if (Math.abs(prev - clamped) > 1e-6) {
+      narrativeAtom.setScrollProgress?.(clamped);
+    }
+
+    const stageInfo =
+      typeof Canonical?.getStageByScroll === 'function'
+        ? Canonical.getStageByScroll(clamped * 100)
+        : null;
+    const targetStage = stageInfo?.name || stageInfo?.stage || null;
+    if (targetStage) {
+      const currentStage = stageAtom.getState?.()?.currentStage;
+      if (currentStage !== targetStage) {
+        stageAtom.jumpToStage(targetStage);
+      }
+    }
+
+    return clamped;
+  }
+
   // Programmatic emergence trigger (only for opening sequence)
   triggerEmergence(payload = {}) {
     if (!this.canEmit('BUILD_EMERGENCE_BLUEPRINT')) {
@@ -181,7 +228,7 @@ class StateCommands {
     const startTime = performance.now();
     const animate = () => {
       const progress = Math.min((performance.now() - startTime) / duration, 1);
-      narrativeAtom.setMorphProgress?.(progress);
+      this.setMorphProgress(progress, { origin: 'climax' });
 
       if (progress < 1) {
         requestAnimationFrame(animate);
