@@ -307,6 +307,42 @@
               m.default.install(BeatBus, incidentCollector, evMod.EVENTS);
               L.blueprintGuard = true;
               console.log('🛡️ Blueprint Guard V2 installed');
+
+              if (typeof window !== 'undefined' && incidentCollector) {
+                const reportsRef = Array.isArray(incidentCollector.incidents)
+                  ? incidentCollector.incidents
+                  : (Array.isArray(window.__canon_reports) ? window.__canon_reports : []);
+                const canonicalReports = Array.isArray(reportsRef) ? reportsRef : [];
+
+                if (!Array.isArray(incidentCollector.incidents)) {
+                  incidentCollector.incidents = canonicalReports;
+                }
+
+                window.__canon_reports = canonicalReports;
+                window.canonDebug = {
+                  getReports: () => window.__canon_reports,
+                  getBlueprintIncidents: () =>
+                    (window.__canon_reports || []).filter((r) => r?.code === 'BLUEPRINT_INVALID'),
+                  clearReports: () => {
+                    if (Array.isArray(window.__canon_reports)) {
+                      window.__canon_reports.length = 0;
+                    }
+                    if (incidentCollector && Array.isArray(incidentCollector.incidents)) {
+                      incidentCollector.incidents.length = 0;
+                    }
+                  },
+                  getGuardStats: () => {
+                    const reports = window.__canon_reports || [];
+                    return {
+                      totalReports: reports.length,
+                      blueprintIncidents: reports.filter((r) => r?.code === 'BLUEPRINT_INVALID').length,
+                      guardFallbacks: reports.filter((r) => r?.message && r.message.includes('Fallback')).length,
+                    };
+                  },
+                };
+
+                console.log('🔧 Canon debug API exposed at window.canonDebug');
+              }
             }
           });
         } catch (e) { 

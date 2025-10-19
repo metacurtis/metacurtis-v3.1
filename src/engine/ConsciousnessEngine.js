@@ -335,13 +335,40 @@ class ConsciousnessEngine {
    this._lastText3DFallbackUsed = false;
    this._lastBlueprint = null;
    this.text2DFallback = true;
-    this._fontCache = new Map();
-    this._activeFontKey = null;
+   this._fontCache = new Map();
+   this._activeFontKey = null;
    this._fontLoadingKey = null;
 
    // State / caches
    this.blueprintCache = new Map();
    this._guardInvalidations = [];
+
+    // Expose engine debug helpers when running in the browser
+    if (typeof window !== 'undefined') {
+      window.__consciousnessEngine = this;
+      window.engineDebug = {
+        getStats: () => this.getStats(),
+        clearCache: () => this.clearCache(),
+        getCurrentStage: () => this.currentStage,
+        getCurrentQuality: () => this.currentQuality,
+        getCacheSize: () => this.blueprintCache.size,
+        getCacheKeys: () => Array.from(this.blueprintCache.keys()),
+        getGuardInvalidations: () => this._guardInvalidations?.slice() || [],
+        getBlueprintCache: () => {
+          const entries = {};
+          this.blueprintCache.forEach((bp, key) => {
+            entries[key] = {
+              stage: bp?.stageName || bp?.stage || null,
+              particleCount: bp?.particleCount || bp?.activeCount || bp?.maxParticles || null,
+              mode: bp?.mode || bp?.metadata?.mode || null,
+            };
+          });
+          return entries;
+        },
+      };
+
+      console.log('🔧 Engine debug API exposed at window.engineDebug');
+    }
     this.currentStage = 'genesis';
     this.currentQuality = 'HIGH';
     this._emergenceActive = false;
