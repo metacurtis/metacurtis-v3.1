@@ -609,9 +609,22 @@
         "tier3": "pulse_soft"
       },
       "camera": {
-        "movement": "dolly_in",
-        "degrees": 5,
-        "shake": false
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "static",
+          "description": "Fixed camera during emergence"
+        },
+        "reveal": {
+          "timing": 8000,
+          "duration": 2000,
+          "target": { "x": 0.8, "y": 0.5, "z": 4.5 },
+          "easing": "easeInOutQuad",
+          "description": "Subtle 15° rotation to show depth"
+        },
+        "keyframes": []
       },
       "morphProfile": {
         "arrival": 1,
@@ -742,9 +755,23 @@
         "tier3": "crystalline_authority"
       },
       "camera": {
-        "movement": "authority_orbit",
-        "degrees": 10,
-        "shake": false
+        "initial": {
+          "position": { "x": 0, "y": -1, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "orbit",
+          "axis": "y",
+          "degrees": 10,
+          "duration": 35000,
+          "speed": 0.1,
+          "easing": "linear",
+          "description": "Slow orbit to reveal structure"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": -1, "z": 5 } },
+          { "time": 35000, "position": { "x": 1.5, "y": -1, "z": 4.5 } }
+        ]
       },
       "morphProfile": {
         "arrival": 1,
@@ -821,9 +848,26 @@
         "tier3": "hub_nodes_temporal"
       },
       "camera": {
-        "movement": "discovery_orbit",
-        "degrees": 15,
-        "shake": false
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "orbit_discovery",
+          "axis": "xy",
+          "degrees": 15,
+          "duration": 30000,
+          "speed": 0.3,
+          "wobble": 0.1,
+          "easing": "easeInOutSine",
+          "description": "Curious orbital movement revealing connections"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 10000, "position": { "x": 1, "y": 0.5, "z": 4.8 } },
+          { "time": 20000, "position": { "x": -0.5, "y": -0.3, "z": 5.2 } },
+          { "time": 30000, "position": { "x": 0, "y": 0, "z": 5 } }
+        ]
       },
       "uniformOverrides": {
         "uGaussianSigma": 2
@@ -895,9 +939,28 @@
         "tier3": "lightning_global"
       },
       "camera": {
-        "movement": "dramatic_pullback",
-        "degrees": 20,
-        "shake": true
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 6 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "dolly_push",
+          "startZ": 6,
+          "endZ": 4,
+          "duration": 40000,
+          "easing": "easeInQuad",
+          "shake": {
+            "enabled": true,
+            "amplitude": 0.1,
+            "frequency": 5
+          },
+          "description": "Dramatic push-in with energy shake"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 6 } },
+          { "time": 20000, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 40000, "position": { "x": 0, "y": 0, "z": 4 } }
+        ]
       },
       "morphProfile": {
         "arrival": 1,
@@ -974,9 +1037,23 @@
         "tier3": "cornerstone_nodes_frontal"
       },
       "camera": {
-        "movement": "calm_track",
-        "degrees": 12,
-        "shake": false
+        "initial": {
+          "position": { "x": 3, "y": 3, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "isometric_track",
+          "pattern": "blueprint",
+          "degrees": 12,
+          "duration": 35000,
+          "easing": "linear",
+          "description": "Isometric view revealing system structure"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 3, "y": 3, "z": 5 } },
+          { "time": 17500, "position": { "x": -3, "y": 3, "z": 5 } },
+          { "time": 35000, "position": { "x": 3, "y": 3, "z": 5 } }
+        ]
       },
       "morphProfile": {
         "arrival": 1,
@@ -1057,9 +1134,27 @@
         "tier3": "conductor_nodes_cerebellar"
       },
       "camera": {
-        "movement": "balletic_orbit",
-        "degrees": 25,
-        "shake": false
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "balletic_orbit",
+          "axis": "xyz",
+          "degrees": 25,
+          "duration": 40000,
+          "speed": 0.2,
+          "smooth": 0.98,
+          "easing": "easeInOutCubic",
+          "description": "Graceful 3-axis ballet revealing golden ratio"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 10000, "position": { "x": 2, "y": 1, "z": 4.5 } },
+          { "time": 20000, "position": { "x": 0, "y": 2, "z": 5.5 } },
+          { "time": 30000, "position": { "x": -2, "y": 1, "z": 4.5 } },
+          { "time": 40000, "position": { "x": 0, "y": 0, "z": 5 } }
+        ]
       },
       "morphProfile": {
         "arrival": 0.95,
@@ -1140,9 +1235,32 @@
         "tier3": "transcendent_swarm"
       },
       "camera": {
-        "movement": "reverent_orbit",
-        "degrees": 30,
-        "shake": false
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "reverent_orbit",
+          "axis": "y",
+          "degrees": 30,
+          "duration": 50000,
+          "speed": 0.15,
+          "pullback": {
+            "enabled": true,
+            "from": 5,
+            "to": 7,
+            "startTime": 35000,
+            "duration": 10000,
+            "easing": "easeOutQuad"
+          },
+          "description": "Slow orbit with reverent pullback for full view"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 25000, "position": { "x": 2.5, "y": 0, "z": 5 } },
+          { "time": 35000, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 45000, "position": { "x": 0, "y": 0, "z": 7 } }
+        ]
       },
       "climax": {
         "arrivalMorph": 1,
@@ -1879,8 +1997,9 @@
       }
     },
     "cameraEffects": {
-      "no_change": {
-        "type": "static"
+      "static": {
+        "type": "fixed",
+        "description": "No camera movement"
       },
       "orbit_slow": {
         "type": "orbit",
@@ -1892,7 +2011,9 @@
         "type": "orbit",
         "degrees": 15,
         "speed": 0.3,
-        "axis": "y"
+        "wobble": 0.1,
+        "axis": "xy",
+        "description": "Curious exploration movement"
       },
       "dramatic_push": {
         "type": "dolly",
@@ -1904,25 +2025,27 @@
           "frequency": 5
         }
       },
-      "calm_track": {
-        "type": "orbit",
+      "isometric_track": {
+        "type": "track",
+        "pattern": "isometric",
         "degrees": 12,
-        "duration": 45000
+        "duration": 35000,
+        "description": "Blueprint-style camera tracking"
       },
       "balletic_orbit": {
         "type": "orbit",
         "degrees": 25,
         "speed": 0.2,
-        "smooth": 0.98
+        "smooth": 0.98,
+        "axis": "xyz",
+        "description": "Graceful 3-axis movement"
       },
       "reverent_orbit": {
         "type": "orbit",
         "degrees": 30,
-        "pullback": {
-          "from": 5,
-          "to": 7,
-          "duration": 10000
-        }
+        "speed": 0.15,
+        "pullback": true,
+        "description": "Slow orbit with pullback"
       }
     }
   },
