@@ -9,7 +9,7 @@
  * RULE: All navigation goes through this API.
  */
 
-import BeatBus from '@/systems/events/BeatBus';
+import BeatBus from '@/theater/bus';
 
 class UnifiedNavigationAPI {
   constructor() {

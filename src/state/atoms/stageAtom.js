@@ -222,37 +222,17 @@ class ProgressSmoother {
 class AutoAdvanceController {
   constructor(stageAtom) {
     this.stageAtom = stageAtom;
-    this.interval = null;
     this.isPaused = false;
     this.lastAdvance = 0;
+    this.enabled = false;
   }
   
   start() {
-    if (this.interval) return;
-    
-    this.interval = setInterval(() => {
-      if (this.isPaused) return;
-      
-      const state = this.stageAtom.getState();
-      if (!state.autoAdvanceEnabled) return;
-      
-      const now = performance.now();
-      if (now - this.lastAdvance < TRANSITION_CONFIG.autoAdvanceInterval) return;
-      
-      this.lastAdvance = now;
-      this.stageAtom.nextStage();
-      
-      if (import.meta.env.DEV) {
-        console.debug('🎭 Auto-advance: Moving to next stage');
-      }
-    }, TRANSITION_CONFIG.autoAdvanceInterval);
+    this.enable(true);
   }
   
   stop() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
+    this.enable(false);
   }
   
   pause() {
@@ -261,6 +241,37 @@ class AutoAdvanceController {
   
   resume() {
     this.isPaused = false;
+  }
+
+  enable(enabled) {
+    this.enabled = Boolean(enabled);
+    if (this.enabled) {
+      this.isPaused = false;
+      this.lastAdvance = (typeof performance !== 'undefined' && performance.now)
+        ? performance.now()
+        : Date.now();
+    } else {
+      this.isPaused = false;
+    }
+  }
+
+  isEnabled() {
+    return this.enabled;
+  }
+
+  canAdvance() {
+    if (!this.enabled || this.isPaused) return false;
+    const now = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
+    if (now - this.lastAdvance < TRANSITION_CONFIG.autoAdvanceInterval) return false;
+    return true;
+  }
+
+  markAdvance() {
+    this.lastAdvance = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
   }
 }
 
@@ -496,16 +507,12 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
     
     // ✅ ENHANCED: Auto advance with intelligent controller
     setAutoAdvanceEnabled: (enabled) => {
-      batchedSetState({ autoAdvanceEnabled: enabled }, 'setAutoAdvance');
-
-      if (enabled) {
-        autoAdvanceController.start();
-      } else {
-        autoAdvanceController.stop();
-      }
+      const value = Boolean(enabled);
+      batchedSetState({ autoAdvanceEnabled: value }, 'setAutoAdvance');
+      autoAdvanceController.enable(value);
       
       if (import.meta.env.DEV) {
-        console.log(`🎭 stageAtom: Auto advance ${enabled ? 'enabled' : 'disabled'}`);
+        console.log(`🎭 stageAtom: Auto advance ${value ? 'enabled' : 'disabled'}`);
       }
     },
     
@@ -624,82 +631,94 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
   return actions;
 });
 
-// ✅ ENHANCED: Development access with advanced features
-if (typeof window !== 'undefined' && import.meta.env.DEV) {
-  window.stageAtom = stageAtom;
-  
-  window.stageControls = {
-    // Basic controls
+// ✅ ENHANCED: Global stage controls (available in prod + dev)
+if (typeof window !== 'undefined') {
+  const baseControls = {
+    // Core state access
+    getState: () => stageAtom.getState(),
+    getInfo: () => stageAtom.getStageInfo(),
+    getStageNames: () => stageAtom.getStageNames(),
+    getStageCount: () => stageAtom.getStageCount(),
     getCurrentStage: () => stageAtom.getState().currentStage,
-    jumpTo: (stage) => stageAtom.jumpToStage(stage),
+    getCurrentStageIndex: () => stageAtom.getState().stageIndex,
+
+    // Navigation helpers
+    jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+    jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
     next: () => stageAtom.nextStage(),
     prev: () => stageAtom.prevStage(),
     setProgress: (progress) => stageAtom.setStageProgress(progress),
-    getInfo: () => stageAtom.getStageInfo(),
     reset: () => stageAtom.resetStage(),
-    
-    // ✅ ENHANCED: Auto-advance controls
-    toggleAuto: () => {
-      const current = stageAtom.getState().autoAdvanceEnabled;
-      stageAtom.setAutoAdvanceEnabled(!current);
-    },
-    pauseAuto: () => stageAtom.pauseAutoAdvance(),
-    resumeAuto: () => stageAtom.resumeAutoAdvance(),
-    
-    // ✅ ENHANCED: Performance and diagnostics
-    getPerformanceMetrics: () => stageAtom.getPerformanceMetrics(),
-    getBatchingStats: () => stageAtom.getBatchingStats(),
-    flushTransitions: () => stageAtom.flushTransitions(),
-    
-    // ✅ ENHANCED: Advanced testing
-    stressTest: (iterations = 100) => {
+
+    // Auto-advance
+    setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
+    toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
+    toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
+    isAutoAdvanceEnabled: () => autoAdvanceController.isEnabled(),
+    pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
+    resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),
+    pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias
+    resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias
+    canAutoAdvance: () => autoAdvanceController.canAdvance(),
+    markAutoAdvance: () => autoAdvanceController.markAdvance()
+  };
+
+  if (import.meta.env.DEV) {
+    baseControls.getPerformanceMetrics = () => stageAtom.getPerformanceMetrics();
+    baseControls.getBatchingStats = () => stageAtom.getBatchingStats();
+    baseControls.flushTransitions = () => stageAtom.flushTransitions();
+    baseControls.stressTest = (iterations = 100) => {
       console.log(`🧪 Running stage transition stress test (${iterations} iterations)...`);
       const startTime = performance.now();
-      
+
       for (let i = 0; i < iterations; i++) {
         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
         stageAtom.jumpToStage(randomStage);
         stageAtom.setStageProgress(Math.random());
       }
-      
+
       const endTime = performance.now();
       const metrics = stageAtom.getPerformanceMetrics();
-      
+
       console.log(`✅ Stress test completed in ${(endTime - startTime).toFixed(2)}ms`);
       console.log('📊 Performance metrics:', metrics);
-      
+
       return {
         duration: endTime - startTime,
         iterationsPerMs: iterations / (endTime - startTime),
         finalMetrics: metrics
       };
-    },
-    
-    // ✅ ENHANCED: Batch testing
-    testBatching: () => {
+    };
+
+    baseControls.testBatching = () => {
       console.log('🧪 Testing transition batching...');
-      
-      // Rapid transitions to test batching
+
       for (let i = 0; i < 10; i++) {
         setTimeout(() => {
           stageAtom.setStageProgress(i / 10);
-        }, i * 5); // 5ms intervals
+        }, i * 5);
       }
-      
+
       setTimeout(() => {
         const stats = stageAtom.getBatchingStats();
         console.log('📊 Batching stats after rapid updates:', stats);
       }, 100);
-      
+
       return 'Batching test initiated - check console in 100ms';
-    }
-  };
-  
-  console.log('🎭 stageAtom: Enhanced with transition batching and performance optimization');
-  console.log('🎮 Available: window.stageControls');
-  console.log('🧪 Test batching: window.stageControls.testBatching()');
-  console.log('🧪 Stress test: window.stageControls.stressTest(100)');
-  console.log('📊 Performance: window.stageControls.getPerformanceMetrics()');
+    };
+
+    window.stageAtom = stageAtom;
+  }
+
+  window.stageControls = Object.assign({}, window.stageControls, baseControls);
+
+  if (import.meta.env.DEV) {
+    console.log('🎭 stageAtom: Enhanced with transition batching and performance optimization');
+    console.log('🎮 Available: window.stageControls');
+    console.log('🧪 Test batching: window.stageControls.testBatching?.()');
+    console.log('🧪 Stress test: window.stageControls.stressTest?.(100)');
+    console.log('📊 Performance: window.stageControls.getPerformanceMetrics?.()');
+  }
 }
 
 export default stageAtom;

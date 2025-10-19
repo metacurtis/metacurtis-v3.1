@@ -3,6 +3,23 @@ import { loadSST } from '@/config/sst-loader.js';
 const SST = loadSST();
 const LETTER_HOTSPOT_PATTERN = /^letter_([a-z])(?:[_-](\d+))?$/i;
 const EMPTY_UINT32 = new Uint32Array(0);
+const HOTSPOT_OVERRIDES = {
+  neural: {
+    cluster_alpha: { type: 'letter', letter: 'A', occurrence: 1 },
+  },
+  velocity: {
+    orbit_path: { type: 'letter', letter: 'O', occurrence: 1 },
+  },
+  architecture: {
+    pillar_one: { type: 'letter', letter: 'T', occurrence: 1 },
+  },
+  harmony: {
+    orbit_chorus: { type: 'letter', letter: 'O', occurrence: 1 },
+  },
+  transcendence: {
+    galaxy_core: { type: 'letter', letter: 'O', occurrence: 2 },
+  },
+};
 
 /**
  * Build glyph metadata for a stage word.
@@ -281,6 +298,34 @@ function parseLetterHotspotId(hotspotId) {
   };
 }
 
+function resolveHotspotDescriptor(stageName, hotspotId) {
+  const stageOverrides = stageName ? HOTSPOT_OVERRIDES?.[stageName] : null;
+  const override = stageOverrides?.[hotspotId];
+  if (override) {
+    if (override.type === 'letter' && typeof override.letter === 'string') {
+      return {
+        type: 'letter',
+        letter: override.letter.toUpperCase(),
+        occurrence: Number.isFinite(override.occurrence) && override.occurrence > 0
+          ? override.occurrence
+          : 1,
+      };
+    }
+    return override;
+  }
+
+  const parsed = parseLetterHotspotId(hotspotId);
+  if (parsed) {
+    return {
+      type: 'letter',
+      letter: parsed.letter,
+      occurrence: parsed.occurrence,
+    };
+  }
+
+  return null;
+}
+
 function resolveStageHotspots(stageName) {
   const stage = SST?.stages?.[stageName];
   if (!stage) return [];
@@ -342,8 +387,9 @@ export function buildHotspotLookup({ stageName, text3DPositions, hotspotIds }) {
 
   uniqueEntries.forEach((entry) => {
     const hotspotId = entry.id;
-    const parsed = parseLetterHotspotId(hotspotId);
-    if (!parsed) {
+    const descriptor = resolveHotspotDescriptor(stageName, hotspotId);
+
+    if (!descriptor || descriptor.type !== 'letter') {
       indicesByHotspot[hotspotId] = {
         indices: EMPTY_UINT32,
         fragmentId: entry.fragmentId,
@@ -358,8 +404,8 @@ export function buildHotspotLookup({ stageName, text3DPositions, hotspotIds }) {
     }
 
     const glyph = glyphs.find((g) => !g.isSpace
-      && g.normalized === parsed.letter
-      && g.occurrence === parsed.occurrence);
+      && g.normalized === descriptor.letter
+      && g.occurrence === descriptor.occurrence);
 
     if (!glyph || !glyph.indices || glyph.indices.length === 0) {
       indicesByHotspot[hotspotId] = {

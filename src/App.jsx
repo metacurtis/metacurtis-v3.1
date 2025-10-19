@@ -6,7 +6,10 @@ import ConsciousnessTheater from './components/consciousness/ConsciousnessTheate
 import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManager.jsx';
 import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
 import NarrationController from '@/components/narrative/NarrationController.jsx';
+import NarrativeUIControls from '@/components/ui/NarrativeUIControls.jsx';
 import { clockAtom } from '@/state/atoms';
+
+import '@/orchestration/navigation/narrativeNavigation.js';
 
 // Import engine as side-effect to ensure initialization
 import './engine/ConsciousnessEngine';
@@ -56,6 +59,7 @@ export default function App() {
       <AmbientFragmentManager />
       <ClimaxSequenceController />
       <NarrationController />
+      <NarrativeUIControls />
     </div>
   );
 }

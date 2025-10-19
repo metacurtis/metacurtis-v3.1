@@ -15,6 +15,7 @@ import { NarrationFragment } from '../fragments/NarrationFragment.jsx';
 const DEBUG_NARRATION = true;
 const DEFAULT_CHARS_PER_SECOND = 15;
 const SKIP_KEYS = new Set([' ', 'Spacebar', 'Space']);
+const AUTO_ADVANCE_DELAY_MS = 3000;
 
 const CANONICAL_STAGE_ORDER = Array.isArray(Canonical?.stageOrder)
   ? Canonical.stageOrder
@@ -128,6 +129,110 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       }
       activeStageRef.current = null;
       unlockScroll();
+
+      if (typeof window !== 'undefined') {
+        const controls = window.stageControls;
+        const isAutoEnabled =
+          controls?.isAutoAdvanceEnabled?.() ??
+          controls?.getState?.()?.autoAdvanceEnabled ??
+          stageAtom.getState?.()?.autoAdvanceEnabled ??
+          false;
+
+        const canTrigger =
+          controls?.canAutoAdvance?.() ??
+          true;
+
+        if (isAutoEnabled && controls?.next && canTrigger) {
+          const info = controls.getInfo?.() || {};
+          const totalStages =
+            info.totalStages ??
+            controls.getStageCount?.() ??
+            (Array.isArray(controls.getStageNames?.()) ? controls.getStageNames().length : null);
+          const currentIndex =
+            info.stageIndex ??
+            controls.getCurrentStageIndex?.() ??
+            null;
+
+          const remainingStages =
+            typeof totalStages === 'number' && typeof currentIndex === 'number'
+              ? totalStages - currentIndex - 1
+              : null;
+
+          if (remainingStages === null || remainingStages > 0) {
+            const delayMs = AUTO_ADVANCE_DELAY_MS;
+            if (DEBUG_NARRATION) {
+              console.log('⏭️ [AUTO-ADVANCE]', {
+                stage: stageName,
+                delayMs,
+                remainingStages,
+              });
+            }
+
+            const timeoutId = setTimeout(() => {
+              timersRef.current.delete(timeoutId);
+
+              const liveControls = window.stageControls;
+              if (!liveControls?.next) return;
+              const autoStillEnabled =
+                liveControls.isAutoAdvanceEnabled?.() ??
+                liveControls.getState?.()?.autoAdvanceEnabled ??
+                stageAtom.getState?.()?.autoAdvanceEnabled ??
+                false;
+              if (!autoStillEnabled) return;
+
+              const liveStage = liveControls.getCurrentStage?.();
+              if (liveStage !== stageName) return;
+
+              if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {
+                return;
+              }
+
+              const liveInfo = liveControls.getInfo?.() || {};
+              const liveTotal =
+                liveInfo.totalStages ??
+                liveControls.getStageCount?.() ??
+                (Array.isArray(liveControls.getStageNames?.()) ? liveControls.getStageNames().length : null);
+              const liveIndex =
+                liveInfo.stageIndex ??
+                liveControls.getCurrentStageIndex?.() ??
+                null;
+
+              if (
+                typeof liveTotal === 'number' &&
+                typeof liveIndex === 'number' &&
+                liveIndex >= liveTotal - 1
+              ) {
+                if (DEBUG_NARRATION) {
+                  console.log('⏭️ [AUTO-ADVANCE] Final stage reached; no further advance.');
+                }
+                return;
+              }
+
+              const stageNames = liveControls.getStageNames?.();
+              const nextStageName =
+                Array.isArray(stageNames) && typeof liveIndex === 'number'
+                  ? stageNames[liveIndex + 1]
+                  : liveInfo.nextStage ?? null;
+
+              const advanceVia = () => {
+                liveControls.markAutoAdvance?.();
+                if (window.narrativeNavigation?.nextStage) {
+                  window.narrativeNavigation.nextStage();
+                } else {
+                  liveControls.next();
+                  if (nextStageName) {
+                    BeatBus.emit?.(EVENTS.START_NARRATIVE, { stage: nextStageName });
+                  }
+                }
+              };
+
+              advanceVia();
+            }, delayMs);
+
+            timersRef.current.add(timeoutId);
+          }
+        }
+      }
     }
   }, [unlockScroll]);
 

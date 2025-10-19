@@ -2,6 +2,7 @@
 // Single source of timeline; Renderer stays single GPU writer; Engine writes blueprints.
 
 import BeatBus from '@/theater/bus';
+import stageAtom from '@/state/atoms/stageAtom.js';
 
 import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -823,7 +824,32 @@ class TheaterDirector {
       }
 
       const elapsed = Date.now() - this.startTime;
-      console.log('🎬 Director: Opening complete → user-driven experience');
+      console.log('🎬 Director: Opening complete → enabling auto-advance');
+
+      let autoEnabled = false;
+      if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
+        const alreadyEnabled =
+          typeof window.stageControls.isAutoAdvanceEnabled === 'function'
+            ? window.stageControls.isAutoAdvanceEnabled()
+            : window.stageControls.getState?.()?.autoAdvanceEnabled;
+
+        if (alreadyEnabled) {
+          console.log('   Auto-advance already active');
+          autoEnabled = true;
+        } else {
+          window.stageControls.setAutoAdvanceEnabled(true);
+          console.log('✅ Auto-advance enabled for narration-driven progression');
+          autoEnabled = true;
+        }
+      } else {
+        console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
+      }
+
+      if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
+        stageAtom.setAutoAdvanceEnabled(true);
+        console.log('✅ Auto-advance enabled via stageAtom fallback');
+      }
+
       if (typeof opening?.totalDurationMs === 'number') {
         console.log(`   Expected (SST): ~${opening.totalDurationMs}ms, Actual: ${elapsed}ms`);
       } else {
