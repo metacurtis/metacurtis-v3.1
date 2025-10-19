@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, stageAtom } from '@/state/atoms';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { getNarrationSegments, getNarrativeForStage } from '@/config/sst3/narrative-dialogue.js';
 import {
   exposeControlSurface,
@@ -14,6 +15,27 @@ import { NarrationFragment } from '../fragments/NarrationFragment.jsx';
 const DEBUG_NARRATION = true;
 const DEFAULT_CHARS_PER_SECOND = 15;
 const SKIP_KEYS = new Set([' ', 'Spacebar', 'Space']);
+
+const CANONICAL_STAGE_ORDER = Array.isArray(Canonical?.stageOrder)
+  ? Canonical.stageOrder
+  : Object.keys(Canonical?.stages || {});
+
+function resolveStageKey(candidate, fallback = 'genesis') {
+  if (typeof candidate === 'string') {
+    const trimmed = candidate.trim();
+    if (trimmed) {
+      const lower = trimmed.toLowerCase();
+      const match = CANONICAL_STAGE_ORDER.find((stage) => stage.toLowerCase() === lower);
+      if (match) return match;
+    }
+  }
+  if (typeof fallback === 'string' && fallback.trim()) {
+    const lowerFallback = fallback.trim().toLowerCase();
+    const match = CANONICAL_STAGE_ORDER.find((stage) => stage.toLowerCase() === lowerFallback);
+    if (match) return match;
+  }
+  return CANONICAL_STAGE_ORDER[0] || 'genesis';
+}
 
 function normalizeSegments(segments = []) {
   return segments
@@ -173,7 +195,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       }
 
       const normalizedStage = typeof stageName === 'string' ? stageName.trim() : '';
-      let stageKey = normalizedStage || currentStage || 'genesis';
+      let stageKey = resolveStageKey(normalizedStage || currentStage, 'genesis');
 
       let narrative = getNarrativeForStage(stageKey);
       if (!narrative && stageKey !== 'genesis') {

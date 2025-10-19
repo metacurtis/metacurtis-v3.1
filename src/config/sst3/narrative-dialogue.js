@@ -21,6 +21,19 @@ function cloneBeat(beat) {
   }
 }
 
+const CANONICAL_STAGE_ORDER = Array.isArray(Canonical?.stageOrder)
+  ? Canonical.stageOrder
+  : Object.keys(Canonical?.stages || {});
+
+function normalizeStageName(stageName) {
+  if (!stageName) return null;
+  const trimmed = String(stageName).trim();
+  if (!trimmed) return null;
+  const lower = trimmed.toLowerCase();
+  const match = CANONICAL_STAGE_ORDER.find((name) => name.toLowerCase() === lower);
+  return match || lower || null;
+}
+
 function computeDurationMs(text, declaredDuration) {
   const safeText = normalizeText(text);
   const declared = coerceNumber(declaredDuration, 0);
@@ -54,15 +67,16 @@ function resolveNarrationOffset(stageName) {
 }
 
 function buildStageNarrative(stageName) {
-  if (!stageName) return null;
+  const normalizedName = normalizeStageName(stageName);
+  if (!normalizedName) return null;
 
-  const beatSheet = Canonical?.narrative?.beatSheets?.[stageName];
+  const beatSheet = Canonical?.narrative?.beatSheets?.[normalizedName];
   if (!beatSheet) return null;
 
   const beats = Array.isArray(beatSheet.beats) ? beatSheet.beats : [];
   if (!beats.length) return null;
 
-  const startOffset = resolveNarrationOffset(stageName);
+  const startOffset = resolveNarrationOffset(normalizedName);
   const normalizedSegments = [];
   let maxEndMs = 0;
 
@@ -100,8 +114,8 @@ function buildStageNarrative(stageName) {
   const totalDuration = coerceNumber(beatSheet?.totalDuration, maxEndMs);
 
   return Object.freeze({
-    id: beatSheet?.id || `narration_${stageName}`,
-    stage: stageName,
+      id: beatSheet?.id || `narration_${normalizedName}`,
+      stage: normalizedName,
     totalDuration,
     startOffset,
     beats: Object.freeze(beats.map(cloneBeat)),
@@ -114,11 +128,12 @@ function buildStageNarrative(stageName) {
 const dialogueCache = Object.create(null);
 
 function ensureStage(stageName) {
-  if (!stageName) return null;
-  if (dialogueCache[stageName]) return dialogueCache[stageName];
-  const built = buildStageNarrative(stageName);
+  const normalized = normalizeStageName(stageName);
+  if (!normalized) return null;
+  if (dialogueCache[normalized]) return dialogueCache[normalized];
+  const built = buildStageNarrative(normalized);
   if (!built) return null;
-  dialogueCache[stageName] = built;
+  dialogueCache[normalized] = built;
   return built;
 }
 
