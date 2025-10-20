@@ -9,6 +9,7 @@ export function NarrationFragment({
   isActive,
   onComplete,
   charsPerSecond = 15,
+  segmentKey,
 }) {
   const [displayedText, setDisplayedText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
@@ -64,7 +65,7 @@ export function NarrationFragment({
         }
         holdTimeoutRef.current = setTimeout(() => {
           holdTimeoutRef.current = null;
-          onComplete?.();
+          onComplete?.(segmentKey);
         }, 2000);
       }
     }, msPerChar);
@@ -79,7 +80,7 @@ export function NarrationFragment({
         holdTimeoutRef.current = null;
       }
     };
-  }, [isActive, text, charsPerSecond, onComplete]);
+  }, [isActive, text, charsPerSecond, onComplete, segmentKey]);
 
   if (!isActive) return null;
 

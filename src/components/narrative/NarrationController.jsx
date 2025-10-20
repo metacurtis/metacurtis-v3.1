@@ -16,6 +16,25 @@ const DEBUG_NARRATION = true;
 const DEFAULT_CHARS_PER_SECOND = 15;
 const SKIP_KEYS = new Set([' ', 'Spacebar', 'Space']);
 const AUTO_ADVANCE_DELAY_MS = 3000;
+const AUTO_ADVANCE_RETRY_MS = 500;
+
+// 🔬 DIAGNOSTIC: Narration lifecycle tracking
+let componentInstanceCounter = 0;
+const narrationDiagnostic = {
+  mountHistory: [],
+  unmountHistory: [],
+  stageChangeEvents: [],
+  completionEvents: [],
+  log(event, data) {
+    console.log(`🔬 [NARRATION] ${event}:`, data);
+    if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {
+      window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);
+    }
+  },
+};
+if (typeof window !== 'undefined') {
+  window.__narrationDiagnostic = narrationDiagnostic;
+}
 
 const CANONICAL_STAGE_ORDER = Array.isArray(Canonical?.stageOrder)
   ? Canonical.stageOrder
@@ -53,7 +72,11 @@ function normalizeSegments(segments = []) {
 
 export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CHARS_PER_SECOND }) {
   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+  const autoAdvanceEnabled = useAtomValue(stageAtom, (state) => state.autoAdvanceEnabled);
   const [activeNarration, setActiveNarration] = useState(null);
+
+  const componentMountIdRef = useRef(null);
+  const effectRunCounterRef = useRef(0);
 
   const timersRef = useRef(new Set());
   const activeStageRef = useRef(null);
@@ -62,6 +85,8 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const completedSegmentsRef = useRef(0);
   const skipRequestedRef = useRef(false);
   const previousOverflowRef = useRef(null);
+  const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);
+  const prevDepsRef = useRef({});
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => clearTimeout(id));
@@ -116,14 +141,48 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   );
 
   const handleNarrationComplete = useCallback(() => {
-    if (!activeStageRef.current || !activeSegmentRef.current) return;
-    completedSegmentsRef.current += 1;
-    activeSegmentRef.current = null;
+    if (!activeStageRef.current) {
+      narrationDiagnostic.log('COMPLETION_SKIPPED', {
+        reason: 'no_active_stage',
+        completed: completedSegmentsRef.current,
+        total: totalSegmentsRef.current,
+      });
+      return;
+    }
+
+    if (!activeSegmentRef.current) {
+      // Still count the completion, but note the missing segment reference
+      completedSegmentsRef.current = Math.min(
+        completedSegmentsRef.current + 1,
+        totalSegmentsRef.current
+      );
+      narrationDiagnostic.log('COMPLETION_NO_SEGMENT_REF', {
+        stage: activeStageRef.current,
+        completed: completedSegmentsRef.current,
+        total: totalSegmentsRef.current,
+      });
+    } else {
+      completedSegmentsRef.current += 1;
+      activeSegmentRef.current = null;
+    }
+
     setActiveNarration(null);
 
     const stageName = activeStageRef.current;
 
     if (completedSegmentsRef.current >= totalSegmentsRef.current) {
+      narrationDiagnostic.log('COMPLETION', {
+        stage: stageName,
+        completed: completedSegmentsRef.current,
+        total: totalSegmentsRef.current,
+      });
+      narrationDiagnostic.completionEvents.push({
+        type: 'completion',
+        stage: stageName,
+        time: Date.now(),
+        completed: completedSegmentsRef.current,
+        total: totalSegmentsRef.current,
+      });
       if (DEBUG_NARRATION) {
         console.log(`✅ Narration complete: ${stageName}`);
       }
@@ -142,7 +201,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           controls?.canAutoAdvance?.() ??
           true;
 
-        if (isAutoEnabled && controls?.next && canTrigger) {
+        if (isAutoEnabled && controls?.next) {
           const info = controls.getInfo?.() || {};
           const totalStages =
             info.totalStages ??
@@ -160,76 +219,113 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
           if (remainingStages === null || remainingStages > 0) {
             const delayMs = AUTO_ADVANCE_DELAY_MS;
+            const stageNamesList = controls.getStageNames?.();
+            const nextStagePreview =
+              Array.isArray(stageNamesList) && typeof currentIndex === 'number'
+                ? stageNamesList[currentIndex + 1]
+                : info.nextStage ?? null;
+            narrationDiagnostic.log('AUTO_ADVANCE_TRIGGER', {
+              currentStage: stageName,
+              nextStage: nextStagePreview,
+              willAdvance: remainingStages === null || remainingStages > 0,
+              delayMs,
+              canTrigger,
+            });
+            narrationDiagnostic.completionEvents.push({
+              type: 'autoAdvanceTrigger',
+              stage: stageName,
+              nextStage: nextStagePreview,
+              delayMs,
+              time: Date.now(),
+              canTrigger,
+            });
             if (DEBUG_NARRATION) {
               console.log('⏭️ [AUTO-ADVANCE]', {
                 stage: stageName,
                 delayMs,
                 remainingStages,
+                canTrigger,
               });
             }
 
-            const timeoutId = setTimeout(() => {
-              timersRef.current.delete(timeoutId);
+            const scheduleAutoAdvance = (timeoutMs) => {
+              const timeoutId = setTimeout(() => {
+                timersRef.current.delete(timeoutId);
 
-              const liveControls = window.stageControls;
-              if (!liveControls?.next) return;
-              const autoStillEnabled =
-                liveControls.isAutoAdvanceEnabled?.() ??
-                liveControls.getState?.()?.autoAdvanceEnabled ??
-                stageAtom.getState?.()?.autoAdvanceEnabled ??
-                false;
-              if (!autoStillEnabled) return;
+                const liveControls = window.stageControls;
+                if (!liveControls?.next) return;
+                const autoStillEnabled =
+                  liveControls.isAutoAdvanceEnabled?.() ??
+                  liveControls.getState?.()?.autoAdvanceEnabled ??
+                  stageAtom.getState?.()?.autoAdvanceEnabled ??
+                  false;
+                if (!autoStillEnabled) return;
 
-              const liveStage = liveControls.getCurrentStage?.();
-              if (liveStage !== stageName) return;
+                const liveStage = liveControls.getCurrentStage?.();
+                if (liveStage !== stageName) return;
 
-              if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {
-                return;
-              }
-
-              const liveInfo = liveControls.getInfo?.() || {};
-              const liveTotal =
-                liveInfo.totalStages ??
-                liveControls.getStageCount?.() ??
-                (Array.isArray(liveControls.getStageNames?.()) ? liveControls.getStageNames().length : null);
-              const liveIndex =
-                liveInfo.stageIndex ??
-                liveControls.getCurrentStageIndex?.() ??
-                null;
-
-              if (
-                typeof liveTotal === 'number' &&
-                typeof liveIndex === 'number' &&
-                liveIndex >= liveTotal - 1
-              ) {
-                if (DEBUG_NARRATION) {
-                  console.log('⏭️ [AUTO-ADVANCE] Final stage reached; no further advance.');
-                }
-                return;
-              }
-
-              const stageNames = liveControls.getStageNames?.();
-              const nextStageName =
-                Array.isArray(stageNames) && typeof liveIndex === 'number'
-                  ? stageNames[liveIndex + 1]
-                  : liveInfo.nextStage ?? null;
-
-              const advanceVia = () => {
-                liveControls.markAutoAdvance?.();
-                if (window.narrativeNavigation?.nextStage) {
-                  window.narrativeNavigation.nextStage();
-                } else {
-                  liveControls.next();
-                  if (nextStageName) {
-                    BeatBus.emit?.(EVENTS.START_NARRATIVE, { stage: nextStageName });
+                if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {
+                  narrationDiagnostic.log('AUTO_ADVANCE_WAIT', {
+                    stage: stageName,
+                    retryIn: AUTO_ADVANCE_RETRY_MS,
+                    timestamp: Date.now(),
+                  });
+                  if (DEBUG_NARRATION) {
+                    console.log('⏳ [AUTO-ADVANCE] Waiting for controller window', {
+                      stage: stageName,
+                      retryIn: AUTO_ADVANCE_RETRY_MS,
+                    });
                   }
+                  scheduleAutoAdvance(AUTO_ADVANCE_RETRY_MS);
+                  return;
                 }
-              };
 
-              advanceVia();
-            }, delayMs);
+                const liveInfo = liveControls.getInfo?.() || {};
+                const liveTotal =
+                  liveInfo.totalStages ??
+                  liveControls.getStageCount?.() ??
+                  (Array.isArray(liveControls.getStageNames?.()) ? liveControls.getStageNames().length : null);
+                const liveIndex =
+                  liveInfo.stageIndex ??
+                  liveControls.getCurrentStageIndex?.() ??
+                  null;
 
-            timersRef.current.add(timeoutId);
+                if (
+                  typeof liveTotal === 'number' &&
+                  typeof liveIndex === 'number' &&
+                  liveIndex >= liveTotal - 1
+                ) {
+                  if (DEBUG_NARRATION) {
+                    console.log('⏭️ [AUTO-ADVANCE] Final stage reached; no further advance.');
+                  }
+                  return;
+                }
+
+                const stageNames = liveControls.getStageNames?.();
+                const nextStageName =
+                  Array.isArray(stageNames) && typeof liveIndex === 'number'
+                    ? stageNames[liveIndex + 1]
+                    : liveInfo.nextStage ?? null;
+
+                const advanceVia = () => {
+                  liveControls.markAutoAdvance?.();
+                  if (window.narrativeNavigation?.nextStage) {
+                    window.narrativeNavigation.nextStage();
+                  } else {
+                    liveControls.next();
+                    if (nextStageName) {
+                      BeatBus.emit?.(EVENTS.START_NARRATIVE, { stage: nextStageName });
+                    }
+                  }
+                };
+
+                advanceVia();
+              }, timeoutMs);
+
+              timersRef.current.add(timeoutId);
+            };
+
+            scheduleAutoAdvance(AUTO_ADVANCE_DELAY_MS);
           }
         }
       }
@@ -292,7 +388,16 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
   const startNarration = useCallback(
     (stageName, origin = 'internal') => {
-      if (origin !== 'internal' && !isControlAllowed('narration:control')) {
+      console.log('🔬 [NARRATION] START_NARRATION_CALLED:', {
+        requestedStage: stageName,
+        normalizedStage: typeof stageName === 'string' ? stageName.trim() : stageName,
+        currentStage,
+        origin,
+        isPlaying: activeStageRef.current !== null,
+        autoAdvanceEnabled: autoAdvanceEnabledRef.current,
+      });
+      const trustedOrigins = new Set(['internal', 'auto', 'internal-auto']);
+      if (!trustedOrigins.has(origin) && !isControlAllowed('narration:control')) {
         if (DEBUG_NARRATION) {
           console.warn('🎙️ [NarrationController] External play blocked by runtime guard');
         }
@@ -381,6 +486,87 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   );
 
   useEffect(() => {
+    componentInstanceCounter += 1;
+    const componentId = componentInstanceCounter;
+    componentMountIdRef.current = componentId;
+    const mountedAt = Date.now();
+    narrationDiagnostic.log('COMPONENT_MOUNT', {
+      componentId,
+      stageAtMount: currentStage,
+    });
+    narrationDiagnostic.mountHistory.push({
+      type: 'component',
+      componentId,
+      stage: currentStage,
+      time: mountedAt,
+    });
+
+    return () => {
+      const lifespan = Date.now() - mountedAt;
+      narrationDiagnostic.log('COMPONENT_UNMOUNT', {
+        componentId,
+        stageAtUnmount: currentStage,
+        lifespan,
+      });
+      narrationDiagnostic.unmountHistory.push({
+        type: 'component',
+        componentId,
+        stage: currentStage,
+        time: Date.now(),
+        lifespan,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    effectRunCounterRef.current += 1;
+    const effectId = effectRunCounterRef.current;
+    const componentId = componentMountIdRef.current;
+    const subscribedAt = Date.now();
+
+    narrationDiagnostic.log('EFFECT_SUBSCRIBE', {
+      componentId,
+      effectId,
+      stage: currentStage,
+      autoAdvance: autoAdvanceEnabled,
+    });
+
+    narrationDiagnostic.mountHistory.push({
+      type: 'effect',
+      componentId,
+      effectId,
+      stage: currentStage,
+      autoAdvance: autoAdvanceEnabled,
+      time: subscribedAt,
+    });
+
+    return () => {
+      const lifespan = Date.now() - subscribedAt;
+      narrationDiagnostic.log('EFFECT_CLEANUP', {
+        componentId,
+        effectId,
+        stage: currentStage,
+        autoAdvance: autoAdvanceEnabled,
+        lifespan,
+      });
+      narrationDiagnostic.unmountHistory.push({
+        type: 'effect',
+        componentId,
+        effectId,
+        stage: currentStage,
+        autoAdvance: autoAdvanceEnabled,
+        time: Date.now(),
+        lifespan,
+      });
+    };
+  }, [currentStage, autoAdvanceEnabled]);
+
+  useEffect(() => {
+    autoAdvanceEnabledRef.current = autoAdvanceEnabled;
+  }, [autoAdvanceEnabled]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return () => {};
 
     const controllerFactory = () => {
@@ -450,6 +636,22 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
+    const deps = {
+      currentStage,
+      autoAdvanceEnabled,
+      resetStateId: resetState,
+      skipNarrationId: skipNarration,
+      startNarrationId: startNarration,
+    };
+    const prevDeps = prevDepsRef.current;
+    const changedKeys = Object.keys(deps).filter((key) => prevDeps[key] !== deps[key]);
+    console.log('🔬 [NARRATION] EFFECT_DEPS_CHECK:', {
+      current: deps,
+      previous: prevDeps,
+      changes: changedKeys,
+    });
+    prevDepsRef.current = deps;
+
     const handleStart = (payload = {}) => {
       const stageName = payload?.stage || currentStage || activeStageRef.current;
       startNarration(stageName);
@@ -457,6 +659,17 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
     const handleStageChange = (payload = {}) => {
       const nextStage = payload?.to || payload?.stage;
+      narrationDiagnostic.log('STAGE_CHANGE_EVENT', {
+        from: payload?.from ?? payload?.previousStage ?? null,
+        to: nextStage,
+        autoAdvance: autoAdvanceEnabledRef.current,
+        isPlaying: activeStageRef.current !== null,
+      });
+      narrationDiagnostic.stageChangeEvents.push({
+        ...payload,
+        to: nextStage,
+        time: Date.now(),
+      });
       if (!activeStageRef.current) return;
       if (nextStage && nextStage !== activeStageRef.current) {
         resetState();
@@ -480,12 +693,47 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
     window.addEventListener('keydown', keyHandler);
 
     return () => {
+      console.log('🔬 [NARRATION] CLEANUP_REASON', {
+        stage: currentStage,
+        wasPlaying: activeStageRef.current !== null,
+        autoAdvance: autoAdvanceEnabledRef.current,
+        caller: new Error().stack.split('\n')[2] ?? null,
+      });
       offStart?.();
       offStageChange?.();
       window.removeEventListener('keydown', keyHandler);
       resetState();
     };
   }, [currentStage, resetState, skipNarration, startNarration]);
+
+  useEffect(() => {
+    if (!currentStage) return;
+
+    const isAlreadyPlayingCurrentStage =
+      activeStageRef.current && activeStageRef.current === currentStage;
+
+    if (isAlreadyPlayingCurrentStage) {
+      narrationDiagnostic.log('AUTO_START_SKIPPED_ALREADY_PLAYING', {
+        stage: currentStage,
+      });
+      return;
+    }
+
+    const segments = normalizeSegments(getNarrationSegments(currentStage));
+    if (!segments.length) {
+      narrationDiagnostic.log('AUTO_START_SKIPPED_NO_SEGMENTS', {
+        stage: currentStage,
+      });
+      return;
+    }
+
+    narrationDiagnostic.log('AUTO_START_INIT', {
+      stage: currentStage,
+      segmentCount: segments.length,
+    });
+
+    startNarration(currentStage, 'auto');
+  }, [currentStage, startNarration]);
 
   useEffect(() => {
     return () => {
