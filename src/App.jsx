@@ -14,6 +14,15 @@ import '@/orchestration/navigation/narrativeNavigation.js';
 // Import engine as side-effect to ensure initialization
 import './engine/ConsciousnessEngine';
 
+// 🔬 DIAGNOSTIC: App initialization
+if (typeof window !== 'undefined') {
+  console.log('🔬 [APP] Initializing MetaCurtis App');
+  window.__appDiagnostic = {
+    componentsMount: [],
+    initialized: Date.now(),
+  };
+}
+
 // DEV: Canon Dev-OS injector (idempotent, order-aware)
 if (import.meta.env.DEV && typeof window !== 'undefined') {
 }
@@ -59,7 +68,16 @@ export default function App() {
       <AmbientFragmentManager />
       <ClimaxSequenceController />
       <NarrationController />
-      <NarrativeUIControls />
+      {(() => {
+        if (typeof window !== 'undefined') {
+          window.__appDiagnostic?.componentsMount.push({
+            component: 'NarrativeUIControls',
+            time: Date.now(),
+          });
+        }
+        console.log('🔬 [APP] Mounting NarrativeUIControls');
+        return <NarrativeUIControls />;
+      })()}
     </div>
   );
 }

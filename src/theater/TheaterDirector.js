@@ -10,6 +10,26 @@ import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 
+// 🔬 DIAGNOSTIC: Auto-advance initialization tracking
+if (typeof window !== 'undefined') {
+  window.__autoAdvanceDiagnostic = {
+    initialized: false,
+    openingComplete: false,
+    autoAdvanceEnabled: false,
+    events: [],
+    log: function (event, data) {
+      const entry = {
+        time: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
+        event,
+        data,
+        timestamp: new Date().toISOString(),
+      };
+      this.events.push(entry);
+      console.log(`🔬 [AUTO-ADVANCE] ${event}:`, data);
+    },
+  };
+}
+
 const DEBUG_NARRATION = true;
 
 const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
@@ -67,6 +87,13 @@ class TheaterDirector {
     this.timeline = {};
     this.scrollOrchestrator = null;
     this.narrationController = null;
+    const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
+    if (autoDiag) {
+      autoDiag.initialized = true;
+      autoDiag.log?.('DIRECTOR_INITIALIZED', {
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     if (DEBUG_NARRATION) {
       const stageKeys = Object.keys(SST?.narrative?.beatSheets || {});
@@ -825,41 +852,86 @@ class TheaterDirector {
 
       const elapsed = Date.now() - this.startTime;
       console.log('🎬 Director: Opening complete → enabling auto-advance');
-
-      let autoEnabled = false;
-      if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
-        const alreadyEnabled =
-          typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-            ? window.stageControls.isAutoAdvanceEnabled()
-            : window.stageControls.getState?.()?.autoAdvanceEnabled;
-
-        if (alreadyEnabled) {
-          console.log('   Auto-advance already active');
-          autoEnabled = true;
-        } else {
-          window.stageControls.setAutoAdvanceEnabled(true);
-          console.log('✅ Auto-advance enabled for narration-driven progression');
-          autoEnabled = true;
-        }
-      } else {
-        console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
-      }
-
-      if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-        stageAtom.setAutoAdvanceEnabled(true);
-        console.log('✅ Auto-advance enabled via stageAtom fallback');
-      }
-
-      if (typeof opening?.totalDurationMs === 'number') {
-        console.log(`   Expected (SST): ~${opening.totalDurationMs}ms, Actual: ${elapsed}ms`);
-      } else {
-        console.log(`   Total opening time: ${elapsed}ms`);
-      }
-      if (skipTriggered) {
-        console.log('   Opening was user-skipped; actual duration shortened.');
-      }
+      this.handleOpeningComplete({ skipTriggered, opening, elapsed });
     } finally {
       this._detachSkipListener();
+    }
+  }
+
+  handleOpeningComplete({ skipTriggered, opening, elapsed }) {
+    const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
+    const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
+    const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
+    const autoAdvanceBefore =
+      stageAtom?.isAutoAdvanceEnabled?.() ??
+      currentState.autoAdvanceEnabled ??
+      false;
+
+    if (autoDiag) {
+      autoDiag.openingComplete = true;
+      autoDiag.log('OPENING_COMPLETE', {
+        stage: currentStage,
+        autoAdvanceBefore,
+      });
+    }
+
+    let autoEnabled = false;
+    let failureReason = null;
+
+    if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
+      const alreadyEnabled =
+        typeof window.stageControls.isAutoAdvanceEnabled === 'function'
+          ? window.stageControls.isAutoAdvanceEnabled()
+          : window.stageControls.getState?.()?.autoAdvanceEnabled;
+
+      if (alreadyEnabled) {
+        console.log('   Auto-advance already active');
+        autoEnabled = true;
+      } else {
+        window.stageControls.setAutoAdvanceEnabled(true);
+        console.log('✅ Auto-advance enabled for narration-driven progression');
+        autoEnabled = true;
+      }
+    } else {
+      failureReason = 'setAutoAdvanceEnabled not found';
+      console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
+    }
+
+    if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
+      stageAtom.setAutoAdvanceEnabled(true);
+      console.log('✅ Auto-advance enabled via stageAtom fallback');
+      autoEnabled = true;
+    } else if (!autoEnabled) {
+      failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
+    }
+
+    const autoAdvanceAfter =
+      stageAtom?.isAutoAdvanceEnabled?.() ??
+      stageAtom?.getState?.()?.autoAdvanceEnabled ??
+      false;
+
+    if (autoDiag) {
+      autoDiag.autoAdvanceEnabled = autoAdvanceAfter;
+      if (autoEnabled) {
+        autoDiag.log('AUTO_ADVANCE_ENABLED', {
+          success: true,
+          autoAdvanceAfter,
+        });
+      } else {
+        autoDiag.log('AUTO_ADVANCE_FAILED', {
+          reason: failureReason ?? 'Unable to enable auto-advance',
+          autoAdvanceAfter,
+        });
+      }
+    }
+
+    if (typeof opening?.totalDurationMs === 'number') {
+      console.log(`   Expected (SST): ~${opening.totalDurationMs}ms, Actual: ${elapsed}ms`);
+    } else {
+      console.log(`   Total opening time: ${elapsed}ms`);
+    }
+    if (skipTriggered) {
+      console.log('   Opening was user-skipped; actual duration shortened.');
     }
   }
 

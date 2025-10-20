@@ -515,6 +515,15 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         console.log(`🎭 stageAtom: Auto advance ${value ? 'enabled' : 'disabled'}`);
       }
     },
+    isAutoAdvanceEnabled: () => {
+      return autoAdvanceController.isEnabled();
+    },
+    canAutoAdvance: () => {
+      return autoAdvanceController.canAdvance();
+    },
+    markAutoAdvance: () => {
+      autoAdvanceController.markAdvance();
+    },
     
     // ✅ ENHANCED: Memory fragments with batching
     unlockMemoryFragment: (fragmentId) => {
@@ -631,6 +640,27 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
   return actions;
 });
 
+// 🔬 DIAGNOSTIC: Stage atom state tracking
+if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {
+  const originalSetState = stageAtom.setState?.bind(stageAtom);
+  if (originalSetState) {
+    stageAtom.setState = function (value, updateType) {
+      const previousState = stageAtom.getState?.();
+      const nextState = typeof value === 'function' ? value(previousState) : value;
+      console.log('🔬 [STAGE_ATOM] State change:', { from: previousState, to: nextState, updateType });
+      if (typeof window !== 'undefined') {
+        window.__autoAdvanceDiagnostic?.log?.('STAGE_ATOM_CHANGE', {
+          from: previousState,
+          to: nextState,
+          updateType,
+        });
+      }
+      return originalSetState(nextState, updateType);
+    };
+    stageAtom.__autoAdvanceDiagnosticWrapped = true;
+  }
+}
+
 // ✅ ENHANCED: Global stage controls (available in prod + dev)
 if (typeof window !== 'undefined') {
   const baseControls = {
@@ -654,13 +684,13 @@ if (typeof window !== 'undefined') {
     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
-    isAutoAdvanceEnabled: () => autoAdvanceController.isEnabled(),
+    isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),
     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias
     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias
-    canAutoAdvance: () => autoAdvanceController.canAdvance(),
-    markAutoAdvance: () => autoAdvanceController.markAdvance()
+    canAutoAdvance: () => stageAtom.canAutoAdvance(),
+    markAutoAdvance: () => stageAtom.markAutoAdvance()
   };
 
   if (import.meta.env.DEV) {
