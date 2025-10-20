@@ -408,6 +408,57 @@ class ConsciousnessEngine {
     this.init();
   }
 
+  _preloadNextStage(currentStageName, quality) {
+    const stageNames = Object.keys(Canonical?.stages || {});
+    if (!stageNames.length) return;
+
+    const currentIndex = stageNames.indexOf(currentStageName);
+    if (currentIndex === -1 || currentIndex >= stageNames.length - 1) {
+      return;
+    }
+
+    const resolvedQuality = quality || this.currentQuality;
+    const nextStageName = stageNames[currentIndex + 1];
+    const nextCacheKey = this._cacheKey(nextStageName, resolvedQuality);
+
+    if (this.blueprintCache.has(nextCacheKey)) {
+      console.log('🔮 Preload: Next stage already cached', nextStageName);
+      return;
+    }
+
+    setTimeout(() => {
+      console.log('🔮 Preloading next stage:', nextStageName);
+
+      try {
+        if (this.blueprintCache.has(nextCacheKey)) {
+          console.log('🔮 Preload: Skipped, cache filled before execution', nextStageName);
+          return;
+        }
+
+        const nextBlueprint = this._buildBlueprintForStage(nextStageName, resolvedQuality);
+        if (!nextBlueprint) {
+          console.warn('⚠️ Preload skipped: builder returned null', nextStageName);
+          return;
+        }
+
+        this.blueprintCache.set(nextCacheKey, nextBlueprint);
+
+        const particleCount = nextBlueprint?.atmosphericPositions?.length
+          ? nextBlueprint.atmosphericPositions.length / 3
+          : 0;
+
+        console.log('✅ Preload complete:', {
+          stage: nextStageName,
+          quality: resolvedQuality,
+          particles: particleCount,
+          cacheSize: this.blueprintCache.size,
+        });
+      } catch (err) {
+        console.warn('⚠️ Preload failed (non-critical):', err);
+      }
+    }, 150);
+  }
+
   init() {
     // Idempotent initialization
     if (this._initialized) return;
@@ -1694,6 +1745,7 @@ class ConsciousnessEngine {
               cacheKey,
               preservedEmergence: true,
             });
+            this._preloadNextStage(stage, quality);
             this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
           }
           this._rendererFencepostSeen = false;
@@ -1713,6 +1765,7 @@ class ConsciousnessEngine {
           cached: true,
           cacheKey,
         });
+        this._preloadNextStage(stage, quality);
         this._log('blueprint_emitted', { stage, quality, cacheKey, cached: true });
       }
       return;
@@ -1731,11 +1784,12 @@ class ConsciousnessEngine {
         cached: false,
         cacheKey,
       });
+      this._preloadNextStage(stage, quality);
       this._log('blueprint_emitted', { stage, quality, cacheKey, cached: false });
     }
   }
 
-  buildBlueprint(stageName, options = {}) {
+  _buildBlueprintForStage(stageName, requestedQuality, options = {}) {
     const stageConfig = Canonical?.stages?.[stageName] || {};
     if (!stageConfig) {
       console.error(`Stage ${stageName} not found`);
@@ -1743,7 +1797,7 @@ class ConsciousnessEngine {
     }
 
     const stageParticleCounts = SST?.performance?.particleCount ?? {};
-    const quality = options.quality || this.currentQuality;
+    const quality = requestedQuality || options.quality || this.currentQuality;
     const baseParticleCount = stageConfig.particleCount || stageParticleCounts[stageName] || 5000;
     const particleCount = options.overrideCount || this.getParticleCountForQuality(baseParticleCount, quality);
 
@@ -1972,6 +2026,11 @@ class ConsciousnessEngine {
     }
 
     return blueprint;
+  }
+
+  buildBlueprint(stageName, options = {}) {
+    const quality = options.quality || this.currentQuality;
+    return this._buildBlueprintForStage(stageName, quality, options);
   }
 
   // --- Validation ---
