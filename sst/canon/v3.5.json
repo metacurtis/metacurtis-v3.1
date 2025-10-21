@@ -453,11 +453,11 @@
         "durationMs": 2000
       },
       "emergence": {
-        "durationMs": 1500,
+        "durationMs": 2000,
         "waitForFencepost": true,
         "maxWaitMs": 5000,
         "stabilizeMs": 500,
-        "skipMorphAnimation": true,
+        "skipMorphAnimation": false,
         "skipGenesisBlueprint": true,
         "targetState": "genesis_initial"
       },
@@ -468,7 +468,7 @@
       },
       "chaos": {
         "enabled": true,
-        "durationMs": 1500,
+        "durationMs": 2000,
         "rendererSpin": {
           "z": 0.55,
           "y": 0.25
@@ -476,12 +476,12 @@
       },
       "coalesce": {
         "enabled": true,
-        "durationMs": 1500,
+        "durationMs": 2000,
         "morphTo": 0.6
       },
       "settle": {
         "enabled": true,
-        "durationMs": 1000,
+        "durationMs": 1500,
         "morphTo": 1.0,
         "constellationCoverage": [
           0.95,
@@ -491,14 +491,14 @@
         ]
       },
       "narration": {
-        "startAtMs": 4000,
+        "startAtMs": 13000,
         "events": [
           "START_NARRATIVE",
           "AUDIO_START_STAGE"
         ]
       },
       "beatGlyph": {
-        "revealMs": 6000,
+        "revealMs": 9500,
         "text": "HELLO CURTIS"
       }
     },
@@ -693,7 +693,7 @@
         },
         "chaos": {
           "enabled": true,
-          "durationMs": 1500,
+          "durationMs": 2000,
           "rendererSpin": {
             "z": 0.55,
             "y": 0.25
@@ -701,12 +701,12 @@
         },
         "coalesce": {
           "enabled": true,
-          "durationMs": 1500,
+          "durationMs": 2000,
           "morphTo": 0.6
         },
         "settle": {
           "enabled": true,
-          "durationMs": 1000,
+          "durationMs": 1500,
           "morphTo": 1.0,
           "constellationCoverage": [
             0.95,
@@ -716,14 +716,14 @@
           ]
         },
         "narration": {
-          "startAtMs": 4000,
+          "startAtMs": 13000,
           "events": [
             "START_NARRATIVE",
             "AUDIO_START_STAGE"
           ]
         },
         "beatGlyph": {
-          "revealMs": 6000,
+          "revealMs": 9500,
           "text": "HELLO CURTIS"
         }
       }

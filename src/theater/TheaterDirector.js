@@ -45,15 +45,15 @@ const DEFAULT_OPENING_TIMELINE = {
   cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
-  chaos: { enabled: true, durationMs: 1500, rendererSpin: { z: 0.5, y: 0.2 } },
-  coalesce: { enabled: true, durationMs: 1500, morphTo: 0.6 },
-  settle: { enabled: true, durationMs: 1000, morphTo: 1.0 },
+  chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
+  coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
+  settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
   emergence: {
-    durationMs: 1500,
+    durationMs: 2000,
     waitForFencepost: true,
     maxWaitMs: 5000,
     stabilizeMs: 500,
-    skipMorphAnimation: true,
+    skipMorphAnimation: false,
     skipGenesisBlueprint: true,
     targetState: 'genesis_initial',
   },
@@ -404,6 +404,7 @@ class TheaterDirector {
     this._skipOrigin = null;
     this._sleepWaiters = new Set();
     this._fencepostReadyEmitted = false;
+    this._openingInProgress = false;
 
     try {
       window.__canonFencepostSeen = false;
@@ -471,6 +472,7 @@ class TheaterDirector {
     this.phase = 'starting';
     this.startTime = Date.now();
     this._fencepostReadyEmitted = false;
+    this._openingInProgress = true;
 
     const openingSnapshot = this._getOpeningConfig();
     const snapshotTimeline = openingSnapshot?.timeline ?? {};
@@ -504,6 +506,7 @@ class TheaterDirector {
       this.phase = 'error';
       BeatBus.emit(EVENTS.DIRECTOR_ERROR, { error });
     } finally {
+      this._openingInProgress = false;
       this._detachSkipListener();
       this.isRunning = false;
       if (this.phase !== 'cancelled' && this.phase !== 'error') {
@@ -803,7 +806,10 @@ class TheaterDirector {
 
       await this._runVisualSchedule();
 
-      BeatBus.emit(EVENTS.START_NARRATIVE, { stage: toStage });
+      BeatBus.emit(EVENTS.START_NARRATIVE, {
+        stage: toStage,
+        source: 'opening_complete',
+      });
       this.emitTune({
         breathingAmp: 0.02,
         breathingPeriodSec: 4,
@@ -1042,6 +1048,10 @@ class TheaterDirector {
       viewportReady: this.viewportReady,
       currentStage: this.currentStage,
     };
+  }
+
+  isOpeningInProgress() {
+    return this._openingInProgress === true;
   }
 
   forceStart() {

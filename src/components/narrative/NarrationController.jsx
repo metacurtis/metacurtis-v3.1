@@ -17,6 +17,7 @@ const DEFAULT_CHARS_PER_SECOND = 15;
 const SKIP_KEYS = new Set([' ', 'Spacebar', 'Space']);
 const AUTO_ADVANCE_DELAY_MS = 3000;
 const AUTO_ADVANCE_RETRY_MS = 500;
+const VALID_START_SOURCES = new Set(['opening_complete', 'user_action', 'auto_advance']);
 
 // 🔬 DIAGNOSTIC: Narration lifecycle tracking
 let componentInstanceCounter = 0;
@@ -89,6 +90,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const prevDepsRef = useRef({});
   const segmentTokenRef = useRef(0);
   const hasTriggeredAutoAdvanceRef = useRef(false);
+  const startedStagesRef = useRef(new Set());
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => clearTimeout(id));
@@ -123,17 +125,21 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const resetState = useCallback(
     ({ unlock = true, preserveStage = false } = {}) => {
       const hadActiveStage = !!activeStageRef.current;
+      const stageBeingCleared = activeStageRef.current;
       clearTimers();
       setActiveNarration(null);
       activeSegmentRef.current = null;
       totalSegmentsRef.current = 0;
       completedSegmentsRef.current = 0;
       skipRequestedRef.current = false;
-       segmentTokenRef.current = 0;
-       hasTriggeredAutoAdvanceRef.current = false;
+      segmentTokenRef.current = 0;
+      hasTriggeredAutoAdvanceRef.current = false;
       if (!preserveStage) {
         if (hadActiveStage && DEBUG_NARRATION) {
           console.log('🎙️ [NarrationController] STOPPED');
+        }
+        if (stageBeingCleared) {
+          startedStagesRef.current.delete(stageBeingCleared);
         }
         activeStageRef.current = null;
       }
@@ -275,7 +281,10 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             } else {
               liveControls.next();
               if (nextStageName) {
-                BeatBus.emit?.(EVENTS.START_NARRATIVE, { stage: nextStageName });
+                BeatBus.emit?.(EVENTS.START_NARRATIVE, {
+                  stage: nextStageName,
+                  source: 'auto_advance',
+                });
               }
             }
           };
@@ -445,7 +454,15 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         isPlaying: activeStageRef.current !== null,
         autoAdvanceEnabled: autoAdvanceEnabledRef.current,
       });
-      const trustedOrigins = new Set(['internal', 'auto', 'internal-auto']);
+      const trustedOrigins = new Set([
+        'internal',
+        'auto',
+        'internal-auto',
+        'opening_complete',
+        'user_action',
+        'auto_advance',
+        'event',
+      ]);
       if (!trustedOrigins.has(origin) && !isControlAllowed('narration:control')) {
         if (DEBUG_NARRATION) {
           console.warn('🎙️ [NarrationController] External play blocked by runtime guard');
@@ -703,7 +720,49 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
     const handleStart = (payload = {}) => {
       const stageName = payload?.stage || currentStage || activeStageRef.current;
-      startNarration(stageName);
+      if (!stageName) {
+        narrationDiagnostic.log('START_EVENT_IGNORED_NO_STAGE', { payload });
+        return;
+      }
+
+      const source = typeof payload?.source === 'string' ? payload.source : null;
+      const openingInProgress =
+        typeof window !== 'undefined' &&
+        window.theaterDirector?.isOpeningInProgress?.() === true;
+
+      if (openingInProgress && (!source || !VALID_START_SOURCES.has(source))) {
+        narrationDiagnostic.log('START_EVENT_BLOCKED_OPENING', {
+          stage: stageName,
+          source,
+        });
+        return;
+      }
+
+      if (activeStageRef.current && activeStageRef.current === stageName) {
+        narrationDiagnostic.log('START_EVENT_SKIPPED_ALREADY_PLAYING', {
+          stage: stageName,
+          source,
+        });
+        return;
+      }
+
+      if (startedStagesRef.current.has(stageName)) {
+        narrationDiagnostic.log('START_EVENT_SKIPPED_ALREADY_STARTED', {
+          stage: stageName,
+          source,
+        });
+        return;
+      }
+
+      narrationDiagnostic.log('START_EVENT_ACCEPTED', {
+        stage: stageName,
+        source,
+        openingInProgress,
+      });
+
+      const origin = source || 'event';
+      startNarration(stageName, origin);
+      startedStagesRef.current.add(stageName);
     };
 
     const handleStageChange = (payload = {}) => {
@@ -758,6 +817,17 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   useEffect(() => {
     if (!currentStage) return;
 
+    const openingInProgress =
+      typeof window !== 'undefined' &&
+      window.theaterDirector?.isOpeningInProgress?.() === true;
+
+    if (openingInProgress) {
+      narrationDiagnostic.log('AUTO_START_BLOCKED_OPENING', {
+        stage: currentStage,
+      });
+      return;
+    }
+
     const isAlreadyPlayingCurrentStage =
       activeStageRef.current && activeStageRef.current === currentStage;
 
@@ -769,19 +839,28 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
     }
 
     const segments = normalizeSegments(getNarrationSegments(currentStage));
-    if (!segments.length) {
+    const segmentCount = segments.length;
+    if (!segmentCount) {
       narrationDiagnostic.log('AUTO_START_SKIPPED_NO_SEGMENTS', {
         stage: currentStage,
       });
       return;
     }
 
-    narrationDiagnostic.log('AUTO_START_INIT', {
+    if (startedStagesRef.current.has(currentStage)) {
+      narrationDiagnostic.log('AUTO_START_SKIPPED_ALREADY_STARTED', {
+        stage: currentStage,
+      });
+      return;
+    }
+
+    narrationDiagnostic.log('AUTO_START_ALLOWED', {
       stage: currentStage,
-      segmentCount: segments.length,
+      segmentCount,
     });
 
     startNarration(currentStage, 'auto');
+    startedStagesRef.current.add(currentStage);
   }, [currentStage, startNarration]);
 
   useEffect(() => {

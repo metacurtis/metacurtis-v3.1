@@ -33,7 +33,10 @@ const syncScrollToStage = (stageIndex, { smooth = true } = {}) => {
 
 const emitStartNarrative = (stageName) => {
   if (!stageName) return;
-  BeatBus.emit?.(EVENTS.START_NARRATIVE, { stage: stageName });
+  BeatBus.emit?.(EVENTS.START_NARRATIVE, {
+    stage: stageName,
+    source: 'user_action',
+  });
 };
 
 const jumpToStage = (stageName, options = {}) => {

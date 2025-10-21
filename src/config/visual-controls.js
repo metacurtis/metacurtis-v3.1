@@ -7,9 +7,9 @@ const GENESIS_WORD = (Canonical?.visual?.letterGeometry?.genesis?.word || 'GENES
 
 export const VC = {
   // Emergence pacing
-  IMPLODE_MS: 1100,      /* VC.IMPLODE_MS */   // 7.7–8.7s (implosion)
-  SETTLE_MS:   900,      /* VC.SETTLE_MS  */   // 8.7–9.6s (settle)
-  MID_MORPH:   0.88,     /* VC.MID_MORPH  */   // morph target at end of implosion
+  IMPLODE_MS: 2000,      /* VC.IMPLODE_MS */   // extended implosion pacing
+  SETTLE_MS:  1500,      /* VC.SETTLE_MS  */   // extended settle pacing
+  MID_MORPH:  0.88,      /* VC.MID_MORPH  */   // morph target at end of implosion
 
   // Spawn behind camera
   Z_BACK_MIN:  80,       /* VC.Z_BACK_MIN */
