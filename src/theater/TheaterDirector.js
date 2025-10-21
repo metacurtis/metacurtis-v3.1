@@ -309,18 +309,27 @@ class TheaterDirector {
         });
       }
 
-      if (narrationController && typeof narrationController.playNarration === 'function') {
-        if (DEBUG_NARRATION) {
-          console.log('🎬 [TRIGGERING NARRATION]', newStage);
-        }
-        try {
-          narrationController.playNarration(newStage);
-        } catch (error) {
-          console.error('🚨 [NARRATION TRIGGER FAILED]', { stage: newStage, error });
-        }
-      } else if (DEBUG_NARRATION) {
-        console.error('🚨 [NO NARRATION CONTROLLER]');
+      const openingInProgress = this.isOpeningInProgress();
+      if (DEBUG_NARRATION) {
+        console.log('🎬 [TRIGGERING NARRATION]', newStage, {
+          openingInProgress,
+        });
       }
+      if (openingInProgress) {
+        if (DEBUG_NARRATION) {
+          console.log('🎬 Director: Opening in progress; suppressing stage-change narration trigger');
+        }
+        return;
+      }
+
+      BeatBus.emit(EVENTS.START_NARRATIVE, {
+        stage: newStage,
+        source: 'director_stage_change',
+        timestamp:
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now(),
+      });
     } else if (DEBUG_NARRATION) {
       console.warn('⚠️ [NO BEAT SHEET]', newStage);
     }
