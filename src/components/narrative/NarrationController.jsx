@@ -17,7 +17,12 @@ const DEFAULT_CHARS_PER_SECOND = 15;
 const SKIP_KEYS = new Set([' ', 'Spacebar', 'Space']);
 const AUTO_ADVANCE_DELAY_MS = 3000;
 const AUTO_ADVANCE_RETRY_MS = 500;
-const VALID_START_SOURCES = new Set(['opening_complete', 'user_action', 'auto_advance']);
+const VALID_START_SOURCES = new Set([
+  'opening_complete',
+  'user_action',
+  'auto_advance',
+  'director_stage_change',
+]);
 
 // 🔬 DIAGNOSTIC: Narration lifecycle tracking
 let componentInstanceCounter = 0;
@@ -91,6 +96,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const segmentTokenRef = useRef(0);
   const hasTriggeredAutoAdvanceRef = useRef(false);
   const startedStagesRef = useRef(new Set());
+  const pendingStartRef = useRef(null);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => clearTimeout(id));
@@ -142,6 +148,9 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           startedStagesRef.current.delete(stageBeingCleared);
         }
         activeStageRef.current = null;
+      }
+      if (!preserveStage && pendingStartRef.current === stageBeingCleared) {
+        pendingStartRef.current = null;
       }
       if (unlock) {
         unlockScroll();
@@ -462,6 +471,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         'user_action',
         'auto_advance',
         'event',
+        'pending',
       ]);
       if (!trustedOrigins.has(origin) && !isControlAllowed('narration:control')) {
         if (DEBUG_NARRATION) {
@@ -730,8 +740,17 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         typeof window !== 'undefined' &&
         window.theaterDirector?.isOpeningInProgress?.() === true;
 
-      if (openingInProgress && (!source || !VALID_START_SOURCES.has(source))) {
-        narrationDiagnostic.log('START_EVENT_BLOCKED_OPENING', {
+      if (openingInProgress && source !== 'opening_complete') {
+        narrationDiagnostic.log('START_EVENT_DEFERRED_OPENING', {
+          stage: stageName,
+          source,
+        });
+        pendingStartRef.current = stageName;
+        return;
+      }
+
+      if (source && !VALID_START_SOURCES.has(source) && source !== 'opening_complete') {
+        narrationDiagnostic.log('START_EVENT_BLOCKED_INVALID_SOURCE', {
           stage: stageName,
           source,
         });
@@ -862,6 +881,29 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
     startNarration(currentStage, 'auto');
     startedStagesRef.current.add(currentStage);
   }, [currentStage, startNarration]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return () => {};
+
+    const intervalId = setInterval(() => {
+      const opening = window.theaterDirector?.isOpeningInProgress?.() === true;
+      if (opening) return;
+      const pendingStage = pendingStartRef.current;
+      if (!pendingStage) return;
+      if (startedStagesRef.current.has(pendingStage)) {
+        pendingStartRef.current = null;
+        return;
+      }
+      narrationDiagnostic.log('PENDING_START_CONSUMED', {
+        stage: pendingStage,
+      });
+      pendingStartRef.current = null;
+      startNarration(pendingStage, 'pending');
+      startedStagesRef.current.add(pendingStage);
+    }, 150);
+
+    return () => clearInterval(intervalId);
+  }, [startNarration]);
 
   useEffect(() => {
     return () => {
