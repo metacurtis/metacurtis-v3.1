@@ -420,12 +420,77 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           token,
         });
 
+        if (segment?.visual) {
+          console.log(`[Narration] Visual cue: ${segment.visual}`);
+
+          const particleEffect =
+            Canonical?.getVisualEffect?.(segment.visual, 'particle') ||
+            (typeof window !== 'undefined'
+              ? window.Canonical?.getVisualEffect?.(segment.visual, 'particle')
+              : null);
+          const cameraEffect =
+            Canonical?.getVisualEffect?.(segment.visual, 'camera') ||
+            (typeof window !== 'undefined'
+              ? window.Canonical?.getVisualEffect?.(segment.visual, 'camera')
+              : null);
+
+          if (particleEffect) {
+            console.log('[Narration] 🎨 Emitting particle directive:', {
+              verb: segment.visual,
+              effect: particleEffect,
+            });
+            BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+              kind: 'particle-effect',
+              effect: particleEffect,
+              verb: segment.visual,
+              stage: stageName,
+              source: 'narration-beat',
+              timestamp:
+                typeof performance !== 'undefined' && typeof performance.now === 'function'
+                  ? performance.now()
+                  : Date.now(),
+            });
+          }
+
+          if (cameraEffect) {
+            console.log('[Narration] 🎥 Emitting camera directive:', {
+              verb: segment.visual,
+              effect: cameraEffect,
+            });
+            BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+              kind: 'camera-effect',
+              effect: cameraEffect,
+              verb: segment.visual,
+              stage: stageName,
+              source: 'narration-beat',
+              timestamp:
+                typeof performance !== 'undefined' && typeof performance.now === 'function'
+                  ? performance.now()
+                  : Date.now(),
+            });
+          }
+
+          if (!particleEffect && !cameraEffect) {
+            console.warn(`[Narration] ⚠️ Visual verb "${segment.visual}" not found in SST`);
+          }
+        }
+
         if (segment?.memoryFragmentTrigger) {
-          BeatBus.emit?.(EVENTS.MEMORY_FRAGMENT_TRIGGER, {
+          const fragmentData = segment.memoryFragmentTrigger;
+          console.log('[Narration] 🧩 Triggering memory fragment:', fragmentData);
+
+          BeatBus.emit?.(EVENTS.MEMORY_FRAGMENT_START, {
             stage: stageName,
-            id: segment.memoryFragmentTrigger,
-            origin: 'narration',
-            segmentId: segment?.id ?? null,
+            fragmentId: fragmentData.id || `${stageName}-fragment-${segment?.id || segmentIndex}`,
+            fragmentType: fragmentData.type || 'ambient',
+            content: fragmentData.content || {},
+            position: fragmentData.position || 'bottomLeft',
+            duration: fragmentData.duration || 5000,
+            source: 'narration-timing',
+            timestamp:
+              typeof performance !== 'undefined' && typeof performance.now === 'function'
+                ? performance.now()
+                : Date.now(),
           });
         }
 

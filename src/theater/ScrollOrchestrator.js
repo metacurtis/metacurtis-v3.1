@@ -368,7 +368,12 @@ export default class ScrollOrchestrator {
             stage: stageName,
             id: fragment.id || key,
             tier,
-            triggerPercent
+            triggerPercent,
+            source: 'scroll-threshold',
+            timestamp:
+              typeof performance !== 'undefined' && typeof performance.now === 'function'
+                ? performance.now()
+                : Date.now(),
           });
           console.log(`📜 Memory fragment triggered: ${key}`);
         }

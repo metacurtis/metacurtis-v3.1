@@ -21,8 +21,8 @@
     {
       "key": "STAGE_CHANGE",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 822,
-      "context": "820: \n821:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);\n822:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);\n823: \n824:     const keyHandler = (event) => {"
+      "line": 887,
+      "context": "885: \n886:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);\n887:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);\n888: \n889:     const keyHandler = (event) => {"
     },
     {
       "key": "STAGE_CHANGE",
@@ -1261,56 +1261,56 @@
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 432,
-      "context": "430:         }\n431: \n432:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {\n433:           stage: stageName,\n434:           segmentId: segment?.id ?? null,"
+      "line": 497,
+      "context": "495:         }\n496: \n497:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {\n498:           stage: stageName,\n499:           segmentId: segment?.id ?? null,"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 552,
-      "context": "550:   );\n551: \n552:   const skipNarration = useCallback(\n553:     (origin = 'skip') => {\n554:       if (origin === 'external' && !isControlAllowed('narration:control')) {"
+      "line": 617,
+      "context": "615:   );\n616: \n617:   const skipNarration = useCallback(\n618:     (origin = 'skip') => {\n619:       if (origin === 'external' && !isControlAllowed('narration:control')) {"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 662,
-      "context": "660:           enumerable: true,\n661:         },\n662:         skipNarration: {\n663:           value: () => skipNarration('external'),\n664:           enumerable: true,"
+      "line": 727,
+      "context": "725:           enumerable: true,\n726:         },\n727:         skipNarration: {\n728:           value: () => skipNarration('external'),\n729:           enumerable: true,"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 663,
-      "context": "661:         },\n662:         skipNarration: {\n663:           value: () => skipNarration('external'),\n664:           enumerable: true,\n665:         },"
+      "line": 728,
+      "context": "726:         },\n727:         skipNarration: {\n728:           value: () => skipNarration('external'),\n729:           enumerable: true,\n730:         },"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 696,
-      "context": "694:     exposeControlSurface('narrationController', controllerFactory, {\n695:       playNarration: 'narration:control',\n696:       skipNarration: 'narration:control',\n697:     });\n698: "
+      "line": 761,
+      "context": "759:     exposeControlSurface('narrationController', controllerFactory, {\n760:       playNarration: 'narration:control',\n761:       skipNarration: 'narration:control',\n762:     });\n763: "
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 717,
-      "context": "715:       revokeControlSurface('narrationController');\n716:     };\n717:   }, [skipNarration, startNarration]);\n718: \n719:   useEffect(() => {"
+      "line": 782,
+      "context": "780:       revokeControlSurface('narrationController');\n781:     };\n782:   }, [skipNarration, startNarration]);\n783: \n784:   useEffect(() => {"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 726,
-      "context": "724:       autoAdvanceEnabled,\n725:       resetStateId: resetState,\n726:       skipNarrationId: skipNarration,\n727:       startNarrationId: startNarration,\n728:     };"
+      "line": 791,
+      "context": "789:       autoAdvanceEnabled,\n790:       resetStateId: resetState,\n791:       skipNarrationId: skipNarration,\n792:       startNarrationId: startNarration,\n793:     };"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 832,
-      "context": "830:       event.preventDefault?.();\n831:       event.stopPropagation?.();\n832:       skipNarration('space');\n833:     };\n834: "
+      "line": 897,
+      "context": "895:       event.preventDefault?.();\n896:       event.stopPropagation?.();\n897:       skipNarration('space');\n898:     };\n899: "
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 849,
-      "context": "847:       resetState();\n848:     };\n849:   }, [currentStage, resetState, skipNarration, startNarration]);\n850: \n851:   useEffect(() => {"
+      "line": 914,
+      "context": "912:       resetState();\n913:     };\n914:   }, [currentStage, resetState, skipNarration, startNarration]);\n915: \n916:   useEffect(() => {"
     },
     {
       "key": "NARRATION_API",
@@ -1356,6 +1356,18 @@
     }
   ],
   "RENDERER": [
+    {
+      "key": "RENDERER",
+      "file": "src/components/narrative/NarrationController.jsx",
+      "line": 442,
+      "context": "440:               effect: particleEffect,\n441:             });\n442:             BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {\n443:               kind: 'particle-effect',\n444:               effect: particleEffect,"
+    },
+    {
+      "key": "RENDERER",
+      "file": "src/components/narrative/NarrationController.jsx",
+      "line": 460,
+      "context": "458:               effect: cameraEffect,\n459:             });\n460:             BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {\n461:               kind: 'camera-effect',\n462:               effect: cameraEffect,"
+    },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",

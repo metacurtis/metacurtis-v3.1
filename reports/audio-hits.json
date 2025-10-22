@@ -98,8 +98,8 @@
     },
     {
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 835,
-      "context": "833:     };\n834: \n835:     window.addEventListener('keydown', keyHandler);\n836: \n837:     return () => {"
+      "line": 900,
+      "context": "898:     };\n899: \n900:     window.addEventListener('keydown', keyHandler);\n901: \n902:     return () => {"
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",
