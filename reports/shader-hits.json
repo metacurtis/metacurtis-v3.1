@@ -1,0 +1,557 @@
+{
+  "jsUniformBlocks": [
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1252,
+      "names": [
+        "uTime"
+      ]
+    },
+    {
+      "file": "src/engine/ConsciousnessEngine.js",
+      "line": 848,
+      "names": []
+    },
+    {
+      "file": "src/runtime/materialFactory.js",
+      "line": 30,
+      "names": [
+        "uPointSize"
+      ]
+    }
+  ],
+  "jsUniformSets": [
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 332,
+      "name": "uMorphProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 334,
+      "name": "uStageProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 339,
+      "name": "uPostMorphFreeze"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 456,
+      "name": "uBandFade"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 495,
+      "name": "uBandHeight"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1037,
+      "name": "uMorphProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1038,
+      "name": "uStageProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1058,
+      "name": "uBandFade"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1191,
+      "name": "shaderMorph"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1301,
+      "name": "uAtlasTexture"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1302,
+      "name": "uStageIndex"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1303,
+      "name": "uBrainRegion"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1304,
+      "name": "uPointSize"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1306,
+      "name": "uDevicePixelRatio"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1307,
+      "name": "uDevicePixelRatio"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1318,
+      "name": "uBandHeight"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1322,
+      "name": "uColorCurrent"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1323,
+      "name": "uColorNext"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1324,
+      "name": "uColorAccent1"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1325,
+      "name": "uColorAccent2"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1327,
+      "name": "uActiveCount"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1328,
+      "name": "uTierCutoff"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1413,
+      "name": "uTime"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1414,
+      "name": "uScrollProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1415,
+      "name": "uStageBlend"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1416,
+      "name": "uActiveCount"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1417,
+      "name": "uTierCutoff"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1529,
+      "name": "uActiveCount"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1530,
+      "name": "uTierCutoff"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1545,
+      "name": "uMorphProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1546,
+      "name": "uStageProgress"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1558,
+      "name": "uPostMorphFreeze"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1575,
+      "name": "uPointSize"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1578,
+      "name": "uGaussianSigma"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1581,
+      "name": "uSpreadFactor"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1584,
+      "name": "uMorphType"
+    },
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 1587,
+      "name": "uPostMorphFreeze"
+    },
+    {
+      "file": "src/runtime/materialFactory.js",
+      "line": 48,
+      "name": "uPointSize"
+    },
+    {
+      "file": "src/runtime/materialFactory.js",
+      "line": 49,
+      "name": "uPointSize"
+    },
+    {
+      "file": "src/runtime/materialFactory.js",
+      "line": 54,
+      "name": "uTierHighlight"
+    }
+  ],
+  "glslUniforms": {
+    "uAtlasTexture": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 4
+      }
+    ],
+    "uTime": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 5
+      },
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 14
+      }
+    ],
+    "uColorCurrent": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 6
+      },
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 18
+      }
+    ],
+    "uColorNext": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 7
+      },
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 19
+      }
+    ],
+    "uColorAccent1": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 8
+      }
+    ],
+    "uColorAccent2": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 9
+      }
+    ],
+    "uActiveCount": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 10
+      }
+    ],
+    "uFadeProgress": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 11
+      }
+    ],
+    "uGaussianSigma": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 12
+      }
+    ],
+    "uBandHeight": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 13
+      }
+    ],
+    "uBandFade": [
+      {
+        "file": "src/shaders/templates/consciousness-fragment.glsl",
+        "line": 14
+      }
+    ],
+    "uMorphProgress": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 15
+      }
+    ],
+    "uScrollProgress": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 16
+      }
+    ],
+    "uPointSize": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 17
+      }
+    ],
+    "uTotalSprites": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 20
+      }
+    ],
+    "uDevicePixelRatio": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 21
+      }
+    ],
+    "uResolution": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 22
+      }
+    ],
+    "uAtmoFit": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 23
+      }
+    ],
+    "uTextFit": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 24
+      }
+    ],
+    "uMoveDampStart": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 25
+      }
+    ],
+    "uMoveDampStartY": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 26
+      }
+    ],
+    "uPostMorphFreeze": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 27
+      }
+    ],
+    "uSpreadFactor": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 28
+      }
+    ],
+    "uMorphType": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 29
+      }
+    ]
+  },
+  "glslAttributes": {
+    "particleIndex": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 4
+      }
+    ],
+    "atmosphericPosition": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 5
+      }
+    ],
+    "text3DPosition": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 6
+      }
+    ],
+    "animationSeed": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 7
+      }
+    ],
+    "atlasIndex": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 8
+      }
+    ],
+    "sizeMultiplier": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 9
+      }
+    ],
+    "tierData": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 10
+      }
+    ],
+    "opacityData": [
+      {
+        "file": "src/shaders/templates/consciousness-vertex.glsl",
+        "line": 11
+      }
+    ]
+  },
+  "mismatches": {
+    "jsSetsMissingInGLSL": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 334,
+        "name": "uStageProgress"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1038,
+        "name": "uStageProgress"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1191,
+        "name": "shaderMorph"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1302,
+        "name": "uStageIndex"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1303,
+        "name": "uBrainRegion"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1328,
+        "name": "uTierCutoff"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1415,
+        "name": "uStageBlend"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1417,
+        "name": "uTierCutoff"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1530,
+        "name": "uTierCutoff"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1546,
+        "name": "uStageProgress"
+      },
+      {
+        "file": "src/runtime/materialFactory.js",
+        "line": 54,
+        "name": "uTierHighlight"
+      }
+    ],
+    "glslUniformNoJSSet": [
+      {
+        "name": "uFadeProgress",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-fragment.glsl",
+            "line": 11
+          }
+        ]
+      },
+      {
+        "name": "uTotalSprites",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-vertex.glsl",
+            "line": 20
+          }
+        ]
+      },
+      {
+        "name": "uResolution",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-vertex.glsl",
+            "line": 22
+          }
+        ]
+      },
+      {
+        "name": "uAtmoFit",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-vertex.glsl",
+            "line": 23
+          }
+        ]
+      },
+      {
+        "name": "uTextFit",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-vertex.glsl",
+            "line": 24
+          }
+        ]
+      },
+      {
+        "name": "uMoveDampStart",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-vertex.glsl",
+            "line": 25
+          }
+        ]
+      },
+      {
+        "name": "uMoveDampStartY",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-vertex.glsl",
+            "line": 26
+          }
+        ]
+      }
+    ]
+  }
+}

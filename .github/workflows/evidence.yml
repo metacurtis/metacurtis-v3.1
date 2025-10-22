@@ -1,0 +1,22 @@
+name: Evidence & Event Lint
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci || npm i
+      - run: npm run build-evidence
+      - run: npm run evidence:lint
+      - run: npm run events:lint
+      - name: Upload evidence reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-reports
+          path: reports/**

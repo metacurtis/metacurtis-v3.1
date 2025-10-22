@@ -104,6 +104,23 @@ class TheaterDirector {
     this._handleStageChangeBound = (payload = {}) => {
       const targetStage = payload?.to ?? payload?.stage ?? null;
       if (!targetStage) return;
+      if (targetStage === 'genesis' && this.currentStage) {
+        const isOpeningHandoff = payload?.preserveEmergence === true;
+        const source = payload?.source;
+        const isManualJump = source === 'manual' || source === 'keyboard';
+
+        if (!isOpeningHandoff && !isManualJump && this.currentStage !== 'genesis') {
+          console.log('🎬 Director: Ignoring stale genesis transition', {
+            currentStage: this.currentStage,
+            targetStage,
+            payloadFlags: {
+              preserveEmergence: !!payload?.preserveEmergence,
+              source,
+            },
+          });
+          return;
+        }
+      }
       this.handleStageChange(targetStage, payload);
     };
 

@@ -140,6 +140,13 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       skipRequestedRef.current = false;
       segmentTokenRef.current = 0;
       hasTriggeredAutoAdvanceRef.current = false;
+      startedStagesRef.current.clear();
+      if (DEBUG_NARRATION) {
+        console.log('🎙️ [NarrationController] resetState called', {
+          clearedStartedStages: true,
+          previousStage: stageBeingCleared || null,
+        });
+      }
       if (!preserveStage) {
         if (hadActiveStage && DEBUG_NARRATION) {
           console.log('🎙️ [NarrationController] STOPPED');
@@ -782,6 +789,11 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       const origin = source || 'event';
       startNarration(stageName, origin);
       startedStagesRef.current.add(stageName);
+      console.log('🎙️ [NarrationController] Added to startedStagesRef', {
+        stage: stageName,
+        setSize: startedStagesRef.current.size,
+        allStages: Array.from(startedStagesRef.current),
+      });
     };
 
     const handleStageChange = (payload = {}) => {
@@ -797,8 +809,11 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         to: nextStage,
         time: Date.now(),
       });
-      if (!activeStageRef.current) return;
       if (nextStage && nextStage !== activeStageRef.current) {
+        console.log('🎙️ [NarrationController] Stage changed, resetting state', {
+          from: activeStageRef.current,
+          to: nextStage,
+        });
         resetState();
       }
     };
