@@ -218,6 +218,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const emittedEmergedRef   = useRef(false);
 
   const meshRef = useRef();
+  const qrModeRef = useRef(false);
+  const qrFreezeTimeRef = useRef(null);
+  const lastPointSizeRef = useRef(null);
+  const lastSpreadFactorRef = useRef(null);
+  const lastForceMonoRef = useRef(false);
+  const lastMonoColorRef = useRef(null);
+  const lastClearColorRef = useRef(null);
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
   const renderGuardRef = useRef(false);
@@ -287,7 +294,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     lastBindMetaRef.current = payload;
     trace('WBG:BIND', payload);
-  }, []);
+  }, [gl, camera]);
 
   const sampleRuntimeAABBOnce = useCallback((label = 'WBG:RUNTIME') => {
     const geo = geometryRef.current;
@@ -1418,6 +1425,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uFlowTurbulence:  { value: 0.0 },
           uStreakIntensity:{ value: 0.0 },
           uMotionParams:   { value: new Float32Array([0, 0, 0, 0]) },
+          uForceMono:      { value: false },
+          uMonoColor:      { value: new THREE.Color(0xffffff) },
         },
         vertexShader: vertexShaderSource,
         fragmentShader: fragmentShaderSource,
@@ -1544,14 +1553,30 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !geometryRef.current) return;
     const sp = clamp01(Number(scrollProgress) || 0);
-    mat.uniforms.uTime.value           = state.clock.elapsedTime;
+    if (qrModeRef.current) {
+      if (mat.uniforms.uTime && qrFreezeTimeRef.current == null) {
+        qrFreezeTimeRef.current = mat.uniforms.uTime.value;
+      }
+      if (mat.uniforms.uTime && qrFreezeTimeRef.current != null) {
+        mat.uniforms.uTime.value = qrFreezeTimeRef.current;
+      }
+    } else {
+      if (mat.uniforms.uTime) {
+        mat.uniforms.uTime.value = state.clock.elapsedTime;
+      }
+      qrFreezeTimeRef.current = null;
+    }
     mat.uniforms.uScrollProgress.value = sp;
     mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value    = activeCount;
     mat.uniforms.uTierCutoff.value     = activeCount;
 
     const deltaSeconds = Number.isFinite(delta) ? delta : state.clock.getDelta();
-    if (meshRef.current && spinRef.current) {
+    if (qrModeRef.current) {
+      if (meshRef.current) {
+        meshRef.current.rotation.set(0, 0, 0);
+      }
+    } else if (meshRef.current && spinRef.current) {
       if (spinRef.current.active) {
         const { velocity, endTime } = spinRef.current;
         meshRef.current.rotation.z += (velocity.z || 0) * deltaSeconds;
@@ -1641,6 +1666,100 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       const uniforms = mat.uniforms;
+
+      if (directive?.enterQrMode) {
+        qrModeRef.current = true;
+        if (spinRef.current) {
+          spinRef.current.active = false;
+          spinRef.current.velocity = { y: 0, z: 0 };
+          spinRef.current.endTime = 0;
+        }
+        if (uniforms.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = 1;
+          uniforms.uPostMorphFreeze.needsUpdate = true;
+        }
+        if (uniforms.uSpreadFactor) {
+          lastSpreadFactorRef.current = uniforms.uSpreadFactor.value;
+          uniforms.uSpreadFactor.value = 0;
+          uniforms.uSpreadFactor.needsUpdate = true;
+        }
+        if (uniforms.uPointSize) {
+          lastPointSizeRef.current = uniforms.uPointSize.value;
+          uniforms.uPointSize.value = directive.uPointSize || 2.6;
+          uniforms.uPointSize.needsUpdate = true;
+        }
+        if (uniforms.uForceMono) {
+          lastForceMonoRef.current = Boolean(uniforms.uForceMono.value);
+          uniforms.uForceMono.value = true;
+          uniforms.uForceMono.needsUpdate = true;
+        }
+        if (uniforms.uMonoColor) {
+          const color = uniforms.uMonoColor.value;
+          lastMonoColorRef.current = color?.clone ? color.clone() : new THREE.Color(color || 0xffffff);
+          uniforms.uMonoColor.value.setRGB(0, 0, 0);
+          uniforms.uMonoColor.needsUpdate = true;
+        }
+        if (uniforms.uTime) {
+          qrFreezeTimeRef.current = uniforms.uTime.value;
+        }
+        if (gl) {
+          const prevColor = gl.getClearColor(new THREE.Color());
+          const alpha = typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
+          lastClearColorRef.current = { color: prevColor.clone(), alpha };
+          gl.setClearColor(0xffffff, 1);
+        }
+        if (meshRef.current) {
+          meshRef.current.rotation.set(0, 0, 0);
+        }
+        if (camera) {
+          const z = Math.abs(camera.position.z || 50);
+          camera.position.set(0, 0, z);
+          camera.lookAt(0, 0, 0);
+          camera.up.set(0, 1, 0);
+          camera.updateProjectionMatrix();
+        }
+        mat.uniformsNeedUpdate = true;
+        return;
+      }
+
+      if (directive?.exitQrMode) {
+        qrModeRef.current = false;
+        if (uniforms.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = 0;
+          uniforms.uPostMorphFreeze.needsUpdate = true;
+        }
+        if (uniforms.uSpreadFactor && lastSpreadFactorRef.current != null) {
+          uniforms.uSpreadFactor.value = lastSpreadFactorRef.current;
+          uniforms.uSpreadFactor.needsUpdate = true;
+        }
+        if (uniforms.uPointSize && lastPointSizeRef.current != null) {
+          uniforms.uPointSize.value = lastPointSizeRef.current;
+          uniforms.uPointSize.needsUpdate = true;
+        }
+        if (uniforms.uForceMono) {
+          uniforms.uForceMono.value = Boolean(lastForceMonoRef.current);
+          uniforms.uForceMono.needsUpdate = true;
+        }
+        if (uniforms.uMonoColor && lastMonoColorRef.current) {
+          if (typeof uniforms.uMonoColor.value?.copy === 'function') {
+            uniforms.uMonoColor.value.copy(lastMonoColorRef.current);
+          } else {
+            uniforms.uMonoColor.value = lastMonoColorRef.current.clone();
+          }
+          uniforms.uMonoColor.needsUpdate = true;
+        }
+        if (gl && lastClearColorRef.current?.color) {
+          gl.setClearColor(lastClearColorRef.current.color, lastClearColorRef.current.alpha ?? 1);
+        }
+        lastPointSizeRef.current = null;
+        lastSpreadFactorRef.current = null;
+        lastMonoColorRef.current = null;
+        lastClearColorRef.current = null;
+        lastForceMonoRef.current = false;
+        qrFreezeTimeRef.current = null;
+        mat.uniformsNeedUpdate = true;
+        return;
+      }
 
       const currentStage = stageNameRef.current;
 
