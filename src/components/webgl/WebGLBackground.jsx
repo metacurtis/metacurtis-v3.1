@@ -226,6 +226,25 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const lastPointSizeRef = useRef(null);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
+
+  function autoscaleQrPositions(positions, targetNdc = 0.9) {
+    if (!(positions instanceof Float32Array) || positions.length < 3) return positions;
+    let maxAbs = 0.000001;
+    for (let i = 0; i < positions.length; i += 3) {
+      const ax = Math.abs(positions[i]);
+      const ay = Math.abs(positions[i + 1]);
+      if (ax > maxAbs) maxAbs = ax;
+      if (ay > maxAbs) maxAbs = ay;
+    }
+    if (!Number.isFinite(maxAbs) || maxAbs <= 0) return positions;
+    const scale = targetNdc / maxAbs;
+    if (!Number.isFinite(scale) || scale <= 0 || scale === 1) return positions;
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i] *= scale;
+      positions[i + 1] *= scale;
+    }
+    return positions;
+  }
   const renderGuardRef = useRef(false);
   const viewportHintRef = useRef(null);
   const lastBindMetaRef = useRef({ kind: null });
@@ -1139,6 +1158,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (fallbackHeight) updateBandHeight(fallbackHeight);
       }
 
+      const isQrBlueprint = !!raw?.metadata?.qrMode;
+      if (isQrBlueprint && !raw.__qrAutoscaled) {
+        if (raw.positions instanceof Float32Array) {
+          autoscaleQrPositions(raw.positions, 0.9);
+        }
+        if (raw.atmosphericPositions instanceof Float32Array) {
+          autoscaleQrPositions(raw.atmosphericPositions, 0.9);
+        }
+        if (raw.text3DPositions instanceof Float32Array) {
+          autoscaleQrPositions(raw.text3DPositions, 0.9);
+        }
+        try {
+          Object.defineProperty(raw, '__qrAutoscaled', { value: true, enumerable: false, configurable: true });
+        } catch {
+          raw.__qrAutoscaled = true;
+        }
+      }
+
       if (geometryRef.current) geometryRef.current.dispose();
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position',            new THREE.BufferAttribute(raw.atmosphericPositions, 3));
@@ -1370,7 +1407,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       // ---------- SAFETY: ensure QR mode cannot leak into normal stages ----------
-      if (qrModeRef.current) {
+      if (!isQrBlueprint && qrModeRef.current) {
         const uniformsNow = materialRef.current?.uniforms;
         if (uniformsNow?.uPostMorphFreeze) {
           uniformsNow.uPostMorphFreeze.value = 0;
@@ -1400,7 +1437,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         matCurrent.uniformsNeedUpdate = true;
 
         const startTime = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
-        const duration = 1500;
+        const duration = 1200;
         const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
           ? window.requestAnimationFrame
           : (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null);
@@ -1420,6 +1457,37 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           }
         };
         raf(step);
+      }
+
+      if (isQrBlueprint && !qrModeRef.current) {
+        const renderer = gl;
+        if (renderer) {
+          const previousColor = renderer.getClearColor(new THREE.Color());
+          const previousAlpha = typeof renderer.getClearAlpha === 'function' ? renderer.getClearAlpha() : 1;
+          restoreClearRef.current = [previousColor.r, previousColor.g, previousColor.b, previousAlpha];
+          renderer.setClearColor(0xffffff, 1);
+        }
+        const uniforms = materialRef.current?.uniforms;
+        if (uniforms?.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = 1;
+          uniforms.uPostMorphFreeze.needsUpdate = true;
+        }
+        if (uniforms?.uTierMode && uniforms.uTierMode.value) {
+          const arr = uniforms.uTierMode.value;
+          for (let i = 0; i < arr.length; i += 1) arr[i] = 0;
+          uniforms.uTierMode.needsUpdate = true;
+        }
+        if (uniforms?.uPointSize) {
+          const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+          lastPointSizeRef.current = uniforms.uPointSize.value;
+          uniforms.uPointSize.value = Math.max(2.6, 3.2 * dpr);
+          uniforms.uPointSize.needsUpdate = true;
+        }
+        timeTickEnabledRef.current = false;
+        qrModeRef.current = true;
+        if (materialRef.current) {
+          materialRef.current.uniformsNeedUpdate = true;
+        }
       }
     };
 

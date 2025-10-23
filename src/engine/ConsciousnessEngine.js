@@ -1118,6 +1118,25 @@ class ConsciousnessEngine {
     };
 
     BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
+    const actionName = (step.action || step.name || '').toLowerCase();
+    const isQrStep = actionName === 'formqrcode' || actionName === 'qr';
+    if (isQrStep) {
+      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+        source: 'climax:qr',
+        enterQrMode: true,
+        uPointSize: 3.0,
+      });
+      const exitDelay = Math.max(0, Number(step.holdDuration) || 0);
+      if (!this._climaxState.timers) this._climaxState.timers = [];
+      const exitTimer = setTimeout(() => {
+        if (!this._climaxState.active) return;
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          source: 'climax:qr',
+          exitQrMode: true,
+        });
+      }, exitDelay);
+      this._climaxState.timers.push(exitTimer);
+    }
     this._log('climax_blueprint_emitted', { step: step.name, particleCount });
   }
 
