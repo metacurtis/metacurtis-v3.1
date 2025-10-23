@@ -117,9 +117,8 @@ function writeJson(relativePath, data) {
 
 (function main() {
   const portrait = buildPortraitPointCloud();
-  const qr = buildQrPointCloud('https://curtisworton.com');
+  const qr = buildQrPointCloud('https://curtisworton.com/contact');
 
   writeJson('src/assets/climax/portrait-pointcloud.json', portrait);
   writeJson('src/assets/climax/qr-curtis.json', qr);
 })();
-

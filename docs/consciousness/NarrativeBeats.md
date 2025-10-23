@@ -112,7 +112,7 @@ Single source: `sst/canon/v3.5.json`. Use this brief to keep the prose walkthrou
     2. Portrait form (`3000 ms`, hold `2000 ms`).
     3. Reform text `CURTIS WHORTON` (`2000 ms`).
     4. Reform text `AI-NATIVE ENGINEER` (`2000 ms`).
-    5. Form QR code (`3000 ms`, URL `https://curtisworton.com`, caption “LET’S BUILD SOMETHING IMPOSSIBLE”).
+    5. Form QR code (`3000 ms`, URL `https://curtisworton.com/contact`, caption “LET’S BUILD SOMETHING IMPOSSIBLE”).
 
 ---
 Use this guide whenever you script narration VO sessions, QA hotspot artwork, or debug stage transitions. Canon remains the authoritative data store; this document mirrors it for fast human reference.
