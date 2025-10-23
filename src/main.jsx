@@ -2,6 +2,13 @@ import React from 'react';
 // Import Canon Dev-OS (dev only)
 if (import.meta.env.DEV) {
   import("/canon-console/browser/inject.js");
+  import('@/dev/taps/openingHandshakeTap.js').then((mod) => {
+    try {
+      mod?.installOpeningHandshakeTap?.();
+    } catch (err) {
+      console.warn('[openingHandshakeTap] install failed', err);
+    }
+  });
 }
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
