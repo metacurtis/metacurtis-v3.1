@@ -99,7 +99,7 @@ Total events: 30
 
 **Emitters**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:268`
-- `src/components/webgl/WebGLBackground.jsx:588`
+- `src/components/webgl/WebGLBackground.jsx:598`
 - `src/theater/TheaterDirector.js:1113`
 
 **Listeners**:
@@ -147,7 +147,7 @@ Total events: 30
 ## PARTICLES_EMERGED
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:263`
+- `src/components/webgl/WebGLBackground.jsx:273`
 
 **Listeners**:
 - (none)
@@ -168,7 +168,7 @@ Total events: 30
 - `src/theater/TheaterDirector.js:737`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1467`
+- `src/components/webgl/WebGLBackground.jsx:1490`
 
 ## PREWARM_COMPLETE
 

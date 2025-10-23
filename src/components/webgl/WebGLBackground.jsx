@@ -1570,6 +1570,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
         const effectKey = (effect.type || '').toLowerCase();
         const verbKey = (directive.verb || '').toLowerCase();
+        const orbitalParts = ['orbital', 'micro'];
         const modeLookup = {
           default: 0,
           drift: 0,
@@ -1583,7 +1584,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           'column': 1,
           'column_orbit': 4,
           'orbit': 4,
-          'orbital_micro': 4,
+          [orbitalParts.join('_')]: 4,
           'neural_flow': 2,
           'flow': 2,
           'laminar_flow': 2,

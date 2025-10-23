@@ -7,7 +7,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 588
+        "line": 598
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -17,7 +17,7 @@
     "PARTICLES_EMERGED": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 263
+        "line": 273
       }
     ],
     "PREWARM_COMPLETE": [
@@ -363,7 +363,7 @@
     "PARTICLE_PHASE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1467
+        "line": 1490
       }
     ],
     "BLUEPRINT_READY": [

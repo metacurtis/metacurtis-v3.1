@@ -27,8 +27,8 @@
     {
       "key": "STAGE_CHANGE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 696,
-      "context": "694:   }, []);\n695:   useEffect(() => {\n696:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {\n697:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);\n698:       setStageName(st);"
+      "line": 706,
+      "context": "704:   }, []);\n705:   useEffect(() => {\n706:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {\n707:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);\n708:       setStageName(st);"
     },
     {
       "key": "STAGE_CHANGE",
@@ -443,50 +443,50 @@
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 634,
-      "context": "632:   }, [emitViewportHint]);\n633: \n634:   // Fallback morph sink (outside emergence directives)\n635:   const __applyMorph = (v) => {\n636:     const mat = materialRef.current;"
+      "line": 644,
+      "context": "642:   }, [emitViewportHint]);\n643: \n644:   // Fallback morph sink (outside emergence directives)\n645:   const __applyMorph = (v) => {\n646:     const mat = materialRef.current;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 711,
-      "context": "709:   }, []);\n710: \n711:   // Emergence flag (no local tween; engine drives via directives)\n712:   useEffect(() => {\n713:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {"
+      "line": 721,
+      "context": "719:   }, []);\n720: \n721:   // Emergence flag (no local tween; engine drives via directives)\n722:   useEffect(() => {\n723:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 921,
-      "context": "919:       if (id === lastBlueprintIdRef.current) return;\n920:       lastBlueprintIdRef.current = id;\n921:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';\n922:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);\n923: "
+      "line": 931,
+      "context": "929:       if (id === lastBlueprintIdRef.current) return;\n930:       lastBlueprintIdRef.current = id;\n931:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';\n932:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);\n933: "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 947,
-      "context": "945:         }\n946:       }\n947:       // ignore late emergence after handoff\n948:       if (isEmergence && emittedEmergedRef.current) return;\n949: "
+      "line": 957,
+      "context": "955:         }\n956:       }\n957:       // ignore late emergence after handoff\n958:       if (isEmergence && emittedEmergedRef.current) return;\n959: "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1030,
-      "context": "1028:       if (mat) {\n1029:         applyRendererFits(geo, viewportHintRef.current || viewport);\n1030:         logBind(isEmergence ? 'emergence' : 'stage', {\n1031:           stage: raw.stageName || st || 'genesis',\n1032:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),"
+      "line": 1040,
+      "context": "1038:       if (mat) {\n1039:         applyRendererFits(geo, viewportHintRef.current || viewport);\n1040:         logBind(isEmergence ? 'emergence' : 'stage', {\n1041:           stage: raw.stageName || st || 'genesis',\n1042:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1032,
-      "context": "1030:         logBind(isEmergence ? 'emergence' : 'stage', {\n1031:           stage: raw.stageName || st || 'genesis',\n1032:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),\n1033:           cached: !!cached,\n1034:         });"
+      "line": 1042,
+      "context": "1040:         logBind(isEmergence ? 'emergence' : 'stage', {\n1041:           stage: raw.stageName || st || 'genesis',\n1042:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),\n1043:           cached: !!cached,\n1044:         });"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1063,
-      "context": "1061: \n1062:       if (isEmergence) {\n1063:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);\n1064:         emergencePendingRef.current = true;\n1065:         emittedEmergedRef.current = false;"
+      "line": 1073,
+      "context": "1071: \n1072:       if (isEmergence) {\n1073:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);\n1074:         emergencePendingRef.current = true;\n1075:         emittedEmergedRef.current = false;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1088,
-      "context": "1086:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';\n1087:           if (finalizeEmergence(source)) {\n1088:             console.log('⚡ Renderer: Emergence fast-forward applied', {\n1089:               source,\n1090:               cacheKey,"
+      "line": 1098,
+      "context": "1096:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';\n1097:           if (finalizeEmergence(source)) {\n1098:             console.log('⚡ Renderer: Emergence fast-forward applied', {\n1099:               source,\n1100:               cacheKey,"
     },
     {
       "key": "OPENING_PHASE",
@@ -1389,116 +1389,116 @@
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 263,
-      "context": "261:     if (!payload) return;\n262:     trace('WBG:FENCEPOST', payload);\n263:     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);\n264:   }, []);\n265: "
+      "line": 273,
+      "context": "271:     if (!payload) return;\n272:     trace('WBG:FENCEPOST', payload);\n273:     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);\n274:   }, []);\n275: "
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 331,
-      "context": "329:       const uniforms = mat?.uniforms;\n330: \n331:       if (uniforms?.uMorphProgress) {\n332:         uniforms.uMorphProgress.value = 1.0;\n333:         if (uniforms.uStageProgress) {"
+      "line": 341,
+      "context": "339:       const uniforms = mat?.uniforms;\n340: \n341:       if (uniforms?.uMorphProgress) {\n342:         uniforms.uMorphProgress.value = 1.0;\n343:         if (uniforms.uStageProgress) {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 332,
-      "context": "330: \n331:       if (uniforms?.uMorphProgress) {\n332:         uniforms.uMorphProgress.value = 1.0;\n333:         if (uniforms.uStageProgress) {\n334:           uniforms.uStageProgress.value = 1.0;"
+      "line": 342,
+      "context": "340: \n341:       if (uniforms?.uMorphProgress) {\n342:         uniforms.uMorphProgress.value = 1.0;\n343:         if (uniforms.uStageProgress) {\n344:           uniforms.uStageProgress.value = 1.0;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 639,
-      "context": "637:     if (!mat?.uniforms) return;\n638:     const u = mat.uniforms;\n639:     if (u.uMorphProgress) u.uMorphProgress.value = v;\n640:     else if (u.morphProgress) u.morphProgress.value = v;\n641:     else if (u.uMorph) u.uMorph.value = v;"
+      "line": 649,
+      "context": "647:     if (!mat?.uniforms) return;\n648:     const u = mat.uniforms;\n649:     if (u.uMorphProgress) u.uMorphProgress.value = v;\n650:     else if (u.morphProgress) u.morphProgress.value = v;\n651:     else if (u.uMorph) u.uMorph.value = v;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1036,
-      "context": "1034:         });\n1035:         scheduleRuntimeSampling();\n1036:         if (mat?.uniforms?.uMorphProgress) {\n1037:           mat.uniforms.uMorphProgress.value = 0;\n1038:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;"
+      "line": 1046,
+      "context": "1044:         });\n1045:         scheduleRuntimeSampling();\n1046:         if (mat?.uniforms?.uMorphProgress) {\n1047:           mat.uniforms.uMorphProgress.value = 0;\n1048:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1037,
-      "context": "1035:         scheduleRuntimeSampling();\n1036:         if (mat?.uniforms?.uMorphProgress) {\n1037:           mat.uniforms.uMorphProgress.value = 0;\n1038:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;\n1039:           mat.uniformsNeedUpdate = true;"
+      "line": 1047,
+      "context": "1045:         scheduleRuntimeSampling();\n1046:         if (mat?.uniforms?.uMorphProgress) {\n1047:           mat.uniforms.uMorphProgress.value = 0;\n1048:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;\n1049:           mat.uniformsNeedUpdate = true;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1254,
-      "context": "1252:         uniforms: {\n1253:           uTime: { value: 0 },\n1254:           uMorphProgress:  { value: clamp01(fallbackMorphRef.current) },\n1255:           uScrollProgress: { value: 0 },\n1256:           uStageProgress:  { value: clamp01(fallbackMorphRef.current) },"
+      "line": 1264,
+      "context": "1262:         uniforms: {\n1263:           uTime: { value: 0 },\n1264:           uMorphProgress:  { value: clamp01(fallbackMorphRef.current) },\n1265:           uScrollProgress: { value: 0 },\n1266:           uStageProgress:  { value: clamp01(fallbackMorphRef.current) },"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1350,
-      "context": "1348:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],\n1349:         hasGeometry: !!geometryRef.current,\n1350:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,\n1351:       }));\n1352: "
+      "line": 1373,
+      "context": "1371:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],\n1372:         hasGeometry: !!geometryRef.current,\n1373:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,\n1374:       }));\n1375: "
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1471,
-      "context": "1469:   }, []);\n1470: \n1471:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)\n1472:   useEffect(() => {\n1473:     frameCountRef.current = 0;"
+      "line": 1494,
+      "context": "1492:   }, []);\n1493: \n1494:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)\n1495:   useEffect(() => {\n1496:     if (typeof window !== 'undefined') {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1542,
-      "context": "1540: \n1541:         // Morph progress + fencepost emission\n1542:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1543:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1544:           const newValue = clamp01(directive.morphProgress);"
+      "line": 1747,
+      "context": "1745: \n1746:         // Morph progress + fencepost emission\n1747:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1748:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1749:           const newValue = clamp01(directive.morphProgress);"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1543,
-      "context": "1541:         // Morph progress + fencepost emission\n1542:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1543:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1544:           const newValue = clamp01(directive.morphProgress);\n1545:           uniforms.uMorphProgress.value = newValue;"
+      "line": 1748,
+      "context": "1746:         // Morph progress + fencepost emission\n1747:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1748:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1749:           const newValue = clamp01(directive.morphProgress);\n1750:           uniforms.uMorphProgress.value = newValue;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1545,
-      "context": "1543:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1544:           const newValue = clamp01(directive.morphProgress);\n1545:           uniforms.uMorphProgress.value = newValue;\n1546:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;\n1547:           if (Math.abs(newValue - oldValue) > 0.001) {"
+      "line": 1750,
+      "context": "1748:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1749:           const newValue = clamp01(directive.morphProgress);\n1750:           uniforms.uMorphProgress.value = newValue;\n1751:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;\n1752:           if (Math.abs(newValue - oldValue) > 0.001) {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1549,
-      "context": "1547:           if (Math.abs(newValue - oldValue) > 0.001) {\n1548:             console.log(\n1549:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`\n1550:             );\n1551:           }"
+      "line": 1754,
+      "context": "1752:           if (Math.abs(newValue - oldValue) > 0.001) {\n1753:             console.log(\n1754:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`\n1755:             );\n1756:           }"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1570,
-      "context": "1568:             queueFencepost(payload);\n1569:           }\n1570:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1571:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1572:         }"
+      "line": 1775,
+      "context": "1773:             queueFencepost(payload);\n1774:           }\n1775:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1776:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1777:         }"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1571,
-      "context": "1569:           }\n1570:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1571:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1572:         }\n1573: "
+      "line": 1776,
+      "context": "1774:           }\n1775:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1776:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1777:         }\n1778: "
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1610,
-      "context": "1608:     };\n1609: \n1610:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1611:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1612:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));"
+      "line": 1815,
+      "context": "1813:     };\n1814: \n1815:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1816:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1817:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1611,
-      "context": "1609: \n1610:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1611:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1612:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1613:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');"
+      "line": 1816,
+      "context": "1814: \n1815:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1816:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1817:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1818:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1612,
-      "context": "1610:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1611:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1612:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1613:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1614:     if (typeof window !== 'undefined') {"
+      "line": 1817,
+      "context": "1815:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1816:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1817:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1818:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1819:     if (typeof window !== 'undefined') {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1613,
-      "context": "1611:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1612:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1613:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1614:     if (typeof window !== 'undefined') {\n1615:       window._rendererSubscriptionCheck = () => {"
+      "line": 1818,
+      "context": "1816:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1817:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1818:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1819:     if (typeof window !== 'undefined') {\n1820:       window._rendererSubscriptionCheck = () => {"
     },
     {
       "key": "RENDERER",
@@ -1611,14 +1611,14 @@
     {
       "key": "RENDERER",
       "file": "src/shaders/templates/consciousness-vertex.glsl",
-      "line": 101,
-      "context": "99:   textPos.y *= uTextFit.y;\n100: \n101:   float morph = clamp(uMorphProgress, 0.0, 1.0);\n102:   float spread = max(uSpreadFactor, 0.0);\n103:   float morphType = uMorphType;"
+      "line": 127,
+      "context": "125:   textPos.y *= uTextFit.y;\n126: \n127:   float morph = clamp(uMorphProgress, 0.0, 1.0);\n128:   float spread = max(uSpreadFactor, 0.0);\n129:   float morphType = uMorphType;"
     },
     {
       "key": "RENDERER",
       "file": "src/shaders/templates/consciousness-vertex.glsl",
-      "line": 163,
-      "context": "161:   \n162:   // Calculate alpha\n163:   vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);\n164: }\n165: "
+      "line": 189,
+      "context": "187:   \n188:   // Calculate alpha\n189:   vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);\n190: }\n191: "
     },
     {
       "key": "RENDERER",
