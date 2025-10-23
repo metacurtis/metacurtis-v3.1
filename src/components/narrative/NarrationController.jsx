@@ -290,22 +290,48 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             });
           }
 
-          const advanceVia = () => {
+          const advanceVia = async () => {
             liveControls.markAutoAdvance?.();
-            if (window.narrativeNavigation?.nextStage) {
-              window.narrativeNavigation.nextStage();
-            } else {
-              liveControls.next();
-              if (nextStageName) {
-                BeatBus.emit?.(EVENTS.START_NARRATIVE, {
-                  stage: nextStageName,
-                  source: 'auto_advance',
-                });
+            try {
+              const nav =
+                window.unifiedNav ||
+                (await import('@/theater/UnifiedNavigationAPI.js')).default;
+
+              if (nav) {
+                if (nextStageName) {
+                  await nav.navigateToStage(nextStageName, {
+                    smooth: true,
+                    source: 'narration_auto_advance',
+                  });
+                  return;
+                }
+                if (typeof nav.nextStage === 'function') {
+                  await nav.nextStage({
+                    smooth: true,
+                    source: 'narration_auto_advance',
+                  });
+                  return;
+                }
               }
+            } catch (error) {
+              console.warn('⚠️ [AUTO-ADVANCE] Unified navigation failed, using fallback', {
+                error,
+                nextStageName,
+              });
+            }
+
+            liveControls.next?.();
+            if (nextStageName) {
+              BeatBus.emit?.(EVENTS.START_NARRATIVE, {
+                stage: nextStageName,
+                source: 'auto_advance',
+              });
             }
           };
 
-          advanceVia();
+          advanceVia().catch((error) => {
+            console.error('🚨 [AUTO-ADVANCE] advanceVia error', error);
+          });
         }, timeoutMs);
 
         timersRef.current.add(timeoutId);
@@ -420,58 +446,52 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           token,
         });
 
+        let particleEffectPayload = null;
         if (segment?.visual) {
           console.log(`[Narration] Visual cue: ${segment.visual}`);
 
-          const particleEffect =
-            Canonical?.getVisualEffect?.(segment.visual, 'particle') ||
-            (typeof window !== 'undefined'
-              ? window.Canonical?.getVisualEffect?.(segment.visual, 'particle')
-              : null);
-          const cameraEffect =
-            Canonical?.getVisualEffect?.(segment.visual, 'camera') ||
-            (typeof window !== 'undefined'
-              ? window.Canonical?.getVisualEffect?.(segment.visual, 'camera')
-              : null);
+          const effectResolver = window.Canonical?.getVisualEffect || Canonical?.getVisualEffect;
+          const resolved = effectResolver ? effectResolver(segment.visual) : null;
+          if (!resolved) {
+            console.warn('[VISUAL] Unknown verb (skipped):', segment.visual);
+          } else if (resolved.type === 'camera') {
+            console.log('[VISUAL] camera-only verb:', segment.visual);
+          } else {
+            const visualKey = (segment.visual || '').toLowerCase();
+            particleEffectPayload = { ...resolved };
 
-          if (particleEffect) {
-            console.log('[Narration] 🎨 Emitting particle directive:', {
-              verb: segment.visual,
-              effect: particleEffect,
-            });
-            BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
-              kind: 'particle-effect',
-              effect: particleEffect,
-              verb: segment.visual,
-              stage: stageName,
-              source: 'narration-beat',
-              timestamp:
-                typeof performance !== 'undefined' && typeof performance.now === 'function'
-                  ? performance.now()
-                  : Date.now(),
-            });
-          }
+            const ensure = (cond, key, value) => {
+              if (cond && (particleEffectPayload[key] === undefined || particleEffectPayload[key] === null)) {
+                particleEffectPayload[key] = value;
+              }
+            };
 
-          if (cameraEffect) {
-            console.log('[Narration] 🎥 Emitting camera directive:', {
-              verb: segment.visual,
-              effect: cameraEffect,
-            });
-            BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
-              kind: 'camera-effect',
-              effect: cameraEffect,
-              verb: segment.visual,
-              stage: stageName,
-              source: 'narration-beat',
-              timestamp:
-                typeof performance !== 'undefined' && typeof performance.now === 'function'
-                  ? performance.now()
-                  : Date.now(),
-            });
-          }
+            ensure(
+              particleEffectPayload.gridSize === undefined &&
+                (visualKey.includes('grid') ||
+                 visualKey.includes('structure') ||
+                 visualKey.includes('column')),
+              'gridSize',
+              0.45
+            );
 
-          if (!particleEffect && !cameraEffect) {
-            console.warn(`[Narration] ⚠️ Visual verb "${segment.visual}" not found in SST`);
+            ensure(
+              particleEffectPayload.uFlowTurbulence === undefined &&
+                (visualKey.includes('flow') ||
+                 visualKey.includes('stream') ||
+                 visualKey.includes('storm')),
+              'uFlowTurbulence',
+              0.9
+            );
+
+            ensure(
+              particleEffectPayload.uStreakIntensity === undefined &&
+                (visualKey.includes('streak') ||
+                 visualKey.includes('trail') ||
+                 visualKey.includes('velocity')),
+              'uStreakIntensity',
+              1.0
+            );
           }
         }
 
@@ -499,6 +519,24 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           segmentId: segment?.id ?? null,
           text,
         });
+
+        if (particleEffectPayload) {
+          console.log('[Narration] 🎨 Emitting particle directive:', {
+            verb: segment.visual,
+            effect: particleEffectPayload,
+          });
+          BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+            kind: 'particle-effect',
+            ...particleEffectPayload,
+            verb: segment.visual,
+            stage: stageName,
+            source: 'beat_visual',
+            timestamp:
+              typeof performance !== 'undefined' && typeof performance.now === 'function'
+                ? performance.now()
+                : Date.now(),
+          });
+        }
 
         const isLastBeat =
           totalSegments > 0 ? segmentIndex === totalSegments - 1 : false;

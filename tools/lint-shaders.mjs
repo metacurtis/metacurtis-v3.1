@@ -14,6 +14,7 @@ const ALLOW_JS_ONLY = new Set([
   'uTierCutoff',
   'uStageBlend',
   'uTierHighlight',
+  'uTierMode',
 ]);
 
 const ALLOW_GLSL_ONLY = new Set([

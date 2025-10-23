@@ -1,3 +1,761 @@
+# Narration & Opening Evidence Report
+
+Generated: 10/23/2025, 5:49:22 AM
+
+---
+## 1) SST Extract
+
+```json
+{
+  "source": "sst/canon/v3.5.json",
+  "version": null,
+  "mode": null,
+  "openingPhases": {
+    "rules": {
+      "startAfterViewportHint": true,
+      "stage0ColorLock": true,
+      "scrollLockedUntil": "ENABLE_SCROLL",
+      "emergenceModeRequired": true
+    },
+    "skipKey": "SPACE",
+    "totalDurationMs": 12500,
+    "timeline": {
+      "blackout": {
+        "durationMs": 2000
+      },
+      "cursor": {
+        "blinkCount": 2,
+        "intervalMs": 500
+      },
+      "typing": {
+        "lines": [
+          "READY.",
+          "10 PRINT \"HELLO CURTIS\"",
+          "20 GOTO 10",
+          "RUN"
+        ],
+        "typeSpeed": 50,
+        "lineDelay": 500,
+        "completionDelayMs": 800
+      },
+      "fill": {
+        "text": "HELLO CURTIS ",
+        "scrollSpeed": 100,
+        "durationMs": 2000
+      },
+      "emergence": {
+        "durationMs": 2000,
+        "waitForFencepost": true,
+        "maxWaitMs": 5000,
+        "stabilizeMs": 500,
+        "skipMorphAnimation": false,
+        "skipGenesisBlueprint": true,
+        "targetState": "genesis_initial"
+      },
+      "profile": "chaos_coalesce_settle_v1",
+      "prologue": {
+        "terminalOverlay": true,
+        "fadeOutAtMs": 0
+      },
+      "chaos": {
+        "enabled": true,
+        "durationMs": 2000,
+        "rendererSpin": {
+          "z": 0.55,
+          "y": 0.25
+        }
+      },
+      "coalesce": {
+        "enabled": true,
+        "durationMs": 2000,
+        "morphTo": 0.6
+      },
+      "settle": {
+        "enabled": true,
+        "durationMs": 1500,
+        "morphTo": 1,
+        "constellationCoverage": [
+          0.95,
+          0.8,
+          0.6,
+          0.45
+        ]
+      },
+      "narration": {
+        "startAtMs": 13000,
+        "events": [
+          "START_NARRATIVE",
+          "AUDIO_START_STAGE"
+        ]
+      },
+      "beatGlyph": {
+        "revealMs": 9500,
+        "text": "HELLO CURTIS"
+      }
+    },
+    "emergence": {
+      "target": "random_to_random_gas_cloud",
+      "mode": "emergence",
+      "source": "viewportSpread"
+    }
+  },
+  "stages": [
+    "genesis",
+    "discipline",
+    "neural",
+    "velocity",
+    "architecture",
+    "harmony",
+    "transcendence"
+  ],
+  "morphProfiles": {},
+  "cameraByStage": {
+    "genesis": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "static",
+        "description": "Fixed camera during emergence"
+      },
+      "reveal": {
+        "timing": 8000,
+        "duration": 2000,
+        "target": {
+          "x": 0.8,
+          "y": 0.5,
+          "z": 4.5
+        },
+        "easing": "easeInOutQuad",
+        "description": "Subtle 15° rotation to show depth"
+      },
+      "keyframes": []
+    },
+    "discipline": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": -1,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "orbit",
+        "axis": "y",
+        "degrees": 10,
+        "duration": 35000,
+        "speed": 0.1,
+        "easing": "linear",
+        "description": "Slow orbit to reveal structure"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": -1,
+            "z": 5
+          }
+        },
+        {
+          "time": 35000,
+          "position": {
+            "x": 1.5,
+            "y": -1,
+            "z": 4.5
+          }
+        }
+      ]
+    },
+    "neural": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "orbit_discovery",
+        "axis": "xy",
+        "degrees": 15,
+        "duration": 30000,
+        "speed": 0.3,
+        "wobble": 0.1,
+        "easing": "easeInOutSine",
+        "description": "Curious orbital movement revealing connections"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 10000,
+          "position": {
+            "x": 1,
+            "y": 0.5,
+            "z": 4.8
+          }
+        },
+        {
+          "time": 20000,
+          "position": {
+            "x": -0.5,
+            "y": -0.3,
+            "z": 5.2
+          }
+        },
+        {
+          "time": 30000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        }
+      ]
+    },
+    "velocity": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 6
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "dolly_push",
+        "startZ": 6,
+        "endZ": 4,
+        "duration": 40000,
+        "easing": "easeInQuad",
+        "shake": {
+          "enabled": true,
+          "amplitude": 0.1,
+          "frequency": 5
+        },
+        "description": "Dramatic push-in with energy shake"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          }
+        },
+        {
+          "time": 20000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 40000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          }
+        }
+      ]
+    },
+    "architecture": {
+      "initial": {
+        "position": {
+          "x": 3,
+          "y": 3,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "isometric_track",
+        "pattern": "blueprint",
+        "degrees": 12,
+        "duration": 35000,
+        "easing": "linear",
+        "description": "Isometric view revealing system structure"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 3,
+            "y": 3,
+            "z": 5
+          }
+        },
+        {
+          "time": 17500,
+          "position": {
+            "x": -3,
+            "y": 3,
+            "z": 5
+          }
+        },
+        {
+          "time": 35000,
+          "position": {
+            "x": 3,
+            "y": 3,
+            "z": 5
+          }
+        }
+      ]
+    },
+    "harmony": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "balletic_orbit",
+        "axis": "xyz",
+        "degrees": 25,
+        "duration": 40000,
+        "speed": 0.2,
+        "smooth": 0.98,
+        "easing": "easeInOutCubic",
+        "description": "Graceful 3-axis ballet revealing golden ratio"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 10000,
+          "position": {
+            "x": 2,
+            "y": 1,
+            "z": 4.5
+          }
+        },
+        {
+          "time": 20000,
+          "position": {
+            "x": 0,
+            "y": 2,
+            "z": 5.5
+          }
+        },
+        {
+          "time": 30000,
+          "position": {
+            "x": -2,
+            "y": 1,
+            "z": 4.5
+          }
+        },
+        {
+          "time": 40000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        }
+      ]
+    },
+    "transcendence": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "reverent_orbit",
+        "axis": "y",
+        "degrees": 30,
+        "duration": 50000,
+        "speed": 0.15,
+        "pullback": {
+          "enabled": true,
+          "from": 5,
+          "to": 7,
+          "startTime": 35000,
+          "duration": 10000,
+          "easing": "easeOutQuad"
+        },
+        "description": "Slow orbit with reverent pullback for full view"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 25000,
+          "position": {
+            "x": 2.5,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 35000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 45000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 7
+          }
+        }
+      ]
+    }
+  },
+  "beatsByStage": {},
+  "generatedAt": "2025-10-23T10:49:20.493Z"
+}
+```
+
+---
+## 2) BeatBus Emitters/Listeners Map
+
+# BeatBus Event Map
+Total events: 30
+## AUDIO_COMPUTER_HUM
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:656`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:170`
+
+## AUDIO_KEY_CLICK
+
+**Emitters**:
+- (none)
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:186`
+
+## AUDIO_START_STAGE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:827`
+
+**Listeners**:
+- (none)
+
+## BLUEPRINT_READY
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:682`
+- `src/engine/ConsciousnessEngine.js:1120`
+- `src/engine/ConsciousnessEngine.js:1740`
+- `src/engine/ConsciousnessEngine.js:1761`
+- `src/engine/ConsciousnessEngine.js:1780`
+
+**Listeners**:
+- `src/dev/BlueprintTap.js:14`
+
+## BUILD_EMERGENCE_BLUEPRINT
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:210`
+- `src/theater/TheaterDirector.js:765`
+
+**Listeners**:
+- (none)
+
+## CLIMAX_STEP
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:1027`
+- `src/engine/ConsciousnessEngine.js:1353`
+
+**Listeners**:
+- (none)
+
+## CURSOR_BLINK
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:662`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:88`
+
+## CURSOR_SHOW
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:655`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:81`
+
+## DIRECTOR_CANCEL
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:997`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:218`
+
+## DIRECTOR_ERROR
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:533`
+
+**Listeners**:
+- (none)
+
+## ENABLE_SCROLL
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:848`
+
+**Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:226`
+- `src/state/commands/StateCommands.js:66`
+
+## ENGINE_VIEWPORT_HINT
+
+**Emitters**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:268`
+- `src/components/webgl/WebGLBackground.jsx:633`
+- `src/theater/TheaterDirector.js:1113`
+
+**Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:210`
+- `src/components/consciousness/ConsciousnessTheater.jsx:255`
+- `src/components/consciousness/ConsciousnessTheater.jsx:275`
+- `src/theater/TheaterDirector.js:468`
+- `src/theater/TheaterDirector.js:1133`
+
+## FENCEPOST_LISTENERS_READY
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:798`
+
+**Listeners**:
+- (none)
+
+## MEMORY_FRAGMENT_END
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:260`
+
+**Listeners**:
+- (none)
+
+## MEMORY_FRAGMENT_START
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:254`
+
+**Listeners**:
+- (none)
+
+## MORPH_PROGRESS
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:832`
+- `src/engine/ConsciousnessEngine.js:857`
+- `src/engine/ConsciousnessEngine.js:865`
+- `src/state/commands/StateCommands.js:27`
+
+**Listeners**:
+- (none)
+
+## PARTICLES_EMERGED
+
+**Emitters**:
+- `src/components/webgl/WebGLBackground.jsx:308`
+
+**Listeners**:
+- (none)
+
+## PARTICLES_START_EMERGING
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:779`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:199`
+
+## PARTICLE_PHASE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:700`
+- `src/theater/TheaterDirector.js:715`
+- `src/theater/TheaterDirector.js:737`
+
+**Listeners**:
+- `src/components/webgl/WebGLBackground.jsx:1572`
+
+## PREWARM_COMPLETE
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:618`
+
+**Listeners**:
+- (none)
+
+## PREWARM_GENESIS_BLUEPRINT
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:1003`
+
+**Listeners**:
+- (none)
+
+## QUALITY_CHANGE
+
+**Emitters**:
+- `src/state/atoms/qualityAtom.js:198`
+- `src/state/commands/StateCommands.js:150`
+
+**Listeners**:
+- (none)
+
+## RENDERER_TUNE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:1018`
+
+**Listeners**:
+- (none)
+
+## RENDER_DIRECTIVE
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:817`
+- `src/engine/ConsciousnessEngine.js:841`
+- `src/engine/ConsciousnessEngine.js:866`
+- `src/engine/ConsciousnessEngine.js:1243`
+- `src/engine/ConsciousnessEngine.js:1252`
+- `src/engine/ConsciousnessEngine.js:1284`
+- `src/theater/TheaterDirector.js:721`
+- `src/theater/TheaterDirector.js:743`
+
+**Listeners**:
+- `src/components/webgl/WebGLBackground.jsx:112`
+
+## SCREEN_FILL
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:689`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:149`
+
+## STAGE_CHANGE
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:109`
+- `src/theater/TheaterDirector.js:820`
+
+**Listeners**:
+- `src/state/atoms/qualityAtom.js:155`
+- `src/theater/TheaterDirector.js:128`
+- `src/theater/UnifiedNavigationAPI.js:174`
+
+## STAGE_CHANGED
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:118`
+
+**Listeners**:
+- (none)
+
+## STAGE_TRANSITION
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:266`
+
+**Listeners**:
+- (none)
+
+## START_NARRATIVE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:342`
+- `src/theater/TheaterDirector.js:835`
+
+**Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:231`
+
+## TERMINAL_TYPE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:674`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:103`
+
+
+
+---
+## 3) Source Evidence
+
 # Source Evidence Scan
 
 ## STAGE_CHANGE
@@ -12,34 +770,34 @@
 96:   });
 ```
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:427`
+- `src/components/consciousness/ConsciousnessTheater.jsx:426`
 
 ```text
-425:             });
-426:           } else {
-427:             stageAtom.jumpToStage(targetStage);
-428:           }
-429:         }
+424:             });
+425:           } else {
+426:             stageAtom.jumpToStage(targetStage);
+427:           }
+428:         }
 ```
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:484`
+- `src/components/consciousness/ConsciousnessTheater.jsx:467`
 
 ```text
-482:         case 'r':
-483:         case 'R':
-484:           stageAtom.jumpToStage('genesis');
-485:           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
-486:           break;
+465:         case 'r':
+466:         case 'R':
+467:           stageAtom.jumpToStage('genesis');
+468:           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
+469:           break;
 ```
 
-- `src/components/narrative/NarrationController.jsx:925`
+- `src/components/narrative/NarrationController.jsx:937`
 
 ```text
-923: 
-924:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);
-925:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);
-926: 
-927:     const keyHandler = (event) => {
+935: 
+936:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);
+937:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);
+938: 
+939:     const keyHandler = (event) => {
 ```
 
 - `src/components/webgl/WebGLBackground.jsx:749`
@@ -50,16 +808,6 @@
 749:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
 750:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
 751:       setStageName(st);
-```
-
-- `src/components/webgl/WebGLBackground.jsx:775`
-
-```text
-773:   useEffect(() => {
-774:     let morphProbeTimer = null;
-775:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, () => {
-776:       if (morphProbeTimer) {
-777:         clearInterval(morphProbeTimer);
 ```
 
 - `src/config/canonical/sst-v3.3.json:58`
@@ -132,34 +880,44 @@
 23:     prevStage: narrativeAtom.prevStage,
 ```
 
-- `src/orchestration/navigation/narrativeNavigation.js:26`
+- `src/orchestration/navigation/narrativeNavigation.js:42`
 
 ```text
-24: };
-25: 
-26: const jumpToStage = (stageName, options = {}) => {
-27:   const stageNames = getStageNames();
-28:   const targetIndex = stageNames.indexOf(stageName);
+40: };
+41: 
+42: const jumpToStage = (stageName, options = {}) => {
+43:   const stageNames = getStageNames();
+44:   const targetIndex = stageNames.indexOf(stageName);
 ```
 
-- `src/orchestration/navigation/narrativeNavigation.js:97`
+- `src/orchestration/navigation/narrativeNavigation.js:54`
 
 ```text
-95:       label,
-96:       isActive: activeStage === name,
-97:       onClick: () => jumpToStage(name, { smooth: true, emitNarration: true }),
-98:       index,
-99:     };
+52:   if (currentStage === stageName) return true;
+53: 
+54:   stageAtom.jumpToStage(stageName);
+55:   syncScrollToStage(targetIndex, { smooth });
+56:   if (emitNarration) emitStartNarrative(stageName);
 ```
 
-- `src/orchestration/navigation/narrativeNavigation.js:152`
+- `src/orchestration/navigation/narrativeNavigation.js:104`
 
 ```text
-150:   nextStage,
-151:   prevStage,
-152:   jumpToStage,
-153:   toggleAutoAdvance,
-154: };
+102:       label,
+103:       isActive: activeStage === name,
+104:       onClick: () => jumpToStage(name, { smooth: true, emitNarration: true }),
+105:       index,
+106:     };
+```
+
+- `src/orchestration/navigation/narrativeNavigation.js:145`
+
+```text
+143:   nextStage,
+144:   prevStage,
+145:   jumpToStage,
+146:   toggleAutoAdvance,
+147: };
 ```
 
 - `src/state/atoms/narrativeAtom.js:69`
@@ -282,44 +1040,44 @@
 708:       }
 ```
 
-- `src/state/commands/StateCommands.js:110`
+- `src/state/commands/StateCommands.js:109`
 
 ```text
-108:       if (next !== prevStage) {
-109:         // Emit stage change events
-110:         BeatBus.emit(EVENTS.STAGE_CHANGE, { 
-111:           from: prevStage, 
-112:           to: next, 
+107:       if (next !== prevStage) {
+108:         // Emit stage change events
+109:         BeatBus.emit(EVENTS.STAGE_CHANGE, { 
+110:           from: prevStage, 
+111:           to: next, 
+```
+
+- `src/state/commands/StateCommands.js:117`
+
+```text
+115:         
+116:         // Compatibility event if different
+117:         if (EVENTS.STAGE_CHANGED !== EVENTS.STAGE_CHANGE) {
+118:           BeatBus.emit(EVENTS.STAGE_CHANGED, { 
+119:             from: prevStage, 
 ```
 
 - `src/state/commands/StateCommands.js:118`
 
 ```text
-116:         
-117:         // Compatibility event if different
-118:         if (EVENTS.STAGE_CHANGED !== EVENTS.STAGE_CHANGE) {
-119:           BeatBus.emit(EVENTS.STAGE_CHANGED, { 
-120:             from: prevStage, 
+116:         // Compatibility event if different
+117:         if (EVENTS.STAGE_CHANGED !== EVENTS.STAGE_CHANGE) {
+118:           BeatBus.emit(EVENTS.STAGE_CHANGED, { 
+119:             from: prevStage, 
+120:             to: next, 
 ```
 
-- `src/state/commands/StateCommands.js:119`
+- `src/state/commands/StateCommands.js:195`
 
 ```text
-117:         // Compatibility event if different
-118:         if (EVENTS.STAGE_CHANGED !== EVENTS.STAGE_CHANGE) {
-119:           BeatBus.emit(EVENTS.STAGE_CHANGED, { 
-120:             from: prevStage, 
-121:             to: next, 
-```
-
-- `src/state/commands/StateCommands.js:199`
-
-```text
-197:       if (!gateActive || gateTarget === targetStage) {
-198:         if (currentStage !== targetStage) {
-199:           stageAtom.jumpToStage(targetStage);
-200:         }
-201:       }
+193:       const currentStage = stageAtom.getState?.()?.currentStage;
+194:       if (currentStage !== targetStage) {
+195:         stageAtom.jumpToStage(targetStage);
+196:       }
+197:     }
 ```
 
 - `src/theater/ScrollOrchestrator.js:3`
@@ -402,64 +1160,44 @@
 10:  */
 ```
 
-- `src/theater/UnifiedNavigationAPI.js:76`
+- `src/theater/UnifiedNavigationAPI.js:90`
 
 ```text
-74:       const currentStage = stageAtom.getState?.()?.currentStage;
-75:       if (currentStage !== targetStage) {
-76:         stageAtom.jumpToStage(targetStage);
-77:       }
-78:       return true;
+88:       console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
+89: 
+90:       if (window.stageControls?.jumpToStage) {
+91:         window.stageControls.jumpToStage(targetStage);
+92:         console.log('🎯 [UNIFIED NAV] Used fallback stage jump');
 ```
 
-- `src/theater/UnifiedNavigationAPI.js:102`
+- `src/theater/UnifiedNavigationAPI.js:91`
 
 ```text
-100:       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {
-101:         console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
-102:         if (window.stageControls?.jumpToStage) {
-103:           window.stageControls.jumpToStage(targetStage);
-104:         } else {
+89: 
+90:       if (window.stageControls?.jumpToStage) {
+91:         window.stageControls.jumpToStage(targetStage);
+92:         console.log('🎯 [UNIFIED NAV] Used fallback stage jump');
+93:       } else {
 ```
 
-- `src/theater/UnifiedNavigationAPI.js:103`
+- `src/theater/UnifiedNavigationAPI.js:94`
 
 ```text
-101:         console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
-102:         if (window.stageControls?.jumpToStage) {
-103:           window.stageControls.jumpToStage(targetStage);
-104:         } else {
-105:           stageAtom.jumpToStage(targetStage);
+92:         console.log('🎯 [UNIFIED NAV] Used fallback stage jump');
+93:       } else {
+94:         console.warn('🚨 [UNIFIED NAV] Fallback stageControls.jumpToStage unavailable');
+95:       }
+96: 
 ```
 
-- `src/theater/UnifiedNavigationAPI.js:105`
+- `src/theater/UnifiedNavigationAPI.js:174`
 
 ```text
-103:           window.stageControls.jumpToStage(targetStage);
-104:         } else {
-105:           stageAtom.jumpToStage(targetStage);
-106:         }
-107:         finalReason = 'fallback';
-```
-
-- `src/theater/UnifiedNavigationAPI.js:124`
-
-```text
-122:       const currentStage = stageAtom.getState?.()?.currentStage;
-123:       if (currentStage !== targetStage) {
-124:         stageAtom.jumpToStage(targetStage);
-125:       }
-126: 
-```
-
-- `src/theater/UnifiedNavigationAPI.js:192`
-
-```text
-190:    */
-191:   onStageChange(callback) {
-192:     return BeatBus.on('STAGE_CHANGE', callback);
-193:   }
-194: }
+172:    */
+173:   onStageChange(callback) {
+174:     return BeatBus.on('STAGE_CHANGE', callback);
+175:   }
+176: }
 ```
 
 - `src/theater/bus/index.js:26`
@@ -524,14 +1262,14 @@
 
 ## OPENING_PHASE
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:156`
+- `src/components/consciousness/ConsciousnessTheater.jsx:155`
 
 ```text
-154:           border: 'none',
-155:           borderRadius: '5px',
-156:           cursor: 'pointer',
-157:           fontFamily: 'Courier New, monospace',
-158:           fontWeight: 'bold',
+153:           border: 'none',
+154:           borderRadius: '5px',
+155:           cursor: 'pointer',
+156:           fontFamily: 'Courier New, monospace',
+157:           fontWeight: 'bold',
 ```
 
 - `src/components/fragments/NarrationFragment.jsx:134`
@@ -774,64 +1512,64 @@
 766:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {
 ```
 
+- `src/components/webgl/WebGLBackground.jsx:974`
+
+```text
+972:       if (id === lastBlueprintIdRef.current) return;
+973:       lastBlueprintIdRef.current = id;
+974:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
+975:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
+976: 
+```
+
 - `src/components/webgl/WebGLBackground.jsx:1000`
 
 ```text
-998:       if (id === lastBlueprintIdRef.current) return;
-999:       lastBlueprintIdRef.current = id;
-1000:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
-1001:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
+998:         }
+999:       }
+1000:       // ignore late emergence after handoff
+1001:       if (isEmergence && emittedEmergedRef.current) return;
 1002: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1026`
+- `src/components/webgl/WebGLBackground.jsx:1122`
 
 ```text
-1024:         }
-1025:       }
-1026:       // ignore late emergence after handoff
-1027:       if (isEmergence && emittedEmergedRef.current) return;
-1028: 
+1120:       if (mat) {
+1121:         applyRendererFits(geo, viewportHintRef.current || viewport);
+1122:         logBind(isEmergence ? 'emergence' : 'stage', {
+1123:           stage: raw.stageName || st || 'genesis',
+1124:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1148`
+- `src/components/webgl/WebGLBackground.jsx:1124`
 
 ```text
-1146:       if (mat) {
-1147:         applyRendererFits(geo, viewportHintRef.current || viewport);
-1148:         logBind(isEmergence ? 'emergence' : 'stage', {
-1149:           stage: raw.stageName || st || 'genesis',
-1150:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
+1122:         logBind(isEmergence ? 'emergence' : 'stage', {
+1123:           stage: raw.stageName || st || 'genesis',
+1124:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
+1125:           cached: !!cached,
+1126:         });
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1150`
+- `src/components/webgl/WebGLBackground.jsx:1155`
 
 ```text
-1148:         logBind(isEmergence ? 'emergence' : 'stage', {
-1149:           stage: raw.stageName || st || 'genesis',
-1150:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
-1151:           cached: !!cached,
-1152:         });
+1153: 
+1154:       if (isEmergence) {
+1155:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+1156:         emergencePendingRef.current = true;
+1157:         emittedEmergedRef.current = false;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1181`
+- `src/components/webgl/WebGLBackground.jsx:1180`
 
 ```text
-1179: 
-1180:       if (isEmergence) {
-1181:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
-1182:         emergencePendingRef.current = true;
-1183:         emittedEmergedRef.current = false;
-```
-
-- `src/components/webgl/WebGLBackground.jsx:1206`
-
-```text
-1204:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
-1205:           if (finalizeEmergence(source)) {
-1206:             console.log('⚡ Renderer: Emergence fast-forward applied', {
-1207:               source,
-1208:               cacheKey,
+1178:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
+1179:           if (finalizeEmergence(source)) {
+1180:             console.log('⚡ Renderer: Emergence fast-forward applied', {
+1181:               source,
+1182:               cacheKey,
 ```
 
 - `src/components/webgl/WebGLCanvas.jsx:317`
@@ -1214,64 +1952,64 @@
 2368:           } catch {}
 ```
 
-- `src/state/commands/StateCommands.js:104`
+- `src/state/commands/StateCommands.js:103`
 
 ```text
-102: 
-103:   wireAtomsToBeatBus() {
-104:     // Stage changes → BeatBus (without emergence blueprint emission)
-105:     let prevStage = stageAtom.getState?.()?.currentStage;
-106:     const stageSub = stageAtom.subscribe?.(s => {
+101: 
+102:   wireAtomsToBeatBus() {
+103:     // Stage changes → BeatBus (without emergence blueprint emission)
+104:     let prevStage = stageAtom.getState?.()?.currentStage;
+105:     const stageSub = stageAtom.subscribe?.(s => {
+```
+
+- `src/state/commands/StateCommands.js:126`
+
+```text
+124:         
+125:         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
+126:         // This was causing emergence to build on every stage change
+127:         // Emergence should only be triggered by TheaterDirector during opening
+128:         
 ```
 
 - `src/state/commands/StateCommands.js:127`
 
 ```text
-125:         
-126:         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
-127:         // This was causing emergence to build on every stage change
-128:         // Emergence should only be triggered by TheaterDirector during opening
-129:         
+125:         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
+126:         // This was causing emergence to build on every stage change
+127:         // Emergence should only be triggered by TheaterDirector during opening
+128:         
+129:         prevStage = next;
 ```
 
-- `src/state/commands/StateCommands.js:128`
+- `src/state/commands/StateCommands.js:202`
 
 ```text
-126:         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
-127:         // This was causing emergence to build on every stage change
-128:         // Emergence should only be triggered by TheaterDirector during opening
-129:         
-130:         prevStage = next;
+200:   }
+201: 
+202:   // Programmatic emergence trigger (only for opening sequence)
+203:   triggerEmergence(payload = {}) {
+204:     if (!this.canEmit('BUILD_EMERGENCE_BLUEPRINT')) {
 ```
 
-- `src/state/commands/StateCommands.js:207`
+- `src/state/commands/StateCommands.js:205`
 
 ```text
-205:   }
-206: 
-207:   // Programmatic emergence trigger (only for opening sequence)
-208:   triggerEmergence(payload = {}) {
-209:     if (!this.canEmit('BUILD_EMERGENCE_BLUEPRINT')) {
+203:   triggerEmergence(payload = {}) {
+204:     if (!this.canEmit('BUILD_EMERGENCE_BLUEPRINT')) {
+205:       console.error('[StateCommands] Cannot trigger emergence - contract violation');
+206:       return false;
+207:     }
 ```
 
-- `src/state/commands/StateCommands.js:210`
+- `src/state/commands/StateCommands.js:211`
 
 ```text
-208:   triggerEmergence(payload = {}) {
-209:     if (!this.canEmit('BUILD_EMERGENCE_BLUEPRINT')) {
-210:       console.error('[StateCommands] Cannot trigger emergence - contract violation');
-211:       return false;
-212:     }
-```
-
-- `src/state/commands/StateCommands.js:216`
-
-```text
-214:     this.recordEmission('BUILD_EMERGENCE_BLUEPRINT');
-215:     BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
-216:       mode: 'emergence',
-217:       source: 'viewportSpread',
-218:       target: 'constellation',
+209:     this.recordEmission('BUILD_EMERGENCE_BLUEPRINT');
+210:     BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+211:       mode: 'emergence',
+212:       source: 'viewportSpread',
+213:       target: 'constellation',
 ```
 
 - `src/theater/ScrollOrchestrator.js:310`
@@ -2076,134 +2814,134 @@
 
 ## NARRATION_API
 
+- `src/components/consciousness/ConsciousnessTheater.jsx:290`
+
+```text
+288:     const skipNarrationIfActive = () => {
+289:       const controller = typeof window !== 'undefined' ? window.narrationController : null;
+290:       if (controller?.isPlaying && typeof controller.skipNarration === 'function') {
+291:         controller.skipNarration();
+292:         return true;
+```
+
 - `src/components/consciousness/ConsciousnessTheater.jsx:291`
 
 ```text
-289:     const skipNarrationIfActive = () => {
-290:       const controller = typeof window !== 'undefined' ? window.narrationController : null;
-291:       if (controller?.isPlaying && typeof controller.skipNarration === 'function') {
-292:         controller.skipNarration();
-293:         return true;
+289:       const controller = typeof window !== 'undefined' ? window.narrationController : null;
+290:       if (controller?.isPlaying && typeof controller.skipNarration === 'function') {
+291:         controller.skipNarration();
+292:         return true;
+293:       }
 ```
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:292`
+- `src/components/consciousness/ConsciousnessTheater.jsx:422`
 
 ```text
-290:       const controller = typeof window !== 'undefined' ? window.narrationController : null;
-291:       if (controller?.isPlaying && typeof controller.skipNarration === 'function') {
-292:         controller.skipNarration();
-293:         return true;
-294:       }
+420:             window.unifiedNav.navigateToStage(targetStage, {
+421:               smooth: true,
+422:               skipNarration: false,
+423:               source: 'number_key',
+424:             });
 ```
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:423`
+- `src/components/narrative/NarrationController.jsx:396`
 
 ```text
-421:             window.unifiedNav.navigateToStage(targetStage, {
-422:               smooth: true,
-423:               skipNarration: false,
-424:               source: 'number_key',
-425:             });
+394:         if (DEBUG_NARRATION) {
+395:           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;
+396:           console.log('🎙️ [BEAT FIRED]', {
+397:             stage: stageName,
+398:             segmentIndex,
 ```
 
-- `src/components/narrative/NarrationController.jsx:422`
+- `src/components/narrative/NarrationController.jsx:515`
 
 ```text
-420:         if (DEBUG_NARRATION) {
-421:           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;
-422:           console.log('🎙️ [BEAT FIRED]', {
-423:             stage: stageName,
-424:             segmentIndex,
+513:         }
+514: 
+515:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
+516:           stage: stageName,
+517:           segmentId: segment?.id ?? null,
 ```
 
-- `src/components/narrative/NarrationController.jsx:517`
+- `src/components/narrative/NarrationController.jsx:667`
 
 ```text
-515:         }
-516: 
-517:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
-518:           stage: stageName,
-519:           segmentId: segment?.id ?? null,
+665:   );
+666: 
+667:   const skipNarration = useCallback(
+668:     (origin = 'skip') => {
+669:       if (origin === 'external' && !isControlAllowed('narration:control')) {
 ```
 
-- `src/components/narrative/NarrationController.jsx:655`
+- `src/components/narrative/NarrationController.jsx:777`
 
 ```text
-653:   );
-654: 
-655:   const skipNarration = useCallback(
-656:     (origin = 'skip') => {
-657:       if (origin === 'external' && !isControlAllowed('narration:control')) {
+775:           enumerable: true,
+776:         },
+777:         skipNarration: {
+778:           value: () => skipNarration('external'),
+779:           enumerable: true,
 ```
 
-- `src/components/narrative/NarrationController.jsx:765`
+- `src/components/narrative/NarrationController.jsx:778`
 
 ```text
-763:           enumerable: true,
-764:         },
-765:         skipNarration: {
-766:           value: () => skipNarration('external'),
-767:           enumerable: true,
+776:         },
+777:         skipNarration: {
+778:           value: () => skipNarration('external'),
+779:           enumerable: true,
+780:         },
 ```
 
-- `src/components/narrative/NarrationController.jsx:766`
+- `src/components/narrative/NarrationController.jsx:811`
 
 ```text
-764:         },
-765:         skipNarration: {
-766:           value: () => skipNarration('external'),
-767:           enumerable: true,
-768:         },
+809:     exposeControlSurface('narrationController', controllerFactory, {
+810:       playNarration: 'narration:control',
+811:       skipNarration: 'narration:control',
+812:     });
+813: 
 ```
 
-- `src/components/narrative/NarrationController.jsx:799`
+- `src/components/narrative/NarrationController.jsx:832`
 
 ```text
-797:     exposeControlSurface('narrationController', controllerFactory, {
-798:       playNarration: 'narration:control',
-799:       skipNarration: 'narration:control',
-800:     });
-801: 
-```
-
-- `src/components/narrative/NarrationController.jsx:820`
-
-```text
-818:       revokeControlSurface('narrationController');
-819:     };
-820:   }, [skipNarration, startNarration]);
-821: 
-822:   useEffect(() => {
-```
-
-- `src/components/narrative/NarrationController.jsx:829`
-
-```text
-827:       autoAdvanceEnabled,
-828:       resetStateId: resetState,
-829:       skipNarrationId: skipNarration,
-830:       startNarrationId: startNarration,
+830:       revokeControlSurface('narrationController');
 831:     };
+832:   }, [skipNarration, startNarration]);
+833: 
+834:   useEffect(() => {
 ```
 
-- `src/components/narrative/NarrationController.jsx:935`
+- `src/components/narrative/NarrationController.jsx:841`
 
 ```text
-933:       event.preventDefault?.();
-934:       event.stopPropagation?.();
-935:       skipNarration('space');
-936:     };
-937: 
+839:       autoAdvanceEnabled,
+840:       resetStateId: resetState,
+841:       skipNarrationId: skipNarration,
+842:       startNarrationId: startNarration,
+843:     };
 ```
 
-- `src/components/narrative/NarrationController.jsx:952`
+- `src/components/narrative/NarrationController.jsx:947`
 
 ```text
-950:       resetState();
-951:     };
-952:   }, [currentStage, resetState, skipNarration, startNarration]);
-953: 
-954:   useEffect(() => {
+945:       event.preventDefault?.();
+946:       event.stopPropagation?.();
+947:       skipNarration('space');
+948:     };
+949: 
+```
+
+- `src/components/narrative/NarrationController.jsx:964`
+
+```text
+962:       resetState();
+963:     };
+964:   }, [currentStage, resetState, skipNarration, startNarration]);
+965: 
+966:   useEffect(() => {
 ```
 
 - `src/components/ui/AdvancedContactPortal.jsx:65`
@@ -2226,74 +2964,44 @@
 49:               });
 ```
 
-- `src/orchestration/navigation/narrativeNavigation.js:41`
+- `src/theater/UnifiedNavigationAPI.js:29`
 
 ```text
-39:     .navigateToStage(stageName, {
-40:       smooth,
-41:       skipNarration: !emitNarration,
-42:       source: 'narrative_navigation',
-43:     })
+27:     const {
+28:       smooth = true,
+29:       skipNarration = false,
+30:       source = 'unknown',
+31:     } = options;
 ```
 
-- `src/orchestration/navigation/narrativeNavigation.js:115`
+- `src/theater/UnifiedNavigationAPI.js:37`
 
 ```text
-113:     .navigateToStage(nextStageName, {
-114:       smooth: true,
-115:       skipNarration: false,
-116:       source: 'narrative_navigation_next',
-117:     })
+35:       source,
+36:       smooth,
+37:       skipNarration,
+38:       method: 'ORCHESTRATED',
+39:     });
 ```
 
-- `src/orchestration/navigation/narrativeNavigation.js:137`
+- `src/theater/UnifiedNavigationAPI.js:62`
 
 ```text
-135:     .navigateToStage(prevStageName, {
-136:       smooth: true,
-137:       skipNarration: false,
-138:       source: 'narrative_navigation_prev',
-139:     })
+60: 
+61:     // Skip narration if requested
+62:     if (skipNarration && window.narrationController?.skipNarration) {
+63:       window.narrationController.skipNarration();
+64:     }
 ```
 
-- `src/theater/UnifiedNavigationAPI.js:32`
+- `src/theater/UnifiedNavigationAPI.js:63`
 
 ```text
-30:     const {
-31:       smooth = true,
-32:       skipNarration = false,
-33:       source = 'unknown',
-34:       settleMs = 450,
-```
-
-- `src/theater/UnifiedNavigationAPI.js:42`
-
-```text
-40:       source,
-41:       smooth,
-42:       skipNarration,
-43:       method: 'ORCHESTRATED',
-44:     });
-```
-
-- `src/theater/UnifiedNavigationAPI.js:67`
-
-```text
+61:     // Skip narration if requested
+62:     if (skipNarration && window.narrationController?.skipNarration) {
+63:       window.narrationController.skipNarration();
+64:     }
 65: 
-66:     // Skip narration if requested
-67:     if (skipNarration && window.narrationController?.skipNarration) {
-68:       window.narrationController.skipNarration();
-69:     }
-```
-
-- `src/theater/UnifiedNavigationAPI.js:68`
-
-```text
-66:     // Skip narration if requested
-67:     if (skipNarration && window.narrationController?.skipNarration) {
-68:       window.narrationController.skipNarration();
-69:     }
-70: 
 ```
 
 - `src/theater/events.js:31`
@@ -2308,14 +3016,24 @@
 
 ## RENDERER
 
-- `src/components/narrative/NarrationController.jsx:528`
+- `src/components/narrative/NarrationController.jsx:526`
 
 ```text
-526:             effect: particleEffectPayload,
-527:           });
-528:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
-529:             kind: 'particle-effect',
-530:             ...particleEffectPayload,
+524:             effect: particleEffectPayload,
+525:           });
+526:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+527:             kind: 'particle-effect',
+528:             ...particleEffectPayload,
+```
+
+- `src/components/narrative/NarrationController.jsx:544`
+
+```text
+542:             effect: cameraEffectPayload.effect,
+543:           });
+544:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+545:             ...cameraEffectPayload,
+546:             timestamp:
 ```
 
 - `src/components/webgl/WebGLBackground.jsx:3`
@@ -2388,184 +3106,154 @@
 686:     else if (u.uMorph) u.uMorph.value = v;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:783`
+- `src/components/webgl/WebGLBackground.jsx:1128`
 
 ```text
-781:       const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-782:       morphProbeTimer = setInterval(() => {
-783:         if (!uniforms?.uMorphProgress) return;
-784:         const val = Number(uniforms.uMorphProgress.value) || 0;
-785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+1126:         });
+1127:         scheduleRuntimeSampling();
+1128:         if (mat?.uniforms?.uMorphProgress) {
+1129:           mat.uniforms.uMorphProgress.value = 0;
+1130:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:784`
+- `src/components/webgl/WebGLBackground.jsx:1129`
 
 ```text
-782:       morphProbeTimer = setInterval(() => {
-783:         if (!uniforms?.uMorphProgress) return;
-784:         const val = Number(uniforms.uMorphProgress.value) || 0;
-785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-786:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
+1127:         scheduleRuntimeSampling();
+1128:         if (mat?.uniforms?.uMorphProgress) {
+1129:           mat.uniforms.uMorphProgress.value = 0;
+1130:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+1131:           mat.uniformsNeedUpdate = true;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:786`
+- `src/components/webgl/WebGLBackground.jsx:1346`
 
 ```text
-784:         const val = Number(uniforms.uMorphProgress.value) || 0;
-785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-786:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
-787:         if (now - start > 2000) {
-788:           clearInterval(morphProbeTimer);
+1344:         uniforms: {
+1345:           uTime:            { value: 0 },
+1346:           uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },
+1347:           uScrollProgress:  { value: 0 },
+1348:           uStageProgress:   { value: clamp01(fallbackMorphRef.current) },
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1154`
+- `src/components/webgl/WebGLBackground.jsx:1455`
 
 ```text
-1152:         });
-1153:         scheduleRuntimeSampling();
-1154:         if (mat?.uniforms?.uMorphProgress) {
-1155:           mat.uniforms.uMorphProgress.value = 0;
-1156:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+1453:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],
+1454:         hasGeometry: !!geometryRef.current,
+1455:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,
+1456:       }));
+1457: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1155`
+- `src/components/webgl/WebGLBackground.jsx:1576`
 
 ```text
-1153:         scheduleRuntimeSampling();
-1154:         if (mat?.uniforms?.uMorphProgress) {
-1155:           mat.uniforms.uMorphProgress.value = 0;
-1156:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
-1157:           mat.uniformsNeedUpdate = true;
+1574:   }, []);
+1575: 
+1576:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
+1577:   useEffect(() => {
+1578:     if (typeof window !== 'undefined') {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1372`
+- `src/components/webgl/WebGLBackground.jsx:1733`
 
 ```text
-1370:         uniforms: {
-1371:           uTime:            { value: 0 },
-1372:           uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },
-1373:           uScrollProgress:  { value: 0 },
-1374:           uStageProgress:   { value: clamp01(fallbackMorphRef.current) },
+1731: 
+1732:         // Morph progress + fencepost emission
+1733:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
+1734:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+1735:           const newValue = clamp01(directive.morphProgress);
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1484`
+- `src/components/webgl/WebGLBackground.jsx:1734`
 
 ```text
-1482:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],
-1483:         hasGeometry: !!geometryRef.current,
-1484:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,
-1485:       }));
-1486: 
+1732:         // Morph progress + fencepost emission
+1733:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
+1734:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+1735:           const newValue = clamp01(directive.morphProgress);
+1736:           uniforms.uMorphProgress.value = newValue;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1605`
+- `src/components/webgl/WebGLBackground.jsx:1736`
 
 ```text
-1603:   }, []);
-1604: 
-1605:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
-1606:   useEffect(() => {
-1607:     if (typeof window !== 'undefined') {
+1734:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+1735:           const newValue = clamp01(directive.morphProgress);
+1736:           uniforms.uMorphProgress.value = newValue;
+1737:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
+1738:           if (Math.abs(newValue - oldValue) > 0.001) {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1784`
+- `src/components/webgl/WebGLBackground.jsx:1740`
 
 ```text
-1782: 
-1783:         // Morph progress + fencepost emission
-1784:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
-1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-1786:           const newValue = clamp01(directive.morphProgress);
+1738:           if (Math.abs(newValue - oldValue) > 0.001) {
+1739:             console.log(
+1740:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
+1741:             );
+1742:           }
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1785`
+- `src/components/webgl/WebGLBackground.jsx:1761`
 
 ```text
-1783:         // Morph progress + fencepost emission
-1784:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
-1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-1786:           const newValue = clamp01(directive.morphProgress);
-1787:           uniforms.uMorphProgress.value = newValue;
+1759:             queueFencepost(payload);
+1760:           }
+1761:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
+1762:           console.warn('⚠️ uMorphProgress uniform not found on material!');
+1763:         }
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1787`
+- `src/components/webgl/WebGLBackground.jsx:1762`
 
 ```text
-1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-1786:           const newValue = clamp01(directive.morphProgress);
-1787:           uniforms.uMorphProgress.value = newValue;
-1788:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
-1789:           if (Math.abs(newValue - oldValue) > 0.001) {
-```
-
-- `src/components/webgl/WebGLBackground.jsx:1791`
-
-```text
-1789:           if (Math.abs(newValue - oldValue) > 0.001) {
-1790:             console.log(
-1791:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
-1792:             );
-1793:           }
+1760:           }
+1761:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
+1762:           console.warn('⚠️ uMorphProgress uniform not found on material!');
+1763:         }
+1764: 
 ```
 
 - `src/components/webgl/WebGLBackground.jsx:1812`
 
 ```text
-1810:             queueFencepost(payload);
-1811:           }
-1812:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
-1813:           console.warn('⚠️ uMorphProgress uniform not found on material!');
-1814:         }
+1810:     };
+1811: 
+1812:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+1813:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1814:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
 ```
 
 - `src/components/webgl/WebGLBackground.jsx:1813`
 
 ```text
-1811:           }
-1812:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
-1813:           console.warn('⚠️ uMorphProgress uniform not found on material!');
-1814:         }
-1815: 
+1811: 
+1812:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+1813:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1814:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1815:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1863`
+- `src/components/webgl/WebGLBackground.jsx:1814`
 
 ```text
-1861:     };
-1862: 
-1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1812:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+1813:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1814:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1815:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+1816:     if (typeof window !== 'undefined') {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1864`
+- `src/components/webgl/WebGLBackground.jsx:1815`
 
 ```text
-1862: 
-1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
-```
-
-- `src/components/webgl/WebGLBackground.jsx:1865`
-
-```text
-1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
-1867:     if (typeof window !== 'undefined') {
-```
-
-- `src/components/webgl/WebGLBackground.jsx:1866`
-
-```text
-1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
-1867:     if (typeof window !== 'undefined') {
-1868:       window._rendererSubscriptionCheck = () => {
+1813:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1814:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1815:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+1816:     if (typeof window !== 'undefined') {
+1817:       window._rendererSubscriptionCheck = () => {
 ```
 
 - `src/config/canonical/sst-v3.3.json:48`
@@ -2748,34 +3436,34 @@
 17: uniform float uPointSize;
 ```
 
-- `src/shaders/templates/consciousness-vertex.glsl:66`
+- `src/shaders/templates/consciousness-vertex.glsl:64`
 
 ```text
-64:   float mode = getTierMode(tierIndex);
-65:   vec4 params = getTierParams(tierIndex);
-66:   float taper = clamp(1.0 - uMorphProgress, 0.0, 1.0);
-67:   vec3 offset = vec3(0.0);
-68: 
+62:   float mode = getTierMode(tierIndex);
+63:   vec4 params = getTierParams(tierIndex);
+64:   float taper = clamp(1.0 - uMorphProgress, 0.0, 1.0);
+65:   vec3 offset = vec3(0.0);
+66: 
 ```
 
-- `src/shaders/templates/consciousness-vertex.glsl:123`
+- `src/shaders/templates/consciousness-vertex.glsl:119`
 
 ```text
-121:   textPos.y *= uTextFit.y;
-122: 
-123:   float morph = clamp(uMorphProgress, 0.0, 1.0);
-124:   float spread = max(uSpreadFactor, 0.0);
-125:   float morphType = uMorphType;
+117:   textPos.y *= uTextFit.y;
+118: 
+119:   float morph = clamp(uMorphProgress, 0.0, 1.0);
+120:   float spread = max(uSpreadFactor, 0.0);
+121:   float morphType = uMorphType;
 ```
 
-- `src/shaders/templates/consciousness-vertex.glsl:187`
+- `src/shaders/templates/consciousness-vertex.glsl:183`
 
 ```text
-185:   
-186:   // Calculate alpha
-187:   vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
-188:   vTier = tierData;
-189: }
+181:   
+182:   // Calculate alpha
+183:   vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
+184:   vTier = tierData;
+185: }
 ```
 
 - `src/theater/TheaterDirector.js:721`
@@ -2857,4 +3545,5 @@
 24:   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }
 25:   PARTICLE_PHASE: 'PARTICLE_PHASE',              // { name }
 ```
+
 

@@ -33,6 +33,7 @@ import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import NavigationGate from '@/theater/NavigationGate.js';
 
 const clamp01 = (value) => {
   const num = Number.isFinite(value) ? value : Number(value);
@@ -191,8 +192,12 @@ class StateCommands {
     const targetStage = stageInfo?.name || stageInfo?.stage || null;
     if (targetStage) {
       const currentStage = stageAtom.getState?.()?.currentStage;
-      if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
+      const gateActive = typeof NavigationGate?.isInFlight === 'function' && NavigationGate.isInFlight();
+      const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;
+      if (!gateActive || gateTarget === targetStage) {
+        if (currentStage !== targetStage) {
+          stageAtom.jumpToStage(targetStage);
+        }
       }
     }
 

@@ -39,7 +39,7 @@ Total events: 30
 ## BUILD_EMERGENCE_BLUEPRINT
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:210`
+- `src/state/commands/StateCommands.js:215`
 - `src/theater/TheaterDirector.js:765`
 
 **Listeners**:
@@ -92,20 +92,20 @@ Total events: 30
 - `src/theater/TheaterDirector.js:848`
 
 **Listeners**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:226`
-- `src/state/commands/StateCommands.js:66`
+- `src/components/consciousness/ConsciousnessTheater.jsx:227`
+- `src/state/commands/StateCommands.js:67`
 
 ## ENGINE_VIEWPORT_HINT
 
 **Emitters**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:268`
-- `src/components/webgl/WebGLBackground.jsx:598`
+- `src/components/consciousness/ConsciousnessTheater.jsx:269`
+- `src/components/webgl/WebGLBackground.jsx:633`
 - `src/theater/TheaterDirector.js:1113`
 
 **Listeners**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:210`
-- `src/components/consciousness/ConsciousnessTheater.jsx:255`
-- `src/components/consciousness/ConsciousnessTheater.jsx:275`
+- `src/components/consciousness/ConsciousnessTheater.jsx:211`
+- `src/components/consciousness/ConsciousnessTheater.jsx:256`
+- `src/components/consciousness/ConsciousnessTheater.jsx:276`
 - `src/theater/TheaterDirector.js:468`
 - `src/theater/TheaterDirector.js:1133`
 
@@ -120,7 +120,7 @@ Total events: 30
 ## MEMORY_FRAGMENT_END
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:260`
+- `src/state/commands/StateCommands.js:265`
 
 **Listeners**:
 - (none)
@@ -128,7 +128,7 @@ Total events: 30
 ## MEMORY_FRAGMENT_START
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:254`
+- `src/state/commands/StateCommands.js:259`
 
 **Listeners**:
 - (none)
@@ -147,7 +147,7 @@ Total events: 30
 ## PARTICLES_EMERGED
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:273`
+- `src/components/webgl/WebGLBackground.jsx:308`
 
 **Listeners**:
 - (none)
@@ -168,7 +168,7 @@ Total events: 30
 - `src/theater/TheaterDirector.js:737`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1490`
+- `src/components/webgl/WebGLBackground.jsx:1601`
 
 ## PREWARM_COMPLETE
 
@@ -190,7 +190,7 @@ Total events: 30
 
 **Emitters**:
 - `src/state/atoms/qualityAtom.js:198`
-- `src/state/commands/StateCommands.js:150`
+- `src/state/commands/StateCommands.js:151`
 
 **Listeners**:
 - (none)
@@ -229,18 +229,18 @@ Total events: 30
 ## STAGE_CHANGE
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:109`
+- `src/state/commands/StateCommands.js:110`
 - `src/theater/TheaterDirector.js:820`
 
 **Listeners**:
 - `src/state/atoms/qualityAtom.js:155`
 - `src/theater/TheaterDirector.js:128`
-- `src/theater/UnifiedNavigationAPI.js:174`
+- `src/theater/UnifiedNavigationAPI.js:192`
 
 ## STAGE_CHANGED
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:118`
+- `src/state/commands/StateCommands.js:119`
 
 **Listeners**:
 - (none)
@@ -248,7 +248,7 @@ Total events: 30
 ## STAGE_TRANSITION
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:266`
+- `src/state/commands/StateCommands.js:271`
 
 **Listeners**:
 - (none)
@@ -260,7 +260,7 @@ Total events: 30
 - `src/theater/TheaterDirector.js:835`
 
 **Listeners**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:231`
+- `src/components/consciousness/ConsciousnessTheater.jsx:232`
 
 ## TERMINAL_TYPE
 

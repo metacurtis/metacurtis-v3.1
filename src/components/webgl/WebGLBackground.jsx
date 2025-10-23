@@ -127,6 +127,42 @@ const directiveBridgeState = { handler: null };
 
 const clampFit = (v) => Math.min(5.0, Math.max(0.2, v));
 
+function mapBehaviorToMode(behavior) {
+  if (!behavior) return { mode: 0, params: [0.4, 0.8, 1.2, 0.0] };
+  const b = String(behavior).toLowerCase();
+  if (b.includes('drift') || b.includes('perlin')) {
+    return { mode: 0, params: [0.4, 0.8, 1.2, 0.0] };
+  }
+  if (b.includes('grid')) {
+    return { mode: 1, params: [0.15, 0.02, 0.0, 0.0] };
+  }
+  if (b.includes('flow') || b.includes('laminar')) {
+    return { mode: 2, params: [0.6, 0.3, 0.7, 0.0] };
+  }
+  if (b.includes('streak') || b.includes('trail')) {
+    return { mode: 3, params: [1.2, 0.3, 0.0, 0.0] };
+  }
+  if (b.includes('orbit') || b.includes('arm')) {
+    return { mode: 4, params: [0.9, 0.6, 0.2, 0.0] };
+  }
+  return { mode: 0, params: [0.4, 0.8, 1.2, 0.0] };
+}
+
+const hexToRGBArray = (value) => {
+  if (!value) return [1, 1, 1];
+  if (Array.isArray(value) && value.length >= 3) {
+    return [Number(value[0]) || 0, Number(value[1]) || 0, Number(value[2]) || 0].map((c) => Math.max(0, Math.min(1, c)));
+  }
+  if (typeof value === 'object' && value !== null && 'r' in value && 'g' in value && 'b' in value) {
+    return [value.r, value.g, value.b];
+  }
+  const normalized = String(value).replace('#', '').padEnd(6, '0');
+  const r = parseInt(normalized.substring(0, 2), 16) / 255;
+  const g = parseInt(normalized.substring(2, 4), 16) / 255;
+  const b = parseInt(normalized.substring(4, 6), 16) / 255;
+  return [r, g, b];
+};
+
 function computeAABB(geo, key) {
   const attr = geo?.attributes?.[key];
   if (!attr?.array) return null;
@@ -214,7 +250,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     activeMode: 0,
     activeEffects: [],
   });
-  const tierHighlightBaseRef = useRef(null);
 
   const logBind = useCallback((kind, meta = {}) => {
     const geo = geometryRef.current;
@@ -663,6 +698,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (u.uColorNext)    u.uColorNext.value    = next;
     if (u.uColorAccent1) u.uColorAccent1.value = acc1;
     if (u.uColorAccent2) u.uColorAccent2.value = acc2;
+    if (u.uPalette0?.value?.set) u.uPalette0.value.set([current.r, current.g, current.b]);
+    if (u.uPalette1?.value?.set) u.uPalette1.value.set([acc1.r, acc1.g, acc1.b]);
+    if (u.uPalette2?.value?.set) u.uPalette2.value.set([acc2.r, acc2.g, acc2.b]);
+    if (u.uPalette3?.value?.set) u.uPalette3.value.set([next.r, next.g, next.b]);
     mat.uniformsNeedUpdate = true;
   };
 
@@ -690,6 +729,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     assign(u.uColorCurrent, palette[0]);
     assign(u.uColorNext, palette[1] ?? palette[0]);
     assign(u.uColorAccent1, palette[2] ?? palette[0]);
+    if (u.uPalette0?.value?.set) { u.uPalette0.value.set(hexToRGBArray(palette[0])); u.uPalette0.needsUpdate = true; }
+    if (u.uPalette1?.value?.set) { u.uPalette1.value.set(hexToRGBArray(palette[1] ?? palette[0])); u.uPalette1.needsUpdate = true; }
+    if (u.uPalette2?.value?.set) { u.uPalette2.value.set(hexToRGBArray(palette[2] ?? palette[0])); u.uPalette2.needsUpdate = true; }
+    if (u.uPalette3?.value?.set) { u.uPalette3.value.set(hexToRGBArray(palette[3] ?? palette[0])); u.uPalette3.needsUpdate = true; }
     mat.uniformsNeedUpdate = true;
   };
 
@@ -725,6 +768,32 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       emittedEmergedRef.current = false;
     });
     return () => off && off();
+  }, []);
+
+  useEffect(() => {
+    let morphProbeTimer = null;
+    const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, () => {
+      if (morphProbeTimer) {
+        clearInterval(morphProbeTimer);
+        morphProbeTimer = null;
+      }
+      const uniforms = materialRef.current?.uniforms;
+      const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      morphProbeTimer = setInterval(() => {
+        if (!uniforms?.uMorphProgress) return;
+        const val = Number(uniforms.uMorphProgress.value) || 0;
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
+        if (now - start > 2000) {
+          clearInterval(morphProbeTimer);
+          morphProbeTimer = null;
+        }
+      }, 120);
+    });
+    return () => {
+      if (morphProbeTimer) clearInterval(morphProbeTimer);
+      off && off();
+    };
   }, []);
 
   // Raycaster: handle click requests from canvas
@@ -962,6 +1031,45 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
       applyMetadataColors(raw?.metadata?.colors);
+
+      const uniforms = materialRef.current?.uniforms;
+      if (uniforms) {
+        const palette = raw?.metadata?.colors || raw?.colors || null;
+        if (palette) {
+          const fetch = (idx, fallbackIdx = 0) => hexToRGBArray(palette[idx] || palette[fallbackIdx] || palette[palette.length - 1]);
+          uniforms.uPalette0.value = new Float32Array(fetch(0));
+          uniforms.uPalette1.value = new Float32Array(fetch(1, 0));
+          uniforms.uPalette2.value = new Float32Array(fetch(2, 1));
+          uniforms.uPalette3.value = new Float32Array(fetch(3, 0));
+          uniforms.uPalette0.needsUpdate = uniforms.uPalette1.needsUpdate = true;
+          uniforms.uPalette2.needsUpdate = uniforms.uPalette3.needsUpdate = true;
+        }
+
+        const motionBehaviors = raw?.metadata?.motionBehaviors || null;
+        if (motionBehaviors) {
+          const tierDefs = [motionBehaviors.tier0, motionBehaviors.tier1, motionBehaviors.tier2, motionBehaviors.tier3];
+          const modeArray = new Float32Array(4);
+          const paramsArrays = [new Float32Array(4), new Float32Array(4), new Float32Array(4), new Float32Array(4)];
+          tierDefs.forEach((def, index) => {
+            const { mode, params } = mapBehaviorToMode(def?.behavior);
+            modeArray[index] = mode;
+            const src = Array.isArray(params) ? params : [0, 0, 0, 0];
+            paramsArrays[index].set(src.slice(0, 4));
+          });
+          uniforms.uTierMode.value = modeArray;
+          uniforms.uTierParams0.value = paramsArrays[0];
+          uniforms.uTierParams1.value = paramsArrays[1];
+          uniforms.uTierParams2.value = paramsArrays[2];
+          uniforms.uTierParams3.value = paramsArrays[3];
+          uniforms.uTierMode.needsUpdate = true;
+          uniforms.uTierParams0.needsUpdate = uniforms.uTierParams1.needsUpdate = true;
+          uniforms.uTierParams2.needsUpdate = uniforms.uTierParams3.needsUpdate = true;
+        }
+
+        if (uniforms.uTierHighlight) {
+          uniforms.uTierHighlight.value = -1;
+        }
+      }
 
       const stageForLog = raw.stageName || st || 'genesis';
       const nextHotspotMap = raw?.hotspotMap
@@ -1260,45 +1368,56 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       mat = new THREE.ShaderMaterial({
         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },
         uniforms: {
-          uTime: { value: 0 },
-          uMorphProgress:  { value: clamp01(fallbackMorphRef.current) },
-          uScrollProgress: { value: 0 },
-          uStageProgress:  { value: clamp01(fallbackMorphRef.current) },
-          uStageBlend:     { value: 0 },
-          uColorCurrent:   { value: palette.current.clone() },
-          uColorNext:      { value: palette.next.clone() },
-          uColorAccent1:   { value: palette.acc1.clone() },
-          uColorAccent2:   { value: palette.acc2.clone() },
-          uAtlasTexture:   { value: atlasTexture },
-          uTotalSprites:   { value: 16 },
-          uPointSize:      { value: POINT_SIZE_DEFAULT },
-          uDevicePixelRatio: { value: (() => {
+          uTime:            { value: 0 },
+          uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },
+          uScrollProgress:  { value: 0 },
+          uStageProgress:   { value: clamp01(fallbackMorphRef.current) },
+          uStageBlend:      { value: 0 },
+          uAtlasTexture:    { value: atlasTexture },
+          uTotalSprites:    { value: 16 },
+          uPointSize:       { value: POINT_SIZE_DEFAULT },
+          uDevicePixelRatio:{ value: (() => {
             try { return Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); } catch { return 1; }
           })() },
-          uResolution:     { value: new THREE.Vector2(1, 1) },
-          uAtmoFit:        { value: new THREE.Vector2(1, 1) },
-          uTextFit:        { value: new THREE.Vector2(1, 1) },
-          uMoveDampStart:  { value: 0.96 },
-          uMoveDampStartY: { value: 0.9 },
+          uResolution:      { value: new THREE.Vector2(1, 1) },
+          uAtmoFit:         { value: new THREE.Vector2(1, 1) },
+          uTextFit:         { value: new THREE.Vector2(1, 1) },
+          uMoveDampStart:   { value: 0.96 },
+          uMoveDampStartY:  { value: 0.9 },
           uPostMorphFreeze: { value: 0.0 },
-          uActiveCount:    { value: blueprintCount },
-          uTierCutoff:     { value: blueprintCount || 15000 },
-          uFadeProgress:   { value: 1.0 },
-          uGaussianSigma:  { value: 2.5 },
-          uTierHighlight:  { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
-          uBandHeight:     { value: bandHeightRef.current || 0 },
-          uBandFade:       { value: 0 },
+          uActiveCount:     { value: blueprintCount },
+          uTierCutoff:      { value: blueprintCount || 15000 },
+          uFadeProgress:    { value: 1.0 },
+          uGaussianSigma:   { value: 2.5 },
+          uBandHeight:      { value: bandHeightRef.current || 0 },
+          uBandFade:        { value: 0 },
           uGaussianFalloff: { value: Canonical?.features?.gaussianFalloff ?? 1.0 },
           uCenterWeighting: { value: Canonical?.features?.centerWeightingTier4 ?? 1.0 },
-          uStageIndex:     { value: stageIndex },
-          uBrainRegion:    { value: stageIndex },
-          uSpreadFactor:   { value: 1.0 },
-          uMorphType:      { value: MORPH_TYPE_ENUM.steady },
-          uMotionMode:     { value: 0 },
-          uMotionParams:   { value: new THREE.Vector3(1.0, 0.3, 0.5) },
-          uGridSpacing:    { value: new THREE.Vector2(2.0, 2.0) },
-          uFlowTurbulence: { value: 0.1 },
-          uStreakIntensity:{ value: 1.0 },
+          uStageIndex:      { value: stageIndex },
+          uBrainRegion:     { value: stageIndex },
+          uSpreadFactor:    { value: 1.0 },
+          uMorphType:       { value: MORPH_TYPE_ENUM.steady },
+          // Legacy color uniforms (kept for compatibility)
+          uColorCurrent:    { value: palette.current.clone() },
+          uColorNext:       { value: palette.next.clone() },
+          uColorAccent1:    { value: palette.acc1.clone() },
+          uColorAccent2:    { value: palette.acc2.clone() },
+          // Tier motion interface
+          uTierMode:        { value: new Float32Array([0, 0, 0, 0]) },
+          uTierParams0:     { value: new Float32Array([0, 0, 0, 0]) },
+          uTierParams1:     { value: new Float32Array([0, 0, 0, 0]) },
+          uTierParams2:     { value: new Float32Array([0, 0, 0, 0]) },
+          uTierParams3:     { value: new Float32Array([0, 0, 0, 0]) },
+          // Stage palette (per tier)
+          uPalette0:        { value: new Float32Array([palette.current.r, palette.current.g, palette.current.b]) },
+          uPalette1:        { value: new Float32Array([palette.acc1.r, palette.acc1.g, palette.acc1.b]) },
+          uPalette2:        { value: new Float32Array([palette.acc2.r, palette.acc2.g, palette.acc2.b]) },
+          uPalette3:        { value: new Float32Array([palette.next.r, palette.next.g, palette.next.b]) },
+          uTierHighlight:   { value: -1 },
+          uGridSpacing:     { value: new Float32Array([0.5, 0.5]) },
+          uFlowTurbulence:  { value: 0.0 },
+          uStreakIntensity:{ value: 0.0 },
+          uMotionParams:   { value: new Float32Array([0, 0, 0, 0]) },
         },
         vertexShader: vertexShaderSource,
         fragmentShader: fragmentShaderSource,
@@ -1313,11 +1432,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const uniforms = mat.uniforms || {};
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
-    if (!uniforms.uMotionMode) uniforms.uMotionMode = { value: 0 };
-    if (!uniforms.uMotionParams) uniforms.uMotionParams = { value: new THREE.Vector3(1.0, 0.3, 0.5) };
-    if (!uniforms.uGridSpacing) uniforms.uGridSpacing = { value: new THREE.Vector2(2.0, 2.0) };
-    if (!uniforms.uFlowTurbulence) uniforms.uFlowTurbulence = { value: 0.1 };
-    if (!uniforms.uStreakIntensity) uniforms.uStreakIntensity = { value: 1.0 };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
@@ -1346,9 +1460,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     if (uniforms.uActiveCount) uniforms.uActiveCount.value = blueprintCount;
     if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = blueprintCount || 15000;
-    if (uniforms.uTierHighlight?.value && (!tierHighlightBaseRef.current || tierHighlightBaseRef.current.length !== uniforms.uTierHighlight.value.length)) {
-      tierHighlightBaseRef.current = Float32Array.from(uniforms.uTierHighlight.value);
-    }
 
     mat.uniformsNeedUpdate = true;
 
@@ -1540,173 +1651,98 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
       });
 
-      if (directive.kind === 'particle-effect' && directive.effect) {
-        console.log('[Renderer] 🎨 Processing particle effect:', {
+      if (directive.kind === 'particle-effect') {
+        const effect = directive.effect || {};
+        console.log('[Renderer] 🎨 Particle effect:', {
           verb: directive.verb,
-          effect: directive.effect,
           stage: directive.stage || currentStage,
+          keys: Object.keys(effect),
         });
 
-        const effect = directive.effect;
-        const effectParams = effect.parameters || {};
-
-        if (typeof effectParams.speed !== 'undefined') {
-          const speedFactor = Number(effectParams.speed) || 1.0;
-          particleEffectStateRef.current.speedMultiplier = speedFactor;
-          console.log(`[Renderer] ✅ speedMultiplier set to ${speedFactor}`);
+        if (typeof window !== 'undefined') {
+          window.__particleEffectState = { effect, directive, timestamp: performance.now() };
         }
 
-        if (typeof effectParams.trailLength !== 'undefined') {
-          console.log(
-            `[Renderer] Trail effect requested (length=${effectParams.trailLength}, fade=${effectParams.fadeSpeed})`
-          );
+        if (Number.isFinite(effect.spreadFactor) && uniforms.uSpreadFactor) {
+          uniforms.uSpreadFactor.value = Number(effect.spreadFactor);
         }
 
-        if (typeof effectParams.spreadFactor !== 'undefined' && uniforms.uSpreadFactor) {
-          uniforms.uSpreadFactor.value = Number(effectParams.spreadFactor);
-          mat.uniformsNeedUpdate = true;
-          console.log(`[Renderer] ✅ Applied spreadFactor: ${effectParams.spreadFactor}`);
-        }
-
-        const effectKey = (effect.type || '').toLowerCase();
-        const verbKey = (directive.verb || '').toLowerCase();
-        const orbitalParts = ['orbital', 'micro'];
-        const modeLookup = {
-          default: 0,
-          drift: 0,
-          gentle_drift: 0,
-          'particles_accelerate': 0,
-          acceleration: 0,
-          'grid': 1,
-          'grid_drift': 1,
-          'structure': 1,
-          'particles_begin_columns': 1,
-          'column': 1,
-          'column_orbit': 4,
-          'orbit': 4,
-          [orbitalParts.join('_')]: 4,
-          'neural_flow': 2,
-          'flow': 2,
-          'laminar_flow': 2,
-          'storm_medium': 2,
-          'velocity_peak': 2,
-          'streak': 3,
-          'streak_trails_form': 3,
-          'trail': 3,
-          'hyperdriveburst': 3,
+        const applyTierArray = (uniformName, values) => {
+          const target = uniforms[uniformName];
+          if (!target || !Array.isArray(values)) return;
+          const baseLength = Array.isArray(target.value) || target.value instanceof Float32Array
+            ? target.value.length
+            : values.length;
+          const next = new Float32Array(baseLength);
+          next.set(values.slice(0, baseLength).map((v) => Number(v) || 0));
+          target.value = next;
+          target.needsUpdate = true;
         };
-        const modeValue = modeLookup[effectKey] ?? modeLookup[verbKey] ?? 0;
-        if (uniforms.uMotionMode) {
-          uniforms.uMotionMode.value = modeValue;
-          mat.uniformsNeedUpdate = true;
-          console.log(`[Renderer] ✅ Motion mode set to: ${effect.type || directive.verb || 'default'} (${modeValue})`);
-          particleEffectStateRef.current.activeMode = modeValue;
+
+        if (Array.isArray(effect.tierModes)) {
+          applyTierArray('uTierMode', effect.tierModes);
         }
 
-        if (uniforms.uMotionParams?.value) {
-          const paramsVec = uniforms.uMotionParams.value;
-          let paramsChanged = false;
-          if (typeof effectParams.speed !== 'undefined') {
-            paramsVec.x = Number(effectParams.speed);
-            paramsChanged = true;
-          }
-          if (typeof effectParams.amplitude !== 'undefined') {
-            paramsVec.y = Number(effectParams.amplitude);
-            paramsChanged = true;
-          }
-          if (typeof effectParams.frequency !== 'undefined') {
-            paramsVec.z = Number(effectParams.frequency);
-            paramsChanged = true;
-          }
-          if (paramsChanged) {
-            mat.uniformsNeedUpdate = true;
-            console.log('[Renderer] ✅ Motion params:', paramsVec);
-            particleEffectStateRef.current.motionParams = { x: paramsVec.x, y: paramsVec.y, z: paramsVec.z };
-          }
+        if (Array.isArray(effect.tierParams)) {
+          const sets = effect.tierParams;
+          [['uTierParams0', 0], ['uTierParams1', 1], ['uTierParams2', 2], ['uTierParams3', 3]].forEach(([name, idx]) => {
+            if (Array.isArray(sets[idx])) applyTierArray(name, sets[idx]);
+          });
         }
 
-        if ((modeValue == 1 || effectParams.gridSize !== undefined) && uniforms.uGridSpacing?.value) {
-          const spacingVal = effectParams.gridSize;
-          if (Array.isArray(spacingVal) && spacingVal.length >= 2) {
-            uniforms.uGridSpacing.value.set(Number(spacingVal[0]), Number(spacingVal[1]));
-            mat.uniformsNeedUpdate = true;
-            particleEffectStateRef.current.gridSpacing = { x: Number(spacingVal[0]), y: Number(spacingVal[1]) };
-          } else if (typeof spacingVal === 'number') {
-            uniforms.uGridSpacing.value.set(spacingVal, spacingVal);
-            mat.uniformsNeedUpdate = true;
-            particleEffectStateRef.current.gridSpacing = { x: spacingVal, y: spacingVal };
-          }
+        if (effect.tierHighlight !== undefined && uniforms.uTierHighlight) {
+          uniforms.uTierHighlight.value = Number(effect.tierHighlight);
         }
 
-        if (modeValue == 2 && uniforms.uFlowTurbulence) {
-          if (typeof effectParams.turbulence !== 'undefined') {
-            uniforms.uFlowTurbulence.value = Number(effectParams.turbulence);
-            mat.uniformsNeedUpdate = true;
-            particleEffectStateRef.current.turbulence = uniforms.uFlowTurbulence.value;
-          }
+        if (effect.gridSize !== undefined && uniforms.uGridSpacing) {
+          const val = effect.gridSize;
+          const next = Array.isArray(val)
+            ? new Float32Array([Number(val[0]) || 0.35, Number(val[1]) || 0.35])
+            : new Float32Array([Number(val) || 0.35, Number(val) || 0.35]);
+          uniforms.uGridSpacing.value = next;
+          uniforms.uGridSpacing.needsUpdate = true;
         }
 
-        if (modeValue == 3 && uniforms.uStreakIntensity) {
-          if (typeof effectParams.intensity !== 'undefined') {
-            uniforms.uStreakIntensity.value = Number(effectParams.intensity);
-            mat.uniformsNeedUpdate = true;
-            particleEffectStateRef.current.streakIntensity = uniforms.uStreakIntensity.value;
-          }
+        if (Number.isFinite(effect.uFlowTurbulence) && uniforms.uFlowTurbulence) {
+          uniforms.uFlowTurbulence.value = Number(effect.uFlowTurbulence);
+          uniforms.uFlowTurbulence.needsUpdate = true;
         }
 
-        if (Array.isArray(effect.tiers) && uniforms.uTierHighlight?.value instanceof Float32Array) {
-          const arr = uniforms.uTierHighlight.value;
-          if (!tierHighlightBaseRef.current || tierHighlightBaseRef.current.length !== arr.length) {
-            tierHighlightBaseRef.current = Float32Array.from(arr);
-          }
-          const base = tierHighlightBaseRef.current;
-          const highlightValue = effectParams.tierIntensity !== undefined ? Number(effectParams.tierIntensity) : 2.0;
-          for (let i = 0; i < arr.length; i += 1) {
-            arr[i] = effect.tiers.includes(i) ? highlightValue : base?.[i] ?? arr[i];
-          }
-          mat.uniformsNeedUpdate = true;
-          console.log('[Renderer] ✅ Applied tier highlight mask', effect.tiers);
-
-          if (typeof effect.duration === 'number' && effect.duration > 0) {
-            const expiresAt = Date.now() + effect.duration;
-            particleEffectStateRef.current.activeEffects.push({
-              verb: directive.verb || effect.type || 'unknown',
-              expiresAt,
-            });
-            setTimeout(() => {
-              const currentMat = materialRef.current;
-              if (currentMat?.uniforms?.uTierHighlight?.value && tierHighlightBaseRef.current) {
-                const highlight = currentMat.uniforms.uTierHighlight.value;
-                const baseVals = tierHighlightBaseRef.current;
-                for (let i = 0; i < highlight.length; i += 1) {
-                  highlight[i] = baseVals[i] ?? highlight[i];
-                }
-                currentMat.uniformsNeedUpdate = true;
-                console.log('[Renderer] 🕐 Effect duration expired, tier highlight restored');
-              }
-              particleEffectStateRef.current.activeEffects = particleEffectStateRef.current.activeEffects.filter(
-                (entry) => entry.expiresAt !== expiresAt
-              );
-            }, effect.duration);
-          }
-        } else if (Array.isArray(effect.tiers)) {
-          console.warn('[Renderer] ⚠️ Tier highlight uniform missing; cannot apply tier mask');
+        if (Number.isFinite(effect.uStreakIntensity) && uniforms.uStreakIntensity) {
+          uniforms.uStreakIntensity.value = Number(effect.uStreakIntensity);
+          uniforms.uStreakIntensity.needsUpdate = true;
         }
 
-        const handledTypes = new Set([
-          'acceleration',
-          'convergence',
-          'highlight',
-          'grid_drift',
-          'neural_flow',
-          'flow',
-          'streak',
-          'orbit',
-          'drift',
-        ]);
-        if (effect.type && !handledTypes.has(effect.type)) {
-          console.warn(`[Renderer] ⚠️ Effect type "${effect.type}" not yet implemented`);
+        if (Number.isFinite(effect.uSpreadFactor) && uniforms.uSpreadFactor) {
+          uniforms.uSpreadFactor.value = Number(effect.uSpreadFactor);
+          uniforms.uSpreadFactor.needsUpdate = true;
         }
+
+        if (Array.isArray(effect.uMotionParams) && uniforms.uMotionParams) {
+          const arr = uniforms.uMotionParams.value;
+          const src = effect.uMotionParams;
+          for (let i = 0; i < Math.min(arr.length || 0, src.length); i += 1) {
+            arr[i] = Number(src[i]) || 0;
+          }
+          uniforms.uMotionParams.needsUpdate = true;
+        }
+
+        if (Array.isArray(effect.paletteOverride)) {
+          const pal = effect.paletteOverride;
+          const assign = (uniformName, idx, fallbackIdx = 0) => {
+            const uniform = uniforms[uniformName];
+            if (!uniform) return;
+            const rgb = hexToRGBArray(pal[idx] || pal[fallbackIdx] || pal[pal.length - 1]);
+            uniform.value.set(rgb);
+            uniform.needsUpdate = true;
+          };
+          assign('uPalette0', 0);
+          assign('uPalette1', 1, 0);
+          assign('uPalette2', 2, 1);
+          assign('uPalette3', 3, 0);
+        }
+
+        mat.uniformsNeedUpdate = true;
       }
 
       if (directive.kind === 'camera-effect' && directive.effect) {
@@ -1793,11 +1829,22 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uniforms.uPostMorphFreeze.value = directive.postMorphFreeze ? 1.0 : 0.0;
           mat.uniformsNeedUpdate = true;
         }
-        if (Array.isArray(directive?.tierHighlight) && uniforms.uTierHighlight?.value) {
-          const arr = uniforms.uTierHighlight.value;
-          for (let i = 0; i < Math.min(arr.length, directive.tierHighlight.length); i += 1) {
-            arr[i] = directive.tierHighlight[i];
+        if (Number.isFinite(directive?.uMotionMode) && uniforms.uTierMode) {
+          const m = directive.uMotionMode | 0;
+          uniforms.uTierMode.value = new Float32Array([m, m, m, m]);
+          uniforms.uTierMode.needsUpdate = true;
+          if (m === 1 && uniforms.uGridSpacing) {
+            const sx = Number.isFinite(directive?.gridX) ? Number(directive.gridX) : 0.35;
+            const sy = Number.isFinite(directive?.gridY) ? Number(directive.gridY) : 0.35;
+            uniforms.uGridSpacing.value = new Float32Array([sx, sy]);
+            uniforms.uGridSpacing.needsUpdate = true;
           }
+        }
+        if (directive?.tierHighlight !== undefined && uniforms.uTierHighlight) {
+          const highlightValue = Array.isArray(directive.tierHighlight)
+            ? Number(directive.tierHighlight[0])
+            : Number(directive.tierHighlight);
+          uniforms.uTierHighlight.value = Number.isFinite(highlightValue) ? highlightValue : -1;
         }
         if (directive?.uniforms && typeof directive.uniforms === 'object') {
           for (const key in directive.uniforms) {

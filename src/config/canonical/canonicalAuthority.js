@@ -1,5 +1,6 @@
 // CANONICAL AUTHORITY — SST v3.5 (Unified Single Source)
 import sstRaw from '../sst-loader.js';
+import { PARTICLE_EFFECTS as OVERRIDE_PARTICLE_EFFECTS, CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS } from './visualEffects.js';
 
 /** Deep-freeze utility (keeps Canonical read-only) */
 function deepFreeze(obj) {
@@ -87,6 +88,14 @@ function buildCanonical(source) {
   };
 
   const visualEffects = clone(sst.visualEffects || {});
+  visualEffects.particleEffects = {
+    ...(visualEffects.particleEffects || {}),
+    ...(OVERRIDE_PARTICLE_EFFECTS || {}),
+  };
+  visualEffects.cameraEffects = {
+    ...(visualEffects.cameraEffects || {}),
+    ...(OVERRIDE_CAMERA_EFFECTS || {}),
+  };
 
   const getVisualEffect = (visualVerb, type = 'particle') => {
     if (!visualVerb || visualVerb === 'no_change') return null;

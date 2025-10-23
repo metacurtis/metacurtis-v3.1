@@ -28,14 +28,23 @@ export async function createPointsMaterial({
     vertexShader,
     fragmentShader,
     uniforms: {
-      uPointSize: { value: 48.0 },
+      uPointSize:     { value: 48.0 },
       uDevicePixelRatio: { value: Math.min(2.5, window.devicePixelRatio || 1) },
-      uTierHighlight: { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
-      uMotionMode: { value: 0 },
-      uMotionParams: { value: new THREE.Vector3(1.0, 0.3, 0.5) },
-      uGridSpacing: { value: new THREE.Vector2(2.0, 2.0) },
-      uFlowTurbulence: { value: 0.1 },
-      uStreakIntensity: { value: 1.0 },
+      uTierMode:       { value: new Float32Array([0, 0, 0, 0]) },
+      uTierParams0:    { value: new Float32Array([0, 0, 0, 0]) },
+      uTierParams1:    { value: new Float32Array([0, 0, 0, 0]) },
+      uTierParams2:    { value: new Float32Array([0, 0, 0, 0]) },
+      uTierParams3:    { value: new Float32Array([0, 0, 0, 0]) },
+      uPalette0:       { value: new Float32Array([1, 1, 1]) },
+      uPalette1:       { value: new Float32Array([1, 1, 1]) },
+      uPalette2:       { value: new Float32Array([1, 1, 1]) },
+      uPalette3:       { value: new Float32Array([1, 1, 1]) },
+      uTierHighlight:  { value: -1 },
+      uGridSpacing:    { value: new Float32Array([0.5, 0.5]) },
+      uFlowTurbulence: { value: 0.0 },
+      uStreakIntensity:{ value: 0.0 },
+      uMotionParams:   { value: new Float32Array([0, 0, 0, 0]) },
+      uSpreadFactor:   { value: 0.0 },
       ...uniforms,
     },
     defines: {
@@ -52,11 +61,6 @@ export async function createPointsMaterial({
   const maxPS = Number(profile.maxPointSize || 64);
   if (mat.uniforms.uPointSize && typeof mat.uniforms.uPointSize.value === 'number') {
     mat.uniforms.uPointSize.value = Math.min(mat.uniforms.uPointSize.value, maxPS);
-  }
-
-  // Ensure typed arrays for legacy GL1 (tier highlight)
-  if (mat.uniforms.uTierHighlight && !(mat.uniforms.uTierHighlight.value instanceof Float32Array)) {
-    mat.uniforms.uTierHighlight.value = new Float32Array(mat.uniforms.uTierHighlight.value);
   }
 
   return { material: mat, profile };

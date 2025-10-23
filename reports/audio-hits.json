@@ -93,13 +93,13 @@
   "unlocks": [
     {
       "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-      "line": 475,
-      "context": "473:     };\n474: \n475:     window.addEventListener('keydown', handleKey);\n476:     return () => window.removeEventListener('keydown', handleKey);\n477:   }, [isInitialized]);"
+      "line": 492,
+      "context": "490:     };\n491: \n492:     window.addEventListener('keydown', handleKey);\n493:     return () => window.removeEventListener('keydown', handleKey);\n494:   }, [isInitialized]);"
     },
     {
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 900,
-      "context": "898:     };\n899: \n900:     window.addEventListener('keydown', keyHandler);\n901: \n902:     return () => {"
+      "line": 938,
+      "context": "936:     };\n937: \n938:     window.addEventListener('keydown', keyHandler);\n939: \n940:     return () => {"
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",

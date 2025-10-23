@@ -27,9 +27,12 @@ uniform float uMoveDampStartY;
 uniform float uPostMorphFreeze;
 uniform float uSpreadFactor;
 uniform float uMorphType;
-uniform float uMotionMode;
-uniform vec3 uMotionParams;
-uniform vec2 uGridSpacing;
+uniform float uTierMode[4];
+uniform vec4  uTierParams0;
+uniform vec4  uTierParams1;
+uniform vec4  uTierParams2;
+uniform vec4  uTierParams3;
+uniform vec2  uGridSpacing;
 uniform float uFlowTurbulence;
 uniform float uStreakIntensity;
 
@@ -39,69 +42,62 @@ varying float vBlend;
 varying float vAlpha;
 varying vec2 vAtlasUVOffset;
 varying float vTierID;
+varying float vTier;
 varying float vSizeMultiplier;
 varying float vParticleIndex;
 
 const float PI = 3.14159265359;
 const float TWO_PI = 6.28318530718;
 
-vec3 generateMovement(vec3 basePos, vec3 seeds, float morphProgress, float tier) {
-  vec3 movement = vec3(0.0);
-  float tierPhase = tier * 0.5 + seeds.x * TWO_PI;
-  vec3 params = uMotionParams;
-  int mode = int(floor(uMotionMode + 0.5));
+vec4 getTierParams(int t) {
+  if (t == 0) return uTierParams0;
+  if (t == 1) return uTierParams1;
+  if (t == 2) return uTierParams2;
+  return uTierParams3;
+}
 
-  if (mode == 0) {
+float getTierMode(int t) {
+  return (t >= 0 && t < 4) ? uTierMode[t] : 0.0;
+}
+
+vec3 applyTierMovement(vec3 basePos, int tierIndex) {
+  float mode = getTierMode(tierIndex);
+  vec4 params = getTierParams(tierIndex);
+  float taper = clamp(1.0 - uMorphProgress, 0.0, 1.0);
+  vec3 offset = vec3(0.0);
+
+  if (mode < 0.5) {
     float speed = max(0.1, params.x);
-    float amplitude = max(0.05, params.y);
-    float frequency = max(0.1, params.z);
-    movement = vec3(
-      sin(uTime * 0.5 * speed + tierPhase) * amplitude,
-      cos(uTime * 0.3 * speed + tierPhase) * amplitude,
-      sin(uTime * 0.4 * speed + tierPhase) * amplitude * 0.5
-    );
-  } else if (mode == 1) {
-    vec2 spacing = max(abs(uGridSpacing), vec2(0.1));
-    vec2 gridPos = floor(basePos.xy / spacing) * spacing;
-    float wobble = params.y != 0.0 ? params.y : 0.2;
-    movement = vec3(
-      (gridPos.x - basePos.x) * 0.2 + sin(uTime * 0.2 + tierPhase) * wobble,
-      (gridPos.y - basePos.y) * 0.2 + cos(uTime * 0.18 + tierPhase * 0.9) * wobble,
-      sin(uTime * 0.15 + seeds.z * TWO_PI) * wobble * 0.5
-    );
-  } else if (mode == 2) {
-    float flowSpeed = max(0.05, params.x);
     float amplitude = params.y;
-    float turbulence = max(0.0, uFlowTurbulence);
-    vec2 flowDir = normalize(vec2(cos(params.z + tierPhase * 0.1), sin(params.z + seeds.y)));
-    movement = vec3(
-      flowDir.x * flowSpeed * (1.0 + sin(uTime * 0.6 + tierPhase) * turbulence),
-      flowDir.y * flowSpeed * (1.0 + cos(uTime * 0.5 + seeds.y * TWO_PI) * turbulence),
-      sin(uTime * 0.4 + basePos.x * 0.1 + seeds.z * TWO_PI) * amplitude * 0.3
+    float freq = max(0.1, params.z);
+    float signal = sin(dot(basePos.xy, vec2(freq)) + uTime * speed);
+    offset = vec3(signal, -signal, 0.0) * amplitude;
+  } else if (mode < 1.5) {
+    float sx = max(uGridSpacing.x, 1e-4);
+    float sy = max(uGridSpacing.y, 1e-4);
+    vec2 snapped = vec2(
+      floor(basePos.x / sx + 0.5) * sx,
+      floor(basePos.y / sy + 0.5) * sy
     );
-  } else if (mode == 3) {
-    float streakSpeed = uStreakIntensity * max(0.1, params.x);
-    float verticalAmp = params.y != 0.0 ? params.y : 0.2;
-    float lag = clamp(tier * 0.05 + seeds.x * 0.02, 0.0, 0.9);
-    movement = vec3(
-      streakSpeed * (1.0 - lag),
-      sin(uTime * 2.0 + tierPhase) * verticalAmp,
-      0.0
-    );
-  } else if (mode == 4) {
-    float orbitSpeed = max(0.05, params.x);
-    float orbitRadius = max(0.05, params.y);
-    float flatten = params.z != 0.0 ? params.z : 0.7;
-    float angle = uTime * orbitSpeed + tierPhase * 3.14159;
-    movement = vec3(
-      cos(angle) * orbitRadius,
-      sin(angle) * orbitRadius * flatten,
-      sin(angle * 2.0 + seeds.z * TWO_PI) * orbitRadius * 0.3
-    );
+    vec2 wob = vec2(sin(uTime * 6.28318) * params.x, cos(uTime * 3.14159) * params.x);
+    offset = vec3(snapped.x - basePos.x + wob.x, snapped.y - basePos.y + wob.y, 0.0);
+  } else if (mode < 2.5) {
+    vec2 dir = normalize(vec2(0.7, 0.3));
+    float turbulence = clamp(uFlowTurbulence, 0.0, 2.0);
+    offset = vec3(dir, 0.0) * params.x * (1.0 + turbulence) + vec3(0.0, sin(uTime * 1.5) * params.y * (1.0 + turbulence), 0.0);
+  } else if (mode < 3.5) {
+    float streak = max(0.0, uStreakIntensity + params.x);
+    offset = vec3(streak * 0.3, sin(uTime * 3.0) * (params.y + uStreakIntensity * 0.2), 0.0);
+  } else {
+    float radius = max(0.05, params.y);
+    float speed = max(0.05, params.x);
+    float flatten = clamp(1.0 - params.z, 0.2, 1.0);
+    float angle = uTime * speed + basePos.x * 0.25;
+    vec2 orbit = vec2(cos(angle) * radius, sin(angle) * radius * flatten);
+    offset = vec3(orbit, 0.0);
   }
 
-  movement *= (1.0 - morphProgress * 0.8);
-  return movement;
+  return basePos + offset * taper;
 }
 
 void main() {
@@ -142,9 +138,11 @@ void main() {
   }
 
   vec3 basePos = mix(atmoPos, textPos, morph);
+  int tierIndex = int(clamp(floor(tierData + 0.5), 0.0, 3.0));
+  vec3 tierAdjusted = applyTierMovement(basePos, tierIndex);
   
   // Add movement
-  vec3 movement = generateMovement(basePos, animationSeed, morph, tierData);
+  vec3 movement = tierAdjusted - basePos;
 
   float freeze = (uPostMorphFreeze > 0.5) ? 0.0 : 1.0;
   float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morph);
@@ -187,4 +185,5 @@ void main() {
   
   // Calculate alpha
   vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
+  vTier = tierData;
 }

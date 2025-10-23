@@ -5,6 +5,7 @@ import stageAtom from '@/state/atoms/stageAtom.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import unifiedNav from '@/theater/UnifiedNavigationAPI.js';
 
 const getStageNames = () => {
   const names = stageAtom.getStageNames?.();
@@ -12,23 +13,6 @@ const getStageNames = () => {
   const canonicalOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
   if (canonicalOrder.length) return canonicalOrder;
   return Object.keys(Canonical?.stages || {});
-};
-
-const syncScrollToStage = (stageIndex, { smooth = true } = {}) => {
-  if (typeof window === 'undefined') return;
-  const stageNames = getStageNames();
-  const totalStages = Math.max(stageNames.length - 1, 1);
-  const percent = totalStages > 0 ? stageIndex / totalStages : 0;
-  const doc = document.body;
-  const maxScroll =
-    Math.max((doc?.scrollHeight || 0) - (window.innerHeight || 0), 0);
-
-  if (maxScroll <= 0) return;
-
-  window.scrollTo({
-    top: percent * maxScroll,
-    behavior: smooth ? 'smooth' : 'auto',
-  });
 };
 
 const emitStartNarrative = (stageName) => {
@@ -51,9 +35,18 @@ const jumpToStage = (stageName, options = {}) => {
   const currentStage = stageAtom.getState().currentStage;
   if (currentStage === stageName) return true;
 
-  stageAtom.jumpToStage(stageName);
-  syncScrollToStage(targetIndex, { smooth });
-  if (emitNarration) emitStartNarrative(stageName);
+  unifiedNav
+    .navigateToStage(stageName, {
+      smooth,
+      skipNarration: !emitNarration,
+      source: 'narrative_navigation',
+    })
+    .then(() => {
+      if (emitNarration) emitStartNarrative(stageName);
+    })
+    .catch((error) => {
+      console.warn('[narrativeNavigation] navigateToStage failed', { stageName, error });
+    });
   return true;
 };
 
@@ -116,9 +109,16 @@ const nextStage = () => {
 
   if (!nextStageName || nextStageName === info.currentStage) return false;
 
-  stageAtom.nextStage();
-  syncScrollToStage(nextIndex, { smooth: true });
-  emitStartNarrative(nextStageName);
+  unifiedNav
+    .navigateToStage(nextStageName, {
+      smooth: true,
+      skipNarration: false,
+      source: 'narrative_navigation_next',
+    })
+    .then(() => emitStartNarrative(nextStageName))
+    .catch((error) => {
+      console.warn('[narrativeNavigation] nextStage navigate failed', { nextStageName, error });
+    });
   return true;
 };
 
@@ -131,9 +131,16 @@ const prevStage = () => {
 
   if (!prevStageName || prevStageName === info.currentStage) return false;
 
-  stageAtom.prevStage();
-  syncScrollToStage(prevIndex, { smooth: true });
-  emitStartNarrative(prevStageName);
+  unifiedNav
+    .navigateToStage(prevStageName, {
+      smooth: true,
+      skipNarration: false,
+      source: 'narrative_navigation_prev',
+    })
+    .then(() => emitStartNarrative(prevStageName))
+    .catch((error) => {
+      console.warn('[narrativeNavigation] prevStage navigate failed', { prevStageName, error });
+    });
   return true;
 };
 

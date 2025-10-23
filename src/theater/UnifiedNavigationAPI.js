@@ -10,6 +10,9 @@
  */
 
 import BeatBus from '@/theater/bus';
+import NavigationGate from '@/theater/NavigationGate.js';
+import { stageAtom } from '@/state/atoms';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 class UnifiedNavigationAPI {
   constructor() {
@@ -23,11 +26,13 @@ class UnifiedNavigationAPI {
    * Navigate to specific stage by slug
    * Triggers full orchestration via scroll
    */
-  navigateToStage(targetStage, options = {}) {
+  async navigateToStage(targetStage, options = {}) {
     const {
       smooth = true,
       skipNarration = false,
       source = 'unknown',
+      settleMs = 450,
+      releaseDelayMs = 150,
     } = options;
 
     console.log('🎯 [UNIFIED NAV] navigateToStage', {
@@ -38,14 +43,14 @@ class UnifiedNavigationAPI {
       method: 'ORCHESTRATED',
     });
 
-    // Get stage index from SST
-    const stages = window.SST?.stages || window.Canonical?.stages;
-    if (!stages) {
-      console.error('🚨 [UNIFIED NAV] SST not available');
-      return false;
-    }
-
-    const stageOrder = Object.keys(stages);
+    const fallbackStages =
+      typeof window !== 'undefined'
+        ? window.SST?.stages || window.Canonical?.stages || {}
+        : {};
+    const stageOrder =
+      Array.isArray(Canonical?.stageOrder) && Canonical.stageOrder.length
+        ? Canonical.stageOrder
+        : Object.keys(fallbackStages);
     const stageCount = stageOrder.length;
     const targetIndex = stageOrder.indexOf(targetStage);
 
@@ -66,7 +71,11 @@ class UnifiedNavigationAPI {
     // DIAGNOSTIC: Check if scroll is possible
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       console.warn('🚨 [UNIFIED NAV] Window or document unavailable');
-      return false;
+      const currentStage = stageAtom.getState?.()?.currentStage;
+      if (currentStage !== targetStage) {
+        stageAtom.jumpToStage(targetStage);
+      }
+      return true;
     }
 
     const documentHeight = document.body?.scrollHeight ?? 0;
@@ -84,40 +93,49 @@ class UnifiedNavigationAPI {
     });
 
     // Check if document is scrollable
-    if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {
-      console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
+    NavigationGate.start(targetStage, source);
+    let finalReason = 'committed';
 
-      if (window.stageControls?.jumpToStage) {
-        window.stageControls.jumpToStage(targetStage);
-        console.log('🎯 [UNIFIED NAV] Used fallback stage jump');
-      } else {
-        console.warn('🚨 [UNIFIED NAV] Fallback stageControls.jumpToStage unavailable');
+    try {
+      if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {
+        console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
+        if (window.stageControls?.jumpToStage) {
+          window.stageControls.jumpToStage(targetStage);
+        } else {
+          stageAtom.jumpToStage(targetStage);
+        }
+        finalReason = 'fallback';
+        return true;
+      }
+
+      try {
+        window.scrollTo({
+          top: scrollTarget,
+          behavior: smooth ? 'smooth' : 'auto',
+        });
+      } catch {
+        window.scrollTo(0, scrollTarget);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, Math.max(0, settleMs)));
+
+      const currentStage = stageAtom.getState?.()?.currentStage;
+      if (currentStage !== targetStage) {
+        stageAtom.jumpToStage(targetStage);
+      }
+
+      if (releaseDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, releaseDelayMs));
       }
 
       return true;
+    } catch (err) {
+      console.error('🚨 [UNIFIED NAV] navigateToStage error', err);
+      finalReason = 'error';
+      return false;
+    } finally {
+      NavigationGate.end(finalReason);
     }
-
-    // Attempt scroll
-    window.scrollTo({
-      top: scrollTarget,
-      behavior: smooth ? 'smooth' : 'auto',
-    });
-
-    // Verify scroll happened
-    setTimeout(() => {
-      const actualScroll = typeof window.scrollY === 'number' ? window.scrollY : 0;
-      if (Math.abs(actualScroll - scrollTarget) > 10) {
-        console.warn('🚨 [UNIFIED NAV] Scroll failed', {
-          actualScroll,
-          scrollTarget,
-          delta: actualScroll - scrollTarget,
-        });
-      } else {
-        console.log('✅ [UNIFIED NAV] Scroll succeeded');
-      }
-    }, smooth ? 500 : 100);
-
-    return true;
   }
 
   /**

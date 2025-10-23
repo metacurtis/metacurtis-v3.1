@@ -79,23 +79,23 @@
 ```
 ## Unlock gates
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:475`
+- `src/components/consciousness/ConsciousnessTheater.jsx:492`
 
 ```text
-473:     };
-474: 
-475:     window.addEventListener('keydown', handleKey);
-476:     return () => window.removeEventListener('keydown', handleKey);
-477:   }, [isInitialized]);
+490:     };
+491: 
+492:     window.addEventListener('keydown', handleKey);
+493:     return () => window.removeEventListener('keydown', handleKey);
+494:   }, [isInitialized]);
 ```
-- `src/components/narrative/NarrationController.jsx:900`
+- `src/components/narrative/NarrationController.jsx:938`
 
 ```text
-898:     };
-899: 
-900:     window.addEventListener('keydown', keyHandler);
-901: 
-902:     return () => {
+936:     };
+937: 
+938:     window.addEventListener('keydown', keyHandler);
+939: 
+940:     return () => {
 ```
 - `src/components/theater/OpeningSequence.jsx:62`
 

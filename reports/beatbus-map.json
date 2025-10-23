@@ -3,11 +3,11 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 268
+        "line": 269
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 598
+        "line": 633
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -17,7 +17,7 @@
     "PARTICLES_EMERGED": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 273
+        "line": 308
       }
     ],
     "PREWARM_COMPLETE": [
@@ -117,13 +117,13 @@
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 150
+        "line": 151
       }
     ],
     "STAGE_CHANGE": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 109
+        "line": 110
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -133,13 +133,13 @@
     "STAGE_CHANGED": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 118
+        "line": 119
       }
     ],
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 210
+        "line": 215
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -149,19 +149,19 @@
     "MEMORY_FRAGMENT_START": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 254
+        "line": 259
       }
     ],
     "MEMORY_FRAGMENT_END": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 260
+        "line": 265
       }
     ],
     "STAGE_TRANSITION": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 266
+        "line": 271
       }
     ],
     "START_NARRATIVE": [
@@ -271,15 +271,15 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 210
+        "line": 211
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 255
+        "line": 256
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 275
+        "line": 276
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -293,17 +293,17 @@
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 226
+        "line": 227
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 66
+        "line": 67
       }
     ],
     "START_NARRATIVE": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 231
+        "line": 232
       }
     ],
     "CURSOR_SHOW": [
@@ -363,7 +363,7 @@
     "PARTICLE_PHASE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1490
+        "line": 1601
       }
     ],
     "BLUEPRINT_READY": [
@@ -383,7 +383,7 @@
       },
       {
         "file": "src/theater/UnifiedNavigationAPI.js",
-        "line": 174
+        "line": 192
       }
     ]
   }

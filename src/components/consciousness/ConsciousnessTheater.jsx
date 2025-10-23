@@ -16,6 +16,7 @@ import director from '@/theater/TheaterDirector.js';
 import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import NavigationGate from '@/theater/NavigationGate.js';
 
 console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe cancel)');
 
@@ -435,12 +436,28 @@ export default function ConsciousnessTheater() {
         e.stopPropagation();
         const before = stageAtom.getState?.();
         const narrationSkipped = skipNarrationIfActive();
-        stageAtom.nextStage();
+        const stageNamesRef =
+          stageAtom.getStageNames?.() ?? stageNames ?? Canonical?.stageOrder ?? [];
+        const currentIndex = stageNamesRef.indexOf(before?.currentStage || '');
+        const nextIndex = Math.min(
+          currentIndex >= 0 ? currentIndex + 1 : 1,
+          Math.max(stageNamesRef.length - 1, 0)
+        );
+        const targetStage = stageNamesRef[nextIndex] || stageNamesRef[stageNamesRef.length - 1];
+
+        if (targetStage && window.unifiedNav?.navigateToStage) {
+          window.unifiedNav.navigateToStage(targetStage, {
+            smooth: true,
+            source: 'keyboard_space',
+          });
+        } else {
+          stageAtom.nextStage();
+        }
         const after = stageAtom.getState?.();
         console.log('🎬 [KEY NAV]', {
           key: 'Space',
-          from: before?.currentStage,
-          to: after?.currentStage,
+          from: before?.currentStage ?? null,
+          to: after?.currentStage ?? targetStage ?? null,
           narrationSkipped,
         });
         return;
@@ -489,7 +506,9 @@ export default function ConsciousnessTheater() {
       const progress = Math.min(scrollTop / scrollHeight, 1);
 
       stateCommands.setScrollProgress(progress, { origin: 'scroll' });
-      stateCommands.setMorphProgress(Math.min(progress * 2, 1), { origin: 'scroll' });
+      if (!NavigationGate.isInFlight()) {
+        stateCommands.setMorphProgress(Math.min(progress * 2, 1), { origin: 'scroll' });
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
