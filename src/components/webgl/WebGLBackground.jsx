@@ -220,6 +220,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const meshRef = useRef();
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
+  // QR state / restore slots
+  const qrModeRef = useRef(false);
+  const restoreClearRef = useRef([0, 0, 0, 1]);
+  const lastPointSizeRef = useRef(null);
+  // Optional: if your render loop advances uTime, guard it here
+  const timeTickEnabledRef = useRef(true);
   const renderGuardRef = useRef(false);
   const viewportHintRef = useRef(null);
   const lastBindMetaRef = useRef({ kind: null });
@@ -428,6 +434,23 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       clearPendingFencepost();
     };
   }, [clearPendingFencepost, flushPendingFencepost]);
+
+  // DEV-only guard-friendly snapshot (no special control surface)
+  useEffect(() => {
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      window.getRendererSnapshot = () => {
+        const geo = geometryRef.current;
+        const uniforms = materialRef.current?.uniforms || {};
+        return {
+          attrs: geo ? Object.keys(geo.attributes || {}) : [],
+          drawCount: geo?.drawRange?.count ?? null,
+          morph: uniforms.uMorphProgress?.value ?? null,
+          pointSize: uniforms.uPointSize?.value ?? null,
+          freeze: uniforms.uPostMorphFreeze?.value ?? null,
+        };
+      };
+    }
+  }, []);
 
   const applyRendererFits = useCallback((geo, viewport) => {
     const material = materialRef.current;
@@ -1345,6 +1368,59 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           ignoreDirectivesRef.current = false;
         });
       }
+
+      // ---------- SAFETY: ensure QR mode cannot leak into normal stages ----------
+      if (qrModeRef.current) {
+        const uniformsNow = materialRef.current?.uniforms;
+        if (uniformsNow?.uPostMorphFreeze) {
+          uniformsNow.uPostMorphFreeze.value = 0;
+          uniformsNow.uPostMorphFreeze.needsUpdate = true;
+        }
+        if (uniformsNow?.uPointSize && lastPointSizeRef.current != null) {
+          uniformsNow.uPointSize.value = lastPointSizeRef.current;
+          uniformsNow.uPointSize.needsUpdate = true;
+          lastPointSizeRef.current = null;
+        }
+        qrModeRef.current = false;
+        if (gl && restoreClearRef.current) {
+          const [r, g, b, a] = restoreClearRef.current;
+          gl.setClearColor(new THREE.Color(r, g, b), a);
+        }
+        timeTickEnabledRef.current = true;
+      }
+
+      // ---------- MORPH: start at 0 for FULL binds so we actually see the transition ----------
+      const isEmergenceMode = payload?.mode === 'emergence' || payload?.blueprint?.mode === 'emergence';
+      const matCurrent = materialRef.current;
+      if (!isEmergenceMode && matCurrent?.uniforms?.uMorphProgress) {
+        matCurrent.uniforms.uMorphProgress.value = 0.0;
+        if (matCurrent.uniforms.uStageProgress) {
+          matCurrent.uniforms.uStageProgress.value = 0.0;
+        }
+        matCurrent.uniformsNeedUpdate = true;
+
+        const startTime = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+        const duration = 1500;
+        const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+          ? window.requestAnimationFrame
+          : (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null);
+        if (!raf) return;
+        const step = (now) => {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          if (matCurrent.uniforms.uMorphProgress) {
+            matCurrent.uniforms.uMorphProgress.value = progress;
+          }
+          if (matCurrent.uniforms.uStageProgress) {
+            matCurrent.uniforms.uStageProgress.value = progress;
+          }
+          matCurrent.uniformsNeedUpdate = true;
+          if (progress < 1) {
+            raf(step);
+          }
+        };
+        raf(step);
+      }
     };
 
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
@@ -1544,7 +1620,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !geometryRef.current) return;
     const sp = clamp01(Number(scrollProgress) || 0);
-    mat.uniforms.uTime.value           = state.clock.elapsedTime;
+    if (timeTickEnabledRef.current && mat.uniforms.uTime) {
+      mat.uniforms.uTime.value = state.clock.elapsedTime;
+    }
     mat.uniforms.uScrollProgress.value = sp;
     mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value    = activeCount;
@@ -1650,6 +1728,62 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         draw: Number.isFinite(directive.drawCount) ? directive.drawCount : null,
         active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
       });
+
+      // ----- QR ENTER -----
+      if (directive?.enterQrMode) {
+        qrModeRef.current = true;
+        if (gl) {
+          const prev = gl.getClearColor(new THREE.Color());
+          const prevAlpha = typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
+          restoreClearRef.current = [prev.r, prev.g, prev.b, prevAlpha];
+          gl.setClearColor(0xffffff, 1);
+        }
+        if (uniforms.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = 1;
+          uniforms.uPostMorphFreeze.needsUpdate = true;
+        }
+        if (uniforms.uSpreadFactor) {
+          uniforms.uSpreadFactor.value = 0;
+          uniforms.uSpreadFactor.needsUpdate = true;
+        }
+        if (uniforms.uTierMode && uniforms.uTierMode.value) {
+          const arr = uniforms.uTierMode.value;
+          for (let i = 0; i < arr.length; i += 1) arr[i] = 0;
+          uniforms.uTierMode.needsUpdate = true;
+        }
+        if (uniforms.uPointSize) {
+          const currentPointSize = uniforms.uPointSize.value;
+          lastPointSizeRef.current = typeof currentPointSize === 'number'
+            ? currentPointSize
+            : Number(currentPointSize ?? 0);
+          uniforms.uPointSize.value = directive.uPointSize || 2.6;
+          uniforms.uPointSize.needsUpdate = true;
+        }
+        timeTickEnabledRef.current = false;
+        mat.uniformsNeedUpdate = true;
+        return;
+      }
+
+      // ----- QR EXIT -----
+      if (directive?.exitQrMode) {
+        qrModeRef.current = false;
+        if (uniforms.uPostMorphFreeze) {
+          uniforms.uPostMorphFreeze.value = 0;
+          uniforms.uPostMorphFreeze.needsUpdate = true;
+        }
+        if (uniforms.uPointSize && lastPointSizeRef.current != null) {
+          uniforms.uPointSize.value = lastPointSizeRef.current;
+          uniforms.uPointSize.needsUpdate = true;
+          lastPointSizeRef.current = null;
+        }
+        if (gl && restoreClearRef.current) {
+          const [r0, g0, b0, a0] = restoreClearRef.current;
+          gl.setClearColor(new THREE.Color(r0, g0, b0), a0);
+        }
+        timeTickEnabledRef.current = true;
+        mat.uniformsNeedUpdate = true;
+        return;
+      }
 
       if (directive.kind === 'particle-effect') {
         const effect = directive.effect || {};

@@ -147,6 +147,27 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           previousStage: stageBeingCleared || null,
         });
       }
+      const timestamp =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+
+      if (hadActiveStage) {
+        BeatBus.emit?.(EVENTS.NARRATION_STOPPED, {
+          stage: stageBeingCleared ?? null,
+          reason: 'reset_state',
+          preserveStage,
+          timestamp,
+        });
+      }
+
+      BeatBus.emit?.(EVENTS.NARRATION_CLEANUP, {
+        stage: stageBeingCleared ?? null,
+        reason: 'reset_state',
+        preserveStage,
+        timestamp,
+      });
+
       if (!preserveStage) {
         if (hadActiveStage && DEBUG_NARRATION) {
           console.log('🎙️ [NarrationController] STOPPED');
@@ -398,6 +419,15 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         if (DEBUG_NARRATION) {
           console.log(`✅ Narration complete: ${stageName}`);
         }
+        const timestamp =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        BeatBus.emit?.(EVENTS.NARRATION_STOPPED, {
+          stage: stageName,
+          reason: 'complete',
+          timestamp,
+        });
         triggerAutoAdvance(stageName, 'narration_complete');
         activeStageRef.current = null;
       }
@@ -514,10 +544,26 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           });
         }
 
+        const explicitSpeed = Number(segment?.typeSpeed);
+        const fallbackSpeed =
+          charsPerSecond > 0 ? Math.round(1000 / charsPerSecond) : null;
+        const speedMs =
+          Number.isFinite(explicitSpeed) && explicitSpeed > 0
+            ? explicitSpeed
+            : fallbackSpeed;
+        const narrativeTimestamp =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+
         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
           stage: stageName,
           segmentId: segment?.id ?? null,
+          segmentIndex,
+          token,
           text,
+          speedMs: speedMs || undefined,
+          timestamp: narrativeTimestamp,
         });
 
         if (particleEffectPayload) {

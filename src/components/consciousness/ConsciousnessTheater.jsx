@@ -17,6 +17,7 @@ import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import NavigationGate from '@/theater/NavigationGate.js';
+import NarrationOverlayBus from '@/components/narrative/NarrationOverlayBus.jsx';
 
 console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe cancel)');
 
@@ -56,40 +57,6 @@ function createDebouncer(minInterval = 150) {
     return true;
   };
 }
-
-const NarrationOverlay = ({ segment }) => {
-  if (!segment) return null;
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: '100px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '80%',
-        maxWidth: '800px',
-        background: 'rgba(0, 0, 0, 0.9)',
-        padding: '20px 30px',
-        borderRadius: '10px',
-        border: '1px solid rgba(0, 255, 0, 0.3)',
-        zIndex: 40,
-      }}
-    >
-      <p
-        style={{
-          color: '#ffffff',
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '1.1rem',
-          lineHeight: '1.6',
-          margin: 0,
-          textAlign: 'center',
-        }}
-      >
-        {segment.text}
-      </p>
-    </div>
-  );
-};
 
 const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
   if (!fragment) return null;
@@ -170,11 +137,8 @@ export default function ConsciousnessTheater() {
   const morphProgress = useAtomValue(narrativeAtom, (state) => state.morphProgress);
   const [isInitialized, setIsInitialized] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(false);
-  const [narrativeEnabled, setNarrativeEnabled] = useState(false);
-  const [activeNarrative, setActiveNarrative] = useState(null);
   const showCanvas = true;
 
-  const startTimeRef = useRef(Date.now());
   const currentStageRef = useRef(currentStage || 'genesis');
   const morphProgressRef = useRef(0);
   const directorStartedRef = useRef(false);
@@ -182,8 +146,6 @@ export default function ConsciousnessTheater() {
   const arrowKeyDebounce = useRef(createDebouncer(150)).current;
 
   const _stageConfig = Canonical.stages[currentStage];
-  const narrative = Canonical.dialogue?.[currentStage];
-
   const {
     activeFragments,
     fragmentStates,
@@ -231,7 +193,6 @@ export default function ConsciousnessTheater() {
       }),
       BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {
         console.log(`   Theater: Starting ${stage} narrative`);
-        setNarrativeEnabled(true);
         setIsInitialized(true);
       }),
     ];
@@ -516,23 +477,6 @@ export default function ConsciousnessTheater() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isInitialized, scrollEnabled]);
 
-  // ───────────────── Narrative timing
-  useEffect(() => {
-    if (!narrative?.narration?.segments || !isInitialized || !narrativeEnabled) return;
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const seg = narrative.narration.segments.find((s) => {
-        const start = s.timing.start;
-        const end = s.timing.start + s.timing.duration;
-        return elapsed >= start && elapsed < end;
-      });
-      setActiveNarrative((prev) =>
-        seg && seg.id !== prev?.id ? seg : !seg ? null : prev
-      );
-    }, 100);
-    return () => clearInterval(timer);
-  }, [narrative, isInitialized, narrativeEnabled]);
-
   // ───────────────── Render
   return (
     <div className="consciousness-theater-v3">
@@ -557,10 +501,8 @@ export default function ConsciousnessTheater() {
         />
       )}
 
-      {/* Narrative overlay (optional) */}
-      {/* {narrativeEnabled && activeNarrative && (
-        <NarrationOverlay segment={activeNarrative} />
-      )} */}
+      {/* Narrative overlay (bus-driven) */}
+      <NarrationOverlayBus />
 
       {/* Memory fragments */}
       {activeFragments.map((fragment) => {
