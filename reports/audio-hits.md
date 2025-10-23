@@ -88,14 +88,14 @@
 493:     return () => window.removeEventListener('keydown', handleKey);
 494:   }, [isInitialized]);
 ```
-- `src/components/narrative/NarrationController.jsx:938`
+- `src/components/narrative/NarrationController.jsx:947`
 
 ```text
-936:     };
-937: 
-938:     window.addEventListener('keydown', keyHandler);
-939: 
-940:     return () => {
+945:     };
+946: 
+947:     window.addEventListener('keydown', keyHandler);
+948: 
+949:     return () => {
 ```
 - `src/components/theater/OpeningSequence.jsx:62`
 

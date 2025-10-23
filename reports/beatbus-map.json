@@ -7,7 +7,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 633
+        "line": 640
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -17,61 +17,73 @@
     "PARTICLES_EMERGED": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 308
+        "line": 315
       }
     ],
     "PREWARM_COMPLETE": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 618
+        "line": 620
       }
     ],
     "BLUEPRINT_READY": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 682
+        "line": 684
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1120
+        "line": 1132
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1740
+        "line": 1795
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1761
+        "line": 1816
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1780
+        "line": 1835
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 817
+        "line": 819
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 841
+        "line": 843
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 866
+        "line": 868
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1243
+        "line": 1058
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1252
+        "line": 1137
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1284
+        "line": 1294
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 1303
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 1335
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 1380
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -85,15 +97,15 @@
     "MORPH_PROGRESS": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 832
+        "line": 834
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 857
+        "line": 859
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 865
+        "line": 867
       },
       {
         "file": "src/state/commands/StateCommands.js",
@@ -103,11 +115,11 @@
     "CLIMAX_STEP": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1027
+        "line": 1029
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1353
+        "line": 1408
       }
     ],
     "QUALITY_CHANGE": [
@@ -363,7 +375,7 @@
     "PARTICLE_PHASE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1601
+        "line": 1626
       }
     ],
     "BLUEPRINT_READY": [

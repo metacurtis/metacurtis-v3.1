@@ -34,7 +34,7 @@
 (none)
 
 ## Dispatcher uniform writes
-- uAtmoFit
+(none)
 
 ## GLSL Uniforms detected
 - uActiveCount
@@ -49,8 +49,10 @@
 - uDevicePixelRatio
 - uFadeProgress
 - uFlowTurbulence
+- uForceMono
 - uGaussianSigma
 - uGridSpacing
+- uMonoColor
 - uMorphProgress
 - uMorphType
 - uMoveDampStart
