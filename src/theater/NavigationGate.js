@@ -17,7 +17,6 @@ const NavigationGate = {
     this._reason = reason;
     if (typeof window !== 'undefined') {
       window.__NAV_GATE = { inFlight: true, targetStage: this._target, reason };
-      window.NavigationGate = this;
     }
   },
 
@@ -27,7 +26,6 @@ const NavigationGate = {
     this._reason = reason;
     if (typeof window !== 'undefined') {
       window.__NAV_GATE = { inFlight: false, reason };
-      window.NavigationGate = this;
     }
   },
 
@@ -59,7 +57,3 @@ const NavigationGate = {
 };
 
 export default NavigationGate;
-
-if (typeof window !== 'undefined' && !window.NavigationGate) {
-  window.NavigationGate = NavigationGate;
-}

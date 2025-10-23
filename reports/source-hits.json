@@ -21,20 +21,20 @@
     {
       "key": "STAGE_CHANGE",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 934,
-      "context": "932: \n933:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);\n934:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);\n935: \n936:     const keyHandler = (event) => {"
+      "line": 925,
+      "context": "923: \n924:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);\n925:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);\n926: \n927:     const keyHandler = (event) => {"
     },
     {
       "key": "STAGE_CHANGE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 756,
-      "context": "754:   }, []);\n755:   useEffect(() => {\n756:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {\n757:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);\n758:       setStageName(st);"
+      "line": 749,
+      "context": "747:   }, []);\n748:   useEffect(() => {\n749:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {\n750:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);\n751:       setStageName(st);"
     },
     {
       "key": "STAGE_CHANGE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 782,
-      "context": "780:   useEffect(() => {\n781:     let morphProbeTimer = null;\n782:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, () => {\n783:       if (morphProbeTimer) {\n784:         clearInterval(morphProbeTimer);"
+      "line": 775,
+      "context": "773:   useEffect(() => {\n774:     let morphProbeTimer = null;\n775:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, () => {\n776:       if (morphProbeTimer) {\n777:         clearInterval(morphProbeTimer);"
     },
     {
       "key": "STAGE_CHANGE",
@@ -57,20 +57,20 @@
     {
       "key": "STAGE_CHANGE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 487,
-      "context": "485:     );\n486:     this._listeners.push(\n487:       BeatBus.on(this._ev('STAGE_CHANGE'), this._onStageChange.bind(this))\n488:     );\n489:     this._listeners.push("
+      "line": 485,
+      "context": "483:     );\n484:     this._listeners.push(\n485:       BeatBus.on(this._ev('STAGE_CHANGE'), this._onStageChange.bind(this))\n486:     );\n487:     this._listeners.push("
     },
     {
       "key": "STAGE_CHANGE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 589,
-      "context": "587:     this.currentStage = stage;\n588:     if (skipBlueprint) {\n589:       this._log('stage_change', { stage, skippedBlueprint: true });\n590:       if (preserveEmergence && stage === 'genesis') {\n591:         this._log('stage_preserve_emergence', { preserved: !!this._lastEmergenceTargets });"
+      "line": 587,
+      "context": "585:     this.currentStage = stage;\n586:     if (skipBlueprint) {\n587:       this._log('stage_change', { stage, skippedBlueprint: true });\n588:       if (preserveEmergence && stage === 'genesis') {\n589:         this._log('stage_preserve_emergence', { preserved: !!this._lastEmergenceTargets });"
     },
     {
       "key": "STAGE_CHANGE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 596,
-      "context": "594:     }\n595:     this.buildAndEmitBlueprint(stage, this.currentQuality);\n596:     this._log('stage_change', { stage });\n597:   }\n598: "
+      "line": 594,
+      "context": "592:     }\n593:     this.buildAndEmitBlueprint(stage, this.currentQuality);\n594:     this._log('stage_change', { stage });\n595:   }\n596: "
     },
     {
       "key": "STAGE_CHANGE",
@@ -455,50 +455,50 @@
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 686,
-      "context": "684:   }, [emitViewportHint]);\n685: \n686:   // Fallback morph sink (outside emergence directives)\n687:   const __applyMorph = (v) => {\n688:     const mat = materialRef.current;"
+      "line": 679,
+      "context": "677:   }, [emitViewportHint]);\n678: \n679:   // Fallback morph sink (outside emergence directives)\n680:   const __applyMorph = (v) => {\n681:     const mat = materialRef.current;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 771,
-      "context": "769:   }, []);\n770: \n771:   // Emergence flag (no local tween; engine drives via directives)\n772:   useEffect(() => {\n773:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {"
+      "line": 764,
+      "context": "762:   }, []);\n763: \n764:   // Emergence flag (no local tween; engine drives via directives)\n765:   useEffect(() => {\n766:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1007,
-      "context": "1005:       if (id === lastBlueprintIdRef.current) return;\n1006:       lastBlueprintIdRef.current = id;\n1007:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';\n1008:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);\n1009: "
+      "line": 1000,
+      "context": "998:       if (id === lastBlueprintIdRef.current) return;\n999:       lastBlueprintIdRef.current = id;\n1000:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';\n1001:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);\n1002: "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1033,
-      "context": "1031:         }\n1032:       }\n1033:       // ignore late emergence after handoff\n1034:       if (isEmergence && emittedEmergedRef.current) return;\n1035: "
+      "line": 1026,
+      "context": "1024:         }\n1025:       }\n1026:       // ignore late emergence after handoff\n1027:       if (isEmergence && emittedEmergedRef.current) return;\n1028: "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1155,
-      "context": "1153:       if (mat) {\n1154:         applyRendererFits(geo, viewportHintRef.current || viewport);\n1155:         logBind(isEmergence ? 'emergence' : 'stage', {\n1156:           stage: raw.stageName || st || 'genesis',\n1157:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),"
+      "line": 1148,
+      "context": "1146:       if (mat) {\n1147:         applyRendererFits(geo, viewportHintRef.current || viewport);\n1148:         logBind(isEmergence ? 'emergence' : 'stage', {\n1149:           stage: raw.stageName || st || 'genesis',\n1150:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1157,
-      "context": "1155:         logBind(isEmergence ? 'emergence' : 'stage', {\n1156:           stage: raw.stageName || st || 'genesis',\n1157:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),\n1158:           cached: !!cached,\n1159:         });"
+      "line": 1150,
+      "context": "1148:         logBind(isEmergence ? 'emergence' : 'stage', {\n1149:           stage: raw.stageName || st || 'genesis',\n1150:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),\n1151:           cached: !!cached,\n1152:         });"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1188,
-      "context": "1186: \n1187:       if (isEmergence) {\n1188:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);\n1189:         emergencePendingRef.current = true;\n1190:         emittedEmergedRef.current = false;"
+      "line": 1181,
+      "context": "1179: \n1180:       if (isEmergence) {\n1181:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);\n1182:         emergencePendingRef.current = true;\n1183:         emittedEmergedRef.current = false;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1213,
-      "context": "1211:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';\n1212:           if (finalizeEmergence(source)) {\n1213:             console.log('⚡ Renderer: Emergence fast-forward applied', {\n1214:               source,\n1215:               cacheKey,"
+      "line": 1206,
+      "context": "1204:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';\n1205:           if (finalizeEmergence(source)) {\n1206:             console.log('⚡ Renderer: Emergence fast-forward applied', {\n1207:               source,\n1208:               cacheKey,"
     },
     {
       "key": "OPENING_PHASE",
@@ -569,164 +569,164 @@
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 191,
-      "context": "189:   'JetBrains Mono': () => '/fonts/CourierPrime_Regular.typeface.json',\n190:   Inter: () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),\n191:   'Archivo Black': () => '/fonts/helvetiker_bold.typeface.json',\n192:   Montserrat: () => '/fonts/helvetiker_bold.typeface.json',\n193:   'Playfair Display': () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),"
+      "line": 189,
+      "context": "187:   'JetBrains Mono': () => '/fonts/CourierPrime_Regular.typeface.json',\n188:   Inter: () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),\n189:   'Archivo Black': () => '/fonts/helvetiker_bold.typeface.json',\n190:   Montserrat: () => '/fonts/helvetiker_bold.typeface.json',\n191:   'Playfair Display': () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 384,
-      "context": "382:     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };\n383: \n384:     // Emergence memory - store only targets, not full blueprint\n385:     this._lastEmergenceTargets = null;\n386:     this._emergenceRaf = null;"
+      "line": 382,
+      "context": "380:     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };\n381: \n382:     // Emergence memory - store only targets, not full blueprint\n383:     this._lastEmergenceTargets = null;\n384:     this._emergenceRaf = null;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 610,
-      "context": "608: \n609:   _onPrewarmGenesis() {\n610:     // Clear stale emergence targets so prewarm rebuilds with current VC tuning\n611:     this._lastEmergenceTargets = null;\n612:     console.log('🧠 Engine: Prewarming genesis blueprint');"
+      "line": 608,
+      "context": "606: \n607:   _onPrewarmGenesis() {\n608:     // Clear stale emergence targets so prewarm rebuilds with current VC tuning\n609:     this._lastEmergenceTargets = null;\n610:     console.log('🧠 Engine: Prewarming genesis blueprint');"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 668,
-      "context": "666:       this._rendererFencepostSeen = false;\n667: \n668:       // Build the emergence blueprint\n669:       const blueprint = await this.buildEmergenceBlueprint(payload);\n670:       "
+      "line": 666,
+      "context": "664:       this._rendererFencepostSeen = false;\n665: \n666:       // Build the emergence blueprint\n667:       const blueprint = await this.buildEmergenceBlueprint(payload);\n668:       "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 673,
-      "context": "671:       // Validate before proceeding\n672:       if (!this._validateBlueprint(blueprint)) {\n673:         console.error('🧠 Engine: Invalid emergence blueprint, not emitting');\n674:         this._log('emergence_validation_failed');\n675:         this._emergenceActive = false;"
+      "line": 671,
+      "context": "669:       // Validate before proceeding\n670:       if (!this._validateBlueprint(blueprint)) {\n671:         console.error('🧠 Engine: Invalid emergence blueprint, not emitting');\n672:         this._log('emergence_validation_failed');\n673:         this._emergenceActive = false;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 683,
-      "context": "681:       this._lastEmergenceTargets = blueprint.text3DPositions;\n682: \n683:       // Emit emergence blueprint with mode flag (canonical event)\n684:       BeatBus.emit(EVENTS.BLUEPRINT_READY, {\n685:         blueprint,"
+      "line": 681,
+      "context": "679:       this._lastEmergenceTargets = blueprint.text3DPositions;\n680: \n681:       // Emit emergence blueprint with mode flag (canonical event)\n682:       BeatBus.emit(EVENTS.BLUEPRINT_READY, {\n683:         blueprint,"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 688,
-      "context": "686:         stage: 'genesis',\n687:         quality: this.currentQuality,\n688:         mode: 'emergence',\n689:         cached: false,\n690:         skipMorphAnimation: !!payload.skipMorphAnimation,"
+      "line": 686,
+      "context": "684:         stage: 'genesis',\n685:         quality: this.currentQuality,\n686:         mode: 'emergence',\n687:         cached: false,\n688:         skipMorphAnimation: !!payload.skipMorphAnimation,"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 696,
-      "context": "694:       });\n695:       \n696:       console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });\n697:       this._log('emergence_built', { count: blueprint.particleCount });\n698: "
+      "line": 694,
+      "context": "692:       });\n693:       \n694:       console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });\n695:       this._log('emergence_built', { count: blueprint.particleCount });\n696: "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 699,
-      "context": "697:       this._log('emergence_built', { count: blueprint.particleCount });\n698: \n699:       // Drive implosion → settle via directives; renderer remains passive\n700:       if (!this._startEmergenceTimeline(blueprint)) {\n701:         this._emergenceActive = false;"
+      "line": 697,
+      "context": "695:       this._log('emergence_built', { count: blueprint.particleCount });\n696: \n697:       // Drive implosion → settle via directives; renderer remains passive\n698:       if (!this._startEmergenceTimeline(blueprint)) {\n699:         this._emergenceActive = false;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 895,
-      "context": "893:       : midDefault;\n894: \n895:     console.log('🎨 [EMERGENCE TIMELINE]', {\n896:       fastForward,\n897:       midDefault,"
+      "line": 893,
+      "context": "891:       : midDefault;\n892: \n893:     console.log('🎨 [EMERGENCE TIMELINE]', {\n894:       fastForward,\n895:       midDefault,"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 905,
-      "context": "903: \n904:     if (implMs > 6000 || settleMs > 6000) {\n905:       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });\n906:     }\n907: "
+      "line": 903,
+      "context": "901: \n902:     if (implMs > 6000 || settleMs > 6000) {\n903:       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });\n904:     }\n905: "
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1466,
-      "context": "1464: \n1465:     if (safeCount > 0) {\n1466:       const rnd = createSeededRandom(`emergence-${mode || 'default'}-${quality || 'HIGH'}`);\n1467:       for (let i = 0; i < safeCount; i++) {\n1468:         const j = i * 3;"
+      "line": 1411,
+      "context": "1409: \n1410:     if (safeCount > 0) {\n1411:       const rnd = createSeededRandom(`emergence-${mode || 'default'}-${quality || 'HIGH'}`);\n1412:       for (let i = 0; i < safeCount; i++) {\n1413:         const j = i * 3;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1604,
-      "context": "1602: \n1603:   /**\n1604:    * Build + emit the Emergence blueprint for the opening sequence.\n1605:    */\n1606:   async buildEmergenceBlueprint(options = {}) {"
+      "line": 1549,
+      "context": "1547: \n1548:   /**\n1549:    * Build + emit the Emergence blueprint for the opening sequence.\n1550:    */\n1551:   async buildEmergenceBlueprint(options = {}) {"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1608,
-      "context": "1606:   async buildEmergenceBlueprint(options = {}) {\n1607:     const {\n1608:       mode = 'emergence',\n1609:       source = 'viewportSpread',\n1610:       target = 'constellation',"
+      "line": 1553,
+      "context": "1551:   async buildEmergenceBlueprint(options = {}) {\n1552:     const {\n1553:       mode = 'emergence',\n1554:       source = 'viewportSpread',\n1555:       target = 'constellation',"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1655,
-      "context": "1653:         usedFallback = this._lastText3DFallbackUsed;\n1654:         if (usedFallback) {\n1655:           console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);\n1656:         }\n1657:       } else {"
+      "line": 1600,
+      "context": "1598:         usedFallback = this._lastText3DFallbackUsed;\n1599:         if (usedFallback) {\n1600:           console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);\n1601:         }\n1602:       } else {"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1722,
-      "context": "1720:       targetState: targetState || null,\n1721:       note: usedFallback\n1722:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'\n1723:         : 'Emergence endpoints separated: random atmospheric → 3D text target',\n1724:     };"
+      "line": 1667,
+      "context": "1665:       targetState: targetState || null,\n1666:       note: usedFallback\n1667:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'\n1668:         : 'Emergence endpoints separated: random atmospheric → 3D text target',\n1669:     };"
+    },
+    {
+      "key": "OPENING_PHASE",
+      "file": "src/engine/ConsciousnessEngine.js",
+      "line": 1668,
+      "context": "1666:       note: usedFallback\n1667:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'\n1668:         : 'Emergence endpoints separated: random atmospheric → 3D text target',\n1669:     };\n1670: "
+    },
+    {
+      "key": "OPENING_PHASE",
+      "file": "src/engine/ConsciousnessEngine.js",
+      "line": 1697,
+      "context": "1695: \n1696:     if (this._emergenceActive && stage !== 'genesis') {\n1697:       console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });\n1698:       this._log('rebuild_blocked_emergence', { stage, quality });\n1699:       return;"
+    },
+    {
+      "key": "OPENING_PHASE",
+      "file": "src/engine/ConsciousnessEngine.js",
+      "line": 1705,
+      "context": "1703:     let blueprint = this.blueprintCache.get(cacheKey);\n1704: \n1705:     // Post-emergence genesis: optionally preserve settled emergence\n1706:     if (stage === 'genesis' && this._lastEmergenceTargets) {\n1707:       if (this._lastText3DFallbackUsed) {"
+    },
+    {
+      "key": "OPENING_PHASE",
+      "file": "src/engine/ConsciousnessEngine.js",
+      "line": 1708,
+      "context": "1706:     if (stage === 'genesis' && this._lastEmergenceTargets) {\n1707:       if (this._lastText3DFallbackUsed) {\n1708:         console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');\n1709:         this._lastEmergenceTargets = null;\n1710:         this._emergenceDone = false;"
+    },
+    {
+      "key": "OPENING_PHASE",
+      "file": "src/engine/ConsciousnessEngine.js",
+      "line": 1713,
+      "context": "1711:         this._rendererFencepostSeen = false;\n1712:       } else if (!this._emergenceDone) {\n1713:         console.warn('🧠 Engine: Emergence incomplete; rebuilding genesis cleanly');\n1714:         this._lastEmergenceTargets = null;\n1715:         this._emergenceDone = false;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
       "line": 1723,
-      "context": "1721:       note: usedFallback\n1722:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'\n1723:         : 'Emergence endpoints separated: random atmospheric → 3D text target',\n1724:     };\n1725: "
+      "context": "1721:         this._rendererFencepostSeen = false;\n1722:       } else {\n1723:         console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');\n1724: \n1725:         const emergenceCount = Math.max(0, Math.floor(this._lastEmergenceTargets.length / 3));"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1752,
-      "context": "1750: \n1751:     if (this._emergenceActive && stage !== 'genesis') {\n1752:       console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });\n1753:       this._log('rebuild_blocked_emergence', { stage, quality });\n1754:       return;"
+      "line": 1744,
+      "context": "1742:               stage,\n1743:               quality,\n1744:               mode: 'post-emergence-guarded',\n1745:               cacheKey,\n1746:               preservedEmergence: true,"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1760,
-      "context": "1758:     let blueprint = this.blueprintCache.get(cacheKey);\n1759: \n1760:     // Post-emergence genesis: optionally preserve settled emergence\n1761:     if (stage === 'genesis' && this._lastEmergenceTargets) {\n1762:       if (this._lastText3DFallbackUsed) {"
+      "line": 1749,
+      "context": "1747:             });\n1748:             this._preloadNextStage(stage, quality);\n1749:             this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });\n1750:           }\n1751:           this._rendererFencepostSeen = false;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1763,
-      "context": "1761:     if (stage === 'genesis' && this._lastEmergenceTargets) {\n1762:       if (this._lastText3DFallbackUsed) {\n1763:         console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');\n1764:         this._lastEmergenceTargets = null;\n1765:         this._emergenceDone = false;"
+      "line": 2364,
+      "context": "2362:           console.log(`✅ 3D font loaded from ${usedUrl}; cleared text3D cache (was ${oldSize} entries)`);\n2363:           try {\n2364:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {\n2365:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');\n2366:               this.buildEmergenceBlueprint({ mode: 'emergence' });"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1768,
-      "context": "1766:         this._rendererFencepostSeen = false;\n1767:       } else if (!this._emergenceDone) {\n1768:         console.warn('🧠 Engine: Emergence incomplete; rebuilding genesis cleanly');\n1769:         this._lastEmergenceTargets = null;\n1770:         this._emergenceDone = false;"
+      "line": 2365,
+      "context": "2363:           try {\n2364:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {\n2365:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');\n2366:               this.buildEmergenceBlueprint({ mode: 'emergence' });\n2367:             }"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1778,
-      "context": "1776:         this._rendererFencepostSeen = false;\n1777:       } else {\n1778:         console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');\n1779: \n1780:         const emergenceCount = Math.max(0, Math.floor(this._lastEmergenceTargets.length / 3));"
-    },
-    {
-      "key": "OPENING_PHASE",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1799,
-      "context": "1797:               stage,\n1798:               quality,\n1799:               mode: 'post-emergence-guarded',\n1800:               cacheKey,\n1801:               preservedEmergence: true,"
-    },
-    {
-      "key": "OPENING_PHASE",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1804,
-      "context": "1802:             });\n1803:             this._preloadNextStage(stage, quality);\n1804:             this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });\n1805:           }\n1806:           this._rendererFencepostSeen = false;"
-    },
-    {
-      "key": "OPENING_PHASE",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 2419,
-      "context": "2417:           console.log(`✅ 3D font loaded from ${usedUrl}; cleared text3D cache (was ${oldSize} entries)`);\n2418:           try {\n2419:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {\n2420:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');\n2421:               this.buildEmergenceBlueprint({ mode: 'emergence' });"
-    },
-    {
-      "key": "OPENING_PHASE",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 2420,
-      "context": "2418:           try {\n2419:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {\n2420:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');\n2421:               this.buildEmergenceBlueprint({ mode: 'emergence' });\n2422:             }"
-    },
-    {
-      "key": "OPENING_PHASE",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 2421,
-      "context": "2419:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {\n2420:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');\n2421:               this.buildEmergenceBlueprint({ mode: 'emergence' });\n2422:             }\n2423:           } catch {}"
+      "line": 2366,
+      "context": "2364:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {\n2365:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');\n2366:               this.buildEmergenceBlueprint({ mode: 'emergence' });\n2367:             }\n2368:           } catch {}"
     },
     {
       "key": "OPENING_PHASE",
@@ -1229,20 +1229,20 @@
     {
       "key": "OPENING_PHASE",
       "file": "src/utils/portraitPositions.js",
-      "line": 72,
-      "context": "70: \n71:   const step = baseCount / safeCount;\n72:   let cursor = 0;\n73:   for (let i = 0; i < safeCount; i++) {\n74:     const index = Math.min(baseCount - 1, Math.floor(cursor));"
+      "line": 40,
+      "context": "38: \n39:   const step = baseCount / safeCount;\n40:   let cursor = 0;\n41:   for (let i = 0; i < safeCount; i++) {\n42:     const index = Math.min(baseCount - 1, Math.floor(cursor));"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/utils/portraitPositions.js",
-      "line": 74,
-      "context": "72:   let cursor = 0;\n73:   for (let i = 0; i < safeCount; i++) {\n74:     const index = Math.min(baseCount - 1, Math.floor(cursor));\n75:     const src = index * 3;\n76:     const dst = i * 3;"
+      "line": 42,
+      "context": "40:   let cursor = 0;\n41:   for (let i = 0; i < safeCount; i++) {\n42:     const index = Math.min(baseCount - 1, Math.floor(cursor));\n43:     const src = index * 3;\n44:     const dst = i * 3;"
     },
     {
       "key": "OPENING_PHASE",
       "file": "src/utils/portraitPositions.js",
-      "line": 80,
-      "context": "78:     out[dst + 1] = points[src + 1];\n79:     out[dst + 2] = points[src + 2];\n80:     cursor += step;\n81:   }\n82:   return out;"
+      "line": 48,
+      "context": "46:     out[dst + 1] = points[src + 1];\n47:     out[dst + 2] = points[src + 2];\n48:     cursor += step;\n49:   }\n50:   return out;"
     }
   ],
   "NARRATION_API": [
@@ -1267,62 +1267,62 @@
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 431,
-      "context": "429:         if (DEBUG_NARRATION) {\n430:           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;\n431:           console.log('🎙️ [BEAT FIRED]', {\n432:             stage: stageName,\n433:             segmentIndex,"
+      "line": 422,
+      "context": "420:         if (DEBUG_NARRATION) {\n421:           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;\n422:           console.log('🎙️ [BEAT FIRED]', {\n423:             stage: stageName,\n424:             segmentIndex,"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 526,
-      "context": "524:         }\n525: \n526:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {\n527:           stage: stageName,\n528:           segmentId: segment?.id ?? null,"
+      "line": 517,
+      "context": "515:         }\n516: \n517:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {\n518:           stage: stageName,\n519:           segmentId: segment?.id ?? null,"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 664,
-      "context": "662:   );\n663: \n664:   const skipNarration = useCallback(\n665:     (origin = 'skip') => {\n666:       if (origin === 'external' && !isControlAllowed('narration:control')) {"
+      "line": 655,
+      "context": "653:   );\n654: \n655:   const skipNarration = useCallback(\n656:     (origin = 'skip') => {\n657:       if (origin === 'external' && !isControlAllowed('narration:control')) {"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 774,
-      "context": "772:           enumerable: true,\n773:         },\n774:         skipNarration: {\n775:           value: () => skipNarration('external'),\n776:           enumerable: true,"
+      "line": 765,
+      "context": "763:           enumerable: true,\n764:         },\n765:         skipNarration: {\n766:           value: () => skipNarration('external'),\n767:           enumerable: true,"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 775,
-      "context": "773:         },\n774:         skipNarration: {\n775:           value: () => skipNarration('external'),\n776:           enumerable: true,\n777:         },"
+      "line": 766,
+      "context": "764:         },\n765:         skipNarration: {\n766:           value: () => skipNarration('external'),\n767:           enumerable: true,\n768:         },"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 808,
-      "context": "806:     exposeControlSurface('narrationController', controllerFactory, {\n807:       playNarration: 'narration:control',\n808:       skipNarration: 'narration:control',\n809:     });\n810: "
+      "line": 799,
+      "context": "797:     exposeControlSurface('narrationController', controllerFactory, {\n798:       playNarration: 'narration:control',\n799:       skipNarration: 'narration:control',\n800:     });\n801: "
+    },
+    {
+      "key": "NARRATION_API",
+      "file": "src/components/narrative/NarrationController.jsx",
+      "line": 820,
+      "context": "818:       revokeControlSurface('narrationController');\n819:     };\n820:   }, [skipNarration, startNarration]);\n821: \n822:   useEffect(() => {"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
       "line": 829,
-      "context": "827:       revokeControlSurface('narrationController');\n828:     };\n829:   }, [skipNarration, startNarration]);\n830: \n831:   useEffect(() => {"
+      "context": "827:       autoAdvanceEnabled,\n828:       resetStateId: resetState,\n829:       skipNarrationId: skipNarration,\n830:       startNarrationId: startNarration,\n831:     };"
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 838,
-      "context": "836:       autoAdvanceEnabled,\n837:       resetStateId: resetState,\n838:       skipNarrationId: skipNarration,\n839:       startNarrationId: startNarration,\n840:     };"
+      "line": 935,
+      "context": "933:       event.preventDefault?.();\n934:       event.stopPropagation?.();\n935:       skipNarration('space');\n936:     };\n937: "
     },
     {
       "key": "NARRATION_API",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 944,
-      "context": "942:       event.preventDefault?.();\n943:       event.stopPropagation?.();\n944:       skipNarration('space');\n945:     };\n946: "
-    },
-    {
-      "key": "NARRATION_API",
-      "file": "src/components/narrative/NarrationController.jsx",
-      "line": 961,
-      "context": "959:       resetState();\n960:     };\n961:   }, [currentStage, resetState, skipNarration, startNarration]);\n962: \n963:   useEffect(() => {"
+      "line": 952,
+      "context": "950:       resetState();\n951:     };\n952:   }, [currentStage, resetState, skipNarration, startNarration]);\n953: \n954:   useEffect(() => {"
     },
     {
       "key": "NARRATION_API",
@@ -1389,8 +1389,8 @@
     {
       "key": "RENDERER",
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 537,
-      "context": "535:             effect: particleEffectPayload,\n536:           });\n537:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {\n538:             kind: 'particle-effect',\n539:             ...particleEffectPayload,"
+      "line": 528,
+      "context": "526:             effect: particleEffectPayload,\n527:           });\n528:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {\n529:             kind: 'particle-effect',\n530:             ...particleEffectPayload,"
     },
     {
       "key": "RENDERER",
@@ -1413,134 +1413,134 @@
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 315,
-      "context": "313:     if (!payload) return;\n314:     trace('WBG:FENCEPOST', payload);\n315:     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);\n316:   }, []);\n317: "
+      "line": 308,
+      "context": "306:     if (!payload) return;\n307:     trace('WBG:FENCEPOST', payload);\n308:     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);\n309:   }, []);\n310: "
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 383,
-      "context": "381:       const uniforms = mat?.uniforms;\n382: \n383:       if (uniforms?.uMorphProgress) {\n384:         uniforms.uMorphProgress.value = 1.0;\n385:         if (uniforms.uStageProgress) {"
+      "line": 376,
+      "context": "374:       const uniforms = mat?.uniforms;\n375: \n376:       if (uniforms?.uMorphProgress) {\n377:         uniforms.uMorphProgress.value = 1.0;\n378:         if (uniforms.uStageProgress) {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 384,
-      "context": "382: \n383:       if (uniforms?.uMorphProgress) {\n384:         uniforms.uMorphProgress.value = 1.0;\n385:         if (uniforms.uStageProgress) {\n386:           uniforms.uStageProgress.value = 1.0;"
+      "line": 377,
+      "context": "375: \n376:       if (uniforms?.uMorphProgress) {\n377:         uniforms.uMorphProgress.value = 1.0;\n378:         if (uniforms.uStageProgress) {\n379:           uniforms.uStageProgress.value = 1.0;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 691,
-      "context": "689:     if (!mat?.uniforms) return;\n690:     const u = mat.uniforms;\n691:     if (u.uMorphProgress) u.uMorphProgress.value = v;\n692:     else if (u.morphProgress) u.morphProgress.value = v;\n693:     else if (u.uMorph) u.uMorph.value = v;"
+      "line": 684,
+      "context": "682:     if (!mat?.uniforms) return;\n683:     const u = mat.uniforms;\n684:     if (u.uMorphProgress) u.uMorphProgress.value = v;\n685:     else if (u.morphProgress) u.morphProgress.value = v;\n686:     else if (u.uMorph) u.uMorph.value = v;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 790,
-      "context": "788:       const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();\n789:       morphProbeTimer = setInterval(() => {\n790:         if (!uniforms?.uMorphProgress) return;\n791:         const val = Number(uniforms.uMorphProgress.value) || 0;\n792:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();"
+      "line": 783,
+      "context": "781:       const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();\n782:       morphProbeTimer = setInterval(() => {\n783:         if (!uniforms?.uMorphProgress) return;\n784:         const val = Number(uniforms.uMorphProgress.value) || 0;\n785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 791,
-      "context": "789:       morphProbeTimer = setInterval(() => {\n790:         if (!uniforms?.uMorphProgress) return;\n791:         const val = Number(uniforms.uMorphProgress.value) || 0;\n792:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();\n793:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });"
+      "line": 784,
+      "context": "782:       morphProbeTimer = setInterval(() => {\n783:         if (!uniforms?.uMorphProgress) return;\n784:         const val = Number(uniforms.uMorphProgress.value) || 0;\n785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();\n786:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 793,
-      "context": "791:         const val = Number(uniforms.uMorphProgress.value) || 0;\n792:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();\n793:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });\n794:         if (now - start > 2000) {\n795:           clearInterval(morphProbeTimer);"
+      "line": 786,
+      "context": "784:         const val = Number(uniforms.uMorphProgress.value) || 0;\n785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();\n786:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });\n787:         if (now - start > 2000) {\n788:           clearInterval(morphProbeTimer);"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1161,
-      "context": "1159:         });\n1160:         scheduleRuntimeSampling();\n1161:         if (mat?.uniforms?.uMorphProgress) {\n1162:           mat.uniforms.uMorphProgress.value = 0;\n1163:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;"
+      "line": 1154,
+      "context": "1152:         });\n1153:         scheduleRuntimeSampling();\n1154:         if (mat?.uniforms?.uMorphProgress) {\n1155:           mat.uniforms.uMorphProgress.value = 0;\n1156:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1162,
-      "context": "1160:         scheduleRuntimeSampling();\n1161:         if (mat?.uniforms?.uMorphProgress) {\n1162:           mat.uniforms.uMorphProgress.value = 0;\n1163:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;\n1164:           mat.uniformsNeedUpdate = true;"
+      "line": 1155,
+      "context": "1153:         scheduleRuntimeSampling();\n1154:         if (mat?.uniforms?.uMorphProgress) {\n1155:           mat.uniforms.uMorphProgress.value = 0;\n1156:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;\n1157:           mat.uniformsNeedUpdate = true;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1379,
-      "context": "1377:         uniforms: {\n1378:           uTime:            { value: 0 },\n1379:           uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },\n1380:           uScrollProgress:  { value: 0 },\n1381:           uStageProgress:   { value: clamp01(fallbackMorphRef.current) },"
+      "line": 1372,
+      "context": "1370:         uniforms: {\n1371:           uTime:            { value: 0 },\n1372:           uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },\n1373:           uScrollProgress:  { value: 0 },\n1374:           uStageProgress:   { value: clamp01(fallbackMorphRef.current) },"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1493,
-      "context": "1491:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],\n1492:         hasGeometry: !!geometryRef.current,\n1493:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,\n1494:       }));\n1495: "
+      "line": 1484,
+      "context": "1482:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],\n1483:         hasGeometry: !!geometryRef.current,\n1484:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,\n1485:       }));\n1486: "
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1630,
-      "context": "1628:   }, []);\n1629: \n1630:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)\n1631:   useEffect(() => {\n1632:     if (typeof window !== 'undefined') {"
+      "line": 1605,
+      "context": "1603:   }, []);\n1604: \n1605:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)\n1606:   useEffect(() => {\n1607:     if (typeof window !== 'undefined') {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1903,
-      "context": "1901: \n1902:         // Morph progress + fencepost emission\n1903:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1904:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1905:           const newValue = clamp01(directive.morphProgress);"
+      "line": 1784,
+      "context": "1782: \n1783:         // Morph progress + fencepost emission\n1784:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1786:           const newValue = clamp01(directive.morphProgress);"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1904,
-      "context": "1902:         // Morph progress + fencepost emission\n1903:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1904:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1905:           const newValue = clamp01(directive.morphProgress);\n1906:           uniforms.uMorphProgress.value = newValue;"
+      "line": 1785,
+      "context": "1783:         // Morph progress + fencepost emission\n1784:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {\n1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1786:           const newValue = clamp01(directive.morphProgress);\n1787:           uniforms.uMorphProgress.value = newValue;"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1906,
-      "context": "1904:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1905:           const newValue = clamp01(directive.morphProgress);\n1906:           uniforms.uMorphProgress.value = newValue;\n1907:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;\n1908:           if (Math.abs(newValue - oldValue) > 0.001) {"
+      "line": 1787,
+      "context": "1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;\n1786:           const newValue = clamp01(directive.morphProgress);\n1787:           uniforms.uMorphProgress.value = newValue;\n1788:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;\n1789:           if (Math.abs(newValue - oldValue) > 0.001) {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1910,
-      "context": "1908:           if (Math.abs(newValue - oldValue) > 0.001) {\n1909:             console.log(\n1910:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`\n1911:             );\n1912:           }"
+      "line": 1791,
+      "context": "1789:           if (Math.abs(newValue - oldValue) > 0.001) {\n1790:             console.log(\n1791:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`\n1792:             );\n1793:           }"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1931,
-      "context": "1929:             queueFencepost(payload);\n1930:           }\n1931:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1932:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1933:         }"
+      "line": 1812,
+      "context": "1810:             queueFencepost(payload);\n1811:           }\n1812:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1813:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1814:         }"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1932,
-      "context": "1930:           }\n1931:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1932:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1933:         }\n1934: "
+      "line": 1813,
+      "context": "1811:           }\n1812:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {\n1813:           console.warn('⚠️ uMorphProgress uniform not found on material!');\n1814:         }\n1815: "
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1982,
-      "context": "1980:     };\n1981: \n1982:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));"
+      "line": 1863,
+      "context": "1861:     };\n1862: \n1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1983,
-      "context": "1981: \n1982:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1985:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');"
+      "line": 1864,
+      "context": "1862: \n1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1984,
-      "context": "1982:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1985:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1986:     if (typeof window !== 'undefined') {"
+      "line": 1865,
+      "context": "1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);\n1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1867:     if (typeof window !== 'undefined') {"
     },
     {
       "key": "RENDERER",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 1985,
-      "context": "1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1985:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1986:     if (typeof window !== 'undefined') {\n1987:       window._rendererSubscriptionCheck = () => {"
+      "line": 1866,
+      "context": "1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);\n1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));\n1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');\n1867:     if (typeof window !== 'undefined') {\n1868:       window._rendererSubscriptionCheck = () => {"
     },
     {
       "key": "RENDERER",
@@ -1587,80 +1587,62 @@
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 502,
-      "context": "500:     );\n501:     this._listeners.push(\n502:       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {\n503:         this._rendererFencepostSeen = true;\n504:         this._emergenceActive = false;"
+      "line": 500,
+      "context": "498:     );\n499:     this._listeners.push(\n500:       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {\n501:         this._rendererFencepostSeen = true;\n502:         this._emergenceActive = false;"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 705,
-      "context": "703:       }\n704: \n705:       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost\n706: \n707:     } catch (e) {"
+      "line": 703,
+      "context": "701:       }\n702: \n703:       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost\n704: \n705:     } catch (e) {"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 819,
-      "context": "817:         const morphRounded = +morph.toFixed(3);\n818: \n819:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n820:           morphProgress: morphRounded,\n821:           drawCount: draw,"
+      "line": 817,
+      "context": "815:         const morphRounded = +morph.toFixed(3);\n816: \n817:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n818:           morphProgress: morphRounded,\n819:           drawCount: draw,"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 843,
-      "context": "841:             return;\n842:           }\n843:           BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n844:             morphProgress: 1,\n845:             drawCount: count,"
+      "line": 841,
+      "context": "839:             return;\n840:           }\n841:           BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n842:             morphProgress: 1,\n843:             drawCount: count,"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 868,
-      "context": "866:       // Prime listeners with baseline state before the first frame\n867:       BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });\n868:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n869:         morphProgress: 0,\n870:         drawCount: Math.max(1, Math.round(count * 0.05)),"
+      "line": 866,
+      "context": "864:       // Prime listeners with baseline state before the first frame\n865:       BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });\n866:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n867:         morphProgress: 0,\n868:         drawCount: Math.max(1, Math.round(count * 0.05)),"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1058,
-      "context": "1056:     if ((step.action ?? step.name) === 'formQRCode') {\n1057:       const releaseTimer = setTimeout(() => {\n1058:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { source: 'climax:qr', exitQrMode: true });\n1059:         if (typeof NavigationGate?.end === 'function') {\n1060:           NavigationGate.end('qr_complete');"
+      "line": 1243,
+      "context": "1241: \n1242:     console.log('🧪 TEST: Emitting test directive before animation loop');\n1243:     BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n1244:       morphProgress: -0.01,\n1245:       morphType: 0,"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1137,
-      "context": "1135:     if ((step.action ?? step.name) === 'formQRCode') {\n1136:       const qrMeta = getQrPointCloudMeta();\n1137:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n1138:         source: 'climax:qr',\n1139:         enterQrMode: true,"
+      "line": 1252,
+      "context": "1250:     const runAnimation = () => {\n1251:       console.log('🧪 TEST: Starting actual animation loop after 100ms delay');\n1252:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n1253:         morphProgress: 0,\n1254:         morphType: 0,"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1294,
-      "context": "1292: \n1293:     console.log('🧪 TEST: Emitting test directive before animation loop');\n1294:     BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n1295:       morphProgress: -0.01,\n1296:       morphType: 0,"
+      "line": 1284,
+      "context": "1282:         }\n1283: \n1284:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);\n1285:         console.log(\n1286:           `📤 Emitted to event:`,"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1303,
-      "context": "1301:     const runAnimation = () => {\n1302:       console.log('🧪 TEST: Starting actual animation loop after 100ms delay');\n1303:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {\n1304:         morphProgress: 0,\n1305:         morphType: 0,"
+      "line": 1287,
+      "context": "1285:         console.log(\n1286:           `📤 Emitted to event:`,\n1287:           EVENTS.RENDER_DIRECTIVE,\n1288:           '| Value:',\n1289:           String(EVENTS.RENDER_DIRECTIVE)"
     },
     {
       "key": "RENDERER",
       "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1335,
-      "context": "1333:         }\n1334: \n1335:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);\n1336:         console.log(\n1337:           `📤 Emitted to event:`,"
-    },
-    {
-      "key": "RENDERER",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1338,
-      "context": "1336:         console.log(\n1337:           `📤 Emitted to event:`,\n1338:           EVENTS.RENDER_DIRECTIVE,\n1339:           '| Value:',\n1340:           String(EVENTS.RENDER_DIRECTIVE)"
-    },
-    {
-      "key": "RENDERER",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1340,
-      "context": "1338:           EVENTS.RENDER_DIRECTIVE,\n1339:           '| Value:',\n1340:           String(EVENTS.RENDER_DIRECTIVE)\n1341:         );\n1342: "
-    },
-    {
-      "key": "RENDERER",
-      "file": "src/engine/ConsciousnessEngine.js",
-      "line": 1380,
-      "context": "1378:     if (typeof NavigationGate?.end === 'function' && NavigationGate.isInFlight?.() && NavigationGate.target?.() === 'qr') {\n1379:       NavigationGate.end('qr_cancelled');\n1380:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { source: 'climax:qr', exitQrMode: true });\n1381:     }\n1382:   }"
+      "line": 1289,
+      "context": "1287:           EVENTS.RENDER_DIRECTIVE,\n1288:           '| Value:',\n1289:           String(EVENTS.RENDER_DIRECTIVE)\n1290:         );\n1291: "
     },
     {
       "key": "RENDERER",

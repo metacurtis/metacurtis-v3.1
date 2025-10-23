@@ -70,7 +70,9 @@
   "dispatcher": {
     "file": "src/components/webgl/WebGLBackground.jsx",
     "fields": [],
-    "uniformWrites": []
+    "uniformWrites": [
+      "uAtmoFit"
+    ]
   },
   "uniforms": [
     "uActiveCount",
@@ -85,10 +87,8 @@
     "uDevicePixelRatio",
     "uFadeProgress",
     "uFlowTurbulence",
-    "uForceMono",
     "uGaussianSigma",
     "uGridSpacing",
-    "uMonoColor",
     "uMorphProgress",
     "uMorphType",
     "uMoveDampStart",

@@ -32,34 +32,34 @@
 486:           break;
 ```
 
-- `src/components/narrative/NarrationController.jsx:934`
+- `src/components/narrative/NarrationController.jsx:925`
 
 ```text
-932: 
-933:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);
-934:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);
-935: 
-936:     const keyHandler = (event) => {
+923: 
+924:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);
+925:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);
+926: 
+927:     const keyHandler = (event) => {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:756`
+- `src/components/webgl/WebGLBackground.jsx:749`
 
 ```text
-754:   }, []);
-755:   useEffect(() => {
-756:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
-757:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
-758:       setStageName(st);
+747:   }, []);
+748:   useEffect(() => {
+749:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
+750:       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
+751:       setStageName(st);
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:782`
+- `src/components/webgl/WebGLBackground.jsx:775`
 
 ```text
-780:   useEffect(() => {
-781:     let morphProbeTimer = null;
-782:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, () => {
-783:       if (morphProbeTimer) {
-784:         clearInterval(morphProbeTimer);
+773:   useEffect(() => {
+774:     let morphProbeTimer = null;
+775:     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, () => {
+776:       if (morphProbeTimer) {
+777:         clearInterval(morphProbeTimer);
 ```
 
 - `src/config/canonical/sst-v3.3.json:58`
@@ -92,34 +92,34 @@
 10:       BLUEPRINT_READY: ['blueprint', 'stage', 'quality'],
 ```
 
-- `src/engine/ConsciousnessEngine.js:487`
+- `src/engine/ConsciousnessEngine.js:485`
 
 ```text
-485:     );
-486:     this._listeners.push(
-487:       BeatBus.on(this._ev('STAGE_CHANGE'), this._onStageChange.bind(this))
-488:     );
-489:     this._listeners.push(
+483:     );
+484:     this._listeners.push(
+485:       BeatBus.on(this._ev('STAGE_CHANGE'), this._onStageChange.bind(this))
+486:     );
+487:     this._listeners.push(
 ```
 
-- `src/engine/ConsciousnessEngine.js:589`
+- `src/engine/ConsciousnessEngine.js:587`
 
 ```text
-587:     this.currentStage = stage;
-588:     if (skipBlueprint) {
-589:       this._log('stage_change', { stage, skippedBlueprint: true });
-590:       if (preserveEmergence && stage === 'genesis') {
-591:         this._log('stage_preserve_emergence', { preserved: !!this._lastEmergenceTargets });
+585:     this.currentStage = stage;
+586:     if (skipBlueprint) {
+587:       this._log('stage_change', { stage, skippedBlueprint: true });
+588:       if (preserveEmergence && stage === 'genesis') {
+589:         this._log('stage_preserve_emergence', { preserved: !!this._lastEmergenceTargets });
 ```
 
-- `src/engine/ConsciousnessEngine.js:596`
+- `src/engine/ConsciousnessEngine.js:594`
 
 ```text
-594:     }
-595:     this.buildAndEmitBlueprint(stage, this.currentQuality);
-596:     this._log('stage_change', { stage });
-597:   }
-598: 
+592:     }
+593:     this.buildAndEmitBlueprint(stage, this.currentQuality);
+594:     this._log('stage_change', { stage });
+595:   }
+596: 
 ```
 
 - `src/hooks/atoms/useNarrativeStore.js:21`
@@ -754,84 +754,84 @@
 59:             }}
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:686`
+- `src/components/webgl/WebGLBackground.jsx:679`
 
 ```text
-684:   }, [emitViewportHint]);
-685: 
-686:   // Fallback morph sink (outside emergence directives)
-687:   const __applyMorph = (v) => {
-688:     const mat = materialRef.current;
+677:   }, [emitViewportHint]);
+678: 
+679:   // Fallback morph sink (outside emergence directives)
+680:   const __applyMorph = (v) => {
+681:     const mat = materialRef.current;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:771`
+- `src/components/webgl/WebGLBackground.jsx:764`
 
 ```text
-769:   }, []);
-770: 
-771:   // Emergence flag (no local tween; engine drives via directives)
-772:   useEffect(() => {
-773:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {
+762:   }, []);
+763: 
+764:   // Emergence flag (no local tween; engine drives via directives)
+765:   useEffect(() => {
+766:     const off = BeatBus?.on?.(EVENTS.PARTICLES_START_EMERGING, () => {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1007`
+- `src/components/webgl/WebGLBackground.jsx:1000`
 
 ```text
-1005:       if (id === lastBlueprintIdRef.current) return;
-1006:       lastBlueprintIdRef.current = id;
-1007:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
-1008:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
-1009: 
+998:       if (id === lastBlueprintIdRef.current) return;
+999:       lastBlueprintIdRef.current = id;
+1000:       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
+1001:       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
+1002: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1033`
+- `src/components/webgl/WebGLBackground.jsx:1026`
 
 ```text
-1031:         }
-1032:       }
-1033:       // ignore late emergence after handoff
-1034:       if (isEmergence && emittedEmergedRef.current) return;
-1035: 
+1024:         }
+1025:       }
+1026:       // ignore late emergence after handoff
+1027:       if (isEmergence && emittedEmergedRef.current) return;
+1028: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1155`
+- `src/components/webgl/WebGLBackground.jsx:1148`
 
 ```text
-1153:       if (mat) {
-1154:         applyRendererFits(geo, viewportHintRef.current || viewport);
-1155:         logBind(isEmergence ? 'emergence' : 'stage', {
-1156:           stage: raw.stageName || st || 'genesis',
-1157:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
+1146:       if (mat) {
+1147:         applyRendererFits(geo, viewportHintRef.current || viewport);
+1148:         logBind(isEmergence ? 'emergence' : 'stage', {
+1149:           stage: raw.stageName || st || 'genesis',
+1150:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1157`
+- `src/components/webgl/WebGLBackground.jsx:1150`
 
 ```text
-1155:         logBind(isEmergence ? 'emergence' : 'stage', {
-1156:           stage: raw.stageName || st || 'genesis',
-1157:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
-1158:           cached: !!cached,
-1159:         });
+1148:         logBind(isEmergence ? 'emergence' : 'stage', {
+1149:           stage: raw.stageName || st || 'genesis',
+1150:           mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
+1151:           cached: !!cached,
+1152:         });
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1188`
+- `src/components/webgl/WebGLBackground.jsx:1181`
 
 ```text
-1186: 
-1187:       if (isEmergence) {
-1188:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
-1189:         emergencePendingRef.current = true;
-1190:         emittedEmergedRef.current = false;
+1179: 
+1180:       if (isEmergence) {
+1181:         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+1182:         emergencePendingRef.current = true;
+1183:         emittedEmergedRef.current = false;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1213`
+- `src/components/webgl/WebGLBackground.jsx:1206`
 
 ```text
-1211:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
-1212:           if (finalizeEmergence(source)) {
-1213:             console.log('⚡ Renderer: Emergence fast-forward applied', {
-1214:               source,
-1215:               cacheKey,
+1204:           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
+1205:           if (finalizeEmergence(source)) {
+1206:             console.log('⚡ Renderer: Emergence fast-forward applied', {
+1207:               source,
+1208:               cacheKey,
 ```
 
 - `src/components/webgl/WebGLCanvas.jsx:317`
@@ -944,274 +944,274 @@
 29:   ATMO_SCALE:      1.00, /* VC.ATMO_SCALE     */ // atmospheric XY spread vs target (>1 → implosion feel)
 ```
 
-- `src/engine/ConsciousnessEngine.js:191`
+- `src/engine/ConsciousnessEngine.js:189`
 
 ```text
-189:   'JetBrains Mono': () => '/fonts/CourierPrime_Regular.typeface.json',
-190:   Inter: () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
-191:   'Archivo Black': () => '/fonts/helvetiker_bold.typeface.json',
-192:   Montserrat: () => '/fonts/helvetiker_bold.typeface.json',
-193:   'Playfair Display': () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
+187:   'JetBrains Mono': () => '/fonts/CourierPrime_Regular.typeface.json',
+188:   Inter: () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
+189:   'Archivo Black': () => '/fonts/helvetiker_bold.typeface.json',
+190:   Montserrat: () => '/fonts/helvetiker_bold.typeface.json',
+191:   'Playfair Display': () => import('three/examples/fonts/helvetiker_regular.typeface.json?url').then((m) => m.default),
 ```
 
-- `src/engine/ConsciousnessEngine.js:384`
+- `src/engine/ConsciousnessEngine.js:382`
 
 ```text
-382:     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };
-383: 
-384:     // Emergence memory - store only targets, not full blueprint
-385:     this._lastEmergenceTargets = null;
-386:     this._emergenceRaf = null;
+380:     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };
+381: 
+382:     // Emergence memory - store only targets, not full blueprint
+383:     this._lastEmergenceTargets = null;
+384:     this._emergenceRaf = null;
 ```
 
-- `src/engine/ConsciousnessEngine.js:610`
+- `src/engine/ConsciousnessEngine.js:608`
 
 ```text
-608: 
-609:   _onPrewarmGenesis() {
-610:     // Clear stale emergence targets so prewarm rebuilds with current VC tuning
-611:     this._lastEmergenceTargets = null;
-612:     console.log('🧠 Engine: Prewarming genesis blueprint');
+606: 
+607:   _onPrewarmGenesis() {
+608:     // Clear stale emergence targets so prewarm rebuilds with current VC tuning
+609:     this._lastEmergenceTargets = null;
+610:     console.log('🧠 Engine: Prewarming genesis blueprint');
 ```
 
-- `src/engine/ConsciousnessEngine.js:668`
+- `src/engine/ConsciousnessEngine.js:666`
 
 ```text
-666:       this._rendererFencepostSeen = false;
-667: 
-668:       // Build the emergence blueprint
-669:       const blueprint = await this.buildEmergenceBlueprint(payload);
-670:       
+664:       this._rendererFencepostSeen = false;
+665: 
+666:       // Build the emergence blueprint
+667:       const blueprint = await this.buildEmergenceBlueprint(payload);
+668:       
 ```
 
-- `src/engine/ConsciousnessEngine.js:673`
+- `src/engine/ConsciousnessEngine.js:671`
 
 ```text
-671:       // Validate before proceeding
-672:       if (!this._validateBlueprint(blueprint)) {
-673:         console.error('🧠 Engine: Invalid emergence blueprint, not emitting');
-674:         this._log('emergence_validation_failed');
-675:         this._emergenceActive = false;
+669:       // Validate before proceeding
+670:       if (!this._validateBlueprint(blueprint)) {
+671:         console.error('🧠 Engine: Invalid emergence blueprint, not emitting');
+672:         this._log('emergence_validation_failed');
+673:         this._emergenceActive = false;
 ```
 
-- `src/engine/ConsciousnessEngine.js:683`
+- `src/engine/ConsciousnessEngine.js:681`
 
 ```text
-681:       this._lastEmergenceTargets = blueprint.text3DPositions;
-682: 
-683:       // Emit emergence blueprint with mode flag (canonical event)
-684:       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-685:         blueprint,
+679:       this._lastEmergenceTargets = blueprint.text3DPositions;
+680: 
+681:       // Emit emergence blueprint with mode flag (canonical event)
+682:       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
+683:         blueprint,
 ```
 
-- `src/engine/ConsciousnessEngine.js:688`
+- `src/engine/ConsciousnessEngine.js:686`
 
 ```text
-686:         stage: 'genesis',
-687:         quality: this.currentQuality,
-688:         mode: 'emergence',
-689:         cached: false,
-690:         skipMorphAnimation: !!payload.skipMorphAnimation,
+684:         stage: 'genesis',
+685:         quality: this.currentQuality,
+686:         mode: 'emergence',
+687:         cached: false,
+688:         skipMorphAnimation: !!payload.skipMorphAnimation,
 ```
 
-- `src/engine/ConsciousnessEngine.js:696`
+- `src/engine/ConsciousnessEngine.js:694`
 
 ```text
-694:       });
-695:       
-696:       console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
-697:       this._log('emergence_built', { count: blueprint.particleCount });
-698: 
+692:       });
+693:       
+694:       console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
+695:       this._log('emergence_built', { count: blueprint.particleCount });
+696: 
 ```
 
-- `src/engine/ConsciousnessEngine.js:699`
+- `src/engine/ConsciousnessEngine.js:697`
 
 ```text
-697:       this._log('emergence_built', { count: blueprint.particleCount });
-698: 
-699:       // Drive implosion → settle via directives; renderer remains passive
-700:       if (!this._startEmergenceTimeline(blueprint)) {
-701:         this._emergenceActive = false;
+695:       this._log('emergence_built', { count: blueprint.particleCount });
+696: 
+697:       // Drive implosion → settle via directives; renderer remains passive
+698:       if (!this._startEmergenceTimeline(blueprint)) {
+699:         this._emergenceActive = false;
 ```
 
-- `src/engine/ConsciousnessEngine.js:895`
+- `src/engine/ConsciousnessEngine.js:893`
 
 ```text
-893:       : midDefault;
-894: 
-895:     console.log('🎨 [EMERGENCE TIMELINE]', {
-896:       fastForward,
-897:       midDefault,
+891:       : midDefault;
+892: 
+893:     console.log('🎨 [EMERGENCE TIMELINE]', {
+894:       fastForward,
+895:       midDefault,
 ```
 
-- `src/engine/ConsciousnessEngine.js:905`
+- `src/engine/ConsciousnessEngine.js:903`
 
 ```text
-903: 
-904:     if (implMs > 6000 || settleMs > 6000) {
-905:       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });
-906:     }
-907: 
+901: 
+902:     if (implMs > 6000 || settleMs > 6000) {
+903:       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });
+904:     }
+905: 
 ```
 
-- `src/engine/ConsciousnessEngine.js:1466`
+- `src/engine/ConsciousnessEngine.js:1411`
 
 ```text
-1464: 
-1465:     if (safeCount > 0) {
-1466:       const rnd = createSeededRandom(`emergence-${mode || 'default'}-${quality || 'HIGH'}`);
-1467:       for (let i = 0; i < safeCount; i++) {
-1468:         const j = i * 3;
+1409: 
+1410:     if (safeCount > 0) {
+1411:       const rnd = createSeededRandom(`emergence-${mode || 'default'}-${quality || 'HIGH'}`);
+1412:       for (let i = 0; i < safeCount; i++) {
+1413:         const j = i * 3;
 ```
 
-- `src/engine/ConsciousnessEngine.js:1604`
+- `src/engine/ConsciousnessEngine.js:1549`
 
 ```text
-1602: 
-1603:   /**
-1604:    * Build + emit the Emergence blueprint for the opening sequence.
-1605:    */
-1606:   async buildEmergenceBlueprint(options = {}) {
+1547: 
+1548:   /**
+1549:    * Build + emit the Emergence blueprint for the opening sequence.
+1550:    */
+1551:   async buildEmergenceBlueprint(options = {}) {
 ```
 
-- `src/engine/ConsciousnessEngine.js:1608`
+- `src/engine/ConsciousnessEngine.js:1553`
 
 ```text
-1606:   async buildEmergenceBlueprint(options = {}) {
-1607:     const {
-1608:       mode = 'emergence',
-1609:       source = 'viewportSpread',
-1610:       target = 'constellation',
+1551:   async buildEmergenceBlueprint(options = {}) {
+1552:     const {
+1553:       mode = 'emergence',
+1554:       source = 'viewportSpread',
+1555:       target = 'constellation',
 ```
 
-- `src/engine/ConsciousnessEngine.js:1655`
+- `src/engine/ConsciousnessEngine.js:1600`
 
 ```text
-1653:         usedFallback = this._lastText3DFallbackUsed;
-1654:         if (usedFallback) {
-1655:           console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
-1656:         }
-1657:       } else {
+1598:         usedFallback = this._lastText3DFallbackUsed;
+1599:         if (usedFallback) {
+1600:           console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
+1601:         }
+1602:       } else {
 ```
 
-- `src/engine/ConsciousnessEngine.js:1722`
+- `src/engine/ConsciousnessEngine.js:1667`
 
 ```text
-1720:       targetState: targetState || null,
-1721:       note: usedFallback
-1722:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
-1723:         : 'Emergence endpoints separated: random atmospheric → 3D text target',
-1724:     };
+1665:       targetState: targetState || null,
+1666:       note: usedFallback
+1667:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
+1668:         : 'Emergence endpoints separated: random atmospheric → 3D text target',
+1669:     };
+```
+
+- `src/engine/ConsciousnessEngine.js:1668`
+
+```text
+1666:       note: usedFallback
+1667:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
+1668:         : 'Emergence endpoints separated: random atmospheric → 3D text target',
+1669:     };
+1670: 
+```
+
+- `src/engine/ConsciousnessEngine.js:1697`
+
+```text
+1695: 
+1696:     if (this._emergenceActive && stage !== 'genesis') {
+1697:       console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });
+1698:       this._log('rebuild_blocked_emergence', { stage, quality });
+1699:       return;
+```
+
+- `src/engine/ConsciousnessEngine.js:1705`
+
+```text
+1703:     let blueprint = this.blueprintCache.get(cacheKey);
+1704: 
+1705:     // Post-emergence genesis: optionally preserve settled emergence
+1706:     if (stage === 'genesis' && this._lastEmergenceTargets) {
+1707:       if (this._lastText3DFallbackUsed) {
+```
+
+- `src/engine/ConsciousnessEngine.js:1708`
+
+```text
+1706:     if (stage === 'genesis' && this._lastEmergenceTargets) {
+1707:       if (this._lastText3DFallbackUsed) {
+1708:         console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');
+1709:         this._lastEmergenceTargets = null;
+1710:         this._emergenceDone = false;
+```
+
+- `src/engine/ConsciousnessEngine.js:1713`
+
+```text
+1711:         this._rendererFencepostSeen = false;
+1712:       } else if (!this._emergenceDone) {
+1713:         console.warn('🧠 Engine: Emergence incomplete; rebuilding genesis cleanly');
+1714:         this._lastEmergenceTargets = null;
+1715:         this._emergenceDone = false;
 ```
 
 - `src/engine/ConsciousnessEngine.js:1723`
 
 ```text
-1721:       note: usedFallback
-1722:         ? 'Emergence used fallback band (font not ready); cache will be cleared on font load.'
-1723:         : 'Emergence endpoints separated: random atmospheric → 3D text target',
-1724:     };
-1725: 
+1721:         this._rendererFencepostSeen = false;
+1722:       } else {
+1723:         console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');
+1724: 
+1725:         const emergenceCount = Math.max(0, Math.floor(this._lastEmergenceTargets.length / 3));
 ```
 
-- `src/engine/ConsciousnessEngine.js:1752`
+- `src/engine/ConsciousnessEngine.js:1744`
 
 ```text
-1750: 
-1751:     if (this._emergenceActive && stage !== 'genesis') {
-1752:       console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });
-1753:       this._log('rebuild_blocked_emergence', { stage, quality });
-1754:       return;
+1742:               stage,
+1743:               quality,
+1744:               mode: 'post-emergence-guarded',
+1745:               cacheKey,
+1746:               preservedEmergence: true,
 ```
 
-- `src/engine/ConsciousnessEngine.js:1760`
+- `src/engine/ConsciousnessEngine.js:1749`
 
 ```text
-1758:     let blueprint = this.blueprintCache.get(cacheKey);
-1759: 
-1760:     // Post-emergence genesis: optionally preserve settled emergence
-1761:     if (stage === 'genesis' && this._lastEmergenceTargets) {
-1762:       if (this._lastText3DFallbackUsed) {
+1747:             });
+1748:             this._preloadNextStage(stage, quality);
+1749:             this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
+1750:           }
+1751:           this._rendererFencepostSeen = false;
 ```
 
-- `src/engine/ConsciousnessEngine.js:1763`
+- `src/engine/ConsciousnessEngine.js:2364`
 
 ```text
-1761:     if (stage === 'genesis' && this._lastEmergenceTargets) {
-1762:       if (this._lastText3DFallbackUsed) {
-1763:         console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');
-1764:         this._lastEmergenceTargets = null;
-1765:         this._emergenceDone = false;
+2362:           console.log(`✅ 3D font loaded from ${usedUrl}; cleared text3D cache (was ${oldSize} entries)`);
+2363:           try {
+2364:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
+2365:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
+2366:               this.buildEmergenceBlueprint({ mode: 'emergence' });
 ```
 
-- `src/engine/ConsciousnessEngine.js:1768`
+- `src/engine/ConsciousnessEngine.js:2365`
 
 ```text
-1766:         this._rendererFencepostSeen = false;
-1767:       } else if (!this._emergenceDone) {
-1768:         console.warn('🧠 Engine: Emergence incomplete; rebuilding genesis cleanly');
-1769:         this._lastEmergenceTargets = null;
-1770:         this._emergenceDone = false;
+2363:           try {
+2364:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
+2365:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
+2366:               this.buildEmergenceBlueprint({ mode: 'emergence' });
+2367:             }
 ```
 
-- `src/engine/ConsciousnessEngine.js:1778`
+- `src/engine/ConsciousnessEngine.js:2366`
 
 ```text
-1776:         this._rendererFencepostSeen = false;
-1777:       } else {
-1778:         console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');
-1779: 
-1780:         const emergenceCount = Math.max(0, Math.floor(this._lastEmergenceTargets.length / 3));
-```
-
-- `src/engine/ConsciousnessEngine.js:1799`
-
-```text
-1797:               stage,
-1798:               quality,
-1799:               mode: 'post-emergence-guarded',
-1800:               cacheKey,
-1801:               preservedEmergence: true,
-```
-
-- `src/engine/ConsciousnessEngine.js:1804`
-
-```text
-1802:             });
-1803:             this._preloadNextStage(stage, quality);
-1804:             this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
-1805:           }
-1806:           this._rendererFencepostSeen = false;
-```
-
-- `src/engine/ConsciousnessEngine.js:2419`
-
-```text
-2417:           console.log(`✅ 3D font loaded from ${usedUrl}; cleared text3D cache (was ${oldSize} entries)`);
-2418:           try {
-2419:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
-2420:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
-2421:               this.buildEmergenceBlueprint({ mode: 'emergence' });
-```
-
-- `src/engine/ConsciousnessEngine.js:2420`
-
-```text
-2418:           try {
-2419:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
-2420:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
-2421:               this.buildEmergenceBlueprint({ mode: 'emergence' });
-2422:             }
-```
-
-- `src/engine/ConsciousnessEngine.js:2421`
-
-```text
-2419:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
-2420:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
-2421:               this.buildEmergenceBlueprint({ mode: 'emergence' });
-2422:             }
-2423:           } catch {}
+2364:             if (this._lastText3DFallbackUsed && this._lastBlueprint?.metadata?.mode === 'emergence') {
+2365:               console.log('🔁 Rebuilding emergence with real text3D now that font is ready…');
+2366:               this.buildEmergenceBlueprint({ mode: 'emergence' });
+2367:             }
+2368:           } catch {}
 ```
 
 - `src/state/commands/StateCommands.js:104`
@@ -2044,34 +2044,34 @@
 16:   BLUEPRINT_READY: 'BLUEPRINT_READY',            // { blueprint, stage?, quality?, mode? }
 ```
 
-- `src/utils/portraitPositions.js:72`
+- `src/utils/portraitPositions.js:40`
 
 ```text
-70: 
-71:   const step = baseCount / safeCount;
-72:   let cursor = 0;
-73:   for (let i = 0; i < safeCount; i++) {
-74:     const index = Math.min(baseCount - 1, Math.floor(cursor));
+38: 
+39:   const step = baseCount / safeCount;
+40:   let cursor = 0;
+41:   for (let i = 0; i < safeCount; i++) {
+42:     const index = Math.min(baseCount - 1, Math.floor(cursor));
 ```
 
-- `src/utils/portraitPositions.js:74`
+- `src/utils/portraitPositions.js:42`
 
 ```text
-72:   let cursor = 0;
-73:   for (let i = 0; i < safeCount; i++) {
-74:     const index = Math.min(baseCount - 1, Math.floor(cursor));
-75:     const src = index * 3;
-76:     const dst = i * 3;
+40:   let cursor = 0;
+41:   for (let i = 0; i < safeCount; i++) {
+42:     const index = Math.min(baseCount - 1, Math.floor(cursor));
+43:     const src = index * 3;
+44:     const dst = i * 3;
 ```
 
-- `src/utils/portraitPositions.js:80`
+- `src/utils/portraitPositions.js:48`
 
 ```text
-78:     out[dst + 1] = points[src + 1];
-79:     out[dst + 2] = points[src + 2];
-80:     cursor += step;
-81:   }
-82:   return out;
+46:     out[dst + 1] = points[src + 1];
+47:     out[dst + 2] = points[src + 2];
+48:     cursor += step;
+49:   }
+50:   return out;
 ```
 
 ## NARRATION_API
@@ -2106,104 +2106,104 @@
 425:             });
 ```
 
-- `src/components/narrative/NarrationController.jsx:431`
+- `src/components/narrative/NarrationController.jsx:422`
 
 ```text
-429:         if (DEBUG_NARRATION) {
-430:           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;
-431:           console.log('🎙️ [BEAT FIRED]', {
-432:             stage: stageName,
-433:             segmentIndex,
+420:         if (DEBUG_NARRATION) {
+421:           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;
+422:           console.log('🎙️ [BEAT FIRED]', {
+423:             stage: stageName,
+424:             segmentIndex,
 ```
 
-- `src/components/narrative/NarrationController.jsx:526`
+- `src/components/narrative/NarrationController.jsx:517`
 
 ```text
-524:         }
-525: 
-526:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
-527:           stage: stageName,
-528:           segmentId: segment?.id ?? null,
+515:         }
+516: 
+517:         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
+518:           stage: stageName,
+519:           segmentId: segment?.id ?? null,
 ```
 
-- `src/components/narrative/NarrationController.jsx:664`
+- `src/components/narrative/NarrationController.jsx:655`
 
 ```text
-662:   );
-663: 
-664:   const skipNarration = useCallback(
-665:     (origin = 'skip') => {
-666:       if (origin === 'external' && !isControlAllowed('narration:control')) {
+653:   );
+654: 
+655:   const skipNarration = useCallback(
+656:     (origin = 'skip') => {
+657:       if (origin === 'external' && !isControlAllowed('narration:control')) {
 ```
 
-- `src/components/narrative/NarrationController.jsx:774`
+- `src/components/narrative/NarrationController.jsx:765`
 
 ```text
-772:           enumerable: true,
-773:         },
-774:         skipNarration: {
-775:           value: () => skipNarration('external'),
-776:           enumerable: true,
+763:           enumerable: true,
+764:         },
+765:         skipNarration: {
+766:           value: () => skipNarration('external'),
+767:           enumerable: true,
 ```
 
-- `src/components/narrative/NarrationController.jsx:775`
+- `src/components/narrative/NarrationController.jsx:766`
 
 ```text
-773:         },
-774:         skipNarration: {
-775:           value: () => skipNarration('external'),
-776:           enumerable: true,
-777:         },
+764:         },
+765:         skipNarration: {
+766:           value: () => skipNarration('external'),
+767:           enumerable: true,
+768:         },
 ```
 
-- `src/components/narrative/NarrationController.jsx:808`
+- `src/components/narrative/NarrationController.jsx:799`
 
 ```text
-806:     exposeControlSurface('narrationController', controllerFactory, {
-807:       playNarration: 'narration:control',
-808:       skipNarration: 'narration:control',
-809:     });
-810: 
+797:     exposeControlSurface('narrationController', controllerFactory, {
+798:       playNarration: 'narration:control',
+799:       skipNarration: 'narration:control',
+800:     });
+801: 
+```
+
+- `src/components/narrative/NarrationController.jsx:820`
+
+```text
+818:       revokeControlSurface('narrationController');
+819:     };
+820:   }, [skipNarration, startNarration]);
+821: 
+822:   useEffect(() => {
 ```
 
 - `src/components/narrative/NarrationController.jsx:829`
 
 ```text
-827:       revokeControlSurface('narrationController');
-828:     };
-829:   }, [skipNarration, startNarration]);
-830: 
-831:   useEffect(() => {
+827:       autoAdvanceEnabled,
+828:       resetStateId: resetState,
+829:       skipNarrationId: skipNarration,
+830:       startNarrationId: startNarration,
+831:     };
 ```
 
-- `src/components/narrative/NarrationController.jsx:838`
+- `src/components/narrative/NarrationController.jsx:935`
 
 ```text
-836:       autoAdvanceEnabled,
-837:       resetStateId: resetState,
-838:       skipNarrationId: skipNarration,
-839:       startNarrationId: startNarration,
-840:     };
+933:       event.preventDefault?.();
+934:       event.stopPropagation?.();
+935:       skipNarration('space');
+936:     };
+937: 
 ```
 
-- `src/components/narrative/NarrationController.jsx:944`
+- `src/components/narrative/NarrationController.jsx:952`
 
 ```text
-942:       event.preventDefault?.();
-943:       event.stopPropagation?.();
-944:       skipNarration('space');
-945:     };
-946: 
-```
-
-- `src/components/narrative/NarrationController.jsx:961`
-
-```text
-959:       resetState();
-960:     };
-961:   }, [currentStage, resetState, skipNarration, startNarration]);
-962: 
-963:   useEffect(() => {
+950:       resetState();
+951:     };
+952:   }, [currentStage, resetState, skipNarration, startNarration]);
+953: 
+954:   useEffect(() => {
 ```
 
 - `src/components/ui/AdvancedContactPortal.jsx:65`
@@ -2308,14 +2308,14 @@
 
 ## RENDERER
 
-- `src/components/narrative/NarrationController.jsx:537`
+- `src/components/narrative/NarrationController.jsx:528`
 
 ```text
-535:             effect: particleEffectPayload,
-536:           });
-537:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
-538:             kind: 'particle-effect',
-539:             ...particleEffectPayload,
+526:             effect: particleEffectPayload,
+527:           });
+528:           BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+529:             kind: 'particle-effect',
+530:             ...particleEffectPayload,
 ```
 
 - `src/components/webgl/WebGLBackground.jsx:3`
@@ -2348,224 +2348,224 @@
 121:       console.warn('🪢 BeatBus.on not available at module scope');
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:315`
+- `src/components/webgl/WebGLBackground.jsx:308`
 
 ```text
-313:     if (!payload) return;
-314:     trace('WBG:FENCEPOST', payload);
-315:     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
-316:   }, []);
-317: 
+306:     if (!payload) return;
+307:     trace('WBG:FENCEPOST', payload);
+308:     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+309:   }, []);
+310: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:383`
+- `src/components/webgl/WebGLBackground.jsx:376`
 
 ```text
-381:       const uniforms = mat?.uniforms;
-382: 
-383:       if (uniforms?.uMorphProgress) {
-384:         uniforms.uMorphProgress.value = 1.0;
-385:         if (uniforms.uStageProgress) {
+374:       const uniforms = mat?.uniforms;
+375: 
+376:       if (uniforms?.uMorphProgress) {
+377:         uniforms.uMorphProgress.value = 1.0;
+378:         if (uniforms.uStageProgress) {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:384`
+- `src/components/webgl/WebGLBackground.jsx:377`
 
 ```text
-382: 
-383:       if (uniforms?.uMorphProgress) {
-384:         uniforms.uMorphProgress.value = 1.0;
-385:         if (uniforms.uStageProgress) {
-386:           uniforms.uStageProgress.value = 1.0;
+375: 
+376:       if (uniforms?.uMorphProgress) {
+377:         uniforms.uMorphProgress.value = 1.0;
+378:         if (uniforms.uStageProgress) {
+379:           uniforms.uStageProgress.value = 1.0;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:691`
+- `src/components/webgl/WebGLBackground.jsx:684`
 
 ```text
-689:     if (!mat?.uniforms) return;
-690:     const u = mat.uniforms;
-691:     if (u.uMorphProgress) u.uMorphProgress.value = v;
-692:     else if (u.morphProgress) u.morphProgress.value = v;
-693:     else if (u.uMorph) u.uMorph.value = v;
+682:     if (!mat?.uniforms) return;
+683:     const u = mat.uniforms;
+684:     if (u.uMorphProgress) u.uMorphProgress.value = v;
+685:     else if (u.morphProgress) u.morphProgress.value = v;
+686:     else if (u.uMorph) u.uMorph.value = v;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:790`
+- `src/components/webgl/WebGLBackground.jsx:783`
 
 ```text
-788:       const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-789:       morphProbeTimer = setInterval(() => {
-790:         if (!uniforms?.uMorphProgress) return;
-791:         const val = Number(uniforms.uMorphProgress.value) || 0;
-792:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+781:       const start = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+782:       morphProbeTimer = setInterval(() => {
+783:         if (!uniforms?.uMorphProgress) return;
+784:         const val = Number(uniforms.uMorphProgress.value) || 0;
+785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:791`
+- `src/components/webgl/WebGLBackground.jsx:784`
 
 ```text
-789:       morphProbeTimer = setInterval(() => {
-790:         if (!uniforms?.uMorphProgress) return;
-791:         const val = Number(uniforms.uMorphProgress.value) || 0;
-792:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-793:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
+782:       morphProbeTimer = setInterval(() => {
+783:         if (!uniforms?.uMorphProgress) return;
+784:         const val = Number(uniforms.uMorphProgress.value) || 0;
+785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+786:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:793`
+- `src/components/webgl/WebGLBackground.jsx:786`
 
 ```text
-791:         const val = Number(uniforms.uMorphProgress.value) || 0;
-792:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-793:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
-794:         if (now - start > 2000) {
-795:           clearInterval(morphProbeTimer);
+784:         const val = Number(uniforms.uMorphProgress.value) || 0;
+785:         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+786:         console.log('[PROBE] uMorphProgress', { t: Math.round(now - start), val });
+787:         if (now - start > 2000) {
+788:           clearInterval(morphProbeTimer);
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1161`
+- `src/components/webgl/WebGLBackground.jsx:1154`
 
 ```text
-1159:         });
-1160:         scheduleRuntimeSampling();
-1161:         if (mat?.uniforms?.uMorphProgress) {
-1162:           mat.uniforms.uMorphProgress.value = 0;
-1163:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+1152:         });
+1153:         scheduleRuntimeSampling();
+1154:         if (mat?.uniforms?.uMorphProgress) {
+1155:           mat.uniforms.uMorphProgress.value = 0;
+1156:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1162`
+- `src/components/webgl/WebGLBackground.jsx:1155`
 
 ```text
-1160:         scheduleRuntimeSampling();
-1161:         if (mat?.uniforms?.uMorphProgress) {
-1162:           mat.uniforms.uMorphProgress.value = 0;
-1163:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
-1164:           mat.uniformsNeedUpdate = true;
+1153:         scheduleRuntimeSampling();
+1154:         if (mat?.uniforms?.uMorphProgress) {
+1155:           mat.uniforms.uMorphProgress.value = 0;
+1156:           if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+1157:           mat.uniformsNeedUpdate = true;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1379`
+- `src/components/webgl/WebGLBackground.jsx:1372`
 
 ```text
-1377:         uniforms: {
-1378:           uTime:            { value: 0 },
-1379:           uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },
-1380:           uScrollProgress:  { value: 0 },
-1381:           uStageProgress:   { value: clamp01(fallbackMorphRef.current) },
+1370:         uniforms: {
+1371:           uTime:            { value: 0 },
+1372:           uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },
+1373:           uScrollProgress:  { value: 0 },
+1374:           uStageProgress:   { value: clamp01(fallbackMorphRef.current) },
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1493`
+- `src/components/webgl/WebGLBackground.jsx:1484`
 
 ```text
-1491:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],
-1492:         hasGeometry: !!geometryRef.current,
-1493:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,
-1494:       }));
-1495: 
+1482:         uniforms: mat ? Object.keys(mat.uniforms || {}) : [],
+1483:         hasGeometry: !!geometryRef.current,
+1484:         morph: mat?.uniforms?.uMorphProgress?.value ?? null,
+1485:       }));
+1486: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1630`
+- `src/components/webgl/WebGLBackground.jsx:1605`
 
 ```text
-1628:   }, []);
-1629: 
-1630:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
-1631:   useEffect(() => {
-1632:     if (typeof window !== 'undefined') {
+1603:   }, []);
+1604: 
+1605:   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
+1606:   useEffect(() => {
+1607:     if (typeof window !== 'undefined') {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1903`
+- `src/components/webgl/WebGLBackground.jsx:1784`
 
 ```text
-1901: 
-1902:         // Morph progress + fencepost emission
-1903:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
-1904:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-1905:           const newValue = clamp01(directive.morphProgress);
+1782: 
+1783:         // Morph progress + fencepost emission
+1784:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
+1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+1786:           const newValue = clamp01(directive.morphProgress);
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1904`
+- `src/components/webgl/WebGLBackground.jsx:1785`
 
 ```text
-1902:         // Morph progress + fencepost emission
-1903:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
-1904:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-1905:           const newValue = clamp01(directive.morphProgress);
-1906:           uniforms.uMorphProgress.value = newValue;
+1783:         // Morph progress + fencepost emission
+1784:         if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
+1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+1786:           const newValue = clamp01(directive.morphProgress);
+1787:           uniforms.uMorphProgress.value = newValue;
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1906`
+- `src/components/webgl/WebGLBackground.jsx:1787`
 
 ```text
-1904:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-1905:           const newValue = clamp01(directive.morphProgress);
-1906:           uniforms.uMorphProgress.value = newValue;
-1907:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
-1908:           if (Math.abs(newValue - oldValue) > 0.001) {
+1785:           const oldValue = Number(uniforms.uMorphProgress.value) || 0;
+1786:           const newValue = clamp01(directive.morphProgress);
+1787:           uniforms.uMorphProgress.value = newValue;
+1788:           if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
+1789:           if (Math.abs(newValue - oldValue) > 0.001) {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1910`
+- `src/components/webgl/WebGLBackground.jsx:1791`
 
 ```text
-1908:           if (Math.abs(newValue - oldValue) > 0.001) {
-1909:             console.log(
-1910:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
-1911:             );
-1912:           }
+1789:           if (Math.abs(newValue - oldValue) > 0.001) {
+1790:             console.log(
+1791:               `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
+1792:             );
+1793:           }
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1931`
+- `src/components/webgl/WebGLBackground.jsx:1812`
 
 ```text
-1929:             queueFencepost(payload);
-1930:           }
-1931:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
-1932:           console.warn('⚠️ uMorphProgress uniform not found on material!');
-1933:         }
+1810:             queueFencepost(payload);
+1811:           }
+1812:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
+1813:           console.warn('⚠️ uMorphProgress uniform not found on material!');
+1814:         }
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1932`
+- `src/components/webgl/WebGLBackground.jsx:1813`
 
 ```text
-1930:           }
-1931:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
-1932:           console.warn('⚠️ uMorphProgress uniform not found on material!');
-1933:         }
-1934: 
+1811:           }
+1812:         } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
+1813:           console.warn('⚠️ uMorphProgress uniform not found on material!');
+1814:         }
+1815: 
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1982`
+- `src/components/webgl/WebGLBackground.jsx:1863`
 
 ```text
-1980:     };
-1981: 
-1982:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1861:     };
+1862: 
+1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1983`
+- `src/components/webgl/WebGLBackground.jsx:1864`
 
 ```text
-1981: 
-1982:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-1985:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+1862: 
+1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1984`
+- `src/components/webgl/WebGLBackground.jsx:1865`
 
 ```text
-1982:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-1985:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
-1986:     if (typeof window !== 'undefined') {
+1863:     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
+1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+1867:     if (typeof window !== 'undefined') {
 ```
 
-- `src/components/webgl/WebGLBackground.jsx:1985`
+- `src/components/webgl/WebGLBackground.jsx:1866`
 
 ```text
-1983:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-1984:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-1985:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
-1986:     if (typeof window !== 'undefined') {
-1987:       window._rendererSubscriptionCheck = () => {
+1864:     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
+1865:     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
+1866:     console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+1867:     if (typeof window !== 'undefined') {
+1868:       window._rendererSubscriptionCheck = () => {
 ```
 
 - `src/config/canonical/sst-v3.3.json:48`
@@ -2638,134 +2638,104 @@
 56:             mat.uniforms[key].value = value;
 ```
 
-- `src/engine/ConsciousnessEngine.js:502`
+- `src/engine/ConsciousnessEngine.js:500`
 
 ```text
-500:     );
-501:     this._listeners.push(
-502:       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
-503:         this._rendererFencepostSeen = true;
-504:         this._emergenceActive = false;
+498:     );
+499:     this._listeners.push(
+500:       BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
+501:         this._rendererFencepostSeen = true;
+502:         this._emergenceActive = false;
 ```
 
-- `src/engine/ConsciousnessEngine.js:705`
+- `src/engine/ConsciousnessEngine.js:703`
 
 ```text
-703:       }
+701:       }
+702: 
+703:       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost
 704: 
-705:       // DO NOT emit PARTICLES_EMERGED - renderer owns this fencepost
-706: 
-707:     } catch (e) {
+705:     } catch (e) {
 ```
 
-- `src/engine/ConsciousnessEngine.js:819`
+- `src/engine/ConsciousnessEngine.js:817`
 
 ```text
-817:         const morphRounded = +morph.toFixed(3);
-818: 
-819:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-820:           morphProgress: morphRounded,
-821:           drawCount: draw,
+815:         const morphRounded = +morph.toFixed(3);
+816: 
+817:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+818:           morphProgress: morphRounded,
+819:           drawCount: draw,
 ```
 
-- `src/engine/ConsciousnessEngine.js:843`
+- `src/engine/ConsciousnessEngine.js:841`
 
 ```text
-841:             return;
-842:           }
-843:           BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-844:             morphProgress: 1,
-845:             drawCount: count,
+839:             return;
+840:           }
+841:           BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+842:             morphProgress: 1,
+843:             drawCount: count,
 ```
 
-- `src/engine/ConsciousnessEngine.js:868`
+- `src/engine/ConsciousnessEngine.js:866`
 
 ```text
-866:       // Prime listeners with baseline state before the first frame
-867:       BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });
-868:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-869:         morphProgress: 0,
-870:         drawCount: Math.max(1, Math.round(count * 0.05)),
+864:       // Prime listeners with baseline state before the first frame
+865:       BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });
+866:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+867:         morphProgress: 0,
+868:         drawCount: Math.max(1, Math.round(count * 0.05)),
 ```
 
-- `src/engine/ConsciousnessEngine.js:1058`
+- `src/engine/ConsciousnessEngine.js:1243`
 
 ```text
-1056:     if ((step.action ?? step.name) === 'formQRCode') {
-1057:       const releaseTimer = setTimeout(() => {
-1058:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { source: 'climax:qr', exitQrMode: true });
-1059:         if (typeof NavigationGate?.end === 'function') {
-1060:           NavigationGate.end('qr_complete');
+1241: 
+1242:     console.log('🧪 TEST: Emitting test directive before animation loop');
+1243:     BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+1244:       morphProgress: -0.01,
+1245:       morphType: 0,
 ```
 
-- `src/engine/ConsciousnessEngine.js:1137`
+- `src/engine/ConsciousnessEngine.js:1252`
 
 ```text
-1135:     if ((step.action ?? step.name) === 'formQRCode') {
-1136:       const qrMeta = getQrPointCloudMeta();
-1137:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-1138:         source: 'climax:qr',
-1139:         enterQrMode: true,
+1250:     const runAnimation = () => {
+1251:       console.log('🧪 TEST: Starting actual animation loop after 100ms delay');
+1252:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+1253:         morphProgress: 0,
+1254:         morphType: 0,
 ```
 
-- `src/engine/ConsciousnessEngine.js:1294`
+- `src/engine/ConsciousnessEngine.js:1284`
 
 ```text
-1292: 
-1293:     console.log('🧪 TEST: Emitting test directive before animation loop');
-1294:     BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-1295:       morphProgress: -0.01,
-1296:       morphType: 0,
+1282:         }
+1283: 
+1284:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
+1285:         console.log(
+1286:           `📤 Emitted to event:`,
 ```
 
-- `src/engine/ConsciousnessEngine.js:1303`
+- `src/engine/ConsciousnessEngine.js:1287`
 
 ```text
-1301:     const runAnimation = () => {
-1302:       console.log('🧪 TEST: Starting actual animation loop after 100ms delay');
-1303:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-1304:         morphProgress: 0,
-1305:         morphType: 0,
+1285:         console.log(
+1286:           `📤 Emitted to event:`,
+1287:           EVENTS.RENDER_DIRECTIVE,
+1288:           '| Value:',
+1289:           String(EVENTS.RENDER_DIRECTIVE)
 ```
 
-- `src/engine/ConsciousnessEngine.js:1335`
+- `src/engine/ConsciousnessEngine.js:1289`
 
 ```text
-1333:         }
-1334: 
-1335:         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
-1336:         console.log(
-1337:           `📤 Emitted to event:`,
-```
-
-- `src/engine/ConsciousnessEngine.js:1338`
-
-```text
-1336:         console.log(
-1337:           `📤 Emitted to event:`,
-1338:           EVENTS.RENDER_DIRECTIVE,
-1339:           '| Value:',
-1340:           String(EVENTS.RENDER_DIRECTIVE)
-```
-
-- `src/engine/ConsciousnessEngine.js:1340`
-
-```text
-1338:           EVENTS.RENDER_DIRECTIVE,
-1339:           '| Value:',
-1340:           String(EVENTS.RENDER_DIRECTIVE)
-1341:         );
-1342: 
-```
-
-- `src/engine/ConsciousnessEngine.js:1380`
-
-```text
-1378:     if (typeof NavigationGate?.end === 'function' && NavigationGate.isInFlight?.() && NavigationGate.target?.() === 'qr') {
-1379:       NavigationGate.end('qr_cancelled');
-1380:       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { source: 'climax:qr', exitQrMode: true });
-1381:     }
-1382:   }
+1287:           EVENTS.RENDER_DIRECTIVE,
+1288:           '| Value:',
+1289:           String(EVENTS.RENDER_DIRECTIVE)
+1290:         );
+1291: 
 ```
 
 - `src/shaders/templates/consciousness-vertex.glsl:15`

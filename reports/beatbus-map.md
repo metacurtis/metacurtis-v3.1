@@ -27,11 +27,11 @@ Total events: 30
 ## BLUEPRINT_READY
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:684`
-- `src/engine/ConsciousnessEngine.js:1132`
-- `src/engine/ConsciousnessEngine.js:1795`
-- `src/engine/ConsciousnessEngine.js:1816`
-- `src/engine/ConsciousnessEngine.js:1835`
+- `src/engine/ConsciousnessEngine.js:682`
+- `src/engine/ConsciousnessEngine.js:1120`
+- `src/engine/ConsciousnessEngine.js:1740`
+- `src/engine/ConsciousnessEngine.js:1761`
+- `src/engine/ConsciousnessEngine.js:1780`
 
 **Listeners**:
 - `src/dev/BlueprintTap.js:14`
@@ -48,8 +48,8 @@ Total events: 30
 ## CLIMAX_STEP
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:1029`
-- `src/engine/ConsciousnessEngine.js:1408`
+- `src/engine/ConsciousnessEngine.js:1027`
+- `src/engine/ConsciousnessEngine.js:1353`
 
 **Listeners**:
 - (none)
@@ -99,7 +99,7 @@ Total events: 30
 
 **Emitters**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:269`
-- `src/components/webgl/WebGLBackground.jsx:640`
+- `src/components/webgl/WebGLBackground.jsx:633`
 - `src/theater/TheaterDirector.js:1113`
 
 **Listeners**:
@@ -136,9 +136,9 @@ Total events: 30
 ## MORPH_PROGRESS
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:834`
-- `src/engine/ConsciousnessEngine.js:859`
-- `src/engine/ConsciousnessEngine.js:867`
+- `src/engine/ConsciousnessEngine.js:832`
+- `src/engine/ConsciousnessEngine.js:857`
+- `src/engine/ConsciousnessEngine.js:865`
 - `src/state/commands/StateCommands.js:27`
 
 **Listeners**:
@@ -147,7 +147,7 @@ Total events: 30
 ## PARTICLES_EMERGED
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:315`
+- `src/components/webgl/WebGLBackground.jsx:308`
 
 **Listeners**:
 - (none)
@@ -168,12 +168,12 @@ Total events: 30
 - `src/theater/TheaterDirector.js:737`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1626`
+- `src/components/webgl/WebGLBackground.jsx:1601`
 
 ## PREWARM_COMPLETE
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:620`
+- `src/engine/ConsciousnessEngine.js:618`
 
 **Listeners**:
 - (none)
@@ -206,15 +206,12 @@ Total events: 30
 ## RENDER_DIRECTIVE
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:819`
-- `src/engine/ConsciousnessEngine.js:843`
-- `src/engine/ConsciousnessEngine.js:868`
-- `src/engine/ConsciousnessEngine.js:1058`
-- `src/engine/ConsciousnessEngine.js:1137`
-- `src/engine/ConsciousnessEngine.js:1294`
-- `src/engine/ConsciousnessEngine.js:1303`
-- `src/engine/ConsciousnessEngine.js:1335`
-- `src/engine/ConsciousnessEngine.js:1380`
+- `src/engine/ConsciousnessEngine.js:817`
+- `src/engine/ConsciousnessEngine.js:841`
+- `src/engine/ConsciousnessEngine.js:866`
+- `src/engine/ConsciousnessEngine.js:1243`
+- `src/engine/ConsciousnessEngine.js:1252`
+- `src/engine/ConsciousnessEngine.js:1284`
 - `src/theater/TheaterDirector.js:721`
 - `src/theater/TheaterDirector.js:743`
 
