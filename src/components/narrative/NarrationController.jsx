@@ -188,6 +188,15 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
       if (typeof window === 'undefined') return;
 
+      const gate = window.NavigationGate;
+      if (gate?.isInFlight?.() && gate.target?.() === 'qr') {
+        narrationDiagnostic.log('AUTO_ADVANCE_DEFERRED_QR', {
+          stage: completedStageName,
+          origin,
+        });
+        return;
+      }
+
       const controls = window.stageControls;
       const isAutoEnabled =
         controls?.isAutoAdvanceEnabled?.() ??

@@ -14,11 +14,13 @@ import {
   generatePortraitPositions,
   generateQRPositions,
   generateScatterPositions,
+  getQrPointCloudMeta,
 } from '@/utils/portraitPositions.js';
 import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
+import NavigationGate from '@/theater/NavigationGate.js';
 
 // ===== Band probe helpers (pure, exportable) =================================
 const deg2rad = (d) => (d * Math.PI) / 180;
@@ -1050,6 +1052,16 @@ class ConsciousnessEngine {
       this._executeClimaxStep(stepIndex + 1);
     }, totalStepTime + 50);
     this._climaxState.timers.push(nextTimer);
+
+    if ((step.action ?? step.name) === 'formQRCode') {
+      const releaseTimer = setTimeout(() => {
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { source: 'climax:qr', exitQrMode: true });
+        if (typeof NavigationGate?.end === 'function') {
+          NavigationGate.end('qr_complete');
+        }
+      }, totalStepTime);
+      this._climaxState.timers.push(releaseTimer);
+    }
   }
 
   _buildClimaxBlueprint(step) {
@@ -1119,6 +1131,20 @@ class ConsciousnessEngine {
 
     BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
     this._log('climax_blueprint_emitted', { step: step.name, particleCount });
+
+    if ((step.action ?? step.name) === 'formQRCode') {
+      const qrMeta = getQrPointCloudMeta();
+      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+        source: 'climax:qr',
+        enterQrMode: true,
+        uPointSize: 2.6,
+        paletteOverride: ['#000000', '#000000', '#000000', '#000000'],
+        qrMeta,
+      });
+      if (typeof NavigationGate?.start === 'function') {
+        NavigationGate.start('qr', 'climax_qr');
+      }
+    }
   }
 
   _buildClimaxBlueprintFromPositions(step, targetPositions, particleCount) {
@@ -1186,6 +1212,17 @@ class ConsciousnessEngine {
       for (let i = 0; i < arr.length; i += 1) arr[i] = 2;
     });
 
+    const isQrStep = (step.action ?? step.name) === 'formQRCode';
+
+    if (isQrStep) {
+      for (let i = 0; i < animationSeeds.length; i += 1) {
+        animationSeeds[i] = 0;
+      }
+      sizeMultipliers.fill(1);
+      opacityData.fill(1);
+      tierData.fill(0);
+    }
+
     const metadata = {
       ...(source?.metadata || {}),
       climaxStep: step.name,
@@ -1197,6 +1234,15 @@ class ConsciousnessEngine {
       climaxTransitionMs: step.transitionDuration,
       colors: palette,
     };
+
+    if (isQrStep) {
+      const qrMeta = getQrPointCloudMeta();
+      metadata.qr = {
+        ...qrMeta,
+        url: step.url ?? qrMeta?.url ?? null,
+        particleCount,
+      };
+    }
 
     const blueprint = {
       stageName: 'transcendence',
@@ -1217,6 +1263,11 @@ class ConsciousnessEngine {
       hotspotMap: {},
       hotspotLookup: null,
     };
+
+    if (isQrStep) {
+      blueprint.colors = ['#000000', '#000000', '#000000'];
+      blueprint.metadata.colors = ['#000000'];
+    }
 
     this._lastBlueprint = blueprint;
     this._climaxState.previousPositions = blueprint.text3DPositions.slice();
@@ -1324,6 +1375,10 @@ class ConsciousnessEngine {
       if (id != null) clearTimeout(id);
     });
     this._climaxState.timers.length = 0;
+    if (typeof NavigationGate?.end === 'function' && NavigationGate.isInFlight?.() && NavigationGate.target?.() === 'qr') {
+      NavigationGate.end('qr_cancelled');
+      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, { source: 'climax:qr', exitQrMode: true });
+    }
   }
 
   _cancelClimaxTransition() {
