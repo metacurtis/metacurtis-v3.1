@@ -3,38 +3,6 @@ import SST from '@/config/sst-loader.js';
 import portraitPointCloud from '@/assets/climax/portrait-pointcloud.json';
 import qrPointCloud from '@/assets/climax/qr-curtis.json';
 
-function flattenPoints(points) {
-  if (!Array.isArray(points) || points.length === 0) return new Float32Array(0);
-  if (typeof points[0] === 'number') {
-    return Float32Array.from(points);
-  }
-  const out = new Float32Array(points.length * 3);
-  for (let i = 0; i < points.length; i += 1) {
-    const src = points[i] || [0, 0, 0];
-    const dst = i * 3;
-    out[dst] = Number(src[0]) || 0;
-    out[dst + 1] = Number(src[1]) || 0;
-    out[dst + 2] = Number(src[2]) || 0;
-  }
-  return out;
-}
-
-const portraitBasePoints = flattenPoints(portraitPointCloud?.points || []);
-const qrBasePoints = flattenPoints(
-  (Array.isArray(qrPointCloud?.positions) ? qrPointCloud.positions : qrPointCloud?.points) || []
-);
-
-const qrPointCloudMeta = {
-  url: qrPointCloud?.url ?? null,
-  ecc: qrPointCloud?.ecc ?? null,
-  moduleCount: qrPointCloud?.moduleCount ?? null,
-  totalModules: qrPointCloud?.totalModules ?? null,
-  quietZone: qrPointCloud?.quietZone ?? null,
-  samplesPerModule: qrPointCloud?.samplesPerModule ?? null,
-  normalized: qrPointCloud?.normalized ?? false,
-  bounds: qrPointCloud?.bounds ?? null,
-};
-
 /**
  * Resolve the canonical transcendence particle count from configuration.
  * Falls back to 15000 if Canonical/SST are not available or not yet initialized.
@@ -62,7 +30,7 @@ function getCanonicalTranscendenceCount() {
  * @param {number} count - Number of particles (defaults to transcendence count from Canonical)
  * @returns {Float32Array} Position data [x,y,z,x,y,z,...]
  */
-function resamplePointCloud(points = new Float32Array(0), count = 0) {
+function resamplePointCloud(points = [], count = 0) {
   const safeCount = Math.max(0, Math.floor(count));
   const out = new Float32Array(safeCount * 3);
   const baseCount = Math.floor(points.length / 3);
@@ -83,7 +51,9 @@ function resamplePointCloud(points = new Float32Array(0), count = 0) {
 }
 
 export function generatePortraitPositions(count = getCanonicalTranscendenceCount()) {
-  const basePoints = portraitBasePoints;
+  const basePoints = Array.isArray(portraitPointCloud?.points)
+    ? portraitPointCloud.points
+    : [];
   const safeCount = Math.max(0, Math.floor(count));
   const positions = resamplePointCloud(basePoints, safeCount);
   if (safeCount && import.meta?.env?.DEV) {
@@ -102,7 +72,7 @@ export function generatePortraitPositions(count = getCanonicalTranscendenceCount
  * @returns {Float32Array} Position data [x,y,z,x,y,z,...]
  */
 export function generateQRPositions(count = getCanonicalTranscendenceCount()) {
-  const basePoints = qrBasePoints;
+  const basePoints = Array.isArray(qrPointCloud?.points) ? qrPointCloud.points : [];
   const safeCount = Math.max(0, Math.floor(count));
   const positions = resamplePointCloud(basePoints, safeCount);
   if (safeCount && import.meta?.env?.DEV) {
@@ -112,10 +82,6 @@ export function generateQRPositions(count = getCanonicalTranscendenceCount()) {
     });
   }
   return positions;
-}
-
-export function getQrPointCloudMeta() {
-  return { ...qrPointCloudMeta, sampleCount: Math.floor(qrBasePoints.length / 3) };
 }
 
 /**

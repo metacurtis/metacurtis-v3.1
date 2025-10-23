@@ -1,11 +1,12 @@
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
 
+import { TELEMETRY, ringPush } from '@/runtime/telemetryConfig.js';
+
 class BeatBus {
   constructor(){
     this.listeners = new Map();
     this.eventLog  = [];
-    this.maxLog    = 200;
     this._last = { stage: 'genesis', quality: 'HIGH' };
     this._contracts = null;
     
@@ -119,8 +120,7 @@ class BeatBus {
 
   _log(evt, data){
     try {
-      this.eventLog.push({ t: Date.now(), evt, data });
-      if (this.eventLog.length>this.maxLog) this.eventLog.shift();
+      ringPush(this.eventLog, { t: Date.now(), evt, data }, TELEMETRY.EVENTLOG_MAX);
     } catch {}
   }
 

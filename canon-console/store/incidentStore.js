@@ -1,11 +1,12 @@
 import { Emitter } from './emitter.js';
 import Incident from '../model/incident.js';
+import { TELEMETRY } from '../../src/runtime/telemetryConfig.js';
 
 class IncidentStore {
   constructor() {
     this.bus = new Emitter();
     this.incidents = new Map();
-    this.maxIncidents = 100;
+    this.maxIncidents = TELEMETRY?.INCIDENT_MAX || 200;
     this.stats = this.initStats();
     this.patterns = this.initPatterns();
   }

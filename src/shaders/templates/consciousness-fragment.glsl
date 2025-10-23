@@ -17,8 +17,6 @@ uniform float uFadeProgress;
 uniform float uGaussianSigma;
 uniform float uBandHeight;
 uniform float uBandFade;
-uniform bool uForceMono;
-uniform vec3 uMonoColor;
 
 // Varyings
 varying vec3 vPosition;
@@ -94,10 +92,6 @@ void main() {
   finalColor += glowGradient * (coreStrength * tierGlowBoost * 0.5);
   finalColor += haloTint * (haloStrength * 0.25);
   finalColor += ambientGlow;
-
-  if (uForceMono) {
-    finalColor = uMonoColor;
-  }
 
   // Slightly elevate starfield opacity for Tier 0
   float tierOpacityBoost = tierIndex == 0 ? 1.6 : (tierIndex == 1 ? 1.1 : 1.0);

@@ -73,83 +73,52 @@ function buildPortraitPointCloud() {
   };
 }
 
-async function buildQrPointCloud(url, opts = {}) {
-  const ecc = opts.ecc || 'H';
-  const quietZone = Number.isFinite(opts.quietZone) ? opts.quietZone : 4;
-  const samplesPerModule = Number.isFinite(opts.samplesPerModule) ? Math.max(1, opts.samplesPerModule) : 6;
-  const scale = Number.isFinite(opts.scale) ? opts.scale : 1;
-
-  const qr = QRCode.create(url, { errorCorrectionLevel: ecc });
+function buildQrPointCloud(url) {
+  const qr = QRCode.create(url, { errorCorrectionLevel: 'Q' });
   const modules = qr.modules;
   const size = modules.size;
-
-  const totalModules = size + quietZone * 2;
   const data = modules.data;
-  const jitterRng = createSeededRandom('qr-cloud-v2');
+  const points = [];
+  const rng = createSeededRandom('qr-cloud-v1');
 
-  const positions = [];
-  const halfSpan = totalModules * scale * 0.5 || 1;
-
-  const isBlack = (row, col) => {
-    if (row < quietZone || col < quietZone) return false;
-    if (row >= quietZone + size || col >= quietZone + size) return false;
-    const baseRow = row - quietZone;
-    const baseCol = col - quietZone;
-    const idx = baseRow * size + baseCol;
-    return data[idx] === 1;
-  };
-
-  for (let r = 0; r < totalModules; r += 1) {
-    for (let c = 0; c < totalModules; c += 1) {
-      if (!isBlack(r, c)) continue;
-      for (let s = 0; s < samplesPerModule; s += 1) {
-        const jitter = scale * 0.45;
-        const px = (c + 0.5) * scale - halfSpan + (jitterRng() - 0.5) * jitter;
-        const py = (r + 0.5) * scale - halfSpan + (jitterRng() - 0.5) * jitter;
-        const pz = (jitterRng() - 0.5) * scale * 0.1;
-        positions.push([
-          Number((px / halfSpan).toFixed(5)),
-          Number((-(py) / halfSpan).toFixed(5)),
-          Number(pz.toFixed(5)),
-        ]);
+  const moduleSize = 0.06;
+  const half = (size * moduleSize) / 2;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = y * size + x;
+      if (!data[idx]) continue;
+      const cx = x * moduleSize - half + moduleSize / 2;
+      const cy = (size - 1 - y) * moduleSize - half + moduleSize / 2;
+      for (let s = 0; s < 5; s++) {
+        const jitterX = (rng() - 0.5) * moduleSize * 0.6;
+        const jitterY = (rng() - 0.5) * moduleSize * 0.6;
+        const jitterZ = (rng() - 0.5) * moduleSize * 0.15;
+        points.push(
+          Number((cx + jitterX).toFixed(4)),
+          Number((cy + jitterY).toFixed(4)),
+          Number(jitterZ.toFixed(4))
+        );
       }
     }
   }
 
-  const minZ = positions.length ? Math.min(...positions.map((p) => p[2])) : 0;
-  const maxZ = positions.length ? Math.max(...positions.map((p) => p[2])) : 0;
-
   return {
-    type: 'qrPointCloud',
-    url,
-    ecc,
-    quietZone,
-    moduleCount: size,
-    totalModules,
-    samplesPerModule,
-    normalized: true,
-    positions,
-    bounds: {
-      min: [-1, -1, minZ],
-      max: [1, 1, maxZ],
-    },
+    size,
+    moduleSize,
+    points,
   };
 }
 
 function writeJson(relativePath, data) {
   const outputPath = path.resolve(process.cwd(), relativePath);
   fs.writeFileSync(outputPath, `${JSON.stringify(data)}\n`, 'utf8');
-  const count = Array.isArray(data.positions) ? data.positions.length : (Array.isArray(data.points) ? data.points.length / 3 : 0);
-  console.log(`✅ Wrote ${relativePath} (${count} samples)`);
+  console.log(`✅ Wrote ${relativePath} (${data.points.length / 3} points)`);
 }
 
-(async function main() {
+(function main() {
   const portrait = buildPortraitPointCloud();
-  const qr = await buildQrPointCloud('https://curtisworton.com/contact', { ecc: 'H', quietZone: 4, samplesPerModule: 6, scale: 1 });
+  const qr = buildQrPointCloud('https://curtisworton.com/contact');
 
   writeJson('src/assets/climax/portrait-pointcloud.json', portrait);
   writeJson('src/assets/climax/qr-curtis.json', qr);
-})().catch((error) => {
-  console.error('❌ Failed to generate climax assets', error);
-  process.exitCode = 1;
-});
+})();
