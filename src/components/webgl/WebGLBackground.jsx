@@ -205,6 +205,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const pendingFenceDataRef = useRef(null);
   const pendingFenceTimeoutRef = useRef(null);
   const spinRef = useRef({ active: false, velocity: { y: 0, z: 0 }, endTime: 0 });
+  const particleEffectStateRef = useRef({
+    speedMultiplier: 1.0,
+    motionParams: { x: 1.0, y: 0.3, z: 0.5 },
+    gridSpacing: { x: 2.0, y: 2.0 },
+    turbulence: 0.1,
+    streakIntensity: 1.0,
+    activeMode: 0,
+    activeEffects: [],
+  });
+  const tierHighlightBaseRef = useRef(null);
 
   const logBind = useCallback((kind, meta = {}) => {
     const geo = geometryRef.current;
@@ -1284,6 +1294,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uBrainRegion:    { value: stageIndex },
           uSpreadFactor:   { value: 1.0 },
           uMorphType:      { value: MORPH_TYPE_ENUM.steady },
+          uMotionMode:     { value: 0 },
+          uMotionParams:   { value: new THREE.Vector3(1.0, 0.3, 0.5) },
+          uGridSpacing:    { value: new THREE.Vector2(2.0, 2.0) },
+          uFlowTurbulence: { value: 0.1 },
+          uStreakIntensity:{ value: 1.0 },
         },
         vertexShader: vertexShaderSource,
         fragmentShader: fragmentShaderSource,
@@ -1298,6 +1313,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const uniforms = mat.uniforms || {};
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
+    if (!uniforms.uMotionMode) uniforms.uMotionMode = { value: 0 };
+    if (!uniforms.uMotionParams) uniforms.uMotionParams = { value: new THREE.Vector3(1.0, 0.3, 0.5) };
+    if (!uniforms.uGridSpacing) uniforms.uGridSpacing = { value: new THREE.Vector2(2.0, 2.0) };
+    if (!uniforms.uFlowTurbulence) uniforms.uFlowTurbulence = { value: 0.1 };
+    if (!uniforms.uStreakIntensity) uniforms.uStreakIntensity = { value: 1.0 };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
@@ -1326,6 +1346,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     if (uniforms.uActiveCount) uniforms.uActiveCount.value = blueprintCount;
     if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = blueprintCount || 15000;
+    if (uniforms.uTierHighlight?.value && (!tierHighlightBaseRef.current || tierHighlightBaseRef.current.length !== uniforms.uTierHighlight.value.length)) {
+      tierHighlightBaseRef.current = Float32Array.from(uniforms.uTierHighlight.value);
+    }
 
     mat.uniformsNeedUpdate = true;
 
@@ -1470,6 +1493,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__particleEffectState = particleEffectStateRef.current;
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.__particleEffectState === particleEffectStateRef.current) {
+        delete window.__particleEffectState;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     frameCountRef.current = 0;
     const handler = (payload = {}) => {
       const directive = payload?.directive || payload || {};
@@ -1506,6 +1540,177 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
       });
 
+      if (directive.kind === 'particle-effect' && directive.effect) {
+        console.log('[Renderer] 🎨 Processing particle effect:', {
+          verb: directive.verb,
+          effect: directive.effect,
+          stage: directive.stage || currentStage,
+        });
+
+        const effect = directive.effect;
+        const effectParams = effect.parameters || {};
+
+        if (typeof effectParams.speed !== 'undefined') {
+          const speedFactor = Number(effectParams.speed) || 1.0;
+          particleEffectStateRef.current.speedMultiplier = speedFactor;
+          console.log(`[Renderer] ✅ speedMultiplier set to ${speedFactor}`);
+        }
+
+        if (typeof effectParams.trailLength !== 'undefined') {
+          console.log(
+            `[Renderer] Trail effect requested (length=${effectParams.trailLength}, fade=${effectParams.fadeSpeed})`
+          );
+        }
+
+        if (typeof effectParams.spreadFactor !== 'undefined' && uniforms.uSpreadFactor) {
+          uniforms.uSpreadFactor.value = Number(effectParams.spreadFactor);
+          mat.uniformsNeedUpdate = true;
+          console.log(`[Renderer] ✅ Applied spreadFactor: ${effectParams.spreadFactor}`);
+        }
+
+        const effectKey = (effect.type || '').toLowerCase();
+        const verbKey = (directive.verb || '').toLowerCase();
+        const modeLookup = {
+          default: 0,
+          drift: 0,
+          gentle_drift: 0,
+          'particles_accelerate': 0,
+          acceleration: 0,
+          'grid': 1,
+          'grid_drift': 1,
+          'structure': 1,
+          'particles_begin_columns': 1,
+          'column': 1,
+          'column_orbit': 4,
+          'orbit': 4,
+          'orbital_micro': 4,
+          'neural_flow': 2,
+          'flow': 2,
+          'laminar_flow': 2,
+          'storm_medium': 2,
+          'velocity_peak': 2,
+          'streak': 3,
+          'streak_trails_form': 3,
+          'trail': 3,
+          'hyperdriveburst': 3,
+        };
+        const modeValue = modeLookup[effectKey] ?? modeLookup[verbKey] ?? 0;
+        if (uniforms.uMotionMode) {
+          uniforms.uMotionMode.value = modeValue;
+          mat.uniformsNeedUpdate = true;
+          console.log(`[Renderer] ✅ Motion mode set to: ${effect.type || directive.verb || 'default'} (${modeValue})`);
+          particleEffectStateRef.current.activeMode = modeValue;
+        }
+
+        if (uniforms.uMotionParams?.value) {
+          const paramsVec = uniforms.uMotionParams.value;
+          let paramsChanged = false;
+          if (typeof effectParams.speed !== 'undefined') {
+            paramsVec.x = Number(effectParams.speed);
+            paramsChanged = true;
+          }
+          if (typeof effectParams.amplitude !== 'undefined') {
+            paramsVec.y = Number(effectParams.amplitude);
+            paramsChanged = true;
+          }
+          if (typeof effectParams.frequency !== 'undefined') {
+            paramsVec.z = Number(effectParams.frequency);
+            paramsChanged = true;
+          }
+          if (paramsChanged) {
+            mat.uniformsNeedUpdate = true;
+            console.log('[Renderer] ✅ Motion params:', paramsVec);
+            particleEffectStateRef.current.motionParams = { x: paramsVec.x, y: paramsVec.y, z: paramsVec.z };
+          }
+        }
+
+        if ((modeValue == 1 || effectParams.gridSize !== undefined) && uniforms.uGridSpacing?.value) {
+          const spacingVal = effectParams.gridSize;
+          if (Array.isArray(spacingVal) && spacingVal.length >= 2) {
+            uniforms.uGridSpacing.value.set(Number(spacingVal[0]), Number(spacingVal[1]));
+            mat.uniformsNeedUpdate = true;
+            particleEffectStateRef.current.gridSpacing = { x: Number(spacingVal[0]), y: Number(spacingVal[1]) };
+          } else if (typeof spacingVal === 'number') {
+            uniforms.uGridSpacing.value.set(spacingVal, spacingVal);
+            mat.uniformsNeedUpdate = true;
+            particleEffectStateRef.current.gridSpacing = { x: spacingVal, y: spacingVal };
+          }
+        }
+
+        if (modeValue == 2 && uniforms.uFlowTurbulence) {
+          if (typeof effectParams.turbulence !== 'undefined') {
+            uniforms.uFlowTurbulence.value = Number(effectParams.turbulence);
+            mat.uniformsNeedUpdate = true;
+            particleEffectStateRef.current.turbulence = uniforms.uFlowTurbulence.value;
+          }
+        }
+
+        if (modeValue == 3 && uniforms.uStreakIntensity) {
+          if (typeof effectParams.intensity !== 'undefined') {
+            uniforms.uStreakIntensity.value = Number(effectParams.intensity);
+            mat.uniformsNeedUpdate = true;
+            particleEffectStateRef.current.streakIntensity = uniforms.uStreakIntensity.value;
+          }
+        }
+
+        if (Array.isArray(effect.tiers) && uniforms.uTierHighlight?.value instanceof Float32Array) {
+          const arr = uniforms.uTierHighlight.value;
+          if (!tierHighlightBaseRef.current || tierHighlightBaseRef.current.length !== arr.length) {
+            tierHighlightBaseRef.current = Float32Array.from(arr);
+          }
+          const base = tierHighlightBaseRef.current;
+          const highlightValue = effectParams.tierIntensity !== undefined ? Number(effectParams.tierIntensity) : 2.0;
+          for (let i = 0; i < arr.length; i += 1) {
+            arr[i] = effect.tiers.includes(i) ? highlightValue : base?.[i] ?? arr[i];
+          }
+          mat.uniformsNeedUpdate = true;
+          console.log('[Renderer] ✅ Applied tier highlight mask', effect.tiers);
+
+          if (typeof effect.duration === 'number' && effect.duration > 0) {
+            const expiresAt = Date.now() + effect.duration;
+            particleEffectStateRef.current.activeEffects.push({
+              verb: directive.verb || effect.type || 'unknown',
+              expiresAt,
+            });
+            setTimeout(() => {
+              const currentMat = materialRef.current;
+              if (currentMat?.uniforms?.uTierHighlight?.value && tierHighlightBaseRef.current) {
+                const highlight = currentMat.uniforms.uTierHighlight.value;
+                const baseVals = tierHighlightBaseRef.current;
+                for (let i = 0; i < highlight.length; i += 1) {
+                  highlight[i] = baseVals[i] ?? highlight[i];
+                }
+                currentMat.uniformsNeedUpdate = true;
+                console.log('[Renderer] 🕐 Effect duration expired, tier highlight restored');
+              }
+              particleEffectStateRef.current.activeEffects = particleEffectStateRef.current.activeEffects.filter(
+                (entry) => entry.expiresAt !== expiresAt
+              );
+            }, effect.duration);
+          }
+        } else if (Array.isArray(effect.tiers)) {
+          console.warn('[Renderer] ⚠️ Tier highlight uniform missing; cannot apply tier mask');
+        }
+
+        const handledTypes = new Set([
+          'acceleration',
+          'convergence',
+          'highlight',
+          'grid_drift',
+          'neural_flow',
+          'flow',
+          'streak',
+          'orbit',
+          'drift',
+        ]);
+        if (effect.type && !handledTypes.has(effect.type)) {
+          console.warn(`[Renderer] ⚠️ Effect type "${effect.type}" not yet implemented`);
+        }
+      }
+
+      if (directive.kind === 'camera-effect' && directive.effect) {
+        console.log('[Renderer] 🎥 Camera effect received (Phase 3 placeholder):', directive.verb);
+      }
       if (Number.isFinite(directive?.morphProgress)) {
         frameCountRef.current += 1;
         if (frameCountRef.current <= 60) {

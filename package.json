@@ -84,7 +84,7 @@
     "system:query": "node scripts/system.mjs query",
     "system:fix": "node scripts/system.mjs fix",
     "test:contracts": "node tests/contracts/blueprint-tests.cjs",
-    "build-evidence": "npm run sst-extract && npm run trace-bus && npm run scan-source && npm run scan-audio && npm run scan-shaders && node tools/build-report.mjs",
+    "build-evidence": "npm run sst-extract && npm run trace-bus && npm run scan-source && npm run scan-audio && npm run scan-shaders && npm run scan-shaders-advanced && node tools/build-report.mjs",
     "sst-extract": "node tools/sst-extract.mjs",
     "trace-bus": "node tools/trace-bus.mjs",
     "scan-source": "node tools/scan-source.mjs",
@@ -93,10 +93,12 @@
     "velocity:start": "node tools/velocity.mjs start",
     "velocity:stop": "node tools/velocity.mjs stop \"$npm_config_task\"",
     "onboard": "node tools/onboard.mjs",
-    "preflight": "npm run build-evidence && npm run evidence:lint && npm run events:lint && npm run lint-shaders",
+    "preflight": "npm run build-evidence && npm run evidence:lint && npm run events:lint && npm run lint-shaders && npm run lint-shaders-advanced",
     "scan-audio": "node tools/scan-audio.mjs",
     "scan-shaders": "node tools/scan-shaders.mjs",
-    "lint-shaders": "node tools/lint-shaders.mjs"
+    "lint-shaders": "node tools/lint-shaders.mjs",
+    "scan-shaders-advanced": "node tools/scanners/shader-audit.mjs",
+    "lint-shaders-advanced": "node tools/lint-shaders-advanced.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",

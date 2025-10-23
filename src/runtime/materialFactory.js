@@ -31,6 +31,11 @@ export async function createPointsMaterial({
       uPointSize: { value: 48.0 },
       uDevicePixelRatio: { value: Math.min(2.5, window.devicePixelRatio || 1) },
       uTierHighlight: { value: new Float32Array([1.0, 1.25, 1.5, 1.75]) },
+      uMotionMode: { value: 0 },
+      uMotionParams: { value: new THREE.Vector3(1.0, 0.3, 0.5) },
+      uGridSpacing: { value: new THREE.Vector2(2.0, 2.0) },
+      uFlowTurbulence: { value: 0.1 },
+      uStreakIntensity: { value: 1.0 },
       ...uniforms,
     },
     defines: {

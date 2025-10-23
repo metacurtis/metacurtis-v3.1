@@ -27,6 +27,11 @@ uniform float uMoveDampStartY;
 uniform float uPostMorphFreeze;
 uniform float uSpreadFactor;
 uniform float uMorphType;
+uniform float uMotionMode;
+uniform vec3 uMotionParams;
+uniform vec2 uGridSpacing;
+uniform float uFlowTurbulence;
+uniform float uStreakIntensity;
 
 // Varyings
 varying vec3 vPosition;
@@ -40,42 +45,63 @@ varying float vParticleIndex;
 const float PI = 3.14159265359;
 const float TWO_PI = 6.28318530718;
 
-vec3 generateMovement(vec3 basePos, vec3 seeds, float time, float tier) {
-  float phase = seeds.x * TWO_PI;
-  float speed = seeds.y;
-  float depth = seeds.z;
-  
-  // Tier-based movement
-  if (tier < 1.5) {
-    // Atmospheric drift
-    return vec3(
-      sin(time * 0.8 + phase) * 2.0,
-      cos(time * 0.6 + phase * 0.7) * 2.0,
-      sin(time * 0.5 + depth * TWO_PI) * 0.5
+vec3 generateMovement(vec3 basePos, vec3 seeds, float morphProgress, float tier) {
+  vec3 movement = vec3(0.0);
+  float tierPhase = tier * 0.5 + seeds.x * TWO_PI;
+  vec3 params = uMotionParams;
+  int mode = int(floor(uMotionMode + 0.5));
+
+  if (mode == 0) {
+    float speed = max(0.1, params.x);
+    float amplitude = max(0.05, params.y);
+    float frequency = max(0.1, params.z);
+    movement = vec3(
+      sin(uTime * 0.5 * speed + tierPhase) * amplitude,
+      cos(uTime * 0.3 * speed + tierPhase) * amplitude,
+      sin(uTime * 0.4 * speed + tierPhase) * amplitude * 0.5
     );
-  } else if (tier < 2.5) {
-    // Stable orbital
-    return vec3(
-      sin(time * 0.3 + phase) * 0.5,
-      cos(time * 0.3 + phase) * 0.5,
-      sin(time * 0.4 + depth * TWO_PI) * 0.2
+  } else if (mode == 1) {
+    vec2 spacing = max(abs(uGridSpacing), vec2(0.1));
+    vec2 gridPos = floor(basePos.xy / spacing) * spacing;
+    float wobble = params.y != 0.0 ? params.y : 0.2;
+    movement = vec3(
+      (gridPos.x - basePos.x) * 0.2 + sin(uTime * 0.2 + tierPhase) * wobble,
+      (gridPos.y - basePos.y) * 0.2 + cos(uTime * 0.18 + tierPhase * 0.9) * wobble,
+      sin(uTime * 0.15 + seeds.z * TWO_PI) * wobble * 0.5
     );
-  } else if (tier < 3.5) {
-    // Twinkling
-    float twinkle = sin(time * 3.0 + phase) * 0.5 + 0.5;
-    return vec3(
-      sin(time * 0.5 + phase) * twinkle,
-      cos(time * 0.5 + phase) * twinkle,
-      sin(time * 0.6 + depth * TWO_PI) * 0.3
+  } else if (mode == 2) {
+    float flowSpeed = max(0.05, params.x);
+    float amplitude = params.y;
+    float turbulence = max(0.0, uFlowTurbulence);
+    vec2 flowDir = normalize(vec2(cos(params.z + tierPhase * 0.1), sin(params.z + seeds.y)));
+    movement = vec3(
+      flowDir.x * flowSpeed * (1.0 + sin(uTime * 0.6 + tierPhase) * turbulence),
+      flowDir.y * flowSpeed * (1.0 + cos(uTime * 0.5 + seeds.y * TWO_PI) * turbulence),
+      sin(uTime * 0.4 + basePos.x * 0.1 + seeds.z * TWO_PI) * amplitude * 0.3
     );
-  } else {
-    // Prominent
-    return vec3(
-      sin(time * 0.2 + phase) * 0.3,
-      cos(time * 0.2 + phase) * 0.3,
-      sin(time * 0.3 + depth * TWO_PI) * 0.1
+  } else if (mode == 3) {
+    float streakSpeed = uStreakIntensity * max(0.1, params.x);
+    float verticalAmp = params.y != 0.0 ? params.y : 0.2;
+    float lag = clamp(tier * 0.05 + seeds.x * 0.02, 0.0, 0.9);
+    movement = vec3(
+      streakSpeed * (1.0 - lag),
+      sin(uTime * 2.0 + tierPhase) * verticalAmp,
+      0.0
+    );
+  } else if (mode == 4) {
+    float orbitSpeed = max(0.05, params.x);
+    float orbitRadius = max(0.05, params.y);
+    float flatten = params.z != 0.0 ? params.z : 0.7;
+    float angle = uTime * orbitSpeed + tierPhase * 3.14159;
+    movement = vec3(
+      cos(angle) * orbitRadius,
+      sin(angle) * orbitRadius * flatten,
+      sin(angle * 2.0 + seeds.z * TWO_PI) * orbitRadius * 0.3
     );
   }
+
+  movement *= (1.0 - morphProgress * 0.8);
+  return movement;
 }
 
 void main() {
@@ -118,7 +144,7 @@ void main() {
   vec3 basePos = mix(atmoPos, textPos, morph);
   
   // Add movement
-  vec3 movement = generateMovement(basePos, animationSeed, uTime, tierData);
+  vec3 movement = generateMovement(basePos, animationSeed, morph, tierData);
 
   float freeze = (uPostMorphFreeze > 0.5) ? 0.0 : 1.0;
   float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morph);
