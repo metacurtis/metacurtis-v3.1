@@ -939,7 +939,7 @@ class ConsciousnessEngine {
       { action: 'formPortrait', duration: 3000 },
       { action: 'reformText', text: 'CURTIS WHORTON', duration: 2000 },
       { action: 'reformText', text: 'AI-NATIVE ENGINEER', duration: 2000 },
-      { action: 'formQRCode', url: 'https://curtisworton.com/contact', duration: 3000 },
+      { action: 'formQRCode', url: 'https://curtisworton.com', duration: 3000 },
     ];
 
     const sourceSequence =
