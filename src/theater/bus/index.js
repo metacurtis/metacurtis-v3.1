@@ -1,6 +1,70 @@
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
 
+const BATCH_EVENTS = new Set(['MORPH_PROGRESS', 'SCROLL_PROGRESS', 'RENDER_DIRECTIVE']);
+const SYNC_EVENTS = new Set(['PARTICLES_EMERGED', 'FENCEPOST_LISTENERS_READY', 'ENABLE_SCROLL']);
+
+class EventProfiler {
+  constructor() {
+    this.metrics = new Map();
+  }
+
+  _now() {
+    return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+      ? performance.now()
+      : Date.now();
+  }
+
+  _ensure(eventName) {
+    if (!this.metrics.has(eventName)) {
+      this.metrics.set(eventName, {
+        count: 0,
+        totalTime: 0,
+        minTime: Infinity,
+        maxTime: -Infinity,
+        lastEmit: 0,
+      });
+    }
+  }
+
+  start(eventName) {
+    this._ensure(eventName);
+    return this._now();
+  }
+
+  stop(eventName, startTime) {
+    if (typeof startTime !== 'number') return;
+    const metric = this.metrics.get(eventName);
+    if (!metric) return;
+    const duration = this._now() - startTime;
+    metric.count += 1;
+    metric.totalTime += duration;
+    metric.minTime = Math.min(metric.minTime, duration);
+    metric.maxTime = Math.max(metric.maxTime, duration);
+    metric.lastEmit = this._now();
+  }
+
+  report() {
+    if (!this.metrics.size) {
+      console.info('[eventProfiler] No metrics recorded yet.');
+      return;
+    }
+    const rows = Array.from(this.metrics.entries()).map(([event, metric]) => ({
+      Event: event,
+      Count: metric.count,
+      'Total (ms)': metric.totalTime.toFixed(2),
+      'Avg (ms)': (metric.totalTime / metric.count).toFixed(2),
+      'Min (ms)': metric.minTime === Infinity ? '0.00' : metric.minTime.toFixed(2),
+      'Max (ms)': metric.maxTime === -Infinity ? '0.00' : metric.maxTime.toFixed(2),
+    })).sort((a, b) => b['Total (ms)'] - a['Total (ms)']);
+    console.table(rows);
+  }
+
+  reset() {
+    this.metrics.clear();
+  }
+}
+
 class BeatBus {
   constructor(){
     this.listeners = new Map();
@@ -8,6 +72,10 @@ class BeatBus {
     this.maxLog    = 200;
     this._last = { stage: 'genesis', quality: 'HIGH' };
     this._contracts = null;
+    this._batchMap = new Map();
+    this._batchFlushScheduled = false;
+    this._batchFlushHandle = null;
+    this._profiler = new EventProfiler();
     
     // Lazy load contracts
     this._loadContracts();
@@ -142,15 +210,6 @@ class BeatBus {
   }
 
   emit(evt, payload = {}){
-    if (evt === 'RENDER_DIRECTIVE') {
-      const set = this.listeners.get(evt);
-      console.log('🚌 BeatBus.emit called:', {
-        eventName: evt,
-        hasPayload: !!payload,
-        payloadKeys: payload ? Object.keys(payload) : [],
-        listenerCount: set ? set.size : 0,
-      });
-    }
     const mode = this._mode();
     const { ok:canonOk, out:canonPayload, normalized } = this._canonicalize(evt, payload);
     const { ok:validOk, missing } = this._validate(evt, canonPayload);
@@ -174,13 +233,106 @@ class BeatBus {
     if (evt==='STAGE_CHANGE' && canonPayload?.to) this._last.stage = canonPayload.to;
     if (evt==='QUALITY_CHANGE' && canonPayload?.tier) this._last.quality = canonPayload.tier;
 
-    this._log(evt, { payload: canonPayload, normalized });
-    const set = this.listeners.get(evt); if (!set || set.size===0) return;
+    const startTime = this._profiler.start(evt);
 
-    set.forEach(fn => {
-      try { fn(canonPayload); }
-      catch(e){ console.error(`🚌 listener error @ ${evt}`, e); }
-    });
+    if (this._shouldBatch(evt, canonPayload)) {
+      const existing = this._batchMap.get(evt);
+      if (existing) {
+        existing.payload = canonPayload;
+        existing.normalized = normalized;
+        existing.startTime = Math.min(existing.startTime, startTime);
+      } else {
+        this._batchMap.set(evt, { payload: canonPayload, normalized, startTime });
+      }
+      this._scheduleBatchFlush();
+      return;
+    }
+
+    this._dispatch(evt, canonPayload, normalized);
+    this._profiler.stop(evt, startTime);
+  }
+
+  _shouldBatch(evt, payload) {
+    if (!BATCH_EVENTS.has(evt)) return false;
+    if (evt === 'RENDER_DIRECTIVE') {
+      if (!payload) return false;
+      if (payload.enterQrMode || payload.exitQrMode) return false;
+      if (payload.kind) return false;
+    }
+    return true;
+  }
+
+  _scheduleBatchFlush() {
+    if (this._batchFlushScheduled) return;
+    this._batchFlushScheduled = true;
+    const flush = () => {
+      this._batchFlushScheduled = false;
+      this._batchFlushHandle = null;
+      this._flushBatch();
+    };
+    if (typeof requestAnimationFrame === 'function') {
+      this._batchFlushHandle = requestAnimationFrame(flush);
+    } else {
+      this._batchFlushHandle = setTimeout(flush, 16);
+    }
+  }
+
+  _flushBatch() {
+    if (!this._batchMap.size) return;
+    const entries = Array.from(this._batchMap.entries());
+    this._batchMap.clear();
+    for (const [evt, entry] of entries) {
+      this._dispatch(evt, entry.payload, entry.normalized);
+      this._profiler.stop(evt, entry.startTime);
+    }
+  }
+
+  _dispatch(evt, payload, normalized) {
+    const listenerSet = this.listeners.get(evt);
+    const listenerCount = listenerSet ? listenerSet.size : 0;
+
+    if (evt === 'RENDER_DIRECTIVE') {
+      console.log('🚌 BeatBus.emit called:', {
+        eventName: evt,
+        hasPayload: !!payload,
+        payloadKeys: payload ? Object.keys(payload) : [],
+        listenerCount,
+      });
+    }
+
+    this._log(evt, { payload, normalized });
+    if (!listenerSet || listenerCount === 0) return;
+
+    if (SYNC_EVENTS.has(evt)) {
+      listenerSet.forEach((fn) => this._safeInvoke(fn, evt, payload));
+    } else {
+      listenerSet.forEach((fn) => this._scheduleAsyncInvoke(fn, evt, payload));
+    }
+  }
+
+  _safeInvoke(fn, evt, payload) {
+    try {
+      fn(payload);
+    } catch (error) {
+      console.error(`🚌 listener error @ ${evt}`, error);
+    }
+  }
+
+  _scheduleAsyncInvoke(fn, evt, payload) {
+    const invoke = () => this._safeInvoke(fn, evt, payload);
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(invoke);
+    } else {
+      Promise.resolve().then(invoke);
+    }
+  }
+
+  reportProfiler() {
+    this._profiler.report();
+  }
+
+  resetProfiler() {
+    this._profiler.reset();
   }
 
   getDebugInfo(){
@@ -218,6 +370,12 @@ if (typeof window !== 'undefined'){
       return off;
     };
     console.log('🚌 BeatBus ready · mode=', beatBus._mode());
+  }
+  if (!window.eventProfiler) {
+    window.eventProfiler = {
+      report: () => beatBus.reportProfiler(),
+      reset: () => beatBus.resetProfiler(),
+    };
   }
 }
 
