@@ -19,7 +19,6 @@ export default function OpeningSequence() {
 
   // Audio refs
   const humAudioRef = useRef(null);
-  const keyClickAudioRef = useRef(null);
 
   // Cleanup tracking
   const timers = useRef(new Set());
@@ -123,11 +122,6 @@ export default function OpeningSequence() {
 
             currentText += line[charIdx];
 
-            if (keyClickAudioRef.current && audioUnlocked.current) {
-              keyClickAudioRef.current.currentTime = 0;
-              keyClickAudioRef.current.play().catch(() => {});
-            }
-
             setLines(prev => {
               const updated = [...prev];
               updated[lineIdx] = currentText;
@@ -182,19 +176,6 @@ export default function OpeningSequence() {
         }
       }),
 
-      // AUDIO KEY CLICK
-      BeatBus.on(EVENTS.AUDIO_KEY_CLICK, () => {
-        if (!keyClickAudioRef.current) {
-          keyClickAudioRef.current = new Audio('/audio/key-click.mp3');
-          keyClickAudioRef.current.volume = 0.5;
-        }
-        
-        if (audioUnlocked.current) {
-          keyClickAudioRef.current.currentTime = 0;
-          keyClickAudioRef.current.play().catch(() => {});
-        }
-      }),
-
       // PARTICLES START EMERGING
       BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
         console.log('   OpeningSequence: Particles emerging, fading out');
@@ -225,10 +206,6 @@ export default function OpeningSequence() {
           humAudioRef.current.pause();
           humAudioRef.current = null;
         }
-        if (keyClickAudioRef.current) {
-          keyClickAudioRef.current.pause();
-          keyClickAudioRef.current = null;
-        }
       }),
     ];
 
@@ -240,9 +217,6 @@ export default function OpeningSequence() {
 
       if (humAudioRef.current) {
         humAudioRef.current.pause();
-      }
-      if (keyClickAudioRef.current) {
-        keyClickAudioRef.current.pause();
       }
     };
   }, []);

@@ -114,15 +114,6 @@ class StateCommands {
           reason: 'atom' 
         });
         
-        // Compatibility event if different
-        if (EVENTS.STAGE_CHANGED !== EVENTS.STAGE_CHANGE) {
-          BeatBus.emit(EVENTS.STAGE_CHANGED, { 
-            from: prevStage, 
-            to: next, 
-            reason: 'atom' 
-          });
-        }
-        
         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
         // This was causing emergence to build on every stage change
         // Emergence should only be triggered by TheaterDirector during opening
@@ -256,19 +247,16 @@ class StateCommands {
       locked: true,
     }));
 
-    BeatBus.emit(EVENTS.MEMORY_FRAGMENT_START, fragment);
   }
 
   resumeFromFragment() {
     const snapshot = this.snapshots.find(s => s.label === 'fragment');
     if (snapshot) this.restoreSnapshot(snapshot);
-    BeatBus.emit(EVENTS.MEMORY_FRAGMENT_END);
   }
 
   transitionStage(from, to) {
     stageAtom.setState?.({ currentStage: to, transitioning: true });
     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
-    BeatBus.emit(EVENTS.STAGE_TRANSITION, { from, to });
   }
 
   createSnapshot(label) {

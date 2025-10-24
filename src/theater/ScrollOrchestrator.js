@@ -1,6 +1,6 @@
 // src/theater/ScrollOrchestrator.js
 // BeatGlyph v3.3 — ScrollOrchestrator
-// Purpose: map window scroll -> stage-local progress; publish MORPH_PROGRESS, STAGE_CHANGE, and MEMORY_FRAGMENT_TRIGGER.
+// Purpose: map window scroll -> stage-local progress; publish MORPH_PROGRESS and STAGE_CHANGE.
 // Kinetics: speedMultiplier=2.0, smoothing=0.15, overshoot=0.05 (v3.3 canon)
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -39,7 +39,6 @@ export default class ScrollOrchestrator {
     this.lastStageIndex = -1;
     this.morph = 1;
     this.morphTarget = 1;
-    this.fragmentFired = new Set();
     this.scrollLocked = false;
   
     this._rafId = 0;
@@ -60,7 +59,6 @@ export default class ScrollOrchestrator {
   start() {
     if (this.running) return;
     this.running = true;
-    this.fragmentFired.clear();
     this.scrollLocked = false;
     if (typeof window !== 'undefined') {
       if (!this._resizeHandlerBound) {
@@ -353,31 +351,6 @@ export default class ScrollOrchestrator {
       }
 
       // memory fragment trigger per stage
-      const fragments = Canonical?.getFragmentsForStage?.(stageName) || [];
-      for (const fragment of fragments) {
-        const tier = fragment?.tier || 'unknown';
-        const triggerPercent = typeof fragment?.triggerPercent === 'number'
-          ? fragment.triggerPercent
-          : (typeof fragment?.trigger?.percent === 'number' ? fragment.trigger.percent : null);
-        if (triggerPercent === null) continue;
-
-        const key = `${stageName}::${tier}::${triggerPercent}`;
-        if (!this.fragmentFired.has(key) && easedPct >= triggerPercent) {
-          this.fragmentFired.add(key);
-          BeatBus.emit?.(EVENTS.MEMORY_FRAGMENT_TRIGGER, {
-            stage: stageName,
-            id: fragment.id || key,
-            tier,
-            triggerPercent,
-            source: 'scroll-threshold',
-            timestamp:
-              typeof performance !== 'undefined' && typeof performance.now === 'function'
-                ? performance.now()
-                : Date.now(),
-          });
-          console.log(`📜 Memory fragment triggered: ${key}`);
-        }
-      }
     } catch (e) {
       console.warn('[ScrollOrchestrator] scroll error', e);
     }
@@ -390,8 +363,7 @@ export default class ScrollOrchestrator {
       morph: this.morph,
       morphTarget: this.morphTarget,
       lastStageIndex: this.lastStageIndex,
-      stage: Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown',
-      fragmentsFired: Array.from(this.fragmentFired)
+      stage: Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown'
     };
   }
 
@@ -413,7 +385,6 @@ export default class ScrollOrchestrator {
     this.morph = 1;
     this.morphTarget = 1;
     this.lastStageIndex = -1;
-    this.fragmentFired.clear();
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
   }

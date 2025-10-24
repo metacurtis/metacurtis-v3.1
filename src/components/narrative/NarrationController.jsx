@@ -525,25 +525,6 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           }
         }
 
-        if (segment?.memoryFragmentTrigger) {
-          const fragmentData = segment.memoryFragmentTrigger;
-          console.log('[Narration] 🧩 Triggering memory fragment:', fragmentData);
-
-          BeatBus.emit?.(EVENTS.MEMORY_FRAGMENT_START, {
-            stage: stageName,
-            fragmentId: fragmentData.id || `${stageName}-fragment-${segment?.id || segmentIndex}`,
-            fragmentType: fragmentData.type || 'ambient',
-            content: fragmentData.content || {},
-            position: fragmentData.position || 'bottomLeft',
-            duration: fragmentData.duration || 5000,
-            source: 'narration-timing',
-            timestamp:
-              typeof performance !== 'undefined' && typeof performance.now === 'function'
-                ? performance.now()
-                : Date.now(),
-          });
-        }
-
         const explicitSpeed = Number(segment?.typeSpeed);
         const fallbackSpeed =
           charsPerSecond > 0 ? Math.round(1000 / charsPerSecond) : null;

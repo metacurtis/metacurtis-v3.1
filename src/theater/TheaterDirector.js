@@ -824,7 +824,6 @@ class TheaterDirector {
         preserveEmergence: true,
         targetState,
       });
-      BeatBus.emit(EVENTS.AUDIO_START_STAGE, { stage: toStage });
 
       try {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });

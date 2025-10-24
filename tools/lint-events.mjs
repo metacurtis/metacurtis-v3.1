@@ -6,21 +6,14 @@ const IGNORED_EMITTERS = new Set([
   'MORPH_PROGRESS',
   'CLIMAX_STEP',
   'QUALITY_CHANGE',
-  'STAGE_CHANGED',
   'BUILD_EMERGENCE_BLUEPRINT',
-  'MEMORY_FRAGMENT_START',
-  'MEMORY_FRAGMENT_END',
-  'STAGE_TRANSITION',
   'DIRECTOR_ERROR',
   'FENCEPOST_LISTENERS_READY',
-  'AUDIO_START_STAGE',
   'PREWARM_GENESIS_BLUEPRINT',
   'RENDERER_TUNE'
 ]);
 
-const IGNORED_LISTENERS = new Set([
-  'AUDIO_KEY_CLICK'
-]);
+const IGNORED_LISTENERS = new Set();
 
 if (!fs.existsSync('reports/beatbus-map.json')) {
   console.error('[events:lint] No beatbus-map.json');
