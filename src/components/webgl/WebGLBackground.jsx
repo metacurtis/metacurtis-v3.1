@@ -224,7 +224,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const qrModeRef = useRef(false);
   const restoreClearRef = useRef([0, 0, 0, 1]);
   const lastPointSizeRef = useRef(null);
-  const qrWhiteoutPendingRef = useRef(false);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
 
@@ -259,6 +258,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const lastUniformsRef = useRef({ atmo: [1, 1], text: [1, 1] });
   const stageNameRef = useRef(stageName);
   const blueprintRef = useRef(blueprint);
+  const lastBlueprintMetaRef = useRef({});
   const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
   const ignoreDirectivesRef = useRef(false);
@@ -1071,6 +1071,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       // bind arrays
       setBlueprint(raw);
+      lastBlueprintMetaRef.current = raw?.metadata || {};
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
       applyMetadataColors(raw?.metadata?.colors);
@@ -1238,17 +1239,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         ignoreDirectivesRef.current = false;
       }
 
-      if (isQrBlueprint && qrWhiteoutPendingRef.current) {
-        if (gl) {
-          const prev = gl.getClearColor(new THREE.Color());
-          const prevAlpha = typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
-          restoreClearRef.current = [prev.r, prev.g, prev.b, prevAlpha];
-          gl.setClearColor(0xffffff, 1);
-        }
-        qrWhiteoutPendingRef.current = false;
-      } else if (!isQrBlueprint) {
-        qrWhiteoutPendingRef.current = false;
-      }
+      // Leave background color untouched for QR binds to avoid pre-emptive white-out.
 
       if (DEV && !geo.__singleWriterPatched) {
         const rawSetDrawRange = geo.setDrawRange.bind(geo);
@@ -1496,7 +1487,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           const previousColor = renderer.getClearColor(new THREE.Color());
           const previousAlpha = typeof renderer.getClearAlpha === 'function' ? renderer.getClearAlpha() : 1;
           restoreClearRef.current = [previousColor.r, previousColor.g, previousColor.b, previousAlpha];
-          renderer.setClearColor(0xffffff, 1);
         }
         const uniforms = materialRef.current?.uniforms;
         if (uniforms?.uPostMorphFreeze) {
@@ -1833,12 +1823,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         qrModeRef.current = true;
         const qrReady = lastBlueprintMetaRef.current?.qrMode === true && geometryRef.current;
         if (qrReady && gl) {
+          // Preserve current clear color in case other modes need it, but don't switch to white here.
           const prev = gl.getClearColor(new THREE.Color());
-          const prevAlpha = typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
+          const prevAlpha =
+            typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
           restoreClearRef.current = [prev.r, prev.g, prev.b, prevAlpha];
-          gl.setClearColor(0xffffff, 1);
-        } else {
-          qrWhiteoutPendingRef.current = true;
         }
         if (uniforms.uPostMorphFreeze) {
           uniforms.uPostMorphFreeze.value = 1;
@@ -1855,15 +1844,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         }
         if (uniforms.uPointSize) {
           const currentPointSize = uniforms.uPointSize.value;
-          lastPointSizeRef.current = typeof currentPointSize === 'number'
-            ? currentPointSize
-            : Number(currentPointSize ?? 0);
-          const dpr = typeof window !== 'undefined' && window.devicePixelRatio
-            ? window.devicePixelRatio
-            : 1;
-          const cssSize = (directive.uPointSize && directive.uPointSize > 0) ? directive.uPointSize : 2.6;
-          const deviceSize = cssSize * dpr;
-          const clampedSize = Math.min(Math.max(deviceSize, 3.0), 36.0);
+          lastPointSizeRef.current =
+            typeof currentPointSize === 'number'
+              ? currentPointSize
+              : Number(currentPointSize ?? 0);
+
+          const renderer = gl;
+          const pixelRatio =
+            typeof renderer?.getPixelRatio === 'function'
+              ? renderer.getPixelRatio()
+              : typeof window !== 'undefined' && window.devicePixelRatio
+                ? window.devicePixelRatio
+                : 1;
+
+          const baseSize =
+            directive.uPointSize && directive.uPointSize > 0 ? directive.uPointSize : 6.0;
+          const deviceSize = baseSize * pixelRatio;
+          const clampedSize = Math.min(Math.max(deviceSize, 6), 48);
+
           uniforms.uPointSize.value = clampedSize;
           uniforms.uPointSize.needsUpdate = true;
         }
@@ -1884,11 +1882,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uniforms.uPointSize.needsUpdate = true;
           lastPointSizeRef.current = null;
         }
-        if (gl && restoreClearRef.current) {
+        if (gl && restoreClearRef.current && restoreClearRef.current.length === 4) {
           const [r0, g0, b0, a0] = restoreClearRef.current;
           gl.setClearColor(new THREE.Color(r0, g0, b0), a0);
         }
-        qrWhiteoutPendingRef.current = false;
         timeTickEnabledRef.current = true;
         mat.uniformsNeedUpdate = true;
         return;

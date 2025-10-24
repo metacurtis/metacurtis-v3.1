@@ -21,6 +21,22 @@ import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
 import qrCurtis from '@/assets/climax/qr-curtis.json';
 
+const CURATED_QR_POINTS = (() => {
+  if (Array.isArray(qrCurtis?.points)) return new Float32Array(qrCurtis.points);
+  if (Array.isArray(qrCurtis?.positions)) return new Float32Array(qrCurtis.positions);
+  return null;
+})();
+
+const CURATED_QR_META = {
+  moduleCount: Number.isFinite(qrCurtis?.moduleCount)
+    ? qrCurtis.moduleCount
+    : Number.isFinite(qrCurtis?.size)
+      ? qrCurtis.size
+      : undefined,
+  moduleSize: Number.isFinite(qrCurtis?.moduleSize) ? qrCurtis.moduleSize : undefined,
+  quietZone: Number.isFinite(qrCurtis?.quietZone) ? qrCurtis.quietZone : undefined,
+};
+
 // ===== Band probe helpers (pure, exportable) =================================
 const deg2rad = (d) => (d * Math.PI) / 180;
 function makeBandFrame(vc, rnd, gauss) {
@@ -1083,21 +1099,30 @@ class ConsciousnessEngine {
         case 'formQRCode':
         case 'qr': {
           const url = String(step?.url || '');
-          const asset = Array.isArray(qrCurtis?.positions) ? qrCurtis : null;
+          const SCALE_FACTOR = 2.4;
 
-          if (asset?.positions) {
-            const src = asset.positions;
-            positions = src instanceof Float32Array ? src : new Float32Array(src.flat());
+          let basePositions;
+          if (CURATED_QR_POINTS instanceof Float32Array && CURATED_QR_POINTS.length) {
+            basePositions = CURATED_QR_POINTS;
           } else {
             console.warn('[QR] curated asset missing; using generated fallback');
-            positions = generateQRPositions(particleCount);
+            basePositions = generateQRPositions(particleCount);
           }
 
+          const scaled = new Float32Array(basePositions.length);
+          for (let i = 0; i < basePositions.length; i += 3) {
+            scaled[i] = basePositions[i] * SCALE_FACTOR;
+            scaled[i + 1] = basePositions[i + 1] * SCALE_FACTOR;
+            scaled[i + 2] = basePositions[i + 2] * SCALE_FACTOR;
+          }
+
+          positions = scaled;
           this._pendingQrMetadata = {
             url,
-            moduleCount: asset?.moduleCount ?? asset?.size ?? null,
-            quietZone: asset?.quietZone ?? 4,
-            positions,
+            moduleCount: CURATED_QR_META.moduleCount ?? null,
+            moduleSize: CURATED_QR_META.moduleSize ?? undefined,
+            quietZone: CURATED_QR_META.quietZone ?? 4,
+            positions: scaled,
           };
           break;
         }
@@ -1118,11 +1143,15 @@ class ConsciousnessEngine {
       positions = generateScatterPositions(particleCount);
     }
 
-    const blueprint = this._buildClimaxBlueprintFromPositions(step, positions, particleCount);
-    if (!blueprint) return;
-
     const actionName = (step.action || step.name || '').toLowerCase();
     const isQrStep = actionName === 'formqrcode' || actionName === 'qr';
+    const effectiveCount =
+      isQrStep && positions instanceof Float32Array
+        ? Math.max(0, Math.floor(positions.length / 3))
+        : particleCount;
+
+    const blueprint = this._buildClimaxBlueprintFromPositions(step, positions, effectiveCount);
+    if (!blueprint) return;
 
     if (blueprint && isQrStep) {
       const qrMeta = this._pendingQrMetadata || {};
@@ -1169,20 +1198,27 @@ class ConsciousnessEngine {
 
     BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
     if (isQrStep) {
-      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-        source: 'climax:qr',
-        enterQrMode: true,
-        uPointSize: 3.0,
-      });
-      const exitDelay = Math.max(0, Number(step.holdDuration) || 0);
       if (!this._climaxState.timers) this._climaxState.timers = [];
+      const enterDelayMs = 50;
+      const enterTimer = setTimeout(() => {
+        if (!this._climaxState.active) return;
+        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+          source: 'climax:qr',
+          enterQrMode: true,
+          uPointSize: 6.0,
+          timestamp: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
+        });
+      }, enterDelayMs);
+      this._climaxState.timers.push(enterTimer);
+
+      const exitDelay = Math.max(0, Number(step.holdDuration) || 0);
       const exitTimer = setTimeout(() => {
         if (!this._climaxState.active) return;
         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
           source: 'climax:qr',
           exitQrMode: true,
         });
-      }, exitDelay);
+      }, enterDelayMs + exitDelay);
       this._climaxState.timers.push(exitTimer);
     }
     this._log('climax_blueprint_emitted', { step: step.name, particleCount });

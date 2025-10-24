@@ -81,11 +81,28 @@ class BeatBus {
     if (evt==='STAGE_CHANGE'){
       if (p.stage && !p.to) p.to = p.stage;
       if (!p.from) p.from = this._last.stage || 'unknown';
-      return { ok: !!(p.from && p.to), out: { from:p.from, to:p.to }, normalized: ('stage' in payload) };
+      const extended = {};
+      if (p.index !== undefined) extended.index = p.index;
+      if (p.stageIndex !== undefined) extended.stageIndex = p.stageIndex;
+      if (p.scrollPercent !== undefined) extended.scrollPercent = p.scrollPercent;
+      if (p.localProgress !== undefined) extended.localProgress = p.localProgress;
+      if (p.source !== undefined) extended.source = p.source;
+      if (p.stage !== undefined) extended.stage = p.stage;
+      const out = { from: p.from, to: p.to };
+      if (Object.keys(extended).length) out._extended = extended;
+      return { ok: !!(p.from && p.to), out, normalized: ('stage' in payload) };
     }
     if (evt==='QUALITY_CHANGE'){
       if (p.quality && !p.tier) p.tier = p.quality;
-      return { ok: !!p.tier, out: { tier:p.tier }, normalized: ('quality' in payload) };
+      const extended = {};
+      if (p.particleCount !== undefined) extended.particleCount = p.particleCount;
+      if (p.dpr !== undefined) extended.dpr = p.dpr;
+      if (p.reason !== undefined) extended.reason = p.reason;
+      if (p.from !== undefined) extended.from = p.from;
+      if (p.quality !== undefined) extended.quality = p.quality;
+      const out = { tier: p.tier };
+      if (Object.keys(extended).length) out._extended = extended;
+      return { ok: !!p.tier, out, normalized: ('quality' in payload) };
     }
     if (evt==='BLUEPRINT_READY'){
       const stage   = p.stage ?? p.to ?? p.name;
