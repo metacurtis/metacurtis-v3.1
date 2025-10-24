@@ -491,44 +491,41 @@ class ConsciousnessEngine {
   _installListeners() {
     // Clean up any existing listeners first
     this._cleanupListeners();
+
+    const subscribe = (eventKey, handler, { optional = false } = {}) => {
+      if (typeof BeatBus?.on !== 'function') {
+        if (!optional) {
+          console.warn('[ConsciousnessEngine] BeatBus.on unavailable for event', eventKey);
+        }
+        return;
+      }
+      const off = BeatBus.on(this._ev(eventKey), handler);
+      if (typeof off === 'function') {
+        this._listeners.push(off);
+      } else if (!optional) {
+        console.warn('[ConsciousnessEngine] BeatBus.on returned non-function for', eventKey);
+      }
+    };
     
     // Install listeners with stable method references
-    this._listeners.push(
-      BeatBus.on(this._ev('ENGINE_VIEWPORT_HINT'), this._onViewportHint.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('ENABLE_SCROLL'), this._onEnableScroll.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('STAGE_CHANGE'), this._onStageChange.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('QUALITY_CHANGE'), this._onQualityChange.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('PREWARM_GENESIS_BLUEPRINT'), this._onPrewarmGenesis.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('BUILD_EMERGENCE_BLUEPRINT'), this._onBuildEmergence.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('START_CLIMAX'), this._handleStartClimax.bind(this))
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('PARTICLES_EMERGED'), () => {
-        this._rendererFencepostSeen = true;
-        this._emergenceActive = false;
-        this._emergenceDone = true;
-        if (this._emergenceRaf) {
-          if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this._emergenceRaf);
-          else clearTimeout(this._emergenceRaf);
-          this._emergenceRaf = null;
-        }
-      })
-    );
-    this._listeners.push(
-      BeatBus.on(this._ev('BLUEPRINT_INVALIDATED'), this._onBlueprintInvalidated.bind(this))
-    );
+    subscribe('ENGINE_VIEWPORT_HINT', this._onViewportHint.bind(this));
+    subscribe('ENABLE_SCROLL', this._onEnableScroll.bind(this));
+    subscribe('STAGE_CHANGE', this._onStageChange.bind(this));
+    subscribe('QUALITY_CHANGE', this._onQualityChange.bind(this));
+    subscribe('PREWARM_GENESIS_BLUEPRINT', this._onPrewarmGenesis.bind(this));
+    subscribe('BUILD_EMERGENCE_BLUEPRINT', this._onBuildEmergence.bind(this));
+    subscribe('START_CLIMAX', this._handleStartClimax.bind(this));
+    subscribe('PARTICLES_EMERGED', () => {
+      this._rendererFencepostSeen = true;
+      this._emergenceActive = false;
+      this._emergenceDone = true;
+      if (this._emergenceRaf) {
+        if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this._emergenceRaf);
+        else clearTimeout(this._emergenceRaf);
+        this._emergenceRaf = null;
+      }
+    });
+    subscribe('BLUEPRINT_INVALIDATED', this._onBlueprintInvalidated.bind(this), { optional: true });
   }
 
   // Clean up listeners for HMR
