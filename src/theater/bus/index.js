@@ -67,6 +67,115 @@ class EventProfiler {
   }
 }
 
+class EventRecorder {
+  constructor(bus) {
+    this.bus = bus;
+    this.recording = false;
+    this.events = [];
+    this.startTime = 0;
+  }
+
+  _now() {
+    return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+      ? performance.now()
+      : Date.now();
+  }
+
+  _clone(payload) {
+    if (typeof structuredClone === 'function') {
+      try { return structuredClone(payload); } catch (_) {}
+    }
+    try {
+      return JSON.parse(JSON.stringify(payload));
+    } catch (_) {
+      return payload;
+    }
+  }
+
+  start() {
+    if (this.recording) return;
+    this.recording = true;
+    this.startTime = this._now();
+    this.events = [];
+    console.log('[eventRecorder] 🔴 recording started');
+  }
+
+  stop() {
+    if (!this.recording) return;
+    this.recording = false;
+    console.log(`[eventRecorder] ⏹️ recorded ${this.events.length} events`);
+  }
+
+  record(eventName, payload) {
+    if (!this.recording) return;
+    const timestamp = this._now() - this.startTime;
+    this.events.push({
+      name: eventName,
+      payload: this._clone(payload),
+      timestamp,
+    });
+  }
+
+  export() {
+    return {
+      version: DEFAULT_SCHEMA_VERSION,
+      duration: this._now() - this.startTime,
+      events: this.events.slice(),
+    };
+  }
+
+  async replay(recording, options = {}) {
+    if (!recording || !Array.isArray(recording.events)) {
+      console.warn('[eventRecorder] Invalid recording supplied to replay');
+      return;
+    }
+    const speed = Number(options.speed) > 0 ? options.speed : 1.0;
+    const originalState = this.recording;
+    this.recording = false;
+    console.log('[eventRecorder] ▶️ replaying', recording.events.length, 'events');
+    let lastTimestamp = 0;
+    for (const event of recording.events) {
+      const delay = Math.max(0, (event.timestamp - lastTimestamp) / speed);
+      lastTimestamp = event.timestamp;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      try {
+        this.bus.emit(event.name, this._clone(event.payload));
+      } catch (error) {
+        console.error('[eventRecorder] replay emit failed', event.name, error);
+      }
+    }
+    console.log('[eventRecorder] ✅ replay complete');
+    this.recording = originalState;
+  }
+
+  save(filename) {
+    if (typeof window === 'undefined') return;
+    const data = this.export();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || `events-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  getAPI() {
+    return {
+      start: () => this.start(),
+      stop: () => this.stop(),
+      export: () => this.export(),
+      replay: (recording, speed) => this.replay(recording, { speed }),
+      save: (filename) => this.save(filename),
+      get events() {
+        return this.events;
+      },
+    };
+  }
+}
+
 class BeatBus {
   constructor(){
     this.listeners = new Map();
@@ -80,6 +189,7 @@ class BeatBus {
     this._profiler = new EventProfiler();
     this.middleware = [];
     this._sequence = 0;
+    this._recorder = new EventRecorder(this);
     
     // Lazy load contracts
     this._loadContracts();
@@ -328,6 +438,7 @@ class BeatBus {
       });
     }
 
+    this._recorder.record(evt, payload);
     this._log(evt, { payload, normalized });
     if (!listenerSet || listenerCount === 0) return;
 
@@ -413,6 +524,10 @@ class BeatBus {
     this._profiler.reset();
   }
 
+  getRecorder() {
+    return this._recorder;
+  }
+
   getDebugInfo(){
     const map = {};
     this.listeners.forEach((s, k)=> map[k] = s.size);
@@ -467,6 +582,10 @@ if (typeof window !== 'undefined'){
       report: () => beatBus.reportProfiler(),
       reset: () => beatBus.resetProfiler(),
     };
+  }
+  if (!window.eventRecorder) {
+    const recorderAPI = beatBus.getRecorder().getAPI();
+    window.eventRecorder = recorderAPI;
   }
 }
 
