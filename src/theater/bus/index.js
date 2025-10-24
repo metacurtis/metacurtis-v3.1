@@ -1,3 +1,5 @@
+import { DEFAULT_SCHEMA_VERSION, validateEventPayload } from './schemas.js';
+
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
 
@@ -76,6 +78,8 @@ class BeatBus {
     this._batchFlushScheduled = false;
     this._batchFlushHandle = null;
     this._profiler = new EventProfiler();
+    this.middleware = [];
+    this._sequence = 0;
     
     // Lazy load contracts
     this._loadContracts();
@@ -124,6 +128,17 @@ class BeatBus {
   off(evt, fn){
     const set = this.listeners.get(evt); if (!set) return;
     set.delete(fn); if (set.size===0) this.listeners.delete(evt);
+  }
+
+  use(fn){
+    if (typeof fn !== 'function') {
+      throw new TypeError('[BeatBus] middleware must be a function');
+    }
+    this.middleware.push(fn);
+    return () => {
+      const idx = this.middleware.indexOf(fn);
+      if (idx >= 0) this.middleware.splice(idx, 1);
+    };
   }
 
   _mode(){
@@ -228,28 +243,40 @@ class BeatBus {
         if (!canonOk) return;
       }
     }
+    let canonPayloadWithBase = this._applyBaseFields(evt, canonPayload);
+    const middlewareResult = this._runMiddleware(evt, canonPayloadWithBase);
+    if (middlewareResult.blocked) {
+      return;
+    }
+    canonPayloadWithBase = this._applyBaseFields(evt, middlewareResult.payload);
 
     // maintain last state hints for better "from"
-    if (evt==='STAGE_CHANGE' && canonPayload?.to) this._last.stage = canonPayload.to;
-    if (evt==='QUALITY_CHANGE' && canonPayload?.tier) this._last.quality = canonPayload.tier;
+    if (evt==='STAGE_CHANGE' && canonPayloadWithBase?.to) this._last.stage = canonPayloadWithBase.to;
+    if (evt==='QUALITY_CHANGE' && canonPayloadWithBase?.tier) this._last.quality = canonPayloadWithBase.tier;
 
     const startTime = this._profiler.start(evt);
 
-    if (this._shouldBatch(evt, canonPayload)) {
+    if (this._shouldBatch(evt, canonPayloadWithBase)) {
       const existing = this._batchMap.get(evt);
       if (existing) {
-        existing.payload = canonPayload;
+        existing.payload = canonPayloadWithBase;
         existing.normalized = normalized;
         existing.startTime = Math.min(existing.startTime, startTime);
       } else {
-        this._batchMap.set(evt, { payload: canonPayload, normalized, startTime });
+        this._batchMap.set(evt, { payload: canonPayloadWithBase, normalized, startTime });
       }
       this._scheduleBatchFlush();
       return;
     }
 
-    this._dispatch(evt, canonPayload, normalized);
+    this._dispatch(evt, canonPayloadWithBase, normalized);
     this._profiler.stop(evt, startTime);
+  }
+
+  _now() {
+    return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+      ? performance.now()
+      : Date.now();
   }
 
   _shouldBatch(evt, payload) {
@@ -282,7 +309,8 @@ class BeatBus {
     const entries = Array.from(this._batchMap.entries());
     this._batchMap.clear();
     for (const [evt, entry] of entries) {
-      this._dispatch(evt, entry.payload, entry.normalized);
+      const payloadWithBase = this._applyBaseFields(evt, entry.payload);
+      this._dispatch(evt, payloadWithBase, entry.normalized);
       this._profiler.stop(evt, entry.startTime);
     }
   }
@@ -308,6 +336,56 @@ class BeatBus {
     } else {
       listenerSet.forEach((fn) => this._scheduleAsyncInvoke(fn, evt, payload));
     }
+  }
+
+  _applyBaseFields(evt, payload) {
+    if (!payload || typeof payload !== 'object') return payload;
+    if (typeof payload.timestamp !== 'number' || !Number.isFinite(payload.timestamp)) {
+      payload.timestamp = this._now();
+    }
+    if (!payload.source) {
+      payload.source = this._inferSource(evt, payload);
+    }
+    if (!payload._meta || typeof payload._meta !== 'object') {
+      payload._meta = {};
+    }
+    if (!payload._meta.version) {
+      payload._meta.version = DEFAULT_SCHEMA_VERSION;
+    }
+    if (payload._meta.sequence === undefined || payload._meta.sequence === null) {
+      payload._meta.sequence = this._sequence++;
+    }
+    return payload;
+  }
+
+  _inferSource(evt, payload) {
+    if (payload && typeof payload.source === 'string' && payload.source.length) {
+      return payload.source;
+    }
+    if (payload?._extended && typeof payload._extended.source === 'string') {
+      return payload._extended.source;
+    }
+    return `beatbus:${evt}`;
+  }
+
+  _runMiddleware(evt, payload) {
+    let current = payload;
+    for (const fn of this.middleware) {
+      if (typeof fn !== 'function') continue;
+      try {
+        const result = fn(evt, current);
+        if (result === false) {
+          console.warn(`[BeatBus] ${evt} blocked by middleware`, fn.name || 'anonymous');
+          return { blocked: true };
+        }
+        if (result !== undefined) {
+          current = result;
+        }
+      } catch (error) {
+        console.error(`[BeatBus] middleware error @ ${evt}`, error);
+      }
+    }
+    return { blocked: false, payload: current };
   }
 
   _safeInvoke(fn, evt, payload) {
@@ -349,6 +427,19 @@ class BeatBus {
 }
 
 const beatBus = new BeatBus();
+
+const schemaMiddleware = (eventName, payload) => {
+  const result = validateEventPayload(eventName, payload);
+  if (!result.valid) {
+    console.warn(`[BeatBus] Schema violation for ${eventName}`, {
+      errors: result.errors,
+      payload,
+    });
+  }
+  return payload;
+};
+
+beatBus.use(schemaMiddleware);
 
 // Singleton guard: prevent accidental re-instantiation (DEV fails fast)
 if (typeof globalThis !== 'undefined') {
