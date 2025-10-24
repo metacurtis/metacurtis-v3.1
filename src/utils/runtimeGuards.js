@@ -24,6 +24,8 @@ function hasLocalOptIn() {
   }
 }
 
+const ALWAYS_ALLOWED_CAPABILITIES = new Set(['renderer:diagnostics']);
+
 /**
  * Determine if a given capability may be controlled externally.
  * @param {string} capability
@@ -31,6 +33,10 @@ function hasLocalOptIn() {
  */
 export function isControlAllowed(capability) {
   if (typeof window === 'undefined') return false;
+
+  if (ALWAYS_ALLOWED_CAPABILITIES.has(capability)) {
+    return true;
+  }
 
   const guard = window.__CANON_RUNTIME_GUARD__;
   if (guard && typeof guard.allow === 'function') {

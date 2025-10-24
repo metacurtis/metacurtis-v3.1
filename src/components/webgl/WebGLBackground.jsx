@@ -224,6 +224,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const qrModeRef = useRef(false);
   const restoreClearRef = useRef([0, 0, 0, 1]);
   const lastPointSizeRef = useRef(null);
+  const qrWhiteoutPendingRef = useRef(false);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
 
@@ -1178,15 +1179,27 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       if (geometryRef.current) geometryRef.current.dispose();
       const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position',            new THREE.BufferAttribute(raw.atmosphericPositions, 3));
-      geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
-      geo.setAttribute('text3DPosition',      new THREE.BufferAttribute(raw.text3DPositions, 3));
+      const primaryPositions =
+        isQrBlueprint
+          ? (raw.text3DPositions || raw.atmosphericPositions || raw.positions)
+          : (raw.atmosphericPositions || raw.text3DPositions || raw.positions);
+
+      if (primaryPositions instanceof Float32Array) {
+        geo.setAttribute('position', new THREE.BufferAttribute(primaryPositions, 3));
+      }
+      if (raw.atmosphericPositions instanceof Float32Array) {
+        geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
+      }
+      if (raw.text3DPositions instanceof Float32Array) {
+        geo.setAttribute('text3DPosition', new THREE.BufferAttribute(raw.text3DPositions, 3));
+      }
       if (raw.animationSeeds)  geo.setAttribute('animationSeed',  new THREE.BufferAttribute(raw.animationSeeds, 3));
       if (raw.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(raw.sizeMultipliers, 1));
       if (raw.opacityData)     geo.setAttribute('opacityData',    new THREE.BufferAttribute(raw.opacityData, 1));
       if (raw.atlasIndices)    geo.setAttribute('atlasIndex',     new THREE.BufferAttribute(raw.atlasIndices, 1));
       if (raw.tierData)        geo.setAttribute('tierData',       new THREE.BufferAttribute(raw.tierData, 1));
-      const idx = new Float32Array((raw.activeCount || raw.particleCount || 0) || (raw.atmosphericPositions.length / 3));
+      const inferredCount = primaryPositions instanceof Float32Array ? primaryPositions.length / 3 : 0;
+      const idx = new Float32Array((raw.activeCount || raw.particleCount || 0) || inferredCount);
       for (let i = 0; i < idx.length; i++) idx[i] = i;
       geo.setAttribute('particleIndex', new THREE.BufferAttribute(idx, 1));
       geo.setDrawRange(0, raw.activeCount || raw.particleCount);
@@ -1212,11 +1225,29 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         });
         scheduleRuntimeSampling();
         if (mat?.uniforms?.uMorphProgress) {
-          mat.uniforms.uMorphProgress.value = 0;
-          if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+          if (isQrBlueprint) {
+            mat.uniforms.uMorphProgress.value = 1;
+            if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 1;
+            if (mat.uniforms.uPostMorphFreeze) mat.uniforms.uPostMorphFreeze.value = 1;
+          } else {
+            mat.uniforms.uMorphProgress.value = 0;
+            if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
+          }
           mat.uniformsNeedUpdate = true;
         }
         ignoreDirectivesRef.current = false;
+      }
+
+      if (isQrBlueprint && qrWhiteoutPendingRef.current) {
+        if (gl) {
+          const prev = gl.getClearColor(new THREE.Color());
+          const prevAlpha = typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
+          restoreClearRef.current = [prev.r, prev.g, prev.b, prevAlpha];
+          gl.setClearColor(0xffffff, 1);
+        }
+        qrWhiteoutPendingRef.current = false;
+      } else if (!isQrBlueprint) {
+        qrWhiteoutPendingRef.current = false;
       }
 
       if (DEV && !geo.__singleWriterPatched) {
@@ -1271,7 +1302,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           }
         }
       } else {
-        console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
+        console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`, isQrBlueprint ? '[qrMode]' : '');
 
         if (isClimax) {
           const blueprintForDiag = raw;
@@ -1800,11 +1831,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       // ----- QR ENTER -----
       if (directive?.enterQrMode) {
         qrModeRef.current = true;
-        if (gl) {
+        const qrReady = lastBlueprintMetaRef.current?.qrMode === true && geometryRef.current;
+        if (qrReady && gl) {
           const prev = gl.getClearColor(new THREE.Color());
           const prevAlpha = typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
           restoreClearRef.current = [prev.r, prev.g, prev.b, prevAlpha];
           gl.setClearColor(0xffffff, 1);
+        } else {
+          qrWhiteoutPendingRef.current = true;
         }
         if (uniforms.uPostMorphFreeze) {
           uniforms.uPostMorphFreeze.value = 1;
@@ -1824,7 +1858,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           lastPointSizeRef.current = typeof currentPointSize === 'number'
             ? currentPointSize
             : Number(currentPointSize ?? 0);
-          uniforms.uPointSize.value = directive.uPointSize || 2.6;
+          const dpr = typeof window !== 'undefined' && window.devicePixelRatio
+            ? window.devicePixelRatio
+            : 1;
+          const cssSize = (directive.uPointSize && directive.uPointSize > 0) ? directive.uPointSize : 2.6;
+          const deviceSize = cssSize * dpr;
+          const clampedSize = Math.min(Math.max(deviceSize, 3.0), 36.0);
+          uniforms.uPointSize.value = clampedSize;
           uniforms.uPointSize.needsUpdate = true;
         }
         timeTickEnabledRef.current = false;
@@ -1848,6 +1888,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           const [r0, g0, b0, a0] = restoreClearRef.current;
           gl.setClearColor(new THREE.Color(r0, g0, b0), a0);
         }
+        qrWhiteoutPendingRef.current = false;
         timeTickEnabledRef.current = true;
         mat.uniformsNeedUpdate = true;
         return;

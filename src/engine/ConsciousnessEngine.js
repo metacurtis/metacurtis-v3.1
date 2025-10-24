@@ -19,6 +19,7 @@ import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
+import qrCurtis from '@/assets/climax/qr-curtis.json';
 
 // ===== Band probe helpers (pure, exportable) =================================
 const deg2rad = (d) => (d * Math.PI) / 180;
@@ -374,6 +375,7 @@ class ConsciousnessEngine {
     this._emergenceActive = false;
     this._emergenceDone = false;
     this._rendererFencepostSeen = false;
+    this._pendingQrMetadata = null;
     
     // Opening gates
     this._openingPhase = true;
@@ -1079,9 +1081,26 @@ class ConsciousnessEngine {
             generateScatterPositions(particleCount);
           break;
         case 'formQRCode':
-        case 'qr':
-          positions = generateQRPositions(particleCount);
+        case 'qr': {
+          const url = String(step?.url || '');
+          const asset = Array.isArray(qrCurtis?.positions) ? qrCurtis : null;
+
+          if (asset?.positions) {
+            const src = asset.positions;
+            positions = src instanceof Float32Array ? src : new Float32Array(src.flat());
+          } else {
+            console.warn('[QR] curated asset missing; using generated fallback');
+            positions = generateQRPositions(particleCount);
+          }
+
+          this._pendingQrMetadata = {
+            url,
+            moduleCount: asset?.moduleCount ?? asset?.size ?? null,
+            quietZone: asset?.quietZone ?? 4,
+            positions,
+          };
           break;
+        }
         default:
           positions = generateScatterPositions(particleCount);
       }
@@ -1102,6 +1121,37 @@ class ConsciousnessEngine {
     const blueprint = this._buildClimaxBlueprintFromPositions(step, positions, particleCount);
     if (!blueprint) return;
 
+    const actionName = (step.action || step.name || '').toLowerCase();
+    const isQrStep = actionName === 'formqrcode' || actionName === 'qr';
+
+    if (blueprint && isQrStep) {
+      const qrMeta = this._pendingQrMetadata || {};
+      const qrPositions = qrMeta.positions instanceof Float32Array
+        ? qrMeta.positions
+        : blueprint.text3DPositions instanceof Float32Array
+          ? blueprint.text3DPositions
+          : null;
+
+      if (qrPositions) {
+        const copy = qrPositions.slice();
+        const copy2 = qrPositions.slice();
+        blueprint.text3DPositions = copy;
+        blueprint.atmosphericPositions = copy2;
+        blueprint.positions = qrPositions.slice();
+        blueprint.particleCount = qrPositions.length / 3;
+        blueprint.activeCount = blueprint.particleCount;
+      }
+
+      blueprint.metadata = {
+        ...(blueprint.metadata || {}),
+        qrMode: true,
+        url: qrMeta.url ?? step.url ?? null,
+        moduleCount: qrMeta.moduleCount ?? undefined,
+        quietZone: qrMeta.quietZone ?? undefined,
+      };
+    }
+    this._pendingQrMetadata = null;
+
     const emitPayload = {
       stage: 'transcendence',
       quality: this.currentQuality,
@@ -1118,8 +1168,6 @@ class ConsciousnessEngine {
     };
 
     BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
-    const actionName = (step.action || step.name || '').toLowerCase();
-    const isQrStep = actionName === 'formqrcode' || actionName === 'qr';
     if (isQrStep) {
       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
         source: 'climax:qr',
