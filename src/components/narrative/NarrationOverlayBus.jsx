@@ -1,32 +1,49 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { loadOverlayConfig } from '@/config/overlay-config.js';
+import { OverlayStateMachine, STATES } from './overlay/OverlayStateMachine.js';
+import { validateEvent } from './overlay/OverlayContracts.js';
+import { OverlayDiagnostics } from './overlay/OverlayDiagnostics.js';
+import { OverlayTimers } from './overlay/OverlayTimers.js';
+import { OverlayDeduplicator } from './overlay/OverlayDeduplication.js';
 
-const DEFAULT_TYPEWRITER_SPEED_MS = 50;
-const GRACE_WINDOW_MS = 800;
+console.log('🎙️ [NarrationOverlay] Loaded (v2.0 - State Machine)');
+
+// Module-singletons to preserve state across hot reloads
+const config = loadOverlayConfig();
+const stateMachine = new OverlayStateMachine();
+const diagnostics = new OverlayDiagnostics();
+const timers = new OverlayTimers();
+const deduplicator = new OverlayDeduplicator(config.deduplication);
+
+// Expose diagnostics for investigators
+if (typeof window !== 'undefined') {
+  window.__narrationOverlayDiagnostic = diagnostics;
+  window.__narrationOverlayState = stateMachine;
+  window.__narrationOverlayTimers = timers;
+  window.__narrationOverlayDeduplicator = deduplicator;
+}
 
 export default function NarrationOverlayBus() {
   const [visible, setVisible] = useState(false);
   const [displayText, setDisplayText] = useState('');
   const [incomingText, setIncomingText] = useState('');
 
-  const graceTimerRef = useRef(null);
-  const typeTimerRef = useRef(null);
   const indexRef = useRef(0);
-  const speedRef = useRef(DEFAULT_TYPEWRITER_SPEED_MS);
+  const speedRef = useRef(config.typewriterSpeedMs);
+
+  useEffect(() => {
+    const unsubscribe = stateMachine.subscribe(() => diagnostics.recordStateTransition());
+    return unsubscribe;
+  }, []);
 
   const clearGraceTimer = useCallback(() => {
-    if (graceTimerRef.current) {
-      clearTimeout(graceTimerRef.current);
-      graceTimerRef.current = null;
-    }
+    timers.clear('grace');
   }, []);
 
   const clearTypeTimer = useCallback(() => {
-    if (typeTimerRef.current) {
-      clearTimeout(typeTimerRef.current);
-      typeTimerRef.current = null;
-    }
+    timers.clear('typewriter');
   }, []);
 
   const resetOverlay = useCallback(() => {
@@ -35,26 +52,39 @@ export default function NarrationOverlayBus() {
     indexRef.current = 0;
     setIncomingText('');
     setDisplayText('');
+
+    // Force state to idle (may already be idle during rapid resets)
+    if (stateMachine.getState() !== STATES.IDLE) {
+      stateMachine.forceState(STATES.IDLE, 'reset');
+    }
   }, [clearGraceTimer, clearTypeTimer]);
 
   const scheduleGraceHide = useCallback(() => {
     clearGraceTimer();
-    graceTimerRef.current = setTimeout(() => {
-      graceTimerRef.current = null;
+    stateMachine.transitionTo(STATES.GRACE_PERIOD, { reason: 'narration_stopped' });
+    timers.set('grace', () => {
+      stateMachine.transitionTo(STATES.HIDING, { reason: 'grace_expired' });
       resetOverlay();
       setVisible(false);
-    }, GRACE_WINDOW_MS);
+    }, config.graceWindowMs);
   }, [clearGraceTimer, resetOverlay]);
 
   const typewriterStep = useCallback(() => {
     clearTypeTimer();
+
     if (!incomingText) {
       setDisplayText('');
+      stateMachine.transitionTo(STATES.IDLE, { reason: 'no_text' });
       return;
     }
 
     if (indexRef.current >= incomingText.length) {
       setDisplayText(incomingText);
+      stateMachine.transitionTo(STATES.COMPLETE, {
+        reason: 'typing_complete',
+        length: incomingText.length,
+      });
+      diagnostics.recordDisplay(incomingText.length);
       return;
     }
 
@@ -63,19 +93,25 @@ export default function NarrationOverlayBus() {
     indexRef.current = nextIndex;
 
     if (indexRef.current < incomingText.length) {
-      typeTimerRef.current = setTimeout(typewriterStep, speedRef.current);
+      timers.set('typewriter', typewriterStep, speedRef.current);
     }
   }, [incomingText, clearTypeTimer]);
 
   useEffect(() => {
     indexRef.current = 0;
     clearTypeTimer();
+
     if (!incomingText) {
       setDisplayText('');
       return;
     }
 
-    typeTimerRef.current = setTimeout(typewriterStep, speedRef.current);
+    stateMachine.transitionTo(STATES.TYPING, {
+      reason: 'new_text',
+      length: incomingText.length,
+    });
+
+    timers.set('typewriter', typewriterStep, speedRef.current);
     return () => clearTypeTimer();
   }, [incomingText, typewriterStep, clearTypeTimer]);
 
@@ -85,21 +121,64 @@ export default function NarrationOverlayBus() {
       window.theaterDirector?.isOpeningInProgress?.() === true;
 
     const handleStart = (payload = {}) => {
-      if (isOpeningBlocked()) return;
+      const validation = validateEvent('START_NARRATIVE', payload);
+      diagnostics.recordEvent('START_NARRATIVE', payload, validation.valid);
+
+      if (!validation.valid) {
+        console.error('❌ [NarrationOverlay] Invalid START_NARRATIVE:', validation.reason);
+        diagnostics.recordError('INVALID_EVENT', { event: 'START_NARRATIVE', ...validation });
+        return;
+      }
+
+      if (isOpeningBlocked()) {
+        diagnostics.recordError('BLOCKED', { reason: 'opening_in_progress' });
+        return;
+      }
+
+      const dupCheck = deduplicator.check('START_NARRATIVE', payload);
+      if (dupCheck.isDuplicate) {
+        diagnostics.recordDuplicateIgnored();
+        diagnostics.recordError('DUPLICATE_EVENT', { event: 'START_NARRATIVE', reason: dupCheck.reason });
+        return;
+      }
+
       clearGraceTimer();
       resetOverlay();
       setVisible(true);
+      stateMachine.transitionTo(STATES.STARTING, { source: payload.source });
+
       if (payload?.prefill) {
         setIncomingText(String(payload.prefill));
       }
     };
 
     const handleLine = (payload = {}) => {
-      if (!payload || isOpeningBlocked()) return;
-      const text = typeof payload.text === 'string' ? payload.text : '';
-      const speedMs = Number.isFinite(payload.speedMs) && payload.speedMs > 0
-        ? Math.max(10, payload.speedMs)
-        : DEFAULT_TYPEWRITER_SPEED_MS;
+      const validation = validateEvent('NARRATIVE_LINE', payload);
+      diagnostics.recordEvent('NARRATIVE_LINE', payload, validation.valid);
+
+      if (!validation.valid) {
+        console.error('❌ [NarrationOverlay] Invalid NARRATIVE_LINE:', validation.reason);
+        diagnostics.recordError('INVALID_EVENT', { event: 'NARRATIVE_LINE', ...validation });
+        return;
+      }
+
+      if (isOpeningBlocked()) {
+        diagnostics.recordError('BLOCKED', { reason: 'opening_in_progress' });
+        return;
+      }
+
+      const dupCheck = deduplicator.check('NARRATIVE_LINE', payload);
+      if (dupCheck.isDuplicate) {
+        diagnostics.recordDuplicateIgnored();
+        diagnostics.recordError('DUPLICATE_EVENT', { event: 'NARRATIVE_LINE', reason: dupCheck.reason });
+        return;
+      }
+
+      const text = payload.text;
+      const speedMs =
+        Number.isFinite(payload.speedMs) && payload.speedMs > 0
+          ? Math.max(10, payload.speedMs)
+          : config.typewriterSpeedMs;
 
       speedRef.current = speedMs;
       clearGraceTimer();
@@ -110,11 +189,14 @@ export default function NarrationOverlayBus() {
     };
 
     const handleStop = () => {
+      diagnostics.recordEvent('NARRATION_STOPPED', {}, true);
+
       if (!visible) return;
       scheduleGraceHide();
     };
 
     const handleCleanup = () => {
+      diagnostics.recordEvent('NARRATION_CLEANUP', {}, true);
       scheduleGraceHide();
     };
 
@@ -124,10 +206,14 @@ export default function NarrationOverlayBus() {
     const offCleanup = BeatBus.on?.(EVENTS.NARRATION_CLEANUP, handleCleanup);
 
     return () => {
+      console.log('🧹 [NarrationOverlay] Cleanup: clearing timers + resetting diagnostics');
+      timers.clearAll();
+      deduplicator.reset();
       offStart?.();
       offLine?.();
       offStop?.();
       offCleanup?.();
+      setVisible(false);
       resetOverlay();
     };
   }, [clearGraceTimer, clearTypeTimer, resetOverlay, scheduleGraceHide, visible]);
@@ -145,20 +231,20 @@ export default function NarrationOverlayBus() {
         display: 'flex',
         justifyContent: 'center',
         pointerEvents: 'none',
-        zIndex: 1000,
+        zIndex: config.style.zIndex,
       }}
     >
       <div
         style={{
-          background: 'rgba(0, 0, 0, 0.65)',
-          color: '#fff',
+          background: config.style.background,
+          color: config.style.color,
           fontFamily:
             'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-          fontSize: 16,
-          lineHeight: 1.45,
-          padding: '12px 18px',
-          borderRadius: 10,
-          maxWidth: 960,
+          fontSize: config.style.fontSize,
+          lineHeight: config.style.lineHeight,
+          padding: config.style.padding,
+          borderRadius: config.style.borderRadius,
+          maxWidth: config.style.maxWidth,
           width: 'calc(100% - 56px)',
           textAlign: 'center',
           pointerEvents: 'auto',
