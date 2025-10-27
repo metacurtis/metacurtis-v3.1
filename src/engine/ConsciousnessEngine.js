@@ -793,6 +793,33 @@ class ConsciousnessEngine {
       const totalPhases = Math.max(0, implMs) + Math.max(0, settleMs);
       const total = holdMs + totalPhases;
 
+      const stageLabel = this.currentStage || 'genesis';
+      const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
+      const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
+      const emitMorphProgress = (value, target = value) => {
+        const clampedValue = clamp(value, 0, 1);
+        const clampedTarget = clamp(target, 0, 1);
+        const morphPayload = {
+          morphProgress: clampedValue,
+          value: clampedValue,
+          morphTarget: clampedTarget,
+          target: clampedTarget,
+          stage: stageLabel,
+          schemaVersion: '3.5',
+        };
+        if (stageIndex >= 0) {
+          morphPayload.stageIndex = stageIndex;
+        }
+        console.log('🔬 [MORPH] Emitting MORPH_PROGRESS:', {
+          payload: JSON.stringify(morphPayload, null, 2),
+          keys: Object.keys(morphPayload),
+          hasSchemaVersion: 'schemaVersion' in morphPayload,
+          hasStage: 'stage' in morphPayload,
+          hasMorphProgress: 'morphProgress' in morphPayload,
+        });
+        BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
+      };
+
       const step = () => {
         if (!this._emergenceActive || this._rendererFencepostSeen) {
           this._emergenceRaf = null;
@@ -844,7 +871,7 @@ class ConsciousnessEngine {
           pointSize,
           gaussian,
         });
-        BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: morphRounded });
+        emitMorphProgress(morphRounded, inImplosion ? midValue : 1);
 
         if (elapsed < total) {
           this._emergenceRaf = schedule(step);
@@ -869,7 +896,7 @@ class ConsciousnessEngine {
             pointSize: pointSizeBase,
             gaussian: sigmaBase,
           });
-          BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 1 });
+          emitMorphProgress(1, 1);
           this._emergenceRaf = null;
           this._emergenceActive = false;
           this._emergenceDone = true;
@@ -877,7 +904,7 @@ class ConsciousnessEngine {
       };
 
       // Prime listeners with baseline state before the first frame
-      BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: 0 });
+      emitMorphProgress(0, midValue);
       BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
         morphProgress: 0,
         drawCount: Math.max(1, Math.round(count * 0.05)),
@@ -1298,11 +1325,14 @@ class ConsciousnessEngine {
       colors: palette,
     };
 
+    const startPositions = fromPositions.slice();
+
     const blueprint = {
       stageName: 'transcendence',
       particleCount,
       activeCount: particleCount,
       maxParticles: Math.max(source?.maxParticles || particleCount, particleCount),
+      positions: startPositions,
       atmosphericPositions: fromPositions,
       text3DPositions: targetPositions.slice(),
       animationSeeds,
@@ -1498,6 +1528,7 @@ class ConsciousnessEngine {
       activeCount: safeCount,
       atmosphericPositions: allocateVec3(),
       text3DPositions: allocateVec3(),
+      positions: allocateVec3(),
       animationSeeds: allocateVec3(),
       sizeMultipliers: new Float32Array(safeCount),
       opacityData: new Float32Array(safeCount),
@@ -1718,6 +1749,9 @@ class ConsciousnessEngine {
     const { a: atmH, b: tgtH } = this._harmonizeAttributeLengths(atmospheric, targetPositions);
     blueprint.atmosphericPositions.set(atmH);
     blueprint.text3DPositions.set(tgtH);
+    if (blueprint.positions?.length === atmH.length) {
+      blueprint.positions.set(atmH);
+    }
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
@@ -1832,11 +1866,20 @@ class ConsciousnessEngine {
           const targets = this._lastEmergenceTargets;
           blueprint.atmosphericPositions.set(targets);
           blueprint.text3DPositions.set(targets);
+          if (blueprint.positions?.length === targets.length) {
+            blueprint.positions.set(targets);
+          }
 
           this._lastEmergenceTargets = null;
           this._emergenceDone = false;
 
           if (this._validateBlueprint(blueprint)) {
+            console.log('🔬 [BLUEPRINT] Final blueprint check:', {
+              stage: blueprint.stage ?? blueprint.stageName,
+              hasPositions: !!blueprint.positions,
+              positionsLength: blueprint.positions?.length,
+              metadata: blueprint.metadata,
+            });
             BeatBus.emit(EVENTS.BLUEPRINT_READY, {
               blueprint,
               stage,
@@ -1858,6 +1901,12 @@ class ConsciousnessEngine {
     if (blueprint) {
       console.log(`🧠 Using cached blueprint for ${stage}|${quality}`);
       if (this._validateBlueprint(blueprint)) {
+        console.log('🔬 [BLUEPRINT] Final blueprint check:', {
+          stage: blueprint.stage ?? blueprint.stageName,
+          hasPositions: !!blueprint.positions,
+          positionsLength: blueprint.positions?.length,
+          metadata: blueprint.metadata,
+        });
         BeatBus.emit(EVENTS.BLUEPRINT_READY, {
           blueprint,
           stage,
@@ -1877,6 +1926,12 @@ class ConsciousnessEngine {
 
     if (blueprint && this._validateBlueprint(blueprint)) {
       this.blueprintCache.set(cacheKey, blueprint);
+      console.log('🔬 [BLUEPRINT] Final blueprint check:', {
+        stage: blueprint.stage ?? blueprint.stageName,
+        hasPositions: !!blueprint.positions,
+        positionsLength: blueprint.positions?.length,
+        metadata: blueprint.metadata,
+      });
       BeatBus.emit(EVENTS.BLUEPRINT_READY, {
         blueprint,
         stage,
@@ -1895,6 +1950,12 @@ class ConsciousnessEngine {
       console.error(`Stage ${stageName} not found`);
       return null;
     }
+
+    console.log('🔬 [BLUEPRINT] Starting position generation for stage:', stageName);
+    console.log('🔬 [BLUEPRINT] Input SST data:', {
+      particlesBase: SST?.stages?.[stageName]?.particlesBase,
+      hasLetterGeometry: !!SST?.visual?.letterGeometry?.[stageName],
+    });
 
     const stageParticleCounts = SST?.performance?.particleCount ?? {};
     const quality = requestedQuality || options.quality || this.currentQuality;
@@ -1953,6 +2014,7 @@ class ConsciousnessEngine {
       [tierAssignments[i], tierAssignments[swapIndex]] = [tierAssignments[swapIndex], tierAssignments[i]];
     }
 
+    const positions = new Float32Array(particleCount * 3);
     const atmosphericPositions = new Float32Array(particleCount * 3);
     const text3DPositions = new Float32Array(particleCount * 3);
     const animationSeeds = new Float32Array(particleCount * 3);
@@ -1981,13 +2043,21 @@ class ConsciousnessEngine {
       const spread = tierSpread[tier] || tierSpread[0];
       const baseIndex = i * 3;
 
-      atmosphericPositions[baseIndex] = (rng() - 0.5) * spread.x;
-      atmosphericPositions[baseIndex + 1] = (rng() - 0.5) * spread.y;
-      atmosphericPositions[baseIndex + 2] = (rng() - 0.5) * spread.z;
+      const ax = (rng() - 0.5) * spread.x;
+      const ay = (rng() - 0.5) * spread.y;
+      const az = (rng() - 0.5) * spread.z;
 
-      text3DPositions[baseIndex] = atmosphericPositions[baseIndex];
-      text3DPositions[baseIndex + 1] = atmosphericPositions[baseIndex + 1];
-      text3DPositions[baseIndex + 2] = atmosphericPositions[baseIndex + 2];
+      atmosphericPositions[baseIndex] = ax;
+      atmosphericPositions[baseIndex + 1] = ay;
+      atmosphericPositions[baseIndex + 2] = az;
+
+      positions[baseIndex] = ax;
+      positions[baseIndex + 1] = ay;
+      positions[baseIndex + 2] = az;
+
+      text3DPositions[baseIndex] = ax;
+      text3DPositions[baseIndex + 1] = ay;
+      text3DPositions[baseIndex + 2] = az;
 
       animationSeeds[baseIndex] = rng();
       animationSeeds[baseIndex + 1] = rng();
@@ -2069,6 +2139,7 @@ class ConsciousnessEngine {
     };
     fitToViewXY(text3DPositions, vw, vh, fitTarget);
     fitToViewXY(atmosphericPositions, vw, vh, fitTarget);
+    fitToViewXY(positions, vw, vh, fitTarget);
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {
@@ -2093,11 +2164,19 @@ class ConsciousnessEngine {
       );
     }
 
+    console.log('🔬 [BLUEPRINT] Position array result:', {
+      type: positions?.constructor?.name,
+      length: positions?.length,
+      sample: positions ? Array.from(positions.slice(0, 6)) : 'UNDEFINED',
+      isFloat32Array: positions instanceof Float32Array,
+    });
+
     const blueprint = {
       stageName,
       particleCount,
       maxParticles: particleCount,
       activeCount: particleCount,
+      positions,
       atmosphericPositions,
       text3DPositions,
       animationSeeds,
@@ -2140,33 +2219,38 @@ class ConsciousnessEngine {
     
     const a = bp.atmosphericPositions;
     const t = bp.text3DPositions;
-    
-    // Check existence and non-empty
-    if (!(a && t && a.length && t.length)) {
-      console.error('Blueprint validation failed: missing arrays');
+    const p = bp.positions;
+
+    const arrays = [
+      ['atmosphericPositions', a],
+      ['text3DPositions', t],
+      ['positions', p],
+    ];
+
+    for (const [name, arr] of arrays) {
+      if (!(arr instanceof Float32Array) || !arr.length) {
+        console.error(`Blueprint validation failed: missing or invalid ${name}`);
+        return false;
+      }
+      if (arr.length % 3 !== 0) {
+        console.error(`Blueprint validation failed: ${name} length not divisible by 3`);
+        return false;
+      }
+    }
+
+    const baseLength = a.length;
+    if (t.length !== baseLength || p.length !== baseLength) {
+      console.error('Blueprint validation failed: attribute length mismatch');
       return false;
     }
-    
-    // Check alignment (divisible by 3)
-    if (a.length % 3 !== 0 || t.length % 3 !== 0) {
-      console.error('Blueprint validation failed: array length not divisible by 3');
-      return false;
-    }
-    
-    // Check matching lengths
-    if (a.length !== t.length) {
-      console.error('Blueprint validation failed: array length mismatch');
-      return false;
-    }
-    
-    // Check for NaN/Infinity
-    for (let i = 0; i < a.length; i++) {
-      if (!isFinite(a[i]) || !isFinite(t[i])) {
+
+    for (let i = 0; i < baseLength; i++) {
+      if (!isFinite(a[i]) || !isFinite(t[i]) || !isFinite(p[i])) {
         console.error('Blueprint validation failed: NaN/Infinity detected');
         return false;
       }
     }
-    
+
     return true;
   }
 

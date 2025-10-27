@@ -190,11 +190,16 @@ export default class ScrollOrchestrator {
       
       const currentStage = Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown';
       
+      const morphProgress = clamp01(this.morph);
+      const morphTarget = clamp01(this.morphTarget);
       BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
-        value: clamp01(this.morph),
-        target: clamp01(this.morphTarget),
+        morphProgress,
+        value: morphProgress,
+        morphTarget,
+        target: morphTarget,
         stage: currentStage,
-        stageIndex: this.lastStageIndex
+        stageIndex: this.lastStageIndex,
+        schemaVersion: '3.5',
       });
     }
   }
