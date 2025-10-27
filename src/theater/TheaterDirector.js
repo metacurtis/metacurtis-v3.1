@@ -530,7 +530,6 @@ class TheaterDirector {
     } catch (error) {
       console.error('🎬 Director error:', error);
       this.phase = 'error';
-      BeatBus.emit(EVENTS.DIRECTOR_ERROR, { error });
     } finally {
       this._openingInProgress = false;
       this._detachSkipListener();
@@ -1013,8 +1012,7 @@ class TheaterDirector {
   }
 
   emitTune(payload) {
-    console.log('   RENDERER_TUNE:', payload);
-    BeatBus.emit(EVENTS.RENDERER_TUNE, payload || {});
+    console.log('   Renderer tune payload (no-op):', payload);
   }
 
   // Utility methods

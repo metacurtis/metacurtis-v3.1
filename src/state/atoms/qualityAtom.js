@@ -194,14 +194,6 @@ export const qualityAtom = createAtom(initialState, (get, setState) => {
         lastTierChange: performance.now()
       });
       
-      // Emit quality change event
-      BeatBus.emit(EVENTS.QUALITY_CHANGE, { 
-        tier, 
-        quality: tier,
-        particleCount,
-        dpr 
-      });
-      
       console.log(`🎨 qualityAtom: Quality tier set to ${tier} (DPR: ${dpr.toFixed(2)}, Particles: ${particleCount})`);
     },
     
