@@ -1359,47 +1359,15 @@ class ConsciousnessEngine {
     this._cancelClimaxTransition();
 
     const hasRAF = typeof requestAnimationFrame === 'function';
-    const diagTimestamp = performance.now ? performance.now() : Date.now();
-    console.log('🔍 CLIMAX TRANSITION START DIAGNOSTIC:', {
-      timestamp: typeof diagTimestamp.toFixed === 'function' ? diagTimestamp.toFixed(0) : `${diagTimestamp}`,
-      BeatBusExists: !!BeatBus,
-      BeatBusEmitExists: typeof BeatBus?.emit === 'function',
-      BeatBusOnExists: typeof BeatBus?.on === 'function',
-      climaxStepIndex: this._climaxState?.stepIndex,
-      climaxStepName: this._climaxState?.currentStep,
-    });
-
-    console.log('🧪 TEST: Emitting test directive before animation loop');
-    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-      morphProgress: -0.01,
-      morphType: 0,
-      postMorphFreeze: 0,
-      _test: true,
-    });
+    const startTime = performance.now ? performance.now() : Date.now();
 
     const runAnimation = () => {
-      console.log('🧪 TEST: Starting actual animation loop after 100ms delay');
-      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-        morphProgress: 0,
-        morphType: 0,
-        postMorphFreeze: 0,
-      });
-      console.log(`🎬 Starting ${clampedDuration}ms transition (SST-compliant)`);
-
-      const startTime = performance.now ? performance.now() : Date.now();
-
       const step = () => {
         const now = performance.now ? performance.now() : Date.now();
         const raw = Math.min((now - startTime) / clampedDuration, 1);
         const eased = raw < 0.5
           ? 2 * raw * raw
           : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-
-        if (this._climaxState.stepIndex === 0) {
-          console.log(
-            `🎬 Frame: raw=${(raw * 100).toFixed(1)}% eased=${(eased * 100).toFixed(1)}%`
-          );
-        }
 
         const directive = {
           morphProgress: eased,
@@ -1412,15 +1380,7 @@ class ConsciousnessEngine {
         }
 
         BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
-        console.log(
-          `📤 Emitted to event:`,
-          EVENTS.RENDER_DIRECTIVE,
-          '| Value:',
-          String(EVENTS.RENDER_DIRECTIVE)
-        );
-
         if (raw >= 1) {
-          console.log('✅ Climax transition complete');
           this._climaxState.transitionHandle = null;
           this._climaxState.transitionUsesRAF = false;
           return;
@@ -1444,8 +1404,7 @@ class ConsciousnessEngine {
       }
     };
 
-    const startTimer = setTimeout(runAnimation, 100);
-    this._climaxState.timers.push(startTimer);
+    runAnimation();
   }
 
   _clearClimaxTimers() {
