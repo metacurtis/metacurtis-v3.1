@@ -2119,14 +2119,39 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
     console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
     console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-    console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+    console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');
+    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
+
+    const morphListener = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (payload = {}) => {
+      const value = Number.isFinite(payload.morphProgress ?? payload.value)
+        ? (payload.morphProgress ?? payload.value)
+        : null;
+      const stage = payload.stage ?? payload.stageName ?? null;
+      console.log('🔬 [MORPH LISTENER] Received:', { value, stage });
+
+      if (typeof value === 'number' && materialRef.current?.uniforms?.uMorphProgress) {
+        materialRef.current.uniforms.uMorphProgress.value = value;
+        materialRef.current.uniformsNeedUpdate = true;
+        console.log('✅ [MORPH LISTENER] Updated uniform to:', value);
+      } else {
+        console.warn('⚠️ [MORPH LISTENER] Uniform not found');
+      }
+    });
+
     if (typeof window !== 'undefined') {
       window._rendererSubscriptionCheck = () => {
         console.log('🔍 Subscription check:', {
           handlerStillExists: typeof handler === 'function',
-          BeatBusExists: typeof BeatBus !== 'undefined',        });
+          BeatBusExists: typeof BeatBus !== 'undefined',
+          morphListenerActive: typeof morphListener === 'function',
+        });
       };
     }
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+      if (typeof morphListener === 'function') morphListener();
+    };
   }, []);
 
   // early-out fallback if not ready
