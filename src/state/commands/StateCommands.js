@@ -118,11 +118,35 @@ class StateCommands {
   }
 
   wireAtomsToBeatBus() {
-    // Stage changes → BeatBus (without emergence blueprint emission)
+    // Track latest canonical events to avoid duplicate emissions
+    let lastStageFromBus = stageAtom.getState?.()?.currentStage ?? null;
+    let lastQualityFromBus = qualityAtom.getState?.()?.currentQualityTier ?? null;
+
+    const stageBusSub = BeatBus.on?.(EVENTS.STAGE_CHANGE, (payload = {}) => {
+      const stage = payload.to ?? payload.stage ?? payload.name ?? null;
+      if (stage) {
+        lastStageFromBus = stage;
+      }
+    });
+    if (stageBusSub) this.subscriptions.push(stageBusSub);
+
+    const qualityBusSub = BeatBus.on?.(EVENTS.QUALITY_CHANGE, (payload = {}) => {
+      const tier = payload.tier ?? payload.quality ?? null;
+      if (tier) {
+        lastQualityFromBus = tier;
+      }
+    });
+    if (qualityBusSub) this.subscriptions.push(qualityBusSub);
+
+    // Stage changes → BeatBus (only when atom-driven)
     let prevStage = stageAtom.getState?.()?.currentStage;
     const stageSub = stageAtom.subscribe?.(s => {
       const next = s.currentStage;
       if (next !== prevStage) {
+        if (next === lastStageFromBus) {
+          prevStage = next;
+          return;
+        }
         // Emit stage change events
         BeatBus.emit(EVENTS.STAGE_CHANGE, { 
           from: prevStage, 
@@ -136,6 +160,7 @@ class StateCommands {
         // Emergence should only be triggered by TheaterDirector during opening
         
         prevStage = next;
+        lastStageFromBus = next;
       }
     });
     if (stageSub) this.subscriptions.push(stageSub);
@@ -156,6 +181,10 @@ class StateCommands {
     const qualitySub = qualityAtom.subscribe?.(s => {
       const tier = s.currentQualityTier;
       if (tier !== lastQuality) {
+        if (tier === lastQualityFromBus) {
+          lastQuality = tier;
+          return;
+        }
         BeatBus.emit(EVENTS.QUALITY_CHANGE, { 
           tier, 
           quality: tier,  // Include for compatibility
@@ -163,6 +192,7 @@ class StateCommands {
           reason: 'atom' 
         });
         lastQuality = tier;
+        lastQualityFromBus = tier;
       }
     });
     if (qualitySub) this.subscriptions.push(qualitySub);
