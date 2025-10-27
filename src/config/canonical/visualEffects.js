@@ -85,6 +85,32 @@ export const PARTICLE_EFFECTS = {
     ],
     uSpreadFactor: 0.06,
   },
+  particles_accelerate: {
+    type: 'particle',
+    uMotionMode: 3,
+    uStreakIntensity: 1.6,
+    tierModes: [3, 3, 4, 4],
+    tierParams: [
+      [1.6, 0.40, 0.05, 0.0],
+      [1.3, 0.32, 0.05, 0.0],
+      [1.1, 0.48, 0.2, 0.0],
+      [1.2, 0.60, 0.2, 0.0],
+    ],
+    uSpreadFactor: 0.07,
+  },
+  streak_trails_form: {
+    type: 'particle',
+    uMotionMode: 3,
+    uStreakIntensity: 1.2,
+    tierModes: [3, 3, 3, 4],
+    tierParams: [
+      [1.2, 0.30, 0.10, 0.0],
+      [1.0, 0.28, 0.08, 0.0],
+      [0.9, 0.35, 0.12, 0.0],
+      [1.0, 0.45, 0.18, 0.0],
+    ],
+    uSpreadFactor: 0.05,
+  },
   consciousness_nodes_pulse: {
     type: 'particle',
     uTierHighlight: 3,
@@ -121,6 +147,19 @@ export const PARTICLE_EFFECTS = {
       [1.0, 0.6, 0.2, 0.0],
     ],
     uSpreadFactor: 0.1,
+  },
+  tier3_lightning_burst: {
+    type: 'particle',
+    uTierHighlight: 3,
+    intensity: 1.5,
+    uSpreadFactor: 0.09,
+    tierModes: [4, 4, 4, 4],
+    tierParams: [
+      [1.2, 0.30, 0.0, 0.0],
+      [1.3, 0.35, 0.0, 0.0],
+      [1.4, 0.40, 0.0, 0.0],
+      [1.6, 0.45, 0.0, 0.0],
+    ],
   },
 };
 

@@ -19,12 +19,29 @@ function __emitMorphThrottled(BeatBus, EVENTS, v) {
     const EPS = 0.005; // 0.5% change
     const now = performance.now();
     const MIN = __getMorphThrottleMs(); // default 80ms
-    if (typeof v !== 'number') return;
-    if (Math.abs(v - __lastMorph) < EPS) return; // no change
+    const numeric = Number.isFinite(v) ? v : Number(v);
+    if (!Number.isFinite(numeric)) return;
+    const clamped = Math.max(0, Math.min(1, numeric));
+    if (Math.abs(clamped - __lastMorph) < EPS) return; // no change
     if (now - __lastMorphEmit < MIN) return; // too soon
-    __lastMorph = v;
+    __lastMorph = clamped;
     __lastMorphEmit = now;
-    BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', { value: v });
+    const stageState = stageAtom.getState?.() || {};
+    const currentStage = stageState.currentStage || 'genesis';
+    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
+    const stageIndex = stageState.stageIndex ?? (stageOrder.indexOf(currentStage));
+    const payload = {
+      morphProgress: clamped,
+      value: clamped,
+      morphTarget: clamped,
+      target: clamped,
+      stage: currentStage,
+      schemaVersion: '3.5',
+    };
+    if (Number.isFinite(stageIndex) && stageIndex >= 0) {
+      payload.stageIndex = stageIndex;
+    }
+    BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', payload);
   } catch {}
 }
 
