@@ -79,6 +79,13 @@ export class OverlayStateMachine {
    * @returns {boolean} true if the transition succeeded.
    */
   transitionTo(newState, context = {}) {
+    if (newState === this.currentState) {
+      console.debug?.(
+        `[OverlayStateMachine] ${this.currentState} → ${newState} (no-op)`,
+        context
+      );
+      return true;
+    }
     if (!this.canTransitionTo(newState)) {
       console.warn(`❌ [OverlayStateMachine] Invalid transition: ${this.currentState} → ${newState}`, context);
       return false;

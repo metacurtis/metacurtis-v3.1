@@ -1001,12 +1001,28 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         console.log(`   Not a hotspot (particle ${particleIndex})`);
       }
 
+      const currentStage = stageNameRef.current || 'genesis';
+      const point = hit.point
+        ? { x: hit.point.x, y: hit.point.y, z: hit.point.z }
+        : null;
+      const hotspotPayload = matchedHotspot
+        ? {
+            id: matchedHotspot.hotspotId ?? matchedHotspot.id ?? null,
+            fragmentId: matchedHotspot.fragmentId ?? null,
+            meta: {
+              particles: matchedHotspot.particles ?? matchedHotspot.indices ?? null,
+            },
+          }
+        : null;
+
       BeatBus.emit?.(EVENTS.PARTICLE_CLICK_HIT, {
         particleIndex,
+        index: particleIndex,
         distance: hit.distance,
-        point: hit.point,
-        hotspot: matchedHotspot,
-        timestamp: performance.now(),
+        point,
+        stage: currentStage,
+        hotspot: hotspotPayload,
+        schemaVersion: '3.5',
       });
     };
 
