@@ -97,34 +97,6 @@ function normalizePayload(payload) {
   };
 }
 
-const directiveBridgeState = { handler: null };
-
-(() => {
-  try {
-    const sym = '__RENDER_DIRECTIVE_BRIDGE__';
-    if (typeof globalThis !== 'undefined') {
-      if (globalThis[sym]) {
-        return;
-      }
-      globalThis[sym] = true;
-    }
-    if (typeof BeatBus?.on === 'function') {
-      BeatBus.on(EVENTS.RENDER_DIRECTIVE, (payload) => {
-        try {
-          directiveBridgeState.handler?.(payload);
-        } catch (error) {
-          console.error('🎯 Renderer bridge handler error', error);
-        }
-      });
-      console.log('🪢 RENDER_DIRECTIVE bridge subscribed (module scope)');
-    } else {
-      console.warn('🪢 BeatBus.on not available at module scope');
-    }
-  } catch (error) {
-    console.error('🪢 Failed to init render directive bridge', error);
-  }
-})();
-
 const clampFit = (v) => Math.min(5.0, Math.max(0.2, v));
 
 function mapBehaviorToMode(behavior) {
@@ -780,14 +752,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   };
 
   // Passive fallbacks (OK to keep)
-  useEffect(() => {
-    const off = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (p) => {
-      const v = clamp01(p?.value);
-      fallbackMorphRef.current = v;
-      __applyMorph(v);
-    });
-    return () => off && off();
-  }, []);
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
       const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
@@ -1532,6 +1496,79 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => off && off();
   }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, finalizeEmergence]);
 
+  // MORPH_PROGRESS → lightweight timeline updates
+  useEffect(() => {
+    if (!blueprint || !materialRef.current?.uniforms) {
+      return;
+    }
+    if (typeof BeatBus?.on !== 'function') {
+      return;
+    }
+
+    const handleMorphProgress = (payload = {}) => {
+      const raw = payload?.morphProgress ?? payload?.value ?? null;
+      const value = Number.isFinite(raw) ? clamp01(raw) : null;
+      if (value == null) return;
+
+      fallbackMorphRef.current = value;
+
+      const mat = materialRef.current;
+      const uniforms = mat?.uniforms;
+      if (!uniforms) {
+        if (DEV) console.warn('⚠️ [MORPH] Material uniforms missing');
+        return;
+      }
+
+      __applyMorph(value);
+      if (uniforms.uStageProgress) {
+        uniforms.uStageProgress.value = value;
+      }
+      mat.uniformsNeedUpdate = true;
+
+      if (emergencePendingRef.current && !emittedEmergedRef.current && value >= 0.995) {
+        const now =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+
+        if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+          uniforms.uPostMorphFreeze.value = 1.0;
+          mat.uniformsNeedUpdate = true;
+          trace('WBG:FREEZE', { value: 1, source: 'morph' });
+        }
+
+        const currentStage = stageNameRef.current || 'genesis';
+        queueFencepost({
+          at: now,
+          source: 'renderer-morph',
+          stage: currentStage,
+          morph: value,
+        });
+
+        emittedEmergedRef.current = true;
+        emergencePendingRef.current = false;
+        ignoreDirectivesRef.current = true;
+      }
+
+      if (DEV) {
+        console.log('🔬 [MORPH] Updated:', value.toFixed(3));
+      }
+    };
+
+    const unsubMorph = BeatBus.on(EVENTS.MORPH_PROGRESS, handleMorphProgress);
+
+    if (DEV) {
+      console.log('✅ Renderer subscribed:', {
+        MORPH_PROGRESS: 'active',
+        BLUEPRINT_READY: 'active (separate hook)',
+      });
+    }
+
+    return () => {
+      unsubMorph?.();
+    };
+  }, [blueprint, queueFencepost]);
+
   // build material once atlas+blueprint exist
   useEffect(() => {
     if (!atlasTexture || !blueprint) return;
@@ -1753,7 +1790,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
   });
 
-  const frameCountRef = useRef(0);
 
   useEffect(() => {
     if (!BeatBus?.on) return () => {};
@@ -1785,7 +1821,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => off?.();
   }, []);
 
-  // RENDER_DIRECTIVE sink (apply data-only; renderer owns all GPU writes)
+  // Persist particle effect diagnostics when renderer active
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.__particleEffectState = particleEffectStateRef.current;
@@ -1797,362 +1833,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     };
   }, []);
 
-  useEffect(() => {
-    frameCountRef.current = 0;
-    const handler = (payload = {}) => {
-      const directive = payload?.directive || payload || {};
-      const ts =
-        typeof performance !== 'undefined' && typeof performance.now === 'function'
-          ? performance.now().toFixed(0)
-          : Date.now();
-      console.log('📥 RENDERER HANDLER CALLED:', {
-        timestamp: ts,
-        hasMorphProgress: typeof directive?.morphProgress === 'number',
-        morphValue: directive?.morphProgress,
-      });
-
-      if (ignoreDirectivesRef.current) {
-        if (DEV) console.debug('[WBG] ignoring directive post-fencepost', directive?.morphProgress);
-        return;
-      }
-      const mat = materialRef.current;
-      const geo = geometryRef.current;
-      if (!mat?.uniforms || !geo) return;
-
-      if (typeof window !== 'undefined') {
-        window.__lastDirective = directive;
-      }
-
-      const uniforms = mat.uniforms;
-
-      const currentStage = stageNameRef.current;
-
-      trace('DIR', {
-        source: 'WBG:APPLIED',
-        morph: Number.isFinite(directive.morphProgress) ? clamp01(directive.morphProgress) : null,
-        draw: Number.isFinite(directive.drawCount) ? directive.drawCount : null,
-        active: Number.isFinite(directive.activeCount) ? directive.activeCount : null,
-      });
-
-      // ----- QR ENTER -----
-      if (directive?.enterQrMode) {
-        qrModeRef.current = true;
-        const qrReady = lastBlueprintMetaRef.current?.qrMode === true && geometryRef.current;
-        if (qrReady && gl) {
-          // Preserve current clear color in case other modes need it, but don't switch to white here.
-          const prev = gl.getClearColor(new THREE.Color());
-          const prevAlpha =
-            typeof gl.getClearAlpha === 'function' ? gl.getClearAlpha() : 1;
-          restoreClearRef.current = [prev.r, prev.g, prev.b, prevAlpha];
-        }
-        if (uniforms.uPostMorphFreeze) {
-          uniforms.uPostMorphFreeze.value = 1;
-          uniforms.uPostMorphFreeze.needsUpdate = true;
-        }
-        if (uniforms.uSpreadFactor) {
-          uniforms.uSpreadFactor.value = 0;
-          uniforms.uSpreadFactor.needsUpdate = true;
-        }
-        if (uniforms.uTierMode && uniforms.uTierMode.value) {
-          const arr = uniforms.uTierMode.value;
-          for (let i = 0; i < arr.length; i += 1) arr[i] = 0;
-          uniforms.uTierMode.needsUpdate = true;
-        }
-        if (uniforms.uPointSize) {
-          const currentPointSize = uniforms.uPointSize.value;
-          lastPointSizeRef.current =
-            typeof currentPointSize === 'number'
-              ? currentPointSize
-              : Number(currentPointSize ?? 0);
-
-          const renderer = gl;
-          const pixelRatio =
-            typeof renderer?.getPixelRatio === 'function'
-              ? renderer.getPixelRatio()
-              : typeof window !== 'undefined' && window.devicePixelRatio
-                ? window.devicePixelRatio
-                : 1;
-
-          const baseSize =
-            directive.uPointSize && directive.uPointSize > 0 ? directive.uPointSize : 6.0;
-          const deviceSize = baseSize * pixelRatio;
-          const clampedSize = Math.min(Math.max(deviceSize, 6), 48);
-
-          uniforms.uPointSize.value = clampedSize;
-          uniforms.uPointSize.needsUpdate = true;
-        }
-        timeTickEnabledRef.current = false;
-        mat.uniformsNeedUpdate = true;
-        return;
-      }
-
-      // ----- QR EXIT -----
-      if (directive?.exitQrMode) {
-        qrModeRef.current = false;
-        if (uniforms.uPostMorphFreeze) {
-          uniforms.uPostMorphFreeze.value = 0;
-          uniforms.uPostMorphFreeze.needsUpdate = true;
-        }
-        if (uniforms.uPointSize && lastPointSizeRef.current != null) {
-          uniforms.uPointSize.value = lastPointSizeRef.current;
-          uniforms.uPointSize.needsUpdate = true;
-          lastPointSizeRef.current = null;
-        }
-        if (gl && restoreClearRef.current && restoreClearRef.current.length === 4) {
-          const [r0, g0, b0, a0] = restoreClearRef.current;
-          gl.setClearColor(new THREE.Color(r0, g0, b0), a0);
-        }
-        timeTickEnabledRef.current = true;
-        mat.uniformsNeedUpdate = true;
-        return;
-      }
-
-      if (directive.kind === 'particle-effect') {
-        const effect = directive.effect || {};
-        console.log('[Renderer] 🎨 Particle effect:', {
-          verb: directive.verb,
-          stage: directive.stage || currentStage,
-          keys: Object.keys(effect),
-        });
-
-        if (typeof window !== 'undefined') {
-          window.__particleEffectState = { effect, directive, timestamp: performance.now() };
-        }
-
-        if (Number.isFinite(effect.spreadFactor) && uniforms.uSpreadFactor) {
-          uniforms.uSpreadFactor.value = Number(effect.spreadFactor);
-        }
-
-        const applyTierArray = (uniformName, values) => {
-          const target = uniforms[uniformName];
-          if (!target || !Array.isArray(values)) return;
-          const baseLength = Array.isArray(target.value) || target.value instanceof Float32Array
-            ? target.value.length
-            : values.length;
-          const next = new Float32Array(baseLength);
-          next.set(values.slice(0, baseLength).map((v) => Number(v) || 0));
-          target.value = next;
-          target.needsUpdate = true;
-        };
-
-        if (Array.isArray(effect.tierModes)) {
-          applyTierArray('uTierMode', effect.tierModes);
-        }
-
-        if (Array.isArray(effect.tierParams)) {
-          const sets = effect.tierParams;
-          [['uTierParams0', 0], ['uTierParams1', 1], ['uTierParams2', 2], ['uTierParams3', 3]].forEach(([name, idx]) => {
-            if (Array.isArray(sets[idx])) applyTierArray(name, sets[idx]);
-          });
-        }
-
-        if (effect.tierHighlight !== undefined && uniforms.uTierHighlight) {
-          uniforms.uTierHighlight.value = Number(effect.tierHighlight);
-        }
-
-        if (effect.gridSize !== undefined && uniforms.uGridSpacing) {
-          const val = effect.gridSize;
-          const next = Array.isArray(val)
-            ? new Float32Array([Number(val[0]) || 0.35, Number(val[1]) || 0.35])
-            : new Float32Array([Number(val) || 0.35, Number(val) || 0.35]);
-          uniforms.uGridSpacing.value = next;
-          uniforms.uGridSpacing.needsUpdate = true;
-        }
-
-        if (Number.isFinite(effect.uFlowTurbulence) && uniforms.uFlowTurbulence) {
-          uniforms.uFlowTurbulence.value = Number(effect.uFlowTurbulence);
-          uniforms.uFlowTurbulence.needsUpdate = true;
-        }
-
-        if (Number.isFinite(effect.uStreakIntensity) && uniforms.uStreakIntensity) {
-          uniforms.uStreakIntensity.value = Number(effect.uStreakIntensity);
-          uniforms.uStreakIntensity.needsUpdate = true;
-        }
-
-        if (Number.isFinite(effect.uSpreadFactor) && uniforms.uSpreadFactor) {
-          uniforms.uSpreadFactor.value = Number(effect.uSpreadFactor);
-          uniforms.uSpreadFactor.needsUpdate = true;
-        }
-
-        if (Array.isArray(effect.uMotionParams) && uniforms.uMotionParams) {
-          const arr = uniforms.uMotionParams.value;
-          const src = effect.uMotionParams;
-          for (let i = 0; i < Math.min(arr.length || 0, src.length); i += 1) {
-            arr[i] = Number(src[i]) || 0;
-          }
-          uniforms.uMotionParams.needsUpdate = true;
-        }
-
-        if (Array.isArray(effect.paletteOverride)) {
-          const pal = effect.paletteOverride;
-          const assign = (uniformName, idx, fallbackIdx = 0) => {
-            const uniform = uniforms[uniformName];
-            if (!uniform) return;
-            const rgb = hexToRGBArray(pal[idx] || pal[fallbackIdx] || pal[pal.length - 1]);
-            uniform.value.set(rgb);
-            uniform.needsUpdate = true;
-          };
-          assign('uPalette0', 0);
-          assign('uPalette1', 1, 0);
-          assign('uPalette2', 2, 1);
-          assign('uPalette3', 3, 0);
-        }
-
-        mat.uniformsNeedUpdate = true;
-      }
-
-      if (directive.kind === 'camera-effect' && directive.effect) {
-        console.log('[Renderer] 🎥 Camera effect received (Phase 3 placeholder):', directive.verb);
-      }
-      if (Number.isFinite(directive?.morphProgress)) {
-        frameCountRef.current += 1;
-        if (frameCountRef.current <= 60) {
-          console.log(
-            `🎨 Renderer frame #${frameCountRef.current}: morphProgress=${(directive.morphProgress * 100).toFixed(1)}%`
-          );
-        } else if (frameCountRef.current % 60 === 0) {
-          console.log(`🎨 Renderer: ${frameCountRef.current} total frames received`);
-        }
-        console.log(`🎨 Renderer received morphProgress: ${(directive.morphProgress * 100).toFixed(0)}%`);
-      }
-
-      if (DEV) renderGuardRef.current = true;
-      try {
-        // Draw range (single writer)
-        let drawUpdated = false;
-        if (Number.isFinite(directive.activeCount)) {
-          const count = Math.max(0, Math.floor(directive.activeCount));
-          setActiveCount(count);
-          geo.setDrawRange(0, count);
-          if (uniforms.uActiveCount) uniforms.uActiveCount.value = count;
-          if (uniforms.uTierCutoff)  uniforms.uTierCutoff.value  = count;
-          if (typeof window !== 'undefined') window.__lastActiveCount = count;
-          drawUpdated = true;
-        }
-
-        if (!drawUpdated && Number.isFinite(directive.drawCount)) {
-          const count = Math.max(0, Math.floor(directive.drawCount));
-          geo.setDrawRange(0, count);
-          if (typeof window !== 'undefined') window.__lastActiveCount = count;
-        }
-
-        // Morph progress + fencepost emission
-        if (Number.isFinite(directive?.morphProgress) && uniforms.uMorphProgress) {
-          const oldValue = Number(uniforms.uMorphProgress.value) || 0;
-          const newValue = clamp01(directive.morphProgress);
-          uniforms.uMorphProgress.value = newValue;
-          if (uniforms.uStageProgress) uniforms.uStageProgress.value = newValue;
-          if (Math.abs(newValue - oldValue) > 0.001) {
-            console.log(
-              `✅ uMorphProgress updated: ${(oldValue * 100).toFixed(1)}% → ${(newValue * 100).toFixed(1)}%`
-            );
-          }
-
-          if (emergencePendingRef.current && !emittedEmergedRef.current && newValue >= 0.995) {
-            emittedEmergedRef.current = true;
-            emergencePendingRef.current = false;
-            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-            ignoreDirectivesRef.current = true;            if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
-              uniforms.uPostMorphFreeze.value = 1.0;
-              mat.uniformsNeedUpdate = true;
-              trace('WBG:FREEZE', { value: 1, source: 'directive' });
-            }
-            const payload = {
-              at: now,
-              source: 'renderer-directive',
-              stage: currentStage,
-              morph: newValue,
-            };
-            queueFencepost(payload);
-          }
-        } else if (Number.isFinite(directive?.morphProgress) && !uniforms.uMorphProgress) {
-          console.warn('⚠️ uMorphProgress uniform not found on material!');
-        }
-
-      if (Number.isFinite(directive?.pointSize) && uniforms.uPointSize) {
-          uniforms.uPointSize.value = directive.pointSize;
-        }
-        if (Number.isFinite(directive?.gaussianSigma) && uniforms.uGaussianSigma) {
-          uniforms.uGaussianSigma.value = directive.gaussianSigma;
-        }
-        if (Number.isFinite(directive?.spreadFactor) && uniforms.uSpreadFactor) {
-          uniforms.uSpreadFactor.value = directive.spreadFactor;
-        }
-        if (directive?.morphType !== undefined && directive?.morphType !== null && uniforms.uMorphType) {
-          uniforms.uMorphType.value = morphTypeToInt(directive.morphType);
-        }
-        if (directive?.postMorphFreeze !== undefined && uniforms.uPostMorphFreeze) {
-          uniforms.uPostMorphFreeze.value = directive.postMorphFreeze ? 1.0 : 0.0;
-          mat.uniformsNeedUpdate = true;
-        }
-        if (Number.isFinite(directive?.uMotionMode) && uniforms.uTierMode) {
-          const m = directive.uMotionMode | 0;
-          uniforms.uTierMode.value = new Float32Array([m, m, m, m]);
-          uniforms.uTierMode.needsUpdate = true;
-          if (m === 1 && uniforms.uGridSpacing) {
-            const sx = Number.isFinite(directive?.gridX) ? Number(directive.gridX) : 0.35;
-            const sy = Number.isFinite(directive?.gridY) ? Number(directive.gridY) : 0.35;
-            uniforms.uGridSpacing.value = new Float32Array([sx, sy]);
-            uniforms.uGridSpacing.needsUpdate = true;
-          }
-        }
-        if (directive?.tierHighlight !== undefined && uniforms.uTierHighlight) {
-          const highlightValue = Array.isArray(directive.tierHighlight)
-            ? Number(directive.tierHighlight[0])
-            : Number(directive.tierHighlight);
-          uniforms.uTierHighlight.value = Number.isFinite(highlightValue) ? highlightValue : -1;
-        }
-        if (directive?.uniforms && typeof directive.uniforms === 'object') {
-          for (const key in directive.uniforms) {
-            if (Object.hasOwn(directive.uniforms, key) && uniforms[key]) {
-              uniforms[key].value = directive.uniforms[key];
-            }
-          }
-        }
-
-        mat.uniformsNeedUpdate = true;
-      } finally {
-        if (DEV) renderGuardRef.current = false;
-      }
-    };
-
-    const unsubscribe = BeatBus?.on?.(EVENTS.RENDER_DIRECTIVE, handler);
-    console.log('🔌 Renderer subscribed to:', EVENTS.RENDER_DIRECTIVE);
-    console.log('🔌 Event string value:', String(EVENTS.RENDER_DIRECTIVE));
-    console.log('🔌 Unsubscribe function exists:', typeof unsubscribe === 'function');
-    console.log('✅ RENDER_DIRECTIVE subscription established (persistent)');
-
-    const morphListener = BeatBus?.on?.(EVENTS.MORPH_PROGRESS, (payload = {}) => {
-      const value = Number.isFinite(payload.morphProgress ?? payload.value)
-        ? (payload.morphProgress ?? payload.value)
-        : null;
-      const stage = payload.stage ?? payload.stageName ?? null;
-      console.log('🔬 [MORPH LISTENER] Received:', { value, stage });
-
-      if (typeof value === 'number' && materialRef.current?.uniforms?.uMorphProgress) {
-        materialRef.current.uniforms.uMorphProgress.value = value;
-        materialRef.current.uniformsNeedUpdate = true;
-        console.log('✅ [MORPH LISTENER] Updated uniform to:', value);
-      } else {
-        console.warn('⚠️ [MORPH LISTENER] Uniform not found');
-      }
-    });
-
-    if (typeof window !== 'undefined') {
-      window._rendererSubscriptionCheck = () => {
-        console.log('🔍 Subscription check:', {
-          handlerStillExists: typeof handler === 'function',
-          BeatBusExists: typeof BeatBus !== 'undefined',
-          morphListenerActive: typeof morphListener === 'function',
-        });
-      };
-    }
-
-    return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
-      if (typeof morphListener === 'function') morphListener();
-    };
-  }, []);
 
   // early-out fallback if not ready
   if (!atlasTexture || !blueprint || !materialRef.current || !geometryRef.current) {
