@@ -199,6 +199,11 @@ function pickTextParticleIndices(tiers, count, rng) {
   return entries.slice(0, Math.min(count, entries.length)).map((entry) => entry.index);
 }
 
+const clamp = (value, min, max) => {
+  const bounded = value < min ? min : value > max ? max : value;
+  return Number.isFinite(bounded) ? bounded : min;
+};
+
 const FONT_RESOLVERS = {
   'Courier Prime': () => '/fonts/CourierPrime_Regular.typeface.json',
   'JetBrains Mono': () => '/fonts/CourierPrime_Regular.typeface.json',
@@ -408,19 +413,22 @@ class ConsciousnessEngine {
       currentStep: null,
       stepIndex: -1,
       stepStartTime: 0,
+      stepTransitionStart: 0,
+      holdDuration: 0,
+      transitionDuration: 0,
+      progress: 0,
+      phase: 'idle',
       previousPositions: null,
-      timers: [],
-      transitionHandle: null,
-      transitionUsesRAF: false,
+      rafId: null,
+      usesRAF: false,
+      lastMorphValue: null,
+      holdStartTime: 0,
     };
     this._climaxSteps = [];
 
     // HMR safety
     this._listeners = [];
     this._initialized = false;
-
-    // Diagnostics
-    this._eventLog = [];
     
     // Initialize once
     this.init();
@@ -810,13 +818,6 @@ class ConsciousnessEngine {
         if (stageIndex >= 0) {
           morphPayload.stageIndex = stageIndex;
         }
-        console.log('🔬 [MORPH] Emitting MORPH_PROGRESS:', {
-          payload: JSON.stringify(morphPayload, null, 2),
-          keys: Object.keys(morphPayload),
-          hasSchemaVersion: 'schemaVersion' in morphPayload,
-          hasStage: 'stage' in morphPayload,
-          hasMorphProgress: 'morphProgress' in morphPayload,
-        });
         BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
       };
 
@@ -855,14 +856,6 @@ class ConsciousnessEngine {
           : tierPeak - (tierPeak - tierSettle) * easeSettle;
 
         const morphRounded = +morph.toFixed(3);
-
-        trace('CE:DIR', {
-          source: 'CE:timeline',
-          morph: morphRounded,
-          draw,
-          pointSize,
-          gaussian,
-        });
         emitMorphProgress(morphRounded, inImplosion ? midValue : 1);
 
         if (elapsed < total) {
@@ -872,13 +865,6 @@ class ConsciousnessEngine {
             this._emergenceRaf = null;
             return;
           }
-          trace('CE:DIR', {
-            source: 'CE:timeline-final',
-            morph: 1,
-            draw: count,
-            pointSize: pointSizeBase,
-            gaussian: sigmaBase,
-          });
           emitMorphProgress(1, 1);
           this._emergenceRaf = null;
           this._emergenceActive = false;
@@ -888,13 +874,6 @@ class ConsciousnessEngine {
 
       // Prime listeners with baseline state before the first frame
       emitMorphProgress(0, midValue);
-      trace('CE:DIR', {
-        source: 'CE:timeline-prime',
-        morph: 0,
-        draw: Math.max(1, Math.round(count * 0.05)),
-        pointSize: pointSizeBase,
-        gaussian: sigmaBase,
-      });
 
       step();
       return true;
@@ -937,9 +916,7 @@ class ConsciousnessEngine {
       console.warn('🎬 Climax already active, ignoring duplicate trigger');
       return;
     }
-
-    this._clearClimaxTimers();
-    this._cancelClimaxTransition();
+    this._stopClimaxLoop();
 
     const transitions = Canonical?.visual?.transitions || {};
     const transitionTimings = {
@@ -1003,21 +980,29 @@ class ConsciousnessEngine {
     });
 
     console.log('🎬 ConsciousnessEngine: Starting climax sequence');
-    console.log('🎬 Using SST transition timings:', transitionTimings);
 
+    const now = performance.now ? performance.now() : Date.now();
     this._climaxState.active = true;
     this._climaxState.currentStep = null;
     this._climaxState.previousPositions = null;
-    this._climaxState.stepIndex = -1;
-    this._climaxState.stepStartTime = performance.now ? performance.now() : Date.now();
+    this._climaxState.stepIndex = 0;
+    this._climaxState.stepStartTime = now;
+    this._climaxState.stepTransitionStart = now;
+    this._climaxState.holdDuration = 0;
+    this._climaxState.transitionDuration = 0;
+    this._climaxState.phase = 'idle';
+    this._climaxState.progress = 0;
+    this._climaxState.lastMorphValue = null;
+    this._climaxState.holdStartTime = 0;
 
     this._climaxSteps = steps;
     this._log('climax_start', { steps: steps.length });
 
-    this._executeClimaxStep(0);
+    this._prepareClimaxStep(0, now);
+    this._scheduleClimaxFrame();
   }
 
-  _executeClimaxStep(stepIndex) {
+  _prepareClimaxStep(stepIndex, timestamp) {
     if (!this._climaxState.active) return;
     if (stepIndex >= this._climaxSteps.length) {
       this._finalizeClimaxSequence();
@@ -1025,48 +1010,144 @@ class ConsciousnessEngine {
     }
 
     const step = this._climaxSteps[stepIndex];
-    const now = performance.now ? performance.now() : Date.now();
-    this._climaxState.stepIndex = stepIndex;
-    this._climaxState.currentStep = step.name;
-    this._climaxState.stepStartTime = now;
+    const state = this._climaxState;
+    const now = timestamp ?? (performance.now ? performance.now() : Date.now());
+    const holdDuration = Math.max(0, Number(step.holdDuration) || 0);
+    const transitionDuration = Math.max(1, Number(step.transitionDuration) || 1);
+
+    state.stepIndex = stepIndex;
+    state.currentStep = step.name;
+    state.stepStartTime = now;
+    state.holdDuration = holdDuration;
+    state.transitionDuration = transitionDuration;
+    state.phase = 'transition';
+    state.stepTransitionStart = now;
+    state.progress = 0;
+    state.lastMorphValue = null;
+    state.holdStartTime = 0;
 
     this._log('climax_step', {
       step: step.name,
-      hold: step.holdDuration,
-      transition: step.transitionDuration,
+      hold: holdDuration,
+      transition: transitionDuration,
       index: stepIndex,
     });
-    console.log(`🎬 === STEP ${stepIndex}: ${step.name} ===`);
-    console.log(`   Hold: ${step.holdDuration}ms, Transition: ${step.transitionDuration}ms`);
-    console.log(`   Total time: ${step.holdDuration + step.transitionDuration}ms`);
-    console.log(`   Timestamp: ${now.toFixed(0)}`);
 
     BeatBus.emit(EVENTS.CLIMAX_STEP, {
       step: step.name,
-      holdDuration: step.holdDuration,
-      transitionDuration: step.transitionDuration,
+      holdDuration,
+      transitionDuration,
       text: step.text ?? null,
       url: step.url ?? null,
       stepIndex,
-      timestamp: now,
     });
 
-    console.log(`📦 Building blueprint for ${step.name}`);
     this._buildClimaxBlueprint(step);
 
-    console.log(`⏱️ Scheduling ${step.transitionDuration}ms transition in 50ms`);
-    const transitionTimer = setTimeout(() => {
-      if (!this._climaxState.active) return;
-      console.log(`🎬 STARTING TRANSITION for ${step.name}`);
-      this._startClimaxTransition(step.transitionDuration);
-    }, 50);
-    this._climaxState.timers.push(transitionTimer);
+    this._emitClimaxProgress(0, step, stepIndex);
+  }
 
-    const totalStepTime = step.holdDuration + step.transitionDuration;
-    const nextTimer = setTimeout(() => {
-      this._executeClimaxStep(stepIndex + 1);
-    }, totalStepTime + 50);
-    this._climaxState.timers.push(nextTimer);
+  _emitClimaxProgress(progress, step, stepIndex) {
+    const state = this._climaxState;
+    if (!state.active) return;
+    const clamped = clamp(progress, 0, 1);
+    if (state.lastMorphValue != null && clamped < 1 && Math.abs(state.lastMorphValue - clamped) < 1e-3) {
+      return;
+    }
+    state.lastMorphValue = clamped;
+
+    const stageLabel = this.currentStage || 'transcendence';
+    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
+    const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
+
+    const morphPayload = {
+      morphProgress: clamped,
+      value: clamped,
+      morphTarget: 1,
+      target: 1,
+      stage: stageLabel,
+      schemaVersion: '3.5',
+      postMorphFreeze: clamped >= 1 ? 1 : 0,
+      source: 'climax-transition',
+      step: step?.name,
+      stepIndex,
+    };
+    if (stageIndex >= 0) {
+      morphPayload.stageIndex = stageIndex;
+    }
+
+    BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
+  }
+
+  _runClimaxFrame() {
+    if (!this._climaxState.active) return;
+
+    const state = this._climaxState;
+    const step = this._climaxSteps[state.stepIndex];
+    if (!step) {
+      this._finalizeClimaxSequence();
+      return;
+    }
+
+    const now = performance.now ? performance.now() : Date.now();
+
+    if (state.phase === 'transition') {
+      const raw = Math.min((now - state.stepTransitionStart) / state.transitionDuration, 1);
+      const eased = raw < 0.5 ? 2 * raw * raw : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+      state.progress = eased;
+      if (raw < 1) {
+        this._emitClimaxProgress(eased, step, state.stepIndex);
+      } else {
+        this._emitClimaxProgress(1, step, state.stepIndex);
+        const nextIndex = state.stepIndex + 1;
+        if (state.holdDuration > 0) {
+          state.phase = 'postHold';
+          state.holdStartTime = now;
+        } else if (nextIndex >= this._climaxSteps.length) {
+          this._finalizeClimaxSequence();
+          return;
+        } else {
+          this._prepareClimaxStep(nextIndex, now);
+        }
+      }
+    } else if (state.phase === 'postHold') {
+      const holdElapsed = now - state.holdStartTime;
+      if (holdElapsed >= state.holdDuration) {
+        const nextIndex = state.stepIndex + 1;
+        if (nextIndex >= this._climaxSteps.length) {
+          this._finalizeClimaxSequence();
+          return;
+        }
+        this._prepareClimaxStep(nextIndex, now);
+      }
+    }
+
+    this._scheduleClimaxFrame();
+  }
+
+  _scheduleClimaxFrame() {
+    if (!this._climaxState.active) return;
+    if (typeof requestAnimationFrame === 'function') {
+      this._climaxState.usesRAF = true;
+      this._climaxState.rafId = requestAnimationFrame(() => this._runClimaxFrame());
+    } else {
+      this._climaxState.usesRAF = false;
+      this._climaxState.rafId = setTimeout(() => this._runClimaxFrame(), 16);
+    }
+  }
+
+  _stopClimaxLoop() {
+    const state = this._climaxState;
+    if (!state) return;
+    if (state.rafId != null) {
+      if (state.usesRAF && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(state.rafId);
+      } else {
+        clearTimeout(state.rafId);
+      }
+    }
+    state.rafId = null;
+    state.usesRAF = false;
   }
 
   _buildClimaxBlueprint(step) {
@@ -1304,104 +1385,27 @@ class ConsciousnessEngine {
     return blueprint;
   }
 
-  _startClimaxTransition(duration = 800) {
-    if (typeof window === 'undefined') return;
-    const clampedDuration = Math.max(1, Number(duration) || 800);
-    this._cancelClimaxTransition();
-
-    const hasRAF = typeof requestAnimationFrame === 'function';
-    const startTime = performance.now ? performance.now() : Date.now();
-    const stageLabel = this.currentStage || 'transcendence';
-    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
-    const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
-
-    const runAnimation = () => {
-      const step = () => {
-        const now = performance.now ? performance.now() : Date.now();
-        const raw = Math.min((now - startTime) / clampedDuration, 1);
-        const eased = raw < 0.5
-          ? 2 * raw * raw
-          : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-
-        if (this._climaxState.stepIndex === 0) {
-          console.log(`📤 ENGINE EMITTING: morphProgress=${(eased * 100).toFixed(1)}%`);
-        }
-
-        const morphPayload = {
-          morphProgress: eased,
-          value: eased,
-          morphTarget: 1,
-          target: 1,
-          stage: stageLabel,
-          schemaVersion: '3.5',
-          postMorphFreeze: raw >= 1 ? 1 : 0,
-          source: 'climax-transition',
-        };
-        if (stageIndex >= 0) {
-          morphPayload.stageIndex = stageIndex;
-        }
-
-        BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
-        if (raw >= 1) {
-          this._climaxState.transitionHandle = null;
-          this._climaxState.transitionUsesRAF = false;
-          return;
-        }
-
-        if (hasRAF) {
-          this._climaxState.transitionUsesRAF = true;
-          this._climaxState.transitionHandle = requestAnimationFrame(step);
-        } else {
-          this._climaxState.transitionUsesRAF = false;
-          this._climaxState.transitionHandle = setTimeout(step, 16);
-        }
-      };
-
-      if (hasRAF) {
-        this._climaxState.transitionUsesRAF = true;
-        this._climaxState.transitionHandle = requestAnimationFrame(step);
-      } else {
-        this._climaxState.transitionUsesRAF = false;
-        this._climaxState.transitionHandle = setTimeout(step, 16);
-      }
-    };
-
-    runAnimation();
-  }
-
-  _clearClimaxTimers() {
-    if (!this._climaxState?.timers) return;
-    this._climaxState.timers.forEach((id) => {
-      if (id != null) clearTimeout(id);
-    });
-    this._climaxState.timers.length = 0;
-  }
-
-  _cancelClimaxTransition() {
-    const state = this._climaxState;
-    if (!state || state.transitionHandle == null) return;
-    if (state.transitionUsesRAF && typeof cancelAnimationFrame === 'function') {
-      cancelAnimationFrame(state.transitionHandle);
-    } else {
-      clearTimeout(state.transitionHandle);
-    }
-    state.transitionHandle = null;
-    state.transitionUsesRAF = false;
-  }
-
   _finalizeClimaxSequence() {
-    this._clearClimaxTimers();
-    this._cancelClimaxTransition();
+    this._stopClimaxLoop();
 
     this._climaxState.active = false;
     this._climaxState.currentStep = null;
     this._climaxState.stepIndex = -1;
     this._climaxState.stepStartTime = 0;
     this._climaxState.previousPositions = null;
+    this._climaxState.stepTransitionStart = 0;
+    this._climaxState.holdDuration = 0;
+    this._climaxState.transitionDuration = 0;
+    this._climaxState.phase = 'idle';
+    this._climaxState.progress = 0;
+    this._climaxState.lastMorphValue = null;
+    this._climaxState.rafId = null;
+    this._climaxState.usesRAF = false;
+    this._climaxState.holdStartTime = 0;
 
     this._log('climax_complete');
     console.log('🎬 Climax sequence complete');
-    BeatBus.emit(EVENTS.CLIMAX_STEP, { step: 'complete', timestamp: performance.now ? performance.now() : Date.now() });
+    BeatBus.emit(EVENTS.CLIMAX_STEP, { step: 'complete' });
   }
 
   _resolveClimaxParticleCount() {
@@ -2578,6 +2582,11 @@ class ConsciousnessEngine {
       geometry.computeBoundingBox();
       geometry.center();
 
+      const bbox = geometry.boundingBox;
+      const width = (bbox?.max.x ?? 0) - (bbox?.min.x ?? 0);
+      const height = (bbox?.max.y ?? 0) - (bbox?.min.y ?? 0);
+      const area = Math.max(1, width * height);
+
       const mesh = new Mesh(geometry);
       const sampler = new MeshSurfaceSampler(mesh).build();
       const out = new Float32Array(particles * 3);
@@ -2588,50 +2597,81 @@ class ConsciousnessEngine {
       const thickness = Math.max(0.002, baseDepth * 0.25);
       const tangentJitter = thickness * 0.4;
 
-      const oversampleFactor = Math.min(6, Math.max(2, Math.ceil(particles <= 1200 ? 4 : 3)));
-      const maxCandidates = Math.max(particles, particles * oversampleFactor);
-      const candidates = new Float32Array(maxCandidates * 3);
-      const candidateWeight = new Float32Array(maxCandidates);
+      const spacingFactor = Math.max(0.12, Math.sqrt(area / particles) * 0.55);
+      const minDistance = spacingFactor / Math.max(0.5, Math.min(1.6, letterSpacing));
+      const minDistSq = minDistance * minDistance;
+      const cellSize = minDistance / Math.SQRT2;
+      const invCell = cellSize > 0 ? 1 / cellSize : 1;
+      const buckets = new Map();
 
-      let filled = 0;
-      const maxAttempts = maxCandidates * 12;
+      let accepted = 0;
+      let attempts = 0;
+      const maxAttempts = particles * 40;
 
-      for (let attempt = 0; attempt < maxAttempts && filled < maxCandidates; attempt++) {
-        sampler.sample(scratch, normal);
-
-        const absNz = Math.abs(normal.z);
-        if (absNz < 0.35 && attempt < maxCandidates * 4) {
-          if (Math.random() < 0.7) continue;
+      const registerPoint = (dest, x, y) => {
+        const cellX = Math.floor(x * invCell);
+        const cellY = Math.floor(y * invCell);
+        const key = `${cellX}:${cellY}`;
+        const existing = buckets.get(key);
+        if (existing) {
+          existing.push(dest);
+        } else {
+          buckets.set(key, [dest]);
         }
+      };
+
+      while (accepted < particles && attempts < maxAttempts) {
+        attempts += 1;
+        sampler.sample(scratch, normal);
 
         const angle = Math.random() * Math.PI * 2;
         const radius = Math.random() * tangentJitter;
-        scratch.x += Math.cos(angle) * radius;
-        scratch.y += Math.sin(angle) * radius;
+        const px = scratch.x + Math.cos(angle) * radius;
+        const py = scratch.y + Math.sin(angle) * radius;
+        const pz = (Math.random() - 0.5) * thickness;
 
-        const jitter = (Math.random() - 0.5) * thickness;
-        scratch.z = jitter;
+        const cellX = Math.floor(px * invCell);
+        const cellY = Math.floor(py * invCell);
+        let tooClose = false;
+        for (let gx = cellX - 1; gx <= cellX + 1 && !tooClose; gx++) {
+          for (let gy = cellY - 1; gy <= cellY + 1 && !tooClose; gy++) {
+            const bucket = buckets.get(`${gx}:${gy}`);
+            if (!bucket) continue;
+            for (let i = 0; i < bucket.length; i += 1) {
+              const idx = bucket[i];
+              const dx = px - out[idx];
+              const dy = py - out[idx + 1];
+              if (dx * dx + dy * dy < minDistSq) {
+                tooClose = true;
+                break;
+              }
+            }
+          }
+        }
+        if (tooClose) continue;
 
-        const offset = filled * 3;
-        candidates[offset] = scratch.x;
-        candidates[offset + 1] = scratch.y;
-        candidates[offset + 2] = scratch.z;
-        candidateWeight[filled] = absNz;
-        filled++;
+        const dest = accepted * 3;
+        out[dest] = px;
+        out[dest + 1] = py;
+        out[dest + 2] = pz;
+        registerPoint(dest, px, py);
+        accepted += 1;
       }
 
-    if (filled < particles) {
-      for (let i = 0; i < particles; i++) {
-        sampler.sample(scratch);
-        const offset = i * 3;
-        out[offset] = scratch.x;
-        out[offset + 1] = scratch.y;
-        out[offset + 2] = scratch.z + (Math.random() - 0.5) * thickness;
+      if (accepted < particles) {
+        while (accepted < particles) {
+          sampler.sample(scratch);
+          const dest = accepted * 3;
+          out[dest] = scratch.x;
+          out[dest + 1] = scratch.y;
+          out[dest + 2] = (Math.random() - 0.5) * thickness;
+          accepted += 1;
+        }
       }
 
-      if (depth && depth !== 1) {
+      if (baseDepth && baseDepth !== 1) {
         for (let i = 2; i < out.length; i += 3) {
-          out[i] *= depth;
+          out[i] *= baseDepth;
         }
       }
 
@@ -2650,105 +2690,6 @@ class ConsciousnessEngine {
       }
 
       return out;
-    }
-
-    const candidateIndices = [];
-    for (let i = 0; i < filled; i++) candidateIndices.push(i);
-
-    let selectedCount = 0;
-    const attemptsPerPick = Math.min(12, Math.max(4, Math.ceil(candidateIndices.length / 400)));
-
-    while (selectedCount < particles && candidateIndices.length) {
-      let bestListIndex = 0;
-      let bestScore = -Infinity;
-      const tries = Math.min(attemptsPerPick, candidateIndices.length);
-
-      for (let t = 0; t < tries; t++) {
-        const listIndex = Math.floor(Math.random() * candidateIndices.length);
-        const candidateIndex = candidateIndices[listIndex];
-        const cx = candidates[candidateIndex * 3];
-        const cy = candidates[candidateIndex * 3 + 1];
-        const cz = candidates[candidateIndex * 3 + 2];
-
-        let minDistSq = Infinity;
-        for (let s = 0; s < selectedCount; s++) {
-          const sx = out[s * 3];
-          const sy = out[s * 3 + 1];
-          const dx = cx - sx;
-          const dy = cy - sy;
-          const distSq = dx * dx + dy * dy;
-          if (distSq < minDistSq) {
-            minDistSq = distSq;
-            if (minDistSq <= bestScore) break;
-          }
-        }
-
-        if (selectedCount === 0) {
-          minDistSq = Infinity;
-        } else {
-          const weight = 0.25 + candidateWeight[candidateIndex] * 0.75;
-          minDistSq *= weight;
-        }
-
-        if (minDistSq > bestScore) {
-          bestScore = minDistSq;
-          bestListIndex = listIndex;
-        }
-      }
-
-      const chosenIndex = candidateIndices[bestListIndex];
-      const dest = selectedCount * 3;
-      out[dest] = candidates[chosenIndex * 3];
-      out[dest + 1] = candidates[chosenIndex * 3 + 1];
-      out[dest + 2] = candidates[chosenIndex * 3 + 2];
-      selectedCount++;
-
-      const last = candidateIndices.length - 1;
-      candidateIndices[bestListIndex] = candidateIndices[last];
-      candidateIndices.pop();
-    }
-
-    if (selectedCount < particles && candidateIndices.length) {
-      for (let i = selectedCount; i < particles; i++) {
-        const fallbackIndex = candidateIndices[i % candidateIndices.length];
-        const dest = i * 3;
-        out[dest] = candidates[fallbackIndex * 3];
-        out[dest + 1] = candidates[fallbackIndex * 3 + 1];
-        out[dest + 2] = candidates[fallbackIndex * 3 + 2];
-      }
-      selectedCount = particles;
-    } else if (selectedCount < particles) {
-      for (let i = selectedCount; i < particles; i++) {
-        sampler.sample(scratch);
-        const dest = i * 3;
-        out[dest] = scratch.x;
-        out[dest + 1] = scratch.y;
-        out[dest + 2] = scratch.z + (Math.random() - 0.5) * thickness;
-      }
-      selectedCount = particles;
-    }
-
-    if (depth && depth !== 1) {
-      for (let i = 2; i < out.length; i += 3) {
-        out[i] *= depth;
-      }
-    }
-
-    if (letterSpacing && letterSpacing !== 1) {
-      for (let i = 0; i < out.length; i += 3) {
-        out[i] *= letterSpacing;
-      }
-    }
-
-    if (scale && scale !== 1) {
-      for (let i = 0; i < out.length; i += 3) {
-        out[i] *= scale;
-        out[i + 1] *= scale;
-        out[i + 2] *= scale;
-      }
-    }
-
-    return out;
     } finally {
       if (geometry) geometry.dispose();
       globalThis.__GPU_WATCHDOG_SUSPEND__ = prevSuspend;
@@ -2807,27 +2748,15 @@ class ConsciousnessEngine {
   // --- Diagnostics ---
 
   _log(type, data = {}) {
-    this._eventLog.push({
-      type,
-      t: performance.now(),
-      data
-    });
-    
-    // Keep last 100 events
-    if (this._eventLog.length > 100) {
-      this._eventLog.shift();
-    }
+    // Intentional no-op: diagnostic trail removed for performance.
   }
 
   getStats() {
     return {
       cacheSize: this.blueprintCache.size,
-      cachedStages: Array.from(this.blueprintCache.keys()),
-      openingPhase: this._openingPhase,
-      viewportHint: this._viewportHint,
-      hasEmergenceTargets: !!this._lastEmergenceTargets,
+      currentStage: this.currentStage,
+      currentQuality: this.currentQuality,
       guardInvalidations: this._guardInvalidations.slice(-10),
-      lastEvents: this._eventLog.slice(-20),
     };
   }
 
@@ -2840,13 +2769,22 @@ class ConsciousnessEngine {
 
   // Cleanup for HMR
   destroy() {
-    this._clearClimaxTimers();
-    this._cancelClimaxTransition();
+    this._stopClimaxLoop();
     if (this._climaxState) {
       this._climaxState.active = false;
       this._climaxState.currentStep = null;
       this._climaxState.previousPositions = null;
       this._climaxState.stepIndex = -1;
+      this._climaxState.stepStartTime = 0;
+      this._climaxState.stepTransitionStart = 0;
+      this._climaxState.holdDuration = 0;
+      this._climaxState.transitionDuration = 0;
+      this._climaxState.lastMorphValue = null;
+      this._climaxState.phase = 'idle';
+      this._climaxState.progress = 0;
+      this._climaxState.rafId = null;
+      this._climaxState.usesRAF = false;
+      this._climaxState.holdStartTime = 0;
     }
     this._cleanupListeners();
     this.clearCache();
