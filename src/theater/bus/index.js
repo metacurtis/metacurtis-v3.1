@@ -3,7 +3,7 @@ import { DEFAULT_SCHEMA_VERSION, validateEventPayload } from './schemas.js';
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
 
-const BATCH_EVENTS = new Set(['MORPH_PROGRESS', 'SCROLL_PROGRESS', 'RENDER_DIRECTIVE']);
+const BATCH_EVENTS = new Set(['MORPH_PROGRESS', 'SCROLL_PROGRESS']);
 const SYNC_EVENTS = new Set(['PARTICLES_EMERGED', 'FENCEPOST_LISTENERS_READY', 'ENABLE_SCROLL']);
 
 class EventProfiler {
@@ -391,11 +391,6 @@ class BeatBus {
 
   _shouldBatch(evt, payload) {
     if (!BATCH_EVENTS.has(evt)) return false;
-    if (evt === 'RENDER_DIRECTIVE') {
-      if (!payload) return false;
-      if (payload.enterQrMode || payload.exitQrMode) return false;
-      if (payload.kind) return false;
-    }
     return true;
   }
 

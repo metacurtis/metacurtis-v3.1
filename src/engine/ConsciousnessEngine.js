@@ -856,14 +856,6 @@ class ConsciousnessEngine {
 
         const morphRounded = +morph.toFixed(3);
 
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          morphProgress: morphRounded,
-          drawCount: draw,
-          activeCount: draw,
-          pointSize,
-          gaussianSigma: gaussian,
-          tierHighlight: [1, 1, 1, tierHi],
-        });
         trace('CE:DIR', {
           source: 'CE:timeline',
           morph: morphRounded,
@@ -880,15 +872,6 @@ class ConsciousnessEngine {
             this._emergenceRaf = null;
             return;
           }
-          BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-            morphProgress: 1,
-            drawCount: count,
-            activeCount: count,
-            pointSize: pointSizeBase,
-            gaussianSigma: sigmaBase,
-            tierHighlight: [1, 1, 1, tierSettle],
-            uniforms: { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 },
-          });
           trace('CE:DIR', {
             source: 'CE:timeline-final',
             morph: 1,
@@ -905,14 +888,6 @@ class ConsciousnessEngine {
 
       // Prime listeners with baseline state before the first frame
       emitMorphProgress(0, midValue);
-      BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-        morphProgress: 0,
-        drawCount: Math.max(1, Math.round(count * 0.05)),
-        activeCount: Math.max(1, Math.round(count * 0.05)),
-        pointSize: pointSizeBase,
-        gaussianSigma: sigmaBase,
-        tierHighlight: [1, 1, 1, tierPeak],
-      });
       trace('CE:DIR', {
         source: 'CE:timeline-prime',
         morph: 0,
@@ -1221,30 +1196,6 @@ class ConsciousnessEngine {
     };
 
     BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
-    if (isQrStep) {
-      if (!this._climaxState.timers) this._climaxState.timers = [];
-      const enterDelayMs = 50;
-      const enterTimer = setTimeout(() => {
-        if (!this._climaxState.active) return;
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          source: 'climax:qr',
-          enterQrMode: true,
-          uPointSize: 6.0,
-          timestamp: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
-        });
-      }, enterDelayMs);
-      this._climaxState.timers.push(enterTimer);
-
-      const exitDelay = Math.max(0, Number(step.holdDuration) || 0);
-      const exitTimer = setTimeout(() => {
-        if (!this._climaxState.active) return;
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          source: 'climax:qr',
-          exitQrMode: true,
-        });
-      }, enterDelayMs + exitDelay);
-      this._climaxState.timers.push(exitTimer);
-    }
     this._log('climax_blueprint_emitted', { step: step.name, particleCount });
   }
 
@@ -1360,6 +1311,9 @@ class ConsciousnessEngine {
 
     const hasRAF = typeof requestAnimationFrame === 'function';
     const startTime = performance.now ? performance.now() : Date.now();
+    const stageLabel = this.currentStage || 'transcendence';
+    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
+    const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
 
     const runAnimation = () => {
       const step = () => {
@@ -1369,17 +1323,25 @@ class ConsciousnessEngine {
           ? 2 * raw * raw
           : 1 - Math.pow(-2 * raw + 2, 2) / 2;
 
-        const directive = {
-          morphProgress: eased,
-          morphType: 0,
-          postMorphFreeze: raw >= 1 ? 1 : 0,
-        };
-
         if (this._climaxState.stepIndex === 0) {
           console.log(`📤 ENGINE EMITTING: morphProgress=${(eased * 100).toFixed(1)}%`);
         }
 
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
+        const morphPayload = {
+          morphProgress: eased,
+          value: eased,
+          morphTarget: 1,
+          target: 1,
+          stage: stageLabel,
+          schemaVersion: '3.5',
+          postMorphFreeze: raw >= 1 ? 1 : 0,
+          source: 'climax-transition',
+        };
+        if (stageIndex >= 0) {
+          morphPayload.stageIndex = stageIndex;
+        }
+
+        BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
         if (raw >= 1) {
           this._climaxState.transitionHandle = null;
           this._climaxState.transitionUsesRAF = false;
