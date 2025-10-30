@@ -1,16 +1,14 @@
 import React from 'react';
 // Import Canon Dev-OS (dev only)
 if (import.meta.env.DEV) {
-  console.log('🔧 Canon Dev-OS: Loading (dev mode)');
+  console.log('🔧 [DEV MODE] Loading Canon Dev-OS...');
   import('./canon-console/browser/inject.js')
     .then(() => {
-      console.log('✅ Canon Dev-OS: Ready');
+      console.log('✅ [DEV MODE] Canon Dev-OS loaded');
     })
-    .catch(error => {
-      console.warn('⚠️ Canon Dev-OS failed to load', error);
+    .catch((err) => {
+      console.warn('⚠️ [DEV MODE] Canon load failed:', err);
     });
-} else {
-  console.log('📦 Canon Dev-OS: Disabled (production mode)');
 }
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
@@ -55,9 +53,19 @@ import _StateCommands from "@/state/commands/StateCommands";
 
 // Import Canon L2 (now it exists!)
 
-// DEV-only: dynamic visual probes for ad-hoc inspection
-if (import.meta?.env?.DEV) {
-  import('./dev/visual-probes.js').catch(() => {});
+// DEV-only: dynamic tooling
+if (import.meta.env.DEV) {
+  console.log('🔧 [DEV MODE] Loading dev tools...');
+  Promise.all([
+    import('./dev/visual-probes.js'),
+    import('./dev/trace.js'),
+  ])
+    .then(() => {
+      console.log('✅ [DEV MODE] Dev tools loaded');
+    })
+    .catch((err) => {
+      console.warn('⚠️ [DEV MODE] Dev tools load failed:', err);
+    });
 }
 
 const rootEl = document.getElementById('root');
