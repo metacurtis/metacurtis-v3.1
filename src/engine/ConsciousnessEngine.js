@@ -20,6 +20,13 @@ import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
 import qrCurtis from '@/assets/climax/qr-curtis.json';
+import {
+  calculateBounds,
+  gaussianRandom,
+  createBlueprintStructure,
+  assignTiersShuffled,
+  emitBlueprintReady,
+} from './utils/blueprintUtils.js';
 
 const CURATED_QR_POINTS = (() => {
   if (Array.isArray(qrCurtis?.points)) return new Float32Array(qrCurtis.points);
@@ -60,25 +67,14 @@ function makeBandFrame(vc, rnd, gauss) {
 }
 
 function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
-  if (!fitFrac || fitFrac <= 0) return;
+  if (!fitFrac || fitFrac <= 0 || !out?.length) return;
 
   const computeScale = () => {
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    for (let i = 0; i < out.length; i += 3) {
-      const x = out[i];
-      const y = out[i + 1];
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-    const extX = maxX - minX;
-    const extY = maxY - minY;
-    const halfX = extX * 0.5;
-    const halfY = extY * 0.5;
+    const bounds = calculateBounds(out);
+    if (!bounds) return 1;
+
+    const halfX = bounds.size.x * 0.5;
+    const halfY = bounds.size.y * 0.5;
     let fracX;
     let fracY;
 
@@ -107,11 +103,8 @@ function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
       ? goalY / Math.max(halfY, 1e-6)
       : Infinity;
 
-    let target = Math.min(ratioX, ratioY);
-    if (!Number.isFinite(target)) {
-      target = 1;
-    }
-    return target;
+    const target = Math.min(ratioX, ratioY);
+    return Number.isFinite(target) ? target : 1;
   };
 
   const scale = computeScale();
@@ -125,38 +118,19 @@ function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
 
 // helper: measure how much the field fills the view (ratio against width/height caps)
 function aabbRatio(out, vw, vh) {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (let i = 0; i < out.length; i += 3) {
-    const x = out[i], y = out[i + 1];
-    if (x < minX) minX = x;
-    if (x > maxX) maxX = x;
-    if (y < minY) minY = y;
-    if (y > maxY) maxY = y;
-  }
-  const extX = maxX - minX, extY = maxY - minY;
-  const halfX = extX * 0.5;
-  const halfY = extY * 0.5;
+  const bounds = calculateBounds(out);
+  if (!bounds) return 0;
+  const halfX = bounds.size.x * 0.5;
+  const halfY = bounds.size.y * 0.5;
   const ratioX = vw ? halfX / vw : 0;
   const ratioY = vh ? halfY / vh : 0;
   return Math.max(ratioX, ratioY);
 }
 
 function aabbOf(arr) {
-  if (!arr || arr.length < 3) return null;
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  for (let i = 0; i < arr.length; i += 3) {
-    const x = arr[i];
-    const y = arr[i + 1];
-    if (x < minX) minX = x;
-    if (x > maxX) maxX = x;
-    if (y < minY) minY = y;
-    if (y > maxY) maxY = y;
-  }
-  if (minX === Infinity || minY === Infinity) return null;
-  return { w: maxX - minX, h: maxY - minY };
+  const bounds = calculateBounds(arr);
+  if (!bounds) return null;
+  return { w: bounds.size.x, h: bounds.size.y };
 }
 
 function safeClone(value) {
@@ -716,8 +690,7 @@ class ConsciousnessEngine {
       this._lastEmergenceTargets = blueprint.text3DPositions;
 
       // Emit emergence blueprint with mode flag (canonical event)
-      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-        blueprint,
+      emitBlueprintReady(BeatBus, EVENTS, blueprint, {
         stage: 'genesis',
         quality: this.currentQuality,
         mode: payload.mode || 'emergence',
@@ -1291,7 +1264,6 @@ class ConsciousnessEngine {
     const emitPayload = {
       stage: 'transcendence',
       quality: this.currentQuality,
-      blueprint,
       mode: `climax:${step.name}`,
       duration: step.holdDuration,
       transitionDuration: step.transitionDuration,
@@ -1303,7 +1275,7 @@ class ConsciousnessEngine {
       cacheKey: this._cacheKey('transcendence', this.currentQuality),
     };
 
-    BeatBus.emit(EVENTS.BLUEPRINT_READY, emitPayload);
+    emitBlueprintReady(BeatBus, EVENTS, blueprint, emitPayload);
     this._log('climax_blueprint_emitted', { step: step.name, particleCount });
   }
 
@@ -1469,30 +1441,15 @@ class ConsciousnessEngine {
   // --- Blueprint Generation ---
 
   _createEmptyBlueprint(count, { mode, quality } = {}) {
-    const safeCount = Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
-    const allocateVec3 = () => new Float32Array(safeCount * 3);
-    const blueprint = {
+    const blueprint = createBlueprintStructure(count, {
       stageName: 'genesis',
       mode,
       quality,
-      particleCount: safeCount,
-      maxParticles: safeCount,
-      activeCount: safeCount,
-      atmosphericPositions: allocateVec3(),
-      text3DPositions: allocateVec3(),
-      positions: allocateVec3(),
-      animationSeeds: allocateVec3(),
-      sizeMultipliers: new Float32Array(safeCount),
-      opacityData: new Float32Array(safeCount),
-      atlasIndices: new Float32Array(safeCount),
-      tierOf: new Uint8Array(safeCount),
-      tierData: new Float32Array(safeCount),
-      metadata: { mode, quality },
-    };
+    });
 
-    if (safeCount > 0) {
+    if (blueprint.particleCount > 0) {
       const rnd = createSeededRandom(`emergence-${mode || 'default'}-${quality || 'HIGH'}`);
-      for (let i = 0; i < safeCount; i++) {
+      for (let i = 0; i < blueprint.particleCount; i++) {
         const j = i * 3;
         blueprint.animationSeeds[j + 0] = rnd();
         blueprint.animationSeeds[j + 1] = rnd();
@@ -1543,14 +1500,7 @@ class ConsciousnessEngine {
     const R = base * 0.45;
 
     const rnd = Math.random;
-    const gauss = () => {
-      let u = 0;
-      let v = 0;
-      while (u === 0) u = rnd();
-      while (v === 0) v = rnd();
-      const g = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-      return Math.max(-1.2, Math.min(1.2, g));
-    };
+    const gauss = () => gaussianRandom({ rand: rnd, clamp: 1.2 });
 
     const useBand = opts.band ?? (VC?.ATMO_USE_BAND ?? true);
     if (useBand) {
@@ -1581,27 +1531,9 @@ class ConsciousnessEngine {
   /**
    * Given ratios and particle count, compute per-tier counts and a shuffled tier map.
    * Returns { counts:[c0,c1,c2,c3], tiers:Uint8Array(count) }
-   */
+  */
   _assignTiersShuffled(count, ratios) {
-    const counts = [0, 0, 0, 0];
-    counts[0] = Math.floor(count * ratios[0]);
-    counts[1] = Math.floor(count * ratios[1]);
-    counts[2] = Math.floor(count * ratios[2]);
-    counts[3] = Math.max(0, count - (counts[0] + counts[1] + counts[2]));
-
-    const labels = new Uint8Array(count);
-    let idx = 0;
-    for (let t = 0; t < 4; t++) {
-      const n = counts[t];
-      for (let k = 0; k < n; k++) labels[idx++] = t;
-    }
-    for (let i = count - 1; i > 0; i--) {
-      const j = (Math.random() * (i + 1)) | 0;
-      const tmp = labels[i];
-      labels[i] = labels[j];
-      labels[j] = tmp;
-    }
-    return { counts, tiers: labels };
+    return assignTiersShuffled(count, ratios, Math.random);
   }
 
   /**
@@ -1710,16 +1642,12 @@ class ConsciousnessEngine {
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        for (let i = 0; i < arr.length; i += 3) {
-          const x = arr[i];
-          const y = arr[i + 1];
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-        return { w: +(maxX - minX).toFixed(2), h: +(maxY - minY).toFixed(2) };
+        const bounds = calculateBounds(arr);
+        if (!bounds) return { w: 0, h: 0 };
+        return {
+          w: +bounds.size.x.toFixed(2),
+          h: +bounds.size.y.toFixed(2),
+        };
       };
       console.debug('[CE] AABB post-fit',
         { text: aabbExtents(blueprint.text3DPositions) },
@@ -1832,8 +1760,7 @@ class ConsciousnessEngine {
               positionsLength: blueprint.positions?.length,
               metadata: blueprint.metadata,
             });
-            BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-              blueprint,
+            emitBlueprintReady(BeatBus, EVENTS, blueprint, {
               stage,
               quality,
               mode: 'post-emergence-guarded',
@@ -1859,8 +1786,7 @@ class ConsciousnessEngine {
           positionsLength: blueprint.positions?.length,
           metadata: blueprint.metadata,
         });
-        BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-          blueprint,
+        emitBlueprintReady(BeatBus, EVENTS, blueprint, {
           stage,
           quality,
           cached: true,
@@ -1884,8 +1810,7 @@ class ConsciousnessEngine {
         positionsLength: blueprint.positions?.length,
         metadata: blueprint.metadata,
       });
-      BeatBus.emit(EVENTS.BLUEPRINT_READY, {
-        blueprint,
+      emitBlueprintReady(BeatBus, EVENTS, blueprint, {
         stage,
         quality,
         cached: false,
@@ -1966,14 +1891,23 @@ class ConsciousnessEngine {
       [tierAssignments[i], tierAssignments[swapIndex]] = [tierAssignments[swapIndex], tierAssignments[i]];
     }
 
-    const positions = new Float32Array(particleCount * 3);
-    const atmosphericPositions = new Float32Array(particleCount * 3);
-    const text3DPositions = new Float32Array(particleCount * 3);
-    const animationSeeds = new Float32Array(particleCount * 3);
-    const sizeMultipliers = new Float32Array(particleCount);
-    const opacityData = new Float32Array(particleCount);
-    const atlasIndices = new Float32Array(particleCount);
-    const tierData = new Float32Array(particleCount);
+    const blueprint = createBlueprintStructure(particleCount, {
+      stageName,
+      mode: stageConfig?.mode ?? null,
+      quality,
+      metadata: null,
+    });
+    const {
+      positions,
+      atmosphericPositions,
+      text3DPositions,
+      animationSeeds,
+      sizeMultipliers,
+      opacityData,
+      atlasIndices,
+      tierData,
+      tierOf,
+    } = blueprint;
 
     const rng = createSeededRandom(`${stageName}|scatter`);
     const tierSpread = [
@@ -2095,19 +2029,12 @@ class ConsciousnessEngine {
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {
-        let minX = Infinity,
-          maxX = -Infinity,
-          minY = Infinity,
-          maxY = -Infinity;
-        for (let i = 0; i < arr.length; i += 3) {
-          const x = arr[i];
-          const y = arr[i + 1];
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-        return { w: +(maxX - minX).toFixed(2), h: +(maxY - minY).toFixed(2) };
+        const bounds = calculateBounds(arr);
+        if (!bounds) return { w: 0, h: 0 };
+        return {
+          w: +bounds.size.x.toFixed(2),
+          h: +bounds.size.y.toFixed(2),
+        };
       };
       console.debug('[CE] AABB stage build', stageName,
         { text: aabbExtents(text3DPositions) },
@@ -2123,21 +2050,24 @@ class ConsciousnessEngine {
       isFloat32Array: positions instanceof Float32Array,
     });
 
-    const blueprint = {
-      stageName,
-      particleCount,
-      maxParticles: particleCount,
-      activeCount: particleCount,
-      positions,
-      atmosphericPositions,
-      text3DPositions,
-      animationSeeds,
-      sizeMultipliers,
-      opacityData,
-      atlasIndices,
-      tierData,
-      metadata,
-    };
+    blueprint.stageName = stageName;
+    blueprint.particleCount = particleCount;
+    blueprint.maxParticles = particleCount;
+    blueprint.activeCount = particleCount;
+    blueprint.positions = positions;
+    blueprint.atmosphericPositions = atmosphericPositions;
+    blueprint.text3DPositions = text3DPositions;
+    blueprint.animationSeeds = animationSeeds;
+    blueprint.sizeMultipliers = sizeMultipliers;
+    blueprint.opacityData = opacityData;
+    blueprint.atlasIndices = atlasIndices;
+    blueprint.tierData = tierData;
+    if (tierOf?.length === tierAssignments.length) {
+      for (let i = 0; i < tierAssignments.length; i += 1) {
+        tierOf[i] = tierAssignments[i];
+      }
+    }
+    blueprint.metadata = metadata;
 
     try {
       const hotspotLookup = buildHotspotLookup({
@@ -2270,13 +2200,7 @@ class ConsciousnessEngine {
     const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
     // helpers
     // Box-Muller with clamp to bound starfield extent (|g| ≤ 1.2)
-    const gauss = () => {
-      let u = 0, v = 0;
-      while (u === 0) u = rnd();
-      while (v === 0) v = rnd();
-      const g = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-      return Math.max(-1.2, Math.min(1.2, g));
-    };
+    const gauss = () => gaussianRandom({ rand: rnd, clamp: 1.2 });
     const sampleEllipse = (rx, ry) => {
       // Gaussian-weighted inside ellipse
       const gx = gauss() * rx;
@@ -2361,20 +2285,11 @@ class ConsciousnessEngine {
         ? VC.T3_TEXT.trim()
         : (Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS');
       const pts = this.generate3DTextFormation(tierWord, { particles: tc3 });
-      let minX = Number.POSITIVE_INFINITY;
-      let maxX = Number.NEGATIVE_INFINITY;
-      let minY = Number.POSITIVE_INFINITY;
-      let maxY = Number.NEGATIVE_INFINITY;
-      for (let i = 0; i < pts.length; i += 3) {
-        const x = pts[i];
-        const y = pts[i + 1];
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-      const sx = (VC.T3_TEXT_SCALE ?? 0.70) * (R * 0.4) / Math.max(1, (maxX - minX) * 0.5);
-      const sy = (VC.T3_TEXT_SCALE ?? 0.70) * (bandHeight * 0.35) / Math.max(1, (maxY - minY) * 0.5);
+      const bounds = calculateBounds(pts);
+      const width = bounds ? bounds.size.x : 0;
+      const height = bounds ? bounds.size.y : 0;
+      const sx = (VC.T3_TEXT_SCALE ?? 0.70) * (R * 0.4) / Math.max(1, width * 0.5);
+      const sy = (VC.T3_TEXT_SCALE ?? 0.70) * (bandHeight * 0.35) / Math.max(1, height * 0.5);
       for (let i = 0; i < tc3; i++) {
         const s = (i % (pts.length / 3)) * 3;
         const x = pts[s] * sx;
