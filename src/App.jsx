@@ -3,11 +3,11 @@
 
 import React, { useEffect } from 'react';
 import ConsciousnessTheater from './components/consciousness/ConsciousnessTheater';
+import LCPHero from './components/ui/LCPHero.jsx';
 import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManager.jsx';
 import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
 import NarrationController from '@/components/narrative/NarrationController.jsx';
 import NarrativeUIControls from '@/components/ui/NarrativeUIControls.jsx';
-import HeroFallback from '@/components/ui/HeroFallback.jsx';
 import { clockAtom } from '@/state/atoms';
 
 import '@/orchestration/navigation/narrativeNavigation.js';
@@ -65,7 +65,8 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen">
-      <HeroFallback />
+      {/* STEP 0: Instant LCP hero – fades once particles emerge */}
+      <LCPHero />
       <ConsciousnessTheater />
       <AmbientFragmentManager />
       <ClimaxSequenceController />

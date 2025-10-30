@@ -4,7 +4,6 @@
 
 import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { PerspectiveCamera } from '@react-three/drei';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 import DebugExpose from '@/components/dev/DebugExpose';
 import BeatBus from '@/theater/bus';
@@ -370,14 +369,22 @@ export default function WebGLCanvas({
 
   // Canvas configuration
   const canvasConfig = useMemo(() => {
+    const maxDpr = typeof window !== 'undefined'
+      ? Math.min(2, window.devicePixelRatio || 1)
+      : 1;
+
     const baseConfig = {
       className: 'w-full h-full',
+      frameloop: 'demand',
+      dpr: [1, maxDpr],
       gl: {
-        antialias: quality !== 'LOW',
+        antialias: false,
         alpha: true,
         preserveDrawingBuffer: false,
         powerPreference: 'high-performance',
         failIfMajorPerformanceCaveat: false,
+        depth: true,
+        stencil: false,
       },
     };
 
@@ -386,7 +393,6 @@ export default function WebGLCanvas({
         baseConfig.gl.powerPreference = 'default';
         break;
       case 2:
-        baseConfig.gl.antialias = false;
         baseConfig.gl.alpha = false;
         break;
     }
@@ -441,6 +447,7 @@ export default function WebGLCanvas({
 
             // Context optimization
             const context = gl.getContext();
+            context?.pixelStorei?.(context.UNPACK_ALIGNMENT, 1);
             contextPool.cacheWebGLState(context);
 
             // Optimal WebGL settings
@@ -477,14 +484,14 @@ export default function WebGLCanvas({
           onError={handleCanvasError}
         >
           {/* Wide-angle camera for panoramic Milky Way vista */}
-          <PerspectiveCamera
+          <perspectiveCamera
             ref={cameraRef}
             makeDefault
             position={[0, 0, DEFAULT_CAMERA_SETTINGS.positionZ]}
             fov={DEFAULT_CAMERA_SETTINGS.fov}
             near={0.1}
             far={200}
-            lookAt={[0, 0, 0]}
+            onUpdate={(cam) => cam.lookAt(0, 0, 0)}
           />
 
           {/* Minimal lighting for particles */}

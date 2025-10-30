@@ -48,6 +48,16 @@
     <meta name="robots" content="index, follow" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
+    <!-- STEP 0: LCP Hero Optimization -->
+    <link
+      rel="preload"
+      as="image"
+      href="/poster/hero@2x.avif"
+      imagesrcset="/poster/hero.avif 1x, /poster/hero@2x.avif 2x"
+      fetchpriority="high"
+    />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <link rel="icon" href="/vite.svg" type="image/svg+xml" />
   </head>
 

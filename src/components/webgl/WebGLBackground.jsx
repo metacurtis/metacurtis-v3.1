@@ -308,6 +308,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (!payload) return;
     trace('WBG:FENCEPOST', payload);
     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+    if (import.meta?.env?.DEV) {
+      console.log('✅ [RENDERER] PARTICLES_EMERGED emitted', payload);
+    }
 
     if (!pageInteractiveDispatchedRef.current) {
       pageInteractiveDispatchedRef.current = true;

@@ -30,7 +30,18 @@ function shaderHMR() {
 // https://vitejs.dev/config/
 export default defineConfig({
   esbuild: { target: 'es2022' },
-  build: { target: 'es2022' },
+  build: {
+    target: 'es2022',
+    sourcemap: false,
+    cssCodeSplit: true,
+    reportCompressedSize: true,
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
   plugins: [react(), shaderHMR()],
   resolve: {
     alias: {

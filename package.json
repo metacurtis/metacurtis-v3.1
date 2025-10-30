@@ -104,7 +104,6 @@
     "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs"
   },
   "dependencies": {
-    "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
     "gsap": "^3.13.0",
     "opentype.js": "^1.3.4",

@@ -493,7 +493,17 @@ class ConsciousnessEngine {
     if (this._initialized) return;
     this._initialized = true;
     
-    this.loadFont();
+    const queueFontLoad = () => {
+      this.loadFont().catch(() => {});
+    };
+    if (typeof window !== 'undefined') {
+      const schedule =
+        window.requestIdleCallback ||
+        ((cb) => window.setTimeout(cb, 600));
+      schedule(() => queueFontLoad());
+    } else {
+      queueFontLoad();
+    }
     this._installListeners();
     console.log('🧠 ConsciousnessEngine: Initialized (Canon-compliant, HMR-safe)');
   }
