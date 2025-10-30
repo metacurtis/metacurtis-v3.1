@@ -192,6 +192,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const meshRef = useRef();
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
+  const geometryBoundOnceRef = useRef(false);
   // QR state / restore slots
   const qrModeRef = useRef(false);
   const restoreClearRef = useRef([0, 0, 0, 1]);
@@ -1021,6 +1022,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (id === lastBlueprintIdRef.current) return;
       lastBlueprintIdRef.current = id;
       const isEmergence = mode === 'emergence' || raw?.mode === 'emergence';
+      const isOpeningChaos = mode === 'opening_chaos' || raw?.mode === 'opening_chaos';
       const shouldFastForward = isEmergence && (fastForwardRequested || skipMorph);
 
       if (guardFixed) {
@@ -1055,6 +1057,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
       applyMetadataColors(raw?.metadata?.colors);
+
+      if (isOpeningChaos) {
+        emergencePendingRef.current = true;
+        emittedEmergedRef.current = false;
+      }
 
       const uniforms = materialRef.current?.uniforms;
       if (uniforms) {
@@ -1180,11 +1187,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (raw.atlasIndices)    geo.setAttribute('atlasIndex',     new THREE.BufferAttribute(raw.atlasIndices, 1));
       if (raw.tierData)        geo.setAttribute('tierData',       new THREE.BufferAttribute(raw.tierData, 1));
       const inferredCount = primaryPositions instanceof Float32Array ? primaryPositions.length / 3 : 0;
-      const idx = new Float32Array((raw.activeCount || raw.particleCount || 0) || inferredCount);
+      const drawCount = raw.activeCount || raw.particleCount || inferredCount;
+      const idx = new Float32Array(drawCount > 0 ? drawCount : 0);
       for (let i = 0; i < idx.length; i++) idx[i] = i;
       geo.setAttribute('particleIndex', new THREE.BufferAttribute(idx, 1));
-      geo.setDrawRange(0, raw.activeCount || raw.particleCount);
+      geo.setDrawRange(0, drawCount);
       geometryRef.current = geo;
+      geometryBoundOnceRef.current = true;
       fitsLockedRef.current = false;
       if (isEmergence) {
         fenceReadyRef.current = false;
@@ -1217,6 +1226,44 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           mat.uniformsNeedUpdate = true;
         }
         ignoreDirectivesRef.current = false;
+
+        const uniforms = mat?.uniforms;
+        if (uniforms) {
+          const maybeSeedNumber = (uniform, value) => {
+            if (!uniform) return false;
+            const current = uniform.value;
+            if (typeof current === 'number' && Number.isFinite(current)) return false;
+            uniform.value = value;
+            if (typeof uniform.needsUpdate === 'boolean') uniform.needsUpdate = true;
+            return true;
+          };
+
+          const seededPointSize = maybeSeedNumber(
+            uniforms.uPointSize,
+            raw?.metadata?.pointSize ?? uniforms.uPointSize?.value ?? 3.0
+          );
+          const seededGaussian = maybeSeedNumber(
+            uniforms.uGaussianSigma,
+            raw?.metadata?.gaussianSigma ?? Canonical?.features?.gaussianSigma ?? 2.5
+          );
+          const seededMorph = maybeSeedNumber(
+            uniforms.uMorphProgress,
+            fallbackMorphRef.current ?? 0
+          );
+
+          const drawCountUniform = geometryRef.current?.attributes?.position?.count ?? drawCount;
+          if (uniforms.uActiveCount) {
+            uniforms.uActiveCount.value = drawCountUniform;
+            uniforms.uActiveCount.needsUpdate = true;
+          }
+          if (uniforms.uTierCutoff) {
+            uniforms.uTierCutoff.value = Math.max(uniforms.uTierCutoff.value || 0, drawCountUniform);
+            uniforms.uTierCutoff.needsUpdate = true;
+          }
+          if (seededPointSize || seededGaussian || seededMorph) {
+            mat.uniformsNeedUpdate = true;
+          }
+        }
       }
 
       // Leave background color untouched for QR binds to avoid pre-emptive white-out.
@@ -1274,6 +1321,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         }
       } else {
         console.log(`✅ Renderer: ${cached ? 'cached' : 'new'} BR(full)`, `stage=${raw.stageName || st}`, `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`, isQrBlueprint ? '[qrMode]' : '');
+        if (isOpeningChaos) {
+          fenceReadyRef.current = false;
+          clearPendingFencepost();
+          geometryBoundOnceRef.current = false;
+        }
 
         if (isClimax) {
           const blueprintForDiag = raw;
@@ -1387,11 +1439,21 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
             source: 'renderer-blueprint',
             stage: raw.stageName || st || 'genesis',
+            count:
+              geometryRef.current?.attributes?.position?.count ??
+              raw.activeCount ??
+              raw.particleCount ??
+              0,
           };
-          queueFencepost(payload);
+          fenceReadyRef.current = true;
+          clearPendingFencepost();
+          emitFencepostNow(payload);
+          if (typeof window !== 'undefined') {
+            window.__lastParticlesEmerged = payload;
+          }
           emittedEmergedRef.current = true;
           emergencePendingRef.current = false;
-          console.log('EMERGED once');
+          console.log('EMERGED once — emitting PARTICLES_EMERGED fencepost');
         }
       }
 
@@ -1431,34 +1493,54 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       // ---------- MORPH: start at 0 for FULL binds so we actually see the transition ----------
       const isEmergenceMode = payload?.mode === 'emergence' || payload?.blueprint?.mode === 'emergence';
       const matCurrent = materialRef.current;
-      if (!isEmergenceMode && matCurrent?.uniforms?.uMorphProgress) {
-        matCurrent.uniforms.uMorphProgress.value = 0.0;
-        if (matCurrent.uniforms.uStageProgress) {
-          matCurrent.uniforms.uStageProgress.value = 0.0;
+      const currentUniforms = matCurrent?.uniforms;
+      if (!isEmergenceMode && currentUniforms?.uMorphProgress) {
+        const director = typeof window !== 'undefined' ? window.theaterDirector : null;
+        const currentStage = director?.getCurrentStage?.() ?? director?.currentStage ?? null;
+        const currentPhase = director?.getCurrentPhase?.() ?? director?.phase ?? null;
+        const isOpeningPhase = currentStage === 'genesis' && currentPhase !== 'emergence';
+        const startMorph = 0.0;
+
+        currentUniforms.uMorphProgress.value = startMorph;
+        if (currentUniforms.uStageProgress) {
+          currentUniforms.uStageProgress.value = startMorph;
         }
+        fallbackMorphRef.current = startMorph;
         matCurrent.uniformsNeedUpdate = true;
 
-        const startTime = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
-        const duration = 1200;
-        const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-          ? window.requestAnimationFrame
-          : (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null);
-        if (!raf) return;
-        const step = (now) => {
-          const elapsed = now - startTime;
-          const progress = Math.min(1, elapsed / duration);
-          if (matCurrent.uniforms.uMorphProgress) {
-            matCurrent.uniforms.uMorphProgress.value = progress;
-          }
-          if (matCurrent.uniforms.uStageProgress) {
-            matCurrent.uniforms.uStageProgress.value = progress;
-          }
-          matCurrent.uniformsNeedUpdate = true;
-          if (progress < 1) {
-            raf(step);
-          }
-        };
-        raf(step);
+        if (isOpeningPhase && !geometryBoundOnceRef.current) {
+          geometryBoundOnceRef.current = true;
+          return;
+        }
+
+        if (!geometryBoundOnceRef.current) {
+          geometryBoundOnceRef.current = true;
+        }
+
+        {
+          const startTime = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+          const duration = 1200;
+          const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+            ? window.requestAnimationFrame
+            : (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null);
+          if (!raf) return;
+          const step = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(1, elapsed / duration);
+            const liveUniforms = matCurrent.uniforms;
+            if (liveUniforms?.uMorphProgress) {
+              liveUniforms.uMorphProgress.value = startMorph + (1 - startMorph) * progress;
+            }
+            if (liveUniforms?.uStageProgress) {
+              liveUniforms.uStageProgress.value = startMorph + (1 - startMorph) * progress;
+            }
+            matCurrent.uniformsNeedUpdate = true;
+            if (progress < 1) {
+              raf(step);
+            }
+          };
+          raf(step);
+        }
       }
 
       if (isQrBlueprint && !qrModeRef.current) {
@@ -1491,7 +1573,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         }
       }
     };
-
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
   }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, finalizeEmergence]);
@@ -1509,6 +1590,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const raw = payload?.morphProgress ?? payload?.value ?? null;
       const value = Number.isFinite(raw) ? clamp01(raw) : null;
       if (value == null) return;
+
+      if (!geometryBoundOnceRef.current) {
+        if (DEV) {
+          console.log('[WBG] Morph ignored (geometry not yet bound)', payload);
+        }
+        return;
+      }
 
       fallbackMorphRef.current = value;
 

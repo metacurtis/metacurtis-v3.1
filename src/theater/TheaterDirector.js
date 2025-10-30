@@ -59,6 +59,13 @@ const DEFAULT_OPENING_TIMELINE = {
   },
 };
 
+const clamp01 = (value) => {
+  if (!Number.isFinite(value)) return 0;
+  if (value <= 0) return 0;
+  if (value >= 1) return 1;
+  return value;
+};
+
 const DEFAULT_OPENING_EMERGENCE = {
   target: 'constellation',
   mode: 'emergence',
@@ -99,6 +106,19 @@ class TheaterDirector {
       const stageKeys = Object.keys(SST?.narrative?.beatSheets || {});
       console.log('🎬 [TheaterDirector] Initializing');
       console.log('🎬 [TheaterDirector] SST stages:', stageKeys);
+    }
+
+    try {
+      const openingProbe = this._getOpeningConfig();
+      console.log('📋 [OPENING TIMELINE]', {
+        hasTimeline: !!openingProbe?.timeline,
+        chaos: openingProbe?.timeline?.chaos,
+        coalesce: openingProbe?.timeline?.coalesce,
+        settle: openingProbe?.timeline?.settle,
+        hasChaosConfig: !!openingProbe?.timeline?.chaos,
+      });
+    } catch (timelineError) {
+      console.warn('⚠️ [OPENING TIMELINE] Unable to resolve opening configuration', timelineError);
     }
 
     this._handleStageChangeBound = (payload = {}) => {
@@ -285,6 +305,141 @@ class TheaterDirector {
     this._activeTimers?.delete(id);
   }
 
+  _cancelMorphAnimation() {
+    if (typeof this._activeMorphCancel === 'function') {
+      try {
+        this._activeMorphCancel();
+      } catch (error) {
+        if (import.meta?.env?.DEV) {
+          console.warn('[Director] morph cancel failed', error);
+        }
+      }
+    }
+    this._activeMorphCancel = null;
+  }
+
+  _emitMorphProgress(value, { target, stage, phase, durationMs, source }) {
+    const stageName = stage || this.currentStage || 'genesis';
+    const clampedValue = clamp01(value);
+    const clampedTarget = clamp01(Number.isFinite(target) ? target : clampedValue);
+    const payload = {
+      morphProgress: clampedValue,
+      value: clampedValue,
+      target: clampedTarget,
+      morphTarget: clampedTarget,
+      stage: stageName,
+      phase,
+      durationMs: Number.isFinite(durationMs) ? Math.max(0, durationMs) : 0,
+      schemaVersion: '3.5',
+      source: source || 'director',
+    };
+    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+  }
+
+  _animateMorphPhase({ from, to, durationMs, stage, phase, skipSignal }) {
+    const startValue = clamp01(Number.isFinite(from) ? from : 0);
+    const endValue = clamp01(Number.isFinite(to) ? to : startValue);
+    const duration = Math.max(0, Number(durationMs) || 0);
+    const shouldSkip = typeof skipSignal === 'function' ? skipSignal : () => false;
+
+    this._cancelMorphAnimation();
+
+    console.log(`🎯 [_animateMorphPhase] Starting ${phase || 'unknown'}`, {
+      config: { from: startValue, to: endValue, duration },
+      stage,
+      phase,
+      timestamp: Date.now(),
+    });
+
+    if (duration === 0 || Math.abs(endValue - startValue) < 1e-4) {
+      this._emitMorphProgress(endValue, {
+        target: endValue,
+        stage,
+        phase,
+        durationMs: 0,
+        source: 'director/morph-immediate',
+      });
+      return Promise.resolve();
+    }
+
+    const requestFrame =
+      typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+        ? window.requestAnimationFrame.bind(window)
+        : (cb) => setTimeout(() => cb(Date.now()), 16);
+    const cancelFrame =
+      typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function'
+        ? window.cancelAnimationFrame.bind(window)
+        : clearTimeout;
+
+    const getNow =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? () => performance.now()
+        : () => Date.now();
+
+    return new Promise((resolve) => {
+      const startTime = getNow();
+      let rafHandle = null;
+      let settled = false;
+
+      const finalize = () => {
+        if (settled) return;
+        settled = true;
+        this._emitMorphProgress(endValue, {
+          target: endValue,
+          stage,
+          phase,
+          durationMs,
+          source: 'director/morph-finalize',
+        });
+        resolve();
+      };
+
+      const step = () => {
+        if (shouldSkip() || this.cancelled) {
+          finalize();
+          return;
+        }
+
+        const elapsed = getNow() - startTime;
+        const ratio = Math.min(1, elapsed / duration);
+        const value = startValue + (endValue - startValue) * ratio;
+        console.log(`⏱️ [RAF ${phase || 'unknown'}] tick`, {
+          elapsed,
+          targetDuration: duration,
+          currentMorph: value,
+          stage,
+        });
+        this._emitMorphProgress(value, {
+          target: endValue,
+          stage,
+          phase,
+          durationMs,
+          source: 'director/raf',
+        });
+
+        if (ratio >= 1) {
+          finalize();
+          return;
+        }
+        rafHandle = requestFrame(step);
+      };
+
+      rafHandle = requestFrame(step);
+
+      this._activeMorphCancel = () => {
+        if (rafHandle != null) {
+          cancelFrame(rafHandle);
+          rafHandle = null;
+        }
+        finalize();
+      };
+    }).finally(() => {
+      if (this._activeMorphCancel) {
+        this._activeMorphCancel = null;
+      }
+    });
+  }
+
   handleStageChange(newStage, payload = {}) {
     if (!newStage) {
       if (DEBUG_NARRATION) {
@@ -357,6 +512,7 @@ class TheaterDirector {
     this.skipRequested = true;
     this._skipOrigin = origin;
     console.log(`🎬 Director: Opening skip requested via ${origin}`);
+    this._cancelMorphAnimation();
     this._wakeSleepWaiters('skipped');
   }
 
@@ -417,6 +573,7 @@ class TheaterDirector {
       this.scrollOrchestrator?.stop?.();
     } catch {}
 
+    this._cancelMorphAnimation();
     this.phase = 'idle';
     this.cancelled = false;
     this.completed = false;
@@ -431,6 +588,8 @@ class TheaterDirector {
     this._sleepWaiters = new Set();
     this._fencepostReadyEmitted = false;
     this._openingInProgress = false;
+    this._openingPrebound = false;
+    this._preChaosReady = false;
 
     try {
       window.__canonFencepostSeen = false;
@@ -440,9 +599,15 @@ class TheaterDirector {
   }
 
   async start() {
+    console.log('🚀 [DIRECTOR START] Called', {
+      isRunning: this.isRunning,
+      hasRun: this.hasRun,
+      phase: this.phase,
+      timestamp: Date.now(),
+    });
     // Strong duplicate protection
     if (this.isRunning) {
-      console.log('🎬 Director: Already running, ignoring duplicate start');
+      console.log('⚠️ [DIRECTOR START] Already running, returning');
       return;
     }
 
@@ -543,6 +708,11 @@ class TheaterDirector {
   }
 
   async _runSequence() {
+    console.log('🎬 [RUN SEQUENCE] Starting', {
+      phase: this.phase,
+      currentStage: this.currentStage,
+      timestamp: Date.now(),
+    });
     // Optional prewarm (disabled during debugging to avoid stale cache)
     // await this.prewarm();
 
@@ -614,6 +784,7 @@ class TheaterDirector {
     );
     const fencepostWaitMs = emergenceTimeline.maxWaitMs || DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs;
     const waitForFencepost = emergenceTimeline.waitForFencepost !== false;
+    const shouldWaitForFencepost = waitForFencepost && !this._openingPrebound;
     const stabilizeMs = Math.max(
       0,
       Number(emergenceTimeline.stabilizeMs ?? DEFAULT_OPENING_TIMELINE.emergence.stabilizeMs ?? 0),
@@ -635,6 +806,26 @@ class TheaterDirector {
       if (result === 'skipped' || this.skipRequested) skipTriggered = true;
       return null;
     };
+    const morphStage = 'genesis';
+    let currentMorphValue = 0;
+    const emitMorphSnapshot = (value, phase, target = value, durationMs = 0) => {
+      this._emitMorphProgress(value, {
+        target,
+        stage: morphStage,
+        phase,
+        durationMs,
+        source: 'director/snapshot',
+      });
+    };
+    const animateMorph = (from, to, durationMs, phase) =>
+      this._animateMorphPhase({
+        from,
+        to,
+        durationMs,
+        stage: morphStage,
+        phase,
+        skipSignal: () => skipTriggered || this.skipRequested || this.cancelled,
+      });
 
     try {
       // ───────────────── Phase 1: Black
@@ -694,6 +885,68 @@ class TheaterDirector {
     }
 
     if (!skipTriggered && chaosConfig?.enabled !== false) {
+      console.log('🔍 [ABOUT TO START CHAOS]', {
+        chaosConfig,
+        currentMorph: currentMorphValue,
+        timestamp: Date.now(),
+      });
+      if (!this._openingPrebound) {
+        try {
+          console.log('   Phase: Pre-chaos blueprint bind');
+          BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+            mode: 'opening_chaos',
+            source: 'director:opening',
+            stage: 'genesis',
+            target: 'genesis_opening',
+            count: genesisCount,
+            tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
+              ? Canonical.stages.genesis.tierMix
+              : (Array.isArray(VC?.TIER_RATIOS) ? VC.TIER_RATIOS : undefined),
+            skipMorphAnimation: true,
+            fastForward: true,
+          });
+          this._openingPrebound = true;
+        } catch (bindError) {
+          console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);
+        }
+        const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
+        if (bindSettleMs > 0) {
+          const waitResult = await this.sleep(bindSettleMs);
+          if (handleWaitResult(waitResult) === 'cancelled') return;
+        }
+      }
+
+      if (!this._preChaosReady) {
+        const readinessResult = await Promise.race([
+          this._waitForEvent(EVENTS.PARTICLES_EMERGED, {
+            timeout: 1200,
+            predicate: (payload = {}) => {
+              const stageName = payload?.stage || payload?.stageName;
+              return !payload || stageName === 'genesis';
+            },
+          }).then((payload) => ({ type: 'particles', payload })),
+          this._waitForEvent(EVENTS.BLUEPRINT_READY, {
+            timeout: 1200,
+            predicate: (payload = {}) => {
+              const blueprint = payload?.blueprint ?? payload;
+              const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
+              const mode = payload?.mode || blueprint?.mode;
+              return stageName === 'genesis' && mode !== 'emergence';
+            },
+          }).then((payload) => ({ type: 'blueprint', payload })),
+        ]);
+
+        if (!readinessResult) {
+          console.warn('⚠️ Director: Pre-chaos renderer readiness timed out');
+        } else {
+          console.log('✅ Blueprint bound and particles ready', {
+            via: readinessResult.type,
+            timestamp: Date.now(),
+          });
+        }
+        this._preChaosReady = true;
+      }
+
       const chaosDuration = Math.max(0, Number(chaosConfig.durationMs) || 0);
       this.phase = 'chaos';
       console.log(`   Phase: Chaos (${chaosDuration}ms)`);
@@ -702,13 +955,26 @@ class TheaterDirector {
         duration: chaosDuration,
         rendererSpin: chaosConfig.rendererSpin || null,
       });
+      const chaosTarget = Number.isFinite(chaosConfig.morphTo)
+        ? clamp01(chaosConfig.morphTo)
+        : 0.0;
+      const chaosAnimation = animateMorph(currentMorphValue, chaosTarget, chaosDuration, 'chaos');
       if (chaosDuration > 0) {
         const waitResult = await this.sleep(chaosDuration);
         if (handleWaitResult(waitResult) === 'cancelled') return;
       }
+      if (chaosAnimation) {
+        await chaosAnimation;
+      }
+      currentMorphValue = chaosTarget;
     }
 
     if (!skipTriggered && coalesceConfig?.enabled !== false) {
+      console.log('🔍 [ABOUT TO START COALESCE]', {
+        coalesceConfig,
+        currentMorph: currentMorphValue,
+        timestamp: Date.now(),
+      });
       const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);
       this.phase = 'coalesce';
       console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
@@ -717,20 +983,30 @@ class TheaterDirector {
         duration: coalesceDuration,
         morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
       });
-      if (typeof coalesceConfig.morphTo === 'number') {
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          source: 'director:coalesce',
-          morphProgress: coalesceConfig.morphTo,
-          durationMs: coalesceDuration,
-        });
+      const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
+      const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
+      let coalesceAnimation = null;
+      if (hasCoalesceTarget) {
+        coalesceAnimation = animateMorph(currentMorphValue, coalesceTarget, coalesceDuration, 'coalesce');
+      } else {
+        emitMorphSnapshot(currentMorphValue, 'coalesce', coalesceTarget, coalesceDuration);
       }
       if (coalesceDuration > 0) {
         const waitResult = await this.sleep(coalesceDuration);
         if (handleWaitResult(waitResult) === 'cancelled') return;
       }
+      if (coalesceAnimation) {
+        await coalesceAnimation;
+      }
+      currentMorphValue = coalesceTarget;
     }
 
     if (!skipTriggered && settleConfig?.enabled !== false) {
+      console.log('🔍 [ABOUT TO START SETTLE]', {
+        settleConfig,
+        currentMorph: currentMorphValue,
+        timestamp: Date.now(),
+      });
       const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
       this.phase = 'settle';
       console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
@@ -739,29 +1015,41 @@ class TheaterDirector {
         duration: settleDuration,
         morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
       });
-      if (typeof settleConfig.morphTo === 'number') {
-        BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
-          source: 'director:settle',
-          morphProgress: settleConfig.morphTo,
-          durationMs: settleDuration,
-        });
+      const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+      const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+      let settleAnimation = null;
+      if (hasSettleTarget) {
+        settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+      } else {
+        emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
       }
       if (settleDuration > 0) {
         const waitResult = await this.sleep(settleDuration);
         if (handleWaitResult(waitResult) === 'cancelled') return;
       }
+      if (settleAnimation) {
+        await settleAnimation;
+      }
+      currentMorphValue = settleTarget;
     }
 
     if (skipTriggered) {
       console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
+      if (currentMorphValue < 1) {
+        emitMorphSnapshot(1, 'skip-fast-forward', 1, 0);
+        currentMorphValue = 1;
+      }
+      this._cancelMorphAnimation();
     }
 
-      // ───────────────── Phase 5: Emergence (viewport → constellation)
-      this.phase = 'emergence';
-      console.log('   Phase: Particle emergence (SST governed)');
+    // ───────────────── Phase 5: Emergence (viewport → constellation)
+    this.phase = 'emergence';
+    const reusePreboundBlueprint = this._openingPrebound === true;
+    console.log(`   Phase: Particle emergence (${reusePreboundBlueprint ? 'reusing pre-bound blueprint' : 'SST governed'})`);
 
-      const viewportHint = await this._ensureViewportHint();
+    const viewportHint = await this._ensureViewportHint();
 
+    if (!reusePreboundBlueprint) {
       BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
         mode: emergenceConfig.mode,
         source: emergenceConfig.source,
@@ -775,8 +1063,11 @@ class TheaterDirector {
         skipMorphAnimation,
         targetState,
       });
+    } else {
+      emitMorphSnapshot(currentMorphValue, 'emergence', 1, emergenceTimeline.durationMs);
+    }
 
-      BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
+    BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
 
       this.emitTune({
         particleFlash: 1.3,
@@ -788,7 +1079,7 @@ class TheaterDirector {
         verticalBias: 0.1,
       });
 
-      if (waitForFencepost) {
+      if (shouldWaitForFencepost && !reusePreboundBlueprint) {
         console.log(`   Waiting for renderer fencepost (<=${fencepostWaitMs}ms)`);
         if (!this._fencepostReadyEmitted) {
           const readyPayload = {
@@ -798,7 +1089,49 @@ class TheaterDirector {
           BeatBus.emit(EVENTS.FENCEPOST_LISTENERS_READY, readyPayload);
           this._fencepostReadyEmitted = true;
         }
-        const fencepostReceived = await this.once(EVENTS.PARTICLES_EMERGED, fencepostWaitMs);
+
+        const fencepostFallbackMs = Math.min(1200, fencepostWaitMs);
+        const fencepostReceived = await new Promise((resolve) => {
+          let resolved = false;
+          let fenceTimeoutId = null;
+          let blueprintTimeoutId = null;
+
+          const finish = (result) => {
+            if (resolved) return;
+            resolved = true;
+            this._clearTimer(fenceTimeoutId);
+            this._clearTimer(blueprintTimeoutId);
+            fenceOff?.();
+            blueprintOff?.();
+            resolve(result);
+          };
+
+          const fenceOff = BeatBus.on(EVENTS.PARTICLES_EMERGED, (payload) => {
+            console.log('   Received: PARTICLES_EMERGED');
+            finish({ type: 'fencepost', payload });
+          });
+
+          fenceTimeoutId = this._trackTimer(() => {
+            console.warn(`⚠️ Director: ${EVENTS.PARTICLES_EMERGED} timed out after ${fencepostWaitMs}ms`);
+            finish(null);
+          }, fencepostWaitMs);
+
+          const blueprintOff = BeatBus.on(EVENTS.BLUEPRINT_READY, (payload = {}) => {
+            const blueprint = payload?.blueprint ?? payload;
+            const stage = payload?.stage || blueprint?.stage || blueprint?.stageName;
+            const mode = payload?.mode || blueprint?.mode;
+            const isGenesis = stage === 'genesis';
+            const isEmergenceMode = mode === 'emergence';
+            if (!isGenesis || isEmergenceMode) return;
+            console.log('   Fallback: BLUEPRINT_READY (genesis full) before fencepost');
+            finish({ type: 'blueprint', payload });
+          });
+
+          blueprintTimeoutId = this._trackTimer(() => {
+            blueprintOff?.();
+          }, fencepostFallbackMs);
+        });
+
         if (!fencepostReceived) {
           console.warn('   Renderer fencepost timeout, continuing anyway');
         }
@@ -845,6 +1178,7 @@ class TheaterDirector {
       });
 
       BeatBus.emit(EVENTS.ENABLE_SCROLL);
+      this._openingPrebound = false;
       
       if (!this.scrollOrchestrator) {
         this.scrollOrchestrator = new ScrollOrchestrator();
@@ -991,6 +1325,7 @@ class TheaterDirector {
     this.isRunning = false;
     this.phase = 'cancelled';
     this.scrollOrchestrator?.stop();
+    this._cancelMorphAnimation();
     this._wakeSleepWaiters('cancelled');
     this._detachSkipListener();
     BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
@@ -1059,6 +1394,43 @@ class TheaterDirector {
         console.warn(`⚠️ Director: ${event} timed out after ${timeout}ms`);
         unsubscribe?.();
         resolve(null);
+      }, timeout);
+    });
+  }
+
+  _waitForEvent(event, { timeout = 5000, predicate } = {}) {
+    if (!event) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      let settled = false;
+      let timeoutId = null;
+
+      const finish = (result) => {
+        if (settled) return;
+        settled = true;
+        this._clearTimer(timeoutId);
+        off?.();
+        resolve(result);
+      };
+
+      const handler = (payload) => {
+        try {
+          if (typeof predicate === 'function' && !predicate(payload)) {
+            return;
+          }
+        } catch (err) {
+          console.warn(`⚠️ Director: predicate for ${event} threw`, err);
+          return;
+        }
+        finish(payload);
+      };
+
+      const off = typeof BeatBus?.on === 'function'
+        ? BeatBus.on(event, handler)
+        : null;
+
+      timeoutId = this._trackTimer(() => {
+        console.warn(`⚠️ Director: ${event} timed out after ${timeout}ms`);
+        finish(null);
       }, timeout);
     });
   }
