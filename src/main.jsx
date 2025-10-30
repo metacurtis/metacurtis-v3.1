@@ -1,7 +1,16 @@
 import React from 'react';
 // Import Canon Dev-OS (dev only)
 if (import.meta.env.DEV) {
-  import("/canon-console/browser/inject.js");
+  console.log('🔧 Canon Dev-OS: Loading (dev mode)');
+  import('./canon-console/browser/inject.js')
+    .then(() => {
+      console.log('✅ Canon Dev-OS: Ready');
+    })
+    .catch(error => {
+      console.warn('⚠️ Canon Dev-OS failed to load', error);
+    });
+} else {
+  console.log('📦 Canon Dev-OS: Disabled (production mode)');
 }
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
