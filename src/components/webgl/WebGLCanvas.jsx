@@ -13,6 +13,16 @@ import { EVENTS } from '@/theater/events.js';
 // Lazy load WebGL components
 const WebGLBackground = lazy(() => import('./WebGLBackground'));
 
+const DEFAULT_CAMERA_SETTINGS = Object.freeze({
+  positionZ: 50,
+  fov: 100,
+});
+
+const QR_CAMERA_SETTINGS = Object.freeze({
+  positionZ: 20,
+  fov: 30,
+});
+
 // WebGL context pool class
 class WebGLContextPool {
   constructor() {
@@ -132,12 +142,14 @@ export default function WebGLCanvas({
 }) {
   // Canvas reference
   const canvasRef = useRef(null);
+  const cameraRef = useRef(null);
 
   // Component state
   const [webglSupported, setWebglSupported] = useState(true);
   const [contextLost, setContextLost] = useState(false);
   const [extensionInterference, setExtensionInterference] = useState(null);
   const [canvasStrategy, setCanvasStrategy] = useState(0);
+  const [qrCameraActive, setQrCameraActive] = useState(false);
 
   // Initialize systems with useMemo
   const contextPool = useMemo(() => new WebGLContextPool(), []);
@@ -199,6 +211,41 @@ export default function WebGLCanvas({
     },
     [canvasStrategy, extensionInterference, contextPool, addEventLog]
   );
+
+  // Toggle QR-specific camera adjustments based on blueprint metadata
+  useEffect(() => {
+    if (typeof BeatBus?.on !== 'function') return undefined;
+
+    const handleBlueprint = (payload = {}) => {
+      const metadata = payload?.blueprint?.metadata ?? payload?.metadata ?? {};
+      setQrCameraActive(!!metadata.qrMode);
+    };
+
+    const off = BeatBus.on(EVENTS.BLUEPRINT_READY, handleBlueprint);
+
+    return () => {
+      if (typeof off === 'function') {
+        off();
+      } else if (typeof BeatBus?.off === 'function') {
+        BeatBus.off(EVENTS.BLUEPRINT_READY, handleBlueprint);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const camera = cameraRef.current;
+    if (!camera) return;
+
+    const target = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
+
+    if (camera.position.z !== target.positionZ) {
+      camera.position.z = target.positionZ;
+    }
+    if (camera.fov !== target.fov) {
+      camera.fov = target.fov;
+    }
+    camera.updateProjectionMatrix();
+  }, [qrCameraActive]);
 
   // Context loss handling
   useEffect(() => {
@@ -341,6 +388,11 @@ export default function WebGLCanvas({
         {...canvasConfig}
         onCreated={({ gl, scene, camera, size }) => {
           const startTime = performance.now();
+          cameraRef.current = camera;
+          const initial = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
+          camera.position.z = initial.positionZ;
+          camera.fov = initial.fov;
+          camera.updateProjectionMatrix();
 
           // Access canvas element
           const canvasElement = canvasRef.current;
@@ -384,7 +436,15 @@ export default function WebGLCanvas({
         onError={handleCanvasError}
       >
         {/* Wide-angle camera for panoramic Milky Way vista */}
-        <PerspectiveCamera makeDefault position={[0, 0, 50]} fov={100} near={0.1} far={200} lookAt={[0, 0, 0]} />
+        <PerspectiveCamera
+          ref={cameraRef}
+          makeDefault
+          position={[0, 0, DEFAULT_CAMERA_SETTINGS.positionZ]}
+          fov={DEFAULT_CAMERA_SETTINGS.fov}
+          near={0.1}
+          far={200}
+          lookAt={[0, 0, 0]}
+        />
 
         {/* Minimal lighting for particles */}
         <ambientLight intensity={0.4} />

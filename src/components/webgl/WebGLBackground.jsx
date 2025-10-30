@@ -200,7 +200,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
 
-  function autoscaleQrPositions(positions, targetNdc = 0.9) {
+  const QR_AUTO_SCALE_TARGET = 0.06;
+
+  function autoscaleQrPositions(positions, targetNdc = QR_AUTO_SCALE_TARGET) {
     if (!(positions instanceof Float32Array) || positions.length < 3) return positions;
     let maxAbs = 0.000001;
     for (let i = 0; i < positions.length; i += 3) {

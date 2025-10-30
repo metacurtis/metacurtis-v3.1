@@ -37,6 +37,8 @@ const CURATED_QR_META = {
   quietZone: Number.isFinite(qrCurtis?.quietZone) ? qrCurtis.quietZone : undefined,
 };
 
+const QR_SCALE = 40; // Expand QR formations for dedicated camera framing
+
 // ===== Band probe helpers (pure, exportable) =================================
 const deg2rad = (d) => (d * Math.PI) / 180;
 function makeBandFrame(vc, rnd, gauss) {
@@ -397,7 +399,8 @@ class ConsciousnessEngine {
     this._emergenceDone = false;
     this._rendererFencepostSeen = false;
     this._pendingQrMetadata = null;
-    
+    this._openingPreboundBlueprint = null;
+
     // Opening gates
     this._openingPhase = true;
     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };
@@ -681,6 +684,7 @@ class ConsciousnessEngine {
   async _onBuildEmergence(payload = {}) {
     try {
       console.log('🧠 Engine: BUILD_EMERGENCE_BLUEPRINT received', payload);
+      const openingChaosMode = payload?.mode === 'opening_chaos';
       
       this._emergenceDone = false;
       this._emergenceActive = false;
@@ -706,7 +710,7 @@ class ConsciousnessEngine {
         blueprint,
         stage: 'genesis',
         quality: this.currentQuality,
-        mode: 'emergence',
+        mode: payload.mode || 'emergence',
         cached: false,
         skipMorphAnimation: !!payload.skipMorphAnimation,
         targetState: payload.targetState,
@@ -714,11 +718,19 @@ class ConsciousnessEngine {
         cacheKey: this._cacheKey('genesis', this.currentQuality),
       });
       
-      console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
-      this._log('emergence_built', { count: blueprint.particleCount });
+      if (openingChaosMode) {
+        console.log('🧠 Engine: Opening chaos blueprint emitted', { count: blueprint.particleCount });
+        this._openingPreboundBlueprint = blueprint;
+        this._log('emergence_built', { count: blueprint.particleCount, mode: 'opening_chaos' });
+      } else {
+        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
+        this._openingPreboundBlueprint = null;
+        this._log('emergence_built', { count: blueprint.particleCount });
+      }
 
       // Drive implosion → settle via directives; renderer remains passive
-      if (!this._startEmergenceTimeline(blueprint)) {
+      const shouldRunTimeline = !openingChaosMode && !payload.skipMorphAnimation;
+      if (shouldRunTimeline && !this._startEmergenceTimeline(blueprint)) {
         this._emergenceActive = false;
         this._emergenceDone = false;
       }
@@ -735,6 +747,11 @@ class ConsciousnessEngine {
 
   _startEmergenceTimeline(bp) {
     const count = bp?.activeCount || bp?.particleCount || 0;
+    if (bp?.mode === 'opening_chaos') {
+      this._emergenceActive = false;
+      this._emergenceDone = false;
+      return false;
+    }
     if (!count || typeof window === 'undefined') {
       this._emergenceActive = false;
       this._emergenceDone = false;
@@ -933,7 +950,7 @@ class ConsciousnessEngine {
       { action: 'formPortrait', duration: 3000 },
       { action: 'reformText', text: 'CURTIS WHORTON', duration: 2000 },
       { action: 'reformText', text: 'AI-NATIVE ENGINEER', duration: 2000 },
-      { action: 'formQRCode', url: 'https://curtisworton.com', duration: 3000 },
+      { action: 'formQRCode', url: 'https://curtiswhorton.com', duration: 3000 },
     ];
 
     const sourceSequence =
@@ -1179,7 +1196,7 @@ class ConsciousnessEngine {
         case 'formQRCode':
         case 'qr': {
           const url = String(step?.url || '');
-          const SCALE_FACTOR = 2.4;
+          const SCALE_FACTOR = QR_SCALE;
 
           let basePositions;
           if (CURATED_QR_POINTS instanceof Float32Array && CURATED_QR_POINTS.length) {
