@@ -12,6 +12,7 @@ import SST from '@/config/sst-loader.js'; // keep consistent with ESM imports
 import { createSeededRandom } from '../utils/random.js';
 import BlueprintGenerator from './modules/BlueprintGenerator.js';
 import ClimaxController from './modules/ClimaxController.js';
+import MorphController from './modules/MorphController.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
@@ -181,6 +182,7 @@ export function __synthesizeBandPositions(N, hint) {
 class ConsciousnessEngine {
   #blueprintGenerator = null;
   #climaxController = null;
+  #morphController = null;
 
   constructor() {
     // Text / font
@@ -200,6 +202,7 @@ class ConsciousnessEngine {
    this._guardInvalidations = [];
    this.#blueprintGenerator = new BlueprintGenerator(this);
    this.#climaxController = new ClimaxController(this);
+   this.#morphController = new MorphController(this);
 
     // Expose engine debug helpers when running in the browser
     if (typeof window !== 'undefined') {
@@ -359,6 +362,7 @@ class ConsciousnessEngine {
         else clearTimeout(this._emergenceRaf);
         this._emergenceRaf = null;
       }
+      this.#morphController?.stopEmergenceTimeline({ markDone: true });
     });
     subscribe('BLUEPRINT_INVALIDATED', this._onBlueprintInvalidated.bind(this), { optional: true });
   }
@@ -569,177 +573,12 @@ class ConsciousnessEngine {
   }
 
   _startEmergenceTimeline(bp) {
-    const count = bp?.activeCount || bp?.particleCount || 0;
-    if (bp?.mode === 'opening_chaos') {
-      this._emergenceActive = false;
-      this._emergenceDone = false;
+    console.log('🌀 [Engine] Starting emergence timeline, delegating to MorphController');
+    if (!this.#morphController) {
+      console.error('[ConsciousnessEngine] MorphController not initialized');
       return false;
     }
-    if (!count || typeof window === 'undefined') {
-      this._emergenceActive = false;
-      this._emergenceDone = false;
-      return false;
-    }
-
-    const nowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function')
-      ? performance.now()
-      : Date.now();
-    const schedule = (fn) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(fn) : setTimeout(fn, 16));
-    const cancel = (id) => {
-      if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(id);
-      else clearTimeout(id);
-    };
-
-    const smooth = (t) => t * t * (3 - 2 * t);
-    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-    const pointSizeBase = Number.isFinite(VC?.POINT_SIZE_BASE)
-      ? VC.POINT_SIZE_BASE
-      : (Canonical?.features?.pointSizeDefault ?? 48);
-    const sigmaBase = Number.isFinite(VC?.SIGMA_BASE) ? VC.SIGMA_BASE : 2.5;
-    const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : sigmaBase * 1.6;
-    const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) && VC.POINT_SIZE_KICK > 0
-      ? VC.POINT_SIZE_KICK
-      : 1.4;
-    const tierPeak = Number.isFinite(VC?.T4_HI_PEAK) ? VC.T4_HI_PEAK : 1.7;
-    const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
-    const midDefault = clamp(Number.isFinite(VC?.MID_MORPH) ? VC.MID_MORPH : 0.85, 0.05, 0.95);
-
-    const implDefault = (() => {
-      const raw = Number(VC?.IMPLODE_MS);
-      return Number.isFinite(raw) && raw > 0 ? raw : 1100;
-    })();
-    const settleDefault = (() => {
-      const raw = Number(VC?.SETTLE_MS);
-      return Number.isFinite(raw) && raw >= 0 ? raw : 900;
-    })();
-
-    const fastForward = !!(bp?.fastForward || bp?.metadata?.fastForward);
-    const fastImpl = (() => {
-      const raw = Number(VC?.SKIP_IMPL_MS);
-      const target = Number.isFinite(raw) && raw > 0 ? raw : 320;
-      return Math.max(120, Math.min(target, implDefault));
-    })();
-    const fastSettle = (() => {
-      const raw = Number(VC?.SKIP_SETTLE_MS);
-      const target = Number.isFinite(raw) && raw >= 0 ? raw : 260;
-      return Math.max(90, Math.min(target, settleDefault));
-    })();
-
-    if (this._emergenceRaf) {
-      cancel(this._emergenceRaf);
-      this._emergenceRaf = null;
-    }
-
-    const holdMs = Math.max(0, Number(VC?.MORPH_HOLD_MS ?? 250));
-
-    const runTimeline = (implMs, settleMs, midValue) => {
-      this._emergenceActive = true;
-      this._emergenceDone = false;
-
-      const start = nowMs();
-      const totalPhases = Math.max(0, implMs) + Math.max(0, settleMs);
-      const total = holdMs + totalPhases;
-
-      const stageLabel = this.currentStage || 'genesis';
-      const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
-      const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
-      const emitMorphProgress = (value, target = value) => {
-        const clampedValue = clamp(value, 0, 1);
-        const clampedTarget = clamp(target, 0, 1);
-        const morphPayload = {
-          morphProgress: clampedValue,
-          value: clampedValue,
-          morphTarget: clampedTarget,
-          target: clampedTarget,
-          stage: stageLabel,
-          schemaVersion: '3.5',
-        };
-        if (stageIndex >= 0) {
-          morphPayload.stageIndex = stageIndex;
-        }
-        BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
-      };
-
-      const step = () => {
-        if (!this._emergenceActive || this._rendererFencepostSeen) {
-          this._emergenceRaf = null;
-          return;
-        }
-        const elapsed = nowMs() - start;
-        if (elapsed < holdMs) {
-          this._emergenceRaf = schedule(step);
-          return;
-        }
-
-        const phaseElapsed = elapsed - holdMs;
-        const inImplosion = implMs > 0 ? phaseElapsed < implMs : false;
-        const implPhase = implMs > 0 ? clamp(phaseElapsed / implMs, 0, 1) : 1;
-        const settleElapsed = phaseElapsed - implMs;
-        const settlePhaseRaw = settleElapsed <= 0 ? 0 : (settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1);
-        const easeImpl = implMs > 0 ? smooth(implPhase) : 1;
-        const easeSettle = settlePhaseRaw <= 0 ? 0 : smooth(settlePhaseRaw);
-
-        const morph = inImplosion
-          ? midValue * easeImpl
-          : midValue + (1 - midValue) * easeSettle;
-
-        const draw = Math.max(1, Math.round(count * (inImplosion ? easeImpl : 1)));
-        const pointSize = inImplosion
-          ? pointSizeBase * (1 + (pointKick - 1) * easeImpl)
-          : pointSizeBase * (pointKick - (pointKick - 1) * easeSettle);
-        const gaussian = inImplosion
-          ? sigmaBase + (sigmaPeak - sigmaBase) * easeImpl
-          : sigmaPeak - (sigmaPeak - sigmaBase) * easeSettle;
-        const tierHi = inImplosion
-          ? tierPeak
-          : tierPeak - (tierPeak - tierSettle) * easeSettle;
-
-        const morphRounded = +morph.toFixed(3);
-        emitMorphProgress(morphRounded, inImplosion ? midValue : 1);
-
-        if (elapsed < total) {
-          this._emergenceRaf = schedule(step);
-        } else {
-          if (!this._emergenceActive || this._rendererFencepostSeen) {
-            this._emergenceRaf = null;
-            return;
-          }
-          emitMorphProgress(1, 1);
-          this._emergenceRaf = null;
-          this._emergenceActive = false;
-          this._emergenceDone = true;
-        }
-      };
-
-      // Prime listeners with baseline state before the first frame
-      emitMorphProgress(0, midValue);
-
-      step();
-      return true;
-    };
-
-    const implMs = fastForward ? fastImpl : implDefault;
-    const settleMs = fastForward ? fastSettle : settleDefault;
-
-    const midForTimeline = fastForward
-      ? clamp(Math.min(midDefault, 0.35), 0.05, 0.5)
-      : midDefault;
-
-    console.log('🎨 [EMERGENCE TIMELINE]', {
-      fastForward,
-      midDefault,
-      midForTimeline,
-      implMs,
-      settleMs,
-      holdMs,
-    });
-
-    if (implMs > 6000 || settleMs > 6000) {
-      console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: midForTimeline });
-    }
-
-    return runTimeline(implMs, settleMs, midForTimeline);
+    return this.#morphController.startEmergenceTimeline(bp);
   }
 
   /**
@@ -1542,6 +1381,20 @@ class ConsciousnessEngine {
     }
   }
 
+  isEmergenceActive() {
+    if (this.#morphController && typeof this.#morphController.isActive === 'function') {
+      return this.#morphController.isActive();
+    }
+    return !!this._emergenceActive;
+  }
+
+  getEmergencePhase() {
+    if (this.#morphController && typeof this.#morphController.getCurrentPhase === 'function') {
+      return this.#morphController.getCurrentPhase();
+    }
+    return null;
+  }
+
   generate3DTextFormation(word, opts = {}) {
     const {
       particles = 2000,
@@ -1615,8 +1468,12 @@ class ConsciousnessEngine {
 
   // Cleanup for HMR
   destroy() {
+    console.log('[Engine] Destroying engine instance');
     if (this.#climaxController) {
       this.#climaxController.stopClimaxSequence({ emitComplete: false });
+    }
+    if (this.#morphController) {
+      this.#morphController.stopEmergenceTimeline();
     }
     this._cleanupListeners();
     this.clearCache();
