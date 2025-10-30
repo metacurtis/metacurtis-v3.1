@@ -150,10 +150,47 @@ export default function WebGLCanvas({
   const [extensionInterference, setExtensionInterference] = useState(null);
   const [canvasStrategy, setCanvasStrategy] = useState(0);
   const [qrCameraActive, setQrCameraActive] = useState(false);
+  const [webglBootstrapped, setWebglBootstrapped] = useState(() => typeof window === 'undefined');
 
   // Initialize systems with useMemo
   const contextPool = useMemo(() => new WebGLContextPool(), []);
   const performanceMonitor = useMemo(() => new CanvasPerformanceMonitor(), []);
+
+  // Defer WebGL bootstrapping to allow initial paint
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setWebglBootstrapped(true);
+      return;
+    }
+
+    let cancelled = false;
+    let rafId = null;
+    let timerId = null;
+
+    const setReady = () => {
+      timerId = window.setTimeout(() => {
+        if (!cancelled) {
+          setWebglBootstrapped(true);
+        }
+      }, 120);
+    };
+
+    if (typeof window.requestAnimationFrame === 'function') {
+      rafId = window.requestAnimationFrame(setReady);
+    } else {
+      setReady();
+    }
+
+    return () => {
+      cancelled = true;
+      if (rafId && typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(rafId);
+      }
+      if (timerId) {
+        window.clearTimeout(timerId);
+      }
+    };
+  }, []);
 
   // Update performance monitor with props
   useEffect(() => {
@@ -234,7 +271,7 @@ export default function WebGLCanvas({
 
   useEffect(() => {
     const camera = cameraRef.current;
-    if (!camera) return;
+    if (!webglBootstrapped || !camera) return;
 
     const target = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
 
@@ -245,10 +282,11 @@ export default function WebGLCanvas({
       camera.fov = target.fov;
     }
     camera.updateProjectionMatrix();
-  }, [qrCameraActive]);
+  }, [qrCameraActive, webglBootstrapped]);
 
   // Context loss handling
   useEffect(() => {
+    if (!webglBootstrapped) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -280,10 +318,11 @@ export default function WebGLCanvas({
       canvas.removeEventListener('webglcontextlost', handleContextLost);
       canvas.removeEventListener('webglcontextrestored', handleContextRestored);
     };
-  }, [extensionInterference, canvasStrategy, contextPool, addEventLog]);
+  }, [extensionInterference, canvasStrategy, contextPool, addEventLog, webglBootstrapped]);
 
   // Pointer event system for particle interaction
   useEffect(() => {
+    if (!webglBootstrapped) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -306,10 +345,11 @@ export default function WebGLCanvas({
     return () => {
       canvas.removeEventListener('pointerdown', handlePointerDown);
     };
-  }, [canvasRef]);
+  }, [canvasRef, webglBootstrapped]);
 
   // Canvas performance monitoring
   useEffect(() => {
+    if (!webglBootstrapped) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -326,7 +366,7 @@ export default function WebGLCanvas({
 
     resizeObserver.observe(canvas);
     return () => resizeObserver.disconnect();
-  }, [performanceMonitor]);
+  }, [performanceMonitor, webglBootstrapped]);
 
   // Canvas configuration
   const canvasConfig = useMemo(() => {
@@ -383,86 +423,88 @@ export default function WebGLCanvas({
 
   return (
     <div style={{ position:'fixed', inset:0, width:'100vw', height:'100vh', zIndex:0 }}>
-      <Canvas style={{ display:'block', width:'100%', height:'100%' }}
-        ref={canvasRef}
-        {...canvasConfig}
-        onCreated={({ gl, scene, camera, size }) => {
-          const startTime = performance.now();
-          cameraRef.current = camera;
-          const initial = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
-          camera.position.z = initial.positionZ;
-          camera.fov = initial.fov;
-          camera.updateProjectionMatrix();
+      {webglBootstrapped ? (
+        <Canvas style={{ display:'block', width:'100%', height:'100%' }}
+          ref={canvasRef}
+          {...canvasConfig}
+          onCreated={({ gl, scene, camera, size }) => {
+            const startTime = performance.now();
+            cameraRef.current = camera;
+            const initial = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
+            camera.position.z = initial.positionZ;
+            camera.fov = initial.fov;
+            camera.updateProjectionMatrix();
 
-          // Access canvas element
-          const canvasElement = canvasRef.current;
-          if (canvasElement) { /* noop */ }
+            // Access canvas element
+            const canvasElement = canvasRef.current;
+            if (canvasElement) { /* noop */ }
 
-          // Context optimization
-          const context = gl.getContext();
-          contextPool.cacheWebGLState(context);
+            // Context optimization
+            const context = gl.getContext();
+            contextPool.cacheWebGLState(context);
 
-          // Optimal WebGL settings
-          gl.setClearColor('#000000', 1);
-          gl.shadowMap.enabled = false;
-          scene.fog = null;
+            // Optimal WebGL settings
+            gl.setClearColor('#000000', 1);
+            gl.shadowMap.enabled = false;
+            scene.fog = null;
 
-          // Check point size range
-          const glContext = gl.getContext();
-          const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
+            // Check point size range
+            const glContext = gl.getContext();
+            const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
 
-          const setupTime = performance.now() - startTime;
+            const setupTime = performance.now() - startTime;
 
-          console.log('[WebGLCanvas] Canvas created with constellation optimization', {
-            renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
-            maxTextures: gl.capabilities.maxTextures,
-            maxVertexAttributes: gl.capabilities.maxVertexAttributes,
-            pointSizeRange: pointSizeRange,
-            canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
-            setupTime: setupTime.toFixed(2) + 'ms',
-            contextPoolStats: contextPool.getStats(),
-            quality: quality,
-            particles: particleCount,
-            stage: stage,
-            strategy: canvasStrategy,
-          });
+            console.log('[WebGLCanvas] Canvas created with constellation optimization', {
+              renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
+              maxTextures: gl.capabilities.maxTextures,
+              maxVertexAttributes: gl.capabilities.maxVertexAttributes,
+              pointSizeRange: pointSizeRange,
+              canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
+              setupTime: setupTime.toFixed(2) + 'ms',
+              contextPoolStats: contextPool.getStats(),
+              quality: quality,
+              particles: particleCount,
+              stage: stage,
+              strategy: canvasStrategy,
+            });
 
-          addEventLog('webgl_canvas_created', {
-            webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
-            point_size_range: pointSizeRange,
-            setup_time: setupTime,
-          });
-        }}
-        onError={handleCanvasError}
-      >
-        {/* Wide-angle camera for panoramic Milky Way vista */}
-        <PerspectiveCamera
-          ref={cameraRef}
-          makeDefault
-          position={[0, 0, DEFAULT_CAMERA_SETTINGS.positionZ]}
-          fov={DEFAULT_CAMERA_SETTINGS.fov}
-          near={0.1}
-          far={200}
-          lookAt={[0, 0, 0]}
-        />
+            addEventLog('webgl_canvas_created', {
+              webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
+              point_size_range: pointSizeRange,
+              setup_time: setupTime,
+            });
+          }}
+          onError={handleCanvasError}
+        >
+          {/* Wide-angle camera for panoramic Milky Way vista */}
+          <PerspectiveCamera
+            ref={cameraRef}
+            makeDefault
+            position={[0, 0, DEFAULT_CAMERA_SETTINGS.positionZ]}
+            fov={DEFAULT_CAMERA_SETTINGS.fov}
+            near={0.1}
+            far={200}
+            lookAt={[0, 0, 0]}
+          />
 
-        {/* Minimal lighting for particles */}
-        <ambientLight intensity={0.4} />
+          {/* Minimal lighting for particles */}
+          <ambientLight intensity={0.4} />
 
-        {/* Dev tools */}
-        {import.meta.env.DEV && <DebugExpose />}
+          {/* Dev tools */}
+          {import.meta.env.DEV && <DebugExpose />}
 
-        {/* Main particle system WITH PROPS */}
-        <Suspense fallback={null}>
-          {webglEnabled && (
-            <WebGLBackground
-              stage={stage}
-              morphProgress={morphProgress}
-              scrollProgress={scrollProgress}
-            />
-          )}
-        </Suspense>
-      </Canvas>
+          {/* Main particle system WITH PROPS */}
+          <Suspense fallback={null}>
+            {webglEnabled && (
+              <WebGLBackground
+                stage={stage}
+                morphProgress={morphProgress}
+                scrollProgress={scrollProgress}
+              />
+            )}
+          </Suspense>
+        </Canvas>
+      ) : null}
 
       {/* Performance monitoring */}
       <DevPerformanceMonitor />

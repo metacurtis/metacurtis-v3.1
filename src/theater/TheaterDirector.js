@@ -66,6 +66,17 @@ const clamp01 = (value) => {
   return value;
 };
 
+const DEFERRED_OPENING_DELAY = 120;
+
+function hideInstantLoader() {
+  if (typeof document === 'undefined') return;
+  const loader = document.getElementById('instant-loader');
+  if (!loader) return;
+  if (!loader.classList.contains('hidden')) {
+    loader.classList.add('hidden');
+  }
+}
+
 const DEFAULT_OPENING_EMERGENCE = {
   target: 'constellation',
   mode: 'emergence',
@@ -624,6 +635,8 @@ class TheaterDirector {
       console.log('🎬 Director: Already completed, ignoring restart');
       return;
     }
+
+    hideInstantLoader();
 
     // Wait for viewport (non-recursive)
     if (!this.viewportReady && !this.waitingForViewport) {
@@ -1462,6 +1475,44 @@ class TheaterDirector {
 // ── Singleton Instance & Dev Tools ───────────────────────────────────────────
 const director = new TheaterDirector();
 
+let deferredStartHandle = null;
+
+const scheduleDeferredDirectorStart = (
+  reason = 'auto',
+  { ensureViewportReady = false, delay = DEFERRED_OPENING_DELAY } = {}
+) => {
+  if (director.hasRun || director.isRunning || director.phase === 'complete') {
+    hideInstantLoader();
+    return;
+  }
+
+  if (ensureViewportReady) {
+    director.viewportReady = true;
+    director.waitingForViewport = false;
+  }
+
+  if (deferredStartHandle != null) {
+    return;
+  }
+
+  const startSequence = () => {
+    deferredStartHandle = null;
+    console.log('🎬 Director: Deferred start scheduled', { reason, delay });
+    hideInstantLoader();
+    director.start();
+  };
+
+  const schedule = () => {
+    deferredStartHandle = director._trackTimer(startSequence, delay);
+  };
+
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    window.requestAnimationFrame(schedule);
+  } else {
+    schedule();
+  }
+};
+
 if (typeof window !== 'undefined') {
   window.theaterDirector = director;
 
@@ -1504,8 +1555,7 @@ if (typeof window !== 'undefined') {
     const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, data => {
       if (!director.hasRun && !director.isRunning && director.phase !== 'complete') {
         console.log('🎬 Director: Viewport hint received, auto-starting', data);
-        director.viewportReady = true;
-        director.start();
+        scheduleDeferredDirectorStart('viewport-hint', { ensureViewportReady: true });
       } else if (DEBUG_NARRATION) {
         console.log('🎬 Director: Viewport hint received but start skipped', {
           hasRun: director.hasRun,
@@ -1520,7 +1570,7 @@ if (typeof window !== 'undefined') {
     director._trackTimer(() => {
       if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
         console.warn('🎬 Director: No viewport hint after 3s, starting anyway');
-        director.forceStart();
+        scheduleDeferredDirectorStart('viewport-timeout', { ensureViewportReady: true, delay: 0 });
       } else if (DEBUG_NARRATION) {
         console.log('🎬 Director: Auto-start fallback skipped', {
           hasRun: director.hasRun,

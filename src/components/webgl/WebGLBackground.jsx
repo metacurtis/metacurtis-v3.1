@@ -195,6 +195,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const geometryBoundOnceRef = useRef(false);
   // QR state / restore slots
   const qrModeRef = useRef(false);
+  const pageInteractiveDispatchedRef = useRef(false);
   const restoreClearRef = useRef([0, 0, 0, 1]);
   const lastPointSizeRef = useRef(null);
   // Optional: if your render loop advances uTime, guard it here
@@ -307,6 +308,22 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (!payload) return;
     trace('WBG:FENCEPOST', payload);
     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+
+    if (!pageInteractiveDispatchedRef.current) {
+      pageInteractiveDispatchedRef.current = true;
+      if (typeof window !== 'undefined') {
+        const markInteractive = () => {
+          if (typeof document !== 'undefined') {
+            document.dispatchEvent(new Event('page-interactive'));
+          }
+        };
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(markInteractive, { timeout: 300 });
+        } else {
+          window.setTimeout(markInteractive, 150);
+        }
+      }
+    }
   }, []);
 
   const clearPendingFencepost = useCallback(() => {

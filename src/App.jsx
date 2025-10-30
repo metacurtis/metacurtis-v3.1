@@ -7,6 +7,7 @@ import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManage
 import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
 import NarrationController from '@/components/narrative/NarrationController.jsx';
 import NarrativeUIControls from '@/components/ui/NarrativeUIControls.jsx';
+import HeroFallback from '@/components/ui/HeroFallback.jsx';
 import { clockAtom } from '@/state/atoms';
 
 import '@/orchestration/navigation/narrativeNavigation.js';
@@ -64,6 +65,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen">
+      <HeroFallback />
       <ConsciousnessTheater />
       <AmbientFragmentManager />
       <ClimaxSequenceController />
