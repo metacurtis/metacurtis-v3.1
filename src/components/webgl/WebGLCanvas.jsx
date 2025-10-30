@@ -3,7 +3,7 @@
 // SST v3.0 COMPLIANT - Props-driven renderer
 
 import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, invalidate } from '@react-three/fiber';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
 import DebugExpose from '@/components/dev/DebugExpose';
 import BeatBus from '@/theater/bus';
@@ -154,6 +154,10 @@ export default function WebGLCanvas({
   // Initialize systems with useMemo
   const contextPool = useMemo(() => new WebGLContextPool(), []);
   const performanceMonitor = useMemo(() => new CanvasPerformanceMonitor(), []);
+
+  useEffect(() => {
+    if (webglBootstrapped) invalidate();
+  }, [webglBootstrapped]);
 
   // Defer WebGL bootstrapping to allow initial paint
   useEffect(() => {
@@ -428,7 +432,16 @@ export default function WebGLCanvas({
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, width:'100vw', height:'100vh', zIndex:0 }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 0,
+        contain: 'layout paint size',
+      }}
+    >
       {webglBootstrapped ? (
         <Canvas style={{ display:'block', width:'100%', height:'100%' }}
           ref={canvasRef}
@@ -461,6 +474,7 @@ export default function WebGLCanvas({
 
             const setupTime = performance.now() - startTime;
 
+            console.log('🎨 [Canvas] WebGL context created with optimized settings');
             console.log('[WebGLCanvas] Canvas created with constellation optimization', {
               renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
               maxTextures: gl.capabilities.maxTextures,

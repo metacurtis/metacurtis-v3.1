@@ -1,92 +1,100 @@
 # ConsciousnessEngine.js Analysis
 
 ## File Stats
-- Lines: 2838
-- Size: 96KB
-- Class: `ConsciousnessEngine` (line 352)
+- Lines: 2221
+- Size: 76KB
+- Class: `ConsciousnessEngine` (line 204)
 
 ## Public API (methods called from outside)
 Methods that MUST stay in core:
 
-1. `constructor()` – line 353; instantiates caches, exposes `window.engineDebug`, registers singleton.
-2. `init()` – line 491; idempotent boot path used on first load and HMR re-entry (no separate `initialize()` exists).
-3. `buildEmergenceBlueprint(options)` – line 1634; async handler behind `BUILD_EMERGENCE_BLUEPRINT`, drives emergence payloads.
-4. `buildAndEmitBlueprint(stage, quality)` – line 1776; main stage/quality switcher that emits renderer-ready blueprints.
-5. `buildBlueprint(stageName, options)` – line 2162; core builder used by caching/prewarm paths.
-6. `loadFont(url)` – line 2468; public promise used by dev flows (`window.__consciousnessEngine.loadFont()`).
-7. `generate3DTextFormation(word, opts)` – line 2726; exposed (non-underscored) generator consumed by multiple build pathways.
-8. `getStats()` – line 2781; surfaced via `window.engineDebug.getStats()`.
-9. `clearCache()` – line 2790; surfaced via `window.engineDebug.clearCache()` and used in docs/playbooks.
-10. `destroy()` – line 2798; teardown invoked during HMR to stop RAFs, listeners, and caches.
+1. `constructor()` – line 207; registers the browser singleton, exposes `window.engineDebug`, primes caches, and instantiates `BlueprintGenerator`.
+2. `init()` – line 346; idempotent bootstrap that schedules font loading and hooks BeatBus listeners.
+3. `buildEmergenceBlueprint(options)` – line 1447; async emergence builder triggered by the `BUILD_EMERGENCE_BLUEPRINT` listener.
+4. `buildAndEmitBlueprint(stage, quality)` – line 1585; central stage/quality dispatcher that emits `BLUEPRINT_READY` payloads.
+5. `buildBlueprint(stageName, options)` – line 1720; caching-aware builder that now delegates stage construction to `BlueprintGenerator`.
+6. `generateViewportSpread(N, hint)` – line 1769; exposes deterministic viewport scatter (used by diagnostics and emergence fallbacks).
+7. `generateConstellationFormation(N, tierRatios, hint, opts)` – line 1814; preserved API that now delegates to `BlueprintGenerator`.
+8. `getParticleCountForQuality(baseCount, quality)` – line 2006; shared with `BlueprintGenerator` to derive particle counts.
+9. `loadFont(url)` – line 2011; public font loader consumed through `window.__consciousnessEngine`.
+10. `generate3DTextFormation(word, opts)` – line 2109; cached 3D text generator used by blueprint code and dev tooling.
+11. `getStats()` – line 2164; exposed via `window.engineDebug.getStats()`.
+12. `clearCache()` – line 2173; clears blueprint/text caches, surfaced on `window.engineDebug`.
+13. `destroy()` – line 2181; HMR teardown that stops RAFs, removes listeners, and resets caches.
 
 ## Internal Methods (can be extracted)
 Methods only called within this file:
 
-1. `_preloadNextStage(stage, quality)` – line 440; anticipatory cache fill for upcoming stages.
-2. `_startEmergenceTimeline(blueprint)` – line 758; orchestrates implosion → settle morph RAF loop.
-3. `_handleStartClimax()` – line 936; wires climax sequencing and begins step progression.
-4. `_buildClimaxBlueprint(step)` – line 1180; assembles climax-specific point clouds and metadata.
-5. `_generateClimaxTextPositions(text, particleCount)` – line 1456; fallback text particle generator for climax.
-6. `_createEmptyBlueprint(count, options)` – line 1471; shared allocator for emergence blueprints.
-7. `_generateRandomAtmosphericScatter(count, viewportHint, opts)` – line 1538; atmospheric field synthesis.
-8. `_assignTiersShuffled(count, ratios)` – line 1585; tier distribution helper for emergence.
-9. `_buildBlueprintForStage(stageName, requestedQuality, options)` – line 1899; stage-heavy builder feeding caches.
-10. `generateViewportSpread(N, hint)` – line 2211; viewport scatter helper (currently only used internally).
+1. `_preloadNextStage(stage, quality)` – line 295; opportunistic cache warmer for the next canonical stage.
+2. `_installListeners()` – line 367; BeatBus subscription manager with optional guard and HMR cleanup.
+3. `_onBuildEmergence(payload)` – line 549; validates emergence requests and drives `buildEmergenceBlueprint`.
+4. `_startEmergenceTimeline(bp)` – line 612; morph timeline orchestrator for implosion → settle phases.
+5. `_handleStartClimax()` – line 790; primes climax sequencing state machine and begins RAF loop.
+6. `_buildClimaxBlueprint(step)` – line 1034; constructs climax step payloads, including hotspot metadata.
+7. `_buildClimaxBlueprintFromPositions(step, positions, count)` – line 1163; rehydrates curated climax assets.
+8. `_generateClimaxTextPositions(text, particleCount)` – line 1309; fallback text particle generator for climax steps.
+9. `_generateRandomAtmosphericScatter(count, viewportHint, opts)` – line 1376; synthesizes atmospheric fields per emergence.
+10. `_buildBlueprintForStage(stageName, requestedQuality, options)` – line 1705; now a thin delegation wrapper around `modules/BlueprintGenerator.buildStage`.
 
 ## Heavy Sections (extraction candidates)
-1. Blueprint generation (`buildAndEmitBlueprint` ➜ `_buildBlueprintForStage`): lines 1776–2182.
-2. Morph/emergence controller (`_startEmergenceTimeline`, `buildEmergenceBlueprint`): lines 758–1760.
-3. Climax sequencing (`_handleStartClimax` through `_finalizeClimaxSequence`): lines 936–1435.
-4. Portrait & QR handling (climax step actions, curated assets): lines 963–1256.
-5. Tier behaviors & constellation math (`generateConstellationFormation`): lines 2256–2407.
+1. Emergence builder (`buildEmergenceBlueprint`): lines 1447–1703 handle blueprint allocation, targets, and metadata logging.
+2. Morph controller (`_onBuildEmergence` + `_startEmergenceTimeline`): lines 549–773 run the implosion/settle RAF loop and BeatBus progress emits.
+3. Stage transitions & cache coordination (`_onStageChange`, `_onQualityChange`, `buildAndEmitBlueprint`): lines 476–1703 manage stage swap logic.
+4. Portrait/QR assets & climax sequencing (`_handleStartClimax` → `_finalizeClimaxSequence`): lines 790–1356 load curated data and drive climax steps.
+5. Delegated stage construction now lives in `src/engine/modules/BlueprintGenerator.js` (lines 27–294); `ConsciousnessEngine` orchestrates cache, font readiness, and event emission around it.
 
 ## Imports Used
-- `FontLoader`, `TextGeometry`, `MeshSurfaceSampler`, `Mesh`, `Vector3` from `three` packages.
+- `FontLoader` from `three/examples/jsm/loaders/FontLoader`.
+- `Mesh`, `Vector3` from `three`.
+- `TextGeometry` from `three/examples/jsm/geometries/TextGeometry`.
+- `MeshSurfaceSampler` from `three/examples/jsm/math/MeshSurfaceSampler.js`.
 - `VC` from `@/config/visual-controls.js`.
 - `Canonical` from `@/config/canonical/canonicalAuthority.js`.
 - `SST` from `@/config/sst-loader.js`.
 - `createSeededRandom` from `../utils/random.js`.
-- Formation helpers from `@/utils/portraitPositions.js` (`generatePortraitPositions`, `generateQRPositions`, `generateScatterPositions`).
-- `buildHotspotLookup` from `@/utils/hotspotMapping.js`.
+- `generatePortraitPositions`, `generateQRPositions`, `generateScatterPositions` from `@/utils/portraitPositions.js`.
+- `BlueprintGenerator` from `./modules/BlueprintGenerator.js`.
 - `BeatBus` from `@/theater/bus`.
 - `EVENTS` from `@/theater/events.js`.
 - `trace` from `@/dev/trace.js`.
-- `qrCurtis` asset (`@/assets/climax/qr-curtis.json`).
+- `qrCurtis` from `@/assets/climax/qr-curtis.json`.
+- `calculateBounds`, `gaussianRandom`, `createBlueprintStructure`, `assignTiersShuffled`, `emitBlueprintReady`, `makeBandFrame` from `./utils/blueprintUtils.js`.
 
 ## Events Emitted (API contract)
-- `EVENTS.PREWARM_COMPLETE` – line 654 (`_onPrewarmGenesis`).
-- `EVENTS.BLUEPRINT_READY` – lines 719 (emergence payload), 1306 (climax steps), 1835 / 1862 / 1887 (stage rebuild paths).
-- `EVENTS.MORPH_PROGRESS` – lines 848 (emergence morph timeline) and 1106 (climax progress updates).
-- `EVENTS.CLIMAX_STEP` – lines 1063 (step start) and 1435 (sequence completion).
+- `EVENTS.PREWARM_COMPLETE` – line 509 (`_onPrewarmGenesis` completion notice).
+- `EVENTS.MORPH_PROGRESS` – line 702 (emergence timeline) and line 960 (climax RAF updates).
+- `EVENTS.CLIMAX_STEP` – line 917 (step start) and line 1288 (sequence completion signal).
+- `EVENTS.BLUEPRINT_READY` – lines 574 (emergence), 1159 (climax step payload), 1644 / 1670 / 1694 (stage rebuild paths) via `emitBlueprintReady`.
 
 ## Events Listened To (API dependencies)
-- `ENGINE_VIEWPORT_HINT` → `_onViewportHint` (line 532).
-- `ENABLE_SCROLL` → `_onEnableScroll` (line 533).
-- `STAGE_CHANGE` → `_onStageChange` (line 534).
-- `QUALITY_CHANGE` → `_onQualityChange` (line 535).
-- `PREWARM_GENESIS_BLUEPRINT` → `_onPrewarmGenesis` (line 536).
-- `BUILD_EMERGENCE_BLUEPRINT` → `_onBuildEmergence` (line 537).
-- `START_CLIMAX` → `_handleStartClimax` (line 538).
-- `PARTICLES_EMERGED` → inline fencepost reset (lines 539–547).
-- `BLUEPRINT_INVALIDATED` → `_onBlueprintInvalidated` (line 549, optional listener).
+- `ENGINE_VIEWPORT_HINT` → `_onViewportHint` (line 428).
+- `ENABLE_SCROLL` → `_onEnableScroll` (line 456).
+- `STAGE_CHANGE` → `_onStageChange` (line 462).
+- `QUALITY_CHANGE` → `_onQualityChange` (line 488).
+- `PREWARM_GENESIS_BLUEPRINT` → `_onPrewarmGenesis` (line 498).
+- `BUILD_EMERGENCE_BLUEPRINT` → `_onBuildEmergence` (line 549).
+- `START_CLIMAX` → `_handleStartClimax` (line 790).
+- `PARTICLES_EMERGED` → inline fencepost reset (line 394 listener lambda).
+- `BLUEPRINT_INVALIDATED` → `_onBlueprintInvalidated` (line 513, optional).
 
 ## Duplication Highlights
-- Repeated AABB/min–max loops (lines 66–77, 146–155, 1713–1721, 2098–2108, 2364–2374) – candidate for shared `calcBounds()` helper.
-- Gaussian random helpers defined multiple times (lines 1546–1553 and 2273–2320) – can consolidate into one utility.
-- Blueprint emission payloads duplicated for each path (`BeatBus.emit(EVENTS.BLUEPRINT_READY)` at lines 719, 1835, 1862, 1887, 1306) – shared emitter would reduce drift.
-- Float32Array allocation patterns repeated in `_createEmptyBlueprint` (lines 1471–1489) and `_buildBlueprintForStage` (1959–1976) – can centralize blueprint buffer factory.
+- Stage blueprint and constellation logic now live solely in `BlueprintGenerator`; `ConsciousnessEngine` delegates instead of duplicating implementation.
+- Repeated `emitBlueprintReady` payload construction (lines 574, 1159, 1644, 1670, 1694) varies only slightly; consider a dedicated helper to avoid mismatched metadata.
+- Scatter/QR fallbacks repeatedly call `generateScatterPositions` (lines 1061, 1105, 1113, 1118, 1213), suggesting a shared factory for deterministic fallbacks.
+- Atmospheric scatter still shares gaussian helpers with `BlueprintGenerator` (lines 1376–1422); could be centralized in `blueprintUtils` to guarantee identical tuning.
 
 ## External Callers (Who Uses ConsciousnessEngine?)
-1. `src/theater/TheaterDirector.js` – emits `BUILD_EMERGENCE_BLUEPRINT`, `ENGINE_VIEWPORT_HINT`, `STAGE_CHANGE`, `QUALITY_CHANGE`, `START_CLIMAX`, and waits on `BLUEPRINT_READY` / `PARTICLES_EMERGED`.
-2. `src/state/commands/StateCommands.js` – enforces opening-phase contracts before emitting `BUILD_EMERGENCE_BLUEPRINT`, listens for `STAGE_CHANGE`/`QUALITY_CHANGE`.
-3. `src/components/webgl/WebGLBackground.jsx` – emits `ENGINE_VIEWPORT_HINT`, `PARTICLES_EMERGED`, and consumes `BLUEPRINT_READY` payloads from the engine.
-4. `src/components/consciousness/ConsciousnessTheater.jsx` – drives initial viewport hints and waits for `ENABLE_SCROLL`.
-5. `src/components/fragments/ClimaxSequenceController.jsx` – triggers `START_CLIMAX` when UI enters climax mode.
-6. `src/App.jsx` – imports `./engine/ConsciousnessEngine` for side-effect instantiation (HMR-safe singleton).
+1. `src/theater/TheaterDirector.js:909` – emits `BUILD_EMERGENCE_BLUEPRINT` for chaos prebind; `src/theater/TheaterDirector.js:1535` pushes `ENGINE_VIEWPORT_HINT` during director startup.
+2. `src/state/commands/StateCommands.js:253` – programmatic emergence trigger that enforces BeatBus contracts.
+3. `src/theater/ScrollOrchestrator.js:324` – emits `SCROLL_PROGRESS` and `STAGE_CHANGE` events that the engine listens for stage transitions.
+4. `src/components/webgl/WebGLBackground.jsx:671` – calculates camera-derived viewport hints and emits `ENGINE_VIEWPORT_HINT`.
+5. `src/components/consciousness/ConsciousnessTheater.jsx:230` – synthesizes a viewport hint if none arrive, ensuring engine bootstrap.
+6. `src/components/fragments/ClimaxSequenceController.jsx:49` – arms climax mode and emits `START_CLIMAX`.
+7. `src/App.jsx:16` – imports the engine module for singleton instantiation on app boot.
 
 ## Critical API (Must Preserve)
-- BeatBus contract: `BUILD_EMERGENCE_BLUEPRINT` → engine must emit `EVENTS.BLUEPRINT_READY` (mode `emergence`) and respect `skipMorphAnimation` / `fastForward`.
-- BeatBus contract: `STAGE_CHANGE` & `QUALITY_CHANGE` → engine rebuild via `buildAndEmitBlueprint`, emit `EVENTS.BLUEPRINT_READY` with cache metadata.
-- Climax trigger: `START_CLIMAX` → engine drives `_handleStartClimax`, emitting `EVENTS.CLIMAX_STEP` and `EVENTS.MORPH_PROGRESS`.
-- Dev tooling: `window.engineDebug.getStats()` / `clearCache()` signatures and payload shape.
-- Font readiness: `loadFont(url)` promise resolves to Three.js font and triggers emergence rebuild when fallback was used.
+- `BUILD_EMERGENCE_BLUEPRINT` must yield a `BLUEPRINT_READY` payload with compatible metadata and respect `skipMorphAnimation` / `fastForward`.
+- `STAGE_CHANGE` / `QUALITY_CHANGE` must continue to call `buildAndEmitBlueprint` so renderers receive `BLUEPRINT_READY` updates.
+- `ENGINE_VIEWPORT_HINT` updates must keep `_onViewportHint` semantics to ensure viewport fit math remains stable.
+- `START_CLIMAX` needs to continue driving `_handleStartClimax` so downstream listeners receive `CLIMAX_STEP` and associated `MORPH_PROGRESS`.
+- `window.engineDebug` surface (`getStats`, `clearCache`, `loadFont`) is relied on by playbooks and diagnostic tooling; signatures should remain intact.

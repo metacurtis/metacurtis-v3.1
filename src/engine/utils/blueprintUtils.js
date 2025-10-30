@@ -163,3 +163,127 @@ export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
   BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
   return payload;
 }
+
+const DEG2RAD = Math.PI / 180;
+
+/**
+ * Create helpers for band sampling used by constellation generation.
+ *
+ * @param {object} vc - Visual controls config.
+ * @param {() => number} rnd - Source of uniform randomness.
+ * @param {() => number} gauss - Source of gaussian randomness.
+ * @returns {{sampleBand:(bias?:number,scaleX?:number,scaleY?:number)=>[number,number]}}
+ */
+export function makeBandFrame(vc, rnd, gauss) {
+  const angleDeg = vc.BAND_ANGLE_DEG ?? 0;
+  const ANG = angleDeg * DEG2RAD;
+  const c = Math.cos(ANG);
+  const s = Math.sin(ANG);
+  const len = vc.BAND_LENGTH_SCALE ?? 2.2;
+  const core = vc.BAND_CORE_WIDTH ?? 0.08;
+  const fade = vc.BAND_FADE_WIDTH ?? 0.2;
+  const unrot = (u, v) => [c * u - s * v, s * u + c * v];
+  const sampleBand = (bias = 1, scaleX = 1, scaleY = 1) => {
+    const u = (rnd() * 2 - 1) * len;
+    const useCore = rnd() < 0.7;
+    const v = (useCore ? gauss() * core : gauss() * fade) / Math.max(0.001, bias);
+    const [ux, uy] = unrot(u, v);
+    return [ux * scaleX, uy * scaleY];
+  };
+  return { sampleBand };
+}
+
+/**
+ * Fit a formation to a viewport by scaling its XY extent.
+ *
+ * @param {Float32Array} out
+ * @param {number} vw
+ * @param {number} vh
+ * @param {number|object|Array} fitFrac
+ */
+export function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
+  if (!fitFrac || fitFrac <= 0 || !out?.length) return;
+
+  const computeScale = () => {
+    const bounds = calculateBounds(out);
+    if (!bounds) return 1;
+
+    const halfX = bounds.size.x * 0.5;
+    const halfY = bounds.size.y * 0.5;
+    let fracX;
+    let fracY;
+
+    if (Array.isArray(fitFrac)) {
+      fracX = Number.isFinite(fitFrac[0]) ? fitFrac[0] : 1;
+      fracY = Number.isFinite(fitFrac[1]) ? fitFrac[1] : fracX;
+    } else if (typeof fitFrac === 'object') {
+      const fallback = Number.isFinite(fitFrac.default) ? fitFrac.default : 1;
+      const resolvedX = fitFrac.x ?? fitFrac.width ?? fitFrac.horizontal ?? fitFrac[0];
+      const resolvedY = fitFrac.y ?? fitFrac.height ?? fitFrac.vertical ?? fitFrac[1];
+      fracX = Number.isFinite(resolvedX) ? resolvedX : fallback;
+      fracY = Number.isFinite(resolvedY) ? resolvedY : (Number.isFinite(resolvedX) ? resolvedX : fallback);
+    } else {
+      const scalar = Number.isFinite(fitFrac) ? fitFrac : 1;
+      fracX = scalar;
+      fracY = scalar;
+    }
+
+    const goalX = vw ? fracX * vw : null;
+    const goalY = vh ? fracY * vh : null;
+
+    const ratioX = goalX ? goalX / Math.max(halfX, 1e-6) : Infinity;
+    const ratioY = goalY ? goalY / Math.max(halfY, 1e-6) : Infinity;
+
+    const target = Math.min(ratioX, ratioY);
+    return Number.isFinite(target) ? target : 1;
+  };
+
+  const scale = computeScale();
+  if (Number.isFinite(scale) && Math.abs(scale - 1) > 1e-3) {
+    for (let i = 0; i < out.length; i += 3) {
+      out[i] *= scale;
+      out[i + 1] *= scale;
+    }
+  }
+}
+
+/**
+ * Clones plain data structures when available.
+ *
+ * @param {any} value
+ * @returns {any}
+ */
+export function safeClone(value) {
+  if (value == null) return null;
+  try {
+    return structuredClone(value);
+  } catch {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+}
+
+/**
+ * Distribute particles according to provided ratios.
+ *
+ * @param {number} total
+ * @param {number[]} ratios
+ * @returns {number[]}
+ */
+export function distributeParticles(total, ratios = []) {
+  const normalized = Array.isArray(ratios) && ratios.length === 4
+    ? ratios.slice()
+    : [0.7, 0.12, 0.13, 0.05];
+  const counts = normalized.map((ratio) => Math.max(0, Math.floor(total * ratio)));
+  let remainder = total - counts.reduce((sum, count) => sum + count, 0);
+  let index = 0;
+  while (remainder > 0) {
+    counts[index % counts.length] += 1;
+    remainder -= 1;
+    index += 1;
+  }
+  return counts;
+}

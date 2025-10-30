@@ -1898,6 +1898,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         meshRef.current.rotation.y *= 0.92;
       }
     }
+    const needsFrame =
+      timeTickEnabledRef.current ||
+      Boolean(spinRef.current?.active) ||
+      emergencePendingRef.current ||
+      !emittedEmergedRef.current;
+
+    if (needsFrame && typeof state.invalidate === 'function') {
+      state.invalidate();
+    }
   });
 
 
