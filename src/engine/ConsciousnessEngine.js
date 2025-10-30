@@ -408,10 +408,13 @@ class ConsciousnessEngine {
       this._lastEmergenceTargets = blueprint.text3DPositions;
 
       // Emit emergence blueprint with mode flag (canonical event)
+      const variantMode = openingChaosMode ? 'opening_chaos' : 'emergence';
+      const emissionMode = 'emergence';
       emitBlueprintReady(BeatBus, EVENTS, blueprint, {
         stage: 'genesis',
         quality: this.currentQuality,
-        mode: payload.mode || 'emergence',
+        mode: emissionMode,
+        variantMode,
         cached: false,
         skipMorphAnimation: !!payload.skipMorphAnimation,
         targetState: payload.targetState,
@@ -420,13 +423,13 @@ class ConsciousnessEngine {
       });
       
       if (openingChaosMode) {
-        console.log('🧠 Engine: Opening chaos blueprint emitted', { count: blueprint.particleCount });
+        console.log('🧠 Engine: Opening chaos blueprint emitted', { count: blueprint.particleCount, mode: variantMode });
         this._openingPreboundBlueprint = blueprint;
-        this._log('emergence_built', { count: blueprint.particleCount, mode: 'opening_chaos' });
+        this._log('emergence_built', { count: blueprint.particleCount, mode: variantMode });
       } else {
-        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
+        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: emissionMode });
         this._openingPreboundBlueprint = null;
-        this._log('emergence_built', { count: blueprint.particleCount });
+        this._log('emergence_built', { count: blueprint.particleCount, mode: emissionMode });
       }
 
       // Drive implosion → settle via directives; renderer remains passive
@@ -563,7 +566,7 @@ class ConsciousnessEngine {
    */
   async buildEmergenceBlueprint(options = {}) {
     const {
-      mode = 'emergence',
+      mode: requestedMode = 'emergence',
       source = 'viewportSpread',
       target = 'constellation',
       count = SST?.performance?.particleCount?.genesis ?? 2000,
@@ -579,7 +582,7 @@ class ConsciousnessEngine {
       tierRatios || this._getGenesisTierRatiosFromSST()
     );
 
-    const blueprint = this._createEmptyBlueprint(count, { mode, quality });
+    const blueprint = this._createEmptyBlueprint(count, { mode: requestedMode, quality });
     if (!blueprint) return null;
 
     const blueprintCount = blueprint.particleCount;
@@ -664,8 +667,12 @@ class ConsciousnessEngine {
 
     const forwardFlag = !!(fastForward || skipMorphAnimation);
 
+    const variantMode = requestedMode;
+    const emissionMode = 'emergence';
+
     blueprint.metadata = {
-      mode,
+      mode: emissionMode,
+      variantMode,
       source,
       target: use3D ? `text3D:${wordRaw}${usedFallback ? ':FALLBACK' : ''}` : target,
       tierRatios: sanitizedRatios,
@@ -680,13 +687,14 @@ class ConsciousnessEngine {
         : 'Emergence endpoints separated: random atmospheric → 3D text target',
     };
 
-    blueprint.mode = mode;
+    blueprint.mode = emissionMode;
     blueprint.fastForward = forwardFlag;
     if (skipMorphAnimation) blueprint.skipMorphAnimation = true;
     if (targetState) blueprint.targetState = targetState;
 
     trace('CE:EMIT', {
-      mode,
+      mode: emissionMode,
+      variantMode,
       stage: 'genesis',
       atmoAABB: aabbOf(blueprint.atmosphericPositions),
       textAABB: aabbOf(blueprint.text3DPositions),
