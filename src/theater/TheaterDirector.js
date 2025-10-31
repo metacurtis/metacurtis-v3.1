@@ -8,7 +8,7 @@ import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
-import ScrollOrchestrator from './ScrollOrchestrator.js';
+import { OpeningSequenceController } from './controllers/OpeningSequenceController.js';
 
 // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
 if (typeof window !== 'undefined') {
@@ -32,33 +32,6 @@ if (typeof window !== 'undefined') {
 
 const DEBUG_NARRATION = true;
 
-const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
-const DEFAULT_TYPING_LINES = [
-  'READY.',
-  `10 PRINT "${GENESIS_STAGE_WORD}"`,
-  '20 GOTO 10',
-  'RUN',
-];
-
-const DEFAULT_OPENING_TIMELINE = {
-  blackout: { durationMs: 2000 },
-  cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
-  typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
-  fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
-  chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
-  coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
-  settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
-  emergence: {
-    durationMs: 2000,
-    waitForFencepost: true,
-    maxWaitMs: 5000,
-    stabilizeMs: 500,
-    skipMorphAnimation: false,
-    skipGenesisBlueprint: true,
-    targetState: 'genesis_initial',
-  },
-};
-
 const clamp01 = (value) => {
   if (!Number.isFinite(value)) return 0;
   if (value <= 0) return 0;
@@ -76,12 +49,6 @@ function hideInstantLoader() {
     loader.classList.add('hidden');
   }
 }
-
-const DEFAULT_OPENING_EMERGENCE = {
-  target: 'constellation',
-  mode: 'emergence',
-  source: 'viewportSpread',
-};
 
 const SKIP_KEY_MAP = {
   SPACE: { codes: ['Space'], keys: [' ', 'Spacebar'] },
@@ -104,6 +71,7 @@ class TheaterDirector {
     this.reset();
     this.timeline = {};
     this.scrollOrchestrator = null;
+    this.openingController = null;
     this.narrationController = null;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
@@ -131,6 +99,9 @@ class TheaterDirector {
     } catch (timelineError) {
       console.warn('⚠️ [OPENING TIMELINE] Unable to resolve opening configuration', timelineError);
     }
+
+    // Initialize opening sequence controller
+    this.openingController = new OpeningSequenceController(this);
 
     this._handleStageChangeBound = (payload = {}) => {
       const targetStage = payload?.to ?? payload?.stage ?? null;
@@ -161,65 +132,7 @@ class TheaterDirector {
   }
 
   _getOpeningConfig() {
-    const opening = SST?.narrative?.opening ?? {};
-    const openingTimeline = opening.timeline ?? {};
-    const stageTimeline = SST?.stages?.genesis?.openingTimeline ?? {};
-
-    const timeline = {
-      blackout: {
-        ...DEFAULT_OPENING_TIMELINE.blackout,
-        ...(openingTimeline.blackout ?? {}),
-        ...(stageTimeline.blackout ?? {}),
-      },
-      cursor: {
-        ...DEFAULT_OPENING_TIMELINE.cursor,
-        ...(openingTimeline.cursor ?? {}),
-        ...(stageTimeline.cursor ?? {}),
-      },
-      typing: {
-        ...DEFAULT_OPENING_TIMELINE.typing,
-        ...(openingTimeline.typing ?? {}),
-        ...(stageTimeline.typing ?? {}),
-      },
-      fill: {
-        ...DEFAULT_OPENING_TIMELINE.fill,
-        ...(openingTimeline.fill ?? {}),
-        ...(stageTimeline.fill ?? {}),
-      },
-      chaos: {
-        ...DEFAULT_OPENING_TIMELINE.chaos,
-        ...(openingTimeline.chaos ?? {}),
-        ...(stageTimeline.chaos ?? {}),
-      },
-      coalesce: {
-        ...DEFAULT_OPENING_TIMELINE.coalesce,
-        ...(openingTimeline.coalesce ?? {}),
-        ...(stageTimeline.coalesce ?? {}),
-      },
-      settle: {
-        ...DEFAULT_OPENING_TIMELINE.settle,
-        ...(openingTimeline.settle ?? {}),
-        ...(stageTimeline.settle ?? {}),
-      },
-      profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
-      narration: stageTimeline.narration ?? openingTimeline.narration ?? null,
-      beatGlyph: stageTimeline.beatGlyph ?? openingTimeline.beatGlyph ?? null,
-    };
-
-    const emergenceTimeline = stageTimeline.emergence ?? openingTimeline.emergence ?? {};
-
-    const fallbackSkipKey = 'SPACE';
-
-    return {
-      skipKey:
-        stageTimeline.skipKey ??
-        opening.skipKey ??
-        SST?.narrative?.orchestration?.skipKey ??
-        fallbackSkipKey,
-      totalDurationMs: stageTimeline.totalDurationMs ?? opening.totalDurationMs ?? null,
-      timeline,
-      emergence: { ...DEFAULT_OPENING_EMERGENCE, ...emergenceTimeline },
-    };
+    return this.openingController?.getOpeningConfig?.() ?? {};
   }
 
   _getGenesisParticleCount() {
@@ -229,20 +142,7 @@ class TheaterDirector {
   }
 
   _calculateTypingDuration(typingConfig) {
-    if (!typingConfig) return 0;
-    const lines = Array.isArray(typingConfig.lines) ? typingConfig.lines : [];
-    const typeSpeed = Number(typingConfig.typeSpeed) || 0;
-    const lineDelay = Number(typingConfig.lineDelay) || 0;
-
-    if (!lines.length || !typeSpeed) return 0;
-
-    let total = 0;
-    for (let i = 0; i < lines.length; i++) {
-      const line = typeof lines[i] === 'string' ? lines[i] : '';
-      total += line.length * typeSpeed;
-      if (i < lines.length - 1) total += lineDelay;
-    }
-    return total;
+    return this.openingController?.calculateTypingDuration?.(typingConfig) ?? 0;
   }
 
   _attachSkipListener(skipKey) {
@@ -523,6 +423,7 @@ class TheaterDirector {
     this.skipRequested = true;
     this._skipOrigin = origin;
     console.log(`🎬 Director: Opening skip requested via ${origin}`);
+    this.openingController?.requestSkip?.(origin);
     this._cancelMorphAnimation();
     this._wakeSleepWaiters('skipped');
   }
@@ -572,6 +473,7 @@ class TheaterDirector {
 
     this._wakeSleepWaiters('reset');
     this._detachSkipListener();
+    this.openingController?.cancel?.();
 
     if (this._activeTimers?.size) {
       for (const id of this._activeTimers) {
@@ -680,23 +582,15 @@ class TheaterDirector {
 
     const openingSnapshot = this._getOpeningConfig();
     const snapshotTimeline = openingSnapshot?.timeline ?? {};
-    const snapshotTyping = {
-      ...DEFAULT_OPENING_TIMELINE.typing,
-      ...(snapshotTimeline.typing ?? {}),
-    };
-    snapshotTyping.lines =
-      Array.isArray(snapshotTyping.lines) && snapshotTyping.lines.length
-        ? snapshotTyping.lines
-        : DEFAULT_OPENING_TIMELINE.typing.lines;
+    const snapshotTyping = snapshotTimeline.typing ?? {};
     const snapshotTypingDuration = this._calculateTypingDuration(snapshotTyping);
 
     const segments = [
-      `black ${snapshotTimeline?.blackout?.durationMs ?? DEFAULT_OPENING_TIMELINE.blackout.durationMs}ms`,
-      `cursor blink x${snapshotTimeline?.cursor?.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount}` +
-        ` @ ${(snapshotTimeline?.cursor?.intervalMs ?? DEFAULT_OPENING_TIMELINE.cursor.intervalMs)}ms`,
+      `black ${snapshotTimeline.blackout?.durationMs ?? 0}ms`,
+      `cursor blink x${snapshotTimeline.cursor?.blinkCount ?? 0} @ ${snapshotTimeline.cursor?.intervalMs ?? 0}ms`,
       `typing ~${snapshotTypingDuration}ms`,
-      `fill ${snapshotTimeline?.fill?.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs}ms`,
-      `emergence ${snapshotTimeline?.emergence?.durationMs ?? DEFAULT_OPENING_TIMELINE.emergence.durationMs}ms`,
+      `fill ${snapshotTimeline.fill?.durationMs ?? 0}ms`,
+      `emergence ${openingSnapshot?.emergence?.durationMs ?? 0}ms`,
     ];
 
     console.log('🎬 Director: Starting SST v3.5 opening sequence');
@@ -720,520 +614,18 @@ class TheaterDirector {
     }
   }
 
+  /**
+   * Run opening sequence – delegate to OpeningSequenceController.
+   */
   async _runSequence() {
-    console.log('🎬 [RUN SEQUENCE] Starting', {
-      phase: this.phase,
-      currentStage: this.currentStage,
-      timestamp: Date.now(),
-    });
-    // Optional prewarm (disabled during debugging to avoid stale cache)
-    // await this.prewarm();
+    console.log('🎬 Director: Delegating to OpeningSequenceController');
 
-    const opening = this._getOpeningConfig();
-    const { timeline, skipKey, emergence: openingEmergence } = opening ?? {};
-
-    const blackoutDuration = Math.max(
-      0,
-      Number(timeline?.blackout?.durationMs ?? DEFAULT_OPENING_TIMELINE.blackout.durationMs),
-    );
-
-    const cursorConfig = {
-      ...DEFAULT_OPENING_TIMELINE.cursor,
-      ...(timeline?.cursor ?? {}),
-    };
-    const cursorLeadInMs = Math.max(0, Number(cursorConfig.leadInMs ?? 0));
-    const cursorSettleMs = Math.max(0, Number(cursorConfig.settleMs ?? 0));
-    const cursorBlinkCount = Math.max(0, Number(cursorConfig.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount));
-    const cursorIntervalMs = Math.max(0, Number(cursorConfig.intervalMs ?? DEFAULT_OPENING_TIMELINE.cursor.intervalMs));
-    const cursorHumVolume = Number.isFinite(cursorConfig.humVolume) ? cursorConfig.humVolume : 0.25;
-
-    const typingConfig = {
-      ...DEFAULT_OPENING_TIMELINE.typing,
-      ...(timeline?.typing ?? {}),
-    };
-    typingConfig.lines =
-      Array.isArray(typingConfig.lines) && typingConfig.lines.length
-        ? typingConfig.lines
-        : DEFAULT_OPENING_TIMELINE.typing.lines;
-    typingConfig.typeSpeed = Math.max(0, Number(typingConfig.typeSpeed ?? DEFAULT_OPENING_TIMELINE.typing.typeSpeed));
-    typingConfig.lineDelay = Math.max(0, Number(typingConfig.lineDelay ?? DEFAULT_OPENING_TIMELINE.typing.lineDelay));
-    typingConfig.completionDelayMs = Math.max(
-      0,
-      Number(
-        typingConfig.completionDelayMs ??
-          typingConfig.completionDelay ??
-          DEFAULT_OPENING_TIMELINE.typing.completionDelayMs ??
-          0,
-      ),
-    );
-    const typingDuration = this._calculateTypingDuration(typingConfig);
-
-    const fillConfig = {
-      ...DEFAULT_OPENING_TIMELINE.fill,
-      ...(timeline?.fill ?? {}),
-    };
-    fillConfig.durationMs = Math.max(0, Number(fillConfig.durationMs ?? DEFAULT_OPENING_TIMELINE.fill.durationMs));
-    fillConfig.scrollSpeed = Math.max(0, Number(fillConfig.scrollSpeed ?? DEFAULT_OPENING_TIMELINE.fill.scrollSpeed));
-    if (typeof fillConfig.text !== 'string' || !fillConfig.text.trim()) {
-      const canonicalFillWord = Canonical?.visual?.letterGeometry?.genesis?.word || GENESIS_STAGE_WORD;
-      fillConfig.text = `${canonicalFillWord} `;
+    if (!this.openingController) {
+      console.error('[Director] OpeningSequenceController not initialized!');
+      return;
     }
 
-    const chaosConfig = timeline?.chaos || {};
-    const coalesceConfig = timeline?.coalesce || {};
-    const settleConfig = timeline?.settle || {};
-
-    const emergenceTimeline = {
-      ...DEFAULT_OPENING_TIMELINE.emergence,
-      ...(timeline?.emergence ?? {}),
-    };
-    emergenceTimeline.durationMs = Math.max(
-      0,
-      Number(emergenceTimeline.durationMs ?? DEFAULT_OPENING_TIMELINE.emergence.durationMs),
-    );
-    emergenceTimeline.maxWaitMs = Math.max(
-      0,
-      Number(emergenceTimeline.maxWaitMs ?? DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs),
-    );
-    const fencepostWaitMs = emergenceTimeline.maxWaitMs || DEFAULT_OPENING_TIMELINE.emergence.maxWaitMs;
-    const waitForFencepost = emergenceTimeline.waitForFencepost !== false;
-    const shouldWaitForFencepost = waitForFencepost && !this._openingPrebound;
-    const stabilizeMs = Math.max(
-      0,
-      Number(emergenceTimeline.stabilizeMs ?? DEFAULT_OPENING_TIMELINE.emergence.stabilizeMs ?? 0),
-    );
-    const skipMorphAnimation = emergenceTimeline.skipMorphAnimation === true;
-    const skipGenesisBlueprint = emergenceTimeline.skipGenesisBlueprint !== false;
-    const targetState = emergenceTimeline.targetState || DEFAULT_OPENING_TIMELINE.emergence.targetState;
-
-    const emergenceConfig = { ...DEFAULT_OPENING_EMERGENCE, ...(openingEmergence ?? {}) };
-    const genesisCount = this._getGenesisParticleCount();
-    const skipLabel = skipKey ?? 'SPACE';
-
-    this._attachSkipListener(skipKey);
-
-    let skipTriggered = false;
-
-    const handleWaitResult = (result) => {
-      if (result === 'cancelled' || this.cancelled) return 'cancelled';
-      if (result === 'skipped' || this.skipRequested) skipTriggered = true;
-      return null;
-    };
-    const morphStage = 'genesis';
-    let currentMorphValue = 0;
-    const emitMorphSnapshot = (value, phase, target = value, durationMs = 0) => {
-      this._emitMorphProgress(value, {
-        target,
-        stage: morphStage,
-        phase,
-        durationMs,
-        source: 'director/snapshot',
-      });
-    };
-    const animateMorph = (from, to, durationMs, phase) =>
-      this._animateMorphPhase({
-        from,
-        to,
-        durationMs,
-        stage: morphStage,
-        phase,
-        skipSignal: () => skipTriggered || this.skipRequested || this.cancelled,
-      });
-
-    try {
-      // ───────────────── Phase 1: Black
-      this.phase = 'black';
-      console.log(`   Phase: Black screen (${blackoutDuration}ms)`);
-      if (blackoutDuration > 0) {
-        const waitResult = await this.sleep(blackoutDuration);
-        if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-      if (skipTriggered) {
-        console.log(`   Skip triggered before cursor phase (key: ${skipLabel})`);
-      }
-
-      // ───────────────── Phase 2: Cursor
-      if (!skipTriggered) {
-        this.phase = 'cursor';
-        console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);
-        BeatBus.emit(EVENTS.CURSOR_SHOW);
-        BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });
-        if (cursorLeadInMs > 0) {
-          const waitResult = await this.sleep(cursorLeadInMs);
-          if (handleWaitResult(waitResult) === 'cancelled') return;
-        }
-        if (!skipTriggered) {
-          BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
-          if (cursorSettleMs > 0) {
-            const waitResult = await this.sleep(cursorSettleMs);
-            if (handleWaitResult(waitResult) === 'cancelled') return;
-          }
-        }
-      }
-
-      // ───────────────── Phase 3: Terminal typing
-      if (!skipTriggered) {
-        this.phase = 'terminal';
-        console.log(`   Phase: Terminal typing (~${typingDuration}ms)`);
-        BeatBus.emit(EVENTS.TERMINAL_TYPE, typingConfig);
-        if (typingDuration > 0) {
-          const waitResult = await this.sleep(typingDuration);
-          if (handleWaitResult(waitResult) === 'cancelled') return;
-        }
-        if (typingConfig.completionDelayMs > 0) {
-          const waitResult = await this.sleep(typingConfig.completionDelayMs);
-          if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-    }
-
-    // ───────────────── Phase 4: Fill
-    if (!skipTriggered) {
-      this.phase = 'fill';
-      console.log(`   Phase: Screen fill (${fillConfig.durationMs}ms)`);
-      BeatBus.emit(EVENTS.SCREEN_FILL, { text: fillConfig.text, scrollSpeed: fillConfig.scrollSpeed });
-      if (fillConfig.durationMs > 0) {
-        const waitResult = await this.sleep(fillConfig.durationMs);
-        if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-    }
-
-    if (!skipTriggered && chaosConfig?.enabled !== false) {
-      console.log('🔍 [ABOUT TO START CHAOS]', {
-        chaosConfig,
-        currentMorph: currentMorphValue,
-        timestamp: Date.now(),
-      });
-      if (!this._openingPrebound) {
-        try {
-          console.log('   Phase: Pre-chaos blueprint bind');
-          BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
-            mode: 'opening_chaos',
-            source: 'director:opening',
-            stage: 'genesis',
-            target: 'genesis_opening',
-            count: genesisCount,
-            tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
-              ? Canonical.stages.genesis.tierMix
-              : (Array.isArray(VC?.TIER_RATIOS) ? VC.TIER_RATIOS : undefined),
-            skipMorphAnimation: true,
-            fastForward: true,
-          });
-          this._openingPrebound = true;
-        } catch (bindError) {
-          console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);
-        }
-        const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
-        if (bindSettleMs > 0) {
-          const waitResult = await this.sleep(bindSettleMs);
-          if (handleWaitResult(waitResult) === 'cancelled') return;
-        }
-      }
-
-      if (!this._preChaosReady) {
-        const readinessResult = await Promise.race([
-          this._waitForEvent(EVENTS.PARTICLES_EMERGED, {
-            timeout: 1200,
-            predicate: (payload = {}) => {
-              const stageName = payload?.stage || payload?.stageName;
-              return !payload || stageName === 'genesis';
-            },
-          }).then((payload) => ({ type: 'particles', payload })),
-          this._waitForEvent(EVENTS.BLUEPRINT_READY, {
-            timeout: 1200,
-            predicate: (payload = {}) => {
-              const blueprint = payload?.blueprint ?? payload;
-              const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
-              const mode = payload?.mode || blueprint?.mode;
-              return stageName === 'genesis' && mode !== 'emergence';
-            },
-          }).then((payload) => ({ type: 'blueprint', payload })),
-        ]);
-
-        if (!readinessResult) {
-          console.warn('⚠️ Director: Pre-chaos renderer readiness timed out');
-        } else {
-          console.log('✅ Blueprint bound and particles ready', {
-            via: readinessResult.type,
-            timestamp: Date.now(),
-          });
-        }
-        this._preChaosReady = true;
-      }
-
-      const chaosDuration = Math.max(0, Number(chaosConfig.durationMs) || 0);
-      this.phase = 'chaos';
-      console.log(`   Phase: Chaos (${chaosDuration}ms)`);
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-        name: 'chaos',
-        duration: chaosDuration,
-        rendererSpin: chaosConfig.rendererSpin || null,
-      });
-      const chaosTarget = Number.isFinite(chaosConfig.morphTo)
-        ? clamp01(chaosConfig.morphTo)
-        : 0.0;
-      const chaosAnimation = animateMorph(currentMorphValue, chaosTarget, chaosDuration, 'chaos');
-      if (chaosDuration > 0) {
-        const waitResult = await this.sleep(chaosDuration);
-        if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-      if (chaosAnimation) {
-        await chaosAnimation;
-      }
-      currentMorphValue = chaosTarget;
-    }
-
-    if (!skipTriggered && coalesceConfig?.enabled !== false) {
-      console.log('🔍 [ABOUT TO START COALESCE]', {
-        coalesceConfig,
-        currentMorph: currentMorphValue,
-        timestamp: Date.now(),
-      });
-      const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);
-      this.phase = 'coalesce';
-      console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-        name: 'coalesce',
-        duration: coalesceDuration,
-        morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
-      });
-      const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
-      const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
-      let coalesceAnimation = null;
-      if (hasCoalesceTarget) {
-        coalesceAnimation = animateMorph(currentMorphValue, coalesceTarget, coalesceDuration, 'coalesce');
-      } else {
-        emitMorphSnapshot(currentMorphValue, 'coalesce', coalesceTarget, coalesceDuration);
-      }
-      if (coalesceDuration > 0) {
-        const waitResult = await this.sleep(coalesceDuration);
-        if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-      if (coalesceAnimation) {
-        await coalesceAnimation;
-      }
-      currentMorphValue = coalesceTarget;
-    }
-
-    if (!skipTriggered && settleConfig?.enabled !== false) {
-      console.log('🔍 [ABOUT TO START SETTLE]', {
-        settleConfig,
-        currentMorph: currentMorphValue,
-        timestamp: Date.now(),
-      });
-      const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
-      this.phase = 'settle';
-      console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-      BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-        name: 'settle',
-        duration: settleDuration,
-        morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-      });
-      const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-      const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-      let settleAnimation = null;
-      if (hasSettleTarget) {
-        settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
-      } else {
-        emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
-      }
-      if (settleDuration > 0) {
-        const waitResult = await this.sleep(settleDuration);
-        if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-      if (settleAnimation) {
-        await settleAnimation;
-      }
-      currentMorphValue = settleTarget;
-    }
-
-    if (skipTriggered) {
-      console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
-      if (currentMorphValue < 1) {
-        emitMorphSnapshot(1, 'skip-fast-forward', 1, 0);
-        currentMorphValue = 1;
-      }
-      this._cancelMorphAnimation();
-    }
-
-    // ───────────────── Phase 5: Emergence (viewport → constellation)
-    this.phase = 'emergence';
-    const reusePreboundBlueprint = this._openingPrebound === true;
-    console.log(`   Phase: Particle emergence (${reusePreboundBlueprint ? 'reusing pre-bound blueprint' : 'SST governed'})`);
-
-    const viewportHint = await this._ensureViewportHint();
-
-    if (!reusePreboundBlueprint) {
-      BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
-        mode: emergenceConfig.mode,
-        source: emergenceConfig.source,
-        target: emergenceConfig.target,
-        count: genesisCount,
-        tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
-          ? Canonical.stages.genesis.tierMix
-          : VC?.TIER_RATIOS,
-        viewportHint,
-        fastForward: skipTriggered || skipMorphAnimation,
-        skipMorphAnimation,
-        targetState,
-      });
-    } else {
-      emitMorphSnapshot(currentMorphValue, 'emergence', 1, emergenceTimeline.durationMs);
-    }
-
-    BeatBus.emit(EVENTS.PARTICLES_START_EMERGING);
-
-      this.emitTune({
-        particleFlash: 1.3,
-        opacityMin: 0.7,
-        opacityMax: 1.0,
-        driftAmp: 1.0,
-        vibeAmp: 0.2,
-        flutterAmp: 0.6,
-        verticalBias: 0.1,
-      });
-
-      if (shouldWaitForFencepost && !reusePreboundBlueprint) {
-        console.log(`   Waiting for renderer fencepost (<=${fencepostWaitMs}ms)`);
-        if (!this._fencepostReadyEmitted) {
-          const readyPayload = {
-            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
-            phase: 'opening',
-          };
-          BeatBus.emit(EVENTS.FENCEPOST_LISTENERS_READY, readyPayload);
-          this._fencepostReadyEmitted = true;
-        }
-
-        const fencepostFallbackMs = Math.min(1200, fencepostWaitMs);
-        const fencepostReceived = await new Promise((resolve) => {
-          let resolved = false;
-          let fenceTimeoutId = null;
-          let blueprintTimeoutId = null;
-
-          const finish = (result) => {
-            if (resolved) return;
-            resolved = true;
-            this._clearTimer(fenceTimeoutId);
-            this._clearTimer(blueprintTimeoutId);
-            fenceOff?.();
-            blueprintOff?.();
-            resolve(result);
-          };
-
-          const fenceOff = BeatBus.on(EVENTS.PARTICLES_EMERGED, (payload) => {
-            console.log('   Received: PARTICLES_EMERGED');
-            finish({ type: 'fencepost', payload });
-          });
-
-          fenceTimeoutId = this._trackTimer(() => {
-            console.warn(`⚠️ Director: ${EVENTS.PARTICLES_EMERGED} timed out after ${fencepostWaitMs}ms`);
-            finish(null);
-          }, fencepostWaitMs);
-
-          const blueprintOff = BeatBus.on(EVENTS.BLUEPRINT_READY, (payload = {}) => {
-            const blueprint = payload?.blueprint ?? payload;
-            const stage = payload?.stage || blueprint?.stage || blueprint?.stageName;
-            const mode = payload?.mode || blueprint?.mode;
-            const isGenesis = stage === 'genesis';
-            const isEmergenceMode = mode === 'emergence';
-            if (!isGenesis || isEmergenceMode) return;
-            console.log('   Fallback: BLUEPRINT_READY (genesis full) before fencepost');
-            finish({ type: 'blueprint', payload });
-          });
-
-          blueprintTimeoutId = this._trackTimer(() => {
-            blueprintOff?.();
-          }, fencepostFallbackMs);
-        });
-
-        if (!fencepostReceived) {
-          console.warn('   Renderer fencepost timeout, continuing anyway');
-        }
-        if (this.cancelled) return;
-      }
-
-      if (!skipTriggered && stabilizeMs > 0) {
-        const waitResult = await this.sleep(stabilizeMs);
-        if (handleWaitResult(waitResult) === 'cancelled') return;
-      }
-
-      // ───────────────── Phase 6: Genesis handoff
-      const toStage = 'genesis';
-      
-      this.phase = 'genesis';
-      const previousStage = this.currentStage ?? 'emergence';
-      console.log('🧬 Phase: Genesis stage handoff');
-
-      BeatBus.emit(EVENTS.STAGE_CHANGE, {
-        from: previousStage,
-        to: toStage,
-        skipBlueprint: skipGenesisBlueprint,
-        preserveEmergence: true,
-        targetState,
-      });
-
-      try {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      } catch {}
-
-      await this._runVisualSchedule();
-
-      BeatBus.emit(EVENTS.START_NARRATIVE, {
-        stage: toStage,
-        source: 'opening_complete',
-      });
-      this.emitTune({
-        breathingAmp: 0.02,
-        breathingPeriodSec: 4,
-        flareProb: 0.02,
-        flareGain: 1.3,
-        tierSpeedScale: [1.0, 0.8, 0.6, 0.4],
-        pulseOnce: 1,
-      });
-
-      BeatBus.emit(EVENTS.ENABLE_SCROLL);
-      this._openingPrebound = false;
-      
-      if (!this.scrollOrchestrator) {
-        this.scrollOrchestrator = new ScrollOrchestrator();
-      }
-      this.scrollOrchestrator.start();
-      this.monitorFragments();
-
-      this.phase = 'complete';
-
-      if (DEBUG_NARRATION) {
-        const timestamp =
-          typeof performance !== 'undefined' && typeof performance.now === 'function'
-            ? performance.now()
-            : Date.now();
-        console.log('✅ [OPENING COMPLETE]', {
-          nextStage: 'discipline',
-          shouldAutoAdvance: true,
-          timestamp,
-        });
-
-        setTimeout(() => {
-          const win = typeof window !== 'undefined' ? window : undefined;
-          const currentStageSnapshot = this.currentStage;
-          const scrollLocked =
-            (win?.scrollOrchestrator && win.scrollOrchestrator.scrollLocked === true) ||
-            (win?.__scrollOrchestrator && win.__scrollOrchestrator.scrollLocked === true) ||
-            false;
-          const narrationController = this._resolveNarrationController();
-          console.log('🔍 [POST-OPENING STATE]', {
-            currentStage: currentStageSnapshot,
-            scrollLocked,
-            narrationPlaying: !!narrationController?.isPlaying,
-          });
-        }, 100);
-      }
-
-      const elapsed = Date.now() - this.startTime;
-      console.log('🎬 Director: Opening complete → enabling auto-advance');
-      this.handleOpeningComplete({ skipTriggered, opening, elapsed });
-    } finally {
-      this._detachSkipListener();
-    }
+    await this.openingController.runSequence();
   }
 
   handleOpeningComplete({ skipTriggered, opening, elapsed }) {
@@ -1337,6 +729,7 @@ class TheaterDirector {
     this.cancelled = true;
     this.isRunning = false;
     this.phase = 'cancelled';
+    this.openingController?.cancel?.();
     this.scrollOrchestrator?.stop();
     this._cancelMorphAnimation();
     this._wakeSleepWaiters('cancelled');
