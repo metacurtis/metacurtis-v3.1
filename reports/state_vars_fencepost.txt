@@ -1,0 +1,4 @@
+src/theater/controllers/OpeningSequenceController.js:570:        if (!this.director._fencepostReadyEmitted) {
+src/theater/controllers/OpeningSequenceController.js:576:          this.director._fencepostReadyEmitted = true;
+src/theater/TheaterDirector.js:364:    this._fencepostReadyEmitted = false;
+src/theater/TheaterDirector.js:442:    this._fencepostReadyEmitted = false;

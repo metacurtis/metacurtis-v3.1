@@ -1,0 +1,48 @@
+src/state/atoms/narrativeAtom.js:144:  setStage: stageIndex => {
+src/state/atoms/narrativeAtom.js:145:    const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];
+src/state/atoms/stageAtom.js:47:    stageIndex: INITIAL_STAGE_INDEX,
+src/state/atoms/stageAtom.js:378:      const stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+src/state/atoms/stageAtom.js:380:      if (stageIndex === -1) {
+src/state/atoms/stageAtom.js:386:      const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
+src/state/atoms/stageAtom.js:389:        stageIndex,
+src/state/atoms/stageAtom.js:403:        console.log(`🎭 stageAtom: Stage set to ${stageName} (${stageIndex})`);
+src/state/atoms/stageAtom.js:409:      const stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+src/state/atoms/stageAtom.js:411:      if (stageIndex === -1) {
+src/state/atoms/stageAtom.js:417:      const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
+src/state/atoms/stageAtom.js:420:        stageIndex,
+src/state/atoms/stageAtom.js:430:        console.log(`🎭 stageAtom: Jumped to stage ${stageName} (${stageIndex})`);
+src/state/atoms/stageAtom.js:436:      const nextIndex = Math.min(state.stageIndex + 1, STAGE_COUNT - 1);
+src/state/atoms/stageAtom.js:439:      if (nextIndex !== state.stageIndex) {
+src/state/atoms/stageAtom.js:446:      const prevIndex = Math.max(state.stageIndex - 1, 0);
+src/state/atoms/stageAtom.js:449:      if (prevIndex !== state.stageIndex) {
+src/state/atoms/stageAtom.js:480:      let stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+src/state/atoms/stageAtom.js:482:      if (stageIndex === -1) {
+src/state/atoms/stageAtom.js:483:        stageIndex = Math.floor(clampedProgress * (STAGE_COUNT - 1));
+src/state/atoms/stageAtom.js:484:        stageIndex = Math.max(0, Math.min(STAGE_COUNT - 1, stageIndex));
+src/state/atoms/stageAtom.js:485:        stageName = STAGE_NAMES[stageIndex] || null;
+src/state/atoms/stageAtom.js:493:        stageIndex,
+src/state/atoms/stageAtom.js:575:        stageIndex: state.stageIndex,
+src/state/atoms/stageAtom.js:673:    getCurrentStageIndex: () => stageAtom.getState().stageIndex,
+src/theater/ScrollOrchestrator.js:122:            stageIndex: this.lastStageIndex,
+src/theater/ScrollOrchestrator.js:314:        stageIndex: stageIdx,
+src/theater/bus/index.js:279:      if (p.stageIndex !== undefined) extended.stageIndex = p.stageIndex;
+src/theater/bus/schemas.js:19:      stageIndex: 'number',
+src/theater/bus/schemas.js:40:      stageIndex: 'number',
+src/theater/bus/schemas.js:60:      stageIndex: 'number',
+src/engine/modules/ClimaxController.js:230:    const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
+src/engine/modules/ClimaxController.js:245:    if (stageIndex >= 0) {
+src/engine/modules/ClimaxController.js:246:      morphPayload.stageIndex = stageIndex;
+src/engine/modules/MorphController.js:261:    const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
+src/engine/modules/MorphController.js:271:    if (stageIndex >= 0) payload.stageIndex = stageIndex;
+src/components/webgl/WebGLBackground.jsx:1686:    const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
+src/components/webgl/WebGLBackground.jsx:1724:          uStageIndex:      { value: stageIndex },
+src/components/webgl/WebGLBackground.jsx:1725:          uBrainRegion:     { value: stageIndex },
+src/components/webgl/WebGLBackground.jsx:1764:    if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
+src/components/webgl/WebGLBackground.jsx:1765:    if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
+src/state/commands/StateCommands.js:32:    const stageIndex = stageState.stageIndex ?? (stageOrder.indexOf(currentStage));
+src/state/commands/StateCommands.js:41:    if (Number.isFinite(stageIndex) && stageIndex >= 0) {
+src/state/commands/StateCommands.js:42:      payload.stageIndex = stageIndex;
+src/orchestration/navigation/narrativeNavigation.js:66:    typeof info.stageIndex === 'number' ? info.stageIndex : 0;
+src/orchestration/navigation/narrativeNavigation.js:106:  const currentIndex = typeof info.stageIndex === 'number' ? info.stageIndex : 0;
+src/orchestration/navigation/narrativeNavigation.js:128:  const currentIndex = typeof info.stageIndex === 'number' ? info.stageIndex : 0;
+src/components/narrative/NarrationController.jsx:276:            liveInfo.stageIndex ??

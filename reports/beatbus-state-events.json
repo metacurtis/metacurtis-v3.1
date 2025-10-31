@@ -1,0 +1,95 @@
+{
+  "stateEvents": [
+    "EVENTS.MORPH_PROGRESS",
+    "EVENTS.STAGE_CHANGE",
+    "EVENTS.QUALITY_CHANGE",
+    "STAGE_CHANGE",
+    "EVENTS.FENCEPOST_LISTENERS_READY"
+  ],
+  "emitters": {
+    "EVENTS.MORPH_PROGRESS": [
+      {
+        "file": "src/engine/modules/ClimaxController.js",
+        "line": 249,
+        "token": "EVENTS.MORPH_PROGRESS"
+      },
+      {
+        "file": "src/engine/modules/MorphController.js",
+        "line": 273,
+        "token": "EVENTS.MORPH_PROGRESS"
+      },
+      {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 44,
+        "token": "EVENTS.MORPH_PROGRESS"
+      },
+      {
+        "file": "src/theater/controllers/MorphAnimationController.js",
+        "line": 332,
+        "token": "EVENTS.MORPH_PROGRESS"
+      }
+    ],
+    "EVENTS.STAGE_CHANGE": [
+      {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 151,
+        "token": "EVENTS.STAGE_CHANGE"
+      },
+      {
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 637,
+        "token": "EVENTS.STAGE_CHANGE"
+      }
+    ],
+    "EVENTS.QUALITY_CHANGE": [
+      {
+        "file": "src/state/atoms/qualityAtom.js",
+        "line": 198,
+        "token": "EVENTS.QUALITY_CHANGE"
+      },
+      {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 188,
+        "token": "EVENTS.QUALITY_CHANGE"
+      }
+    ],
+    "STAGE_CHANGE": [],
+    "EVENTS.FENCEPOST_LISTENERS_READY": [
+      {
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 575,
+        "token": "EVENTS.FENCEPOST_LISTENERS_READY"
+      }
+    ]
+  },
+  "listeners": {
+    "EVENTS.MORPH_PROGRESS": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1668,
+        "token": "EVENTS.MORPH_PROGRESS"
+      }
+    ],
+    "EVENTS.STAGE_CHANGE": [
+      {
+        "file": "src/state/atoms/qualityAtom.js",
+        "line": 155,
+        "token": "EVENTS.STAGE_CHANGE"
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 127,
+        "token": "EVENTS.STAGE_CHANGE"
+      }
+    ],
+    "EVENTS.QUALITY_CHANGE": [],
+    "STAGE_CHANGE": [
+      {
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 192,
+        "token": "'STAGE_CHANGE'"
+      }
+    ],
+    "EVENTS.FENCEPOST_LISTENERS_READY": []
+  }
+}

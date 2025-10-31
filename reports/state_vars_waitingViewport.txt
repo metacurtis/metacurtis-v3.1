@@ -1,0 +1,8 @@
+src/theater/TheaterDirector.js:359:    this.waitingForViewport = false;
+src/theater/TheaterDirector.js:406:    if (!this.viewportReady && !this.waitingForViewport) {
+src/theater/TheaterDirector.js:408:      this.waitingForViewport = true;
+src/theater/TheaterDirector.js:413:        this.waitingForViewport = false;
+src/theater/TheaterDirector.js:423:        if (this.waitingForViewport) {
+src/theater/TheaterDirector.js:426:          this.waitingForViewport = false;
+src/theater/TheaterDirector.js:742:    this.waitingForViewport = false;
+src/theater/TheaterDirector.js:763:    director.waitingForViewport = false;

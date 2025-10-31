@@ -1,0 +1,36 @@
+src/theater/bus/index.js:275:      if (p.stage && !p.to) p.to = p.stage;
+src/theater/bus/index.js:276:      if (!p.from) p.from = this._last.stage || 'unknown';
+src/theater/bus/index.js:283:      if (p.stage !== undefined) extended.stage = p.stage;
+src/theater/bus/index.js:301:      const stage   = p.stage ?? p.to ?? p.name;
+src/theater/bus/index.js:364:    if (evt==='STAGE_CHANGE' && canonPayloadWithBase?.to) this._last.stage = canonPayloadWithBase.to;
+src/theater/TheaterDirector.js:104:      const targetStage = payload?.to ?? payload?.stage ?? null;
+src/theater/controllers/OpeningSequenceController.js:408:                  const stageName = payload?.stage || payload?.stageName;
+src/theater/controllers/OpeningSequenceController.js:418:                  const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
+src/theater/controllers/OpeningSequenceController.js:607:            const stage = payload?.stage || blueprint?.stage || blueprint?.stageName;
+src/theater/controllers/MorphAnimationController.js:36:   * @param {string} options.stage - Stage name for events
+src/theater/controllers/MorphAnimationController.js:234:      stage: animation.stage,
+src/theater/controllers/MorphAnimationController.js:273:      stage: animation.stage,
+src/theater/controllers/MorphAnimationController.js:294:      stage: animation.stage,
+src/theater/controllers/MorphAnimationController.js:360:        stage: a.stage,
+src/engine/ConsciousnessEngine.js:96:              stage: bp?.stageName || bp?.stage || null,
+src/engine/ConsciousnessEngine.js:300:    const stage = payload.stage ?? payload.to;
+src/engine/ConsciousnessEngine.js:351:    const stage = payload.stage || null;
+src/engine/ConsciousnessEngine.js:795:              stage: blueprint.stage ?? blueprint.stageName,
+src/engine/ConsciousnessEngine.js:823:          stage: blueprint.stage ?? blueprint.stageName,
+src/engine/ConsciousnessEngine.js:847:        stage: blueprint.stage ?? blueprint.stageName,
+src/components/fragments/AmbientFragment.jsx:49:      const currentStage = payload.currentStage ?? payload.stage;
+src/components/webgl/WebGLBackground.jsx:67:  const stageName = bp?.stageName || bp?.stage || payload?.stage || 'genesis';
+src/components/webgl/WebGLBackground.jsx:301:      stage: meta.stage || null,
+src/components/webgl/WebGLBackground.jsx:780:      const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
+src/components/narrative/NarrationController.jsx:869:      const stageName = payload?.stage || currentStage || activeStageRef.current;
+src/components/narrative/NarrationController.jsx:930:      const nextStage = payload?.to || payload?.stage;
+src/components/narrative/overlay/OverlayDeduplication.js:21:      return `LINE:${payload.text ?? ''}:${payload.stage ?? ''}`;
+src/components/narrative/overlay/OverlayDeduplication.js:25:      return `START:${payload.stage ?? ''}:${payload.source ?? ''}`;
+src/config/sst3/memory-fragments.js:24:  Object.values(MEMORY_FRAGMENTS).filter(f=>f.stage===stageName);
+src/config/sst3/memory-fragments.js:28:    if (frag.stage !== stageName) return false;
+src/utils/webgl/ShaderDebugSystem.js:264:      Stage: ${lastLog.stage || 'N/A'}
+src/state/commands/StateCommands.js:126:      const stage = payload.to ?? payload.stage ?? payload.name ?? null;
+src/state/commands/StateCommands.js:230:    const targetStage = stageInfo?.name || stageInfo?.stage || null;
+src/state/commands/StateCommands.js:324:      stageAtom.setState?.(snapshot.state.stage);
+src/state/atoms/stageAtom.js:85:    const candidates = [input.name, input.stage, input.id, input.slug, input.key, input.label];
+src/state/atoms/qualityAtom.js:156:      const stage = payload?.to || payload?.stage;

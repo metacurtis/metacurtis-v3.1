@@ -1,0 +1,31 @@
+src/theater/TheaterDirector.js:152:      if (this.skipRequested || this.cancelled) return;
+src/theater/TheaterDirector.js:353:    this.cancelled = false;
+src/theater/TheaterDirector.js:439:    this.cancelled = false;
+src/theater/TheaterDirector.js:472:      if (this.phase !== 'cancelled' && this.phase !== 'error') {
+src/theater/TheaterDirector.js:608:    this.cancelled = true;
+src/theater/TheaterDirector.js:610:    this.phase = 'cancelled';
+src/theater/TheaterDirector.js:614:    this._wakeSleepWaiters('cancelled');
+src/theater/TheaterDirector.js:643:    if (this.cancelled) return Promise.resolve('cancelled');
+src/theater/TheaterDirector.js:727:      cancelled: this.cancelled,
+src/theater/controllers/OpeningSequenceController.js:64:    this.cancelled = false;
+src/theater/controllers/OpeningSequenceController.js:177:    this.cancelled = true;
+src/theater/controllers/OpeningSequenceController.js:190:    this.cancelled = false;
+src/theater/controllers/OpeningSequenceController.js:297:      if (result === 'cancelled' || this.director.cancelled || this.cancelled) return 'cancelled';
+src/theater/controllers/OpeningSequenceController.js:314:        skipSignal: () => skipTriggered || this.director.skipRequested || this.skipRequested || this.cancelled,
+src/theater/controllers/OpeningSequenceController.js:322:        if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:335:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:341:            if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:352:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:356:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:366:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:398:            if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:449:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:481:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:513:          if (handleWaitResult(waitResult) === 'cancelled') return;
+src/theater/controllers/OpeningSequenceController.js:624:        if (this.director.cancelled || this.cancelled) return;
+src/theater/controllers/OpeningSequenceController.js:629:        if (handleWaitResult(waitResult) === 'cancelled') return;
+src/components/theater/OpeningSequence.jsx:200:        console.log('   OpeningSequence: Director cancelled');
+src/components/webgl/WebGLCanvas.jsx:169:    let cancelled = false;
+src/components/webgl/WebGLCanvas.jsx:175:        if (!cancelled) {
+src/components/webgl/WebGLCanvas.jsx:188:      cancelled = true;
+src/components/narrative/overlay/OverlayStateMachine.js:28:    STATES.HIDING, // Can hide if cancelled immediately

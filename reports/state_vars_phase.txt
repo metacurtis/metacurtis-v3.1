@@ -1,0 +1,48 @@
+src/engine/modules/ClimaxController.js:193:    state.phase = 'transition';
+src/engine/modules/ClimaxController.js:264:    if (state.phase === 'transition') {
+src/engine/modules/ClimaxController.js:275:          state.phase = 'postHold';
+src/engine/modules/ClimaxController.js:284:    } else if (state.phase === 'postHold') {
+src/theater/TheaterDirector.js:352:    this.phase = 'idle';
+src/theater/TheaterDirector.js:380:      phase: this.phase,
+src/theater/TheaterDirector.js:389:    if (this.phase === 'complete' && this.currentStage) {
+src/theater/TheaterDirector.js:440:    this.phase = 'starting';
+src/theater/TheaterDirector.js:466:      this.phase = 'error';
+src/theater/TheaterDirector.js:472:      if (this.phase !== 'cancelled' && this.phase !== 'error') {
+src/theater/TheaterDirector.js:600:      if (this.phase === 'black' || this.phase === 'cursor' || this.phase === 'terminal') {
+src/theater/TheaterDirector.js:601:        console.warn('🎬 Director: WARNING - Cancelling during early phase:', this.phase);
+src/theater/TheaterDirector.js:607:    console.log('🎬 Director: Cancelling show at phase:', this.phase);
+src/theater/TheaterDirector.js:610:    this.phase = 'cancelled';
+src/theater/TheaterDirector.js:725:      phase: this.phase,
+src/theater/TheaterDirector.js:756:  if (director.hasRun || director.isRunning || director.phase === 'complete') {
+src/theater/TheaterDirector.js:828:      if (!director.hasRun && !director.isRunning && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:835:          phase: director.phase,
+src/theater/TheaterDirector.js:843:      if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:851:          phase: director.phase,
+src/theater/controllers/MorphAnimationController.js:37:   * @param {string} options.phase - Phase name for logging
+src/theater/controllers/MorphAnimationController.js:235:      phase: animation.phase,
+src/theater/controllers/MorphAnimationController.js:274:      phase: animation.phase,
+src/theater/controllers/MorphAnimationController.js:295:      phase: animation.phase,
+src/theater/controllers/MorphAnimationController.js:361:        phase: a.phase,
+src/theater/controllers/OpeningSequenceController.js:318:      this.director.phase = 'black';
+src/theater/controllers/OpeningSequenceController.js:329:        this.director.phase = 'cursor';
+src/theater/controllers/OpeningSequenceController.js:347:        this.director.phase = 'terminal';
+src/theater/controllers/OpeningSequenceController.js:361:        this.director.phase = 'fill';
+src/theater/controllers/OpeningSequenceController.js:438:        this.director.phase = 'chaos';
+src/theater/controllers/OpeningSequenceController.js:464:        this.director.phase = 'coalesce';
+src/theater/controllers/OpeningSequenceController.js:496:        this.director.phase = 'settle';
+src/theater/controllers/OpeningSequenceController.js:530:      this.director.phase = 'emergence';
+src/theater/controllers/OpeningSequenceController.js:633:      this.director.phase = 'genesis';
+src/theater/controllers/OpeningSequenceController.js:674:      this.director.phase = 'complete';
+src/components/webgl/WebGLBackground.jsx:1522:        const currentPhase = director?.getCurrentPhase?.() ?? director?.phase ?? null;
+src/utils/featureFlags.js:55:  isPhase1Complete: () => runtimeFlags.phase1Complete,
+src/utils/featureFlags.js:56:  isPhase2Complete: () => runtimeFlags.phase2Complete,
+src/utils/featureFlags.js:57:  isPhase3Complete: () => runtimeFlags.phase3Complete,
+src/utils/featureFlags.js:58:  isPhase4Complete: () => runtimeFlags.phase4Complete,
+src/utils/featureFlags.js:93:    runtimeFlags.phase1Complete = true;
+src/utils/featureFlags.js:98:    runtimeFlags.phase2Complete = true;
+src/utils/featureFlags.js:103:    runtimeFlags.phase3Complete = true;
+src/utils/featureFlags.js:108:    runtimeFlags.phase4Complete = true;
+src/utils/featureFlags.js:119:      phase1: runtimeFlags.phase1Complete,
+src/utils/featureFlags.js:120:      phase2: runtimeFlags.phase2Complete,
+src/utils/featureFlags.js:121:      phase3: runtimeFlags.phase3Complete,
+src/utils/featureFlags.js:122:      phase4: runtimeFlags.phase4Complete,

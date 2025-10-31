@@ -1,0 +1,17 @@
+src/theater/TheaterDirector.js:101:    this.morphAnimator = new MorphAnimationController();
+src/theater/TheaterDirector.js:289:    this.morphAnimator?.cancelAll?.();
+src/theater/TheaterDirector.js:351:    this.morphAnimator?.cancelAll?.();
+src/theater/TheaterDirector.js:577:    this.morphAnimator?.destroy?.();
+src/theater/TheaterDirector.js:613:    this.morphAnimator?.cancelAll?.();
+src/theater/controllers/OpeningSequenceController.js:305:      this.director.morphAnimator?.emitSnapshot?.(value, phase, target, durationMs, morphStage);
+src/theater/controllers/OpeningSequenceController.js:308:      this.director.morphAnimator?.animate({
+src/theater/controllers/OpeningSequenceController.js:527:        this.director.morphAnimator?.cancelAll?.();
+src/theater/ScrollOrchestrator.js:43:    this.morphAnimator = new MorphAnimationController();
+src/theater/ScrollOrchestrator.js:85:      this.morphAnimator.cancel(this.morphAnimationId);
+src/theater/ScrollOrchestrator.js:90:    const animation = this.morphAnimator.animate({
+src/theater/ScrollOrchestrator.js:150:      this.morphAnimator.cancel(this.morphAnimationId);
+src/theater/ScrollOrchestrator.js:153:    this.morphAnimator.cancelAll();
+src/theater/ScrollOrchestrator.js:307:        this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+src/theater/ScrollOrchestrator.js:372:      this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+src/theater/ScrollOrchestrator.js:379:      this.morphAnimator.cancel(this.morphAnimationId);
+src/theater/ScrollOrchestrator.js:382:    this.morphAnimator.cancelAll();

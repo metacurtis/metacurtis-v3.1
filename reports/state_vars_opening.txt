@@ -1,0 +1,12 @@
+src/theater/TheaterDirector.js:257:      const openingInProgress = this.isOpeningInProgress();
+src/theater/TheaterDirector.js:260:          openingInProgress,
+src/theater/TheaterDirector.js:263:      if (openingInProgress) {
+src/theater/TheaterDirector.js:365:    this._openingInProgress = false;
+src/theater/TheaterDirector.js:443:    this._openingInProgress = true;
+src/theater/TheaterDirector.js:469:      this._openingInProgress = false;
+src/theater/TheaterDirector.js:736:    return this._openingInProgress === true;
+src/components/narrative/NarrationController.jsx:876:      const openingInProgress =
+src/components/narrative/NarrationController.jsx:880:      if (openingInProgress && source !== 'opening_complete') {
+src/components/narrative/NarrationController.jsx:916:        openingInProgress,
+src/components/narrative/NarrationController.jsx:984:    const openingInProgress =
+src/components/narrative/NarrationController.jsx:988:    if (openingInProgress) {

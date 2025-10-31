@@ -1,0 +1,12 @@
+src/theater/TheaterDirector.js:356:    this.hasRun = false;
+src/theater/TheaterDirector.js:379:      hasRun: this.hasRun,
+src/theater/TheaterDirector.js:398:    if (this.hasRun) {
+src/theater/TheaterDirector.js:417:          if (!this.isRunning && !this.hasRun) this.start();
+src/theater/TheaterDirector.js:429:            if (!this.isRunning && !this.hasRun) this.start();
+src/theater/TheaterDirector.js:473:        this.hasRun = true;
+src/theater/TheaterDirector.js:729:      hasRun: this.hasRun,
+src/theater/TheaterDirector.js:756:  if (director.hasRun || director.isRunning || director.phase === 'complete') {
+src/theater/TheaterDirector.js:828:      if (!director.hasRun && !director.isRunning && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:833:          hasRun: director.hasRun,
+src/theater/TheaterDirector.js:843:      if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:848:          hasRun: director.hasRun,

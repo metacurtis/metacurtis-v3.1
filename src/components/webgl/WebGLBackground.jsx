@@ -25,26 +25,16 @@ import { particleRaycaster } from '@/utils/particleRaycast.js';
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 import { exposeDiagnostics, exposeControlSurface, revokeControlSurface } from '@/utils/runtimeGuards.js';
-
-const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
-const MORPH_TYPE_ENUM = Object.freeze({
-  steady: 0,
-  dissolve: 1,
-  reform: 2,
-});
-
-const morphTypeToInt = (value) => {
-  if (Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (Object.prototype.hasOwnProperty.call(MORPH_TYPE_ENUM, normalized)) {
-      return MORPH_TYPE_ENUM[normalized];
-    }
-  }
-  return MORPH_TYPE_ENUM.steady;
-};
+import {
+  clamp01,
+  MORPH_TYPE_ENUM,
+  morphTypeToInt,
+  mapBehaviorToMode,
+  hexToRGBArray,
+  computeAABB,
+} from './utils/backgroundMath.js';
+import { autoscaleQrPositions } from './utils/qrScaling.js';
+import { applyMetadataColors } from './utils/paletteUtils.js';
 const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
 
 function pickStageColors(stageName) {
@@ -99,63 +89,6 @@ function normalizePayload(payload) {
 
 const clampFit = (v) => Math.min(5.0, Math.max(0.2, v));
 
-function mapBehaviorToMode(behavior) {
-  if (!behavior) return { mode: 0, params: [0.4, 0.8, 1.2, 0.0] };
-  const b = String(behavior).toLowerCase();
-  if (b.includes('drift') || b.includes('perlin')) {
-    return { mode: 0, params: [0.4, 0.8, 1.2, 0.0] };
-  }
-  if (b.includes('grid')) {
-    return { mode: 1, params: [0.15, 0.02, 0.0, 0.0] };
-  }
-  if (b.includes('flow') || b.includes('laminar')) {
-    return { mode: 2, params: [0.6, 0.3, 0.7, 0.0] };
-  }
-  if (b.includes('streak') || b.includes('trail')) {
-    return { mode: 3, params: [1.2, 0.3, 0.0, 0.0] };
-  }
-  if (b.includes('orbit') || b.includes('arm')) {
-    return { mode: 4, params: [0.9, 0.6, 0.2, 0.0] };
-  }
-  return { mode: 0, params: [0.4, 0.8, 1.2, 0.0] };
-}
-
-const hexToRGBArray = (value) => {
-  if (!value) return [1, 1, 1];
-  if (Array.isArray(value) && value.length >= 3) {
-    return [Number(value[0]) || 0, Number(value[1]) || 0, Number(value[2]) || 0].map((c) => Math.max(0, Math.min(1, c)));
-  }
-  if (typeof value === 'object' && value !== null && 'r' in value && 'g' in value && 'b' in value) {
-    return [value.r, value.g, value.b];
-  }
-  const normalized = String(value).replace('#', '').padEnd(6, '0');
-  const r = parseInt(normalized.substring(0, 2), 16) / 255;
-  const g = parseInt(normalized.substring(2, 4), 16) / 255;
-  const b = parseInt(normalized.substring(4, 6), 16) / 255;
-  return [r, g, b];
-};
-
-function computeAABB(geo, key) {
-  const attr = geo?.attributes?.[key];
-  if (!attr?.array) return null;
-  const arr = attr.array;
-  if (!arr.length) return null;
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  for (let i = 0; i < arr.length; i += 3) {
-    const x = arr[i];
-    const y = arr[i + 1];
-    if (x < minX) minX = x;
-    if (x > maxX) maxX = x;
-    if (y < minY) minY = y;
-    if (y > maxY) maxY = y;
-  }
-  if (minX === Infinity || minY === Infinity) return null;
-  return { extX: (maxX - minX) * 0.5, extY: (maxY - minY) * 0.5 };
-}
-
 function arrayAabb(arr) {
   if (!arr || arr.length < 3) return null;
   let minX = Infinity;
@@ -200,27 +133,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const lastPointSizeRef = useRef(null);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
-
-  const QR_AUTO_SCALE_TARGET = 0.06;
-
-  function autoscaleQrPositions(positions, targetNdc = QR_AUTO_SCALE_TARGET) {
-    if (!(positions instanceof Float32Array) || positions.length < 3) return positions;
-    let maxAbs = 0.000001;
-    for (let i = 0; i < positions.length; i += 3) {
-      const ax = Math.abs(positions[i]);
-      const ay = Math.abs(positions[i + 1]);
-      if (ax > maxAbs) maxAbs = ax;
-      if (ay > maxAbs) maxAbs = ay;
-    }
-    if (!Number.isFinite(maxAbs) || maxAbs <= 0) return positions;
-    const scale = targetNdc / maxAbs;
-    if (!Number.isFinite(scale) || scale <= 0 || scale === 1) return positions;
-    for (let i = 0; i < positions.length; i += 3) {
-      positions[i] *= scale;
-      positions[i + 1] *= scale;
-    }
-    return positions;
-  }
   const renderGuardRef = useRef(false);
   const viewportHintRef = useRef(null);
   const lastBindMetaRef = useRef({ kind: null });
@@ -743,37 +655,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniformsNeedUpdate = true;
   };
 
-  const applyMetadataColors = (colors) => {
-    const fallback = (Array.isArray(VC?.GENESIS_PALETTE) && VC.GENESIS_PALETTE.length >= 3)
-      ? VC.GENESIS_PALETTE.slice(0, 3)
-      : null;
-    const palette = (Array.isArray(colors) && colors.length >= 3) ? colors : fallback;
-    if (!palette) return;
-    const mat = materialRef.current;
-    const u = mat?.uniforms;
-    if (!u) return;
-    const assign = (uniform, value) => {
-      if (!uniform) return;
-      const target = uniform.value ?? uniform;
-      if (Array.isArray(value) && value.length >= 3 && value.every((v) => typeof v === 'number')) {
-        if (target?.setRGB) {
-          target.setRGB(value[0], value[1], value[2]);
-          return;
-        }
-      }
-      if (target?.set) target.set(value);
-      else uniform.value = value;
-    };
-    assign(u.uColorCurrent, palette[0]);
-    assign(u.uColorNext, palette[1] ?? palette[0]);
-    assign(u.uColorAccent1, palette[2] ?? palette[0]);
-    if (u.uPalette0?.value?.set) { u.uPalette0.value.set(hexToRGBArray(palette[0])); u.uPalette0.needsUpdate = true; }
-    if (u.uPalette1?.value?.set) { u.uPalette1.value.set(hexToRGBArray(palette[1] ?? palette[0])); u.uPalette1.needsUpdate = true; }
-    if (u.uPalette2?.value?.set) { u.uPalette2.value.set(hexToRGBArray(palette[2] ?? palette[0])); u.uPalette2.needsUpdate = true; }
-    if (u.uPalette3?.value?.set) { u.uPalette3.value.set(hexToRGBArray(palette[3] ?? palette[0])); u.uPalette3.needsUpdate = true; }
-    mat.uniformsNeedUpdate = true;
-  };
-
   // Passive fallbacks (OK to keep)
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
@@ -1078,7 +959,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       lastBlueprintMetaRef.current = raw?.metadata || {};
       setStageName(isEmergence ? 'genesis' : (raw.stageName || st || 'genesis'));
       setActiveCount(raw.activeCount || raw.particleCount || raw.maxParticles || 0);
-      applyMetadataColors(raw?.metadata?.colors);
+      applyMetadataColors(materialRef.current, raw?.metadata?.colors, VC?.GENESIS_PALETTE);
 
       if (isOpeningChaos) {
         emergencePendingRef.current = true;

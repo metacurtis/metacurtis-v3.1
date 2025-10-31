@@ -1,0 +1,33 @@
+src/engine/modules/ClimaxController.js:169:      morphProgress: state.progress,
+src/engine/modules/ClimaxController.js:233:      morphProgress: clamped,
+src/engine/modules/MorphController.js:264:      morphProgress: value,
+src/theater/controllers/MorphAnimationController.js:321:      morphProgress: clampedValue,
+src/theater/ScrollOrchestrator.js:113:          const morphProgress = clamp01(value);
+src/theater/ScrollOrchestrator.js:117:            morphProgress,
+src/theater/ScrollOrchestrator.js:118:            value: morphProgress,
+src/theater/bus/schemas.js:36:    required: { morphProgress: 'number' },
+src/theater/bus/schemas.js:46:      morphProgress: 'number',
+src/components/consciousness/ConsciousnessTheater.jsx:137:  const morphProgress = useAtomValue(narrativeAtom, (state) => state.morphProgress);
+src/components/consciousness/ConsciousnessTheater.jsx:143:  const morphProgressRef = useRef(0);
+src/components/consciousness/ConsciousnessTheater.jsx:159:    morphProgressRef.current = morphProgress;
+src/components/consciousness/ConsciousnessTheater.jsx:160:  }, [morphProgress]);
+src/components/consciousness/ConsciousnessTheater.jsx:337:        const current = typeof morphProgressRef.current === 'number' ? morphProgressRef.current : 0;
+src/components/consciousness/ConsciousnessTheater.jsx:343:          morphProgressRef.current = updated;
+src/components/consciousness/ConsciousnessTheater.jsx:436:          const current = morphProgressRef.current ?? 0;
+src/components/consciousness/ConsciousnessTheater.jsx:438:          morphProgressRef.current = stateCommands.setMorphProgress(target, {
+src/components/consciousness/ConsciousnessTheater.jsx:446:          morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
+src/components/consciousness/ConsciousnessTheater.jsx:499:          morphProgress={morphProgress}
+src/components/webgl/WebGLCanvas.jsx:134:  morphProgress = 0,
+src/components/webgl/WebGLCanvas.jsx:522:                morphProgress={morphProgress}
+src/components/webgl/WebGLCanvas.jsx:556:          <div>Morph: {Math.round(morphProgress * 100)}%</div>
+src/components/webgl/WebGLCanvas.jsx:590:            <div>Morph: {morphProgress.toFixed(2)}</div>
+src/components/webgl/WebGLBackground.jsx:188:function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
+src/components/webgl/WebGLBackground.jsx:723:    else if (u.morphProgress) u.morphProgress.value = v;
+src/components/webgl/WebGLBackground.jsx:1612:      const raw = payload?.morphProgress ?? payload?.value ?? null;
+src/state/commands/StateCommands.js:34:      morphProgress: clamped,
+src/state/commands/StateCommands.js:169:    let lastMorph = narrativeAtom.getState?.()?.morphProgress ?? 0;
+src/state/commands/StateCommands.js:171:      const v = Number(s.morphProgress ?? 0);
+src/state/commands/StateCommands.js:215:    const current = narrativeAtom.getState?.()?.morphProgress ?? 0;
+src/state/atoms/narrativeAtom.js:9:  morphProgress: 0,
+src/state/atoms/narrativeAtom.js:167:      morphProgress: Math.max(0, Math.min(1, progress)),
+src/state/atoms/narrativeAtom.js:290:        morph: state.morphProgress,

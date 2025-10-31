@@ -1,0 +1,162 @@
+src/engine/modules/ClimaxController.js:74:    if (this.#engine.currentStage !== 'transcendence') {
+src/engine/modules/ClimaxController.js:75:      console.warn(`🎬 Climax trigger ignored — current stage is "${this.#engine.currentStage}"`);
+src/engine/modules/ClimaxController.js:228:    const stageLabel = this.#engine.currentStage || 'transcendence';
+src/theater/UnifiedNavigationAPI.js:20:    this.currentStage = null;
+src/theater/UnifiedNavigationAPI.js:74:      const currentStage = stageAtom.getState?.()?.currentStage;
+src/theater/UnifiedNavigationAPI.js:75:      if (currentStage !== targetStage) {
+src/theater/UnifiedNavigationAPI.js:122:      const currentStage = stageAtom.getState?.()?.currentStage;
+src/theater/UnifiedNavigationAPI.js:123:      if (currentStage !== targetStage) {
+src/theater/UnifiedNavigationAPI.js:145:    const currentStage = this.getCurrentStage();
+src/theater/UnifiedNavigationAPI.js:147:    const currentIndex = stages.indexOf(currentStage);
+src/theater/UnifiedNavigationAPI.js:165:    const currentStage = this.getCurrentStage();
+src/theater/UnifiedNavigationAPI.js:167:    const currentIndex = stages.indexOf(currentStage);
+src/theater/TheaterDirector.js:106:      if (targetStage === 'genesis' && this.currentStage) {
+src/theater/TheaterDirector.js:111:        if (!isOpeningHandoff && !isManualJump && this.currentStage !== 'genesis') {
+src/theater/TheaterDirector.js:113:            currentStage: this.currentStage,
+src/theater/TheaterDirector.js:224:    const previousStage = this.currentStage;
+src/theater/TheaterDirector.js:246:    this.currentStage = newStage;
+src/theater/TheaterDirector.js:360:    this.currentStage = null;
+src/theater/TheaterDirector.js:389:    if (this.phase === 'complete' && this.currentStage) {
+src/theater/TheaterDirector.js:392:          currentStage: this.currentStage,
+src/theater/TheaterDirector.js:496:    const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
+src/theater/TheaterDirector.js:505:        stage: currentStage,
+src/theater/TheaterDirector.js:731:      currentStage: this.currentStage,
+src/engine/ConsciousnessEngine.js:87:        getCurrentStage: () => this.currentStage,
+src/engine/ConsciousnessEngine.js:107:    this.currentStage = 'genesis';
+src/engine/ConsciousnessEngine.js:131:  _preloadNextStage(currentStageName, quality) {
+src/engine/ConsciousnessEngine.js:135:    const currentIndex = stageNames.indexOf(currentStageName);
+src/engine/ConsciousnessEngine.js:258:    const stageKey = stage || this.currentStage || 'genesis';
+src/engine/ConsciousnessEngine.js:313:    this.currentStage = stage;
+src/engine/ConsciousnessEngine.js:331:    this.buildAndEmitBlueprint(this.currentStage, tier);
+src/engine/ConsciousnessEngine.js:1299:      currentStage: this.currentStage,
+src/theater/bus/schemas.js:59:      currentStage: 'string',
+src/theater/ScrollOrchestrator.js:112:          const currentStage = Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown';
+src/theater/ScrollOrchestrator.js:121:            stage: currentStage,
+src/theater/ScrollOrchestrator.js:286:            currentStage: stageName,
+src/theater/ScrollOrchestrator.js:313:        currentStage: stageName,
+src/engine/modules/MorphController.js:259:    const stageLabel = engine.currentStage || 'genesis';
+src/components/fragments/ClimaxSequenceController.jsx:10:  const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+src/components/fragments/ClimaxSequenceController.jsx:32:    if (currentStage !== CLIMAX_STAGE) {
+src/components/fragments/ClimaxSequenceController.jsx:59:  }, [currentStage]);
+src/components/fragments/ClimaxSequenceController.jsx:69:  if (currentStage !== CLIMAX_STAGE) return null;
+src/theater/controllers/OpeningSequenceController.js:634:      const previousStage = this.director.currentStage ?? 'emergence';
+src/orchestration/navigation/narrativeNavigation.js:35:  const currentStage = stageAtom.getState().currentStage;
+src/orchestration/navigation/narrativeNavigation.js:36:  if (currentStage === stageName) return true;
+src/orchestration/navigation/narrativeNavigation.js:69:    currentStage: info.currentStage || stageNames[currentIndex] || null,
+src/orchestration/navigation/narrativeNavigation.js:82:  const activeStage = info.currentStage;
+src/orchestration/navigation/narrativeNavigation.js:110:  if (!nextStageName || nextStageName === info.currentStage) return false;
+src/orchestration/navigation/narrativeNavigation.js:132:  if (!prevStageName || prevStageName === info.currentStage) return false;
+src/components/dev/DevPerformanceMonitor.jsx:115:  const currentStage = stageState.currentStage || 'genesis';
+src/components/dev/DevPerformanceMonitor.jsx:120:  const expectedParticles = qualityAtom.getParticleBudget(currentStage);
+src/components/dev/DevPerformanceMonitor.jsx:143:          {currentStage.toUpperCase()} ({stageProgress}%)
+src/components/fragments/AmbientFragmentManager.jsx:10:  const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+src/components/fragments/AmbientFragmentManager.jsx:14:    const stageConfig = SST?.stages?.[currentStage];
+src/components/fragments/AmbientFragmentManager.jsx:31:            id: `${currentStage}-ambient-${index}`,
+src/components/fragments/AmbientFragmentManager.jsx:65:      stage: currentStage,
+src/components/fragments/AmbientFragmentManager.jsx:71:  }, [currentStage]);
+src/components/fragments/AmbientFragmentManager.jsx:79:          key={fragment.id || `${currentStage}-ambient-${index}`}
+src/components/fragments/AmbientFragmentManager.jsx:81:          stage={currentStage}
+src/components/ui/narrative/StageNavigation.jsx:20:  const currentStage = useAtomValue(stageAtom, state => state.currentStage);
+src/components/ui/narrative/StageNavigation.jsx:52:              background: id === currentStage ? '#0D9488' : 'transparent',
+src/components/ui/narrative/StageNavigation.jsx:54:              color: id === currentStage ? '#fff' : '#0D9488',
+src/components/fragments/AmbientFragment.jsx:49:      const currentStage = payload.currentStage ?? payload.stage;
+src/components/fragments/AmbientFragment.jsx:50:      if (currentStage !== stage) return;
+src/components/ui/narrative/MemoryFragments.jsx:16:    currentStage,
+src/components/ui/narrative/MemoryFragments.jsx:30:    const preset = getPreset(currentStage);
+src/components/ui/narrative/MemoryFragments.jsx:35:      id: `${currentStage}-fragment-${index}`,
+src/components/ui/narrative/MemoryFragments.jsx:37:      stageOrigin: currentStage,
+src/components/ui/narrative/MemoryFragments.jsx:39:      isExplored: userEngagement.fragmentsExplored.includes(`${currentStage}-fragment-${index}`),
+src/components/ui/narrative/MemoryFragments.jsx:41:  }, [currentStage, memoryFragmentsEnabled, userEngagement.fragmentsExplored]);
+src/components/ui/narrative/MemoryFragments.jsx:111:    const positions = basePositions[currentStage] || basePositions.genesis;
+src/components/ui/narrative/MemoryFragments.jsx:189:            {activeFragment.isExplored ? '✓ Explored' : 'Click to explore'} • Stage: {currentStage}
+src/bootstrap/wireSSTv3.js:54:            stage: state.currentStage,
+src/bootstrap/wireSSTv3.js:86:      newStage: state.currentStage,
+src/bootstrap/wireSSTv3.js:92:    if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
+src/bootstrap/wireSSTv3.js:94:      // stageAtom.jumpToStage(state.currentStage);
+src/components/narrative/NarrationController.jsx:80:  const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+src/components/narrative/NarrationController.jsx:598:        currentStage,
+src/components/narrative/NarrationController.jsx:621:      let stageKey = resolveStageKey(normalizedStage || currentStage, 'genesis');
+src/components/narrative/NarrationController.jsx:679:    [currentStage, defaultCharsPerSecond, lockScroll, resetState, scheduleSegment]
+src/components/narrative/NarrationController.jsx:708:      stageAtMount: currentStage,
+src/components/narrative/NarrationController.jsx:713:      stage: currentStage,
+src/components/narrative/NarrationController.jsx:721:        stageAtUnmount: currentStage,
+src/components/narrative/NarrationController.jsx:727:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:744:      stage: currentStage,
+src/components/narrative/NarrationController.jsx:752:      stage: currentStage,
+src/components/narrative/NarrationController.jsx:762:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:770:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:776:  }, [currentStage, autoAdvanceEnabled]);
+src/components/narrative/NarrationController.jsx:802:        currentStage: {
+src/components/narrative/NarrationController.jsx:853:      currentStage,
+src/components/narrative/NarrationController.jsx:869:      const stageName = payload?.stage || currentStage || activeStageRef.current;
+src/components/narrative/NarrationController.jsx:969:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:979:  }, [currentStage, resetState, skipNarration, startNarration]);
+src/components/narrative/NarrationController.jsx:982:    if (!currentStage) return;
+src/components/narrative/NarrationController.jsx:990:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:996:      activeStageRef.current && activeStageRef.current === currentStage;
+src/components/narrative/NarrationController.jsx:1000:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:1005:    const segments = normalizeSegments(getNarrationSegments(currentStage));
+src/components/narrative/NarrationController.jsx:1009:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:1014:    if (startedStagesRef.current.has(currentStage)) {
+src/components/narrative/NarrationController.jsx:1016:        stage: currentStage,
+src/components/narrative/NarrationController.jsx:1022:      stage: currentStage,
+src/components/narrative/NarrationController.jsx:1026:    startNarration(currentStage, 'auto');
+src/components/narrative/NarrationController.jsx:1027:    startedStagesRef.current.add(currentStage);
+src/components/narrative/NarrationController.jsx:1028:  }, [currentStage, startNarration]);
+src/state/atoms/performanceAtom.js:33:    currentStage: 'genesis',
+src/state/atoms/performanceAtom.js:102:      narrative: { ...state.narrative, currentStage: stage },
+src/components/consciousness/ConsciousnessTheater.jsx:135:  const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+src/components/consciousness/ConsciousnessTheater.jsx:142:  const currentStageRef = useRef(currentStage || 'genesis');
+src/components/consciousness/ConsciousnessTheater.jsx:148:  const _stageConfig = Canonical.stages[currentStage];
+src/components/consciousness/ConsciousnessTheater.jsx:154:  } = useMemoryFragments(currentStage, scrollProgress * 100, null);
+src/components/consciousness/ConsciousnessTheater.jsx:163:    if (!currentStage) return;
+src/components/consciousness/ConsciousnessTheater.jsx:164:    currentStageRef.current = currentStage;
+src/components/consciousness/ConsciousnessTheater.jsx:166:      qualityAtom.updateParticleBudget(currentStage);
+src/components/consciousness/ConsciousnessTheater.jsx:168:  }, [currentStage]);
+src/components/consciousness/ConsciousnessTheater.jsx:280:          const activeStage = state?.currentStage || currentStageRef.current || stageNames[0];
+src/components/consciousness/ConsciousnessTheater.jsx:402:        const currentIndex = stageNamesRef.indexOf(before?.currentStage || '');
+src/components/consciousness/ConsciousnessTheater.jsx:420:          from: before?.currentStage ?? null,
+src/components/consciousness/ConsciousnessTheater.jsx:421:          to: after?.currentStage ?? targetStage ?? null,
+src/components/consciousness/ConsciousnessTheater.jsx:498:          stage={currentStage}
+src/state/commands/StateCommands.js:30:    const currentStage = stageState.currentStage || 'genesis';
+src/state/commands/StateCommands.js:32:    const stageIndex = stageState.stageIndex ?? (stageOrder.indexOf(currentStage));
+src/state/commands/StateCommands.js:38:      stage: currentStage,
+src/state/commands/StateCommands.js:122:    let lastStageFromBus = stageAtom.getState?.()?.currentStage ?? null;
+src/state/commands/StateCommands.js:142:    let prevStage = stageAtom.getState?.()?.currentStage;
+src/state/commands/StateCommands.js:144:      const next = s.currentStage;
+src/state/commands/StateCommands.js:232:      const currentStage = stageAtom.getState?.()?.currentStage;
+src/state/commands/StateCommands.js:236:        if (currentStage !== targetStage) {
+src/state/commands/StateCommands.js:305:    stageAtom.setState?.({ currentStage: to, transitioning: true });
+src/state/atoms/narrativeAtom.js:7:  currentStage: 'genesis',
+src/state/atoms/narrativeAtom.js:84:    if (stage === currentState.currentStage) return;
+src/state/atoms/narrativeAtom.js:88:      currentStage: stage,
+src/state/atoms/narrativeAtom.js:107:        detail: { stage, previousStage: currentState.currentStage },
+src/state/atoms/narrativeAtom.js:115:      currentStage: get().currentStage,
+src/state/atoms/narrativeAtom.js:121:    const current = get().currentStage;
+src/state/atoms/narrativeAtom.js:131:      currentStage: get().currentStage,
+src/state/atoms/narrativeAtom.js:137:    const current = get().currentStage;
+src/state/atoms/narrativeAtom.js:217:    const currentFeatures = state.stageFeatures[state.currentStage] || [];
+src/state/atoms/narrativeAtom.js:223:    return state.stageFeatures[state.currentStage] || [];
+src/state/atoms/narrativeAtom.js:241:          detail: { type: eventName, stage: state.currentStage },
+src/state/atoms/narrativeAtom.js:286:      currentStage: state.currentStage,
+src/state/atoms/narrativeAtom.js:293:      features: state.stageFeatures[state.currentStage] || [],
+src/state/atoms/narrativeAtom.js:299:    return STAGE_ORDER.indexOf(get().currentStage);
+src/state/atoms/qualityAtom.js:127:  currentStage: 'genesis',
+src/state/atoms/qualityAtom.js:157:      if (stage && stage !== get().currentStage) {
+src/state/atoms/qualityAtom.js:163:          currentStage: stage,
+src/state/atoms/qualityAtom.js:187:      const particleCount = cache.getParticleCount(state.currentStage, tier);
+src/state/atoms/qualityAtom.js:230:        currentStage: stageName,
+src/state/atoms/qualityAtom.js:259:      const particleCount = cache.getParticleCount(state.currentStage, recommendedTier);
+src/state/atoms/stageAtom.js:46:    currentStage: INITIAL_STAGE_NAME,
+src/state/atoms/stageAtom.js:388:        currentStage: stageName,
+src/state/atoms/stageAtom.js:419:        currentStage: stageName,
+src/state/atoms/stageAtom.js:492:        currentStage: stageName,
+src/state/atoms/stageAtom.js:496:      if (stageName !== state.currentStage) {
+src/state/atoms/stageAtom.js:574:        currentStage: state.currentStage,
+src/state/atoms/stageAtom.js:672:    getCurrentStage: () => stageAtom.getState().currentStage,
+src/components/webgl/WebGLBackground.jsx:991:      const currentStage = stageNameRef.current || 'genesis';
+src/components/webgl/WebGLBackground.jsx:1010:        stage: currentStage,
+src/components/webgl/WebGLBackground.jsx:1521:        const currentStage = director?.getCurrentStage?.() ?? director?.currentStage ?? null;
+src/components/webgl/WebGLBackground.jsx:1523:        const isOpeningPhase = currentStage === 'genesis' && currentPhase !== 'emergence';
+src/components/webgl/WebGLBackground.jsx:1650:        const currentStage = stageNameRef.current || 'genesis';
+src/components/webgl/WebGLBackground.jsx:1654:          stage: currentStage,

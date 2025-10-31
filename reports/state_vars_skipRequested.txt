@@ -1,0 +1,17 @@
+src/theater/TheaterDirector.js:152:      if (this.skipRequested || this.cancelled) return;
+src/theater/TheaterDirector.js:284:    if (this.skipRequested) return;
+src/theater/TheaterDirector.js:285:    this.skipRequested = true;
+src/theater/TheaterDirector.js:361:    this.skipRequested = false;
+src/theater/TheaterDirector.js:644:    if (this.skipRequested) return Promise.resolve('skipped');
+src/theater/controllers/OpeningSequenceController.js:65:    this.skipRequested = false;
+src/theater/controllers/OpeningSequenceController.js:161:    if (this.skipRequested) return;
+src/theater/controllers/OpeningSequenceController.js:162:    this.skipRequested = true;
+src/theater/controllers/OpeningSequenceController.js:191:    this.skipRequested = false;
+src/theater/controllers/OpeningSequenceController.js:298:      if (result === 'skipped' || this.director.skipRequested || this.skipRequested) skipTriggered = true;
+src/theater/controllers/OpeningSequenceController.js:314:        skipSignal: () => skipTriggered || this.director.skipRequested || this.skipRequested || this.cancelled,
+src/components/narrative/NarrationController.jsx:92:  const skipRequestedRef = useRef(false);
+src/components/narrative/NarrationController.jsx:140:      skipRequestedRef.current = false;
+src/components/narrative/NarrationController.jsx:443:        if (skipRequestedRef.current || activeStageRef.current !== stageName) return;
+src/components/narrative/NarrationController.jsx:657:      skipRequestedRef.current = false;
+src/components/narrative/NarrationController.jsx:692:      skipRequestedRef.current = true;
+src/components/narrative/NarrationController.jsx:955:      if (!activeStageRef.current || skipRequestedRef.current) return;

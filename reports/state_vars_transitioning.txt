@@ -1,0 +1,26 @@
+src/components/dev/DevPerformanceMonitor.jsx:117:  const isTransitioning = stageState.isTransitioning || false;
+src/components/dev/DevPerformanceMonitor.jsx:232:          <span style={{ color: isTransitioning ? '#ffaa00' : '#00ff88' }}>
+src/components/dev/DevPerformanceMonitor.jsx:233:            {isTransitioning ? 'TRANSITIONING' : 'SYNCED'}
+src/components/ui/NarrativeUIControls.jsx:73:                disabled={navState.isTransitioning}
+src/components/ui/NarrativeUIControls.jsx:80:                  cursor: navState.isTransitioning ? 'not-allowed' : 'pointer',
+src/components/ui/NarrativeUIControls.jsx:82:                  opacity: navState.isTransitioning ? 0.5 : 1,
+src/components/ui/NarrativeUIControls.jsx:87:                  if (!isActive && !navState.isTransitioning) {
+src/components/ui/NarrativeUIControls.jsx:132:            disabled={!navState.canGoPrev || navState.isTransitioning}
+src/components/ui/NarrativeUIControls.jsx:139:              cursor: navState.canGoPrev && !navState.isTransitioning ? 'pointer' : 'not-allowed',
+src/components/ui/NarrativeUIControls.jsx:140:              opacity: navState.canGoPrev && !navState.isTransitioning ? 1 : 0.3,
+src/components/ui/NarrativeUIControls.jsx:159:            disabled={!navState.canGoNext || navState.isTransitioning}
+src/components/ui/NarrativeUIControls.jsx:166:              cursor: navState.canGoNext && !navState.isTransitioning ? 'pointer' : 'not-allowed',
+src/components/ui/NarrativeUIControls.jsx:167:              opacity: navState.canGoNext && !navState.isTransitioning ? 1 : 0.3,
+src/components/ui/NarrativeUIControls.jsx:202:        {navState.isTransitioning && 'Transitioning...'}
+src/orchestration/navigation/narrativeNavigation.js:72:    isTransitioning: !!info.isTransitioning,
+src/bootstrap/wireSSTv3.js:56:            isTransitioning: state.isTransitioning,
+src/state/atoms/narrativeAtom.js:11:  isTransitioning: false,
+src/state/atoms/narrativeAtom.js:89:      isTransitioning: true,
+src/state/atoms/narrativeAtom.js:101:      set(state => ({ ...state, isTransitioning: false }));
+src/state/atoms/stageAtom.js:50:    isTransitioning: false,
+src/state/atoms/stageAtom.js:391:        isTransitioning: true,
+src/state/atoms/stageAtom.js:399:        batchedSetState({ isTransitioning: false }, 'clearTransition');
+src/state/atoms/stageAtom.js:423:        isTransitioning: false,
+src/state/atoms/stageAtom.js:504:    setTransitioning: (isTransitioning) => {
+src/state/atoms/stageAtom.js:505:      batchedSetState({ isTransitioning }, 'setTransitioning');
+src/state/atoms/stageAtom.js:580:        isTransitioning: state.isTransitioning,

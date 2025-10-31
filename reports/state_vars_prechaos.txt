@@ -1,0 +1,3 @@
+src/theater/TheaterDirector.js:367:    this._preChaosReady = false;
+src/theater/controllers/OpeningSequenceController.js:402:        if (!this.director._preChaosReady) {
+src/theater/controllers/OpeningSequenceController.js:434:          this.director._preChaosReady = true;

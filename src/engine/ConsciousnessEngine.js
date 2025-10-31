@@ -632,10 +632,26 @@ class ConsciousnessEngine {
     }
 
     const { a: atmH, b: tgtH } = this._harmonizeAttributeLengths(atmospheric, targetPositions);
-    blueprint.atmosphericPositions.set(atmH);
-    blueprint.text3DPositions.set(tgtH);
-    if (blueprint.positions?.length === atmH.length) {
-      blueprint.positions.set(atmH);
+
+    const hasAtmospheric = blueprint.atmosphericPositions instanceof Float32Array;
+    const hasText3D = blueprint.text3DPositions instanceof Float32Array;
+    const hasPositions = blueprint.positions instanceof Float32Array;
+
+    if (!hasAtmospheric || !hasText3D) {
+      if (!hasAtmospheric) {
+        console.error('[CE] ⚠️ Missing atmosphericPositions in blueprint (line ~807)');
+      }
+      if (!hasText3D) {
+        console.error('[CE] ⚠️ Missing text3DPositions in blueprint (line ~807)');
+      }
+      console.warn('[CE] Cannot set attributes on invalid blueprint, skipping');
+    } else {
+      blueprint.atmosphericPositions.set(atmH);
+      blueprint.text3DPositions.set(tgtH);
+
+      if (hasPositions && blueprint.positions.length === atmH.length) {
+        blueprint.positions.set(atmH);
+      }
     }
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
@@ -751,19 +767,22 @@ class ConsciousnessEngine {
         if (blueprint) {
           const targets = this._lastEmergenceTargets;
 
-          if (!(blueprint.atmosphericPositions instanceof Float32Array)) {
-            console.error('🧠 Engine: Blueprint missing atmosphericPositions attribute');
-            blueprint = null;
-          } else if (!(blueprint.text3DPositions instanceof Float32Array)) {
-            console.error('🧠 Engine: Blueprint missing text3DPositions attribute');
-            blueprint = null;
-          } else if (!(blueprint.positions instanceof Float32Array)) {
-            console.error('🧠 Engine: Blueprint missing positions attribute');
-            blueprint = null;
+          const hasAtmospheric = blueprint.atmosphericPositions instanceof Float32Array;
+          const hasText3D = blueprint.text3DPositions instanceof Float32Array;
+          const hasPositions = blueprint.positions instanceof Float32Array;
+
+          if (!hasAtmospheric || !hasText3D) {
+            if (!hasAtmospheric) {
+              console.error('[CE] ⚠️ Missing atmosphericPositions in blueprint (line ~831)');
+            }
+            if (!hasText3D) {
+              console.error('[CE] ⚠️ Missing text3DPositions in blueprint (line ~831)');
+            }
+            console.warn('[CE] Cannot set attributes on invalid blueprint, skipping');
           } else {
             blueprint.atmosphericPositions.set(targets);
             blueprint.text3DPositions.set(targets);
-            if (blueprint.positions.length === targets.length) {
+            if (hasPositions && blueprint.positions.length === targets.length) {
               blueprint.positions.set(targets);
             }
           }

@@ -1,0 +1,84 @@
+src/hooks/useMemoryFragments.js:17:          [frag.id]: { state: 'pending', startTime: null }
+src/hooks/useMemoryFragments.js:30:      [fragmentId]: { state: 'triggering', startTime: Date.now() }
+src/engine/TierSystem.js:35:    const startTime = performance.now();
+src/engine/TierSystem.js:79:    const elapsed = performance.now() - startTime;
+src/engine/TierSystem.js:81:      (this.metrics.averageDistributionTime * (this.metrics.distributionsCalculated - 1) + elapsed) / 
+src/engine/modules/ClimaxController.js:185:    const startTime = timestamp ?? now();
+src/engine/modules/ClimaxController.js:189:    state.stepStartTime = startTime;
+src/engine/modules/ClimaxController.js:190:    state.stepTransitionStart = startTime;
+src/engine/modules/MorphController.js:35:  #startTime = 0;
+src/engine/modules/MorphController.js:120:    this.#startTime = nowMs();
+src/engine/modules/MorphController.js:150:    this.#startTime = 0;
+src/engine/modules/MorphController.js:175:      startTime: this.#startTime,
+src/engine/modules/MorphController.js:203:    const elapsed = nowMs() - this.#startTime;
+src/engine/modules/MorphController.js:204:    if (elapsed < this.#holdMs) {
+src/engine/modules/MorphController.js:210:    const phaseElapsed = elapsed - this.#holdMs;
+src/theater/bus/index.js:37:  stop(eventName, startTime) {
+src/theater/bus/index.js:38:    if (typeof startTime !== 'number') return;
+src/theater/bus/index.js:41:    const duration = this._now() - startTime;
+src/theater/bus/index.js:75:    this.startTime = 0;
+src/theater/bus/index.js:98:    this.startTime = this._now();
+src/theater/bus/index.js:111:    const timestamp = this._now() - this.startTime;
+src/theater/bus/index.js:122:      duration: this._now() - this.startTime,
+src/theater/bus/index.js:367:    const startTime = this._profiler.start(evt);
+src/theater/bus/index.js:374:        existing.startTime = Math.min(existing.startTime, startTime);
+src/theater/bus/index.js:376:        this._batchMap.set(evt, { payload: canonPayloadWithBase, normalized, startTime });
+src/theater/bus/index.js:383:    this._profiler.stop(evt, startTime);
+src/theater/bus/index.js:419:      this._profiler.stop(evt, entry.startTime);
+src/theater/TheaterDirector.js:357:    this.startTime = null;
+src/theater/TheaterDirector.js:441:    this.startTime = Date.now();
+src/theater/TheaterDirector.js:493:  handleOpeningComplete({ skipTriggered, opening, elapsed }) {
+src/theater/TheaterDirector.js:561:      console.log(`   Expected (SST): ~${opening.totalDurationMs}ms, Actual: ${elapsed}ms`);
+src/theater/TheaterDirector.js:563:      console.log(`   Total opening time: ${elapsed}ms`);
+src/theater/TheaterDirector.js:642:    if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve('elapsed');
+src/theater/TheaterDirector.js:652:      const complete = (reason = 'elapsed') => {
+src/theater/TheaterDirector.js:660:      timeoutId = this._trackTimer(() => complete('elapsed'), ms);
+src/theater/TheaterDirector.js:726:      elapsed: this.startTime ? Date.now() - this.startTime : 0,
+src/theater/controllers/MorphAnimationController.js:108:        startTime: getNow(),
+src/theater/controllers/MorphAnimationController.js:225:    const elapsed = now - animation.startTime;
+src/theater/controllers/MorphAnimationController.js:226:    const ratio = Math.min(1, elapsed / animation.duration);
+src/theater/controllers/OpeningSequenceController.js:685:      const elapsed = Date.now() - this.director.startTime;
+src/theater/controllers/OpeningSequenceController.js:687:      this.director.handleOpeningComplete?.({ skipTriggered, opening, elapsed });
+src/components/webgl/WebGLCanvas.jsx:450:            const startTime = performance.now();
+src/components/webgl/WebGLCanvas.jsx:475:            const setupTime = performance.now() - startTime;
+src/components/webgl/WebGLBackground.jsx:1543:          const startTime = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+src/components/webgl/WebGLBackground.jsx:1550:            const elapsed = now - startTime;
+src/components/webgl/WebGLBackground.jsx:1551:            const progress = Math.min(1, elapsed / duration);
+src/components/webgl/WebGLBackground.jsx:1876:      mat.uniforms.uTime.value = state.clock.elapsedTime;
+src/core/CentralEventClock.js:321:    const startTime = performance.now();
+src/core/CentralEventClock.js:328:    const emissionTime = performance.now() - startTime;
+src/core/CentralEventClock.js:370:let startTime = 0;
+src/core/CentralEventClock.js:423:  // Calculate elapsed time and clock drift
+src/core/CentralEventClock.js:424:  const elapsedTime = currentTime - startTime;
+src/core/CentralEventClock.js:426:  clockDrift = elapsedTime - expectedTime;
+src/core/CentralEventClock.js:528:    startTime = performance.now();
+src/core/CentralEventClock.js:548:    optimizedEmitter.emit('start', { timestamp: startTime });
+src/core/CentralEventClock.js:576:      elapsedTime: performance.now() - startTime,
+src/core/CentralEventClock.js:609:    const elapsedTime = isRunning ? currentTime - startTime : 0;
+src/core/CentralEventClock.js:620:      elapsedTime,
+src/core/CentralEventClock.js:625:      startTime,
+src/core/CentralEventClock.js:766:    const startTime = performance.now();
+src/core/CentralEventClock.js:774:          duration: endTime - startTime,
+src/core/CentralEventClock.js:776:          averageFPS: (endMetrics.frameCount - startMetrics.frameCount) / ((endTime - startTime) / 1000),
+src/config/canonical/canonicalAuthority.js:251:  let startTime = null;
+src/config/canonical/canonicalAuthority.js:258:      startTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+src/config/canonical/canonicalAuthority.js:277:      const origin = startTime || 0;
+src/config/canonical/canonicalAuthority.js:342:          startTime,
+src/state/commands/StateCommands.js:271:    const startTime = performance.now();
+src/state/commands/StateCommands.js:273:      const progress = Math.min((performance.now() - startTime) / duration, 1);
+src/state/atoms/createAtom.js:177:    const startTime = performance.now();
+src/state/atoms/createAtom.js:195:    const duration = performance.now() - startTime;
+src/state/atoms/qualityAtom.js:371:      const startTime = performance.now();
+src/state/atoms/qualityAtom.js:386:        duration: endTime - startTime,
+src/state/atoms/qualityAtom.js:387:        iterationsPerMs: iterations / (endTime - startTime),
+src/state/atoms/stageAtom.js:284:  recordTransition(startTime, endTime) {
+src/state/atoms/stageAtom.js:285:    const duration = endTime - startTime;
+src/state/atoms/stageAtom.js:327:    const startTime = performance.now();
+src/state/atoms/stageAtom.js:332:      timestamp: startTime
+src/state/atoms/stageAtom.js:355:            duration: performance.now() - startTime
+src/state/atoms/stageAtom.js:366:      performanceMonitor.recordTransition(startTime, endTime);
+src/state/atoms/stageAtom.js:369:        console.debug(`🎭 Batched ${batch.length} transitions in ${(endTime - startTime).toFixed(2)}ms`);
+src/state/atoms/stageAtom.js:702:      const startTime = performance.now();
+src/state/atoms/stageAtom.js:713:      console.log(`✅ Stress test completed in ${(endTime - startTime).toFixed(2)}ms`);
+src/state/atoms/stageAtom.js:717:        duration: endTime - startTime,
+src/state/atoms/stageAtom.js:718:        iterationsPerMs: iterations / (endTime - startTime),

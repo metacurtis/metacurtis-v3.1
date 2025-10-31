@@ -1,0 +1,22 @@
+src/theater/ScrollOrchestrator.js:41:    this.morphTarget = 1;
+src/theater/ScrollOrchestrator.js:93:      to: this.morphTarget,
+src/theater/ScrollOrchestrator.js:114:          const morphTarget = clamp01(this.morphTarget);
+src/theater/ScrollOrchestrator.js:119:            morphTarget,
+src/theater/ScrollOrchestrator.js:120:            target: morphTarget,
+src/theater/ScrollOrchestrator.js:179:      morphTarget: {
+src/theater/ScrollOrchestrator.js:180:        get: () => self.morphTarget,
+src/theater/ScrollOrchestrator.js:299:        this.morphTarget = 1;
+src/theater/ScrollOrchestrator.js:302:        this.morphTarget = clamp01(local * speed);
+src/theater/ScrollOrchestrator.js:307:        this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+src/theater/ScrollOrchestrator.js:317:        morphTarget: this.morphTarget,
+src/theater/ScrollOrchestrator.js:355:      morphTarget: this.morphTarget,
+src/theater/ScrollOrchestrator.js:369:    this.morphTarget = this.morph;
+src/theater/ScrollOrchestrator.js:372:      this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+src/theater/ScrollOrchestrator.js:384:    this.morphTarget = 1;
+src/theater/bus/schemas.js:63:      morphTarget: 'number',
+src/engine/modules/ClimaxController.js:235:      morphTarget: 1,
+src/engine/modules/MorphController.js:266:      morphTarget: target,
+src/theater/controllers/MorphAnimationController.js:324:      morphTarget: clampedTarget,
+src/theater/controllers/OpeningSequenceController.js:469:          morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
+src/theater/controllers/OpeningSequenceController.js:501:          morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+src/state/commands/StateCommands.js:36:      morphTarget: clamped,

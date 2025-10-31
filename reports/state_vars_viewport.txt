@@ -1,0 +1,13 @@
+src/theater/TheaterDirector.js:358:    this.viewportReady = false;
+src/theater/TheaterDirector.js:406:    if (!this.viewportReady && !this.waitingForViewport) {
+src/theater/TheaterDirector.js:412:        this.viewportReady = true;
+src/theater/TheaterDirector.js:425:          this.viewportReady = true;
+src/theater/TheaterDirector.js:730:      viewportReady: this.viewportReady,
+src/theater/TheaterDirector.js:741:    this.viewportReady = true;
+src/theater/TheaterDirector.js:762:    director.viewportReady = true;
+src/theater/TheaterDirector.js:843:      if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:850:          viewportReady: director.viewportReady,
+src/components/consciousness/ConsciousnessTheater.jsx:145:  const viewportReadyRef = useRef(false);
+src/components/consciousness/ConsciousnessTheater.jsx:174:      viewportReadyRef.current = true;
+src/components/consciousness/ConsciousnessTheater.jsx:179:      if (!directorStartedRef.current && viewportReadyRef.current) {
+src/components/consciousness/ConsciousnessTheater.jsx:210:      viewportReadyRef.current = false;

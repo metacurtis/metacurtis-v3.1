@@ -31,13 +31,20 @@ function easePercent(p) {
   return p;
 }
 
+/**
+ * ScrollOrchestrator
+ *
+ * ARCHITECTURE NOTE: Morph value authority lives inside MorphAnimationController.
+ * This class reads the current morph from the controller (via helpers) and only
+ * stages the next target with `morphTarget`. Eliminating duplicate storage
+ * prevents drift between orchestrator state and BeatBus emissions.
+ */
 export default class ScrollOrchestrator {
   constructor() {
     this._onScroll = this._onScroll.bind(this);
     this._ensureScrollableArea = this._ensureScrollableArea.bind(this);
     this.running = false;
     this.lastStageIndex = -1;
-    this.morph = 1;
     this.morphTarget = 1;
     this.scrollLocked = false;
     this.morphAnimator = new MorphAnimationController();
@@ -87,9 +94,10 @@ export default class ScrollOrchestrator {
     }
 
     // Start continuous morph animation with unified controller
+    const startMorph = this.getCurrentMorph();
     const animation = this.morphAnimator.animate({
       id: `scroll-morph-${Date.now()}`,
-      from: this.morph,
+      from: startMorph,
       to: this.morphTarget,
       duration: Infinity,
       stage: 'scroll',
@@ -98,8 +106,6 @@ export default class ScrollOrchestrator {
       overshoot: Canonical?.scrollAndMorph?.morphResponse?.overshoot ?? 0.05,
       mode: 'continuous',
       onProgress: (value) => {
-        this.morph = value;
-
         const now = Date.now();
         const shouldEmit =
           Math.abs(value - this._lastEmitVal) > 0.005 ||
@@ -111,7 +117,7 @@ export default class ScrollOrchestrator {
 
           const currentStage = Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown';
           const morphProgress = clamp01(value);
-          const morphTarget = clamp01(this.morphTarget);
+          const morphTarget = clamp01(this.getMorphTarget());
 
           BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
             morphProgress,
@@ -173,7 +179,7 @@ export default class ScrollOrchestrator {
         enumerable: true,
       },
       morph: {
-        get: () => self.morph,
+        get: () => self.getCurrentMorph(),
         enumerable: true,
       },
       morphTarget: {
@@ -315,7 +321,7 @@ export default class ScrollOrchestrator {
         stageProgress: local * 100,
         localProgress: local,
         morphTarget: this.morphTarget,
-        morph: this.morph,
+        morph: this.getCurrentMorph(),
       });
 
       // stage change event
@@ -347,11 +353,41 @@ export default class ScrollOrchestrator {
     }
   }
 
+  /**
+   * Read current morph value from the animation controller.
+   * @returns {number} Current morph progress (0-1)
+   */
+  getCurrentMorph() {
+    const animations = this.morphAnimator?.animations;
+    if (this.morphAnimationId && animations instanceof Map) {
+      const animation = animations.get(this.morphAnimationId);
+      if (animation && Number.isFinite(animation.currentValue)) {
+        return clamp01(animation.currentValue);
+      }
+    }
+    return clamp01(this._lastEmitVal ?? this.morphTarget ?? 1);
+  }
+
+  /**
+   * Read target morph value from the animation controller.
+   * @returns {number} Target morph progress (0-1)
+   */
+  getMorphTarget() {
+    const animations = this.morphAnimator?.animations;
+    if (this.morphAnimationId && animations instanceof Map) {
+      const animation = animations.get(this.morphAnimationId);
+      if (animation && Number.isFinite(animation.targetValue)) {
+        return clamp01(animation.targetValue);
+      }
+    }
+    return clamp01(this.morphTarget ?? 1);
+  }
+
   // Public API for debugging
   getState() {
     return {
       running: this.running,
-      morph: this.morph,
+      morph: this.getCurrentMorph(),
       morphTarget: this.morphTarget,
       lastStageIndex: this.lastStageIndex,
       stage: Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown'
@@ -365,12 +401,21 @@ export default class ScrollOrchestrator {
       console.warn('[ScrollOrchestrator] Unauthorized setMorph attempt blocked');
       return;
     }
-    this.morph = clamp01(value);
-    this.morphTarget = this.morph;
+    const clampedValue = clamp01(value);
+    this.morphTarget = clampedValue;
     this._lastEmitVal = -1; // Force emit on next update
     if (this.morphAnimationId) {
-      this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+      this.morphAnimator.updateTarget(this.morphAnimationId, clampedValue);
     }
+    BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+      morphProgress: clampedValue,
+      value: clampedValue,
+      morphTarget: clampedValue,
+      stage: Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown',
+      stageIndex: this.lastStageIndex,
+      source: `scroll:setMorph:${origin}`,
+      schemaVersion: '3.5',
+    });
   }
 
   // Reset to initial state
@@ -380,7 +425,6 @@ export default class ScrollOrchestrator {
       this.morphAnimationId = null;
     }
     this.morphAnimator.cancelAll();
-    this.morph = 1;
     this.morphTarget = 1;
     this.lastStageIndex = -1;
     this._lastEmitVal = 1;

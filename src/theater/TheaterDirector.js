@@ -62,6 +62,29 @@ function matchesSkipActivation(event, skipKey) {
 
 // ── Theater Director Class ───────────────────────────────────────────────────
 class TheaterDirector {
+  /**
+   * INTERNAL LIFECYCLE STATE (NOT SHARED)
+   *
+   * These properties intentionally remain local to TheaterDirector. They
+   * coordinate internal control flow and asynchronous sequencing rather than
+   * UI-observable state, so they should not be moved into atoms.
+   *
+   * @property {string} phase - Lifecycle phase (`idle` | `starting` | `complete` | `cancelled` | `error`)
+   * @property {boolean} skipRequested - Internal skip signal
+   * @property {boolean} cancelled - Cancellation guard for async waits
+   * @property {boolean} hasRun - Lifecycle completion tracker
+   * @property {boolean} isRunning - Indicates active opening sequence
+   *
+   * Opening sequence coordination flags (reset between runs):
+   * @property {boolean} _openingInProgress
+   * @property {boolean} _openingPrebound
+   * @property {boolean} _preChaosReady
+   * @property {boolean} _fencepostReadyEmitted
+   * @property {boolean} _rendererFencepostSeen
+   *
+   * These values orchestrate the theater internals and are not meant to be
+   * observed directly by components or dev tooling.
+   */
   constructor() {
     this.reset();
     this.timeline = {};
@@ -103,14 +126,15 @@ class TheaterDirector {
     this._handleStageChangeBound = (payload = {}) => {
       const targetStage = payload?.to ?? payload?.stage ?? null;
       if (!targetStage) return;
-      if (targetStage === 'genesis' && this.currentStage) {
+      const currentStage = this.getCurrentStage();
+      if (targetStage === 'genesis' && currentStage) {
         const isOpeningHandoff = payload?.preserveEmergence === true;
         const source = payload?.source;
         const isManualJump = source === 'manual' || source === 'keyboard';
 
-        if (!isOpeningHandoff && !isManualJump && this.currentStage !== 'genesis') {
+        if (!isOpeningHandoff && !isManualJump && currentStage !== 'genesis') {
           console.log('🎬 Director: Ignoring stale genesis transition', {
-            currentStage: this.currentStage,
+            currentStage,
             targetStage,
             payloadFlags: {
               preserveEmergence: !!payload?.preserveEmergence,
@@ -213,6 +237,14 @@ class TheaterDirector {
     this._activeTimers?.delete(id);
   }
 
+  /**
+   * Get the current stage from stageAtom (single source of truth).
+   * @returns {string} Current stage identifier.
+   */
+  getCurrentStage() {
+    return stageAtom?.getState?.()?.currentStage || 'genesis';
+  }
+
   handleStageChange(newStage, payload = {}) {
     if (!newStage) {
       if (DEBUG_NARRATION) {
@@ -221,7 +253,7 @@ class TheaterDirector {
       return;
     }
 
-    const previousStage = this.currentStage;
+    const previousStage = this.getCurrentStage();
     if (previousStage === newStage) {
       if (DEBUG_NARRATION) {
         console.log('🎬 [STAGE CHANGE IGNORED] Duplicate stage event', {
@@ -242,8 +274,6 @@ class TheaterDirector {
         narrationControllerExists: !!narrationController,
       });
     }
-
-    this.currentStage = newStage;
 
     if (beatSheet) {
       if (DEBUG_NARRATION) {
@@ -357,7 +387,6 @@ class TheaterDirector {
     this.startTime = null;
     this.viewportReady = false;
     this.waitingForViewport = false;
-    this.currentStage = null;
     this.skipRequested = false;
     this._skipOrigin = null;
     this._sleepWaiters = new Set();
@@ -380,16 +409,17 @@ class TheaterDirector {
       phase: this.phase,
       timestamp: Date.now(),
     });
+    const currentStage = this.getCurrentStage();
     // Strong duplicate protection
     if (this.isRunning) {
       console.log('⚠️ [DIRECTOR START] Already running, returning');
       return;
     }
 
-    if (this.phase === 'complete' && this.currentStage) {
+    if (this.phase === 'complete' && currentStage) {
       if (DEBUG_NARRATION) {
         console.log('🎬 Director: Opening already complete, ignoring restart request', {
-          currentStage: this.currentStage,
+          currentStage,
         });
       }
       return;
@@ -728,7 +758,7 @@ class TheaterDirector {
       isRunning: this.isRunning,
       hasRun: this.hasRun,
       viewportReady: this.viewportReady,
-      currentStage: this.currentStage,
+      currentStage: this.getCurrentStage(),
     };
   }
 

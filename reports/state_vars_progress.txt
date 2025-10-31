@@ -1,0 +1,21 @@
+src/theater/ScrollOrchestrator.js:315:        stageProgress: local * 100,
+src/theater/bus/schemas.js:61:      stageProgress: 'number',
+src/components/dev/DevPerformanceMonitor.jsx:116:  const stageProgress = Math.round((stageState.stageProgress || 0) * 100);
+src/components/dev/DevPerformanceMonitor.jsx:143:          {currentStage.toUpperCase()} ({stageProgress}%)
+src/components/fragments/AmbientFragment.jsx:52:      const stageProgress =
+src/components/fragments/AmbientFragment.jsx:53:        typeof payload.stageProgress === 'number'
+src/components/fragments/AmbientFragment.jsx:54:          ? payload.stageProgress
+src/components/fragments/AmbientFragment.jsx:59:      if (!hasTriggered && stageProgress >= triggerPercent) {
+src/components/fragments/AmbientFragment.jsx:62:          `📝 Ambient fragment triggered (${fragment.id || 'unknown'}) @ ${stageProgress.toFixed?.(1) ?? stageProgress}%`
+src/state/atoms/narrativeAtom.js:8:  globalProgress: 0,
+src/state/atoms/narrativeAtom.js:153:      globalProgress: Math.max(0, Math.min(1, progress)),
+src/state/atoms/narrativeAtom.js:288:        global: state.globalProgress,
+src/state/atoms/stageAtom.js:48:    stageProgress: 0,
+src/state/atoms/stageAtom.js:49:    globalProgress: STAGE_COUNT > 1 ? INITIAL_STAGE_INDEX / (STAGE_COUNT - 1) : 0,
+src/state/atoms/stageAtom.js:390:        globalProgress: progressBase,
+src/state/atoms/stageAtom.js:421:        globalProgress: progressBase,
+src/state/atoms/stageAtom.js:422:        stageProgress: 0.0,
+src/state/atoms/stageAtom.js:467:        stageProgress: clampedProgress,
+src/state/atoms/stageAtom.js:491:        globalProgress: clampedProgress,
+src/state/atoms/stageAtom.js:576:        stageProgress: state.stageProgress,
+src/state/atoms/stageAtom.js:578:        globalProgress: state.globalProgress,

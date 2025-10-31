@@ -1,0 +1,2 @@
+src/components/webgl/WebGLBackground.jsx:1522:        const currentPhase = director?.getCurrentPhase?.() ?? director?.phase ?? null;
+src/components/webgl/WebGLBackground.jsx:1523:        const isOpeningPhase = currentStage === 'genesis' && currentPhase !== 'emergence';

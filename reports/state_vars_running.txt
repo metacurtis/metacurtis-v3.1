@@ -1,0 +1,50 @@
+src/theater/controllers/OpeningSequenceController.js:63:    this.running = false;
+src/theater/controllers/OpeningSequenceController.js:170:   * Cancel running sequence.
+src/theater/controllers/OpeningSequenceController.js:173:    if (!this.running) return;
+src/theater/controllers/OpeningSequenceController.js:178:    this.running = false;
+src/theater/controllers/OpeningSequenceController.js:189:    this.running = true;
+src/theater/controllers/OpeningSequenceController.js:690:      this.running = false;
+src/theater/TheaterDirector.js:329:      if (this.isRunning) this.cancel();
+src/theater/TheaterDirector.js:355:    this.isRunning = false;
+src/theater/TheaterDirector.js:378:      isRunning: this.isRunning,
+src/theater/TheaterDirector.js:384:    if (this.isRunning) {
+src/theater/TheaterDirector.js:385:      console.log('⚠️ [DIRECTOR START] Already running, returning');
+src/theater/TheaterDirector.js:417:          if (!this.isRunning && !this.hasRun) this.start();
+src/theater/TheaterDirector.js:429:            if (!this.isRunning && !this.hasRun) this.start();
+src/theater/TheaterDirector.js:438:    this.isRunning = true;
+src/theater/TheaterDirector.js:471:      this.isRunning = false;
+src/theater/TheaterDirector.js:593:    if (!this.isRunning) {
+src/theater/TheaterDirector.js:594:      console.log('🎬 Director: Not running, cancel ignored');
+src/theater/TheaterDirector.js:609:    this.isRunning = false;
+src/theater/TheaterDirector.js:728:      isRunning: this.isRunning,
+src/theater/TheaterDirector.js:756:  if (director.hasRun || director.isRunning || director.phase === 'complete') {
+src/theater/TheaterDirector.js:828:      if (!director.hasRun && !director.isRunning && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:834:          isRunning: director.isRunning,
+src/theater/TheaterDirector.js:843:      if (!director.hasRun && !director.isRunning && !director.viewportReady && director.phase !== 'complete') {
+src/theater/TheaterDirector.js:849:          isRunning: director.isRunning,
+src/theater/ScrollOrchestrator.js:38:    this.running = false;
+src/theater/ScrollOrchestrator.js:60:    if (this.running) return;
+src/theater/ScrollOrchestrator.js:61:    this.running = true;
+src/theater/ScrollOrchestrator.js:137:    if (!this.running) return;
+src/theater/ScrollOrchestrator.js:138:    this.running = false;
+src/theater/ScrollOrchestrator.js:167:      running: {
+src/theater/ScrollOrchestrator.js:168:        get: () => self.running,
+src/theater/ScrollOrchestrator.js:353:      running: this.running,
+src/engine/ConsciousnessEngine.js:81:    // Expose engine debug helpers when running in the browser
+src/App.jsx:37:    if (!clock.isRunning && typeof clockAtom.start === 'function') {
+src/App.jsx:59:      if (currentClock.isRunning && typeof clockAtom.stop === 'function') {
+src/core/CentralEventClock.js:369:let isRunning = false;
+src/core/CentralEventClock.js:392:  if (!isRunning) return;
+src/core/CentralEventClock.js:509:  if (document.hidden && isRunning) {
+src/core/CentralEventClock.js:512:  } else if (!document.hidden && !isRunning) {
+src/core/CentralEventClock.js:522:    if (isRunning) {
+src/core/CentralEventClock.js:523:      console.warn('CentralEventClock: Already running');
+src/core/CentralEventClock.js:527:    isRunning = true;
+src/core/CentralEventClock.js:552:    if (!isRunning) {
+src/core/CentralEventClock.js:557:    isRunning = false;
+src/core/CentralEventClock.js:583:    if (!isRunning) return;
+src/core/CentralEventClock.js:585:    isRunning = false;
+src/core/CentralEventClock.js:596:    if (isRunning) return;
+src/core/CentralEventClock.js:598:    isRunning = true;
+src/core/CentralEventClock.js:609:    const elapsedTime = isRunning ? currentTime - startTime : 0;
+src/core/CentralEventClock.js:618:      isRunning,

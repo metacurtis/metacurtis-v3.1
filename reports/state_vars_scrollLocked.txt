@@ -1,0 +1,9 @@
+src/theater/ScrollOrchestrator.js:42:    this.scrollLocked = false;
+src/theater/ScrollOrchestrator.js:62:    this.scrollLocked = false;
+src/theater/ScrollOrchestrator.js:171:      scrollLocked: {
+src/theater/ScrollOrchestrator.js:172:        get: () => self.scrollLocked,
+src/theater/ScrollOrchestrator.js:254:          this.scrollLocked = (document.body?.style?.overflow || '') === 'hidden';
+src/theater/ScrollOrchestrator.js:256:          this.scrollLocked = false;
+src/theater/ScrollOrchestrator.js:287:            scrollLocked: !!this.scrollLocked,
+src/components/narrative/NarrationController.jsx:834:      scrollLocked:
+src/types/sst-types.js:63: * @property {boolean} scrollLocked

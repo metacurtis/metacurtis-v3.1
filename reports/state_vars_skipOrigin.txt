@@ -1,0 +1,5 @@
+src/theater/controllers/OpeningSequenceController.js:66:    this._skipOrigin = null;
+src/theater/controllers/OpeningSequenceController.js:163:    this._skipOrigin = origin;
+src/theater/controllers/OpeningSequenceController.js:522:        console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
+src/theater/TheaterDirector.js:286:    this._skipOrigin = origin;
+src/theater/TheaterDirector.js:362:    this._skipOrigin = null;

@@ -1,0 +1,9 @@
+src/theater/TheaterDirector.js:366:    this._openingPrebound = false;
+src/engine/ConsciousnessEngine.js:112:    this._openingPreboundBlueprint = null;
+src/engine/ConsciousnessEngine.js:427:        this._openingPreboundBlueprint = blueprint;
+src/engine/ConsciousnessEngine.js:431:        this._openingPreboundBlueprint = null;
+src/theater/controllers/OpeningSequenceController.js:280:    const shouldWaitForFencepost = waitForFencepost && !this.director._openingPrebound;
+src/theater/controllers/OpeningSequenceController.js:376:        if (!this.director._openingPrebound) {
+src/theater/controllers/OpeningSequenceController.js:391:            this.director._openingPrebound = true;
+src/theater/controllers/OpeningSequenceController.js:531:      const reusePreboundBlueprint = this.director._openingPrebound === true;
+src/theater/controllers/OpeningSequenceController.js:666:      this.director._openingPrebound = false;
