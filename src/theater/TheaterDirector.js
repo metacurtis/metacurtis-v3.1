@@ -9,6 +9,8 @@ import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import { OpeningSequenceController } from './controllers/OpeningSequenceController.js';
+// Morph animation controller (unified RAF system)
+import { MorphAnimationController } from './controllers/MorphAnimationController.js';
 
 // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
 if (typeof window !== 'undefined') {
@@ -31,13 +33,6 @@ if (typeof window !== 'undefined') {
 }
 
 const DEBUG_NARRATION = true;
-
-const clamp01 = (value) => {
-  if (!Number.isFinite(value)) return 0;
-  if (value <= 0) return 0;
-  if (value >= 1) return 1;
-  return value;
-};
 
 const DEFERRED_OPENING_DELAY = 120;
 
@@ -102,6 +97,8 @@ class TheaterDirector {
 
     // Initialize opening sequence controller
     this.openingController = new OpeningSequenceController(this);
+    // Initialize morph animator (shared RAF system)
+    this.morphAnimator = new MorphAnimationController();
 
     this._handleStageChangeBound = (payload = {}) => {
       const targetStage = payload?.to ?? payload?.stage ?? null;
@@ -216,141 +213,6 @@ class TheaterDirector {
     this._activeTimers?.delete(id);
   }
 
-  _cancelMorphAnimation() {
-    if (typeof this._activeMorphCancel === 'function') {
-      try {
-        this._activeMorphCancel();
-      } catch (error) {
-        if (import.meta?.env?.DEV) {
-          console.warn('[Director] morph cancel failed', error);
-        }
-      }
-    }
-    this._activeMorphCancel = null;
-  }
-
-  _emitMorphProgress(value, { target, stage, phase, durationMs, source }) {
-    const stageName = stage || this.currentStage || 'genesis';
-    const clampedValue = clamp01(value);
-    const clampedTarget = clamp01(Number.isFinite(target) ? target : clampedValue);
-    const payload = {
-      morphProgress: clampedValue,
-      value: clampedValue,
-      target: clampedTarget,
-      morphTarget: clampedTarget,
-      stage: stageName,
-      phase,
-      durationMs: Number.isFinite(durationMs) ? Math.max(0, durationMs) : 0,
-      schemaVersion: '3.5',
-      source: source || 'director',
-    };
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
-  }
-
-  _animateMorphPhase({ from, to, durationMs, stage, phase, skipSignal }) {
-    const startValue = clamp01(Number.isFinite(from) ? from : 0);
-    const endValue = clamp01(Number.isFinite(to) ? to : startValue);
-    const duration = Math.max(0, Number(durationMs) || 0);
-    const shouldSkip = typeof skipSignal === 'function' ? skipSignal : () => false;
-
-    this._cancelMorphAnimation();
-
-    console.log(`🎯 [_animateMorphPhase] Starting ${phase || 'unknown'}`, {
-      config: { from: startValue, to: endValue, duration },
-      stage,
-      phase,
-      timestamp: Date.now(),
-    });
-
-    if (duration === 0 || Math.abs(endValue - startValue) < 1e-4) {
-      this._emitMorphProgress(endValue, {
-        target: endValue,
-        stage,
-        phase,
-        durationMs: 0,
-        source: 'director/morph-immediate',
-      });
-      return Promise.resolve();
-    }
-
-    const requestFrame =
-      typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame.bind(window)
-        : (cb) => setTimeout(() => cb(Date.now()), 16);
-    const cancelFrame =
-      typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function'
-        ? window.cancelAnimationFrame.bind(window)
-        : clearTimeout;
-
-    const getNow =
-      typeof performance !== 'undefined' && typeof performance.now === 'function'
-        ? () => performance.now()
-        : () => Date.now();
-
-    return new Promise((resolve) => {
-      const startTime = getNow();
-      let rafHandle = null;
-      let settled = false;
-
-      const finalize = () => {
-        if (settled) return;
-        settled = true;
-        this._emitMorphProgress(endValue, {
-          target: endValue,
-          stage,
-          phase,
-          durationMs,
-          source: 'director/morph-finalize',
-        });
-        resolve();
-      };
-
-      const step = () => {
-        if (shouldSkip() || this.cancelled) {
-          finalize();
-          return;
-        }
-
-        const elapsed = getNow() - startTime;
-        const ratio = Math.min(1, elapsed / duration);
-        const value = startValue + (endValue - startValue) * ratio;
-        console.log(`⏱️ [RAF ${phase || 'unknown'}] tick`, {
-          elapsed,
-          targetDuration: duration,
-          currentMorph: value,
-          stage,
-        });
-        this._emitMorphProgress(value, {
-          target: endValue,
-          stage,
-          phase,
-          durationMs,
-          source: 'director/raf',
-        });
-
-        if (ratio >= 1) {
-          finalize();
-          return;
-        }
-        rafHandle = requestFrame(step);
-      };
-
-      rafHandle = requestFrame(step);
-
-      this._activeMorphCancel = () => {
-        if (rafHandle != null) {
-          cancelFrame(rafHandle);
-          rafHandle = null;
-        }
-        finalize();
-      };
-    }).finally(() => {
-      if (this._activeMorphCancel) {
-        this._activeMorphCancel = null;
-      }
-    });
-  }
-
   handleStageChange(newStage, payload = {}) {
     if (!newStage) {
       if (DEBUG_NARRATION) {
@@ -424,7 +286,7 @@ class TheaterDirector {
     this._skipOrigin = origin;
     console.log(`🎬 Director: Opening skip requested via ${origin}`);
     this.openingController?.requestSkip?.(origin);
-    this._cancelMorphAnimation();
+    this.morphAnimator?.cancelAll?.();
     this._wakeSleepWaiters('skipped');
   }
 
@@ -486,7 +348,7 @@ class TheaterDirector {
       this.scrollOrchestrator?.stop?.();
     } catch {}
 
-    this._cancelMorphAnimation();
+    this.morphAnimator?.cancelAll?.();
     this.phase = 'idle';
     this.cancelled = false;
     this.completed = false;
@@ -710,6 +572,23 @@ class TheaterDirector {
     return;
   }
 
+  destroy() {
+    console.log('[Director] Destroying director instance');
+    this.morphAnimator?.destroy?.();
+    this.openingController?.cancel?.();
+    this.scrollOrchestrator?.stop?.();
+    this._stageChangeUnsubscribe?.();
+    this._stageChangeUnsubscribe = null;
+    this._wakeSleepWaiters('destroy');
+    this._detachSkipListener();
+    if (this._activeTimers?.size) {
+      for (const id of this._activeTimers) {
+        clearTimeout(id);
+      }
+    }
+    this._activeTimers = new Set();
+  }
+
   cancel() {
     if (!this.isRunning) {
       console.log('🎬 Director: Not running, cancel ignored');
@@ -731,7 +610,7 @@ class TheaterDirector {
     this.phase = 'cancelled';
     this.openingController?.cancel?.();
     this.scrollOrchestrator?.stop();
-    this._cancelMorphAnimation();
+    this.morphAnimator?.cancelAll?.();
     this._wakeSleepWaiters('cancelled');
     this._detachSkipListener();
     BeatBus.emit(EVENTS.DIRECTOR_CANCEL);

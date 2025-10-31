@@ -6,6 +6,7 @@
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { MorphAnimationController } from './controllers/MorphAnimationController.js';
 import {
   exposeDiagnostics,
   exposeControlSurface,
@@ -33,15 +34,14 @@ function easePercent(p) {
 export default class ScrollOrchestrator {
   constructor() {
     this._onScroll = this._onScroll.bind(this);
-    this._update = this._update.bind(this);
     this._ensureScrollableArea = this._ensureScrollableArea.bind(this);
     this.running = false;
     this.lastStageIndex = -1;
     this.morph = 1;
     this.morphTarget = 1;
     this.scrollLocked = false;
-  
-    this._rafId = 0;
+    this.morphAnimator = new MorphAnimationController();
+    this.morphAnimationId = null;
     this._resizeHandlerBound = null;
     
     // throttle / change-detect emit guards
@@ -79,8 +79,54 @@ export default class ScrollOrchestrator {
     }
     // kick once
     this._onScroll();
-    // schedule smoothing loop
-    this._schedule();
+
+    // Cancel any previous animation handle
+    if (this.morphAnimationId) {
+      this.morphAnimator.cancel(this.morphAnimationId);
+      this.morphAnimationId = null;
+    }
+
+    // Start continuous morph animation with unified controller
+    const animation = this.morphAnimator.animate({
+      id: `scroll-morph-${Date.now()}`,
+      from: this.morph,
+      to: this.morphTarget,
+      duration: Infinity,
+      stage: 'scroll',
+      phase: 'smoothing',
+      smoothing: Canonical?.scrollAndMorph?.morphResponse?.smoothing ?? 0.15,
+      overshoot: Canonical?.scrollAndMorph?.morphResponse?.overshoot ?? 0.05,
+      mode: 'continuous',
+      onProgress: (value) => {
+        this.morph = value;
+
+        const now = Date.now();
+        const shouldEmit =
+          Math.abs(value - this._lastEmitVal) > 0.005 ||
+          (now - this._lastEmitTs) > 100;
+
+        if (shouldEmit) {
+          this._lastEmitVal = value;
+          this._lastEmitTs = now;
+
+          const currentStage = Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown';
+          const morphProgress = clamp01(value);
+          const morphTarget = clamp01(this.morphTarget);
+
+          BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+            morphProgress,
+            value: morphProgress,
+            morphTarget,
+            target: morphTarget,
+            stage: currentStage,
+            stageIndex: this.lastStageIndex,
+            schemaVersion: '3.5',
+          });
+        }
+      },
+    });
+    this.morphAnimationId = animation?.animationId ?? null;
+
     // dev
     if (DEBUG_SCROLL) {
       console.log('📜 ScrollOrchestrator started');
@@ -99,11 +145,12 @@ export default class ScrollOrchestrator {
       revokeControlSurface('__scrollOrchestrator');
       revokeControlSurface('scrollOrchestrator');
     }
-  
-    if (this._rafId) { 
-      cancelAnimationFrame(this._rafId); 
-      this._rafId = 0; 
+
+    if (this.morphAnimationId) {
+      this.morphAnimator.cancel(this.morphAnimationId);
+      this.morphAnimationId = null;
     }
+    this.morphAnimator.cancelAll();
     if (DEBUG_SCROLL) {
       console.log('📜 ScrollOrchestrator stopped');
     }
@@ -139,69 +186,6 @@ export default class ScrollOrchestrator {
       },
     });
     return surface;
-  }
-
-  _schedule() {
-    if (!this.running) return;
-    
-    // Cancel any pending frame
-    if (this._rafId) {
-      cancelAnimationFrame(this._rafId);
-    }
-    
-    // Schedule the smoothing update
-    this._rafId = requestAnimationFrame(() => this._update());
-  }
-
-  _update() {
-    if (!this.running) return;
-
-    // Smoothing: lerp toward target
-    const smoothing = Canonical?.scrollAndMorph?.morphResponse?.smoothing ?? 0.15;
-    const delta = this.morphTarget - this.morph;
-    
-    // If we're close enough, snap and stop
-    if (Math.abs(delta) < 0.001) {
-      this.morph = this.morphTarget;
-    } else {
-      // Apply smoothing
-      this.morph += delta * smoothing;
-      
-      // Apply overshoot if configured
-      const overshoot = Canonical?.scrollAndMorph?.morphResponse?.overshoot ?? 0.05;
-      if (overshoot > 0 && Math.abs(delta) > 0.1) {
-        this.morph += delta * overshoot * Math.sin(Date.now() * 0.001);
-      }
-      
-      // Continue animating
-      this._schedule();
-    }
-
-    // Emit morph progress (with throttling)
-    const now = Date.now();
-    const shouldEmit = (
-      Math.abs(this.morph - this._lastEmitVal) > 0.005 || // changed enough
-      (now - this._lastEmitTs) > 100 // or 100ms passed
-    );
-    
-    if (shouldEmit) {
-      this._lastEmitVal = this.morph;
-      this._lastEmitTs = now;
-      
-      const currentStage = Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown';
-      
-      const morphProgress = clamp01(this.morph);
-      const morphTarget = clamp01(this.morphTarget);
-      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
-        morphProgress,
-        value: morphProgress,
-        morphTarget,
-        target: morphTarget,
-        stage: currentStage,
-        stageIndex: this.lastStageIndex,
-        schemaVersion: '3.5',
-      });
-    }
   }
 
   _ensureScrollableArea(originOrEvent = 'runtime') {
@@ -318,8 +302,10 @@ export default class ScrollOrchestrator {
         this.morphTarget = clamp01(local * speed);
       }
       
-      // ensure the loop runs to converge to new target
-      this._schedule();
+      // Update animator target with new morph goal
+      if (this.morphAnimationId) {
+        this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+      }
 
       BeatBus.emit?.(EVENTS.SCROLL_PROGRESS, {
         scrollPercent: easedPct,
@@ -382,11 +368,18 @@ export default class ScrollOrchestrator {
     this.morph = clamp01(value);
     this.morphTarget = this.morph;
     this._lastEmitVal = -1; // Force emit on next update
-    this._schedule();
+    if (this.morphAnimationId) {
+      this.morphAnimator.updateTarget(this.morphAnimationId, this.morphTarget);
+    }
   }
 
   // Reset to initial state
   reset() {
+    if (this.morphAnimationId) {
+      this.morphAnimator.cancel(this.morphAnimationId);
+      this.morphAnimationId = null;
+    }
+    this.morphAnimator.cancelAll();
     this.morph = 1;
     this.morphTarget = 1;
     this.lastStageIndex = -1;

@@ -302,19 +302,13 @@ export class OpeningSequenceController {
     const morphStage = 'genesis';
     let currentMorphValue = 0;
     const emitMorphSnapshot = (value, phase, target = value, durationMs = 0) => {
-      this.director._emitMorphProgress?.(value, {
-        target,
-        stage: morphStage,
-        phase,
-        durationMs,
-        source: 'director/snapshot',
-      });
+      this.director.morphAnimator?.emitSnapshot?.(value, phase, target, durationMs, morphStage);
     };
     const animateMorph = (from, to, durationMs, phase) =>
-      this.director._animateMorphPhase?.({
+      this.director.morphAnimator?.animate({
         from,
         to,
-        durationMs,
+        duration: durationMs,
         stage: morphStage,
         phase,
         skipSignal: () => skipTriggered || this.director.skipRequested || this.skipRequested || this.cancelled,
@@ -530,7 +524,7 @@ export class OpeningSequenceController {
           emitMorphSnapshot(1, 'skip-fast-forward', 1, 0);
           currentMorphValue = 1;
         }
-        this.director._cancelMorphAnimation?.();
+        this.director.morphAnimator?.cancelAll?.();
       }
 
       this.director.phase = 'emergence';

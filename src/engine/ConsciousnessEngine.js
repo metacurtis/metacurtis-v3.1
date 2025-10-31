@@ -750,16 +750,28 @@ class ConsciousnessEngine {
 
         if (blueprint) {
           const targets = this._lastEmergenceTargets;
-          blueprint.atmosphericPositions.set(targets);
-          blueprint.text3DPositions.set(targets);
-          if (blueprint.positions?.length === targets.length) {
-            blueprint.positions.set(targets);
+
+          if (!(blueprint.atmosphericPositions instanceof Float32Array)) {
+            console.error('🧠 Engine: Blueprint missing atmosphericPositions attribute');
+            blueprint = null;
+          } else if (!(blueprint.text3DPositions instanceof Float32Array)) {
+            console.error('🧠 Engine: Blueprint missing text3DPositions attribute');
+            blueprint = null;
+          } else if (!(blueprint.positions instanceof Float32Array)) {
+            console.error('🧠 Engine: Blueprint missing positions attribute');
+            blueprint = null;
+          } else {
+            blueprint.atmosphericPositions.set(targets);
+            blueprint.text3DPositions.set(targets);
+            if (blueprint.positions.length === targets.length) {
+              blueprint.positions.set(targets);
+            }
           }
 
           this._lastEmergenceTargets = null;
           this._emergenceDone = false;
 
-          if (this._validateBlueprint(blueprint)) {
+          if (blueprint && this._validateBlueprint(blueprint)) {
             console.log('🔬 [BLUEPRINT] Final blueprint check:', {
               stage: blueprint.stage ?? blueprint.stageName,
               hasPositions: !!blueprint.positions,
@@ -775,9 +787,11 @@ class ConsciousnessEngine {
             });
             this._preloadNextStage(stage, quality);
             this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
+            this._rendererFencepostSeen = false;
+            return;
           }
+
           this._rendererFencepostSeen = false;
-          return;
         }
       }
     }
