@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "projectName": "metacurtis-v3.1",
+  "sst": {
+    "path": "sst/canon/v3.5.json",
+    "schema": "sst/canon/v3.5.schema.json"
+  },
+  "automation": {
+    "savepoints": {
+      "enabled": true,
+      "autoCreate": true,
+      "prefix": "cdp-savepoint",
+      "maxSavepoints": 10
+    },
+    "validation": {
+      "specCheck": "always",
+      "probes": "pre-commit",
+      "visualTests": "optional"
+    },
+    "hooks": {
+      "preCheckout": true,
+      "preCommit": true,
+      "postCommit": true
+    }
+  },
+  "enforcement": {
+    "blockOnSpecFail": true,
+    "blockOnProbeFail": true,
+    "blockOnVisualFail": false
+  },
+  "visualTests": {
+    "mode": "optional",
+    "mandatoryTriggers": [
+      "src/shaders/**/*.glsl",
+      "src/components/webgl/**",
+      "src/engine/**"
+    ]
+  }
+}

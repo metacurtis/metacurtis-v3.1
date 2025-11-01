@@ -438,7 +438,7 @@ export class OpeningSequenceController {
         this.director.phase = 'chaos';
         console.log(`   Phase: Chaos (${chaosDuration}ms)`);
         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-          name: 'chaos',
+          phase: 'chaos',
           duration: chaosDuration,
           rendererSpin: chaosConfig.rendererSpin || null,
         });
@@ -464,7 +464,7 @@ export class OpeningSequenceController {
         this.director.phase = 'coalesce';
         console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-          name: 'coalesce',
+          phase: 'coalesce',
           duration: coalesceDuration,
           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
         });
@@ -496,7 +496,7 @@ export class OpeningSequenceController {
         this.director.phase = 'settle';
         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-          name: 'settle',
+          phase: 'settle',
           duration: settleDuration,
           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
         });

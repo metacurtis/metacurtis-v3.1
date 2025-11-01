@@ -195,6 +195,69 @@ export default class BlueprintGenerator {
       }
     }
 
+    const expectedArrayLength = particleCount * 3;
+
+    const atmosphericRatio = 0.3;
+    const atmosphericCount = Math.floor(particleCount * atmosphericRatio);
+    const atmosphericRandom = createSeededRandom(`${stageName}|atmosphereHalo`);
+    atmosphericPositions.fill(0);
+    for (let i = 0; i < atmosphericCount; i += 1) {
+      const idx = i * 3;
+      const radius = 5 + atmosphericRandom() * 3;
+      const theta = atmosphericRandom() * Math.PI * 2;
+      const phi = atmosphericRandom() * Math.PI;
+      atmosphericPositions[idx] = radius * Math.sin(phi) * Math.cos(theta);
+      atmosphericPositions[idx + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      atmosphericPositions[idx + 2] = radius * Math.cos(phi);
+    }
+
+    console.log('✅ [ATMOSPHERIC] Generated positions:', {
+      stage: stageName,
+      totalSlots: expectedArrayLength / 3,
+      populated: atmosphericCount,
+      ratio: atmosphericRatio,
+    });
+
+    const letterGeometryConfig = SST?.visual?.letterGeometry?.[stageName];
+    const placeholderWord =
+      (typeof letterGeometryConfig?.word === 'string' && letterGeometryConfig.word.trim()) ||
+      typography.word ||
+      stageName.toUpperCase();
+
+    const textPlaceholderRandom = createSeededRandom(`${stageName}|text3dPlaceholder`);
+    if (!textFormation || assignedTextParticles === 0) {
+      const trimmedWord = placeholderWord.trim();
+      const letterCount = trimmedWord.replace(/\s/g, '').length || 1;
+      const particlesPerLetter = Math.max(1, Math.floor(particleCount / letterCount));
+      text3DPositions.fill(0);
+      let particleIdx = 0;
+      for (let letterIdx = 0; letterIdx < trimmedWord.length && particleIdx < particleCount; letterIdx += 1) {
+        const char = trimmedWord[letterIdx];
+        if (char === ' ') continue;
+        const xOffset = (letterIdx - trimmedWord.length / 2) * 1.2;
+        for (let p = 0; p < particlesPerLetter && particleIdx < particleCount; p += 1, particleIdx += 1) {
+          const baseIndex = particleIdx * 3;
+          text3DPositions[baseIndex] = xOffset + (textPlaceholderRandom() - 0.5) * 0.8;
+          text3DPositions[baseIndex + 1] = (textPlaceholderRandom() - 0.5) * 1.0;
+          text3DPositions[baseIndex + 2] = (textPlaceholderRandom() - 0.5) * 0.3;
+        }
+      }
+
+      console.log('✅ [TYPOGRAPHY] Placeholder generated:', {
+        stage: stageName,
+        word: trimmedWord,
+        letterCount,
+        particlesPerLetter,
+        particlesUsed: Math.min(particleCount, letterCount * particlesPerLetter),
+      });
+    } else {
+      console.log('📝 [TYPOGRAPHY] Using generated text formation', {
+        stage: stageName,
+        assignedTextParticles,
+        totalParticles: particleCount,
+      });
+    }
+
     const metadata = {
       quality,
       buildTime: performance.now(),
@@ -271,6 +334,49 @@ export default class BlueprintGenerator {
         tierOf[i] = tierAssignments[i];
       }
     }
+
+    blueprint.atmosphericPositions = atmosphericPositions;
+    blueprint.text3DPositions = text3DPositions;
+    blueprint.text3DPosition = text3DPositions;
+
+    console.log('🔬 [BLUEPRINT ARRAYS ADDED]', {
+      stage: stageName,
+      timing: 'BEFORE_RETURN',
+      hasAtmospheric: !!blueprint.atmosphericPositions,
+      atmosphericLength: blueprint.atmosphericPositions?.length,
+      hasText3D: !!blueprint.text3DPosition,
+      text3DLength: blueprint.text3DPosition?.length,
+      stackTrace: (() => {
+        const stack = new Error().stack;
+        if (!stack) return 'n/a';
+        const lines = stack.split('\n');
+        return lines[1] || stack;
+      })(),
+    });
+
+    console.log('🔬 [BLUEPRINT PRE-VALIDATION]', {
+      stage: stageName,
+      particleCount: blueprint.particleCount,
+      hasPositions: !!blueprint.positions,
+      positionsLength: blueprint.positions?.length,
+      hasAtmospheric: !!blueprint.atmosphericPositions,
+      atmosphericLength: blueprint.atmosphericPositions?.length,
+      hasText3D: !!blueprint.text3DPosition,
+      text3DLength: blueprint.text3DPosition?.length,
+      expectedArrayLength,
+    });
+
+    console.log('✅ [BLUEPRINT COMPLETE]', {
+      stage: stageName,
+      particleCount: blueprint.particleCount,
+      arraysGenerated: {
+        positions: blueprint.positions?.length ?? 0,
+        atmosphericPositions: blueprint.atmosphericPositions?.length ?? 0,
+        text3DPosition: blueprint.text3DPosition?.length ?? 0,
+      },
+      allExpectedLength: expectedArrayLength,
+    });
+
     blueprint.metadata = metadata;
 
     try {

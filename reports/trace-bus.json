@@ -1,0 +1,125 @@
+{
+  "summary": {
+    "filesScanned": 107,
+    "uniqueEvents": 10,
+    "totalLiteralSites": 14,
+    "dynamicSites": 1,
+    "parseFailures": 0
+  },
+  "events": {
+    "[MorphController] Emergence timeline complete": [
+      {
+        "file": "src/engine/modules/MorphController.js",
+        "line": 237,
+        "column": 7,
+        "kind": "literal"
+      }
+    ],
+    "[MorphController] Emergence timeline started": [
+      {
+        "file": "src/engine/modules/MorphController.js",
+        "line": 123,
+        "column": 5,
+        "kind": "literal"
+      }
+    ],
+    "CE:EMIT": [
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 712,
+        "column": 5,
+        "kind": "literal"
+      }
+    ],
+    "DIR": [
+      {
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 607,
+        "column": 5,
+        "kind": "literal"
+      }
+    ],
+    "FENCEPOST_LISTENERS_READY": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 286,
+        "column": 11,
+        "kind": "literal"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 361,
+        "column": 7,
+        "kind": "literal"
+      }
+    ],
+    "WBG:BIND": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 209,
+        "column": 5,
+        "kind": "literal"
+      }
+    ],
+    "WBG:FAST_FORWARD": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 350,
+        "column": 7,
+        "kind": "literal"
+      }
+    ],
+    "WBG:FENCEPOST": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 227,
+        "column": 5,
+        "kind": "literal"
+      }
+    ],
+    "WBG:FREEZE": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 912,
+        "column": 11,
+        "kind": "literal"
+      },
+      {
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 440,
+        "column": 13,
+        "kind": "literal"
+      },
+      {
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 1151,
+        "column": 9,
+        "kind": "literal"
+      },
+      {
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 1184,
+        "column": 11,
+        "kind": "literal"
+      }
+    ],
+    "WBG:MORPH_TYPE": [
+      {
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 481,
+        "column": 11,
+        "kind": "literal"
+      }
+    ]
+  },
+  "dynamicCalls": [
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 217,
+      "column": 5,
+      "expression": "label",
+      "kind": "dynamic"
+    }
+  ],
+  "parseFailures": []
+}

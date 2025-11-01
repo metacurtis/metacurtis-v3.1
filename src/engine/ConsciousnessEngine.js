@@ -332,13 +332,13 @@ class ConsciousnessEngine {
     this._log('quality_change', { tier });
   }
 
-  _onPrewarmGenesis() {
+  async _onPrewarmGenesis() {
     // Clear stale emergence targets so prewarm rebuilds with current VC tuning
     this._lastEmergenceTargets = null;
     console.log('🧠 Engine: Prewarming genesis blueprint');
     const key = this._cacheKey('genesis', 'HIGH');
     if (!this.blueprintCache.has(key)) {
-      const bp = this.buildBlueprint('genesis', { quality: 'HIGH' });
+      const bp = await this.buildBlueprint('genesis', { quality: 'HIGH' });
       if (bp && this._validateBlueprint(bp)) {
         this.blueprintCache.set(key, bp);
       }
@@ -405,16 +405,17 @@ class ConsciousnessEngine {
       }
 
       // Store ONLY the target positions (not the full blueprint)
-      this._lastEmergenceTargets = blueprint.text3DPositions;
+      this._lastEmergenceTargets = blueprint.text3DPositions
+        ? blueprint.text3DPositions.slice(0)
+        : null;
 
       // Emit emergence blueprint with mode flag (canonical event)
-      const variantMode = openingChaosMode ? 'opening_chaos' : 'emergence';
-      const emissionMode = 'emergence';
+      // BLUEPRINT_READY payload must advertise canonical emergence mode
       emitBlueprintReady(BeatBus, EVENTS, blueprint, {
         stage: 'genesis',
         quality: this.currentQuality,
-        mode: emissionMode,
-        variantMode,
+        mode: 'emergence',
+        variantMode: openingChaosMode ? 'opening_chaos' : 'emergence',
         cached: false,
         skipMorphAnimation: !!payload.skipMorphAnimation,
         targetState: payload.targetState,
@@ -423,13 +424,13 @@ class ConsciousnessEngine {
       });
       
       if (openingChaosMode) {
-        console.log('🧠 Engine: Opening chaos blueprint emitted', { count: blueprint.particleCount, mode: variantMode });
+        console.log('🧠 Engine: Opening chaos blueprint emitted', { count: blueprint.particleCount, mode: 'opening_chaos' });
         this._openingPreboundBlueprint = blueprint;
-        this._log('emergence_built', { count: blueprint.particleCount, mode: variantMode });
+        this._log('emergence_built', { count: blueprint.particleCount, mode: 'opening_chaos' });
       } else {
-        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: emissionMode });
+        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
         this._openingPreboundBlueprint = null;
-        this._log('emergence_built', { count: blueprint.particleCount, mode: emissionMode });
+        this._log('emergence_built', { count: blueprint.particleCount, mode: 'emergence' });
       }
 
       // Drive implosion → settle via directives; renderer remains passive
@@ -723,20 +724,29 @@ class ConsciousnessEngine {
     return blueprint;
   }
 
-  buildAndEmitBlueprint(stage, quality) {
-    if (this._openingPhase && stage !== 'genesis') {
-      console.warn('🧠 Engine: Blocked non-genesis during opening:', stage);
-      return;
-    }
+  async buildAndEmitBlueprint(stage, quality) {
+    try {
+      if (this._openingPhase && stage !== 'genesis') {
+        console.warn('🧠 Engine: Blocked non-genesis during opening:', stage);
+        return;
+      }
 
-    if (this._emergenceActive && stage !== 'genesis') {
-      console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });
-      this._log('rebuild_blocked_emergence', { stage, quality });
-      return;
-    }
-    
-    const cacheKey = this._cacheKey(stage, quality);
-    let blueprint = this.blueprintCache.get(cacheKey);
+      if (this._emergenceActive && stage !== 'genesis') {
+        console.warn('🧠 Engine: rebuild blocked during emergence timeline', { stage, quality });
+        this._log('rebuild_blocked_emergence', { stage, quality });
+        return;
+      }
+      
+      const cacheKey = this._cacheKey(stage, quality);
+      let blueprint = this.blueprintCache.get(cacheKey);
+      if (blueprint instanceof Promise) {
+        blueprint = await blueprint;
+        if (blueprint) {
+          this.blueprintCache.set(cacheKey, blueprint);
+        } else {
+          this.blueprintCache.delete(cacheKey);
+        }
+      }
 
     // Post-emergence genesis: optionally preserve settled emergence
     if (stage === 'genesis' && this._lastEmergenceTargets) {
@@ -759,7 +769,7 @@ class ConsciousnessEngine {
         console.log('🧠 Engine: Building post-emergence genesis (preserving emergence result)');
 
         const emergenceCount = Math.max(0, Math.floor(this._lastEmergenceTargets.length / 3));
-        blueprint = this.buildBlueprint(stage, {
+        blueprint = await this.buildBlueprint(stage, {
           quality,
           overrideCount: emergenceCount,
         });
@@ -778,36 +788,42 @@ class ConsciousnessEngine {
             if (!hasText3D) {
               console.error('[CE] ⚠️ Missing text3DPositions in blueprint (line ~831)');
             }
-            console.warn('[CE] Cannot set attributes on invalid blueprint, skipping');
+            console.warn('[CE] Post-emergence reuse invalid; falling back to fresh genesis build');
+            this._lastEmergenceTargets = null;
+            this._emergenceDone = false;
+            blueprint = null;
           } else {
             blueprint.atmosphericPositions.set(targets);
             blueprint.text3DPositions.set(targets);
             if (hasPositions && blueprint.positions.length === targets.length) {
               blueprint.positions.set(targets);
             }
-          }
 
-          this._lastEmergenceTargets = null;
-          this._emergenceDone = false;
+            this._lastEmergenceTargets = null;
+            this._emergenceDone = false;
 
-          if (blueprint && this._validateBlueprint(blueprint)) {
-            console.log('🔬 [BLUEPRINT] Final blueprint check:', {
-              stage: blueprint.stage ?? blueprint.stageName,
-              hasPositions: !!blueprint.positions,
-              positionsLength: blueprint.positions?.length,
-              metadata: blueprint.metadata,
-            });
-            emitBlueprintReady(BeatBus, EVENTS, blueprint, {
-              stage,
-              quality,
-              mode: 'post-emergence-guarded',
-              cacheKey,
-              preservedEmergence: true,
-            });
-            this._preloadNextStage(stage, quality);
-            this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
-            this._rendererFencepostSeen = false;
-            return;
+            if (this._validateBlueprint(blueprint)) {
+              console.log('🔬 [BLUEPRINT] Final blueprint check:', {
+                stage: blueprint.stage ?? blueprint.stageName,
+                hasPositions: !!blueprint.positions,
+                positionsLength: blueprint.positions?.length,
+                metadata: blueprint.metadata,
+              });
+              emitBlueprintReady(BeatBus, EVENTS, blueprint, {
+                stage,
+                quality,
+                mode: 'post-emergence-guarded',
+                cacheKey,
+                preservedEmergence: true,
+              });
+              this._preloadNextStage(stage, quality);
+              this._log('blueprint_emitted', { stage, quality, cacheKey, mode: 'post-emergence-guarded' });
+              this._rendererFencepostSeen = false;
+              return;
+            }
+
+            console.warn('[CE] Post-emergence blueprint failed validation; rebuilding clean genesis blueprint');
+            blueprint = null;
           }
 
           this._rendererFencepostSeen = false;
@@ -818,6 +834,20 @@ class ConsciousnessEngine {
     // Normal path: cached or fresh build
     if (blueprint) {
       console.log(`🧠 Using cached blueprint for ${stage}|${quality}`);
+      console.log('🔬 [PRE-VALIDATION CHECK]', {
+        stage: blueprint?.stage ?? blueprint?.stageName ?? stage,
+        timing: 'CACHE_VALIDATE',
+        hasAtmospheric: !!blueprint?.atmosphericPositions,
+        hasText3D: !!blueprint?.text3DPositions || !!blueprint?.text3DPosition,
+        allRequiredFields: {
+          positions: !!blueprint?.positions,
+          atmosphericPositions: !!blueprint?.atmosphericPositions,
+          text3DPosition: !!(blueprint?.text3DPosition || blueprint?.text3DPositions),
+          tierData: !!blueprint?.tierData,
+          colors: !!(blueprint?.metadata?.colors || blueprint?.colors),
+        },
+      });
+
       if (this._validateBlueprint(blueprint)) {
         console.log('🔬 [BLUEPRINT] Final blueprint check:', {
           stage: blueprint.stage ?? blueprint.stageName,
@@ -839,7 +869,23 @@ class ConsciousnessEngine {
 
     // Build fresh
     console.log(`🧠 Building new blueprint for ${stage}|${quality}`);
-    blueprint = this.buildBlueprint(stage, { quality });
+    blueprint = await this.buildBlueprint(stage, { quality });
+
+    if (blueprint) {
+      console.log('🔬 [PRE-VALIDATION CHECK]', {
+        stage: blueprint.stage ?? blueprint.stageName ?? stage,
+        timing: 'FRESH_VALIDATE',
+        hasAtmospheric: !!blueprint.atmosphericPositions,
+        hasText3D: !!blueprint.text3DPositions || !!blueprint.text3DPosition,
+        allRequiredFields: {
+          positions: !!blueprint.positions,
+          atmosphericPositions: !!blueprint.atmosphericPositions,
+          text3DPosition: !!(blueprint.text3DPosition || blueprint.text3DPositions),
+          tierData: !!blueprint.tierData,
+          colors: !!(blueprint.metadata?.colors || blueprint.colors),
+        },
+      });
+    }
 
     if (blueprint && this._validateBlueprint(blueprint)) {
       this.blueprintCache.set(cacheKey, blueprint);
@@ -857,6 +903,10 @@ class ConsciousnessEngine {
       });
       this._preloadNextStage(stage, quality);
       this._log('blueprint_emitted', { stage, quality, cacheKey, cached: false });
+    }
+    } catch (error) {
+      console.error('[ConsciousnessEngine] buildAndEmitBlueprint error:', error);
+      this._log('build_emit_error', { stage, quality, message: error?.message });
     }
   }
 

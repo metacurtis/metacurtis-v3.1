@@ -2,7 +2,7 @@ import React from 'react';
 // Import Canon Dev-OS (dev only)
 if (import.meta.env.DEV) {
   console.log('🔧 [DEV MODE] Loading Canon Dev-OS...');
-  import('./canon-console/browser/inject.js')
+  import('../canon-console/browser/inject.js')
     .then(() => {
       console.log('✅ [DEV MODE] Canon Dev-OS loaded');
     })

@@ -1,11 +1,33 @@
 {
   "summary": {
     "morphUnsafeCount": 0,
-    "gridNoSpacingCount": 0,
-    "gridGlobalMissing": false,
+    "gridNoSpacingCount": 1,
+    "gridGlobalMissing": true,
     "sstGridIntent": true
   },
   "glslFindings": [],
-  "jsGridChecks": [],
-  "issues": []
+  "jsGridChecks": [
+    {
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "line": 987,
+      "modeSetLine": 987,
+      "spacingFound": false
+    }
+  ],
+  "issues": [
+    {
+      "severity": "ERROR",
+      "type": "GRID_MODE_NO_SPACING",
+      "file": "src/components/webgl/WebGLBackground.jsx",
+      "detail": "uMotionMode=1 set at line 987 without uGridSpacing assignment in ±60 lines",
+      "hint": "Set material.uniforms.uGridSpacing.value = vec2(x,y) before or near mode=1 assignment"
+    },
+    {
+      "severity": "ERROR",
+      "type": "GRID_BEHAVIOR_NO_SPACING_ANYWHERE",
+      "file": "(global)",
+      "detail": "SST shows grid_* behavior but renderer never sets uGridSpacing",
+      "hint": "Update dispatcher to set uGridSpacing when grid behavior or mode=1 is selected"
+    }
+  ]
 }

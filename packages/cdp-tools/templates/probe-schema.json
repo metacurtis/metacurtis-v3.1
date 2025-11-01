@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "probes": {
+    "particleCount": {
+      "description": "Verify particle count matches draw calls",
+      "context": "const result = window.probe.draw();",
+      "assertion": "result && result.active === result.draw",
+      "required": true,
+      "timeout": 5000,
+      "errorMessage": "Particle count mismatch detected"
+    },
+    "geometryBounds": {
+      "description": "Verify particles fit within expected bounds",
+      "context": "const bounds = window.probe.aabb({ fitFrac: 0.82 }); const result = bounds;",
+      "assertion": "result && result.pass === true",
+      "required": true,
+      "timeout": 3000,
+      "errorMessage": "Geometry bounds validation failed"
+    }
+  }
+}

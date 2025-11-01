@@ -3,7 +3,7 @@
 ## Verbs (SST/code) → Resolver
 
 - SST/code verbs: 42
-- Resolver verbs: 19
+- Resolver verbs: 22
 
 ### Unknown in resolver
 - galactic_arm_rotate
@@ -16,14 +16,11 @@
 - master_plan_glow
 - no_change
 - orbit_sync_begin
-- particles_accelerate
 - phase_lock_achieve
 - question_expand
-- streak_trails_form
 - tier2_flicker_increase
 - tier3_construction_guide
 - tier3_glow_pulse
-- tier3_lightning_burst
 - tier3_subtle_pulse
 - tier3_synaptic_flash
 - transcendent_integration
@@ -34,7 +31,33 @@
 (none)
 
 ## Dispatcher uniform writes
+- uActiveCount
+- uAtlasTexture
 - uAtmoFit
+- uBandFade
+- uBandHeight
+- uBrainRegion
+- uColorAccent1
+- uColorAccent2
+- uColorCurrent
+- uColorNext
+- uDevicePixelRatio
+- uDriftAmp
+- uMorphProgress
+- uMorphType
+- uMotionMode
+- uPointSize
+- uPostMorphFreeze
+- uScrollProgress
+- uSpeedMultiplier
+- uSpreadFactor
+- uStageBlend
+- uStageIndex
+- uStageProgress
+- uTextFit
+- uTierCutoff
+- uTime
+- uTurbulence
 
 ## GLSL Uniforms detected
 - uActiveCount

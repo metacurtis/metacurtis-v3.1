@@ -1,5 +1,5 @@
 import fs from 'fs';
-const req = ['reports/sst-extract.json','reports/beatbus-map.json','reports/source-hits.json'];
+const req = ['reports/sst-extract.json','reports/trace-bus.json','reports/source-hits.json'];
 const errs = [];
 for (const f of req) {
   if (!fs.existsSync(f)) errs.push(`Missing ${f}`);

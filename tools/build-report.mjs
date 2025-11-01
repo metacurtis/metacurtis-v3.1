@@ -5,9 +5,9 @@ await fs.promises.mkdir(outDir, { recursive: true });
 const read = (p) => (fs.existsSync(p) ? fs.readFileSync(p,'utf8') : '');
 const now = new Date().toISOString().replace(/[:.]/g,'-');
 
-const sst  = read(path.join(outDir,'sst-extract.json'));
-const bus  = read(path.join(outDir,'beatbus-map.md'));
-const src  = read(path.join(outDir,'source-hits.md'));
+const sst   = read(path.join(outDir,'sst-extract.json'));
+const trace = read(path.join(outDir,'trace-bus.md'));
+const src   = read(path.join(outDir,'source-hits.md'));
 
 const report = [
   '# Narration & Opening Evidence Report',
@@ -22,9 +22,9 @@ const report = [
   '```',
   '',
   '---',
-  '## 2) BeatBus Emitters/Listeners Map',
+  '## 2) Trace Bus Map',
   '',
-  bus || '_no bus map_',
+  trace || '_no trace bus report_',
   '',
   '---',
   '## 3) Source Evidence',

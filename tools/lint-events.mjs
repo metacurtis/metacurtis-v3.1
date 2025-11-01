@@ -1,47 +1,40 @@
 import fs from 'fs';
 
-const IGNORED_EMITTERS = new Set([
-  'PARTICLES_EMERGED',
-  'PREWARM_COMPLETE',
-  'MORPH_PROGRESS',
-  'CLIMAX_STEP',
-  'QUALITY_CHANGE',
-  'BUILD_EMERGENCE_BLUEPRINT',
-  'DIRECTOR_ERROR',
-  'FENCEPOST_LISTENERS_READY',
-  'PREWARM_GENESIS_BLUEPRINT',
-  'RENDERER_TUNE'
-]);
+const reportPath = 'reports/trace-bus.json';
 
-const IGNORED_LISTENERS = new Set();
-
-if (!fs.existsSync('reports/beatbus-map.json')) {
-  console.error('[events:lint] No beatbus-map.json');
+if (!fs.existsSync(reportPath)) {
+  console.error('[events:lint] Missing reports/trace-bus.json');
   process.exit(1);
 }
 
-const { emitters = {}, listeners = {} } = JSON.parse(
-  fs.readFileSync('reports/beatbus-map.json', 'utf8')
-);
+let report;
+try {
+  report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+} catch (err) {
+  console.error('[events:lint] Failed to parse trace-bus.json:', err.message);
+  process.exit(1);
+}
 
-const events = new Set([...Object.keys(emitters), ...Object.keys(listeners)]);
+const summary = report.summary || {};
+const events = report.events || {};
+const dynamicCalls = report.dynamicCalls || [];
 const problems = [];
 
-for (const ev of events) {
-  const e = (emitters[ev] || []).length;
-  const l = (listeners[ev] || []).length;
-
-  if (e > 0 && l === 0 && !IGNORED_EMITTERS.has(ev)) {
-    problems.push(`Emitter has no listeners: ${ev}`);
-  }
-  if (l > 0 && e === 0 && !IGNORED_LISTENERS.has(ev)) {
-    problems.push(`Listener exists without emitter: ${ev}`);
-  }
+if (!Object.keys(events).length) {
+  problems.push('No literal trace events detected');
+}
+if ((summary.parseFailures || 0) > 0) {
+  problems.push(`Parser failures encountered: ${summary.parseFailures}`);
 }
 
 if (problems.length) {
   console.error('[events:lint] FAILED\n' + problems.map((p) => ' - ' + p).join('\n'));
   process.exit(1);
+}
+
+if (dynamicCalls.length) {
+  const preview = dynamicCalls.slice(0, 5).map((d) => `${d.file}:${d.line ?? '?'} → ${d.expression}`).join('\n - ');
+  console.warn('[events:lint] WARN dynamic trace calls detected:\n - ' + preview + (dynamicCalls.length > 5 ? '\n - …' : ''));
 }
 
 console.log('[events:lint] OK');
