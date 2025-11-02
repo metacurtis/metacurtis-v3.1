@@ -378,15 +378,17 @@ export default function ConsciousnessTheater() {
             narrationSkipped,
           });
 
-          if (window.unifiedNav) {
-            window.unifiedNav.navigateToStage(targetStage, {
-              smooth: true,
-              skipNarration: false,
-              source: 'number_key',
-            });
-          } else {
-            stageAtom.jumpToStage(targetStage);
+          // PHASE 2: Always use UnifiedNavigationAPI (no fallback)
+          if (!window.unifiedNav) {
+            console.error('🚨 UnifiedNavigationAPI not available - cannot navigate');
+            return;
           }
+
+          window.unifiedNav.navigateToStage(targetStage, {
+            smooth: true,
+            skipNarration: false,
+            source: 'keyboard_number',
+          });
         }
         return;
       }
@@ -442,8 +444,21 @@ export default function ConsciousnessTheater() {
         }
         case 'r':
         case 'R':
-          stageAtom.jumpToStage('genesis');
-          morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
+          // PHASE 2: Use UnifiedNavigationAPI for reset
+          if (!window.unifiedNav) {
+            console.error('🚨 UnifiedNavigationAPI not available - cannot reset');
+            return;
+          }
+
+          window.unifiedNav.navigateToStage('genesis', {
+            smooth: true,
+            skipNarration: false,
+            source: 'keyboard_reset',
+          });
+
+          setTimeout(() => {
+            morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
+          }, 100);
           break;
         default:
           break;

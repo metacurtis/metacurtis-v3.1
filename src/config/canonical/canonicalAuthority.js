@@ -349,6 +349,58 @@ function createProbeHistory() {
   };
 }
 
+// Phase 2 Quick Check: Single-writer violations
+if (typeof window !== 'undefined') {
+  window.checkSingleWriter = function checkSingleWriter() {
+    const monitor = window.singleWriterMonitor;
+
+    if (!monitor) {
+      console.warn('⚠️ Single-writer monitor not available');
+      return null;
+    }
+
+    const stats = monitor.getStats();
+
+    console.log('\n' + '='.repeat(60));
+    console.log('SINGLE-WRITER COMPLIANCE CHECK');
+    console.log('='.repeat(60) + '\n');
+
+    if (!stats.total) {
+      console.log('✅ NO VIOLATIONS DETECTED');
+      console.log('   All navigation uses authorized paths\n');
+      return { pass: true, violations: 0 };
+    }
+
+    console.log(`❌ ${stats.total} VIOLATIONS DETECTED\n`);
+
+    console.log('By Method:');
+    Object.entries(stats.byMethod || {}).forEach(([method, count]) => {
+      console.log(`   ${method}: ${count}`);
+    });
+    console.log('');
+
+    console.log('By Caller:');
+    Object.entries(stats.byCaller || {}).forEach(([caller, count]) => {
+      console.log(`   ${caller}: ${count}`);
+    });
+    console.log('');
+
+    console.log('Recent Violations:');
+    (stats.recent || []).slice(-5).forEach((violation, index) => {
+      console.log(`   ${index + 1}. ${violation.method} called by ${violation.caller}`);
+    });
+    console.log('');
+
+    console.log('Fix: Update callers to use window.unifiedNav instead\n');
+
+    return {
+      pass: false,
+      violations: stats.total,
+      details: stats,
+    };
+  };
+}
+
 // DEV exposure
 const isDev =
   (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
@@ -460,19 +512,46 @@ if (typeof window !== 'undefined') {
     );
     console.log(`   - Compliance: ${eventStats.morphProgress?.compliance || 'UNKNOWN'}\n`);
 
-    const overallPass =
+    // PHASE 2: Add single-writer compliance check
+    const violationStats = window.singleWriterMonitor?.getStats() || {
+      total: 0,
+      compliance: 'UNKNOWN',
+    };
+
+    console.log('📊 SINGLE-WRITER COMPLIANCE (PHASE 2):');
+    console.log(`   Total Violations: ${violationStats.total || 0} ❌ (should be 0)`);
+    if (violationStats.byMethod) {
+      console.log('   By Method:', violationStats.byMethod);
+    }
+    if (violationStats.byCaller) {
+      console.log('   By Caller:', violationStats.byCaller);
+    }
+    console.log(`   Compliance: ${violationStats.compliance || 'UNKNOWN'}\n`);
+
+    const phase1Pass =
       navStats.compliance === 'PASS' &&
       eventStats.stageChange?.compliance === 'PASS' &&
       eventStats.morphProgress?.compliance === 'PASS';
+    const phase2Pass = violationStats.compliance === 'PASS';
+    const overallPass = phase1Pass && phase2Pass;
 
     console.log('='.repeat(60));
+    console.log(`PHASE 1: ${phase1Pass ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`PHASE 2: ${phase2Pass ? '✅ PASS' : '❌ FAIL'}`);
     console.log(`OVERALL: ${overallPass ? '✅ PASS' : '❌ FAIL'}`);
     console.log('='.repeat(60) + '\n');
 
     return {
       pass: overallPass,
-      navigation: navStats,
-      events: eventStats,
+      phase1: {
+        navigation: navStats,
+        events: eventStats,
+        pass: phase1Pass,
+      },
+      phase2: {
+        violations: violationStats,
+        pass: phase2Pass,
+      },
     };
   };
 }

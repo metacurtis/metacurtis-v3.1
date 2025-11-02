@@ -63,6 +63,163 @@ function createInitialState() {
   };
 }
 
+// ============================================================================
+// PHASE 2: SINGLE-WRITER ENFORCEMENT
+// ============================================================================
+
+/**
+ * Authorization system for single-writer pattern enforcement.
+ * Only StateCommands and internal stageAtom methods may mutate stage.
+ *
+ * Constitutional Authority: SST v3.5 navigation.singleWriter rules
+ */
+const AUTHORIZED_WRITERS = {
+  // Primary authorized writer
+  'StateCommands.js': true,
+
+  // Internal methods (self-reference OK)
+  'stageAtom.js': true,
+
+  // Development/testing (strict mode only)
+  ...(import.meta.env.DEV
+    ? {
+        test: true,
+        spec: true,
+        debug: true,
+      }
+    : {}),
+};
+
+let singleWriterTracker = null;
+
+/**
+ * Check if caller is authorized to mutate stageAtom.
+ * Uses stack trace analysis to identify calling file.
+ *
+ * @param {string} methodName - Name of method being called
+ * @returns {{authorized: boolean, caller: string, method: string, reason: string}}
+ */
+function checkAuthorization(methodName) {
+  try {
+    const stack = new Error().stack || '';
+    const stackLines = stack.split('\n');
+
+    // Skip first 3 lines (Error, checkAuthorization, wrapper)
+    const callerLine = stackLines[3] || '';
+
+    const fileMatch = callerLine.match(/\/([^/]+\.js):/);
+    const callerFile = fileMatch ? fileMatch[1] : 'unknown';
+
+    const authorized = Boolean(AUTHORIZED_WRITERS[callerFile]);
+
+    const result = {
+      authorized,
+      caller: callerFile,
+      method: methodName,
+      reason: authorized
+        ? 'Authorized writer'
+        : `Unauthorized: Only StateCommands may call ${methodName}. Use UnifiedNavigationAPI instead.`,
+    };
+
+    if (!authorized && import.meta.env.DEV) {
+      console.error('🚨 [SINGLE-WRITER VIOLATION]', result);
+      console.error('   Stack trace:', stack);
+      console.error('   Fix: Route through UnifiedNavigationAPI or StateCommands');
+      singleWriterTracker?.record?.(result);
+    }
+
+    return result;
+  } catch (error) {
+    console.warn('[stageAtom] Authorization check failed:', error);
+    return {
+      authorized: true,
+      caller: 'unknown',
+      method: methodName,
+      reason: 'Authorization check failed - allowing',
+    };
+  }
+}
+
+/**
+ * Wrap a stageAtom method with authorization check.
+ * Throws error if caller is unauthorized (strict mode).
+ *
+ * @param {Function} originalMethod - Method to wrap
+ * @param {string} methodName - Name for error messages
+ * @param {boolean} [strict=true] - If true, throw error on violation
+ * @returns {Function} - Wrapped method
+ */
+function withAuthorization(originalMethod, methodName, strict = true) {
+  return function authorizedStageAtomMethod(...args) {
+    const auth = checkAuthorization(methodName);
+
+    if (!auth.authorized) {
+      const error = new Error(
+        `🚨 Single-Writer Violation: ${methodName} called by unauthorized source.\n` +
+          `   Caller: ${auth.caller}\n` +
+          `   Rule: Only StateCommands may mutate stageAtom.\n` +
+          `   Fix: Use window.unifiedNav.navigateToStage() instead.\n` +
+          `   Authority: SST v3.5 navigation.singleWriter`
+      );
+
+      if (strict && import.meta.env.DEV) {
+        throw error;
+      }
+
+      console.warn(error.message);
+    }
+
+    return originalMethod.apply(this, args);
+  };
+}
+
+/**
+ * Track single-writer violations for Phase 2 validation.
+ * Exposed as window.singleWriterMonitor for reporting.
+ */
+const violationTracker = {
+  violations: [],
+
+  record(violation) {
+    this.violations.push({
+      ...violation,
+      timestamp: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
+    });
+
+    if (this.violations.length > 50) {
+      this.violations.shift();
+    }
+  },
+
+  getStats() {
+    const byMethod = {};
+    const byCaller = {};
+
+    this.violations.forEach((v) => {
+      byMethod[v.method] = (byMethod[v.method] || 0) + 1;
+      byCaller[v.caller] = (byCaller[v.caller] || 0) + 1;
+    });
+
+    return {
+      total: this.violations.length,
+      byMethod,
+      byCaller,
+      recent: this.violations.slice(-10),
+      compliance: this.violations.length === 0 ? 'PASS' : 'FAIL',
+    };
+  },
+
+  reset() {
+    this.violations = [];
+  },
+};
+
+singleWriterTracker = violationTracker;
+
+if (typeof window !== 'undefined') {
+  window.singleWriterMonitor = violationTracker;
+}
+
 const initialState = createInitialState();
 
 function resolveStageName(input) {
@@ -404,32 +561,37 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
       }
     },
     
-    jumpToStage: (stageInput) => {
-      const stageName = resolveStageName(stageInput);
-      const stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
+    // PHASE 2: Wrapped with single-writer authorization
+    jumpToStage: withAuthorization(
+      function (stageInput) {
+        const stageName = resolveStageName(stageInput);
+        const stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;
 
-      if (stageIndex === -1) {
-        console.warn('[stageAtom] Invalid stage input', stageInput);
-        return;
-      }
+        if (stageIndex === -1) {
+          console.warn('[stageAtom] Invalid stage input', stageInput);
+          return;
+        }
 
-      const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
-      const updates = {
-        currentStage: stageName,
-        stageIndex,
-        globalProgress: progressBase,
-        stageProgress: 0.0,
-        isTransitioning: false,
-        lastStageChangeTs: timestamp,
-      };
+        const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
+        const updates = {
+          currentStage: stageName,
+          stageIndex,
+          globalProgress: progressBase,
+          stageProgress: 0.0,
+          isTransitioning: false,
+          lastStageChangeTs: timestamp,
+        };
 
-      batchedSetState(updates, 'jumpToStage');
+        batchedSetState(updates, 'jumpToStage');
 
-      if (import.meta.env.DEV) {
-        console.log(`🎭 stageAtom: Jumped to stage ${stageName} (${stageIndex})`);
-      }
-    },
+        if (import.meta.env.DEV) {
+          console.log(`🎭 stageAtom: Jumped to stage ${stageName} (${stageIndex})`);
+        }
+      },
+      'jumpToStage',
+      true
+    ),
     
     nextStage: () => {
       const state = get();
@@ -506,15 +668,20 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
     },
     
     // ✅ ENHANCED: Auto advance with intelligent controller
-    setAutoAdvanceEnabled: (enabled) => {
-      const value = Boolean(enabled);
-      batchedSetState({ autoAdvanceEnabled: value }, 'setAutoAdvance');
-      autoAdvanceController.enable(value);
-      
-      if (import.meta.env.DEV) {
-        console.log(`🎭 stageAtom: Auto advance ${value ? 'enabled' : 'disabled'}`);
-      }
-    },
+    // PHASE 2: Wrapped with single-writer authorization
+    setAutoAdvanceEnabled: withAuthorization(
+      function (enabled) {
+        const value = Boolean(enabled);
+        batchedSetState({ autoAdvanceEnabled: value }, 'setAutoAdvance');
+        autoAdvanceController.enable(value);
+
+        if (import.meta.env.DEV) {
+          console.log(`🎭 stageAtom: Auto advance ${value ? 'enabled' : 'disabled'}`);
+        }
+      },
+      'setAutoAdvanceEnabled',
+      true
+    ),
     isAutoAdvanceEnabled: () => {
       return autoAdvanceController.isEnabled();
     },

@@ -1,4 +1,17 @@
 // src/state/atoms/narrativeAtom.js
+/**
+ * PHASE 2 MIGRATION NOTICE:
+ *
+ * Navigation methods removed from narrativeAtom:
+ * - jumpToStage() → Use window.unifiedNav.navigateToStage()
+ * - nextStage()   → Use window.unifiedNav.nextStage()
+ * - prevStage()   → Use window.unifiedNav.prevStage()
+ *
+ * Reason: Single-writer pattern enforcement (SST v3.5)
+ *
+ * narrativeAtom now only manages narrative state (progress, fragments, etc.)
+ * Navigation state is managed by stageAtom through UnifiedNavigationAPI.
+ */
 // SST v3.0 - Complete narrative state management
 import { createAtom } from './createAtom';
 
@@ -66,84 +79,46 @@ const STAGE_ORDER = [
 
 export const narrativeAtom = createAtom(initialState, (get, set) => ({
   // ===== STAGE NAVIGATION =====
-  jumpToStage: stage => {
-    console.log('🚨 [NARRATIVEATOM BYPASS]', {
-      function: 'jumpToStage',
-      targetStage: stage,
-      caller: new Error().stack.split('\n')[2].trim(),
-      bypassesOrchestration: true,
-      timestamp: performance.now(),
-    });
-
-    if (!STAGE_ORDER.includes(stage)) {
-      console.warn(`Invalid stage: ${stage}`);
-      return;
-    }
-
-    const currentState = get();
-    if (stage === currentState.currentStage) return;
-
-    set(state => ({
-      ...state,
-      currentStage: stage,
-      isTransitioning: true,
-      stageStartTime: Date.now(),
-      timeInStage: 0,
-      stagesVisited: [...new Set([...state.stagesVisited, stage])],
-      userEngagement: {
-        ...state.userEngagement,
-        stagesVisited: [...new Set([...state.userEngagement.stagesVisited, stage])],
-      },
-    }));
-
-    // Clear transition flag after animation
-    setTimeout(() => {
-      set(state => ({ ...state, isTransitioning: false }));
-    }, 500);
-
-    // Dispatch stage change event
-    window.dispatchEvent(
-      new CustomEvent('sst:stageChange', {
-        detail: { stage, previousStage: currentState.currentStage },
-      })
+  // PHASE 2: Removed - use UnifiedNavigationAPI instead
+  jumpToStage: () => {
+    throw new Error(
+      '❌ narrativeAtom.jumpToStage removed in Phase 2\n' +
+        '   Use: window.unifiedNav.navigateToStage(stage) instead\n' +
+        '   Reason: Single-writer pattern enforcement\n' +
+        '   Authority: SST v3.5 navigation.singleWriter'
     );
   },
 
+  // PHASE 2: Removed - use UnifiedNavigationAPI instead
   nextStage: () => {
-    console.log('🚨 [NARRATIVEATOM BYPASS]', {
-      function: 'nextStage',
-      currentStage: get().currentStage,
-      caller: new Error().stack.split('\n')[2].trim(),
-      bypassesOrchestration: true,
-      timestamp: performance.now(),
-    });
-
-    const current = get().currentStage;
-    const currentIndex = STAGE_ORDER.indexOf(current);
-    if (currentIndex < STAGE_ORDER.length - 1) {
-      narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex + 1]);
-    }
+    throw new Error(
+      '❌ narrativeAtom.nextStage removed in Phase 2\n' +
+        '   Use: window.unifiedNav.nextStage() instead\n' +
+        '   Reason: Single-writer pattern enforcement\n' +
+        '   Authority: SST v3.5 navigation.singleWriter'
+    );
   },
 
+  // PHASE 2: Removed - use UnifiedNavigationAPI instead
   prevStage: () => {
-    console.log('🚨 [NARRATIVEATOM BYPASS]', {
-      function: 'prevStage',
-      currentStage: get().currentStage,
-      caller: new Error().stack.split('\n')[2].trim(),
-      bypassesOrchestration: true,
-      timestamp: performance.now(),
-    });
-
-    const current = get().currentStage;
-    const currentIndex = STAGE_ORDER.indexOf(current);
-    if (currentIndex > 0) {
-      narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex - 1]);
-    }
+    throw new Error(
+      '❌ narrativeAtom.prevStage removed in Phase 2\n' +
+        '   Use: window.unifiedNav.prevStage() instead\n' +
+        '   Reason: Single-writer pattern enforcement\n' +
+        '   Authority: SST v3.5 navigation.singleWriter'
+    );
   },
 
+  // PHASE 2: Only updates local state, does not navigate
   setStage: stageIndex => {
     const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];
-    narrativeAtom.jumpToStage(stage);
+
+    set(state => ({ ...state, currentStage: stage }));
+
+    console.log('📝 [narrativeAtom] Stage state updated (no navigation)', {
+      stage,
+      note: 'Use UnifiedNavigationAPI for actual navigation',
+    });
   },
 
   // ===== PROGRESS MANAGEMENT =====
