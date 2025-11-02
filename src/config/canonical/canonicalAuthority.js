@@ -354,6 +354,129 @@ const isDev =
   (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV);
 
+// Phase 1 Validation: Navigation path monitoring
+if (typeof window !== 'undefined') {
+  const monitor = window.navigationPathMonitor || {
+    orchestratedCount: 0,
+    fallbackCount: 0,
+    directCount: 0,
+    recordPath(type) {
+      if (type === 'orchestrated') this.orchestratedCount++;
+      else if (type === 'fallback') this.fallbackCount++;
+      else if (type === 'direct') this.directCount++;
+    },
+    getStats() {
+      const total = this.orchestratedCount + this.fallbackCount + this.directCount;
+      return {
+        total,
+        orchestrated: this.orchestratedCount,
+        fallback: this.fallbackCount,
+        direct: this.directCount,
+        orchestratedPercent: total > 0 ? ((this.orchestratedCount / total) * 100).toFixed(1) : '0.0',
+        compliance: this.fallbackCount === 0 && this.directCount === 0 ? 'PASS' : 'FAIL',
+      };
+    },
+    reset() {
+      this.orchestratedCount = 0;
+      this.fallbackCount = 0;
+      this.directCount = 0;
+    },
+  };
+  window.navigationPathMonitor = monitor;
+}
+
+// Phase 1 Validation: Event emission monitoring
+if (typeof window !== 'undefined') {
+  const eventMonitor = window.eventEmissionMonitor || {
+    stageChangeEmitters: new Map(),
+    morphProgressEmitters: new Map(),
+    recordEmission(eventName, source) {
+      const key = source || 'unknown';
+      if (eventName === 'STAGE_CHANGE') {
+        this.stageChangeEmitters.set(key, (this.stageChangeEmitters.get(key) || 0) + 1);
+      } else if (eventName === 'MORPH_PROGRESS') {
+        this.morphProgressEmitters.set(key, (this.morphProgressEmitters.get(key) || 0) + 1);
+      }
+    },
+    getStats() {
+      const stageEmitters = Array.from(this.stageChangeEmitters.entries());
+      const morphEmitters = Array.from(this.morphProgressEmitters.entries());
+      return {
+        stageChange: {
+          emitters: stageEmitters.map(([name]) => name),
+          counts: Object.fromEntries(stageEmitters),
+          compliance:
+            stageEmitters.length === 1 && this.stageChangeEmitters.has('StateCommands') ? 'PASS' : 'FAIL',
+        },
+        morphProgress: {
+          emitters: morphEmitters.map(([name]) => name),
+          counts: Object.fromEntries(morphEmitters),
+          compliance:
+            morphEmitters.length === 1 && this.morphProgressEmitters.has('StateCommands') ? 'PASS' : 'FAIL',
+        },
+      };
+    },
+    reset() {
+      this.stageChangeEmitters.clear();
+      this.morphProgressEmitters.clear();
+    },
+  };
+  window.eventEmissionMonitor = eventMonitor;
+}
+
+// Phase 1 Validation Report helper
+if (typeof window !== 'undefined') {
+  window.phase1ValidationReport = function phase1ValidationReport() {
+    console.log('\n' + '='.repeat(60));
+    console.log('PHASE 1 VALIDATION REPORT');
+    console.log('='.repeat(60) + '\n');
+
+    const navStats = window.navigationPathMonitor?.getStats() || {};
+    const eventStats = window.eventEmissionMonitor?.getStats() || {};
+
+    console.log('📊 NAVIGATION PATH COMPLIANCE:');
+    console.log(`   Total Navigations: ${navStats.total ?? 0}`);
+    console.log(
+      `   Orchestrated: ${navStats.orchestrated ?? 0} (${navStats.orchestratedPercent ?? '0.0'}%)`
+    );
+    console.log(`   Fallbacks: ${navStats.fallback ?? 0} ❌ (should be 0)`);
+    console.log(`   Direct: ${navStats.direct ?? 0} ❌ (should be 0)`);
+    console.log(`   Compliance: ${navStats.compliance ?? 'UNKNOWN'}\n`);
+
+    console.log('📊 EVENT EMISSION COMPLIANCE:');
+    console.log(`   STAGE_CHANGE Emitters: ${eventStats.stageChange?.emitters.length || 0}`);
+    console.log('   - Expected: 1 (StateCommands only)');
+    console.log(
+      `   - Actual: ${eventStats.stageChange?.emitters.length ? eventStats.stageChange.emitters.join(', ') : 'none'}`
+    );
+    console.log(`   - Compliance: ${eventStats.stageChange?.compliance || 'UNKNOWN'}\n`);
+
+    console.log(`   MORPH_PROGRESS Emitters: ${eventStats.morphProgress?.emitters.length || 0}`);
+    console.log('   - Expected: 1 (StateCommands only)');
+    console.log(
+      `   - Actual: ${
+        eventStats.morphProgress?.emitters.length ? eventStats.morphProgress.emitters.join(', ') : 'none'
+      }`
+    );
+    console.log(`   - Compliance: ${eventStats.morphProgress?.compliance || 'UNKNOWN'}\n`);
+
+    const overallPass =
+      navStats.compliance === 'PASS' &&
+      eventStats.stageChange?.compliance === 'PASS' &&
+      eventStats.morphProgress?.compliance === 'PASS';
+
+    console.log('='.repeat(60));
+    console.log(`OVERALL: ${overallPass ? '✅ PASS' : '❌ FAIL'}`);
+    console.log('='.repeat(60) + '\n');
+
+    return {
+      pass: overallPass,
+      navigation: navStats,
+      events: eventStats,
+    };
+  };
+}
+
 if (typeof window !== 'undefined' && isDev) {
   try {
     Object.defineProperty(window, 'Canonical', {

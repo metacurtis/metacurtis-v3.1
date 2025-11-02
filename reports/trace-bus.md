@@ -34,8 +34,8 @@
 ## WBG:FREEZE
 - `src/components/webgl/WebGLBackground.jsx:912`
 - `src/components/webgl/managers/BlueprintBinder.js:440`
-- `src/components/webgl/managers/BlueprintBinder.js:1151`
-- `src/components/webgl/managers/BlueprintBinder.js:1184`
+- `src/components/webgl/managers/BlueprintBinder.js:1167`
+- `src/components/webgl/managers/BlueprintBinder.js:1200`
 
 ## WBG:MORPH_TYPE
 - `src/components/webgl/managers/BlueprintBinder.js:481`

@@ -1,0 +1,18 @@
+src/state/atoms/stageAtom.js:645:  const originalSetState = stageAtom.setState?.bind(stageAtom);
+src/state/atoms/stageAtom.js:647:    stageAtom.setState = function (value, updateType) {
+src/state/atoms/stageAtom.js:676:    jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+src/state/atoms/stageAtom.js:680:    setProgress: (progress) => stageAtom.setStageProgress(progress),
+src/state/atoms/stageAtom.js:684:    setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
+src/state/atoms/stageAtom.js:685:    toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
+src/state/atoms/stageAtom.js:706:        stageAtom.jumpToStage(randomStage);
+src/state/atoms/stageAtom.js:707:        stageAtom.setStageProgress(Math.random());
+src/state/atoms/stageAtom.js:728:          stageAtom.setStageProgress(i / 10);
+src/components/consciousness/ConsciousnessTheater.jsx:388:            stageAtom.jumpToStage(targetStage);
+src/components/consciousness/ConsciousnessTheater.jsx:445:          stageAtom.jumpToStage('genesis');
+src/orchestration/navigation/narrativeNavigation.js:57:  stageAtom.setAutoAdvanceEnabled(nextValue);
+src/theater/TheaterDirector.js:563:      stageAtom.setAutoAdvanceEnabled(true);
+src/theater/TheaterDirector.js:567:      failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
+src/theater/UnifiedNavigationAPI.js:8: * RULE: Nothing should call stageAtom.jumpToStage directly.
+src/theater/UnifiedNavigationAPI.js:76:        stageAtom.jumpToStage(targetStage);
+src/theater/UnifiedNavigationAPI.js:105:          stageAtom.jumpToStage(targetStage);
+src/theater/UnifiedNavigationAPI.js:124:        stageAtom.jumpToStage(targetStage);

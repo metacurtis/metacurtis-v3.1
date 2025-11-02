@@ -997,12 +997,28 @@ export const createBlueprintBinder = ({
         );
       }
       bus?.emit?.(events?.MORPH_PROGRESS ?? EVENTS.MORPH_PROGRESS, { value: 0 });
-      if (shouldFastForward && typeof finalizeEmergence === 'function') {
-        const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
-        if (finalizeEmergence(source)) {
-          console.log('⚡ Renderer: Emergence fast-forward applied', {
-            source,
-            cacheKey,
+      if (typeof finalizeEmergence === 'function') {
+        const globalSST = (typeof window !== 'undefined' && window.SST) || null;
+        const openConfig = globalSST?.opening ?? null;
+        const skipAnimation = openConfig?.emergence?.skipMorphAnimation ?? false;
+        const timelineDuration = openConfig?.timeline?.emergence?.durationMs ?? null;
+
+        if (skipAnimation === true || shouldFastForward || fastForwardRequested === true) {
+          const source = skipAnimation ? 'sst-config' : (fastForwardRequested ? 'payload-fastforward' : 'renderer-fastforward');
+          if (finalizeEmergence(source)) {
+            console.log('⚡ Renderer: Emergence fast-forward applied', {
+              source,
+              skipAnimation,
+              fastForwardFlag: fastForwardRequested,
+              cacheKey,
+              stage: raw.stageName || st || 'genesis',
+            });
+          }
+        } else {
+          console.log('🎬 Renderer: Playing emergence animation (no fast-forward)', {
+            skipAnimation,
+            fastForwardFlag: fastForwardRequested,
+            duration: timelineDuration ?? 2000,
             stage: raw.stageName || st || 'genesis',
           });
         }

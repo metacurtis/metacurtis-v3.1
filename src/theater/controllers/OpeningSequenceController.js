@@ -259,6 +259,15 @@ export class OpeningSequenceController {
       fillConfig.text = `${canonicalFillWord} `;
     }
 
+    const emergenceTiming = {
+      ...DEFAULT_OPENING_TIMELINE.emergence,
+      ...(timeline?.emergence ?? {}),
+    };
+    const emergenceProfile = {
+      ...DEFAULT_OPENING_EMERGENCE,
+      ...(openingEmergence ?? {}),
+    };
+
     const chaosConfig = timeline?.chaos || {};
     const coalesceConfig = timeline?.coalesce || {};
     const settleConfig = timeline?.settle || {};
@@ -385,8 +394,8 @@ export class OpeningSequenceController {
               tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
                 ? Canonical.stages.genesis.tierMix
                 : (Array.isArray(VC?.TIER_RATIOS) ? VC.TIER_RATIOS : undefined),
-              skipMorphAnimation: true,
-              fastForward: true,
+              skipMorphAnimation: emergenceTiming.skipMorphAnimation ?? false,
+              skipGenesisBlueprint: emergenceTiming.skipGenesisBlueprint ?? true,
             });
             this.director._openingPrebound = true;
           } catch (bindError) {
@@ -432,6 +441,37 @@ export class OpeningSequenceController {
             });
           }
           this.director._preChaosReady = true;
+        }
+
+        const emergenceDuration = Math.max(0, Number(emergenceTiming.durationMs) || 0);
+        if (emergenceDuration > 0) {
+          this.director.phase = 'emergence';
+          console.log(`   Phase: Emergence (${emergenceDuration}ms)`);
+          console.log('      Particles breaking into gas cloud...');
+
+          BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+            phase: 'emergence',
+            duration: emergenceDuration,
+            target: emergenceProfile.target,
+            mode: emergenceProfile.mode,
+            source: emergenceProfile.source,
+            targetState: emergenceTiming.targetState,
+            waitForFencepost: emergenceTiming.waitForFencepost,
+          });
+
+          const emergenceWait = await this.director.sleep(emergenceDuration);
+          if (handleWaitResult(emergenceWait) === 'cancelled') return;
+
+          const stabilizeMs = Math.max(0, Number(emergenceTiming.stabilizeMs ?? 0));
+          if (stabilizeMs > 0) {
+            const stabilizeWait = await this.director.sleep(stabilizeMs);
+            if (handleWaitResult(stabilizeWait) === 'cancelled') return;
+          }
+
+          console.log('✅ Emergence phase complete', {
+            duration: emergenceDuration,
+            timestamp: Date.now(),
+          });
         }
 
         const chaosDuration = Math.max(0, Number(chaosConfig.durationMs) || 0);
@@ -634,13 +674,16 @@ export class OpeningSequenceController {
       const previousStage = this.director.currentStage ?? 'emergence';
       console.log('🧬 Phase: Genesis stage handoff');
 
-      BeatBus.emit(EVENTS.STAGE_CHANGE, {
-        from: previousStage,
-        to: toStage,
-        skipBlueprint: skipGenesisBlueprint,
-        preserveEmergence: true,
-        targetState,
-      });
+      if (toStage && toStage !== previousStage) {
+        console.log('✅ [OPENING] Transition to stage', {
+          from: previousStage,
+          to: toStage,
+          note: 'STAGE_CHANGE will be emitted by StateCommands when stage updates',
+          skipBlueprint: skipGenesisBlueprint,
+          preserveEmergence: true,
+          targetState,
+        });
+      }
 
       try {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -672,6 +715,8 @@ export class OpeningSequenceController {
       this.director.monitorFragments?.();
 
       this.director.phase = 'complete';
+
+      console.log('✅ [OPENING] Complete - handing off to ScrollOrchestrator for stage detection');
 
       if (DEBUG_OPENING && typeof performance !== 'undefined' && typeof performance.now === 'function') {
         const timestamp = performance.now();

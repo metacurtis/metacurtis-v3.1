@@ -1,0 +1,82 @@
+{
+  "navigation": {
+    "STAGE_CHANGE": {
+      "emitters": [
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 151
+        },
+        {
+          "file": "src/theater/controllers/OpeningSequenceController.js",
+          "line": 637
+        }
+      ],
+      "listeners": [
+        {
+          "file": "src/state/atoms/qualityAtom.js",
+          "line": 155
+        },
+        {
+          "file": "src/theater/TheaterDirector.js",
+          "line": 151
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 192
+        }
+      ]
+    },
+    "NARRATION_START": {
+      "emitters": [
+        {
+          "file": "src/theater/TheaterDirector.js",
+          "line": 300
+        },
+        {
+          "file": "src/theater/controllers/OpeningSequenceController.js",
+          "line": 651
+        }
+      ],
+      "listeners": [
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 194
+        }
+      ]
+    },
+    "NARRATION_STOP": {
+      "emitters": [],
+      "listeners": []
+    },
+    "MORPH_PROGRESS": {
+      "emitters": [
+        {
+          "file": "src/engine/modules/ClimaxController.js",
+          "line": 249
+        },
+        {
+          "file": "src/engine/modules/MorphController.js",
+          "line": 273
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 44
+        },
+        {
+          "file": "src/theater/controllers/MorphAnimationController.js",
+          "line": 332
+        }
+      ],
+      "listeners": [
+        {
+          "file": "src/components/webgl/WebGLBackground.jsx",
+          "line": 930
+        }
+      ]
+    },
+    "SCROLL_PROGRESS": {
+      "emitters": [],
+      "listeners": []
+    }
+  }
+}

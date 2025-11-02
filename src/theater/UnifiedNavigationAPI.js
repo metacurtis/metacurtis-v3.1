@@ -23,6 +23,64 @@ class UnifiedNavigationAPI {
   }
 
   /**
+   * Wait for scroll surface to become ready
+   * Checks both document height and ScrollOrchestrator state
+   *
+   * @param {number} timeoutMs - Maximum wait time
+   * @returns {Promise<boolean>} - True if ready, false if timeout
+   */
+  async _waitForScrollSurface(timeoutMs = 5000) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return false;
+    }
+
+    const startTime = performance.now();
+
+    const checkReady = () => {
+      const bodyHeight = document.body?.scrollHeight ?? 0;
+      const viewportHeight = window.innerHeight ?? 0;
+      const hasHeight = bodyHeight > viewportHeight;
+
+      const orchestrator =
+        window.scrollOrchestrator || window.__scrollOrchestrator || null;
+      const isRunning = orchestrator?.isRunning?.() ?? orchestrator?.running ?? false;
+
+      return hasHeight && !!orchestrator && isRunning;
+    };
+
+    if (checkReady()) {
+      return true;
+    }
+
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        const elapsed = performance.now() - startTime;
+
+        if (checkReady()) {
+          clearInterval(interval);
+          console.log(`✅ [UNIFIED NAV] Scroll surface ready after ${Math.round(elapsed)}ms`);
+          resolve(true);
+          return;
+        }
+
+        if (elapsed >= timeoutMs) {
+          clearInterval(interval);
+          const orchestrator =
+            window.scrollOrchestrator || window.__scrollOrchestrator || null;
+          console.error(`❌ [UNIFIED NAV] Scroll surface timeout after ${timeoutMs}ms`);
+          console.error('   Diagnostics:', {
+            bodyHeight: document.body?.scrollHeight ?? 0,
+            windowHeight: window.innerHeight ?? 0,
+            hasOrchestrator: !!orchestrator,
+            isRunning: orchestrator?.isRunning?.() ?? orchestrator?.running ?? false,
+          });
+          resolve(false);
+        }
+      }, 100);
+    });
+  }
+
+  /**
    * Navigate to specific stage by slug
    * Triggers full orchestration via scroll
    */
@@ -70,12 +128,11 @@ class UnifiedNavigationAPI {
 
     // DIAGNOSTIC: Check if scroll is possible
     if (typeof window === 'undefined' || typeof document === 'undefined') {
-      console.warn('🚨 [UNIFIED NAV] Window or document unavailable');
-      const currentStage = stageAtom.getState?.()?.currentStage;
-      if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
-      }
-      return true;
+      console.error('🚨 [UNIFIED NAV] Window or document unavailable - cannot navigate');
+      throw new Error(
+        'UnifiedNavigationAPI: Cannot navigate without window/document. ' +
+          'This indicates a timing issue - navigation attempted before DOM ready.'
+      );
     }
 
     const documentHeight = document.body?.scrollHeight ?? 0;
@@ -98,14 +155,21 @@ class UnifiedNavigationAPI {
 
     try {
       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {
-        console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
-        if (window.stageControls?.jumpToStage) {
-          window.stageControls.jumpToStage(targetStage);
-        } else {
-          stageAtom.jumpToStage(targetStage);
+        console.error('🚨 [UNIFIED NAV] Document not scrollable - waiting for scroll surface');
+
+        const scrollReady = await this._waitForScrollSurface?.(5000);
+
+        if (!scrollReady) {
+          window.navigationPathMonitor?.recordPath?.('fallback');
+          console.error('🚨 FALLBACK DETECTED - Scroll surface unavailable during navigation');
+          throw new Error(
+            'UnifiedNavigationAPI: Scroll surface never became ready. ' +
+              'Check: (1) Body has height, (2) ScrollOrchestrator initialized, (3) Enough content for scroll'
+          );
         }
-        finalReason = 'fallback';
-        return true;
+
+        console.log('✅ [UNIFIED NAV] Scroll surface ready, retrying navigation');
+        return this.navigateToStage(targetStage, options);
       }
 
       try {
@@ -121,17 +185,42 @@ class UnifiedNavigationAPI {
 
       const currentStage = stageAtom.getState?.()?.currentStage;
       if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
+        console.warn(
+          `⚠️ [UNIFIED NAV] Stage mismatch after scroll: expected ${targetStage}, got ${currentStage}. ` +
+            'ScrollOrchestrator may not have detected stage boundary.'
+        );
       }
 
       if (releaseDelayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, releaseDelayMs));
       }
 
-      return true;
+      finalReason = 'scroll_complete';
+
+      const finalStage = stageAtom.getState?.()?.currentStage;
+      const success = finalStage === targetStage;
+
+      if (success) {
+        console.log('✅ [UNIFIED NAV] Navigation complete', {
+          stage: targetStage,
+          reason: finalReason,
+          orchestrated: true,
+        });
+        window.navigationPathMonitor?.recordPath?.('orchestrated');
+      } else {
+        console.error('❌ [UNIFIED NAV] Navigation completed but stage mismatch', {
+          expected: targetStage,
+          actual: finalStage,
+          reason: finalReason,
+        });
+        window.navigationPathMonitor?.recordPath?.('fallback');
+      }
+
+      return success;
     } catch (err) {
       console.error('🚨 [UNIFIED NAV] navigateToStage error', err);
       finalReason = 'error';
+      window.navigationPathMonitor?.recordPath?.('fallback');
       return false;
     } finally {
       NavigationGate.end(finalReason);

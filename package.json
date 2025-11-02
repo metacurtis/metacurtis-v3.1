@@ -112,7 +112,9 @@
     "lint-shaders-advanced": "node tools/lint-shaders-advanced.mjs",
     "scan-shaders-motion": "node tools/scanners/shader-motion-audit.mjs",
     "lint-shaders-motion": "node tools/lint-shaders-motion.mjs",
-    "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs"
+    "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs",
+    "scan-navigation": "node tools/scan-navigation.mjs",
+    "analyze-flow": "node tools/analyze-control-flow.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.2",
@@ -124,13 +126,13 @@
     "three": "^0.175.0"
   },
   "devDependencies": {
-    "@metacurtis/cdp-tools": "file:packages/cdp-tools",
     "@babel/generator": "^7.28.3",
     "@babel/parser": "^7.28.3",
     "@babel/traverse": "^7.28.3",
     "@babel/types": "^7.28.2",
     "@eslint/js": "^9.24.0",
     "@lhci/cli": "^0.12.0",
+    "@metacurtis/cdp-tools": "file:packages/cdp-tools",
     "@playwright/test": "^1.55.1",
     "@tailwindcss/postcss": "^4.1.7",
     "@tailwindcss/vite": "^4.1.7",

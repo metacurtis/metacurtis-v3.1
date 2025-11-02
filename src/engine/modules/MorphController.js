@@ -260,17 +260,17 @@ class MorphController {
     const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
     const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
 
-    const payload = {
-      morphProgress: value,
-      value,
-      morphTarget: target,
-      target,
-      stage: stageLabel,
-      schemaVersion: '3.5',
-    };
-    if (stageIndex >= 0) payload.stageIndex = stageIndex;
-
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+    const stateCommands = typeof window !== 'undefined' ? window.stateCommands : null;
+    if (stateCommands?.setMorphProgress) {
+      stateCommands.setMorphProgress(value, {
+        origin: 'morphController',
+        stage: stageLabel,
+        stageIndex: stageIndex >= 0 ? stageIndex : undefined,
+        morphTarget: target,
+      });
+    } else {
+      console.warn('[MorphController] StateCommands not available, cannot emit MORPH_PROGRESS');
+    }
   }
 }
 

@@ -1,0 +1,154 @@
+{
+  "NAVIGATE_TO_STAGE": [
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "lines": [
+        382,
+        410
+      ]
+    },
+    {
+      "file": "src/components/narrative/NarrationController.jsx",
+      "lines": [
+        323
+      ]
+    },
+    {
+      "file": "src/components/ui/narrative/StageNavigation.jsx",
+      "lines": [
+        45
+      ]
+    },
+    {
+      "file": "src/orchestration/navigation/narrativeNavigation.js",
+      "lines": [
+        39,
+        113,
+        135
+      ]
+    },
+    {
+      "file": "src/theater/UnifiedNavigationAPI.js",
+      "lines": [
+        29,
+        155,
+        175
+      ]
+    }
+  ],
+  "JUMP_TO_STAGE": [
+    {
+      "file": "src/bootstrap/wireSSTv3.js",
+      "lines": [
+        94
+      ]
+    },
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "lines": [
+        388,
+        445
+      ]
+    },
+    {
+      "file": "src/orchestration/navigation/narrativeNavigation.js",
+      "lines": [
+        97
+      ]
+    },
+    {
+      "file": "src/state/atoms/narrativeAtom.js",
+      "lines": [
+        124,
+        140,
+        146
+      ]
+    },
+    {
+      "file": "src/state/atoms/stageAtom.js",
+      "lines": [
+        623,
+        676,
+        677,
+        706
+      ]
+    },
+    {
+      "file": "src/state/commands/StateCommands.js",
+      "lines": [
+        237
+      ]
+    },
+    {
+      "file": "src/theater/UnifiedNavigationAPI.js",
+      "lines": [
+        76,
+        103,
+        105,
+        124
+      ]
+    }
+  ],
+  "STAGE_ATOM_SET": [
+    {
+      "file": "src/bootstrap/wireSSTv3.js",
+      "lines": [
+        94
+      ]
+    },
+    {
+      "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+      "lines": [
+        388,
+        445
+      ]
+    },
+    {
+      "file": "src/orchestration/navigation/narrativeNavigation.js",
+      "lines": [
+        57
+      ]
+    },
+    {
+      "file": "src/state/atoms/stageAtom.js",
+      "lines": [
+        645,
+        647,
+        676,
+        677,
+        680,
+        684,
+        685,
+        686,
+        706,
+        707,
+        728
+      ]
+    },
+    {
+      "file": "src/state/commands/StateCommands.js",
+      "lines": [
+        237,
+        305,
+        324
+      ]
+    },
+    {
+      "file": "src/theater/TheaterDirector.js",
+      "lines": [
+        563,
+        567
+      ]
+    },
+    {
+      "file": "src/theater/UnifiedNavigationAPI.js",
+      "lines": [
+        8,
+        76,
+        105,
+        124
+      ]
+    }
+  ],
+  "SCROLL_TO_STAGE": []
+}

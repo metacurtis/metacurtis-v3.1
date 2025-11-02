@@ -229,24 +229,19 @@ class ClimaxController {
     const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
     const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
 
-    const morphPayload = {
-      morphProgress: clamped,
-      value: clamped,
-      morphTarget: 1,
-      target: 1,
-      stage: stageLabel,
-      schemaVersion: '3.5',
-      postMorphFreeze: clamped >= 1 ? 1 : 0,
-      source: 'climax-transition',
-      step: step?.name,
-      stepIndex,
-    };
-
-    if (stageIndex >= 0) {
-      morphPayload.stageIndex = stageIndex;
+    const stateCommands = typeof window !== 'undefined' ? window.stateCommands : null;
+    if (stateCommands?.setMorphProgress) {
+      stateCommands.setMorphProgress(clamped, {
+        origin: 'climax-transition',
+        stage: stageLabel,
+        stageIndex: stageIndex >= 0 ? stageIndex : undefined,
+        postMorphFreeze: clamped >= 1 ? 1 : 0,
+        step: step?.name,
+        stepIndex,
+      });
+    } else {
+      console.warn('[ClimaxController] StateCommands not available, cannot emit MORPH_PROGRESS');
     }
-
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
   }
 
   #runFrame() {

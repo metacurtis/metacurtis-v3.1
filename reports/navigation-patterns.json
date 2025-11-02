@@ -1,0 +1,2289 @@
+{
+  "summary": {
+    "timestamp": "2025-11-01T23:59:07.221Z",
+    "totalHits": 360,
+    "byCategory": {
+      "entryPoints": 50,
+      "narrationControls": 137,
+      "manualControls": 7,
+      "orchestration": 4,
+      "raceIndicators": 16
+    },
+    "patterns": [
+      {
+        "key": "JUMP_TO_STAGE",
+        "count": 16,
+        "files": 7
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "count": 24,
+        "files": 7
+      },
+      {
+        "key": "FALLBACK_JUMP",
+        "count": 5,
+        "files": 3
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "count": 10,
+        "files": 5
+      },
+      {
+        "key": "NARRATION_START",
+        "count": 27,
+        "files": 10
+      },
+      {
+        "key": "ARROW_NAV",
+        "count": 6,
+        "files": 1
+      },
+      {
+        "key": "UNIFIED_NAV",
+        "count": 3,
+        "files": 2
+      },
+      {
+        "key": "RAPID_FIRE",
+        "count": 5,
+        "files": 3
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "count": 48,
+        "files": 16
+      },
+      {
+        "key": "DEBOUNCE",
+        "count": 18,
+        "files": 4
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "count": 109,
+        "files": 6
+      },
+      {
+        "key": "NARRATION_NEXT",
+        "count": 1,
+        "files": 1
+      },
+      {
+        "key": "DUPLICATE_EVENT",
+        "count": 6,
+        "files": 4
+      },
+      {
+        "key": "SETTLE_TIME",
+        "count": 80,
+        "files": 9
+      },
+      {
+        "key": "STAGE_CONTROLS",
+        "count": 1,
+        "files": 1
+      },
+      {
+        "key": "SCROLL_ORCHESTRATOR",
+        "count": 1,
+        "files": 1
+      }
+    ]
+  },
+  "patterns": {
+    "JUMP_TO_STAGE": [
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/bootstrap/wireSSTv3.js",
+        "line": 94,
+        "context": "91:     // If stageAtom exists, sync with it\n92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {\n93:       // DISABLED: This bypasses orchestration\n94:       // stageAtom.jumpToStage(state.currentStage);\n95:     }\n96:   });\n97:   unsubscribers.push(unsubscribeNarrative);"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 388,
+        "context": "385:               source: 'number_key',\n386:             });\n387:           } else {\n388:             stageAtom.jumpToStage(targetStage);\n389:           }\n390:         }\n391:         return;"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 445,
+        "context": "442:         }\n443:         case 'r':\n444:         case 'R':\n445:           stageAtom.jumpToStage('genesis');\n446:           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });\n447:           break;\n448:         default:"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 97,
+        "context": "94:       id: name,\n95:       label,\n96:       isActive: activeStage === name,\n97:       onClick: () => jumpToStage(name, { smooth: true, emitNarration: true }),\n98:       index,\n99:     };\n100:   });"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 124,
+        "context": "121:     const current = get().currentStage;\n122:     const currentIndex = STAGE_ORDER.indexOf(current);\n123:     if (currentIndex < STAGE_ORDER.length - 1) {\n124:       narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex + 1]);\n125:     }\n126:   },\n127: "
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 140,
+        "context": "137:     const current = get().currentStage;\n138:     const currentIndex = STAGE_ORDER.indexOf(current);\n139:     if (currentIndex > 0) {\n140:       narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex - 1]);\n141:     }\n142:   },\n143: "
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 146,
+        "context": "143: \n144:   setStage: stageIndex => {\n145:     const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];\n146:     narrativeAtom.jumpToStage(stage);\n147:   },\n148: \n149:   // ===== PROGRESS MANAGEMENT ====="
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 623,
+        "context": "620:       if (import.meta.env.DEV) {\n621:         const clampedIndex = Math.max(0, Math.min(index, STAGE_COUNT - 1));\n622:         const stageName = STAGE_NAMES[clampedIndex];\n623:         actions.jumpToStage(stageName);\n624:       }\n625:     },\n626:     "
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 676,
+        "context": "673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,\n674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 677,
+        "context": "674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 706,
+        "context": "703: \n704:       for (let i = 0; i < iterations; i++) {\n705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];\n706:         stageAtom.jumpToStage(randomStage);\n707:         stageAtom.setStageProgress(Math.random());\n708:       }\n709: "
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 237,
+        "context": "234:       const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;\n235:       if (!gateActive || gateTarget === targetStage) {\n236:         if (currentStage !== targetStage) {\n237:           stageAtom.jumpToStage(targetStage);\n238:         }\n239:       }\n240:     }"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 76,
+        "context": "73:       console.warn('🚨 [UNIFIED NAV] Window or document unavailable');\n74:       const currentStage = stageAtom.getState?.()?.currentStage;\n75:       if (currentStage !== targetStage) {\n76:         stageAtom.jumpToStage(targetStage);\n77:       }\n78:       return true;\n79:     }"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 103,
+        "context": "100:       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {\n101:         console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');\n102:         if (window.stageControls?.jumpToStage) {\n103:           window.stageControls.jumpToStage(targetStage);\n104:         } else {\n105:           stageAtom.jumpToStage(targetStage);\n106:         }"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 105,
+        "context": "102:         if (window.stageControls?.jumpToStage) {\n103:           window.stageControls.jumpToStage(targetStage);\n104:         } else {\n105:           stageAtom.jumpToStage(targetStage);\n106:         }\n107:         finalReason = 'fallback';\n108:         return true;"
+      },
+      {
+        "key": "JUMP_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 124,
+        "context": "121: \n122:       const currentStage = stageAtom.getState?.()?.currentStage;\n123:       if (currentStage !== targetStage) {\n124:         stageAtom.jumpToStage(targetStage);\n125:       }\n126: \n127:       if (releaseDelayMs > 0) {"
+      }
+    ],
+    "STAGE_ATOM_SET": [
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/bootstrap/wireSSTv3.js",
+        "line": 94,
+        "context": "91:     // If stageAtom exists, sync with it\n92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {\n93:       // DISABLED: This bypasses orchestration\n94:       // stageAtom.jumpToStage(state.currentStage);\n95:     }\n96:   });\n97:   unsubscribers.push(unsubscribeNarrative);"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 388,
+        "context": "385:               source: 'number_key',\n386:             });\n387:           } else {\n388:             stageAtom.jumpToStage(targetStage);\n389:           }\n390:         }\n391:         return;"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 445,
+        "context": "442:         }\n443:         case 'r':\n444:         case 'R':\n445:           stageAtom.jumpToStage('genesis');\n446:           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });\n447:           break;\n448:         default:"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 57,
+        "context": "54:   const current = stageAtom.getState().autoAdvanceEnabled;\n55:   const nextValue =\n56:     typeof forcedValue === 'boolean' ? forcedValue : !current;\n57:   stageAtom.setAutoAdvanceEnabled(nextValue);\n58:   return nextValue;\n59: };\n60: "
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 645,
+        "context": "642: \n643: // 🔬 DIAGNOSTIC: Stage atom state tracking\n644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {\n645:   const originalSetState = stageAtom.setState?.bind(stageAtom);\n646:   if (originalSetState) {\n647:     stageAtom.setState = function (value, updateType) {\n648:       const previousState = stageAtom.getState?.();"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 647,
+        "context": "644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {\n645:   const originalSetState = stageAtom.setState?.bind(stageAtom);\n646:   if (originalSetState) {\n647:     stageAtom.setState = function (value, updateType) {\n648:       const previousState = stageAtom.getState?.();\n649:       const nextState = typeof value === 'function' ? value(previousState) : value;\n650:       console.log('🔬 [STAGE_ATOM] State change:', { from: previousState, to: nextState, updateType });"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 676,
+        "context": "673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,\n674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 677,
+        "context": "674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 680,
+        "context": "677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),\n681:     reset: () => stageAtom.resetStage(),\n682: \n683:     // Auto-advance"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 684,
+        "context": "681:     reset: () => stageAtom.resetStage(),\n682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 685,
+        "context": "682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 686,
+        "context": "683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 706,
+        "context": "703: \n704:       for (let i = 0; i < iterations; i++) {\n705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];\n706:         stageAtom.jumpToStage(randomStage);\n707:         stageAtom.setStageProgress(Math.random());\n708:       }\n709: "
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 707,
+        "context": "704:       for (let i = 0; i < iterations; i++) {\n705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];\n706:         stageAtom.jumpToStage(randomStage);\n707:         stageAtom.setStageProgress(Math.random());\n708:       }\n709: \n710:       const endTime = performance.now();"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 728,
+        "context": "725: \n726:       for (let i = 0; i < 10; i++) {\n727:         setTimeout(() => {\n728:           stageAtom.setStageProgress(i / 10);\n729:         }, i * 5);\n730:       }\n731: "
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 237,
+        "context": "234:       const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;\n235:       if (!gateActive || gateTarget === targetStage) {\n236:         if (currentStage !== targetStage) {\n237:           stageAtom.jumpToStage(targetStage);\n238:         }\n239:       }\n240:     }"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 305,
+        "context": "302:   }\n303: \n304:   transitionStage(from, to) {\n305:     stageAtom.setState?.({ currentStage: to, transitioning: true });\n306:     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));\n307:   }\n308: "
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 324,
+        "context": "321: \n322:   restoreSnapshot(snapshot) {\n323:     if (snapshot?.state) {\n324:       stageAtom.setState?.(snapshot.state.stage);\n325:       narrativeAtom.setState?.(snapshot.state.narrative);\n326:       qualityAtom.setState?.(snapshot.state.quality);\n327:       interactionAtom.setState?.(snapshot.state.interaction);"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 563,
+        "context": "560:     }\n561: \n562:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {\n563:       stageAtom.setAutoAdvanceEnabled(true);\n564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;\n566:     } else if (!autoEnabled) {"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 567,
+        "context": "564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;\n566:     } else if (!autoEnabled) {\n567:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';\n568:     }\n569: \n570:     const autoAdvanceAfter ="
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 8,
+        "context": "5:  * Guarantees full orchestration (fragments, scroll sync, narration).\n6:  *\n7:  * RULE: Nothing should call narrativeAtom.jumpToStage directly.\n8:  * RULE: Nothing should call stageAtom.jumpToStage directly.\n9:  * RULE: All navigation goes through this API.\n10:  */\n11: "
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 76,
+        "context": "73:       console.warn('🚨 [UNIFIED NAV] Window or document unavailable');\n74:       const currentStage = stageAtom.getState?.()?.currentStage;\n75:       if (currentStage !== targetStage) {\n76:         stageAtom.jumpToStage(targetStage);\n77:       }\n78:       return true;\n79:     }"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 105,
+        "context": "102:         if (window.stageControls?.jumpToStage) {\n103:           window.stageControls.jumpToStage(targetStage);\n104:         } else {\n105:           stageAtom.jumpToStage(targetStage);\n106:         }\n107:         finalReason = 'fallback';\n108:         return true;"
+      },
+      {
+        "key": "STAGE_ATOM_SET",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 124,
+        "context": "121: \n122:       const currentStage = stageAtom.getState?.()?.currentStage;\n123:       if (currentStage !== targetStage) {\n124:         stageAtom.jumpToStage(targetStage);\n125:       }\n126: \n127:       if (releaseDelayMs > 0) {"
+      }
+    ],
+    "FALLBACK_JUMP": [
+      {
+        "key": "FALLBACK_JUMP",
+        "file": "src/bootstrap/wireSSTv3.js",
+        "line": 93,
+        "context": "90: \n91:     // If stageAtom exists, sync with it\n92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {\n93:       // DISABLED: This bypasses orchestration\n94:       // stageAtom.jumpToStage(state.currentStage);\n95:     }\n96:   });"
+      },
+      {
+        "key": "FALLBACK_JUMP",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 74,
+        "context": "71:       function: 'jumpToStage',\n72:       targetStage: stage,\n73:       caller: new Error().stack.split('\\n')[2].trim(),\n74:       bypassesOrchestration: true,\n75:       timestamp: performance.now(),\n76:     });\n77: "
+      },
+      {
+        "key": "FALLBACK_JUMP",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 117,
+        "context": "114:       function: 'nextStage',\n115:       currentStage: get().currentStage,\n116:       caller: new Error().stack.split('\\n')[2].trim(),\n117:       bypassesOrchestration: true,\n118:       timestamp: performance.now(),\n119:     });\n120: "
+      },
+      {
+        "key": "FALLBACK_JUMP",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 133,
+        "context": "130:       function: 'prevStage',\n131:       currentStage: get().currentStage,\n132:       caller: new Error().stack.split('\\n')[2].trim(),\n133:       bypassesOrchestration: true,\n134:       timestamp: performance.now(),\n135:     });\n136: "
+      },
+      {
+        "key": "FALLBACK_JUMP",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 101,
+        "context": "98: \n99:     try {\n100:       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {\n101:         console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');\n102:         if (window.stageControls?.jumpToStage) {\n103:           window.stageControls.jumpToStage(targetStage);\n104:         } else {"
+      }
+    ],
+    "NAVIGATE_TO_STAGE": [
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 382,
+        "context": "379:           });\n380: \n381:           if (window.unifiedNav) {\n382:             window.unifiedNav.navigateToStage(targetStage, {\n383:               smooth: true,\n384:               skipNarration: false,\n385:               source: 'number_key',"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 410,
+        "context": "407:         const targetStage = stageNamesRef[nextIndex] || stageNamesRef[stageNamesRef.length - 1];\n408: \n409:         if (targetStage && window.unifiedNav?.navigateToStage) {\n410:           window.unifiedNav.navigateToStage(targetStage, {\n411:             smooth: true,\n412:             source: 'keyboard_space',\n413:           });"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 323,
+        "context": "320: \n321:               if (nav) {\n322:                 if (nextStageName) {\n323:                   await nav.navigateToStage(nextStageName, {\n324:                     smooth: true,\n325:                     source: 'narration_auto_advance',\n326:                   });"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/components/ui/narrative/StageNavigation.jsx",
+        "line": 45,
+        "context": "42:                 method: 'UNIFIED_ORCHESTRATED',\n43:                 timestamp: performance.now(),\n44:               });\n45:               unifiedNav.navigateToStage(id, {\n46:                 smooth: true,\n47:                 skipNarration: false,\n48:                 source: 'sidebar',"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 39,
+        "context": "36:   if (currentStage === stageName) return true;\n37: \n38:   unifiedNav\n39:     .navigateToStage(stageName, {\n40:       smooth,\n41:       skipNarration: !emitNarration,\n42:       source: 'narrative_navigation',"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 113,
+        "context": "110:   if (!nextStageName || nextStageName === info.currentStage) return false;\n111: \n112:   unifiedNav\n113:     .navigateToStage(nextStageName, {\n114:       smooth: true,\n115:       skipNarration: false,\n116:       source: 'narrative_navigation_next',"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 135,
+        "context": "132:   if (!prevStageName || prevStageName === info.currentStage) return false;\n133: \n134:   unifiedNav\n135:     .navigateToStage(prevStageName, {\n136:       smooth: true,\n137:       skipNarration: false,\n138:       source: 'narrative_navigation_prev',"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 29,
+        "context": "26:    * Navigate to specific stage by slug\n27:    * Triggers full orchestration via scroll\n28:    */\n29:   async navigateToStage(targetStage, options = {}) {\n30:     const {\n31:       smooth = true,\n32:       skipNarration = false,"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 155,
+        "context": "152:       return false;\n153:     }\n154: \n155:     return this.navigateToStage(stages[nextIndex], {\n156:       ...options,\n157:       source: 'nextStage',\n158:     });"
+      },
+      {
+        "key": "NAVIGATE_TO_STAGE",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 175,
+        "context": "172:       return false;\n173:     }\n174: \n175:     return this.navigateToStage(stages[prevIndex], {\n176:       ...options,\n177:       source: 'prevStage',\n178:     });"
+      }
+    ],
+    "NARRATION_START": [
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 194,
+        "context": "191:         setScrollEnabled(true);\n192:         try { document.body.style.overflow = ''; } catch {}\n193:       }),\n194:       BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {\n195:         console.log(`   Theater: Starting ${stage} narrative`);\n196:         setIsInitialized(true);\n197:       }),"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 346,
+        "context": "343: \n344:             liveControls.next?.();\n345:             if (nextStageName) {\n346:               BeatBus.emit?.(EVENTS.START_NARRATIVE, {\n347:                 stage: nextStageName,\n348:                 source: 'auto_advance',\n349:               });"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 593,
+        "context": "590:     [defaultCharsPerSecond, triggerAutoAdvance]\n591:   );\n592: \n593:   const startNarration = useCallback(\n594:     (stageName, origin = 'internal') => {\n595:       console.log('🔬 [NARRATION] START_NARRATION_CALLED:', {\n596:         requestedStage: stageName,"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 789,
+        "context": "786:       const surface = {};\n787:       Object.defineProperties(surface, {\n788:         playNarration: {\n789:           value: (stage) => startNarration(stage, 'external'),\n790:           enumerable: true,\n791:         },\n792:         skipNarration: {"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 847,
+        "context": "844:     return () => {\n845:       revokeControlSurface('narrationController');\n846:     };\n847:   }, [skipNarration, startNarration]);\n848: \n849:   useEffect(() => {\n850:     if (typeof window === 'undefined') return undefined;"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 857,
+        "context": "854:       autoAdvanceEnabled,\n855:       resetStateId: resetState,\n856:       skipNarrationId: skipNarration,\n857:       startNarrationId: startNarration,\n858:     };\n859:     const prevDeps = prevDepsRef.current;\n860:     const changedKeys = Object.keys(deps).filter((key) => prevDeps[key] !== deps[key]);"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 920,
+        "context": "917:       });\n918: \n919:       const origin = source || 'event';\n920:       startNarration(stageName, origin);\n921:       startedStagesRef.current.add(stageName);\n922:       console.log('🎙️ [NarrationController] Added to startedStagesRef', {\n923:         stage: stageName,"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 951,
+        "context": "948:       }\n949:     };\n950: \n951:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);\n952:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);\n953: \n954:     const keyHandler = (event) => {"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 979,
+        "context": "976:       window.removeEventListener('keydown', keyHandler);\n977:       resetState();\n978:     };\n979:   }, [currentStage, resetState, skipNarration, startNarration]);\n980: \n981:   useEffect(() => {\n982:     if (!currentStage) return;"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 1026,
+        "context": "1023:       segmentCount,\n1024:     });\n1025: \n1026:     startNarration(currentStage, 'auto');\n1027:     startedStagesRef.current.add(currentStage);\n1028:   }, [currentStage, startNarration]);\n1029: "
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 1028,
+        "context": "1025: \n1026:     startNarration(currentStage, 'auto');\n1027:     startedStagesRef.current.add(currentStage);\n1028:   }, [currentStage, startNarration]);\n1029: \n1030:   useEffect(() => {\n1031:     if (typeof window === 'undefined') return () => {};"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 1046,
+        "context": "1043:         stage: pendingStage,\n1044:       });\n1045:       pendingStartRef.current = null;\n1046:       startNarration(pendingStage, 'pending');\n1047:       startedStagesRef.current.add(pendingStage);\n1048:     }, 150);\n1049: "
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 1051,
+        "context": "1048:     }, 150);\n1049: \n1050:     return () => clearInterval(intervalId);\n1051:   }, [startNarration]);\n1052: \n1053:   useEffect(() => {\n1054:     return () => {"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 124,
+        "context": "121:       window.theaterDirector?.isOpeningInProgress?.() === true;\n122: \n123:     const handleStart = (payload = {}) => {\n124:       const validation = validateEvent('START_NARRATIVE', payload);\n125:       diagnostics.recordEvent('START_NARRATIVE', payload, validation.valid);\n126: \n127:       if (!validation.valid) {"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 125,
+        "context": "122: \n123:     const handleStart = (payload = {}) => {\n124:       const validation = validateEvent('START_NARRATIVE', payload);\n125:       diagnostics.recordEvent('START_NARRATIVE', payload, validation.valid);\n126: \n127:       if (!validation.valid) {\n128:         console.error('❌ [NarrationOverlay] Invalid START_NARRATIVE:', validation.reason);"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 128,
+        "context": "125:       diagnostics.recordEvent('START_NARRATIVE', payload, validation.valid);\n126: \n127:       if (!validation.valid) {\n128:         console.error('❌ [NarrationOverlay] Invalid START_NARRATIVE:', validation.reason);\n129:         diagnostics.recordError('INVALID_EVENT', { event: 'START_NARRATIVE', ...validation });\n130:         return;\n131:       }"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 129,
+        "context": "126: \n127:       if (!validation.valid) {\n128:         console.error('❌ [NarrationOverlay] Invalid START_NARRATIVE:', validation.reason);\n129:         diagnostics.recordError('INVALID_EVENT', { event: 'START_NARRATIVE', ...validation });\n130:         return;\n131:       }\n132: "
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 138,
+        "context": "135:         return;\n136:       }\n137: \n138:       const dupCheck = deduplicator.check('START_NARRATIVE', payload);\n139:       if (dupCheck.isDuplicate) {\n140:         diagnostics.recordDuplicateIgnored();\n141:         diagnostics.recordError('DUPLICATE_EVENT', { event: 'START_NARRATIVE', reason: dupCheck.reason });"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 141,
+        "context": "138:       const dupCheck = deduplicator.check('START_NARRATIVE', payload);\n139:       if (dupCheck.isDuplicate) {\n140:         diagnostics.recordDuplicateIgnored();\n141:         diagnostics.recordError('DUPLICATE_EVENT', { event: 'START_NARRATIVE', reason: dupCheck.reason });\n142:         return;\n143:       }\n144: "
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 203,
+        "context": "200:       scheduleGraceHide();\n201:     };\n202: \n203:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);\n204:     const offLine = BeatBus.on?.(EVENTS.NARRATIVE_LINE, handleLine);\n205:     const offStop = BeatBus.on?.(EVENTS.NARRATION_STOPPED, handleStop);\n206:     const offCleanup = BeatBus.on?.(EVENTS.NARRATION_CLEANUP, handleCleanup);"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/overlay/OverlayContracts.js",
+        "line": 14,
+        "context": "11: ]);\n12: \n13: export const EVENT_CONTRACTS = {\n14:   START_NARRATIVE: {\n15:     validate(payload) {\n16:       if (!payload) return { valid: true };\n17: "
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/components/narrative/overlay/OverlayDeduplication.js",
+        "line": 24,
+        "context": "21:       return `LINE:${payload.text ?? ''}:${payload.stage ?? ''}`;\n22:     }\n23: \n24:     if (eventName === 'START_NARRATIVE') {\n25:       return `START:${payload.stage ?? ''}:${payload.source ?? ''}`;\n26:     }\n27: "
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 20,
+        "context": "17: \n18: const emitStartNarrative = (stageName) => {\n19:   if (!stageName) return;\n20:   BeatBus.emit?.(EVENTS.START_NARRATIVE, {\n21:     stage: stageName,\n22:     source: 'user_action',\n23:   });"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 300,
+        "context": "297:         return;\n298:       }\n299: \n300:       BeatBus.emit(EVENTS.START_NARRATIVE, {\n301:         stage: newStage,\n302:         source: 'director_stage_change',\n303:         timestamp:"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/theater/bus/schemas.js",
+        "line": 67,
+        "context": "64:       morph: 'number',\n65:     },\n66:   }],\n67:   ['START_NARRATIVE', {\n68:     required: { stage: 'string' },\n69:     optional: { source: 'string' },\n70:   }],"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 691,
+        "context": "688: \n689:       await this.director._runVisualSchedule?.();\n690: \n691:       BeatBus.emit(EVENTS.START_NARRATIVE, {\n692:         stage: toStage,\n693:         source: 'opening_complete',\n694:       });"
+      },
+      {
+        "key": "NARRATION_START",
+        "file": "src/theater/events.js",
+        "line": 29,
+        "context": "26:   MORPH_PROGRESS: 'MORPH_PROGRESS',              // { value: 0..1 }\n27: \n28:   // Stage / narrative control\n29:   START_NARRATIVE: 'START_NARRATIVE',            // { id?, stage? }\n30:   NARRATIVE_LINE: 'NARRATIVE_LINE',\n31:   NARRATION_STOPPED: 'NARRATION_STOPPED',\n32:   NARRATION_CLEANUP: 'NARRATION_CLEANUP',"
+      }
+    ],
+    "ARROW_NAV": [
+      {
+        "key": "ARROW_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 264,
+        "context": "261:       if (tagName && ['INPUT', 'TEXTAREA'].includes(tagName)) return;\n262: \n263:       const key = e.key;\n264:       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {\n265:         console.log('🔍 [KEY DEBUG]', {\n266:           key,\n267:           target: tagName || 'unknown',"
+      },
+      {
+        "key": "ARROW_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 274,
+        "context": "271:       }\n272: \n273:       // Stage navigation keys\n274:       if (key === 'ArrowRight' || key === 'ArrowLeft') {\n275:         e.preventDefault();\n276:         e.stopPropagation();\n277: "
+      },
+      {
+        "key": "ARROW_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 333,
+        "context": "330:       }\n331: \n332:       // Morph controls (retain existing behaviour)\n333:       if (key === 'ArrowUp' || key === 'ArrowDown') {\n334:         e.preventDefault();\n335:         e.stopPropagation();\n336: "
+      },
+      {
+        "key": "ARROW_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 338,
+        "context": "335:         e.stopPropagation();\n336: \n337:         const current = typeof morphProgressRef.current === 'number' ? morphProgressRef.current : 0;\n338:         const delta = key === 'ArrowUp' ? 0.1 : -0.1;\n339:         const next = Math.max(0, Math.min(1, Number((current + delta).toFixed(3))));\n340: \n341:         if (next !== current) {"
+      },
+      {
+        "key": "ARROW_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 346,
+        "context": "343:           morphProgressRef.current = updated;\n344:           console.log('🎬 [KEY NAV]', {\n345:             key,\n346:             action: key === 'ArrowUp' ? 'increase' : 'decrease',\n347:             from: current.toFixed(2),\n348:             to: updated.toFixed(2),\n349:           });"
+      },
+      {
+        "key": "ARROW_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 353,
+        "context": "350:         } else {\n351:           console.log('🎬 [KEY NAV]', {\n352:             key,\n353:             action: key === 'ArrowUp' ? 'increase' : 'decrease',\n354:             ignored: 'clamped',\n355:             value: current.toFixed(2),\n356:           });"
+      }
+    ],
+    "UNIFIED_NAV": [
+      {
+        "key": "UNIFIED_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 382,
+        "context": "379:           });\n380: \n381:           if (window.unifiedNav) {\n382:             window.unifiedNav.navigateToStage(targetStage, {\n383:               smooth: true,\n384:               skipNarration: false,\n385:               source: 'number_key',"
+      },
+      {
+        "key": "UNIFIED_NAV",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 410,
+        "context": "407:         const targetStage = stageNamesRef[nextIndex] || stageNamesRef[stageNamesRef.length - 1];\n408: \n409:         if (targetStage && window.unifiedNav?.navigateToStage) {\n410:           window.unifiedNav.navigateToStage(targetStage, {\n411:             smooth: true,\n412:             source: 'keyboard_space',\n413:           });"
+      },
+      {
+        "key": "UNIFIED_NAV",
+        "file": "src/components/ui/narrative/StageNavigation.jsx",
+        "line": 45,
+        "context": "42:                 method: 'UNIFIED_ORCHESTRATED',\n43:                 timestamp: performance.now(),\n44:               });\n45:               unifiedNav.navigateToStage(id, {\n46:                 smooth: true,\n47:                 skipNarration: false,\n48:                 source: 'sidebar',"
+      }
+    ],
+    "RAPID_FIRE": [
+      {
+        "key": "RAPID_FIRE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 26,
+        "context": "23: \n24: const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';\n25: \n26: // Debounce helper to prevent rapid-fire navigation (default 150ms)\n27: function createDebouncer(minInterval = 150) {\n28:   let lastCall = 0;\n29:   let timeoutId = null;"
+      },
+      {
+        "key": "RAPID_FIRE",
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 56,
+        "context": "53:     setIncomingText('');\n54:     setDisplayText('');\n55: \n56:     // Force state to idle (may already be idle during rapid resets)\n57:     if (stateMachine.getState() !== STATES.IDLE) {\n58:       stateMachine.forceState(STATES.IDLE, 'reset');\n59:     }"
+      },
+      {
+        "key": "RAPID_FIRE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 734,
+        "context": "731: \n732:       setTimeout(() => {\n733:         const stats = stageAtom.getBatchingStats();\n734:         console.log('📊 Batching stats after rapid updates:', stats);\n735:       }, 100);\n736: \n737:       return 'Batching test initiated - check console in 100ms';"
+      },
+      {
+        "key": "RAPID_FIRE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 773,
+        "context": "770: \n771: 🧠 INTELLIGENT AUTO-ADVANCE:\n772: - ✅ Advanced auto-advance controller with pause/resume\n773: - ✅ Intelligent timing prevents rapid-fire transitions\n774: - ✅ Configurable intervals and smooth progression\n775: - ✅ Integration with batching system for optimal performance\n776: "
+      },
+      {
+        "key": "RAPID_FIRE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 786,
+        "context": "783: 🛡️ RELIABILITY FEATURES:\n784: - ✅ Graceful cleanup and disposal of all systems\n785: - ✅ Error isolation in batch processing\n786: - ✅ Consistent state management during rapid updates\n787: - ✅ Memory leak prevention with proper cleanup\n788: \n789: Ready for qualityAtom.js DPR cache extension!"
+      }
+    ],
+    "MORPH_PROGRESS": [
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 342,
+        "context": "339:         const next = Math.max(0, Math.min(1, Number((current + delta).toFixed(3))));\n340: \n341:         if (next !== current) {\n342:           const updated = stateCommands.setMorphProgress(next, { origin: 'keyboard' });\n343:           morphProgressRef.current = updated;\n344:           console.log('🎬 [KEY NAV]', {\n345:             key,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 438,
+        "context": "435:         case 'M': {\n436:           const current = morphProgressRef.current ?? 0;\n437:           const target = current > 0.5 ? 0 : 1;\n438:           morphProgressRef.current = stateCommands.setMorphProgress(target, {\n439:             origin: 'developer-toggle',\n440:           });\n441:           break;"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 446,
+        "context": "443:         case 'r':\n444:         case 'R':\n445:           stageAtom.jumpToStage('genesis');\n446:           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });\n447:           break;\n448:         default:\n449:           break;"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 471,
+        "context": "468: \n469:       stateCommands.setScrollProgress(progress, { origin: 'scroll' });\n470:       if (!NavigationGate.isInFlight()) {\n471:         stateCommands.setMorphProgress(Math.min(progress * 2, 1), { origin: 'scroll' });\n472:       }\n473:     };\n474: "
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 330,
+        "context": "327:         mat.uniformsNeedUpdate = true;\n328:       }\n329: \n330:       BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 1, source });\n331: \n332:       const now =\n333:         typeof performance !== 'undefined' && typeof performance.now === 'function'"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 867,
+        "context": "864:     return () => off?.();\n865:   }, [BeatBus, EVENTS, blueprintBinder]);\n866: \n867:   // MORPH_PROGRESS → lightweight timeline updates\n868:   useEffect(() => {\n869:     if (!blueprint || !materialRef.current?.uniforms) {\n870:       return;"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 933,
+        "context": "930:       }\n931:     };\n932: \n933:     const unsubMorph = BeatBus.on(EVENTS.MORPH_PROGRESS, (payload = {}) => {\n934:       const normalized = typeof payload === 'number' ? { morphProgress: payload } : payload;\n935:       const value = normalized?.morphProgress ?? normalized?.value ?? null;\n936:       if (value == null) {"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 945,
+        "context": "942: \n943:     if (DEV) {\n944:       console.log('✅ Renderer subscribed:', {\n945:         MORPH_PROGRESS: 'active',\n946:         BLUEPRINT_READY: 'active (separate hook)',\n947:       });\n948:     }"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 459,
+        "context": "456:               morph: clamped,\n457:             });\n458:           } else {\n459:             bus?.emit?.(events?.MORPH_PROGRESS ?? EVENTS.MORPH_PROGRESS, {\n460:               morphProgress: clamped,\n461:               stage: stageName,\n462:             });"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/components/webgl/managers/BlueprintBinder.js",
+        "line": 999,
+        "context": "996:           { tgt: extent('text3DPosition') },\n997:         );\n998:       }\n999:       bus?.emit?.(events?.MORPH_PROGRESS ?? EVENTS.MORPH_PROGRESS, { value: 0 });\n1000:       if (typeof finalizeEmergence === 'function') {\n1001:         const globalSST = (typeof window !== 'undefined' && window.SST) || null;\n1002:         const openConfig = globalSST?.opening ?? null;"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/config/canonical/sst-v3.3.json",
+        "line": 58,
+        "context": "55:         \"role\": \"progress_publisher\",\n56:         \"writes\": [\"eventsOnly\"],\n57:         \"forbidden\": [\"geometry\", \"uniforms\"],\n58:         \"notes\": \"Maps window scroll→stage-local progress; publishes MORPH_PROGRESS; emits STAGE_CHANGE at breakpoints and MEMORY_FRAGMENT_TRIGGER from per-stage triggerPercent. Renderer remains a dumb sink.\"\n59:       }\n60:     },\n61:     \"singleWriterRules\": ["
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/config/canonical/sst-v3.3.json",
+        "line": 289,
+        "context": "286:       }\n287:     },\n288:     {\n289:       \"name\": \"MORPH_PROGRESS\",\n290:       \"emitter\": \"Director\",\n291:       \"payload\": {\n292:         \"value\": \"float[0..1]\""
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/engine/modules/ClimaxController.js",
+        "line": 249,
+        "context": "246:       morphPayload.stageIndex = stageIndex;\n247:     }\n248: \n249:     BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);\n250:   }\n251: \n252:   #runFrame() {"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 273,
+        "context": "270:     };\n271:     if (stageIndex >= 0) payload.stageIndex = stageIndex;\n272: \n273:     BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);\n274:   }\n275: }\n276: "
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/hooks/atoms/useNarrativeStore.js",
+        "line": 27,
+        "context": "24:     setStage: narrativeAtom.setStage,\n25:     setGlobalProgress: narrativeAtom.setGlobalProgress,\n26:     setScrollProgress: narrativeAtom.setScrollProgress,\n27:     setMorphProgress: narrativeAtom.setMorphProgress,\n28:     setNarrativeProgress: narrativeAtom.setNarrativeProgress,\n29:     activateMemoryFragment: narrativeAtom.activateMemoryFragment,\n30:     dismissMemoryFragment: narrativeAtom.dismissMemoryFragment,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/state/atoms/narrativeAtom.js",
+        "line": 164,
+        "context": "161:     }));\n162:   },\n163: \n164:   setMorphProgress: progress => {\n165:     set(state => ({\n166:       ...state,\n167:       morphProgress: Math.max(0, Math.min(1, progress)),"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 44,
+        "context": "41:     if (Number.isFinite(stageIndex) && stageIndex >= 0) {\n42:       payload.stageIndex = stageIndex;\n43:     }\n44:     BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', payload);\n45:   } catch {}\n46: }\n47: "
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 201,
+        "context": "198:     if (qualitySub) this.subscriptions.push(qualitySub);\n199:   }\n200: \n201:   setMorphProgress(value, options = {}) {\n202:     const morph = clamp01(value);\n203:     narrativeAtom.setMorphProgress?.(morph);\n204: "
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 203,
+        "context": "200: \n201:   setMorphProgress(value, options = {}) {\n202:     const morph = clamp01(value);\n203:     narrativeAtom.setMorphProgress?.(morph);\n204: \n205:     this.morphState = {\n206:       value: morph,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 216,
+        "context": "213: \n214:   adjustMorph(delta, options = {}) {\n215:     const current = narrativeAtom.getState?.()?.morphProgress ?? 0;\n216:     return this.setMorphProgress(current + delta, options);\n217:   }\n218: \n219:   setScrollProgress(progress, options = {}) {"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/state/commands/StateCommands.js",
+        "line": 274,
+        "context": "271:     const startTime = performance.now();\n272:     const animate = () => {\n273:       const progress = Math.min((performance.now() - startTime) / duration, 1);\n274:       this.setMorphProgress(progress, { origin: 'climax' });\n275: \n276:       if (progress < 1) {\n277:         requestAnimationFrame(animate);"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 3,
+        "context": "1: // src/theater/ScrollOrchestrator.js\n2: // BeatGlyph v3.3 — ScrollOrchestrator\n3: // Purpose: map window scroll -> stage-local progress; publish MORPH_PROGRESS and STAGE_CHANGE.\n4: // Kinetics: speedMultiplier=2.0, smoothing=0.15, overshoot=0.05 (v3.3 canon)\n5: \n6: import { Canonical } from '@/config/canonical/canonicalAuthority.js';"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 79,
+        "context": "76:       revokeControlSurface('__scrollOrchestrator');\n77:       revokeControlSurface('scrollOrchestrator');\n78:       exposeControlSurface('__scrollOrchestrator', () => this._createControlSurface(), {\n79:         setMorph: 'scroll:setMorph',\n80:       });\n81:       exposeControlSurface('scrollOrchestrator', () => this._createControlSurface(), {\n82:         setMorph: 'scroll:setMorph',"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 82,
+        "context": "79:         setMorph: 'scroll:setMorph',\n80:       });\n81:       exposeControlSurface('scrollOrchestrator', () => this._createControlSurface(), {\n82:         setMorph: 'scroll:setMorph',\n83:       });\n84:       exposeDiagnostics('scrollOrchestrator', () => this.getState());\n85:       this._ensureScrollableArea('start');"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 122,
+        "context": "119:           const morphProgress = clamp01(value);\n120:           const morphTarget = clamp01(this.getMorphTarget());\n121: \n122:           BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {\n123:             morphProgress,\n124:             value: morphProgress,\n125:             morphTarget,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 189,
+        "context": "186:         get: () => self.morphTarget,\n187:         enumerable: true,\n188:       },\n189:       setMorph: {\n190:         value: (value) => self.setMorph(value, { origin: 'external' }),\n191:         enumerable: true,\n192:       },"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 190,
+        "context": "187:         enumerable: true,\n188:       },\n189:       setMorph: {\n190:         value: (value) => self.setMorph(value, { origin: 'external' }),\n191:         enumerable: true,\n192:       },\n193:     });"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 398,
+        "context": "395:   }\n396: \n397:   // Force a specific morph value (for testing)\n398:   setMorph(value, options = {}) {\n399:     const origin = options.origin || 'internal';\n400:     if (origin !== 'internal' && !isControlAllowed('scroll:setMorph')) {\n401:       console.warn('[ScrollOrchestrator] Unauthorized setMorph attempt blocked');"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 400,
+        "context": "397:   // Force a specific morph value (for testing)\n398:   setMorph(value, options = {}) {\n399:     const origin = options.origin || 'internal';\n400:     if (origin !== 'internal' && !isControlAllowed('scroll:setMorph')) {\n401:       console.warn('[ScrollOrchestrator] Unauthorized setMorph attempt blocked');\n402:       return;\n403:     }"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 401,
+        "context": "398:   setMorph(value, options = {}) {\n399:     const origin = options.origin || 'internal';\n400:     if (origin !== 'internal' && !isControlAllowed('scroll:setMorph')) {\n401:       console.warn('[ScrollOrchestrator] Unauthorized setMorph attempt blocked');\n402:       return;\n403:     }\n404:     const clampedValue = clamp01(value);"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 410,
+        "context": "407:     if (this.morphAnimationId) {\n408:       this.morphAnimator.updateTarget(this.morphAnimationId, clampedValue);\n409:     }\n410:     BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {\n411:       morphProgress: clampedValue,\n412:       value: clampedValue,\n413:       morphTarget: clampedValue,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 416,
+        "context": "413:       morphTarget: clampedValue,\n414:       stage: Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown',\n415:       stageIndex: this.lastStageIndex,\n416:       source: `scroll:setMorph:${origin}`,\n417:       schemaVersion: '3.5',\n418:     });\n419:   }"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/bus/index.js",
+        "line": 6,
+        "context": "3: // BeatBus with Canon Dev-OS contract integration\n4: // Uses canon-console contract registry for validation\n5: \n6: const BATCH_EVENTS = new Set(['MORPH_PROGRESS', 'SCROLL_PROGRESS']);\n7: const SYNC_EVENTS = new Set(['PARTICLES_EMERGED', 'FENCEPOST_LISTENERS_READY', 'ENABLE_SCROLL']);\n8: \n9: class EventProfiler {"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/bus/schemas.js",
+        "line": 35,
+        "context": "32:       quality: 'string',\n33:     },\n34:   }],\n35:   ['MORPH_PROGRESS', {\n36:     required: { morphProgress: 'number' },\n37:     optional: {\n38:       stage: 'string',"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/MorphAnimationController.js",
+        "line": 332,
+        "context": "329:       source: source || 'animator',\n330:     };\n331: \n332:     BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);\n333:   }\n334: \n335:   /**"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 34,
+        "context": "31:   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },\n32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },\n33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },\n34:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },\n35:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },\n36:   emergence: {\n37:     durationMs: 2000,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 35,
+        "context": "32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },\n33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },\n34:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },\n35:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },\n36:   emergence: {\n37:     durationMs: 2000,\n38:     waitForFencepost: true,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 485,
+        "context": "482:           duration: chaosDuration,\n483:           rendererSpin: chaosConfig.rendererSpin || null,\n484:         });\n485:         const chaosTarget = Number.isFinite(chaosConfig.morphTo) ? clamp01(chaosConfig.morphTo) : 0.0;\n486:         const chaosAnimation = animateMorph(currentMorphValue, chaosTarget, chaosDuration, 'chaos');\n487:         if (chaosDuration > 0) {\n488:           const waitResult = await this.director.sleep(chaosDuration);"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 505,
+        "context": "502:         });\n503:         const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);\n504:         this.director.phase = 'coalesce';\n505:         console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);\n506:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n507:           phase: 'coalesce',\n508:           duration: coalesceDuration,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 509,
+        "context": "506:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n507:           phase: 'coalesce',\n508:           duration: coalesceDuration,\n509:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,\n510:         });\n511:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';\n512:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 511,
+        "context": "508:           duration: coalesceDuration,\n509:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,\n510:         });\n511:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';\n512:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;\n513:         let coalesceAnimation = null;\n514:         if (hasCoalesceTarget) {"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 512,
+        "context": "509:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,\n510:         });\n511:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';\n512:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;\n513:         let coalesceAnimation = null;\n514:         if (hasCoalesceTarget) {\n515:           coalesceAnimation = animateMorph(currentMorphValue, coalesceTarget, coalesceDuration, 'coalesce');"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 537,
+        "context": "534:         });\n535:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);\n536:         this.director.phase = 'settle';\n537:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);\n538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',\n540:           duration: settleDuration,"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 541,
+        "context": "538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',\n540:           duration: settleDuration,\n541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 543,
+        "context": "540:           duration: settleDuration,\n541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 544,
+        "context": "541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {\n547:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/events-safe.js",
+        "line": 25,
+        "context": "22: export const EVENTS_RUNTIME = {\n23:   // Runtime events\n24:   RENDER_DIRECTIVE: 'RENDER_DIRECTIVE',\n25:   MORPH_PROGRESS: 'MORPH_PROGRESS',\n26:   RENDERER_TUNE: 'RENDERER_TUNE',\n27:   SCROLL_PROGRESS: 'SCROLL_PROGRESS',\n28:   CLIMAX_STEP: 'CLIMAX_STEP',"
+      },
+      {
+        "key": "MORPH_PROGRESS",
+        "file": "src/theater/events.js",
+        "line": 26,
+        "context": "23:   RENDER_DIRECTIVE: 'RENDER_DIRECTIVE',          // renderer draw/morph directives\n24:   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }\n25:   PARTICLE_PHASE: 'PARTICLE_PHASE',              // { name }\n26:   MORPH_PROGRESS: 'MORPH_PROGRESS',              // { value: 0..1 }\n27: \n28:   // Stage / narrative control\n29:   START_NARRATIVE: 'START_NARRATIVE',            // { id?, stage? }"
+      }
+    ],
+    "DEBOUNCE": [
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 26,
+        "context": "23: \n24: const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';\n25: \n26: // Debounce helper to prevent rapid-fire navigation (default 150ms)\n27: function createDebouncer(minInterval = 150) {\n28:   let lastCall = 0;\n29:   let timeoutId = null;"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 27,
+        "context": "24: const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';\n25: \n26: // Debounce helper to prevent rapid-fire navigation (default 150ms)\n27: function createDebouncer(minInterval = 150) {\n28:   let lastCall = 0;\n29:   let timeoutId = null;\n30: "
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 31,
+        "context": "28:   let lastCall = 0;\n29:   let timeoutId = null;\n30: \n31:   return function debounce(fn) {\n32:     const now = performance.now();\n33:     const timeSinceLastCall = now - lastCall;\n34: "
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 44,
+        "context": "41:         fn();\n42:       }, remainingTime);\n43: \n44:       console.log('⏱️ [DEBOUNCE]', {\n45:         action: 'delayed',\n46:         timeSinceLastCall: Math.round(timeSinceLastCall),\n47:         remainingTime: Math.round(remainingTime),"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 146,
+        "context": "143:   const morphProgressRef = useRef(0);\n144:   const directorStartedRef = useRef(false);\n145:   const viewportReadyRef = useRef(false);\n146:   const arrowKeyDebounce = useRef(createDebouncer(150)).current;\n147: \n148:   const _stageConfig = Canonical.stages[currentStage];\n149:   const {"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 278,
+        "context": "275:         e.preventDefault();\n276:         e.stopPropagation();\n277: \n278:         arrowKeyDebounce(() => {\n279:           const state = stageAtom.getState?.();\n280:           const activeStage = state?.currentStage || currentStageRef.current || stageNames[0];\n281:           const currentIndex = Math.max(0, stageNames.indexOf(activeStage));"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 326,
+        "context": "323:             to: targetStage,\n324:             targetScrollPercent: `${targetScrollPercent.toFixed(1)}%`,\n325:             narrationSkipped,\n326:             debounced: true,\n327:           });\n328:         });\n329:         return;"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 563,
+        "context": "560:     ]\n561:   );\n562: \n563:   // single emit on mount; microtask-debounced resize (no RAF / no polling timers)\n564:   useEffect(() => {\n565:     emitViewportHint();\n566:     let inDebounce = false;"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 566,
+        "context": "563:   // single emit on mount; microtask-debounced resize (no RAF / no polling timers)\n564:   useEffect(() => {\n565:     emitViewportHint();\n566:     let inDebounce = false;\n567:     const onResize = () => {\n568:       if (inDebounce) return;\n569:       inDebounce = true;"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 568,
+        "context": "565:     emitViewportHint();\n566:     let inDebounce = false;\n567:     const onResize = () => {\n568:       if (inDebounce) return;\n569:       inDebounce = true;\n570:       queueMicrotask(() => {\n571:         try { emitViewportHint(); }"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 569,
+        "context": "566:     let inDebounce = false;\n567:     const onResize = () => {\n568:       if (inDebounce) return;\n569:       inDebounce = true;\n570:       queueMicrotask(() => {\n571:         try { emitViewportHint(); }\n572:         finally { inDebounce = false; }"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 572,
+        "context": "569:       inDebounce = true;\n570:       queueMicrotask(() => {\n571:         try { emitViewportHint(); }\n572:         finally { inDebounce = false; }\n573:       });\n574:     };\n575:     window.addEventListener('resize', onResize);"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 31,
+        "context": "28:   maxBatchSize: 5,\n29:   smoothingFactor: 0.8,\n30:   autoAdvanceInterval: 3000,\n31:   debounceTimeout: 100,\n32: };\n33: \n34: function createEmptyPerformanceMetrics() {"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/utils/performance/AdaptiveQualitySystem.js",
+        "line": 16,
+        "context": "13: const ENHANCED_STABILITY_CONFIG = {\n14:   // Tier change requirements\n15:   consecutiveChecks: 6,        // Require 6 consecutive stable readings\n16:   debounceMs: 2000,           // 2 second minimum between tier changes\n17:   fpsVarianceThreshold: 8,    // FPS must be within 8 of target for stability\n18:   emergencyDropThreshold: 15, // Emergency drop to LOW if FPS < 15\n19:   "
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/utils/performance/AdaptiveQualitySystem.js",
+        "line": 58,
+        "context": "55:     // Calculate what tier FPS suggests\n56:     const suggestedTier = this.calculateTierFromFPS(fps);\n57:     \n58:     // Check if we're in debounce period\n59:     if (timeSinceLastChange < ENHANCED_STABILITY_CONFIG.debounceMs) {\n60:       console.log(`🛡️ AQS: Debounce active (${Math.round(timeSinceLastChange)}ms), staying at ${this.currentTier}`);\n61:       return this.currentTier;"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/utils/performance/AdaptiveQualitySystem.js",
+        "line": 59,
+        "context": "56:     const suggestedTier = this.calculateTierFromFPS(fps);\n57:     \n58:     // Check if we're in debounce period\n59:     if (timeSinceLastChange < ENHANCED_STABILITY_CONFIG.debounceMs) {\n60:       console.log(`🛡️ AQS: Debounce active (${Math.round(timeSinceLastChange)}ms), staying at ${this.currentTier}`);\n61:       return this.currentTier;\n62:     }"
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/utils/performance/AdaptiveQualitySystem.js",
+        "line": 60,
+        "context": "57:     \n58:     // Check if we're in debounce period\n59:     if (timeSinceLastChange < ENHANCED_STABILITY_CONFIG.debounceMs) {\n60:       console.log(`🛡️ AQS: Debounce active (${Math.round(timeSinceLastChange)}ms), staying at ${this.currentTier}`);\n61:       return this.currentTier;\n62:     }\n63: "
+      },
+      {
+        "key": "DEBOUNCE",
+        "file": "src/utils/performance/AdaptiveQualitySystem.js",
+        "line": 259,
+        "context": "256:       console.log(`FPS History:`, manager.fpsHistory);\n257:       console.log(`FPS Variance: ${manager.getFPSVariance().toFixed(1)}`);\n258:       console.log(`Time Since Last Change: ${Date.now() - manager.lastTierChange}ms`);\n259:       console.log(`Debounce Period: ${ENHANCED_STABILITY_CONFIG.debounceMs}ms`);\n260:       \n261:       return {\n262:         stable: manager.stabilityChecks === 0,"
+      }
+    ],
+    "AUTO_ADVANCE": [
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 36,
+        "context": "33:   completionEvents: [],\n34:   log(event, data) {\n35:     console.log(`🔬 [NARRATION] ${event}:`, data);\n36:     if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {\n37:       window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);\n38:     }\n39:   },"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 37,
+        "context": "34:   log(event, data) {\n35:     console.log(`🔬 [NARRATION] ${event}:`, data);\n36:     if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {\n37:       window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);\n38:     }\n39:   },\n40: };"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 81,
+        "context": "78: \n79: export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CHARS_PER_SECOND }) {\n80:   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);\n81:   const autoAdvanceEnabled = useAtomValue(stageAtom, (state) => state.autoAdvanceEnabled);\n82:   const [activeNarration, setActiveNarration] = useState(null);\n83: \n84:   const componentMountIdRef = useRef(null);"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 94,
+        "context": "91:   const completedSegmentsRef = useRef(0);\n92:   const skipRequestedRef = useRef(false);\n93:   const previousOverflowRef = useRef(null);\n94:   const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);\n95:   const prevDepsRef = useRef({});\n96:   const segmentTokenRef = useRef(0);\n97:   const hasTriggeredAutoAdvanceRef = useRef(false);"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 97,
+        "context": "94:   const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);\n95:   const prevDepsRef = useRef({});\n96:   const segmentTokenRef = useRef(0);\n97:   const hasTriggeredAutoAdvanceRef = useRef(false);\n98:   const startedStagesRef = useRef(new Set());\n99:   const pendingStartRef = useRef(null);\n100: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 142,
+        "context": "139:       completedSegmentsRef.current = 0;\n140:       skipRequestedRef.current = false;\n141:       segmentTokenRef.current = 0;\n142:       hasTriggeredAutoAdvanceRef.current = false;\n143:       startedStagesRef.current.clear();\n144:       if (DEBUG_NARRATION) {\n145:         console.log('🎙️ [NarrationController] resetState called', {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 190,
+        "context": "187:     [clearTimers, unlockScroll]\n188:   );\n189: \n190:   const triggerAutoAdvance = useCallback(\n191:     (completedStageName, origin = 'narration_complete') => {\n192:       if (!completedStageName) return;\n193:       if (hasTriggeredAutoAdvanceRef.current) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 193,
+        "context": "190:   const triggerAutoAdvance = useCallback(\n191:     (completedStageName, origin = 'narration_complete') => {\n192:       if (!completedStageName) return;\n193:       if (hasTriggeredAutoAdvanceRef.current) {\n194:         narrationDiagnostic.log('AUTO_ADVANCE_SKIPPED_DUPLICATE', {\n195:           stage: completedStageName,\n196:           origin,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 201,
+        "context": "198:         return;\n199:       }\n200: \n201:       hasTriggeredAutoAdvanceRef.current = true;\n202:       narrationDiagnostic.log('AUTO_ADVANCE_TRIGGER_REQUEST', {\n203:         stage: completedStageName,\n204:         origin,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 214,
+        "context": "211: \n212:       const controls = window.stageControls;\n213:       const isAutoEnabled =\n214:         controls?.isAutoAdvanceEnabled?.() ??\n215:         controls?.getState?.()?.autoAdvanceEnabled ??\n216:         stageAtom.getState?.()?.autoAdvanceEnabled ??\n217:         false;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 215,
+        "context": "212:       const controls = window.stageControls;\n213:       const isAutoEnabled =\n214:         controls?.isAutoAdvanceEnabled?.() ??\n215:         controls?.getState?.()?.autoAdvanceEnabled ??\n216:         stageAtom.getState?.()?.autoAdvanceEnabled ??\n217:         false;\n218: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 216,
+        "context": "213:       const isAutoEnabled =\n214:         controls?.isAutoAdvanceEnabled?.() ??\n215:         controls?.getState?.()?.autoAdvanceEnabled ??\n216:         stageAtom.getState?.()?.autoAdvanceEnabled ??\n217:         false;\n218: \n219:       if (!isAutoEnabled) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 230,
+        "context": "227:         return;\n228:       }\n229: \n230:       const scheduleAutoAdvance = (timeoutMs) => {\n231:         const timeoutId = setTimeout(() => {\n232:           timersRef.current.delete(timeoutId);\n233: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 237,
+        "context": "234:           const liveControls = window.stageControls;\n235:           if (!liveControls?.next) return;\n236:           const autoStillEnabled =\n237:             liveControls.isAutoAdvanceEnabled?.() ??\n238:             liveControls.getState?.()?.autoAdvanceEnabled ??\n239:             stageAtom.getState?.()?.autoAdvanceEnabled ??\n240:             false;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 238,
+        "context": "235:           if (!liveControls?.next) return;\n236:           const autoStillEnabled =\n237:             liveControls.isAutoAdvanceEnabled?.() ??\n238:             liveControls.getState?.()?.autoAdvanceEnabled ??\n239:             stageAtom.getState?.()?.autoAdvanceEnabled ??\n240:             false;\n241:           if (!autoStillEnabled) return;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 239,
+        "context": "236:           const autoStillEnabled =\n237:             liveControls.isAutoAdvanceEnabled?.() ??\n238:             liveControls.getState?.()?.autoAdvanceEnabled ??\n239:             stageAtom.getState?.()?.autoAdvanceEnabled ??\n240:             false;\n241:           if (!autoStillEnabled) return;\n242: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 253,
+        "context": "250:             return;\n251:           }\n252: \n253:           if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {\n254:             narrationDiagnostic.log('AUTO_ADVANCE_WAIT', {\n255:               stage: completedStageName,\n256:               retryIn: AUTO_ADVANCE_RETRY_MS,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 266,
+        "context": "263:                 retryIn: AUTO_ADVANCE_RETRY_MS,\n264:               });\n265:             }\n266:             scheduleAutoAdvance(AUTO_ADVANCE_RETRY_MS);\n267:             return;\n268:           }\n269: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 315,
+        "context": "312:           }\n313: \n314:           const advanceVia = async () => {\n315:             liveControls.markAutoAdvance?.();\n316:             try {\n317:               const nav =\n318:                 window.unifiedNav ||"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 361,
+        "context": "358:         timersRef.current.add(timeoutId);\n359:       };\n360: \n361:       scheduleAutoAdvance(AUTO_ADVANCE_DELAY_MS);\n362:     },\n363:     [unlockScroll]\n364:   );"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 431,
+        "context": "428:           reason: 'complete',\n429:           timestamp,\n430:         });\n431:         triggerAutoAdvance(stageName, 'narration_complete');\n432:         activeStageRef.current = null;\n433:       }\n434:     },"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 435,
+        "context": "432:         activeStageRef.current = null;\n433:       }\n434:     },\n435:     [triggerAutoAdvance]\n436:   );\n437: \n438:   const scheduleSegment = useCallback("
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 575,
+        "context": "572:           const fallbackDelay = durationMs + AUTO_ADVANCE_DELAY_MS + 200;\n573:           const fallbackId = setTimeout(() => {\n574:             timersRef.current.delete(fallbackId);\n575:             if (hasTriggeredAutoAdvanceRef.current) return;\n576:             narrationDiagnostic.log('AUTO_ADVANCE_FALLBACK', {\n577:               stage: stageName,\n578:               origin: 'last_beat_timeout',"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 582,
+        "context": "579:               fallbackDelay,\n580:               timestamp: Date.now(),\n581:             });\n582:             triggerAutoAdvance(stageName, 'last_beat_timeout');\n583:           }, fallbackDelay);\n584:           timersRef.current.add(fallbackId);\n585:         }"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 590,
+        "context": "587: \n588:       timersRef.current.add(timerId);\n589:     },\n590:     [defaultCharsPerSecond, triggerAutoAdvance]\n591:   );\n592: \n593:   const startNarration = useCallback("
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 601,
+        "context": "598:         currentStage,\n599:         origin,\n600:         isPlaying: activeStageRef.current !== null,\n601:         autoAdvanceEnabled: autoAdvanceEnabledRef.current,\n602:       });\n603:       const trustedOrigins = new Set([\n604:         'internal',"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 745,
+        "context": "742:       componentId,\n743:       effectId,\n744:       stage: currentStage,\n745:       autoAdvance: autoAdvanceEnabled,\n746:     });\n747: \n748:     narrationDiagnostic.mountHistory.push({"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 753,
+        "context": "750:       componentId,\n751:       effectId,\n752:       stage: currentStage,\n753:       autoAdvance: autoAdvanceEnabled,\n754:       time: subscribedAt,\n755:     });\n756: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 763,
+        "context": "760:         componentId,\n761:         effectId,\n762:         stage: currentStage,\n763:         autoAdvance: autoAdvanceEnabled,\n764:         lifespan,\n765:       });\n766:       narrationDiagnostic.unmountHistory.push({"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 771,
+        "context": "768:         componentId,\n769:         effectId,\n770:         stage: currentStage,\n771:         autoAdvance: autoAdvanceEnabled,\n772:         time: Date.now(),\n773:         lifespan,\n774:       });"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 776,
+        "context": "773:         lifespan,\n774:       });\n775:     };\n776:   }, [currentStage, autoAdvanceEnabled]);\n777: \n778:   useEffect(() => {\n779:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 779,
+        "context": "776:   }, [currentStage, autoAdvanceEnabled]);\n777: \n778:   useEffect(() => {\n779:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;\n780:   }, [autoAdvanceEnabled]);\n781: \n782:   useEffect(() => {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 780,
+        "context": "777: \n778:   useEffect(() => {\n779:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;\n780:   }, [autoAdvanceEnabled]);\n781: \n782:   useEffect(() => {\n783:     if (typeof window === 'undefined') return () => {};"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 854,
+        "context": "851: \n852:     const deps = {\n853:       currentStage,\n854:       autoAdvanceEnabled,\n855:       resetStateId: resetState,\n856:       skipNarrationId: skipNarration,\n857:       startNarrationId: startNarration,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 934,
+        "context": "931:       narrationDiagnostic.log('STAGE_CHANGE_EVENT', {\n932:         from: payload?.from ?? payload?.previousStage ?? null,\n933:         to: nextStage,\n934:         autoAdvance: autoAdvanceEnabledRef.current,\n935:         isPlaying: activeStageRef.current !== null,\n936:       });\n937:       narrationDiagnostic.stageChangeEvents.push({"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 971,
+        "context": "968:       console.log('🔬 [NARRATION] CLEANUP_REASON', {\n969:         stage: currentStage,\n970:         wasPlaying: activeStageRef.current !== null,\n971:         autoAdvance: autoAdvanceEnabledRef.current,\n972:         caller: new Error().stack.split('\\n')[2] ?? null,\n973:       });\n974:       offStart?.();"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/ui/NarrativeUIControls.jsx",
+        "line": 176,
+        "context": "173: \n174:         <button\n175:           onClick={() =>\n176:             window.narrativeNavigation?.toggleAutoAdvance(!navState.autoAdvanceEnabled)\n177:           }\n178:           style={{\n179:             background: navState.autoAdvanceEnabled ? '#0D9488' : 'transparent',"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/ui/NarrativeUIControls.jsx",
+        "line": 179,
+        "context": "176:             window.narrativeNavigation?.toggleAutoAdvance(!navState.autoAdvanceEnabled)\n177:           }\n178:           style={{\n179:             background: navState.autoAdvanceEnabled ? '#0D9488' : 'transparent',\n180:             border: '1px solid #0D9488',\n181:             color: navState.autoAdvanceEnabled ? 'white' : '#0D9488',\n182:             padding: '0.25rem 0.5rem',"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/ui/NarrativeUIControls.jsx",
+        "line": 181,
+        "context": "178:           style={{\n179:             background: navState.autoAdvanceEnabled ? '#0D9488' : 'transparent',\n180:             border: '1px solid #0D9488',\n181:             color: navState.autoAdvanceEnabled ? 'white' : '#0D9488',\n182:             padding: '0.25rem 0.5rem',\n183:             fontSize: '0.75rem',\n184:             cursor: 'pointer',"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/ui/NarrativeUIControls.jsx",
+        "line": 188,
+        "context": "185:             transition: 'all 0.2s',\n186:           }}\n187:         >\n188:           {navState.autoAdvanceEnabled ? '⏸️ Auto' : '▶️ Auto'}\n189:         </button>\n190:       </div>\n191: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/components/ui/NarrativeUIControls.jsx",
+        "line": 245,
+        "context": "242:   - window.narrativeNavigation.getStageButtonData()\n243:   - window.narrativeNavigation.nextStage()\n244:   - window.narrativeNavigation.prevStage()\n245:   - window.narrativeNavigation.toggleAutoAdvance()\n246: \n247: This completely replaces StageNavigation with a richer UI that uses\n248: the consolidated navigation system underneath."
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 53,
+        "context": "50:   return true;\n51: };\n52: \n53: const toggleAutoAdvance = (forcedValue) => {\n54:   const current = stageAtom.getState().autoAdvanceEnabled;\n55:   const nextValue =\n56:     typeof forcedValue === 'boolean' ? forcedValue : !current;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 54,
+        "context": "51: };\n52: \n53: const toggleAutoAdvance = (forcedValue) => {\n54:   const current = stageAtom.getState().autoAdvanceEnabled;\n55:   const nextValue =\n56:     typeof forcedValue === 'boolean' ? forcedValue : !current;\n57:   stageAtom.setAutoAdvanceEnabled(nextValue);"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 57,
+        "context": "54:   const current = stageAtom.getState().autoAdvanceEnabled;\n55:   const nextValue =\n56:     typeof forcedValue === 'boolean' ? forcedValue : !current;\n57:   stageAtom.setAutoAdvanceEnabled(nextValue);\n58:   return nextValue;\n59: };\n60: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 73,
+        "context": "70:     currentIndex,\n71:     allStages: stageNames,\n72:     isTransitioning: !!info.isTransitioning,\n73:     autoAdvanceEnabled: !!info.autoAdvanceEnabled,\n74:     canGoPrev: currentIndex > 0,\n75:     canGoNext: currentIndex < totalStages - 1,\n76:   };"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 153,
+        "context": "150:   nextStage,\n151:   prevStage,\n152:   jumpToStage,\n153:   toggleAutoAdvance,\n154: };\n155: \n156: if (typeof window !== 'undefined') {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 30,
+        "context": "27:   batchDelay: 16,\n28:   maxBatchSize: 5,\n29:   smoothingFactor: 0.8,\n30:   autoAdvanceInterval: 3000,\n31:   debounceTimeout: 100,\n32: };\n33: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 56,
+        "context": "53:     metacurtisVoiceLevel: 0.5,\n54:     lastTransition: 0,\n55:     lastStageChangeTs: 0,\n56:     autoAdvanceEnabled: false,\n57:     transitionBatch: [],\n58:     batchTimeout: null,\n59:     lastProgressUpdate: 0,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 222,
+        "context": "219: }\n220: \n221: // ✅ ENHANCED: Auto-advance system with intelligent timing\n222: class AutoAdvanceController {\n223:   constructor(stageAtom) {\n224:     this.stageAtom = stageAtom;\n225:     this.isPaused = false;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 267,
+        "context": "264:     const now = (typeof performance !== 'undefined' && performance.now)\n265:       ? performance.now()\n266:       : Date.now();\n267:     if (now - this.lastAdvance < TRANSITION_CONFIG.autoAdvanceInterval) return false;\n268:     return true;\n269:   }\n270: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 323,
+        "context": "320:   const transitionBatcher = new TransitionBatcher();\n321:   const progressSmoother = new ProgressSmoother();\n322:   const performanceMonitor = new TransitionPerformanceMonitor();\n323:   const autoAdvanceController = new AutoAdvanceController({ getState: get, nextStage: null }); // Will be set later\n324:   \n325:   // ✅ ENHANCED: Batched state updates\n326:   const batchedSetState = (updates, transitionType = 'direct') => {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 509,
+        "context": "506:     },\n507:     \n508:     // ✅ ENHANCED: Auto advance with intelligent controller\n509:     setAutoAdvanceEnabled: (enabled) => {\n510:       const value = Boolean(enabled);\n511:       batchedSetState({ autoAdvanceEnabled: value }, 'setAutoAdvance');\n512:       autoAdvanceController.enable(value);"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 511,
+        "context": "508:     // ✅ ENHANCED: Auto advance with intelligent controller\n509:     setAutoAdvanceEnabled: (enabled) => {\n510:       const value = Boolean(enabled);\n511:       batchedSetState({ autoAdvanceEnabled: value }, 'setAutoAdvance');\n512:       autoAdvanceController.enable(value);\n513:       \n514:       if (import.meta.env.DEV) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 512,
+        "context": "509:     setAutoAdvanceEnabled: (enabled) => {\n510:       const value = Boolean(enabled);\n511:       batchedSetState({ autoAdvanceEnabled: value }, 'setAutoAdvance');\n512:       autoAdvanceController.enable(value);\n513:       \n514:       if (import.meta.env.DEV) {\n515:         console.log(`🎭 stageAtom: Auto advance ${value ? 'enabled' : 'disabled'}`);"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 518,
+        "context": "515:         console.log(`🎭 stageAtom: Auto advance ${value ? 'enabled' : 'disabled'}`);\n516:       }\n517:     },\n518:     isAutoAdvanceEnabled: () => {\n519:       return autoAdvanceController.isEnabled();\n520:     },\n521:     canAutoAdvance: () => {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 519,
+        "context": "516:       }\n517:     },\n518:     isAutoAdvanceEnabled: () => {\n519:       return autoAdvanceController.isEnabled();\n520:     },\n521:     canAutoAdvance: () => {\n522:       return autoAdvanceController.canAdvance();"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 521,
+        "context": "518:     isAutoAdvanceEnabled: () => {\n519:       return autoAdvanceController.isEnabled();\n520:     },\n521:     canAutoAdvance: () => {\n522:       return autoAdvanceController.canAdvance();\n523:     },\n524:     markAutoAdvance: () => {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 522,
+        "context": "519:       return autoAdvanceController.isEnabled();\n520:     },\n521:     canAutoAdvance: () => {\n522:       return autoAdvanceController.canAdvance();\n523:     },\n524:     markAutoAdvance: () => {\n525:       autoAdvanceController.markAdvance();"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 524,
+        "context": "521:     canAutoAdvance: () => {\n522:       return autoAdvanceController.canAdvance();\n523:     },\n524:     markAutoAdvance: () => {\n525:       autoAdvanceController.markAdvance();\n526:     },\n527:     "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 525,
+        "context": "522:       return autoAdvanceController.canAdvance();\n523:     },\n524:     markAutoAdvance: () => {\n525:       autoAdvanceController.markAdvance();\n526:     },\n527:     \n528:     // ✅ ENHANCED: Memory fragments with batching"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 555,
+        "context": "552:       // Clean up systems\n553:       transitionBatcher.clear();\n554:       progressSmoother.dispose();\n555:       autoAdvanceController.stop();\n556:       performanceMonitor.reset();\n557:       \n558:       setState(createInitialState(), 'reset');"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 581,
+        "context": "578:         globalProgress: state.globalProgress,\n579:         totalStages: STAGE_COUNT,\n580:         isTransitioning: state.isTransitioning,\n581:         autoAdvanceEnabled: state.autoAdvanceEnabled,\n582:         lastStageChangeTs: state.lastStageChangeTs,\n583:         performanceMetrics: state.performanceMetrics,\n584:         transitionHistory: state.transitionHistory"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 600,
+        "context": "597:           currentProgress: progressSmoother.getCurrentProgress(),\n598:           targetProgress: progressSmoother.targetProgress\n599:         },\n600:         autoAdvance: {\n601:           isActive: autoAdvanceController.interval !== null,\n602:           isPaused: autoAdvanceController.isPaused,\n603:           lastAdvance: autoAdvanceController.lastAdvance"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 601,
+        "context": "598:           targetProgress: progressSmoother.targetProgress\n599:         },\n600:         autoAdvance: {\n601:           isActive: autoAdvanceController.interval !== null,\n602:           isPaused: autoAdvanceController.isPaused,\n603:           lastAdvance: autoAdvanceController.lastAdvance\n604:         }"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 602,
+        "context": "599:         },\n600:         autoAdvance: {\n601:           isActive: autoAdvanceController.interval !== null,\n602:           isPaused: autoAdvanceController.isPaused,\n603:           lastAdvance: autoAdvanceController.lastAdvance\n604:         }\n605:       };"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 603,
+        "context": "600:         autoAdvance: {\n601:           isActive: autoAdvanceController.interval !== null,\n602:           isPaused: autoAdvanceController.isPaused,\n603:           lastAdvance: autoAdvanceController.lastAdvance\n604:         }\n605:       };\n606:     },"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 628,
+        "context": "625:     },\n626:     \n627:     // ✅ ENHANCED: Pause/resume auto-advance\n628:     pauseAutoAdvance: () => {\n629:       autoAdvanceController.pause();\n630:     },\n631:     "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 629,
+        "context": "626:     \n627:     // ✅ ENHANCED: Pause/resume auto-advance\n628:     pauseAutoAdvance: () => {\n629:       autoAdvanceController.pause();\n630:     },\n631:     \n632:     resumeAutoAdvance: () => {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 632,
+        "context": "629:       autoAdvanceController.pause();\n630:     },\n631:     \n632:     resumeAutoAdvance: () => {\n633:       autoAdvanceController.resume();\n634:     }\n635:   };"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 633,
+        "context": "630:     },\n631:     \n632:     resumeAutoAdvance: () => {\n633:       autoAdvanceController.resume();\n634:     }\n635:   };\n636:   "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 638,
+        "context": "635:   };\n636:   \n637:   // Set reference for auto-advance controller\n638:   autoAdvanceController.stageAtom = { getState: get, nextStage: actions.nextStage };\n639:   \n640:   return actions;\n641: });"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 644,
+        "context": "641: });\n642: \n643: // 🔬 DIAGNOSTIC: Stage atom state tracking\n644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {\n645:   const originalSetState = stageAtom.setState?.bind(stageAtom);\n646:   if (originalSetState) {\n647:     stageAtom.setState = function (value, updateType) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 652,
+        "context": "649:       const nextState = typeof value === 'function' ? value(previousState) : value;\n650:       console.log('🔬 [STAGE_ATOM] State change:', { from: previousState, to: nextState, updateType });\n651:       if (typeof window !== 'undefined') {\n652:         window.__autoAdvanceDiagnostic?.log?.('STAGE_ATOM_CHANGE', {\n653:           from: previousState,\n654:           to: nextState,\n655:           updateType,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 660,
+        "context": "657:       }\n658:       return originalSetState(nextState, updateType);\n659:     };\n660:     stageAtom.__autoAdvanceDiagnosticWrapped = true;\n661:   }\n662: }\n663: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 684,
+        "context": "681:     reset: () => stageAtom.resetStage(),\n682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 685,
+        "context": "682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 686,
+        "context": "683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 687,
+        "context": "684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 688,
+        "context": "685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 689,
+        "context": "686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 690,
+        "context": "687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 691,
+        "context": "688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()\n694:   };"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 692,
+        "context": "689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()\n694:   };\n695: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/state/atoms/stageAtom.js",
+        "line": 693,
+        "context": "690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()\n694:   };\n695: \n696:   if (import.meta.env.DEV) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 17,
+        "context": "14: \n15: // 🔬 DIAGNOSTIC: Auto-advance initialization tracking\n16: if (typeof window !== 'undefined') {\n17:   window.__autoAdvanceDiagnostic = {\n18:     initialized: false,\n19:     openingComplete: false,\n20:     autoAdvanceEnabled: false,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 20,
+        "context": "17:   window.__autoAdvanceDiagnostic = {\n18:     initialized: false,\n19:     openingComplete: false,\n20:     autoAdvanceEnabled: false,\n21:     events: [],\n22:     log: function (event, data) {\n23:       const entry = {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 94,
+        "context": "91:     this.scrollOrchestrator = null;\n92:     this.openingController = null;\n93:     this.narrationController = null;\n94:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;\n95:     if (autoDiag) {\n96:       autoDiag.initialized = true;\n97:       autoDiag.log?.('DIRECTOR_INITIALIZED', {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 524,
+        "context": "521:   }\n522: \n523:   handleOpeningComplete({ skipTriggered, opening, elapsed }) {\n524:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;\n525:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};\n526:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;\n527:     const autoAdvanceBefore ="
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 527,
+        "context": "524:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;\n525:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};\n526:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;\n527:     const autoAdvanceBefore =\n528:       stageAtom?.isAutoAdvanceEnabled?.() ??\n529:       currentState.autoAdvanceEnabled ??\n530:       false;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 528,
+        "context": "525:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};\n526:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;\n527:     const autoAdvanceBefore =\n528:       stageAtom?.isAutoAdvanceEnabled?.() ??\n529:       currentState.autoAdvanceEnabled ??\n530:       false;\n531: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 529,
+        "context": "526:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;\n527:     const autoAdvanceBefore =\n528:       stageAtom?.isAutoAdvanceEnabled?.() ??\n529:       currentState.autoAdvanceEnabled ??\n530:       false;\n531: \n532:     if (autoDiag) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 536,
+        "context": "533:       autoDiag.openingComplete = true;\n534:       autoDiag.log('OPENING_COMPLETE', {\n535:         stage: currentStage,\n536:         autoAdvanceBefore,\n537:       });\n538:     }\n539: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 543,
+        "context": "540:     let autoEnabled = false;\n541:     let failureReason = null;\n542: \n543:     if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {\n544:       const alreadyEnabled =\n545:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'\n546:           ? window.stageControls.isAutoAdvanceEnabled()"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 545,
+        "context": "542: \n543:     if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {\n544:       const alreadyEnabled =\n545:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'\n546:           ? window.stageControls.isAutoAdvanceEnabled()\n547:           : window.stageControls.getState?.()?.autoAdvanceEnabled;\n548: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 546,
+        "context": "543:     if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {\n544:       const alreadyEnabled =\n545:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'\n546:           ? window.stageControls.isAutoAdvanceEnabled()\n547:           : window.stageControls.getState?.()?.autoAdvanceEnabled;\n548: \n549:       if (alreadyEnabled) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 547,
+        "context": "544:       const alreadyEnabled =\n545:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'\n546:           ? window.stageControls.isAutoAdvanceEnabled()\n547:           : window.stageControls.getState?.()?.autoAdvanceEnabled;\n548: \n549:       if (alreadyEnabled) {\n550:         console.log('   Auto-advance already active');"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 553,
+        "context": "550:         console.log('   Auto-advance already active');\n551:         autoEnabled = true;\n552:       } else {\n553:         window.stageControls.setAutoAdvanceEnabled(true);\n554:         console.log('✅ Auto-advance enabled for narration-driven progression');\n555:         autoEnabled = true;\n556:       }"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 558,
+        "context": "555:         autoEnabled = true;\n556:       }\n557:     } else {\n558:       failureReason = 'setAutoAdvanceEnabled not found';\n559:       console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');\n560:     }\n561: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 559,
+        "context": "556:       }\n557:     } else {\n558:       failureReason = 'setAutoAdvanceEnabled not found';\n559:       console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');\n560:     }\n561: \n562:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 562,
+        "context": "559:       console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');\n560:     }\n561: \n562:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {\n563:       stageAtom.setAutoAdvanceEnabled(true);\n564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 563,
+        "context": "560:     }\n561: \n562:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {\n563:       stageAtom.setAutoAdvanceEnabled(true);\n564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;\n566:     } else if (!autoEnabled) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 567,
+        "context": "564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;\n566:     } else if (!autoEnabled) {\n567:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';\n568:     }\n569: \n570:     const autoAdvanceAfter ="
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 570,
+        "context": "567:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';\n568:     }\n569: \n570:     const autoAdvanceAfter =\n571:       stageAtom?.isAutoAdvanceEnabled?.() ??\n572:       stageAtom?.getState?.()?.autoAdvanceEnabled ??\n573:       false;"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 571,
+        "context": "568:     }\n569: \n570:     const autoAdvanceAfter =\n571:       stageAtom?.isAutoAdvanceEnabled?.() ??\n572:       stageAtom?.getState?.()?.autoAdvanceEnabled ??\n573:       false;\n574: "
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 572,
+        "context": "569: \n570:     const autoAdvanceAfter =\n571:       stageAtom?.isAutoAdvanceEnabled?.() ??\n572:       stageAtom?.getState?.()?.autoAdvanceEnabled ??\n573:       false;\n574: \n575:     if (autoDiag) {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 576,
+        "context": "573:       false;\n574: \n575:     if (autoDiag) {\n576:       autoDiag.autoAdvanceEnabled = autoAdvanceAfter;\n577:       if (autoEnabled) {\n578:         autoDiag.log('AUTO_ADVANCE_ENABLED', {\n579:           success: true,"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 580,
+        "context": "577:       if (autoEnabled) {\n578:         autoDiag.log('AUTO_ADVANCE_ENABLED', {\n579:           success: true,\n580:           autoAdvanceAfter,\n581:         });\n582:       } else {\n583:         autoDiag.log('AUTO_ADVANCE_FAILED', {"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 585,
+        "context": "582:       } else {\n583:         autoDiag.log('AUTO_ADVANCE_FAILED', {\n584:           reason: failureReason ?? 'Unable to enable auto-advance',\n585:           autoAdvanceAfter,\n586:         });\n587:       }\n588:     }"
+      },
+      {
+        "key": "AUTO_ADVANCE",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 720,
+        "context": "717:         const timestamp = performance.now();\n718:         console.log('✅ [OPENING COMPLETE]', {\n719:           nextStage: 'discipline',\n720:           shouldAutoAdvance: true,\n721:           timestamp,\n722:         });\n723:       }"
+      }
+    ],
+    "NARRATION_NEXT": [
+      {
+        "key": "NARRATION_NEXT",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 344,
+        "context": "341:               });\n342:             }\n343: \n344:             liveControls.next?.();\n345:             if (nextStageName) {\n346:               BeatBus.emit?.(EVENTS.START_NARRATIVE, {\n347:                 stage: nextStageName,"
+      }
+    ],
+    "DUPLICATE_EVENT": [
+      {
+        "key": "DUPLICATE_EVENT",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 995,
+        "context": "992:       return;\n993:     }\n994: \n995:     const isAlreadyPlayingCurrentStage =\n996:       activeStageRef.current && activeStageRef.current === currentStage;\n997: \n998:     if (isAlreadyPlayingCurrentStage) {"
+      },
+      {
+        "key": "DUPLICATE_EVENT",
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 998,
+        "context": "995:     const isAlreadyPlayingCurrentStage =\n996:       activeStageRef.current && activeStageRef.current === currentStage;\n997: \n998:     if (isAlreadyPlayingCurrentStage) {\n999:       narrationDiagnostic.log('AUTO_START_SKIPPED_ALREADY_PLAYING', {\n1000:         stage: currentStage,\n1001:       });"
+      },
+      {
+        "key": "DUPLICATE_EVENT",
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 145,
+        "context": "142:     const nextCacheKey = this._cacheKey(nextStageName, resolvedQuality);\n143: \n144:     if (this.blueprintCache.has(nextCacheKey)) {\n145:       console.log('🔮 Preload: Next stage already cached', nextStageName);\n146:       return;\n147:     }\n148: "
+      },
+      {
+        "key": "DUPLICATE_EVENT",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 259,
+        "context": "256:     const previousStage = this.getCurrentStage();\n257:     if (previousStage === newStage) {\n258:       if (DEBUG_NARRATION) {\n259:         console.log('🎬 [STAGE CHANGE IGNORED] Duplicate stage event', {\n260:           stage: newStage,\n261:           payload,\n262:         });"
+      },
+      {
+        "key": "DUPLICATE_EVENT",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 151,
+        "context": "148:     const nextIndex = Math.min(currentIndex + 1, stages.length - 1);\n149: \n150:     if (nextIndex === currentIndex) {\n151:       console.log('🎯 [UNIFIED NAV] Already at last stage');\n152:       return false;\n153:     }\n154: "
+      },
+      {
+        "key": "DUPLICATE_EVENT",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 171,
+        "context": "168:     const prevIndex = Math.max(currentIndex - 1, 0);\n169: \n170:     if (prevIndex === currentIndex) {\n171:       console.log('🎯 [UNIFIED NAV] Already at first stage');\n172:       return false;\n173:     }\n174: "
+      }
+    ],
+    "SETTLE_TIME": [
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1074,
+        "context": "1071:           mat.uniformsNeedUpdate = true;\n1072:           break;\n1073:         }\n1074:         case 'settle': {\n1075:           console.log('🎯 [SETTLE] Locking into form');\n1076:           if (uniforms.uTurbulence) {\n1077:             uniforms.uTurbulence.value = 0.0;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1075,
+        "context": "1072:           break;\n1073:         }\n1074:         case 'settle': {\n1075:           console.log('🎯 [SETTLE] Locking into form');\n1076:           if (uniforms.uTurbulence) {\n1077:             uniforms.uTurbulence.value = 0.0;\n1078:             console.log('   Set uTurbulence = 0.0');"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1086,
+        "context": "1083:           }\n1084:           if (uniforms.uMotionMode) {\n1085:             uniforms.uMotionMode.value = 3;\n1086:             console.log('   Set uMotionMode = 3 (settle)');\n1087:           }\n1088:           if (uniforms.uDriftAmp) {\n1089:             uniforms.uDriftAmp.value = 0.2;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/config/visual-controls.js",
+        "line": 11,
+        "context": "8: export const VC = {\n9:   // Emergence pacing\n10:   IMPLODE_MS: 2000,      /* VC.IMPLODE_MS */   // extended implosion pacing\n11:   SETTLE_MS:  1500,      /* VC.SETTLE_MS  */   // extended settle pacing\n12:   MID_MORPH:  0.88,      /* VC.MID_MORPH  */   // morph target at end of implosion\n13: \n14:   // Spawn behind camera"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/config/visual-controls.js",
+        "line": 40,
+        "context": "37: \n38:   // Tier-4 highlight curve\n39:   T4_HI_PEAK:   1.0,     /* VC.T4_HI_PEAK */\n40:   T4_HI_SETTLE: 0.25,    /* VC.T4_HI_SETTLE */\n41: \n42:   // Starfield distribution controls (tiers)\n43:   // Percentages still controlled by engine tierRatios; these tune spatial look."
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 436,
+        "context": "433:         this._log('emergence_built', { count: blueprint.particleCount, mode: 'emergence' });\n434:       }\n435: \n436:       // Drive implosion → settle via directives; renderer remains passive\n437:       const shouldRunTimeline = !openingChaosMode && !payload.skipMorphAnimation;\n438:       if (shouldRunTimeline && !this._startEmergenceTimeline(blueprint)) {\n439:         this._emergenceActive = false;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 751,
+        "context": "748:         }\n749:       }\n750: \n751:     // Post-emergence genesis: optionally preserve settled emergence\n752:     if (stage === 'genesis' && this._lastEmergenceTargets) {\n753:       if (this._lastText3DFallbackUsed) {\n754:         console.warn('🧠 Engine: Emergence fallback detected; skipping preserve');"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 10,
+        "context": "7: const DEFAULT_PHASE_DURATIONS = Object.freeze({\n8:   implosion: 1100,\n9:   coalesce: 250,\n10:   settle: 900,\n11: });\n12: \n13: const nowMs = () =>"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 49,
+        "context": "46:   }\n47: \n48:   /**\n49:    * Begin the emergence timeline (implosion → coalesce → settle).\n50:    * Mirrors the legacy behaviour from ConsciousnessEngine._startEmergenceTimeline.\n51:    * @returns {boolean} true when the timeline starts, false otherwise.\n52:    */"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 76,
+        "context": "73:       const raw = Number(VC?.IMPLODE_MS);\n74:       return Number.isFinite(raw) && raw > 0 ? raw : this.#phaseDurations.implosion;\n75:     })();\n76:     const settleDefault = (() => {\n77:       const raw = Number(VC?.SETTLE_MS);\n78:       return Number.isFinite(raw) && raw >= 0 ? raw : this.#phaseDurations.settle;\n79:     })();"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 77,
+        "context": "74:       return Number.isFinite(raw) && raw > 0 ? raw : this.#phaseDurations.implosion;\n75:     })();\n76:     const settleDefault = (() => {\n77:       const raw = Number(VC?.SETTLE_MS);\n78:       return Number.isFinite(raw) && raw >= 0 ? raw : this.#phaseDurations.settle;\n79:     })();\n80: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 78,
+        "context": "75:     })();\n76:     const settleDefault = (() => {\n77:       const raw = Number(VC?.SETTLE_MS);\n78:       return Number.isFinite(raw) && raw >= 0 ? raw : this.#phaseDurations.settle;\n79:     })();\n80: \n81:     const fastImpl = (() => {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 86,
+        "context": "83:       const target = Number.isFinite(raw) && raw > 0 ? raw : 320;\n84:       return Math.max(120, Math.min(target, implDefault));\n85:     })();\n86:     const fastSettle = (() => {\n87:       const raw = Number(VC?.SKIP_SETTLE_MS);\n88:       const target = Number.isFinite(raw) && raw >= 0 ? raw : 260;\n89:       return Math.max(90, Math.min(target, settleDefault));"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 87,
+        "context": "84:       return Math.max(120, Math.min(target, implDefault));\n85:     })();\n86:     const fastSettle = (() => {\n87:       const raw = Number(VC?.SKIP_SETTLE_MS);\n88:       const target = Number.isFinite(raw) && raw >= 0 ? raw : 260;\n89:       return Math.max(90, Math.min(target, settleDefault));\n90:     })();"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 89,
+        "context": "86:     const fastSettle = (() => {\n87:       const raw = Number(VC?.SKIP_SETTLE_MS);\n88:       const target = Number.isFinite(raw) && raw >= 0 ? raw : 260;\n89:       return Math.max(90, Math.min(target, settleDefault));\n90:     })();\n91: \n92:     const implMs = this.#fastForward ? fastImpl : implDefault;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 93,
+        "context": "90:     })();\n91: \n92:     const implMs = this.#fastForward ? fastImpl : implDefault;\n93:     const settleMs = this.#fastForward ? fastSettle : settleDefault;\n94:     const midDefault = clamp(Number.isFinite(VC?.MID_MORPH) ? VC.MID_MORPH : 0.85, 0.05, 0.95);\n95:     this.#midValue = this.#fastForward ? clamp(Math.min(midDefault, 0.35), 0.05, 0.5) : midDefault;\n96: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 102,
+        "context": "99:       midDefault,\n100:       midForTimeline: this.#midValue,\n101:       implMs,\n102:       settleMs,\n103:       holdMs: this.#holdMs,\n104:     });\n105:     if (implMs > 6000 || settleMs > 6000) {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 105,
+        "context": "102:       settleMs,\n103:       holdMs: this.#holdMs,\n104:     });\n105:     if (implMs > 6000 || settleMs > 6000) {\n106:       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: this.#midValue });\n107:     }\n108: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 106,
+        "context": "103:       holdMs: this.#holdMs,\n104:     });\n105:     if (implMs > 6000 || settleMs > 6000) {\n106:       console.warn('[Emergence] unusually long timings detected', { implMs, settleMs, mid: this.#midValue });\n107:     }\n108: \n109:     if (engine._emergenceRaf) {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 125,
+        "context": "122:     this.#emitMorphProgress(0, this.#midValue);\n123:     trace('[MorphController] Emergence timeline started', { count });\n124: \n125:     this.#rafId = scheduleFrame(() => this.#runFrame(implMs, settleMs));\n126:     engine._emergenceRaf = this.#rafId;\n127:     return true;\n128:   }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 162,
+        "context": "159:   }\n160: \n161:   /**\n162:    * Returns the current emergence phase (`implosion`, `coalesce`, `settle`, or null).\n163:    */\n164:   getCurrentPhase() {\n165:     return this.#phase;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 195,
+        "context": "192:     };\n193:   }\n194: \n195:   #runFrame(implMs, settleMs) {\n196:     const engine = this.#engine;\n197:     if (!engine._emergenceActive || engine._rendererFencepostSeen) {\n198:       this.#rafId = null;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 205,
+        "context": "202: \n203:     const elapsed = nowMs() - this.#startTime;\n204:     if (elapsed < this.#holdMs) {\n205:       this.#rafId = scheduleFrame(() => this.#runFrame(implMs, settleMs));\n206:       engine._emergenceRaf = this.#rafId;\n207:       return;\n208:     }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 213,
+        "context": "210:     const phaseElapsed = elapsed - this.#holdMs;\n211:     const inImplosion = implMs > 0 ? phaseElapsed < implMs : false;\n212:     const implPhase = implMs > 0 ? clamp(phaseElapsed / implMs, 0, 1) : 1;\n213:     const settleElapsed = phaseElapsed - implMs;\n214:     const settlePhaseRaw =\n215:       settleElapsed <= 0 ? 0 : settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1;\n216:     const easeImpl = implMs > 0 ? smoothstep(implPhase) : 1;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 214,
+        "context": "211:     const inImplosion = implMs > 0 ? phaseElapsed < implMs : false;\n212:     const implPhase = implMs > 0 ? clamp(phaseElapsed / implMs, 0, 1) : 1;\n213:     const settleElapsed = phaseElapsed - implMs;\n214:     const settlePhaseRaw =\n215:       settleElapsed <= 0 ? 0 : settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1;\n216:     const easeImpl = implMs > 0 ? smoothstep(implPhase) : 1;\n217:     const easeSettle = settlePhaseRaw <= 0 ? 0 : smoothstep(settlePhaseRaw);"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 215,
+        "context": "212:     const implPhase = implMs > 0 ? clamp(phaseElapsed / implMs, 0, 1) : 1;\n213:     const settleElapsed = phaseElapsed - implMs;\n214:     const settlePhaseRaw =\n215:       settleElapsed <= 0 ? 0 : settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1;\n216:     const easeImpl = implMs > 0 ? smoothstep(implPhase) : 1;\n217:     const easeSettle = settlePhaseRaw <= 0 ? 0 : smoothstep(settlePhaseRaw);\n218: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 217,
+        "context": "214:     const settlePhaseRaw =\n215:       settleElapsed <= 0 ? 0 : settleMs > 0 ? clamp(settleElapsed / settleMs, 0, 1) : 1;\n216:     const easeImpl = implMs > 0 ? smoothstep(implPhase) : 1;\n217:     const easeSettle = settlePhaseRaw <= 0 ? 0 : smoothstep(settlePhaseRaw);\n218: \n219:     const morph = inImplosion\n220:       ? this.#midValue * easeImpl"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 221,
+        "context": "218: \n219:     const morph = inImplosion\n220:       ? this.#midValue * easeImpl\n221:       : this.#midValue + (1 - this.#midValue) * easeSettle;\n222: \n223:     this.#emitMorphProgress(+morph.toFixed(3), inImplosion ? this.#midValue : 1);\n224: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 225,
+        "context": "222: \n223:     this.#emitMorphProgress(+morph.toFixed(3), inImplosion ? this.#midValue : 1);\n224: \n225:     if (phaseElapsed >= implMs + settleMs) {\n226:       if (!engine._emergenceActive || engine._rendererFencepostSeen) {\n227:         this.#rafId = null;\n228:         engine._emergenceRaf = null;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 245,
+        "context": "242:     if (inImplosion) {\n243:       this.#phase = 'implosion';\n244:       this.#phaseDuration = implMs;\n245:     } else if (settlePhaseRaw <= 0) {\n246:       this.#phase = 'coalesce';\n247:       this.#phaseDuration = this.#phaseDurations.coalesce;\n248:     } else {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 249,
+        "context": "246:       this.#phase = 'coalesce';\n247:       this.#phaseDuration = this.#phaseDurations.coalesce;\n248:     } else {\n249:       this.#phase = 'settle';\n250:       this.#phaseDuration = settleMs;\n251:     }\n252: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 250,
+        "context": "247:       this.#phaseDuration = this.#phaseDurations.coalesce;\n248:     } else {\n249:       this.#phase = 'settle';\n250:       this.#phaseDuration = settleMs;\n251:     }\n252: \n253:     this.#rafId = scheduleFrame(() => this.#runFrame(implMs, settleMs));"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/engine/modules/MorphController.js",
+        "line": 253,
+        "context": "250:       this.#phaseDuration = settleMs;\n251:     }\n252: \n253:     this.#rafId = scheduleFrame(() => this.#runFrame(implMs, settleMs));\n254:     engine._emergenceRaf = this.#rafId;\n255:   }\n256: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/NavigationGate.js",
+        "line": 23,
+        "context": "20:     }\n21:   },\n22: \n23:   end(reason = 'settled') {\n24:     this._inFlight = false;\n25:     this._target = null;\n26:     this._reason = reason;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 114,
+        "context": "111:         hasTimeline: !!openingProbe?.timeline,\n112:         chaos: openingProbe?.timeline?.chaos,\n113:         coalesce: openingProbe?.timeline?.coalesce,\n114:         settle: openingProbe?.timeline?.settle,\n115:         hasChaosConfig: !!openingProbe?.timeline?.chaos,\n116:       });\n117:     } catch (timelineError) {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 679,
+        "context": "676:     if (!this._sleepWaiters) this._sleepWaiters = new Set();\n677: \n678:     return new Promise((resolve) => {\n679:       let settled = false;\n680:       let timeoutId;\n681: \n682:       const complete = (reason = 'elapsed') => {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 683,
+        "context": "680:       let timeoutId;\n681: \n682:       const complete = (reason = 'elapsed') => {\n683:         if (settled) return;\n684:         settled = true;\n685:         this._clearTimer(timeoutId);\n686:         this._sleepWaiters.delete(complete);"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 684,
+        "context": "681: \n682:       const complete = (reason = 'elapsed') => {\n683:         if (settled) return;\n684:         settled = true;\n685:         this._clearTimer(timeoutId);\n686:         this._sleepWaiters.delete(complete);\n687:         resolve(reason);"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 719,
+        "context": "716:   _waitForEvent(event, { timeout = 5000, predicate } = {}) {\n717:     if (!event) return Promise.resolve(null);\n718:     return new Promise((resolve) => {\n719:       let settled = false;\n720:       let timeoutId = null;\n721: \n722:       const finish = (result) => {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 723,
+        "context": "720:       let timeoutId = null;\n721: \n722:       const finish = (result) => {\n723:         if (settled) return;\n724:         settled = true;\n725:         this._clearTimer(timeoutId);\n726:         off?.();"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/TheaterDirector.js",
+        "line": 724,
+        "context": "721: \n722:       const finish = (result) => {\n723:         if (settled) return;\n724:         settled = true;\n725:         this._clearTimer(timeoutId);\n726:         off?.();\n727:         resolve(result);"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 34,
+        "context": "31:       smooth = true,\n32:       skipNarration = false,\n33:       source = 'unknown',\n34:       settleMs = 450,\n35:       releaseDelayMs = 150,\n36:     } = options;\n37: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 120,
+        "context": "117:         window.scrollTo(0, scrollTarget);\n118:       }\n119: \n120:       await new Promise((resolve) => setTimeout(resolve, Math.max(0, settleMs)));\n121: \n122:       const currentStage = stageAtom.getState?.()?.currentStage;\n123:       if (currentStage !== targetStage) {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/MorphAnimationController.js",
+        "line": 119,
+        "context": "116:         onProgress,\n117:         onComplete,\n118:         rafId: null,\n119:         settled: false,\n120:         resolve,\n121:       };\n122: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/MorphAnimationController.js",
+        "line": 288,
+        "context": "285:    * Finalize animation and clean up\n286:    */\n287:   _finalizeAnimation(animation) {\n288:     if (animation.settled) return;\n289:     animation.settled = true;\n290:     animation.currentValue = animation.targetValue;\n291: "
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/MorphAnimationController.js",
+        "line": 289,
+        "context": "286:    */\n287:   _finalizeAnimation(animation) {\n288:     if (animation.settled) return;\n289:     animation.settled = true;\n290:     animation.currentValue = animation.targetValue;\n291: \n292:     // Emit final value"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 5,
+        "context": "2:  * OpeningSequenceController\n3:  *\n4:  * Manages the complete opening timeline:\n5:  * Black → Cursor → Terminal → Fill → Chaos → Coalesce → Settle → Emergence\n6:  *\n7:  * Extracted from TheaterDirector for code splitting.\n8:  * Controller relies on TheaterDirector infrastructure (sleep, waiters, emitters)."
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 30,
+        "context": "27: \n28: const DEFAULT_OPENING_TIMELINE = {\n29:   blackout: { durationMs: 2000 },\n30:   cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },\n31:   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },\n32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },\n33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 35,
+        "context": "32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },\n33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },\n34:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },\n35:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },\n36:   emergence: {\n37:     durationMs: 2000,\n38:     waitForFencepost: true,"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 112,
+        "context": "109:         ...(openingTimeline.coalesce ?? {}),\n110:         ...(stageTimeline.coalesce ?? {}),\n111:       },\n112:       settle: {\n113:         ...DEFAULT_OPENING_TIMELINE.settle,\n114:         ...(openingTimeline.settle ?? {}),\n115:         ...(stageTimeline.settle ?? {}),"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 113,
+        "context": "110:         ...(stageTimeline.coalesce ?? {}),\n111:       },\n112:       settle: {\n113:         ...DEFAULT_OPENING_TIMELINE.settle,\n114:         ...(openingTimeline.settle ?? {}),\n115:         ...(stageTimeline.settle ?? {}),\n116:       },"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 114,
+        "context": "111:       },\n112:       settle: {\n113:         ...DEFAULT_OPENING_TIMELINE.settle,\n114:         ...(openingTimeline.settle ?? {}),\n115:         ...(stageTimeline.settle ?? {}),\n116:       },\n117:       profile: stageTimeline.profile ?? openingTimeline.profile ?? null,"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 115,
+        "context": "112:       settle: {\n113:         ...DEFAULT_OPENING_TIMELINE.settle,\n114:         ...(openingTimeline.settle ?? {}),\n115:         ...(stageTimeline.settle ?? {}),\n116:       },\n117:       profile: stageTimeline.profile ?? openingTimeline.profile ?? null,\n118:       narration: stageTimeline.narration ?? openingTimeline.narration ?? null,"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 207,
+        "context": "204:       ...(timeline?.cursor ?? {}),\n205:     };\n206:     const cursorLeadInMs = Math.max(0, Number(cursorConfig.leadInMs ?? 0));\n207:     const cursorSettleMs = Math.max(0, Number(cursorConfig.settleMs ?? 0));\n208:     const cursorBlinkCount = Math.max(\n209:       0,\n210:       Number(cursorConfig.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount),"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 273,
+        "context": "270: \n271:     const chaosConfig = timeline?.chaos || {};\n272:     const coalesceConfig = timeline?.coalesce || {};\n273:     const settleConfig = timeline?.settle || {};\n274: \n275:     const emergenceTimeline = {\n276:       ...DEFAULT_OPENING_TIMELINE.emergence,"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 348,
+        "context": "345:         }\n346:         if (!skipTriggered) {\n347:           BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });\n348:           if (cursorSettleMs > 0) {\n349:             const waitResult = await this.director.sleep(cursorSettleMs);\n350:             if (handleWaitResult(waitResult) === 'cancelled') return;\n351:           }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 349,
+        "context": "346:         if (!skipTriggered) {\n347:           BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });\n348:           if (cursorSettleMs > 0) {\n349:             const waitResult = await this.director.sleep(cursorSettleMs);\n350:             if (handleWaitResult(waitResult) === 'cancelled') return;\n351:           }\n352:         }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 404,
+        "context": "401:           } catch (bindError) {\n402:             console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);\n403:           }\n404:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));\n405:           if (bindSettleMs > 0) {\n406:             const waitResult = await this.director.sleep(bindSettleMs);\n407:             if (handleWaitResult(waitResult) === 'cancelled') return;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 405,
+        "context": "402:             console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);\n403:           }\n404:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));\n405:           if (bindSettleMs > 0) {\n406:             const waitResult = await this.director.sleep(bindSettleMs);\n407:             if (handleWaitResult(waitResult) === 'cancelled') return;\n408:           }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 406,
+        "context": "403:           }\n404:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));\n405:           if (bindSettleMs > 0) {\n406:             const waitResult = await this.director.sleep(bindSettleMs);\n407:             if (handleWaitResult(waitResult) === 'cancelled') return;\n408:           }\n409:         }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 529,
+        "context": "526:         currentMorphValue = coalesceTarget;\n527:       }\n528: \n529:       if (!skipTriggered && settleConfig?.enabled !== false) {\n530:         console.log('🔍 [ABOUT TO START SETTLE]', {\n531:           settleConfig,\n532:           currentMorph: currentMorphValue,"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 530,
+        "context": "527:       }\n528: \n529:       if (!skipTriggered && settleConfig?.enabled !== false) {\n530:         console.log('🔍 [ABOUT TO START SETTLE]', {\n531:           settleConfig,\n532:           currentMorph: currentMorphValue,\n533:           timestamp: Date.now(),"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 531,
+        "context": "528: \n529:       if (!skipTriggered && settleConfig?.enabled !== false) {\n530:         console.log('🔍 [ABOUT TO START SETTLE]', {\n531:           settleConfig,\n532:           currentMorph: currentMorphValue,\n533:           timestamp: Date.now(),\n534:         });"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 535,
+        "context": "532:           currentMorph: currentMorphValue,\n533:           timestamp: Date.now(),\n534:         });\n535:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);\n536:         this.director.phase = 'settle';\n537:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);\n538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 536,
+        "context": "533:           timestamp: Date.now(),\n534:         });\n535:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);\n536:         this.director.phase = 'settle';\n537:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);\n538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 537,
+        "context": "534:         });\n535:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);\n536:         this.director.phase = 'settle';\n537:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);\n538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',\n540:           duration: settleDuration,"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 539,
+        "context": "536:         this.director.phase = 'settle';\n537:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);\n538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',\n540:           duration: settleDuration,\n541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 540,
+        "context": "537:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);\n538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',\n540:           duration: settleDuration,\n541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 541,
+        "context": "538:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {\n539:           phase: 'settle',\n540:           duration: settleDuration,\n541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 543,
+        "context": "540:           duration: settleDuration,\n541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 544,
+        "context": "541:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,\n542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {\n547:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 545,
+        "context": "542:         });\n543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {\n547:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');\n548:         } else {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 546,
+        "context": "543:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';\n544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {\n547:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');\n548:         } else {\n549:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 547,
+        "context": "544:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;\n545:         let settleAnimation = null;\n546:         if (hasSettleTarget) {\n547:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');\n548:         } else {\n549:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);\n550:         }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 549,
+        "context": "546:         if (hasSettleTarget) {\n547:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');\n548:         } else {\n549:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);\n550:         }\n551:         if (settleDuration > 0) {\n552:           const waitResult = await this.director.sleep(settleDuration);"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 551,
+        "context": "548:         } else {\n549:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);\n550:         }\n551:         if (settleDuration > 0) {\n552:           const waitResult = await this.director.sleep(settleDuration);\n553:           if (handleWaitResult(waitResult) === 'cancelled') return;\n554:         }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 552,
+        "context": "549:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);\n550:         }\n551:         if (settleDuration > 0) {\n552:           const waitResult = await this.director.sleep(settleDuration);\n553:           if (handleWaitResult(waitResult) === 'cancelled') return;\n554:         }\n555:         if (settleAnimation) {"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 555,
+        "context": "552:           const waitResult = await this.director.sleep(settleDuration);\n553:           if (handleWaitResult(waitResult) === 'cancelled') return;\n554:         }\n555:         if (settleAnimation) {\n556:           await settleAnimation;\n557:         }\n558:         currentMorphValue = settleTarget;"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 556,
+        "context": "553:           if (handleWaitResult(waitResult) === 'cancelled') return;\n554:         }\n555:         if (settleAnimation) {\n556:           await settleAnimation;\n557:         }\n558:         currentMorphValue = settleTarget;\n559:       }"
+      },
+      {
+        "key": "SETTLE_TIME",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 558,
+        "context": "555:         if (settleAnimation) {\n556:           await settleAnimation;\n557:         }\n558:         currentMorphValue = settleTarget;\n559:       }\n560: \n561:       if (skipTriggered) {"
+      }
+    ],
+    "STAGE_CONTROLS": [
+      {
+        "key": "STAGE_CONTROLS",
+        "file": "src/theater/UnifiedNavigationAPI.js",
+        "line": 103,
+        "context": "100:       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {\n101:         console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');\n102:         if (window.stageControls?.jumpToStage) {\n103:           window.stageControls.jumpToStage(targetStage);\n104:         } else {\n105:           stageAtom.jumpToStage(targetStage);\n106:         }"
+      }
+    ],
+    "SCROLL_ORCHESTRATOR": [
+      {
+        "key": "SCROLL_ORCHESTRATOR",
+        "file": "src/theater/controllers/OpeningSequenceController.js",
+        "line": 711,
+        "context": "708:       if (!this.director.scrollOrchestrator) {\n709:         this.director.scrollOrchestrator = new ScrollOrchestrator();\n710:       }\n711:       this.director.scrollOrchestrator.start?.();\n712:       this.director.monitorFragments?.();\n713: \n714:       this.director.phase = 'complete';"
+      }
+    ]
+  }
+}

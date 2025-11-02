@@ -14,7 +14,7 @@ function __getMorphThrottleMs() {
   }
 }
 
-function __emitMorphThrottled(BeatBus, EVENTS, v) {
+function __emitMorphThrottled(BeatBus, EVENTS, v, context = {}) {
   try {
     const EPS = 0.005; // 0.5% change
     const now = performance.now();
@@ -27,21 +27,31 @@ function __emitMorphThrottled(BeatBus, EVENTS, v) {
     __lastMorph = clamped;
     __lastMorphEmit = now;
     const stageState = stageAtom.getState?.() || {};
-    const currentStage = stageState.currentStage || 'genesis';
+    const currentStage = context.stage || stageState.currentStage || 'genesis';
     const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
-    const stageIndex = stageState.stageIndex ?? (stageOrder.indexOf(currentStage));
+    const stageIndex =
+      context.stageIndex ??
+      stageState.stageIndex ??
+      stageOrder.indexOf(currentStage);
     const payload = {
       morphProgress: clamped,
       value: clamped,
-      morphTarget: clamped,
-      target: clamped,
+      morphTarget: typeof context.morphTarget === 'number' ? context.morphTarget : clamped,
+      target: typeof context.morphTarget === 'number' ? context.morphTarget : clamped,
       stage: currentStage,
       schemaVersion: '3.5',
+      origin: context.origin || 'command',
     };
     if (Number.isFinite(stageIndex) && stageIndex >= 0) {
       payload.stageIndex = stageIndex;
     }
+    if (context.animationId) {
+      payload.animationId = context.animationId;
+    }
     BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', payload);
+    if (typeof window !== 'undefined') {
+      window.eventEmissionMonitor?.recordEmission?.('MORPH_PROGRESS', 'StateCommands');
+    }
   } catch {}
 }
 
@@ -154,6 +164,9 @@ class StateCommands {
           stage: next,  // Include for compatibility
           reason: 'atom' 
         });
+        if (typeof window !== 'undefined') {
+          window.eventEmissionMonitor?.recordEmission?.('STAGE_CHANGE', 'StateCommands');
+        }
         
         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
         // This was causing emergence to build on every stage change
@@ -204,9 +217,22 @@ class StateCommands {
 
     this.morphState = {
       value: morph,
+      timestamp: typeof performance !== 'undefined' ? performance.now() : Date.now(),
       origin: options.origin || 'command',
-      updatedAt: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+      morphTarget: options.morphTarget,
+      animationId: options.animationId,
     };
+
+    const stageState = stageAtom.getState?.() || {};
+    __emitMorphThrottled(BeatBus, EVENTS, morph, {
+      origin: options.origin || 'command',
+      stage: options.stage || stageState.currentStage,
+      stageIndex:
+        options.stageIndex ??
+        (typeof stageState.stageIndex === 'number' ? stageState.stageIndex : undefined),
+      morphTarget: options.morphTarget,
+      animationId: options.animationId,
+    });
 
     return morph;
   }
@@ -359,7 +385,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     stateCommands.dispose();
   });
-  
+  window.stateCommands = stateCommands;
   // Dev tools
   if (import.meta.env.DEV) {
     window.StateCommands = stateCommands;

@@ -1,0 +1,50 @@
+src/state/atoms/stageAtom.js:1:// src/state/atoms/stageAtom.js
+src/state/atoms/stageAtom.js:644:if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {
+src/state/atoms/stageAtom.js:647:    stageAtom.setState = function (value, updateType) {
+src/state/atoms/stageAtom.js:660:    stageAtom.__autoAdvanceDiagnosticWrapped = true;
+src/state/atoms/stageAtom.js:668:    getState: () => stageAtom.getState(),
+src/state/atoms/stageAtom.js:669:    getInfo: () => stageAtom.getStageInfo(),
+src/state/atoms/stageAtom.js:670:    getStageNames: () => stageAtom.getStageNames(),
+src/state/atoms/stageAtom.js:671:    getStageCount: () => stageAtom.getStageCount(),
+src/state/atoms/stageAtom.js:672:    getCurrentStage: () => stageAtom.getState().currentStage,
+src/state/atoms/stageAtom.js:673:    getCurrentStageIndex: () => stageAtom.getState().stageIndex,
+src/state/atoms/stageAtom.js:676:    jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+src/state/atoms/stageAtom.js:677:    jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+src/state/atoms/stageAtom.js:678:    next: () => stageAtom.nextStage(),
+src/state/atoms/stageAtom.js:679:    prev: () => stageAtom.prevStage(),
+src/state/atoms/stageAtom.js:680:    setProgress: (progress) => stageAtom.setStageProgress(progress),
+src/state/atoms/stageAtom.js:681:    reset: () => stageAtom.resetStage(),
+src/state/atoms/stageAtom.js:684:    setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
+src/state/atoms/stageAtom.js:685:    toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
+src/state/atoms/stageAtom.js:686:    toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
+src/state/atoms/stageAtom.js:687:    isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
+src/state/atoms/stageAtom.js:688:    pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
+src/state/atoms/stageAtom.js:689:    resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),
+src/state/atoms/stageAtom.js:690:    pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias
+src/state/atoms/stageAtom.js:691:    resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias
+src/state/atoms/stageAtom.js:692:    canAutoAdvance: () => stageAtom.canAutoAdvance(),
+src/state/atoms/stageAtom.js:693:    markAutoAdvance: () => stageAtom.markAutoAdvance()
+src/state/atoms/stageAtom.js:697:    baseControls.getPerformanceMetrics = () => stageAtom.getPerformanceMetrics();
+src/state/atoms/stageAtom.js:698:    baseControls.getBatchingStats = () => stageAtom.getBatchingStats();
+src/state/atoms/stageAtom.js:699:    baseControls.flushTransitions = () => stageAtom.flushTransitions();
+src/state/atoms/stageAtom.js:706:        stageAtom.jumpToStage(randomStage);
+src/state/atoms/stageAtom.js:707:        stageAtom.setStageProgress(Math.random());
+src/state/atoms/stageAtom.js:728:          stageAtom.setStageProgress(i / 10);
+src/state/atoms/createAtom.js:488:Ready for stageAtom.js transition batching optimization!
+src/bootstrap/wireSSTv3.js:11:  stageAtom = require('@/state/atoms/stageAtom.js').stageAtom;
+src/bootstrap/wireSSTv3.js:92:    if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
+src/bootstrap/wireSSTv3.js:94:      // stageAtom.jumpToStage(state.currentStage);
+src/components/narrative/NarrationController.jsx:216:        stageAtom.getState?.()?.autoAdvanceEnabled ??
+src/components/narrative/NarrationController.jsx:239:            stageAtom.getState?.()?.autoAdvanceEnabled ??
+src/components/consciousness/ConsciousnessTheater.jsx:388:            stageAtom.jumpToStage(targetStage);
+src/components/consciousness/ConsciousnessTheater.jsx:401:          stageAtom.getStageNames?.() ?? stageNames ?? Canonical?.stageOrder ?? [];
+src/components/consciousness/ConsciousnessTheater.jsx:415:          stageAtom.nextStage();
+src/components/consciousness/ConsciousnessTheater.jsx:445:          stageAtom.jumpToStage('genesis');
+src/components/dev/DevPerformanceMonitor.jsx:84:      setStageState(stageAtom.getState());
+src/orchestration/navigation/narrativeNavigation.js:57:  stageAtom.setAutoAdvanceEnabled(nextValue);
+src/theater/TheaterDirector.js:563:      stageAtom.setAutoAdvanceEnabled(true);
+src/theater/TheaterDirector.js:567:      failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
+src/theater/UnifiedNavigationAPI.js:8: * RULE: Nothing should call stageAtom.jumpToStage directly.
+src/theater/UnifiedNavigationAPI.js:76:        stageAtom.jumpToStage(targetStage);
+src/theater/UnifiedNavigationAPI.js:105:          stageAtom.jumpToStage(targetStage);
+src/theater/UnifiedNavigationAPI.js:124:        stageAtom.jumpToStage(targetStage);

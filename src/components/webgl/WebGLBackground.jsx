@@ -930,7 +930,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
     };
 
-    const unsubMorph = BeatBus.on(EVENTS.MORPH_PROGRESS, handleMorphProgress);
+    const unsubMorph = BeatBus.on(EVENTS.MORPH_PROGRESS, (payload = {}) => {
+      const normalized = typeof payload === 'number' ? { morphProgress: payload } : payload;
+      const value = normalized?.morphProgress ?? normalized?.value ?? null;
+      if (value == null) {
+        if (DEV) console.warn('⚠️ [MORPH] Payload missing morphProgress', payload);
+        return;
+      }
+      handleMorphProgress(normalized);
+    });
 
     if (DEV) {
       console.log('✅ Renderer subscribed:', {
@@ -973,6 +981,38 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const phaseName = payload?.phase ?? payload?.name ?? null;
 
       switch (phaseName) {
+        case 'emergence': {
+          console.log('🫧 [EMERGENCE] Dissolving into gas cloud');
+          if (uniforms.uTurbulence) {
+            uniforms.uTurbulence.value = 0.5;
+            console.log('   Set uTurbulence = 0.5');
+          }
+          if (uniforms.uSpeedMultiplier) {
+            uniforms.uSpeedMultiplier.value = 1.2;
+            console.log('   Set uSpeedMultiplier = 1.2');
+          }
+          if (uniforms.uMotionMode) {
+            uniforms.uMotionMode.value = 0;
+            console.log('   Set uMotionMode = 0 (emergence)');
+          }
+          if (uniforms.uDriftAmp) {
+            uniforms.uDriftAmp.value = 1.6;
+            console.log('   Set uDriftAmp = 1.6');
+          }
+          if (uniforms.uMorphProgress) {
+            uniforms.uMorphProgress.value = 0;
+            console.log('   Reset uMorphProgress = 0');
+          }
+          if (uniforms.uStageProgress) {
+            uniforms.uStageProgress.value = 0;
+          }
+          if (uniforms.uPostMorphFreeze) {
+            uniforms.uPostMorphFreeze.value = 0;
+          }
+          fallbackMorphRef.current = 0;
+          mat.uniformsNeedUpdate = true;
+          break;
+        }
         case 'chaos': {
           console.log('🌪️ [CHAOS] Starting random motion');
           if (uniforms.uTurbulence) {

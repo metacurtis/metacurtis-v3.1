@@ -1,0 +1,489 @@
+{
+  "graph": {
+    "entryPoints": {
+      "STAGE_CONTROLS": [
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 103
+        }
+      ],
+      "ARROW_NAV": [
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 264
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 274
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 333
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 338
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 346
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 353
+        }
+      ],
+      "NARRATION_NEXT": [
+        {
+          "file": "src/components/narrative/NarrationController.jsx",
+          "line": 344
+        }
+      ]
+    },
+    "orchestrators": {
+      "UNIFIED_NAV": [
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 382
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 410
+        },
+        {
+          "file": "src/components/ui/narrative/StageNavigation.jsx",
+          "line": 45
+        }
+      ],
+      "SCROLL_ORCHESTRATOR": [
+        {
+          "file": "src/theater/controllers/OpeningSequenceController.js",
+          "line": 711
+        }
+      ]
+    },
+    "mutators": {
+      "STAGE_ATOM_SET": [
+        {
+          "file": "src/bootstrap/wireSSTv3.js",
+          "line": 94
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 388
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 445
+        },
+        {
+          "file": "src/orchestration/navigation/narrativeNavigation.js",
+          "line": 57
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 645
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 647
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 676
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 677
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 680
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 684
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 685
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 686
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 706
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 707
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 728
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 237
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 305
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 324
+        },
+        {
+          "file": "src/theater/TheaterDirector.js",
+          "line": 563
+        },
+        {
+          "file": "src/theater/TheaterDirector.js",
+          "line": 567
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 8
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 76
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 105
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 124
+        }
+      ],
+      "JUMP_TO_STAGE": [
+        {
+          "file": "src/bootstrap/wireSSTv3.js",
+          "line": 94
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 388
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 445
+        },
+        {
+          "file": "src/orchestration/navigation/narrativeNavigation.js",
+          "line": 97
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 124
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 140
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 146
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 623
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 676
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 677
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 706
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 237
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 76
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 103
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 105
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 124
+        }
+      ],
+      "FALLBACK_JUMP": [
+        {
+          "file": "src/bootstrap/wireSSTv3.js",
+          "line": 93
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 74
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 117
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 133
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 101
+        }
+      ]
+    },
+    "emitters": {
+      "STAGE_CHANGE": [
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 151
+        },
+        {
+          "file": "src/theater/controllers/OpeningSequenceController.js",
+          "line": 637
+        }
+      ],
+      "MORPH_PROGRESS": [
+        {
+          "file": "src/engine/modules/ClimaxController.js",
+          "line": 249
+        },
+        {
+          "file": "src/engine/modules/MorphController.js",
+          "line": 273
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 44
+        },
+        {
+          "file": "src/theater/controllers/MorphAnimationController.js",
+          "line": 332
+        }
+      ]
+    }
+  },
+  "analysis": {
+    "orchestratedPaths": 6,
+    "directPaths": 1,
+    "unknownPaths": 1
+  },
+  "violations": {
+    "directMutations": {
+      "STAGE_ATOM_SET": [
+        {
+          "file": "src/bootstrap/wireSSTv3.js",
+          "line": 94
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 388
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 445
+        },
+        {
+          "file": "src/orchestration/navigation/narrativeNavigation.js",
+          "line": 57
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 645
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 647
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 676
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 677
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 680
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 684
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 685
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 686
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 706
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 707
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 728
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 237
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 305
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 324
+        },
+        {
+          "file": "src/theater/TheaterDirector.js",
+          "line": 563
+        },
+        {
+          "file": "src/theater/TheaterDirector.js",
+          "line": 567
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 8
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 76
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 105
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 124
+        }
+      ],
+      "JUMP_TO_STAGE": [
+        {
+          "file": "src/bootstrap/wireSSTv3.js",
+          "line": 94
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 388
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "line": 445
+        },
+        {
+          "file": "src/orchestration/navigation/narrativeNavigation.js",
+          "line": 97
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 124
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 140
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 146
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 623
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 676
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 677
+        },
+        {
+          "file": "src/state/atoms/stageAtom.js",
+          "line": 706
+        },
+        {
+          "file": "src/state/commands/StateCommands.js",
+          "line": 237
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 76
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 103
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 105
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 124
+        }
+      ],
+      "FALLBACK_JUMP": [
+        {
+          "file": "src/bootstrap/wireSSTv3.js",
+          "line": 93
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 74
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 117
+        },
+        {
+          "file": "src/state/atoms/narrativeAtom.js",
+          "line": 133
+        },
+        {
+          "file": "src/theater/UnifiedNavigationAPI.js",
+          "line": 101
+        }
+      ]
+    },
+    "multipleEmitters": [
+      {
+        "event": "STAGE_CHANGE",
+        "count": 2
+      },
+      {
+        "event": "MORPH_PROGRESS",
+        "count": 4
+      }
+    ]
+  }
+}

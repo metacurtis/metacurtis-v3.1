@@ -235,6 +235,8 @@ export class MorphAnimationController {
       phase: animation.phase,
       duration: animation.duration,
       source: 'raf-timed',
+      animationId: animation.id,
+      morphTarget: animation.targetValue,
     });
 
     if (animation.onProgress) {
@@ -274,6 +276,8 @@ export class MorphAnimationController {
       phase: animation.phase,
       duration: 0,
       source: 'raf-continuous',
+      animationId: animation.id,
+      morphTarget: animation.targetValue,
     });
 
     if (animation.onProgress) {
@@ -295,6 +299,8 @@ export class MorphAnimationController {
       phase: animation.phase,
       duration: animation.duration,
       source: 'finalize',
+      animationId: animation.id,
+      morphTarget: animation.targetValue,
     });
 
     if (animation.onComplete) {
@@ -313,23 +319,27 @@ export class MorphAnimationController {
   /**
    * Emit morph progress event
    */
-  _emitProgress(value, { stage, phase, duration, source }) {
+  _emitProgress(value, { stage, phase, duration, source, animationId, morphTarget, target }) {
     const clampedValue = clamp01(value);
-    const clampedTarget = clamp01(value);
+    const resolvedTarget =
+      typeof morphTarget === 'number'
+        ? clamp01(morphTarget)
+        : typeof target === 'number'
+        ? clamp01(target)
+        : clampedValue;
 
-    const payload = {
-      morphProgress: clampedValue,
-      value: clampedValue,
-      target: clampedTarget,
-      morphTarget: clampedTarget,
-      stage: stage || 'genesis',
-      phase,
-      durationMs: Number.isFinite(duration) ? Math.max(0, duration) : 0,
-      schemaVersion: '3.5',
-      source: source || 'animator',
-    };
-
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+    const stateCommands = typeof window !== 'undefined' ? window.stateCommands : null;
+    if (stateCommands?.setMorphProgress) {
+      stateCommands.setMorphProgress(clampedValue, {
+        origin: source || 'animator',
+        morphTarget: resolvedTarget,
+        stage,
+        durationMs: Number.isFinite(duration) ? Math.max(0, duration) : undefined,
+        animationId,
+      });
+    } else {
+      console.warn('[MorphAnimationController] StateCommands not available, cannot emit MORPH_PROGRESS');
+    }
   }
 
   /**

@@ -92,13 +92,13 @@
       },
       {
         "file": "src/components/webgl/managers/BlueprintBinder.js",
-        "line": 1151,
+        "line": 1167,
         "column": 9,
         "kind": "literal"
       },
       {
         "file": "src/components/webgl/managers/BlueprintBinder.js",
-        "line": 1184,
+        "line": 1200,
         "column": 11,
         "kind": "literal"
       }

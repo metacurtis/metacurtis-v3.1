@@ -1,0 +1,302 @@
+[
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 1,
+    "code": "// src/state/atoms/stageAtom.js",
+    "context": "1: // src/state/atoms/stageAtom.js\n2: // ✅ PHASE 2A OPTIMIZATION: Transition Batching + Update Frequency Optimization\n3: // ✅ ATOMIC STAGE MANAGEMENT: Zero stale state with intelligent batching\n4: "
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 644,
+    "code": "if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {",
+    "context": "641: });\n642: \n643: // 🔬 DIAGNOSTIC: Stage atom state tracking\n644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {\n645:   const originalSetState = stageAtom.setState?.bind(stageAtom);\n646:   if (originalSetState) {\n647:     stageAtom.setState = function (value, updateType) {"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 647,
+    "code": "stageAtom.setState = function (value, updateType) {",
+    "context": "644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {\n645:   const originalSetState = stageAtom.setState?.bind(stageAtom);\n646:   if (originalSetState) {\n647:     stageAtom.setState = function (value, updateType) {\n648:       const previousState = stageAtom.getState?.();\n649:       const nextState = typeof value === 'function' ? value(previousState) : value;\n650:       console.log('🔬 [STAGE_ATOM] State change:', { from: previousState, to: nextState, updateType });"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 660,
+    "code": "stageAtom.__autoAdvanceDiagnosticWrapped = true;",
+    "context": "657:       }\n658:       return originalSetState(nextState, updateType);\n659:     };\n660:     stageAtom.__autoAdvanceDiagnosticWrapped = true;\n661:   }\n662: }\n663: "
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 668,
+    "code": "getState",
+    "context": "665: if (typeof window !== 'undefined') {\n666:   const baseControls = {\n667:     // Core state access\n668:     getState: () => stageAtom.getState(),\n669:     getInfo: () => stageAtom.getStageInfo(),\n670:     getStageNames: () => stageAtom.getStageNames(),\n671:     getStageCount: () => stageAtom.getStageCount(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 669,
+    "code": "getInfo",
+    "context": "666:   const baseControls = {\n667:     // Core state access\n668:     getState: () => stageAtom.getState(),\n669:     getInfo: () => stageAtom.getStageInfo(),\n670:     getStageNames: () => stageAtom.getStageNames(),\n671:     getStageCount: () => stageAtom.getStageCount(),\n672:     getCurrentStage: () => stageAtom.getState().currentStage,"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 670,
+    "code": "getStageNames",
+    "context": "667:     // Core state access\n668:     getState: () => stageAtom.getState(),\n669:     getInfo: () => stageAtom.getStageInfo(),\n670:     getStageNames: () => stageAtom.getStageNames(),\n671:     getStageCount: () => stageAtom.getStageCount(),\n672:     getCurrentStage: () => stageAtom.getState().currentStage,\n673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 671,
+    "code": "getStageCount",
+    "context": "668:     getState: () => stageAtom.getState(),\n669:     getInfo: () => stageAtom.getStageInfo(),\n670:     getStageNames: () => stageAtom.getStageNames(),\n671:     getStageCount: () => stageAtom.getStageCount(),\n672:     getCurrentStage: () => stageAtom.getState().currentStage,\n673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,\n674: "
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 672,
+    "code": "getCurrentStage",
+    "context": "669:     getInfo: () => stageAtom.getStageInfo(),\n670:     getStageNames: () => stageAtom.getStageNames(),\n671:     getStageCount: () => stageAtom.getStageCount(),\n672:     getCurrentStage: () => stageAtom.getState().currentStage,\n673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,\n674: \n675:     // Navigation helpers"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 673,
+    "code": "getCurrentStageIndex",
+    "context": "670:     getStageNames: () => stageAtom.getStageNames(),\n671:     getStageCount: () => stageAtom.getStageCount(),\n672:     getCurrentStage: () => stageAtom.getState().currentStage,\n673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,\n674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 676,
+    "code": "jumpToStage",
+    "context": "673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,\n674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 677,
+    "code": "jumpTo",
+    "context": "674: \n675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 678,
+    "code": "next",
+    "context": "675:     // Navigation helpers\n676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),\n681:     reset: () => stageAtom.resetStage(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 679,
+    "code": "prev",
+    "context": "676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),\n677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),\n681:     reset: () => stageAtom.resetStage(),\n682: "
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 680,
+    "code": "setProgress",
+    "context": "677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias\n678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),\n681:     reset: () => stageAtom.resetStage(),\n682: \n683:     // Auto-advance"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 681,
+    "code": "reset",
+    "context": "678:     next: () => stageAtom.nextStage(),\n679:     prev: () => stageAtom.prevStage(),\n680:     setProgress: (progress) => stageAtom.setStageProgress(progress),\n681:     reset: () => stageAtom.resetStage(),\n682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 684,
+    "code": "setAutoAdvanceEnabled",
+    "context": "681:     reset: () => stageAtom.resetStage(),\n682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 685,
+    "code": "toggleAutoAdvance",
+    "context": "682: \n683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 686,
+    "code": "toggleAuto",
+    "context": "683:     // Auto-advance\n684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 687,
+    "code": "isAutoAdvanceEnabled",
+    "context": "684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),\n685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 688,
+    "code": "pauseAutoAdvance",
+    "context": "685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),\n686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 689,
+    "code": "resumeAutoAdvance",
+    "context": "686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias\n687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 690,
+    "code": "pauseAuto",
+    "context": "687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),\n688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 691,
+    "code": "resumeAuto",
+    "context": "688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),\n689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()\n694:   };"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 692,
+    "code": "canAutoAdvance",
+    "context": "689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),\n690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()\n694:   };\n695: "
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 693,
+    "code": "markAutoAdvance",
+    "context": "690:     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias\n691:     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias\n692:     canAutoAdvance: () => stageAtom.canAutoAdvance(),\n693:     markAutoAdvance: () => stageAtom.markAutoAdvance()\n694:   };\n695: \n696:   if (import.meta.env.DEV) {"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 697,
+    "code": "baseControls.getPerformanceMetrics = () => stageAtom.getPerformanceMetrics();",
+    "context": "694:   };\n695: \n696:   if (import.meta.env.DEV) {\n697:     baseControls.getPerformanceMetrics = () => stageAtom.getPerformanceMetrics();\n698:     baseControls.getBatchingStats = () => stageAtom.getBatchingStats();\n699:     baseControls.flushTransitions = () => stageAtom.flushTransitions();\n700:     baseControls.stressTest = (iterations = 100) => {"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 698,
+    "code": "baseControls.getBatchingStats = () => stageAtom.getBatchingStats();",
+    "context": "695: \n696:   if (import.meta.env.DEV) {\n697:     baseControls.getPerformanceMetrics = () => stageAtom.getPerformanceMetrics();\n698:     baseControls.getBatchingStats = () => stageAtom.getBatchingStats();\n699:     baseControls.flushTransitions = () => stageAtom.flushTransitions();\n700:     baseControls.stressTest = (iterations = 100) => {\n701:       console.log(`🧪 Running stage transition stress test (${iterations} iterations)...`);"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 699,
+    "code": "baseControls.flushTransitions = () => stageAtom.flushTransitions();",
+    "context": "696:   if (import.meta.env.DEV) {\n697:     baseControls.getPerformanceMetrics = () => stageAtom.getPerformanceMetrics();\n698:     baseControls.getBatchingStats = () => stageAtom.getBatchingStats();\n699:     baseControls.flushTransitions = () => stageAtom.flushTransitions();\n700:     baseControls.stressTest = (iterations = 100) => {\n701:       console.log(`🧪 Running stage transition stress test (${iterations} iterations)...`);\n702:       const startTime = performance.now();"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 706,
+    "code": "stageAtom.jumpToStage(randomStage);",
+    "context": "703: \n704:       for (let i = 0; i < iterations; i++) {\n705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];\n706:         stageAtom.jumpToStage(randomStage);\n707:         stageAtom.setStageProgress(Math.random());\n708:       }\n709: "
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 707,
+    "code": "stageAtom.setStageProgress(Math.random());",
+    "context": "704:       for (let i = 0; i < iterations; i++) {\n705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];\n706:         stageAtom.jumpToStage(randomStage);\n707:         stageAtom.setStageProgress(Math.random());\n708:       }\n709: \n710:       const endTime = performance.now();"
+  },
+  {
+    "file": "src/state/atoms/stageAtom.js",
+    "line": 728,
+    "code": "stageAtom.setStageProgress(i / 10);",
+    "context": "725: \n726:       for (let i = 0; i < 10; i++) {\n727:         setTimeout(() => {\n728:           stageAtom.setStageProgress(i / 10);\n729:         }, i * 5);\n730:       }\n731: "
+  },
+  {
+    "file": "src/state/atoms/createAtom.js",
+    "line": 488,
+    "code": "Ready for stageAtom.js transition batching optimization!",
+    "context": "485: - ✅ Memory usage tracking and optimization hints\n486: - ✅ Comprehensive atom metadata access\n487: \n488: Ready for stageAtom.js transition batching optimization!\n489: */"
+  },
+  {
+    "file": "src/bootstrap/wireSSTv3.js",
+    "line": 11,
+    "code": "stageAtom = require('@/state/atoms/stageAtom.js').stageAtom;",
+    "context": "8: // Only import atoms that exist\n9: let stageAtom, qualityAtom;\n10: try {\n11:   stageAtom = require('@/state/atoms/stageAtom.js').stageAtom;\n12: } catch (e) {\n13:   console.warn('stageAtom not available');\n14: }"
+  },
+  {
+    "file": "src/bootstrap/wireSSTv3.js",
+    "line": 92,
+    "code": "if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {",
+    "context": "89:     });\n90: \n91:     // If stageAtom exists, sync with it\n92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {\n93:       // DISABLED: This bypasses orchestration\n94:       // stageAtom.jumpToStage(state.currentStage);\n95:     }"
+  },
+  {
+    "file": "src/bootstrap/wireSSTv3.js",
+    "line": 94,
+    "code": "// stageAtom.jumpToStage(state.currentStage);",
+    "context": "91:     // If stageAtom exists, sync with it\n92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {\n93:       // DISABLED: This bypasses orchestration\n94:       // stageAtom.jumpToStage(state.currentStage);\n95:     }\n96:   });\n97:   unsubscribers.push(unsubscribeNarrative);"
+  },
+  {
+    "file": "src/components/narrative/NarrationController.jsx",
+    "line": 216,
+    "code": "stageAtom.getState?.()?.autoAdvanceEnabled ??",
+    "context": "213:       const isAutoEnabled =\n214:         controls?.isAutoAdvanceEnabled?.() ??\n215:         controls?.getState?.()?.autoAdvanceEnabled ??\n216:         stageAtom.getState?.()?.autoAdvanceEnabled ??\n217:         false;\n218: \n219:       if (!isAutoEnabled) {"
+  },
+  {
+    "file": "src/components/narrative/NarrationController.jsx",
+    "line": 239,
+    "code": "stageAtom.getState?.()?.autoAdvanceEnabled ??",
+    "context": "236:           const autoStillEnabled =\n237:             liveControls.isAutoAdvanceEnabled?.() ??\n238:             liveControls.getState?.()?.autoAdvanceEnabled ??\n239:             stageAtom.getState?.()?.autoAdvanceEnabled ??\n240:             false;\n241:           if (!autoStillEnabled) return;\n242: "
+  },
+  {
+    "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+    "line": 388,
+    "code": "stageAtom.jumpToStage(targetStage);",
+    "context": "385:               source: 'number_key',\n386:             });\n387:           } else {\n388:             stageAtom.jumpToStage(targetStage);\n389:           }\n390:         }\n391:         return;"
+  },
+  {
+    "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+    "line": 401,
+    "code": "stageAtom.getStageNames?.() ?? stageNames ?? Canonical?.stageOrder ?? [];",
+    "context": "398:         const before = stageAtom.getState?.();\n399:         const narrationSkipped = skipNarrationIfActive();\n400:         const stageNamesRef =\n401:           stageAtom.getStageNames?.() ?? stageNames ?? Canonical?.stageOrder ?? [];\n402:         const currentIndex = stageNamesRef.indexOf(before?.currentStage || '');\n403:         const nextIndex = Math.min(\n404:           currentIndex >= 0 ? currentIndex + 1 : 1,"
+  },
+  {
+    "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+    "line": 415,
+    "code": "stageAtom.nextStage();",
+    "context": "412:             source: 'keyboard_space',\n413:           });\n414:         } else {\n415:           stageAtom.nextStage();\n416:         }\n417:         const after = stageAtom.getState?.();\n418:         console.log('🎬 [KEY NAV]', {"
+  },
+  {
+    "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+    "line": 445,
+    "code": "stageAtom.jumpToStage('genesis');",
+    "context": "442:         }\n443:         case 'r':\n444:         case 'R':\n445:           stageAtom.jumpToStage('genesis');\n446:           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });\n447:           break;\n448:         default:"
+  },
+  {
+    "file": "src/components/dev/DevPerformanceMonitor.jsx",
+    "line": 84,
+    "code": "setStageState(stageAtom.getState());",
+    "context": "81:     });\n82: \n83:     const unsubscribeStage = stageAtom.subscribe(() => {\n84:       setStageState(stageAtom.getState());\n85:     });\n86: \n87:     return () => {"
+  },
+  {
+    "file": "src/orchestration/navigation/narrativeNavigation.js",
+    "line": 57,
+    "code": "stageAtom.setAutoAdvanceEnabled(nextValue);",
+    "context": "54:   const current = stageAtom.getState().autoAdvanceEnabled;\n55:   const nextValue =\n56:     typeof forcedValue === 'boolean' ? forcedValue : !current;\n57:   stageAtom.setAutoAdvanceEnabled(nextValue);\n58:   return nextValue;\n59: };\n60: "
+  },
+  {
+    "file": "src/theater/TheaterDirector.js",
+    "line": 563,
+    "code": "stageAtom.setAutoAdvanceEnabled(true);",
+    "context": "560:     }\n561: \n562:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {\n563:       stageAtom.setAutoAdvanceEnabled(true);\n564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;\n566:     } else if (!autoEnabled) {"
+  },
+  {
+    "file": "src/theater/TheaterDirector.js",
+    "line": 567,
+    "code": "failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';",
+    "context": "564:       console.log('✅ Auto-advance enabled via stageAtom fallback');\n565:       autoEnabled = true;\n566:     } else if (!autoEnabled) {\n567:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';\n568:     }\n569: \n570:     const autoAdvanceAfter ="
+  },
+  {
+    "file": "src/theater/UnifiedNavigationAPI.js",
+    "line": 8,
+    "code": "* RULE",
+    "context": "5:  * Guarantees full orchestration (fragments, scroll sync, narration).\n6:  *\n7:  * RULE: Nothing should call narrativeAtom.jumpToStage directly.\n8:  * RULE: Nothing should call stageAtom.jumpToStage directly.\n9:  * RULE: All navigation goes through this API.\n10:  */\n11: "
+  },
+  {
+    "file": "src/theater/UnifiedNavigationAPI.js",
+    "line": 76,
+    "code": "stageAtom.jumpToStage(targetStage);",
+    "context": "73:       console.warn('🚨 [UNIFIED NAV] Window or document unavailable');\n74:       const currentStage = stageAtom.getState?.()?.currentStage;\n75:       if (currentStage !== targetStage) {\n76:         stageAtom.jumpToStage(targetStage);\n77:       }\n78:       return true;\n79:     }"
+  },
+  {
+    "file": "src/theater/UnifiedNavigationAPI.js",
+    "line": 105,
+    "code": "stageAtom.jumpToStage(targetStage);",
+    "context": "102:         if (window.stageControls?.jumpToStage) {\n103:           window.stageControls.jumpToStage(targetStage);\n104:         } else {\n105:           stageAtom.jumpToStage(targetStage);\n106:         }\n107:         finalReason = 'fallback';\n108:         return true;"
+  },
+  {
+    "file": "src/theater/UnifiedNavigationAPI.js",
+    "line": 124,
+    "code": "stageAtom.jumpToStage(targetStage);",
+    "context": "121: \n122:       const currentStage = stageAtom.getState?.()?.currentStage;\n123:       if (currentStage !== targetStage) {\n124:         stageAtom.jumpToStage(targetStage);\n125:       }\n126: \n127:       if (releaseDelayMs > 0) {"
+  }
+]
