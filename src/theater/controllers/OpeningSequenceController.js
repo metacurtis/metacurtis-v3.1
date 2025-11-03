@@ -678,11 +678,25 @@ export class OpeningSequenceController {
         console.log('✅ [OPENING] Transition to stage', {
           from: previousStage,
           to: toStage,
-          note: 'STAGE_CHANGE will be emitted by StateCommands when stage updates',
+          note: 'Delegating to StateCommands.setStage for single-writer compliance',
           skipBlueprint: skipGenesisBlueprint,
           preserveEmergence: true,
           targetState,
         });
+
+        // Constitutional Compliance (SST v3.5): only StateCommands may emit STAGE_CHANGE events.
+        // Delegate to StateCommands.setStage so stageAtom updates and BeatBus emissions stay unified.
+        try {
+          const { default: stateCommands } = await import('../../state/commands/StateCommands.js');
+          stateCommands.setStage?.(toStage, {
+            source: 'opening_sequence_transition',
+            morphProfile: 'instant',
+            preserveEmergence: true,
+            targetState,
+          });
+        } catch (error) {
+          console.error('🚨 [OPENING] Failed to delegate stage handoff to StateCommands', error);
+        }
       }
 
       try {

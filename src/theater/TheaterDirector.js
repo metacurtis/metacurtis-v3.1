@@ -3,6 +3,7 @@
 
 import BeatBus from '@/theater/bus';
 import stageAtom from '@/state/atoms/stageAtom.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -540,31 +541,19 @@ class TheaterDirector {
     let autoEnabled = false;
     let failureReason = null;
 
-    if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
-      const alreadyEnabled =
-        typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-          ? window.stageControls.isAutoAdvanceEnabled()
-          : window.stageControls.getState?.()?.autoAdvanceEnabled;
+    const alreadyEnabled = stageAtom.isAutoAdvanceEnabled?.() ?? false;
 
-      if (alreadyEnabled) {
-        console.log('   Auto-advance already active');
-        autoEnabled = true;
-      } else {
-        window.stageControls.setAutoAdvanceEnabled(true);
-        console.log('✅ Auto-advance enabled for narration-driven progression');
-        autoEnabled = true;
-      }
-    } else {
-      failureReason = 'setAutoAdvanceEnabled not found';
-      console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
-    }
-
-    if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-      stageAtom.setAutoAdvanceEnabled(true);
-      console.log('✅ Auto-advance enabled via stageAtom fallback');
+    if (alreadyEnabled) {
+      console.log('   Auto-advance already active');
       autoEnabled = true;
-    } else if (!autoEnabled) {
-      failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
+    } else {
+      try {
+        stateCommands.setAutoAdvanceEnabled(true, 'opening_complete');
+        autoEnabled = stageAtom.isAutoAdvanceEnabled?.() ?? false;
+      } catch (error) {
+        failureReason = error?.message || 'stateCommands.setAutoAdvanceEnabled failed';
+        console.warn('⚠️ Unable to enable auto-advance via StateCommands', error);
+      }
     }
 
     const autoAdvanceAfter =

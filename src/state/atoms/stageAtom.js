@@ -102,33 +102,82 @@ let singleWriterTracker = null;
 function checkAuthorization(methodName) {
   try {
     const stack = new Error().stack || '';
-    const stackLines = stack.split('\n');
+    const stackLines = stack
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
 
-    // Skip first 3 lines (Error, checkAuthorization, wrapper)
-    const callerLine = stackLines[3] || '';
+    // Remove the first two frames (Error constructor + checkAuthorization itself)
+    const callFrames = stackLines.slice(2);
 
-    const fileMatch = callerLine.match(/\/([^/]+\.js):/);
-    const callerFile = fileMatch ? fileMatch[1] : 'unknown';
+    const frameInfo = callFrames.map((line) => {
+      const fileMatch = line.match(/\/([^/]+\.(?:js|jsx|ts|tsx))(?::\d+)?/);
+      const file = fileMatch ? fileMatch[1] : 'unknown';
+      return { raw: line, file };
+    });
 
-    const authorized = Boolean(AUTHORIZED_WRITERS[callerFile]);
+    const authorizedFrame = frameInfo.find((frame) => AUTHORIZED_WRITERS[frame.file]);
+    const hasStateCommands = frameInfo.some((frame) => frame.file === 'StateCommands.js');
+    const hasInternalStageAtom = frameInfo.some((frame) => frame.file === 'stageAtom.js');
 
-    const result = {
+    const authorized = Boolean(authorizedFrame) || hasStateCommands || hasInternalStageAtom;
+
+    const callerFrame = frameInfo[0] || { raw: callFrames[0] || 'unknown', file: 'unknown' };
+
+    const reason = authorized
+      ? authorizedFrame
+        ? `Authorized writer: ${authorizedFrame.file}`
+        : hasInternalStageAtom
+        ? 'Authorized: internal stageAtom call'
+        : 'Authorized: StateCommands in call chain'
+      : `Unauthorized: Only StateCommands may call ${methodName}. Use UnifiedNavigationAPI instead.`;
+
+    const violation = {
       authorized,
-      caller: callerFile,
+      caller: callerFrame.file,
       method: methodName,
-      reason: authorized
-        ? 'Authorized writer'
-        : `Unauthorized: Only StateCommands may call ${methodName}. Use UnifiedNavigationAPI instead.`,
+      reason,
+      stack,
     };
 
     if (!authorized && import.meta.env.DEV) {
-      console.error('🚨 [SINGLE-WRITER VIOLATION]', result);
+      console.error('🚨 [SINGLE-WRITER VIOLATION]', {
+        authorized: false,
+        caller: callerFrame.raw,
+        method: methodName,
+        reason,
+      });
       console.error('   Stack trace:', stack);
       console.error('   Fix: Route through UnifiedNavigationAPI or StateCommands');
-      singleWriterTracker?.record?.(result);
+
+      if (typeof window !== 'undefined') {
+        window.__stageAtomViolations = window.__stageAtomViolations || [];
+        window.__stageAtomViolations.push({
+          timestamp: Date.now(),
+          operation: methodName,
+          caller: callerFrame.raw,
+          stack,
+        });
+      }
+
+      singleWriterTracker?.record?.({
+        authorized: false,
+        caller: callerFrame.file,
+        method: methodName,
+        reason,
+        stack,
+      });
+
+      throw new Error(
+        `🚨 Single-Writer Violation: ${methodName} called by unauthorized source.\n` +
+          `   Caller: ${callerFrame.raw}\n` +
+          `   Rule: Only StateCommands may mutate stageAtom.\n` +
+          `   Fix: Use window.unifiedNav.navigateToStage() instead.\n` +
+          `   Authority: SST v3.5 navigation.singleWriter`
+      );
     }
 
-    return result;
+    return violation;
   } catch (error) {
     console.warn('[stageAtom] Authorization check failed:', error);
     return {
@@ -151,7 +200,16 @@ function checkAuthorization(methodName) {
  */
 function withAuthorization(originalMethod, methodName, strict = true) {
   return function authorizedStageAtomMethod(...args) {
-    const auth = checkAuthorization(methodName);
+    let auth;
+    try {
+      auth = checkAuthorization(methodName);
+    } catch (error) {
+      if (strict && import.meta.env.DEV) {
+        throw error;
+      }
+      console.warn(error?.message || error);
+      return originalMethod.apply(this, args);
+    }
 
     if (!auth.authorized) {
       const error = new Error(
@@ -848,16 +906,54 @@ if (typeof window !== 'undefined') {
     reset: () => stageAtom.resetStage(),
 
     // Auto-advance
-    setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
-    toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
-    toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
+    setAutoAdvanceEnabled: (enabled) => {
+      const commands = window.stateCommands;
+      if (commands?.setAutoAdvanceEnabled) {
+        commands.setAutoAdvanceEnabled(Boolean(enabled), 'stageControls');
+      } else {
+        stageAtom.setAutoAdvanceEnabled(Boolean(enabled));
+      }
+    },
+    toggleAutoAdvance: () => {
+      const nextValue = !stageAtom.getState().autoAdvanceEnabled;
+      const commands = window.stateCommands;
+      if (commands?.setAutoAdvanceEnabled) {
+        commands.setAutoAdvanceEnabled(nextValue, 'stageControls.toggle');
+      } else {
+        stageAtom.setAutoAdvanceEnabled(nextValue);
+      }
+      return stageAtom.getState().autoAdvanceEnabled;
+    },
+    toggleAuto: () => {
+      const nextValue = !stageAtom.getState().autoAdvanceEnabled;
+      const commands = window.stateCommands;
+      if (commands?.setAutoAdvanceEnabled) {
+        commands.setAutoAdvanceEnabled(nextValue, 'stageControls.toggleAuto');
+      } else {
+        stageAtom.setAutoAdvanceEnabled(nextValue);
+      }
+      return stageAtom.getState().autoAdvanceEnabled;
+    }, // legacy alias
     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),
     pauseAuto: () => stageAtom.pauseAutoAdvance(), // legacy alias
     resumeAuto: () => stageAtom.resumeAutoAdvance(), // legacy alias
-    canAutoAdvance: () => stageAtom.canAutoAdvance(),
-    markAutoAdvance: () => stageAtom.markAutoAdvance()
+    canAutoAdvance: () => {
+      const commands = window.stateCommands;
+      if (commands?.canAutoAdvance) {
+        return commands.canAutoAdvance();
+      }
+      console.warn('[stageControls] canAutoAdvance falling back to stageAtom.canAutoAdvance()');
+      return stageAtom.canAutoAdvance();
+    },
+    markAutoAdvance: (context = 'stageControls.manual') => {
+      console.warn(
+        '[stageControls] markAutoAdvance is deprecated; route through StateCommands.requestAutoAdvance instead',
+        { context }
+      );
+      return stageAtom.markAutoAdvance();
+    }
   };
 
   if (import.meta.env.DEV) {

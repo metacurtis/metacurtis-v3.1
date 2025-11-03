@@ -13,6 +13,7 @@ import BeatBus from '@/theater/bus';
 import NavigationGate from '@/theater/NavigationGate.js';
 import { stageAtom } from '@/state/atoms';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { contractValidator } from '@/state/validation/NavigationContractValidator.js';
 
 class UnifiedNavigationAPI {
   constructor() {
@@ -101,6 +102,53 @@ class UnifiedNavigationAPI {
       method: 'ORCHESTRATED',
     });
 
+    let validationResult = null;
+    try {
+      validationResult = contractValidator.validateOrchestrated(targetStage, {
+        smooth,
+        skipNarration,
+        source,
+      });
+
+      if (validationResult?.valid) {
+        console.log('✅ [UNIFIED NAV] Contract validation passed', {
+          targetStage,
+          contract: 'orchestrated',
+        });
+      } else if (validationResult) {
+        console.error('❌ [UNIFIED NAV] Contract validation failed', {
+          targetStage,
+          violations: validationResult.violations,
+        });
+        validationResult.violations.forEach((violation) => {
+          console.error(`   - ${violation.message}`, {
+            requirement: violation.requirement,
+            expected: violation.expected,
+            actual: violation.actual,
+          });
+        });
+      }
+    } catch (validationError) {
+      const violations = validationError?.violations || [];
+      validationResult = { valid: false, violations };
+      console.error('🚨 [UNIFIED NAV] Contract validation error', {
+        error: validationError?.message,
+        targetStage,
+        violations,
+      });
+    }
+
+    const violations = validationResult?.violations || [];
+    if (violations.length) {
+      const hasScrollViolation = violations.some(
+        (violation) => violation.requirement === 'scrollSurfaceReady'
+      );
+
+      if (hasScrollViolation) {
+        console.warn('⏳ [UNIFIED NAV] ScrollOrchestrator not ready, waiting for readiness…');
+      }
+    }
+
     const fallbackStages =
       typeof window !== 'undefined'
         ? window.SST?.stages || window.Canonical?.stages || {}
@@ -160,7 +208,7 @@ class UnifiedNavigationAPI {
         const scrollReady = await this._waitForScrollSurface?.(5000);
 
         if (!scrollReady) {
-          window.navigationPathMonitor?.recordPath?.('fallback');
+          window.navigationPathMonitor?.recordPath?.('error_scroll_surface');
           console.error('🚨 FALLBACK DETECTED - Scroll surface unavailable during navigation');
           throw new Error(
             'UnifiedNavigationAPI: Scroll surface never became ready. ' +
@@ -213,14 +261,14 @@ class UnifiedNavigationAPI {
           actual: finalStage,
           reason: finalReason,
         });
-        window.navigationPathMonitor?.recordPath?.('fallback');
+        window.navigationPathMonitor?.recordPath?.('error_stage_mismatch');
       }
 
       return success;
     } catch (err) {
       console.error('🚨 [UNIFIED NAV] navigateToStage error', err);
       finalReason = 'error';
-      window.navigationPathMonitor?.recordPath?.('fallback');
+      window.navigationPathMonitor?.recordPath?.('error_exception');
       return false;
     } finally {
       NavigationGate.end(finalReason);

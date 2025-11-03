@@ -408,14 +408,23 @@ export default function ConsciousnessTheater() {
         );
         const targetStage = stageNamesRef[nextIndex] || stageNamesRef[stageNamesRef.length - 1];
 
-        if (targetStage && window.unifiedNav?.navigateToStage) {
-          window.unifiedNav.navigateToStage(targetStage, {
+        if (!targetStage) {
+          return;
+        }
+
+        if (!window.unifiedNav?.navigateToStage) {
+          console.error('🚨 [KEY NAV] UnifiedNavigationAPI not available - cannot advance stage');
+          return;
+        }
+
+        window.unifiedNav
+          .navigateToStage(targetStage, {
             smooth: true,
             source: 'keyboard_space',
+          })
+          .catch((error) => {
+            console.error('🚨 [KEY NAV] navigateToStage failed during spacebar advance', error);
           });
-        } else {
-          stageAtom.nextStage();
-        }
         const after = stageAtom.getState?.();
         console.log('🎬 [KEY NAV]', {
           key: 'Space',

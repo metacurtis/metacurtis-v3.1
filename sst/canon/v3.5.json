@@ -2108,6 +2108,175 @@
       }
     }
   },
+  "navigation": {
+    "description": "Navigation contracts and validation rules (SST v3.5)",
+    "contracts": {
+      "orchestrated": {
+        "description": "Standard navigation through UnifiedNavigationAPI",
+        "method": "window.unifiedNav.navigateToStage()",
+        "requirements": {
+          "scrollSurfaceReady": {
+            "value": true,
+            "validation": "window.ScrollOrchestrator?.isRunning === true"
+          },
+          "openingComplete": {
+            "value": true,
+            "validation": "stageAtom.getState().openingComplete === true"
+          },
+          "validStage": {
+            "validation": "STAGES.includes(targetStage)"
+          },
+          "minIntervalMs": {
+            "value": 100,
+            "validation": "Date.now() - lastNavigation >= 100"
+          }
+        },
+        "guarantees": {
+          "smooth": true,
+          "animated": true,
+          "narrationTriggered": true,
+          "morphProgression": "0 → 1",
+          "performanceMaintained": "FPS >= 55",
+          "eventsEmitted": [
+            "STAGE_CHANGE",
+            "MORPH_PROGRESS"
+          ]
+        },
+        "priority": "REQUIRED"
+      },
+      "direct": {
+        "description": "Direct stage jump (StateCommands internal use only)",
+        "method": "stageAtom.jumpToStage()",
+        "requirements": {
+          "authorized": {
+            "value": "StateCommands only",
+            "validation": "caller includes 'StateCommands.js'"
+          },
+          "validStage": {
+            "validation": "STAGES.includes(targetStage)"
+          }
+        },
+        "guarantees": {
+          "immediate": true,
+          "noAnimation": true,
+          "eventsEmitted": [
+            "STAGE_CHANGE"
+          ]
+        },
+        "restrictions": {
+          "useCase": "internal_only",
+          "publicAccess": false,
+          "logged": true,
+          "violationAction": "block"
+        },
+        "priority": "RESTRICTED"
+      },
+      "fallback": {
+        "description": "Emergency fallback (error recovery only)",
+        "method": "stageAtom.setStage() with emergency flag",
+        "requirements": {
+          "errorCondition": {
+            "value": true,
+            "validation": "previousNavigationFailed === true"
+          },
+          "logged": {
+            "value": true,
+            "severity": "warning"
+          }
+        },
+        "guarantees": {
+          "immediate": true,
+          "eventsEmitted": [
+            "STAGE_CHANGE",
+            "FALLBACK_USED"
+          ]
+        },
+        "restrictions": {
+          "useCase": "error_recovery_only",
+          "reportedToTelemetry": true
+        },
+        "priority": "EMERGENCY_ONLY"
+      }
+    },
+    "transitions": {
+      "policy": "any_to_any",
+      "forbidden": [],
+      "timing": {
+        "minIntervalMs": 100,
+        "rapidFireProtection": true,
+        "cooldownAfterError": 1000
+      },
+      "validation": {
+        "stageExists": "required",
+        "scrollPercentCalculable": "required",
+        "performanceThreshold": "FPS >= 55"
+      }
+    },
+    "autoAdvance": {
+      "enabled": true,
+      "minIntervalMs": 2000,
+      "method": "StateCommands.requestAutoAdvance()",
+      "requirements": {
+        "narrationComplete": true,
+        "autoAdvanceEnabled": true,
+        "intervalRespected": true
+      },
+      "guarantees": {
+        "usesOrchestrated": true,
+        "smooth": true,
+        "skipNarration": false
+      }
+    },
+    "performance": {
+      "contracts": {
+        "fpsMinimum": 55,
+        "fpsTarget": 60,
+        "renderTimeMaxMs": 16.67,
+        "memoryLimitMb": 250
+      },
+      "particleLimits": {
+        "genesis": 2000,
+        "discipline": 3000,
+        "neural": 5000,
+        "velocity": 12000,
+        "architecture": 8000,
+        "harmony": 12000,
+        "transcendence": 15000
+      },
+      "degradation": {
+        "trigger": "FPS < 55 for 60 frames",
+        "action": "reduce_quality",
+        "levels": [
+          "ULTRA",
+          "HIGH",
+          "MEDIUM",
+          "LOW"
+        ]
+      }
+    },
+    "validation": {
+      "runtime": true,
+      "throwOnViolation": true,
+      "logViolations": true,
+      "telemetry": true
+    },
+    "singleWriter": {
+      "enforced": true,
+      "writer": "StateCommands",
+      "methods": [
+        "setStage",
+        "jumpToStage",
+        "setMorphProgress",
+        "setScrollProgress",
+        "setAutoAdvanceEnabled"
+      ],
+      "violations": {
+        "action": "block",
+        "logged": true,
+        "reported": true
+      }
+    }
+  },
   "performance": {
     "frameRate": {
       "target": 60,

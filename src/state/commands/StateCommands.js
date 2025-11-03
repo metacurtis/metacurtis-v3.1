@@ -56,6 +56,8 @@ function __emitMorphThrottled(BeatBus, EVENTS, v, context = {}) {
 }
 
 // State Command Layer with proper cleanup and architectural contracts
+import '@/state/validation/NavigationContractValidator.js';
+import { contractValidator } from '@/state/validation/NavigationContractValidator.js';
 import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom } from '../atoms';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
@@ -237,6 +239,196 @@ class StateCommands {
     return morph;
   }
 
+  canAutoAdvance() {
+    return Boolean(stageAtom.canAutoAdvance?.());
+  }
+
+  setAutoAdvanceEnabled(enabled, reason = 'unspecified') {
+    console.log(`[StateCommands] Auto-advance ${enabled ? 'enabled' : 'disabled'}`, reason);
+    stageAtom.setAutoAdvanceEnabled?.(enabled);
+  }
+
+  async requestAutoAdvance(fromStage, toStage, options = {}) {
+    const {
+      source = 'narration',
+      smooth = true,
+      force = false,
+      skipNarration = false,
+    } = options;
+
+    if (!force && stageAtom.canAutoAdvance?.() === false) {
+      const controllerState = stageAtom.getState?.() || {};
+      const lastAdvance = controllerState.lastAutoAdvanceAt ?? null;
+      const minInterval = Number(Canonical?.scrollAndMorph?.autoAdvance?.minIntervalMs) || 2000;
+      console.warn('[StateCommands] Auto-advance blocked (interval)', {
+        from: fromStage,
+        to: toStage,
+        lastAdvance,
+        requiredInterval: minInterval,
+        source,
+      });
+      return { success: false, reason: 'interval_violation' };
+    }
+
+    try {
+      const validation = contractValidator.validateAutoAdvance(fromStage, toStage, {
+        source,
+        smooth,
+        skipNarration,
+      });
+
+      if (!validation?.valid) {
+        console.error('[StateCommands] Auto-advance contract violation', {
+          from: fromStage,
+          to: toStage,
+          source,
+          violations: validation?.violations,
+        });
+        return { success: false, reason: 'contract_violation', violations: validation?.violations || [] };
+      }
+    } catch (validationError) {
+      console.error('[StateCommands] Auto-advance contract validation error', {
+        error: validationError?.message,
+        from: fromStage,
+        to: toStage,
+        source,
+        violations: validationError?.violations,
+      });
+      return {
+        success: false,
+        reason: 'contract_violation',
+        error: validationError,
+        violations: validationError?.violations || [],
+      };
+    }
+
+    stageAtom.markAutoAdvance?.();
+
+    let nav = typeof window !== 'undefined' ? window.unifiedNav : null;
+    if (!nav) {
+      try {
+        const module = await import('@/theater/UnifiedNavigationAPI.js');
+        nav = module?.default ?? nav;
+      } catch (error) {
+        console.error('[StateCommands] Failed to load UnifiedNavigationAPI for auto-advance', error);
+        return { success: false, reason: 'unified_nav_missing', error };
+      }
+    }
+
+    if (!nav) {
+      console.error('[StateCommands] Unified navigation not available for auto-advance');
+      return { success: false, reason: 'unified_nav_missing' };
+    }
+
+    try {
+      let success = false;
+      const navOptions = {
+        smooth,
+        skipNarration,
+        source: `auto_advance_${source}`,
+      };
+
+      if (toStage) {
+        const result = await nav.navigateToStage?.(toStage, navOptions);
+        success = result !== false;
+      } else if (typeof nav.nextStage === 'function') {
+        const result = await nav.nextStage(navOptions);
+        success = result !== false;
+      } else {
+        console.warn('[StateCommands] No target stage for auto-advance and nav.nextStage unavailable');
+        success = false;
+      }
+
+      if (!success) {
+        console.warn('[StateCommands] Auto-advance navigation failed', {
+          from: fromStage,
+          to: toStage,
+          source,
+        });
+        return { success: false, reason: 'navigation_failed' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('[StateCommands] Auto-advance navigation error', error);
+      return { success: false, reason: 'navigation_error', error };
+    }
+  }
+
+  setStage(stageInput, options = {}) {
+    const stageNames =
+      stageAtom.getStageNames?.() ??
+      (Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : []);
+
+    let stageName = null;
+    if (typeof stageInput === 'string') {
+      stageName = stageAtom.isValidStage?.(stageInput) ? stageInput : null;
+    } else if (typeof stageInput === 'number') {
+      stageName = stageNames[stageInput] || null;
+    } else if (stageInput && typeof stageInput === 'object') {
+      stageName =
+        stageInput.name ||
+        stageInput.stage ||
+        stageInput.id ||
+        stageInput.slug ||
+        stageInput.key ||
+        null;
+      if (stageName && !stageAtom.isValidStage?.(stageName)) {
+        stageName = null;
+      }
+    }
+
+    if (!stageName || !stageAtom.isValidStage?.(stageName)) {
+      console.error('[StateCommands] setStage received invalid stage input', stageInput);
+      return false;
+    }
+
+    const currentStage = stageAtom.getState?.()?.currentStage;
+    if (currentStage === stageName) {
+      return true;
+    }
+
+    const callerLabel = options?.source || 'StateCommands.setStage';
+    try {
+      const validation = contractValidator.validateDirect(stageName, callerLabel);
+      if (!validation?.valid) {
+        console.error('[StateCommands] Direct navigation contract violation', {
+          targetStage: stageName,
+          caller: callerLabel,
+          violations: validation?.violations,
+        });
+
+        const hasCritical = validation?.violations?.some(
+          (violation) => (violation.severity || '').toUpperCase() === 'CRITICAL'
+        );
+        if (hasCritical) {
+          return false;
+        }
+      }
+    } catch (validationError) {
+      console.error('[StateCommands] Direct navigation contract validation error', {
+        targetStage: stageName,
+        caller: callerLabel,
+        error: validationError?.message,
+        violations: validationError?.violations,
+      });
+      const hasCritical = validationError?.violations?.some(
+        (violation) => (violation.severity || '').toUpperCase() === 'CRITICAL'
+      );
+      if (hasCritical) {
+        return false;
+      }
+    }
+
+    stageAtom.setStage?.(stageName);
+
+    if (options.pauseNarrative) {
+      narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
+    }
+
+    return true;
+  }
+
   adjustMorph(delta, options = {}) {
     const current = narrativeAtom.getState?.()?.morphProgress ?? 0;
     return this.setMorphProgress(current + delta, options);
@@ -260,6 +452,33 @@ class StateCommands {
       const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;
       if (!gateActive || gateTarget === targetStage) {
         if (currentStage !== targetStage) {
+          try {
+            const validation = contractValidator.validateDirect(targetStage, 'StateCommands.setScrollProgress');
+            if (!validation?.valid) {
+              console.error('[StateCommands] Scroll progress direct navigation contract violation', {
+                targetStage,
+                violations: validation?.violations,
+              });
+              const hasCritical = validation?.violations?.some(
+                (violation) => (violation.severity || '').toUpperCase() === 'CRITICAL'
+              );
+              if (hasCritical) {
+                return clamped;
+              }
+            }
+          } catch (validationError) {
+            console.error('[StateCommands] Scroll progress direct navigation validation error', {
+              targetStage,
+              error: validationError?.message,
+              violations: validationError?.violations,
+            });
+            const hasCritical = validationError?.violations?.some(
+              (violation) => (violation.severity || '').toUpperCase() === 'CRITICAL'
+            );
+            if (hasCritical) {
+              return clamped;
+            }
+          }
           stageAtom.jumpToStage(targetStage);
         }
       }

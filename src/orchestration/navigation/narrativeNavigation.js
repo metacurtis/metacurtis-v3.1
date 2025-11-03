@@ -6,6 +6,7 @@ import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import unifiedNav from '@/theater/UnifiedNavigationAPI.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 const getStageNames = () => {
   const names = stageAtom.getStageNames?.();
@@ -52,10 +53,9 @@ const jumpToStage = (stageName, options = {}) => {
 
 const toggleAutoAdvance = (forcedValue) => {
   const current = stageAtom.getState().autoAdvanceEnabled;
-  const nextValue =
-    typeof forcedValue === 'boolean' ? forcedValue : !current;
-  stageAtom.setAutoAdvanceEnabled(nextValue);
-  return nextValue;
+  const nextValue = typeof forcedValue === 'boolean' ? forcedValue : !current;
+  stateCommands.setAutoAdvanceEnabled(nextValue, 'narrativeNavigation.toggle');
+  return stageAtom.getState().autoAdvanceEnabled;
 };
 
 const buildNavigationState = () => {

@@ -11,6 +11,7 @@ import {
   isControlAllowed,
 } from '@/utils/runtimeGuards.js';
 import { NarrationFragment } from '../fragments/NarrationFragment.jsx';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 const DEBUG_NARRATION = true;
 const DEFAULT_CHARS_PER_SECOND = 15;
@@ -209,12 +210,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
       if (typeof window === 'undefined') return;
 
-      const controls = window.stageControls;
-      const isAutoEnabled =
-        controls?.isAutoAdvanceEnabled?.() ??
-        controls?.getState?.()?.autoAdvanceEnabled ??
-        stageAtom.getState?.()?.autoAdvanceEnabled ??
-        false;
+      const isAutoEnabled = stageAtom.getState?.()?.autoAdvanceEnabled ?? false;
 
       if (!isAutoEnabled) {
         narrationDiagnostic.log('AUTO_ADVANCE_DISABLED', {
@@ -231,16 +227,12 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         const timeoutId = setTimeout(() => {
           timersRef.current.delete(timeoutId);
 
-          const liveControls = window.stageControls;
-          if (!liveControls?.next) return;
-          const autoStillEnabled =
-            liveControls.isAutoAdvanceEnabled?.() ??
-            liveControls.getState?.()?.autoAdvanceEnabled ??
-            stageAtom.getState?.()?.autoAdvanceEnabled ??
-            false;
-          if (!autoStillEnabled) return;
+          const latestState = stageAtom.getState?.() || {};
+          if (!latestState.autoAdvanceEnabled) {
+            return;
+          }
 
-          const liveStage = liveControls.getCurrentStage?.();
+          const liveStage = latestState.currentStage;
           if (liveStage && liveStage !== completedStageName) {
             narrationDiagnostic.log('AUTO_ADVANCE_ABORT_STAGE_CHANGED', {
               expected: completedStageName,
@@ -250,7 +242,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             return;
           }
 
-          if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {
+          if (!stateCommands.canAutoAdvance()) {
             narrationDiagnostic.log('AUTO_ADVANCE_WAIT', {
               stage: completedStageName,
               retryIn: AUTO_ADVANCE_RETRY_MS,
@@ -267,15 +259,13 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             return;
           }
 
-          const liveInfo = liveControls.getInfo?.() || {};
-          const liveTotal =
-            liveInfo.totalStages ??
-            liveControls.getStageCount?.() ??
-            (Array.isArray(liveControls.getStageNames?.()) ? liveControls.getStageNames().length : null);
+          const stageInfo = stageAtom.getStageInfo?.() || {};
+          const stageNamesRef = stageAtom.getStageNames?.() || [];
           const liveIndex =
-            liveInfo.stageIndex ??
-            liveControls.getCurrentStageIndex?.() ??
-            null;
+            typeof stageInfo.stageIndex === 'number'
+              ? stageInfo.stageIndex
+              : Math.max(0, stageNamesRef.indexOf(completedStageName));
+          const liveTotal = stageNamesRef.length;
 
           if (
             typeof liveTotal === 'number' &&
@@ -292,11 +282,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             return;
           }
 
-          const stageNames = liveControls.getStageNames?.();
-          const nextStageName =
-            Array.isArray(stageNames) && typeof liveIndex === 'number'
-              ? stageNames[liveIndex + 1]
-              : liveInfo.nextStage ?? null;
+          const nextStageName = stageNamesRef[liveIndex + 1] ?? stageInfo.nextStage ?? null;
 
           narrationDiagnostic.log('AUTO_ADVANCE_EXEC', {
             from: completedStageName,
@@ -312,41 +298,21 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           }
 
           const advanceVia = async () => {
-            liveControls.markAutoAdvance?.();
-            try {
-              const nav =
-                window.unifiedNav ||
-                (await import('@/theater/UnifiedNavigationAPI.js')).default;
+            const result = await stateCommands.requestAutoAdvance(completedStageName, nextStageName, {
+              source: 'narration',
+            });
 
-              if (nav) {
-                if (nextStageName) {
-                  await nav.navigateToStage(nextStageName, {
-                    smooth: true,
-                    source: 'narration_auto_advance',
-                  });
-                  return;
-                }
-                if (typeof nav.nextStage === 'function') {
-                  await nav.nextStage({
-                    smooth: true,
-                    source: 'narration_auto_advance',
-                  });
-                  return;
-                }
+            if (!result?.success) {
+              narrationDiagnostic.log('AUTO_ADVANCE_REJECTED', {
+                stage: completedStageName,
+                nextStage: nextStageName,
+                origin,
+                reason: result?.reason ?? 'unknown',
+              });
+
+              if (result?.reason === 'interval_violation') {
+                scheduleAutoAdvance(AUTO_ADVANCE_RETRY_MS);
               }
-            } catch (error) {
-              console.warn('⚠️ [AUTO-ADVANCE] Unified navigation failed, using fallback', {
-                error,
-                nextStageName,
-              });
-            }
-
-            liveControls.next?.();
-            if (nextStageName) {
-              BeatBus.emit?.(EVENTS.START_NARRATIVE, {
-                stage: nextStageName,
-                source: 'auto_advance',
-              });
             }
           };
 
