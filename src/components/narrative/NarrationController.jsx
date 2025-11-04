@@ -514,21 +514,33 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         });
 
         if (particleEffectPayload) {
-          console.log('[Narration] 🎨 Emitting particle directive:', {
-            verb: segment.visual,
-            effect: particleEffectPayload,
-          });
-          BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
+          const emissionTimestamp =
+            typeof performance !== 'undefined' && typeof performance.now === 'function'
+              ? performance.now()
+              : Date.now();
+          const directive = {
             kind: 'particle-effect',
             ...particleEffectPayload,
             verb: segment.visual,
             stage: stageName,
             source: 'beat_visual',
-            timestamp:
-              typeof performance !== 'undefined' && typeof performance.now === 'function'
-                ? performance.now()
-                : Date.now(),
-          });
+            timestamp: emissionTimestamp,
+          };
+
+          console.groupCollapsed?.('📤 [NarrationController] Emitting RENDER_DIRECTIVE');
+          console.log('Verb:', segment.visual);
+          console.log('Stage:', stageName);
+          console.log('Directive payload:', directive);
+          console.groupEnd?.();
+
+          BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, directive);
+
+          if (typeof window !== 'undefined') {
+            window.__lastRenderDirective = {
+              directive,
+              emittedAt: Date.now(),
+            };
+          }
         }
 
         const isLastBeat =

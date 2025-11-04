@@ -88,7 +88,13 @@ export const createBlueprintBinder = ({
   const blueprintEvent = events?.BLUEPRINT_READY ?? EVENTS.BLUEPRINT_READY;
 
   const applyDirective = (payload = {}) => {
-    if (!payload || ignoreDirectivesRef?.current) return false;
+    if (!payload) return false;
+    if (ignoreDirectivesRef?.current) {
+      if (dev) {
+        console.warn('[BlueprintBinder] Directive ignored due to ignoreDirectivesRef flag', payload);
+      }
+      return false;
+    }
 
     const directive =
       payload?.directive && typeof payload.directive === 'object'
@@ -106,17 +112,44 @@ export const createBlueprintBinder = ({
         tiers: directive?.tiers || effect?.tiers || null,
         keys: Object.keys(directive || {}),
       });
+      console.log('✅ [BlueprintBinder] Forwarding directive to renderer');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.__lastRenderDirectiveReceived = {
+        payload,
+        directive,
+        effect,
+        at: Date.now(),
+      };
     }
 
     const material = materialRef?.current;
     const geometry = geometryRef?.current;
-    if (!material?.uniforms || !geometry) {
-      if (dev) console.warn('[BlueprintBinder] Directive ignored (renderer not ready)');
+    const hasMaterial = !!material;
+    const hasUniforms = !!material?.uniforms;
+    const hasGeometry = !!geometry;
+
+    if (!hasMaterial || !hasUniforms) {
+      if (dev) {
+        console.warn('[BlueprintBinder] Directive ignored (material not ready)', {
+          hasMaterial,
+          hasUniforms,
+          hasGeometry,
+        });
+      }
       return false;
+    }
+
+    if (!hasGeometry && dev) {
+      console.warn('[BlueprintBinder] Directive received before geometry ready; applying material-only updates', {
+        verb: directive?.verb ?? payload?.verb ?? null,
+      });
     }
 
     const uniforms = material.uniforms;
     let uniformsDirty = false;
+    let appliedCount = 0;
 
     const get = (key) =>
       directive[key] !== undefined
@@ -258,12 +291,27 @@ export const createBlueprintBinder = ({
         setNumberUniform('uTierHighlight', targetedTiers[0]);
       };
 
-      if (effect.uMotionMode !== undefined) setNumberUniform('uMotionMode', effect.uMotionMode);
-      if (effect.uFlowTurbulence !== undefined) setNumberUniform('uFlowTurbulence', effect.uFlowTurbulence);
-      if (effect.uStreakIntensity !== undefined) setNumberUniform('uStreakIntensity', effect.uStreakIntensity);
-      if (effect.uSpreadFactor !== undefined) setNumberUniform('uSpreadFactor', effect.uSpreadFactor);
-      if (effect.uTierHighlight !== undefined) setNumberUniform('uTierHighlight', effect.uTierHighlight);
-      if (effect.uMorphType !== undefined) setNumberUniform('uMorphType', effect.uMorphType);
+      if (effect.uMotionMode !== undefined && setNumberUniform('uMotionMode', effect.uMotionMode)) {
+        appliedCount += 1;
+      }
+      if (effect.uParticlePhase !== undefined && setNumberUniform('uParticlePhase', effect.uParticlePhase)) {
+        appliedCount += 1;
+      }
+      if (effect.uFlowTurbulence !== undefined && setNumberUniform('uFlowTurbulence', effect.uFlowTurbulence)) {
+        appliedCount += 1;
+      }
+      if (effect.uStreakIntensity !== undefined && setNumberUniform('uStreakIntensity', effect.uStreakIntensity)) {
+        appliedCount += 1;
+      }
+      if (effect.uSpreadFactor !== undefined && setNumberUniform('uSpreadFactor', effect.uSpreadFactor)) {
+        appliedCount += 1;
+      }
+      if (effect.uTierHighlight !== undefined && setNumberUniform('uTierHighlight', effect.uTierHighlight)) {
+        appliedCount += 1;
+      }
+      if (effect.uMorphType !== undefined && setNumberUniform('uMorphType', effect.uMorphType)) {
+        appliedCount += 1;
+      }
       if (effect.uMotionParams !== undefined) setArrayUniform(uniforms.uMotionParams, effect.uMotionParams);
 
       if (Array.isArray(effect.tierModes)) updateTierModes(effect.tierModes);
@@ -389,7 +437,9 @@ export const createBlueprintBinder = ({
       if (activeCount !== null) {
         const count = Math.max(0, Math.floor(activeCount));
         setActiveCount?.(count);
-        geometry.setDrawRange(0, count);
+        if (geometry) {
+          geometry.setDrawRange(0, count);
+        }
         if (uniforms.uActiveCount) {
           uniforms.uActiveCount.value = count;
           markDirty(uniforms.uActiveCount);
@@ -408,7 +458,9 @@ export const createBlueprintBinder = ({
         const drawCount = toNumber(get('drawCount'));
         if (drawCount !== null) {
           const count = Math.max(0, Math.floor(drawCount));
-          geometry.setDrawRange(0, count);
+          if (geometry) {
+            geometry.setDrawRange(0, count);
+          }
           if (typeof window !== 'undefined') {
             window.__lastActiveCount = count;
           }
@@ -519,13 +571,13 @@ export const createBlueprintBinder = ({
       }
 
       const flowTurbulence = get('uFlowTurbulence') ?? get('flowTurbulence');
-      if (flowTurbulence !== undefined) {
-        setNumberUniform('uFlowTurbulence', flowTurbulence);
+      if (flowTurbulence !== undefined && setNumberUniform('uFlowTurbulence', flowTurbulence)) {
+        appliedCount += 1;
       }
 
       const streakIntensity = get('uStreakIntensity') ?? get('streakIntensity');
-      if (streakIntensity !== undefined) {
-        setNumberUniform('uStreakIntensity', streakIntensity);
+      if (streakIntensity !== undefined && setNumberUniform('uStreakIntensity', streakIntensity)) {
+        appliedCount += 1;
       }
 
       const motionParams = get('uMotionParams') ?? get('motionParams');
@@ -596,12 +648,41 @@ export const createBlueprintBinder = ({
 
       applyPalette();
       applyCanonicalEffect();
+
+      const directUniformEntries = [
+        ['uMotionMode', get('uMotionMode')],
+        ['uMotionMode', effect?.motionMode],
+        ['uParticlePhase', get('uParticlePhase') ?? get('particlePhase')],
+        ['uParticlePhase', effect?.particlePhase],
+        ['uFlowTurbulence', get('uFlowTurbulence') ?? get('flowTurbulence')],
+        ['uFlowTurbulence', effect?.flowTurbulence],
+        ['uTierHighlight', get('uTierHighlight')],
+        ['uTierHighlight', effect?.tierHighlight],
+        ['uSpreadFactor', get('uSpreadFactor')],
+        ['uSpreadFactor', effect?.spreadFactor],
+        ['uStreakIntensity', get('uStreakIntensity') ?? get('streakIntensity')],
+        ['uStreakIntensity', effect?.intensity],
+      ];
+
+      directUniformEntries.forEach(([uniformKey, value]) => {
+        if (value === undefined) return;
+        if (setNumberUniform(uniformKey, value)) {
+          appliedCount += 1;
+        }
+      });
+
+      if (dev && appliedCount > 0) {
+        console.log(`✅ [BlueprintBinder] Applied ${appliedCount} uniform updates from directive`);
+      }
     } finally {
       if (renderGuardRef) renderGuardRef.current = false;
     }
 
     if (uniformsDirty) {
       material.uniformsNeedUpdate = true;
+      if (typeof material.needsUpdate === 'boolean') {
+        material.needsUpdate = true;
+      }
     }
 
     trace?.('DIR', {
@@ -810,9 +891,17 @@ export const createBlueprintBinder = ({
       }
     }
 
-    if (geometryRef?.current) {
-      disposeAttributes(geometryRef.current);
-      geometryRef.current.dispose?.();
+    const previousGeometry = geometryRef?.current || null;
+    if (previousGeometry) {
+      disposeAttributes(previousGeometry);
+      previousGeometry.dispose?.();
+    }
+
+    if (typeof window !== 'undefined' && dev) {
+      if (window.__particleGeometry === previousGeometry) {
+        delete window.__particleGeometry;
+      }
+      window.__renderDiag?.unregister?.('WebGLBackground.geometry');
     }
 
     const geo = new THREE.BufferGeometry();
@@ -867,6 +956,17 @@ export const createBlueprintBinder = ({
     if (geometryBoundOnceRef) geometryBoundOnceRef.current = true;
     if (fitsLockedRef) fitsLockedRef.current = false;
 
+    if (typeof window !== 'undefined' && dev) {
+      const bg = window.__webglBackground || {};
+      window.__particleGeometry = geo;
+      window.__webglBackground = {
+        ...bg,
+        geometry: geo,
+        geometryRef,
+      };
+      window.__renderDiag?.register?.('WebGLBackground.geometry', geo);
+    }
+
     if (isEmergence) {
       if (fenceReadyRef) fenceReadyRef.current = false;
       clearPendingFencepost?.();
@@ -881,6 +981,16 @@ export const createBlueprintBinder = ({
     }
 
     if (mat) {
+      if (typeof window !== 'undefined' && dev) {
+        const bg = window.__webglBackground || {};
+        window.__consciousnessMaterial = mat;
+        window.__webglBackground = {
+          ...bg,
+          material: mat,
+          materialRef,
+        };
+        window.__renderDiag?.register?.('WebGLBackground.material', mat);
+      }
       applyRendererFitsToViewport?.(geo, viewportHintRef?.current || viewport);
       logBind?.(isEmergence ? 'emergence' : 'stage', {
         stage: raw.stageName || st || 'genesis',
@@ -1351,16 +1461,55 @@ export const createBlueprintBinder = ({
     if (geometryRef?.current) {
       disposeAttributes(geometryRef.current);
       geometryRef.current.dispose?.();
+      const dead = geometryRef.current;
       geometryRef.current = null;
+      if (typeof window !== 'undefined' && dev) {
+        if (window.__particleGeometry === dead) {
+          delete window.__particleGeometry;
+        }
+        window.__renderDiag?.unregister?.('WebGLBackground.geometry');
+        const bg = window.__webglBackground || {};
+        if (bg.geometry === dead || bg.geometryRef === geometryRef) {
+          delete bg.geometry;
+          delete bg.geometryRef;
+          window.__webglBackground = bg;
+        }
+      }
+    }
+
+    if (typeof window !== 'undefined' && dev) {
+      const mat = materialRef?.current || null;
+      if (mat && window.__consciousnessMaterial === mat) {
+        delete window.__consciousnessMaterial;
+      }
+      if (mat) {
+        window.__renderDiag?.unregister?.('WebGLBackground.material');
+      }
+      const bg = window.__webglBackground || {};
+      if (bg.material === mat || bg.materialRef === materialRef) {
+        delete bg.material;
+        delete bg.materialRef;
+        window.__webglBackground = bg;
+      }
     }
   };
 
-  return {
+  const api = {
     bindBlueprint,
     applyDirective,
     subscribe,
     dispose,
   };
+
+  if (dev && typeof window !== 'undefined') {
+    window.__webglBinder = {
+      ...api,
+      materialRef,
+      geometryRef,
+    };
+  }
+
+  return api;
 };
 
 export const createBlueprintReadyHandler = (binder, onBound) => {

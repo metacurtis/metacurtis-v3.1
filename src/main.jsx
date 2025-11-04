@@ -59,6 +59,8 @@ if (import.meta.env.DEV) {
   Promise.all([
     import('./dev/visual-probes.js'),
     import('./dev/trace.js'),
+    import('./dev/renderDiagnostics.js'),
+    import('./dev/diagnosticsHub.js'),
   ])
     .then(() => {
       console.log('✅ [DEV MODE] Dev tools loaded');

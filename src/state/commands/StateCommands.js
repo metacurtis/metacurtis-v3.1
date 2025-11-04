@@ -63,6 +63,7 @@ import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import NavigationGate from '@/theater/NavigationGate.js';
+import unifiedNavInstance from '@/theater/UnifiedNavigationAPI.js';
 
 const clamp01 = (value) => {
   const num = Number.isFinite(value) ? value : Number(value);
@@ -305,13 +306,10 @@ class StateCommands {
     stageAtom.markAutoAdvance?.();
 
     let nav = typeof window !== 'undefined' ? window.unifiedNav : null;
-    if (!nav) {
-      try {
-        const module = await import('@/theater/UnifiedNavigationAPI.js');
-        nav = module?.default ?? nav;
-      } catch (error) {
-        console.error('[StateCommands] Failed to load UnifiedNavigationAPI for auto-advance', error);
-        return { success: false, reason: 'unified_nav_missing', error };
+    if (!nav && unifiedNavInstance) {
+      nav = unifiedNavInstance;
+      if (typeof window !== 'undefined' && !window.unifiedNav) {
+        window.unifiedNav = nav;
       }
     }
 

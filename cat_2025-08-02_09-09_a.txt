@@ -1,0 +1,1256 @@
+  // engine/ConsciousnessEngine.js
+  // Enhanced consciousness particle engine with tier system support
+  // Version: 3.0.1 | Date: 2025-01-24
+
+  import seedrandom from "seedrandom";
+  import { SST_V3_CONFIG, getStageByName } from "@/config/sst3/sst-v3.0-config.js";
+  import { tierSystem } from "./TierSystem.js";
+  import { ConsciousnessPatterns } from "@/components/webgl/consciousness/ConsciousnessPatterns.js";
+  import { getPointSpriteAtlasSingleton } from "@/components/webgl/consciousness/PointSpriteAtlas.js";
+
+  // Schema version for cache invalidation
+  const SCHEMA_VERSION = "v3.0.1";
+
+  // Hoist static maps for performance
+  const BEHAVIOR_MAP = Object.freeze({
+    none: 0,
+    drift: 1,
+    cluster: 2,
+    orbital: 3,
+    structural: 4,
+    twinkle: 5,
+    pulse: 6,
+    anchor: 7,
+    prominent: 8,
+    connected: 9,
+    anatomical: 10
+  });
+
+  const QUALITY_MULTIPLIERS = Object.freeze({
+    LOW: 0.4,
+    MEDIUM: 0.6,
+    HIGH: 0.9,
+    ULTRA: 1.0
+  });
+
+  const STAGE_AFFINITY_BOOSTS = Object.freeze({
+    genesis: 0.1,
+    velocity: 0.3,
+    transcendence: 0.4
+  });
+
+  const ATMOSPHERIC_SPREADS = Object.freeze([40, 30, 20, 15]); // Tier 0-3
+
+  export class ConsciousnessEngine {
+    constructor() {
+      this.isInitialized = false;
+      this.blueprintCache = new Map();
+      this.currentStage = "genesis";
+      this.currentQuality = "HIGH";
+      
+      // Tier system integration
+      this.tierSystem = tierSystem;
+      
+      // Event handler references for cleanup
+      this._aqsHandler = null;
+      
+      // Pre-allocated arrays for max performance (reusable)
+      this._preallocatedArrays = null;
+      this._maxParticlesAllocated = 0;
+      
+      // Performance tracking with optimized metrics
+      this.metrics = {
+        blueprintsGenerated: 0,
+        cacheHits: 0,
+        totalGenerationTime: 0, // Keep running sum
+        particlesGenerated: 0
+      };
+      
+      // Listen for quality changes
+      this.listenToAQS();
+      
+      console.log("🧠 ConsciousnessEngine v3.0.1: Initialized with optimizations");
+    }
+    
+    /**
+    * Listen for adaptive quality system changes (with proper cleanup)
+    */
+    listenToAQS() {
+      if (typeof window === "undefined" || !window.addEventListener) return;
+      
+      // Store handler reference for cleanup
+      this._aqsHandler = (event) => {
+        if (!event?.detail?.tier) {
+          console.warn("🧠 Engine: Invalid AQS event", event);
+          return;
+        }
+        
+        const { tier, particles } = event.detail;
+        const oldTier = this.currentQuality;
+        this.currentQuality = tier;
+        
+        console.log(`🧠 Engine: Quality changed ${oldTier} → ${tier}`);
+        
+        // Clear cache on quality change to regenerate with new settings
+        this.clearCache();
+        
+        // Emit event for renderer (with SSR safety)
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("engineQualityChange", {
+            detail: { 
+              tier, 
+              particles,
+              stage: this.currentStage 
+            }
+          }));
+        }
+      };
+      
+      window.addEventListener("aqsQualityChange", this._aqsHandler);
+    }
+    
+    /**
+    * Get deterministic RNG for a stage/tier combination
+    */
+    getRNG(stageName, tier = null) {
+      const seed = tier !== null 
+        ? `${stageName}|${tier}|${SCHEMA_VERSION}`
+        : `${stageName}|${SCHEMA_VERSION}`;
+      return seedrandom(seed);
+    }
+    
+    /**
+    * Generate complete blueprint with tier support
+    */
+    async generateConstellationParticleData(particleCount, options = {}) {
+      const startTime = performance.now();
+      const { stageName = "genesis" } = options;
+      this.currentStage = stageName;
+      
+      // Ensure particle count doesn't exceed max
+      const maxParticles = SST_V3_CONFIG.performance.maxParticles;
+      const safeParticleCount = Math.min(particleCount, maxParticles);
+      
+      // Enhanced cache key with tier system state
+      const cacheKey = `${stageName}-${this.currentQuality}-${safeParticleCount}-${SCHEMA_VERSION}-${this.tierSystem.metrics.distributionsCalculated}`;
+      
+      if (this.blueprintCache.has(cacheKey)) {
+        this.metrics.cacheHits++;
+        console.log(`🧠 Engine: Using cached blueprint for ${cacheKey}`);
+        return this.blueprintCache.get(cacheKey);
+      }
+      
+      console.log(`🧠 Engine: Generating new v3.0.1 blueprint for ${stageName} (${safeParticleCount} particles)`);
+      
+      // Get stage configuration
+      const stageConfig = getStageByName(stageName);
+      if (!stageConfig) {
+        console.error(`🧠 Engine: Unknown stage "${stageName}"`);
+        return null;
+      }
+      
+      // Get tier distribution
+      const distribution = this.tierSystem.distributeParticles(safeParticleCount, stageName);
+      
+      // Allocate arrays efficiently
+      const arrays = this.allocateArrays(safeParticleCount);
+      
+      // Get brain pattern for this stage (with fail-safe)
+      const brainPattern = ConsciousnessPatterns?.getBrainRegionInfo?.(stageName) || null;
+      if (!brainPattern) {
+        console.warn(`🧠 Engine: No brain pattern for stage ${stageName}`);
+      }
+      
+      // Get atlas (with fail-safe)
+      const atlas = getPointSpriteAtlasSingleton?.() || null;
+      if (!atlas) {
+        console.warn("🧠 Engine: No sprite atlas available");
+      }
+      
+      // Generate particles by tier
+      let particleIndex = 0;
+      for (const tierInfo of distribution.tiers) {
+        const tierRNG = this.getRNG(stageName, tierInfo.tier);
+        
+        for (let i = 0; i < tierInfo.count && particleIndex < safeParticleCount; i++) {
+          this.generateTierAwareParticle(
+            particleIndex,
+            tierInfo,
+            stageName,
+            stageConfig,
+            brainPattern,
+            tierRNG,
+            atlas,
+            arrays
+          );
+          particleIndex++;
+        }
+      }
+      
+      // Create immutable blueprint
+      const blueprint = Object.freeze({
+        stageName,
+        stageConfig,
+        quality: this.currentQuality,
+        particleCount: safeParticleCount,
+        activeCount: particleIndex, // Track actual particles generated
+        maxParticles,
+        distribution,
+        ...arrays,
+        brainPattern,
+        timestamp: Date.now(),
+        version: SCHEMA_VERSION
+      });
+      
+      // Cache it
+      this.blueprintCache.set(cacheKey, blueprint);
+      this.limitCacheSize();
+      
+      // Update metrics efficiently
+      this.metrics.blueprintsGenerated++;
+      this.metrics.particlesGenerated += safeParticleCount;
+      this.metrics.totalGenerationTime += performance.now() - startTime;
+      
+      console.log(`🧠 Engine: Blueprint generated in ${(performance.now() - startTime).toFixed(2)}ms`);
+      
+      return blueprint;
+    }
+    
+    /**
+    * Allocate typed arrays efficiently (with reuse option)
+    */
+    allocateArrays(particleCount) {
+      // Option 1: Reuse pre-allocated arrays if large enough
+      if (this._preallocatedArrays && this._maxParticlesAllocated >= particleCount) {
+        return this._preallocatedArrays;
+      }
+      
+      // Option 2: Allocate exactly what we need
+      const arrays = {
+        atmosphericPositions: new Float32Array(particleCount * 3),
+        allenAtlasPositions: new Float32Array(particleCount * 3),
+        animationSeeds: new Float32Array(particleCount * 3),
+        sizeMultipliers: new Float32Array(particleCount),
+        opacityData: new Float32Array(particleCount),
+        atlasIndices: new Float32Array(particleCount),
+        tierData: new Float32Array(particleCount),
+        behaviorData: new Float32Array(particleCount * 3),
+        storyAffinity: new Float32Array(particleCount),
+        memoryFragment: new Float32Array(particleCount),
+        fusionMoment: new Float32Array(particleCount)
+      };
+      
+      // Store for potential reuse
+      if (particleCount >= SST_V3_CONFIG.performance.maxParticles * 0.8) {
+        this._preallocatedArrays = arrays;
+        this._maxParticlesAllocated = particleCount;
+      }
+      
+      return arrays;
+    }
+    
+    /**
+    * Generate individual particle with tier awareness
+    */
+    generateTierAwareParticle(
+      index,
+      tierInfo,
+      stageName,
+      stageConfig,
+      brainPattern,
+      rng,
+      atlas,
+      arrays
+    ) {
+      const i3 = index * 3;
+      
+      // Create particle data object for tier system
+      const particleData = {
+        index,
+        tier: tierInfo.tier,
+        position: { x: 0, y: 0, z: 0 }
+      };
+      
+      // Generate base atmospheric position
+      const atmosphericSpread = this.getAtmosphericSpread(tierInfo.tier);
+      particleData.position.x = (rng() - 0.5) * atmosphericSpread;
+      particleData.position.y = (rng() - 0.5) * atmosphericSpread;
+      particleData.position.z = (rng() - 0.5) * atmosphericSpread * 0.5;
+      
+      // Apply tier behaviors
+      const tierEnhanced = this.tierSystem.applyTierBehavior(particleData, stageName, rng);
+      
+      // Apply clustering if enabled
+      if (tierEnhanced.clustering && tierEnhanced.clustering.inCluster) {
+        particleData.position = tierEnhanced.clustering.adjustedPosition;
+      }
+      
+      // Store atmospheric position
+      arrays.atmosphericPositions[i3] = particleData.position.x;
+      arrays.atmosphericPositions[i3 + 1] = particleData.position.y;
+      arrays.atmosphericPositions[i3 + 2] = particleData.position.z;
+      
+      // Generate brain position (Allen Atlas target)
+      let brainPosition = this.generateBrainPosition(
+        tierInfo.tier,
+        brainPattern,
+        stageConfig.brainCoordinates,
+        rng
+      );
+      
+      // Apply center weighting if enabled
+      if (tierEnhanced.centerWeight) {
+        brainPosition = tierEnhanced.centerWeight.adjustedPosition;
+      }
+      
+      arrays.allenAtlasPositions[i3] = brainPosition.x;
+      arrays.allenAtlasPositions[i3 + 1] = brainPosition.y;
+      arrays.allenAtlasPositions[i3 + 2] = brainPosition.z;
+      
+      // Animation seeds (could be packed if needed)
+      arrays.animationSeeds[i3] = rng();
+      arrays.animationSeeds[i3 + 1] = rng();
+      arrays.animationSeeds[i3 + 2] = rng();
+      
+      // Tier data
+      arrays.tierData[index] = tierInfo.tier;
+      
+      // Size and opacity from tier system
+      arrays.sizeMultipliers[index] = tierEnhanced.sizeMultiplier;
+      const opacityRange = tierEnhanced.opacityRange;
+      arrays.opacityData[index] = opacityRange[0] + rng() * (opacityRange[1] - opacityRange[0]);
+      
+      // Sprite selection from tier system
+      arrays.atlasIndices[index] = tierEnhanced.spriteIndex;
+      
+      // Behavior data (using hoisted map)
+      arrays.behaviorData[i3] = this.encodeBehavior(tierEnhanced.behaviors[0] || "drift");
+      arrays.behaviorData[i3 + 1] = this.encodeBehavior(tierEnhanced.behaviors[1] || "none");
+      arrays.behaviorData[i3 + 2] = tierEnhanced.behaviorIntensity || 1.0;
+      
+      // v3.0: Story affinity (how connected to narrative)
+      arrays.storyAffinity[index] = this.calculateStoryAffinity(tierInfo.tier, index, stageName);
+      
+      // v3.0: Memory fragment association
+      arrays.memoryFragment[index] = this.calculateMemoryAssociation(tierInfo.tier, rng);
+      
+      // v3.0: Fusion moment readiness
+      arrays.fusionMoment[index] = tierInfo.tier >= 2 ? rng() * 0.5 + 0.5 : rng() * 0.3;
+    }
+    
+    /**
+    * Get atmospheric spread for a tier (using hoisted constant)
+    */
+    getAtmosphericSpread(tier) {
+      return ATMOSPHERIC_SPREADS[tier] || 30;
+    }
+    
+    /**
+    * Generate brain position for a particle
+    */
+    generateBrainPosition(tier, brainPattern, brainCoords, rng) {
+    const position = { x: 0, y: 0, z: 0 };
+    
+    // Add safety defaults
+    const safeCoords = brainCoords || { center: [0, 0, 0], radius: 20 };
+    const center = safeCoords.center || [0, 0, 0];
+    const radius = safeCoords.radius || 20;
+    
+    // Tier 3 (constellation) uses precise brain coordinates
+    if (tier === 3 && brainPattern?.coordinates?.points?.length > 0) {
+      const points = brainPattern.coordinates.points;
+      const pointIndex = Math.floor(rng() * points.length);
+      const point = points[pointIndex];
+      const variation = 0.5; // Small variation for organic feel
+      
+      position.x = point[0] + (rng() - 0.5) * variation;
+      position.y = point[1] + (rng() - 0.5) * variation;
+      position.z = point[2] + (rng() - 0.5) * variation;
+    } else {
+      // Other tiers use broader distribution around brain center
+      const spread = tier === 0 ? radius * 1.5 : tier === 1 ? radius * 1.2 : radius;
+      
+      position.x = center[0] + (rng() - 0.5) * spread;
+      position.y = center[1] + (rng() - 0.5) * spread;
+      position.z = center[2] + (rng() - 0.5) * spread * 0.5;
+    }
+    
+    return position;
+  }
+    
+    /**
+    * Encode behavior name to numeric value for shader (using hoisted map)
+    */
+    encodeBehavior(behaviorName) {
+      return BEHAVIOR_MAP[behaviorName] ?? 0;
+    }
+    
+    /**
+    * Calculate story affinity for v3.0 (using hoisted constants)
+    */
+    calculateStoryAffinity(tier, index, stageName) {
+      const baseAffinity = tier * 0.25;
+      const stageBoost = STAGE_AFFINITY_BOOSTS[stageName] || 0.2;
+      const variation = (index % 100) / 100 * 0.1;
+      
+      return Math.min(baseAffinity + stageBoost + variation, 1.0);
+    }
+    
+    /**
+    * Calculate memory fragment association for v3.0
+    */
+    calculateMemoryAssociation(tier, rng) {
+      // Tier 2 and 3 have higher chance of memory association
+      if (tier >= 2) {
+        return rng() > 0.7 ? rng() : 0;
+      }
+      return rng() > 0.9 ? rng() * 0.5 : 0;
+    }
+    
+    /**
+    * Get active particle count for current quality (with max safety)
+    */
+    getActiveParticleCount(stageName) {
+      const stageConfig = getStageByName(stageName);
+      if (!stageConfig) return 5000; // Fallback
+      
+      const baseCount = stageConfig.particles;
+      const multiplier = QUALITY_MULTIPLIERS[this.currentQuality] || 0.9;
+      const count = Math.round(baseCount * multiplier);
+      
+      // Never exceed max particles
+      return Math.min(count, SST_V3_CONFIG.performance.maxParticles);
+    }
+    
+    /**
+    * Clear blueprint cache
+    */
+    clearCache() {
+      this.blueprintCache.clear();
+      console.log("🧠 Engine: Blueprint cache cleared");
+    }
+    
+    /**
+    * Limit cache size to prevent memory issues
+    */
+    limitCacheSize(maxSize = 20) {
+      if (this.blueprintCache.size > maxSize) {
+        const firstKey = this.blueprintCache.keys().next().value;
+        this.blueprintCache.delete(firstKey);
+      }
+    }
+    
+    /**
+    * Get engine metrics (with computed average)
+    */
+    getMetrics() {
+      const totalOps = this.metrics.blueprintsGenerated + this.metrics.cacheHits;
+      
+      return {
+        ...this.metrics,
+        averageGenerationTime: this.metrics.blueprintsGenerated > 0 
+          ? this.metrics.totalGenerationTime / this.metrics.blueprintsGenerated 
+          : 0,
+        cacheSize: this.blueprintCache.size,
+        cacheHitRate: totalOps > 0 ? this.metrics.cacheHits / totalOps : 0,
+        tierSystemMetrics: this.tierSystem.getMetrics()
+      };
+    }
+    
+    /**
+    * Cleanup (with proper event handler removal)
+    */
+    dispose() {
+      this.clearCache();
+      
+      // Remove event listener with stored reference
+      if (this._aqsHandler && typeof window !== "undefined") {
+        window.removeEventListener("aqsQualityChange", this._aqsHandler);
+        this._aqsHandler = null;
+      }
+      
+      // Clear pre-allocated arrays
+      this._preallocatedArrays = null;
+      this._maxParticlesAllocated = 0;
+      
+      console.log("🧠 Engine: Disposed");
+    }
+  }
+
+  // HMR-safe singleton
+  const getConsciousnessEngineSingleton = () => {
+    if (!globalThis.__CONSCIOUSNESS_ENGINE_V3__) {
+      globalThis.__CONSCIOUSNESS_ENGINE_V3__ = new ConsciousnessEngine();
+    }
+    return globalThis.__CONSCIOUSNESS_ENGINE_V3__;
+  };
+
+  export default getConsciousnessEngineSingleton();
+
+  // Development helpers (with SSR safety)
+  if (typeof window !== "undefined" && import.meta.env.DEV) {
+    window.consciousnessEngine = getConsciousnessEngineSingleton();
+    window.engineMetrics = () => window.consciousnessEngine.getMetrics();
+  }// CANONICAL AUTHORITY - SST v3.0 Config
+  export const SST_V3_CONFIG = {
+    version: "3.0.0",
+    schemaVersion: "2025-07-23",
+    features: {
+      gaussianFalloff: true,
+      noiseClusteringTier1: false,
+      centerWeightingTier4: true,
+      fusionMoments: true,
+      tierLOD: true,
+      memoryFragments: true,
+      narrativeDialogue: true,
+      audioSystem: true
+    },
+    performance: {
+      targetFPS: 60,
+      minFPS: 55,
+      maxParticles: 17000,
+      maxRenderTime: 16.67,
+      heapLimit: 250,
+      gcPauseMax: 3,
+      lodThresholds: { ultra:15000, high:10000, medium:5000, low:2000 }
+    },
+    tierSystem: {
+      count: 4,
+      defaultRatios: [0.5, 0.2, 0.15, 0.15],
+      sizeMultipliers: [0.6, 0.8, 1.2, 1.5],
+      opacityRanges: [
+        [0.3, 0.6],
+        [0.5, 0.8],
+        [0.7, 0.9],
+        [0.8, 1.0]
+      ],
+      names: [
+        "Consciousness Substrate",
+        "Spatial Awareness",
+        "Memory Anchors",
+        "Neural Constellations"
+      ]
+    },
+    stages: {
+      genesis: {
+        id: 0, name: "genesis", title: "Genesis Spark",
+        scrollRange: [0,14], duration: 30, particles: 2000,
+        tierRatios: [0.60,0.20,0.10,0.10],
+        colors: ["#00FF00","#22c55e","#15803d"],
+        brainRegion: "hippocampus",
+        brainCoordinates: { center: [-5, 0, -10], radius: 15 }, // Added
+        camera: { movement:"intimate_dolly", angle:5, duration:30 },
+        sprites: { tier1:[7], tier2:[0,1], tier3:[4], tier4:[1] }
+      },
+      discipline: {
+        id:1, name:"discipline", title:"Discipline Forge",
+        scrollRange:[14,28], duration:35, particles:3000,
+        tierRatios:[0.55,0.25,0.10,0.10],
+        colors:["#1e40af","#3b82f6","#1d4ed8"],
+        brainRegion:"brainstem",
+        brainCoordinates: { center: [0, -20, 0], radius: 10 }, // Added
+        camera:{ movement:"authority_orbit", angle:10, duration:35 },
+        sprites:{ tier1:[7], tier2:[0,1], tier3:[5], tier4:[11] }
+      },
+      neural: {
+        id:2, name:"neural", title:"Neural Awakening",
+        scrollRange:[28,42], duration:35, particles:5000,
+        tierRatios:[0.55,0.20,0.15,0.10],
+        colors:["#4338ca","#a855f7","#7c3aed"],
+        brainRegion:"leftTemporal",
+        brainCoordinates: { center: [-15, 0, 0], radius: 18 }, // Added
+        camera:{ movement:"discovery_orbit", angle:15, duration:35 },
+        sprites:{ tier1:[7], tier2:[0,1,2], tier3:[2], tier4:[10] }
+      },
+      velocity: {
+        id:3, name:"velocity", title:"Velocity Explosion",
+        scrollRange:[42,56], duration:40, particles:12000,
+        tierRatios:[0.45,0.20,0.15,0.20],
+        colors:["#7c3aed","#9333ea","#6b21a8"],
+        brainRegion:"multiRegion",
+        brainCoordinates: { center: [0, 0, 0], radius: 25 }, // Added
+        camera:{ movement:"dramatic_pullback", angle:20, duration:40, shake:true },
+        sprites:{ tier1:[7], tier2:[0,1,6], tier3:[6], tier4:[13] }
+      },
+      architecture: {
+        id:4, name:"architecture", title:"Architecture Consciousness",
+        scrollRange:[56,70], duration:35, particles:8000,
+        tierRatios:[0.50,0.20,0.15,0.15],
+        colors:["#0891b2","#06b6d4","#0e7490"],
+        brainRegion:"frontalLobe",
+        brainCoordinates: { center: [0, 10, 15], radius: 20 }, // Added
+        camera:{ movement:"grid_tracking", angle:12, duration:35 },
+        sprites:{ tier1:[7], tier2:[0,1], tier3:[11], tier4:[12] }
+      },
+      harmony: {
+        id:5, name:"harmony", title:"Harmonic Mastery",
+        scrollRange:[70,84], duration:35, particles:12000,
+        tierRatios:[0.50,0.20,0.15,0.15],
+        colors:["#f59e0b","#d97706","#b45309"],
+        brainRegion:"cerebellum",
+        brainCoordinates: { center: [0, -10, -15], radius: 18 }, // Added
+        camera:{ movement:"balletic_orbit", angle:25, duration:35 },
+        sprites:{ tier1:[7], tier2:[0,1,9], tier3:[9], tier4:[15] }
+      },
+      transcendence: {
+        id:6, name:"transcendence", title:"Consciousness Transcendence",
+        scrollRange:[84,100], duration:40, particles:15000,
+        tierRatios:[0.50,0.20,0.15,0.15],
+        colors:["#ffffff","#f59e0b","#00ffcc"],
+        brainRegion:"consciousnessCore",
+        brainCoordinates: { center: [0, 0, 0], radius: 30 }, // Added
+        camera:{ movement:"reverent_orbit", angle:30, duration:40 },
+        sprites:{ tier1:[7], tier2:[0,1,14], tier3:[14], tier4:[15] }
+      }
+    },
+    global: {
+      defaultTransitionDuration: 1000,
+      scrollSmoothing: 0.15,
+      morphAcceleration: 2.0,
+      audioMasterVolume: 0.8,
+      subtitlePosition: "bottom",
+      qualityAutoAdjust: true,
+      analyticsEnabled: true
+    }
+  };
+
+  // Add brainCoordinates to the freeze list
+  Object.freeze(SST_V3_CONFIG);
+  Object.freeze(SST_V3_CONFIG.features);
+  Object.freeze(SST_V3_CONFIG.performance);
+  Object.freeze(SST_V3_CONFIG.tierSystem);
+  Object.keys(SST_V3_CONFIG.stages).forEach(k=>{
+    Object.freeze(SST_V3_CONFIG.stages[k]);
+    Object.freeze(SST_V3_CONFIG.stages[k].sprites);
+    Object.freeze(SST_V3_CONFIG.stages[k].camera);
+    Object.freeze(SST_V3_CONFIG.stages[k].brainCoordinates); // Added
+  });
+  Object.freeze(SST_V3_CONFIG.global);
+
+  export const getStageByName = (name) => SST_V3_CONFIG.stages[name];
+  export const getStageByScroll = (p) =>
+    Object.values(SST_V3_CONFIG.stages).find(s => p >= s.scrollRange[0] && p < s.scrollRange[1]);
+  export const isFeatureEnabled = (flag) => !!SST_V3_CONFIG.features[flag];export const NARRATIVE_DIALOGUE = {
+    genesis: {
+      id:"narr_genesis_001",
+      narration:{
+        segments:[
+          { id:"gen_1", text:"I was eight years old...", timing:{start:3000, duration:8000} },
+          { id:"gen_3", text:"I typed those lines exactly...", timing:{start:17000, duration:5000}, memoryFragmentTrigger:"genesis_terminal" }
+        ]
+      }
+    },
+    discipline: {
+      id:"narr_discipline_001",
+      narration:{
+        segments:[
+          { id:"dis_1", text:"That spark? It got buried.", timing:{start:0, duration:3000} }
+        ]
+      }
+    }
+    // ... Add full segments later
+  };
+
+  export const getDialogueSegment = (stage, segmentId) => {
+    const s = NARRATIVE_DIALOGUE[stage];
+    if (!s) return null;
+    return s.narration?.segments?.find(seg=>seg.id===segmentId) || null;
+  };
+
+  export const getParticleCuesForStage = (stage) => {
+    const s = NARRATIVE_DIALOGUE[stage];
+    if (!s) return [];
+    return s.narration?.segments
+      ?.filter(seg=>seg.particleCue)
+      .map(seg=>({ timing:seg.timing.start, cue:seg.particleCue, segmentId:seg.id })) || [];
+  };
+  // src/components/consciousness/ConsciousnessTheater.jsx
+  // SST v3.0 PRODUCTION - Complete implementation with all fixes
+
+  import React, { useEffect, useState, useRef, useCallback } from 'react';
+  import { Canonical } from '../../config/canonical/canonicalAuthority';
+  import { stageAtom } from '../../stores/atoms/stageAtom';
+  import { qualityAtom } from '../../stores/atoms/qualityAtom';
+  import { useMemoryFragments } from '../../hooks/useMemoryFragments.js'; // FIXED: Named import
+  import WebGLCanvas from '../webgl/WebGLCanvas';
+  import DevPerformanceMonitor from '../dev/DevPerformanceMonitor';
+
+  console.log('🧬 LOADED: ConsciousnessTheater v3.0'); // Diagnostic
+
+  // ===== OPENING SEQUENCE COMPONENTS =====
+  const C64Cursor = ({ visible }) => (
+    <span style={{
+      color: '#00FF00',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '2rem',
+      opacity: visible ? 1 : 0,
+      transition: 'opacity 100ms'
+    }}>_</span>
+  );
+
+  const TerminalText = ({ text, typeSpeed = 50, onComplete, style = {} }) => {
+    const [displayText, setDisplayText] = useState('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+      if (currentIndex < text.length) {
+        const timeout = setTimeout(() => {
+          setDisplayText(text.slice(0, currentIndex + 1));
+          setCurrentIndex(currentIndex + 1);
+        }, typeSpeed);
+        return () => clearTimeout(timeout);
+      } else if (onComplete) {
+        onComplete();
+      }
+    }, [currentIndex, text, typeSpeed, onComplete]);
+
+    return (
+      <div style={{
+        color: '#00FF00',
+        fontFamily: 'Courier New, monospace',
+        fontSize: '1.5rem',
+        textShadow: '0 0 10px #00FF00',
+        ...style
+      }}>
+        {displayText}
+      </div>
+    );
+  };
+
+  const ScreenFill = ({ active, onComplete }) => {
+    const [lines, setLines] = useState([]);
+    
+    useEffect(() => {
+      if (!active) return;
+
+      let lineCount = 0;
+      const maxLines = 30;
+      
+      const interval = setInterval(() => {
+        if (lineCount < maxLines) {
+          setLines(prev => [...prev, `HELLO CURTIS `]);
+          lineCount++;
+        } else {
+          clearInterval(interval);
+          setTimeout(onComplete, 500);
+        }
+      }, 50);
+
+      return () => clearInterval(interval);
+    }, [active, onComplete]);
+
+    if (!active) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        color: '#00FF00',
+        fontFamily: 'Courier New, monospace',
+        fontSize: '1.2rem',
+        lineHeight: '1.2',
+        zIndex: 9999, // FIXED: Higher z-index
+        background: 'black',
+        whiteSpace: 'pre',
+        padding: '20px'
+      }}>
+        {lines.map((line, i) => (
+          <div key={i} style={{ display: 'inline' }}>
+            {line.repeat(10)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ===== NARRATION OVERLAY =====
+  const NarrationOverlay = ({ segment }) => {
+    if (!segment) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        bottom: '100px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '80%',
+        maxWidth: '800px',
+        background: 'rgba(0, 0, 0, 0.9)',
+        padding: '20px 30px',
+        borderRadius: '10px',
+        border: '1px solid rgba(0, 255, 0, 0.3)',
+        zIndex: 40
+      }}>
+        <p style={{
+          color: '#ffffff',
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '1.1rem',
+          lineHeight: '1.6',
+          margin: 0,
+          textAlign: 'center'
+        }}>
+          {segment.text}
+        </p>
+      </div>
+    );
+  };
+
+  // ===== MEMORY FRAGMENT RENDERER =====
+  const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
+    if (!fragment) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: 'rgba(0, 0, 0, 0.95)',
+        border: '2px solid #00FF00',
+        borderRadius: '10px',
+        padding: '30px',
+        zIndex: 100,
+        minWidth: '400px',
+        maxWidth: '600px'
+      }}>
+        <h3 style={{ 
+          color: '#00FF00', 
+          marginTop: 0,
+          fontFamily: 'Courier New, monospace'
+        }}>
+          {fragment.name}
+        </h3>
+        <div style={{ color: '#ffffff', marginBottom: '20px' }}>
+          {fragment.content.type === 'interactive' && 
+            fragment.content.element === 'commodore_terminal' && (
+              <div style={{
+                background: '#000',
+                padding: '20px',
+                fontFamily: 'Courier New, monospace',
+                color: '#00FF00',
+                border: '1px solid #00FF00'
+              }}>
+                READY.<br/>
+                10 PRINT "HELLO CURTIS"<br/>
+                20 GOTO 10<br/>
+                RUN<br/>
+                <div style={{ marginTop: '10px', opacity: 0.7 }}>
+                  {Array(5).fill('HELLO CURTIS ').join('')}...
+                </div>
+              </div>
+            )
+          }
+        </div>
+        <button 
+          onClick={onDismiss}
+          style={{
+            padding: '10px 20px',
+            background: '#00FF00',
+            color: '#000000',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontFamily: 'Courier New, monospace',
+            fontWeight: 'bold'
+          }}
+        >
+          Close
+        </button>
+      </div>
+    );
+  };
+
+  // ===== MAIN CONSCIOUSNESS THEATER =====
+  export default function ConsciousnessTheater() {
+    // Core state
+    const [currentStage, setCurrentStage] = useState('genesis');
+    const [scrollProgress, setScrollProgress] = useState(0);
+    const [morphProgress, setMorphProgress] = useState(0);
+    const [isInitialized, setIsInitialized] = useState(false);
+    
+    // Opening sequence state
+    const [openingPhase, setOpeningPhase] = useState('black');
+    const [showCursor, setShowCursor] = useState(false);
+    const [terminalLines, setTerminalLines] = useState([]);
+    const [screenFillActive, setScreenFillActive] = useState(false);
+    
+    // Narrative state
+    const [activeNarrative, setActiveNarrative] = useState(null);
+    const [narrativeTime, setNarrativeTime] = useState(0);
+    
+    // Stage management
+    const [showCanvas, setShowCanvas] = useState(false);
+    const startTimeRef = useRef(Date.now());
+    const currentStageRef = useRef('genesis'); // FIXED: Track current stage
+
+    // Get configuration
+    const stageConfig = Canonical.stages[currentStage];
+    const narrative = Canonical.dialogue?.[currentStage];
+
+    // Memory fragments
+    const { 
+      activeFragments, 
+      fragmentStates, 
+      triggerFragment, 
+      dismissFragment 
+    } = useMemoryFragments(currentStage, scrollProgress * 100, activeNarrative?.id);
+
+    // ===== LOCK SCROLLING DURING OPENING =====
+    useEffect(() => {
+      // Lock scrolling initially
+      document.body.style.overflow = 'hidden';
+      
+      // Unlock when opening completes
+      if (openingPhase === 'complete') {
+        document.body.style.overflow = '';
+      }
+      
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }, [openingPhase]);
+
+    // ===== HARDCODED OPENING SEQUENCE (ALWAYS PLAYS) =====
+    useEffect(() => {
+      console.log('🎬 SST v3.0: Starting opening sequence (hardcoded)');
+      
+      const sequence = [];
+      let currentTime = 0;
+
+      // Black screen - 2 seconds
+      currentTime = 2000;
+
+      // Cursor phase
+      sequence.push({
+        delay: currentTime,
+        action: () => {
+          console.log('Phase: cursor');
+          setOpeningPhase('cursor');
+        }
+      });
+
+      // Cursor blink
+      sequence.push({ delay: currentTime + 500, action: () => setShowCursor(true) });
+      sequence.push({ delay: currentTime + 1000, action: () => setShowCursor(false) });
+      sequence.push({ delay: currentTime + 1200, action: () => setShowCursor(true) });
+
+      // Terminal phase
+      currentTime += 1500;
+      sequence.push({
+        delay: currentTime,
+        action: () => {
+          console.log('Phase: terminal');
+          setOpeningPhase('terminal');
+          setShowCursor(false);
+        }
+      });
+
+      // Terminal lines
+      const terminalData = [
+        { text: 'READY.', delay: 500 },
+        { text: '10 PRINT "HELLO CURTIS"', delay: 1000 },
+        { text: '20 GOTO 10', delay: 1000 },
+        { text: 'RUN', delay: 800 }
+      ];
+
+      terminalData.forEach((line) => {
+        currentTime += line.delay;
+        sequence.push({
+          delay: currentTime,
+          action: () => setTerminalLines(prev => [...prev, {
+            text: line.text,
+            typeSpeed: 50
+          }])
+        });
+      });
+
+      // Screen fill
+      currentTime += 1000;
+      sequence.push({
+        delay: currentTime,
+        action: () => {
+          console.log('Phase: fill');
+          setOpeningPhase('fill');
+          setScreenFillActive(true);
+        }
+      });
+
+      // Complete
+      currentTime += 2000;
+      sequence.push({
+        delay: currentTime,
+        action: () => {
+          console.log('Phase: complete');
+          setOpeningPhase('complete');
+          setIsInitialized(true);
+          setShowCanvas(true);
+          console.log('🎬 Opening sequence complete');
+        }
+      });
+
+      // Execute sequence
+      const timeouts = sequence.map(({ delay, action }) => 
+        setTimeout(action, delay)
+      );
+
+      return () => timeouts.forEach(clearTimeout);
+    }, []); // Only run once on mount
+
+    // ===== KEYBOARD NAVIGATION =====
+    useEffect(() => {
+      if (!isInitialized || openingPhase !== 'complete') return; // FIXED: Check opening complete
+
+      const handleKeyPress = (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+        switch (e.key) {
+          case 'ArrowRight':
+          case ' ':
+            e.preventDefault();
+            stageAtom.nextStage();
+            break;
+          case 'ArrowLeft':
+            e.preventDefault();
+            stageAtom.prevStage();
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            setMorphProgress(prev => Math.min(prev + 0.1, 1));
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            setMorphProgress(prev => Math.max(prev - 0.1, 0));
+            break;
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+            const index = parseInt(e.key) - 1;
+            const stages = Object.keys(Canonical.stages);
+            if (stages[index]) {
+              stageAtom.jumpToStage(stages[index]);
+            }
+            break;
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyPress);
+      return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [isInitialized, openingPhase]);
+
+    // ===== STAGE SUBSCRIPTION WITH SPAM FIX =====
+    useEffect(() => {
+      const unsubscribe = stageAtom.subscribe((state) => {
+        // Only update if stage actually changed
+        if (state.currentStage !== currentStageRef.current) {
+          currentStageRef.current = state.currentStage;
+          setCurrentStage(state.currentStage);
+          qualityAtom.updateParticleBudget(state.currentStage);
+        }
+      });
+
+      return unsubscribe;
+    }, []);
+
+    // ===== SCROLL HANDLING =====
+    useEffect(() => {
+      if (!isInitialized || openingPhase !== 'complete') return; // FIXED: Check opening complete
+
+      const handleScroll = () => {
+        const scrollTop = window.scrollY;
+        const scrollHeight = Math.max(
+          document.documentElement.scrollHeight - window.innerHeight,
+          1
+        );
+        const progress = Math.min(scrollTop / scrollHeight, 1);
+        
+        setScrollProgress(progress);
+        
+        // Morph progress: 0-50% scroll = 0-1 morph
+        const morph = Math.min(progress * 2, 1);
+        setMorphProgress(morph);
+        
+        // Stage progression
+        const stageProgress = progress * 100;
+        const newStageCfg = Canonical.getStageByScroll(stageProgress);
+        const atomStage = stageAtom.getState().currentStage;
+        
+        if (newStageCfg && newStageCfg.name !== atomStage) {
+          stageAtom.jumpToStage(newStageCfg.name);
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll();
+
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, [isInitialized, openingPhase]);
+
+    // ===== NARRATIVE TIMING =====
+    useEffect(() => {
+      if (!narrative?.narration?.segments || !isInitialized || openingPhase !== 'complete') return;
+
+      const timer = setInterval(() => {
+        const elapsed = Date.now() - startTimeRef.current;
+        setNarrativeTime(elapsed);
+
+        const segment = narrative.narration.segments.find(seg => {
+          const start = seg.timing.start;
+          const end = seg.timing.start + seg.timing.duration;
+          return elapsed >= start && elapsed < end;
+        });
+
+        if (segment && segment.id !== activeNarrative?.id) {
+          setActiveNarrative(segment);
+          
+          if (segment.memoryFragmentTrigger) {
+            const fragment = Canonical.fragments[segment.memoryFragmentTrigger];
+            if (fragment) {
+              triggerFragment(fragment.id);
+            }
+          }
+        } else if (!segment && activeNarrative) {
+          setActiveNarrative(null);
+        }
+      }, 100);
+
+      return () => clearInterval(timer);
+    }, [narrative, isInitialized, openingPhase, activeNarrative, triggerFragment]);
+
+    // ===== RENDER =====
+
+    // Opening sequence
+    if (openingPhase !== 'complete') {
+      return (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'black',
+          zIndex: 9999, // FIXED: Very high z-index
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden'
+        }}>
+          {openingPhase === 'cursor' && <C64Cursor visible={showCursor} />}
+          
+          {openingPhase === 'terminal' && (
+            <div style={{ width: '100%', maxWidth: '800px', padding: '0 20px' }}>
+              {terminalLines.map((line, i) => (
+                <TerminalText
+                  key={i}
+                  text={line.text}
+                  typeSpeed={line.typeSpeed}
+                  style={{ marginBottom: '10px' }}
+                />
+              ))}
+            </div>
+          )}
+          
+          {openingPhase === 'fill' && (
+            <ScreenFill active={screenFillActive} onComplete={() => {}} />
+          )}
+        </div>
+      );
+    }
+
+    // Main theater
+    return (
+      <div className="consciousness-theater-v3">
+        {/* Scroll container */}
+        <div style={{
+          position: 'absolute',
+          width: '1px',
+          height: '700vh',
+          pointerEvents: 'none',
+          zIndex: -1
+        }} />
+
+        {/* WebGL Canvas with props */}
+        {showCanvas && (
+          <WebGLCanvas 
+            stage={currentStage}
+            morphProgress={morphProgress}
+            scrollProgress={scrollProgress}
+          />
+        )}
+
+        {/* Narrative Overlay */}
+        {activeNarrative && (
+          <NarrationOverlay segment={activeNarrative} />
+        )}
+
+        {/* Memory Fragments */}
+        {activeFragments.map(fragment => {
+          const state = fragmentStates[fragment.id];
+          if (state?.state === 'active') {
+            return (
+              <MemoryFragmentRenderer
+                key={fragment.id}
+                fragment={fragment}
+                onDismiss={() => dismissFragment(fragment.id)}
+              />
+            );
+          }
+          return null;
+        })}
+
+        {/* Stage HUD */}
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '20px',
+          color: '#00FF00',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '0.9rem',
+          opacity: 0.7,
+          zIndex: 50
+        }}>
+          {stageConfig?.title} | {Math.round(scrollProgress * 100)}% | Morph: {Math.round(morphProgress * 100)}%
+        </div>
+
+        {/* Dev Performance Monitor */}
+        <DevPerformanceMonitor />
+
+        {/* Dev controls */}
+        {import.meta.env.DEV && (
+          <div style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            background: 'rgba(0, 0, 0, 0.8)',
+            color: '#00FF00',
+            fontFamily: 'Courier New, monospace',
+            fontSize: '0.8rem',
+            padding: '15px',
+            borderRadius: '5px',
+            border: '1px solid #00FF00',
+            maxWidth: '300px',
+            zIndex: 100
+          }}>
+            <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>
+              🎮 SST v3.0 Controls
+            </div>
+            <div>← → Navigate stages</div>
+            <div>↑ ↓ Manual morph</div>
+            <div>1-7 Jump to stage</div>
+            <div>Scroll for progression</div>
+            <div style={{ marginTop: '5px', color: '#ffff00' }}>
+              {morphProgress < 0.5 ? '☁️ Atmospheric' : '🧠 Brain'} Mode
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }

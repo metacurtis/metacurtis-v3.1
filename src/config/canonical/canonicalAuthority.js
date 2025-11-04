@@ -2,6 +2,19 @@
 import sstRaw from '../sst-loader.js';
 import { PARTICLE_EFFECTS as OVERRIDE_PARTICLE_EFFECTS, CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS } from './visualEffects.js';
 
+const DEFAULT_MIN_FRAME_RATE = 55;
+
+const getMinimumFrameRate = (source) => {
+  const frameRate = source?.performance?.frameRate;
+  const minimum =
+    frameRate?.minimum ??
+    frameRate?.min ??
+    frameRate?.minFps ??
+    frameRate?.minFPS ??
+    DEFAULT_MIN_FRAME_RATE;
+  return Number.isFinite(minimum) ? minimum : DEFAULT_MIN_FRAME_RATE;
+};
+
 /** Deep-freeze utility (keeps Canonical read-only) */
 function deepFreeze(obj) {
   if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
@@ -45,6 +58,8 @@ function buildCanonical(source) {
     timeline: openingTimeline,
     fencepost: openingFencepost
   };
+
+  const minimumFrameRate = getMinimumFrameRate(sst);
 
   const narrativeStages = {};
   for (const stageName of stageOrder) {
@@ -97,6 +112,15 @@ function buildCanonical(source) {
     ...(OVERRIDE_CAMERA_EFFECTS || {}),
   };
 
+  const DEFAULT_PARTICLE_EFFECT = Object.freeze({
+    type: 'particle',
+    uMotionMode: 1,
+    uFlowTurbulence: 0.3,
+    uTierHighlight: 0,
+    uSpreadFactor: 0.5,
+    intensity: 0.5,
+  });
+
   const getVisualEffect = (visualVerb, type = 'particle') => {
     if (!visualVerb || visualVerb === 'no_change') return null;
 
@@ -110,19 +134,46 @@ function buildCanonical(source) {
       return null;
     }
 
-    const effect = effects[visualVerb];
+    const resolveEffect = (key) => visualEffects?.[key]?.[visualVerb];
+
+    let effect = effects?.[visualVerb] ?? null;
+    let resolvedType = type;
+
+    if (!effect && type !== 'camera') {
+      const cameraEffect = resolveEffect('cameraEffects');
+      if (cameraEffect) {
+        effect = cameraEffect;
+        resolvedType = cameraEffect.type || 'camera';
+      }
+    }
+
+    if (!effect && type !== 'particle') {
+      const particleEffect = resolveEffect('particleEffects');
+      if (particleEffect) {
+        effect = particleEffect;
+        resolvedType = particleEffect.type || 'particle';
+      }
+    }
 
     if (!effect) {
       if (typeof console !== 'undefined' && typeof console.warn === 'function') {
         console.warn(`🎨 [Canonical] Unknown visual verb: "${visualVerb}" (type: ${type})`);
       }
-      return null;
+      if (type === 'camera') {
+        return { type: 'camera' };
+      }
+      const fallback = clone(DEFAULT_PARTICLE_EFFECT);
+      fallback.type = type || fallback.type || 'particle';
+      return fallback;
     }
 
+    const result = clone(effect);
+    result.type = effect.type || resolvedType || (type === 'camera' ? 'camera' : 'particle');
+
     if (typeof console !== 'undefined' && typeof console.log === 'function') {
-      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, effect);
+      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, result);
     }
-    return effect;
+    return result;
   };
 
   const getBeatSheet = (stageName) => {
@@ -296,12 +347,16 @@ function createProbeHistory() {
       const fpsSamples = samples.map((s) => s.fps).filter((v) => typeof v === 'number');
       const memorySamples = samples.map((s) => s.memory).filter((v) => typeof v === 'number');
 
+      const minFrameRate = getMinimumFrameRate(
+        (typeof window !== 'undefined' && window.SST) || sstRaw
+      );
+
       const fps = fpsSamples.length
         ? {
             min: Math.min(...fpsSamples),
             max: Math.max(...fpsSamples),
             avg: fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length,
-            drops: fpsSamples.filter((f) => f < 55).length
+            drops: fpsSamples.filter((f) => f < minFrameRate).length
           }
         : null;
 
@@ -879,10 +934,10 @@ if (typeof window !== 'undefined') {
         : 0;
 
       const fpsTest = {
-        name: 'Frame rate ≥ 55 FPS',
+        name: `Frame rate ≥ ${minimumFrameRate} FPS`,
         fps,
-        threshold: 55,
-        pass: typeof fps === 'number' && fps >= 55,
+        threshold: minimumFrameRate,
+        pass: typeof fps === 'number' && fps >= minimumFrameRate,
       };
       results.tests.push(fpsTest);
       results.pass = results.pass && fpsTest.pass;
@@ -1107,9 +1162,9 @@ if (typeof window !== 'undefined') {
 
       console.log('   Navigation violations:', violations === 0 ? '✅ 0' : `❌ ${violations}`);
       console.log('   STAGE_CHANGE emitters:', stageEmitters.length === 1 ? '✅ 1' : `❌ ${stageEmitters.length}`);
-      console.log('   FPS:', fps >= 55 ? `✅ ${fps.toFixed?.(1) ?? fps}` : `❌ ${fps.toFixed?.(1) ?? fps}`);
+      console.log('   FPS:', fps >= minimumFrameRate ? `✅ ${fps.toFixed?.(1) ?? fps}` : `❌ ${fps.toFixed?.(1) ?? fps}`);
 
-      const pass = violations === 0 && stageEmitters.length === 1 && fps >= 55;
+      const pass = violations === 0 && stageEmitters.length === 1 && fps >= minimumFrameRate;
       console.log('Status:', pass ? '✅ HEALTHY' : '❌ ISSUES DETECTED');
 
       return {

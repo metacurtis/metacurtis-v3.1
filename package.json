@@ -25,7 +25,6 @@
     "predev": "npm run validate",
     "prebuild": "npm run validate",
     "prepare": "husky install",
-    "postinstall": "npx playwright install --with-deps chromium",
     "cdp": "node scripts/cdp-quick.mjs",
     "cdp:start": "node scripts/cdp-start.mjs",
     "cdp:check": "npm run validate-sst && npm run detect-drift",

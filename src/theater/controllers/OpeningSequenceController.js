@@ -14,6 +14,7 @@ import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
 import ScrollOrchestrator from '@/theater/ScrollOrchestrator.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 const DEBUG_OPENING = true;
 
@@ -687,7 +688,6 @@ export class OpeningSequenceController {
         // Constitutional Compliance (SST v3.5): only StateCommands may emit STAGE_CHANGE events.
         // Delegate to StateCommands.setStage so stageAtom updates and BeatBus emissions stay unified.
         try {
-          const { default: stateCommands } = await import('../../state/commands/StateCommands.js');
           stateCommands.setStage?.(toStage, {
             source: 'opening_sequence_transition',
             morphProfile: 'instant',

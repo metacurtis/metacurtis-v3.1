@@ -129,7 +129,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const emergencePendingRef = useRef(false);
   const emittedEmergedRef   = useRef(false);
 
-  const meshRef = useRef();
+  const pointsRef = useRef(null);
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
   const geometryBoundOnceRef = useRef(false);
@@ -170,6 +170,46 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     activeMode: 0,
     activeEffects: [],
   });
+
+  useEffect(() => {
+    if (!DEV || typeof window === 'undefined') return undefined;
+    const bg = window.__webglBackground || {};
+    window.__webglBackground = {
+      ...bg,
+      materialRef,
+      geometryRef,
+      pointsRef,
+    };
+
+    return () => {
+      const current = window.__webglBackground || {};
+      const currentMaterial = current.material;
+      const currentGeometry = current.geometry;
+      const currentPoints = current.points;
+      if (current.materialRef === materialRef) {
+        delete current.materialRef;
+        delete current.material;
+        if (window.__consciousnessMaterial === currentMaterial) {
+          delete window.__consciousnessMaterial;
+        }
+        window.__renderDiag?.unregister?.('WebGLBackground.material');
+      }
+      if (current.geometryRef === geometryRef) {
+        delete current.geometryRef;
+        delete current.geometry;
+        if (window.__particleGeometry === currentGeometry) {
+          delete window.__particleGeometry;
+        }
+        window.__renderDiag?.unregister?.('WebGLBackground.geometry');
+      }
+      if (current.pointsRef === pointsRef) {
+        delete current.pointsRef;
+        delete current.points;
+        window.__renderDiag?.unregister?.('WebGLBackground.points');
+      }
+      window.__webglBackground = current;
+    };
+  }, []);
 
   const logBind = useCallback((kind, meta = {}) => {
     const geo = geometryRef.current;
@@ -516,12 +556,274 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       return () => {};
     }
 
+    const unsubscribe = blueprintBinder.subscribe?.();
+    if (DEV && unsubscribe) {
+      console.log('✅ [BlueprintBinder] Subscribed to BeatBus directives');
+    }
+
     return () => {
+      unsubscribe?.();
+      if (DEV && unsubscribe) {
+        console.log('🧹 [BlueprintBinder] Unsubscribed from BeatBus directives');
+      }
       blueprintBinder.dispose?.();
       disposeMaterial(materialRef.current);
       materialRef.current = null;
     };
   }, [blueprintBinder]);
+
+  useEffect(() => {
+    if (!BeatBus?.on || !EVENTS?.RENDER_DIRECTIVE) {
+      return () => {};
+    }
+
+    const handleRenderDirective = (event = {}) => {
+      if (DEV) {
+        console.log('🎨 [WebGLBackground] RENDER_DIRECTIVE (renderer)', event);
+      }
+
+      const effect = event?.effect ?? event?.directive ?? event;
+      if (!effect || typeof effect !== 'object') return;
+
+      const points = pointsRef.current;
+      const material = points?.material || materialRef.current;
+      if (!material?.uniforms) {
+        if (DEV) {
+          console.warn('⚠️ [WebGLBackground] Material uniforms unavailable for directive');
+        }
+        return;
+      }
+
+      const { uniforms } = material;
+      let dirty = false;
+
+      const applyNumberUniform = (name, value) => {
+        if (value === undefined || uniforms[name] == null) return;
+        const uniform = uniforms[name];
+        const current = uniform.value;
+        if (typeof current === 'number') {
+          if (current !== value) {
+            uniform.value = value;
+            dirty = true;
+          }
+        } else if (typeof current === 'object' && current !== null && typeof current.setScalar === 'function') {
+          uniform.value.setScalar(value);
+          dirty = true;
+        } else {
+          uniform.value = value;
+          dirty = true;
+        }
+      };
+
+      const applyArrayUniform = (name, source) => {
+        if (!Array.isArray(source) || uniforms[name] == null) return;
+        const uniform = uniforms[name];
+        const target = uniform.value;
+        if (Array.isArray(target)) {
+          let changed = false;
+          const length = Math.min(target.length, source.length);
+          for (let i = 0; i < length; i += 1) {
+            if (target[i] !== source[i]) {
+              target[i] = source[i];
+              changed = true;
+            }
+          }
+          if (changed) {
+            dirty = true;
+          }
+        } else if (target instanceof Float32Array) {
+          let changed = false;
+          for (let i = 0; i < Math.min(target.length, source.length); i += 1) {
+            if (target[i] !== source[i]) {
+              target[i] = source[i];
+              changed = true;
+            }
+          }
+          if (changed) {
+            dirty = true;
+          }
+        } else if (target && typeof target.set === 'function') {
+          target.set(source);
+          dirty = true;
+        }
+      };
+
+      applyNumberUniform('uTierHighlight', effect.uTierHighlight ?? effect.tierHighlight);
+      applyNumberUniform('uSpreadFactor', effect.uSpreadFactor ?? effect.spreadFactor);
+      applyNumberUniform('uStreakIntensity', effect.uStreakIntensity ?? effect.intensity);
+      applyNumberUniform('uFlowTurbulence', effect.uFlowTurbulence ?? effect.flowTurbulence);
+      applyNumberUniform('uMotionMode', effect.uMotionMode ?? effect.motionMode);
+      applyNumberUniform('uParticlePhase', effect.uParticlePhase ?? effect.particlePhase);
+
+      if (effect.gridSpacing !== undefined) {
+        const spacing = Array.isArray(effect.gridSpacing)
+          ? effect.gridSpacing
+          : [effect.gridSpacing, effect.gridSpacing];
+        applyArrayUniform('uGridSpacing', spacing);
+      }
+
+      if (Array.isArray(effect.uMotionParams)) {
+        applyArrayUniform('uMotionParams', effect.uMotionParams);
+      }
+
+      if (Array.isArray(effect.tierModes) && uniforms.uTierMode?.value) {
+        applyArrayUniform('uTierMode', effect.tierModes);
+      }
+
+      if (dirty) {
+        material.uniformsNeedUpdate = true;
+        if ('needsUpdate' in material) {
+          material.needsUpdate = true;
+        }
+        if (DEV) {
+          console.log('✅ [WebGLBackground] Material uniforms updated from directive');
+        }
+      }
+    };
+
+    const off = BeatBus.on(EVENTS.RENDER_DIRECTIVE, handleRenderDirective);
+    if (DEV) {
+      console.log('🔌 [WebGLBackground] Subscribing to RENDER_DIRECTIVE (renderer layer)');
+    }
+
+    return () => {
+      off?.();
+      if (DEV) {
+        console.log('🔌 [WebGLBackground] Unsubscribing from RENDER_DIRECTIVE (renderer layer)');
+      }
+    };
+  }, [BeatBus, EVENTS]);
+
+  useEffect(() => {
+    if (!DEV || typeof window === 'undefined') return undefined;
+
+    const testEventFlow = () => {
+      console.group('🧪 Testing RENDER_DIRECTIVE Event Flow');
+      const listeners =
+        BeatBus?.getListeners?.(EVENTS.RENDER_DIRECTIVE) ??
+        BeatBus?._listeners?.[EVENTS.RENDER_DIRECTIVE] ??
+        [];
+      if (Array.isArray(listeners)) {
+        console.log('📊 Listener count:', listeners.length);
+        console.log('📊 Listeners:', listeners);
+      } else {
+        console.log('📊 Listener inspection not available on BeatBus');
+      }
+
+      console.log('📤 Emitting test directive...');
+      BeatBus?.emit?.(EVENTS.RENDER_DIRECTIVE, {
+        verb: 'test_flow',
+        effect: {
+          type: 'test',
+          uTierHighlight: 999,
+        },
+      });
+
+      window.setTimeout(() => {
+        const points = pointsRef.current;
+        const material = points?.material || materialRef.current;
+        const value = material?.uniforms?.uTierHighlight?.value;
+        console.log('📊 Material uTierHighlight after test:', value);
+        if (value === 999) {
+          console.log('✅ EVENT FLOW WORKING - Material updated!');
+        } else {
+          console.error('❌ EVENT FLOW BROKEN - Material not updated');
+        }
+        console.groupEnd();
+      }, 100);
+    };
+
+    const verifyUniforms = () => {
+      const points = pointsRef.current;
+      const material = points?.material || materialRef.current;
+      if (!material?.uniforms) {
+        console.error('❌ [WebGLBackground] Material or uniforms missing');
+        return null;
+      }
+
+      console.group('🔍 Uniform Verification');
+      const directiveUniforms = [
+        'uMotionMode',
+        'uFlowTurbulence',
+        'uTierHighlight',
+        'uSpreadFactor',
+        'uStreakIntensity',
+        'uGridSpacing',
+        'uMotionParams',
+      ];
+      console.log('📊 Directive-controlled uniforms:');
+      directiveUniforms.forEach((key) => {
+        if (material.uniforms[key]) {
+          console.log(`  ${key}:`, material.uniforms[key].value);
+        } else {
+          console.warn(`  ${key}: ❌ missing`);
+        }
+      });
+
+      console.log('\n📊 Core animation uniforms:');
+      ['uTime', 'uMorphProgress', 'uScrollProgress'].forEach((key) => {
+        if (material.uniforms[key]) {
+          console.log(`  ${key}:`, material.uniforms[key].value);
+        }
+      });
+
+      console.log('\n📊 Material state:', {
+        needsUpdate: material.needsUpdate,
+        uniformsNeedUpdate: material.uniformsNeedUpdate,
+        transparent: material.transparent,
+        visible: material.visible,
+      });
+      console.groupEnd();
+      return material.uniforms;
+    };
+
+    const forceUniformUpdate = (key, value) => {
+      const points = pointsRef.current;
+      const material = points?.material || materialRef.current;
+      if (!material?.uniforms?.[key]) {
+        console.error(`❌ [WebGLBackground] Uniform "${key}" not found`);
+        return;
+      }
+      const uniform = material.uniforms[key];
+      const previous = uniform.value;
+      if (Array.isArray(previous) && Array.isArray(value)) {
+        const length = Math.min(previous.length, value.length);
+        for (let i = 0; i < length; i += 1) {
+          previous[i] = value[i];
+        }
+      } else if (previous instanceof Float32Array && Array.isArray(value)) {
+        const length = Math.min(previous.length, value.length);
+        for (let i = 0; i < length; i += 1) {
+          previous[i] = value[i];
+        }
+      } else {
+        uniform.value = value;
+      }
+      material.uniformsNeedUpdate = true;
+      if ('needsUpdate' in material) {
+        material.needsUpdate = true;
+      }
+      console.log(`✅ [WebGLBackground] Forced uniform "${key}" update`, { previous, next: uniform.value });
+    };
+
+    window.testEventFlow = testEventFlow;
+    window.verifyUniforms = verifyUniforms;
+    window.forceUniformUpdate = forceUniformUpdate;
+    console.log('🧪 Test event flow: window.testEventFlow()');
+    console.log('🔍 Uniform tools available: window.verifyUniforms(), window.forceUniformUpdate(key, value)');
+
+    return () => {
+      if (window.testEventFlow === testEventFlow) {
+        delete window.testEventFlow;
+      }
+      if (window.verifyUniforms === verifyUniforms) {
+        delete window.verifyUniforms;
+      }
+      if (window.forceUniformUpdate === forceUniformUpdate) {
+        delete window.forceUniformUpdate;
+      }
+    };
+  }, [BeatBus, EVENTS]);
 
   // Point size (once) — raw base only; shader multiplies by uDevicePixelRatio
   useEffect(() => {
@@ -666,7 +968,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         return;
       }
 
-      const mesh = meshRef.current;
+      const mesh = pointsRef.current;
       if (!camera) {
         console.error('[WebGLBackground] Camera not available for raycasting');
         return;
@@ -846,7 +1148,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const off = BeatBus?.on?.(EVENTS.PARTICLE_CLICK_REQUEST, handleClickRequest);
     return () => off && off();
-  }, [camera, meshRef]);
+  }, [camera, pointsRef]);
 
   useEffect(() => {
     if (typeof BeatBus?.on !== 'function') {
@@ -995,6 +1297,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             uniforms.uMotionMode.value = 0;
             console.log('   Set uMotionMode = 0 (emergence)');
           }
+          if (uniforms.uParticlePhase) {
+            uniforms.uParticlePhase.value = 1;
+            console.log('   Set uParticlePhase = 1 (emergence)');
+          }
           if (uniforms.uDriftAmp) {
             uniforms.uDriftAmp.value = 1.6;
             console.log('   Set uDriftAmp = 1.6');
@@ -1026,6 +1332,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           if (uniforms.uMotionMode) {
             uniforms.uMotionMode.value = 1;
             console.log('   Set uMotionMode = 1 (chaos)');
+          }
+          if (uniforms.uParticlePhase) {
+            uniforms.uParticlePhase.value = 2;
+            console.log('   Set uParticlePhase = 2 (chaos)');
           }
           if (uniforms.uDriftAmp) {
             uniforms.uDriftAmp.value = 2.0;
@@ -1064,6 +1374,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             uniforms.uMotionMode.value = 2;
             console.log('   Set uMotionMode = 2 (coalesce)');
           }
+          if (uniforms.uParticlePhase) {
+            uniforms.uParticlePhase.value = 3;
+            console.log('   Set uParticlePhase = 3 (coalesce)');
+          }
           if (uniforms.uDriftAmp) {
             uniforms.uDriftAmp.value = 0.8;
             console.log('   Set uDriftAmp = 0.8');
@@ -1084,6 +1398,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           if (uniforms.uMotionMode) {
             uniforms.uMotionMode.value = 3;
             console.log('   Set uMotionMode = 3 (settle)');
+          }
+          if (uniforms.uParticlePhase) {
+            uniforms.uParticlePhase.value = 4;
+            console.log('   Set uParticlePhase = 4 (settle)');
           }
           if (uniforms.uDriftAmp) {
             uniforms.uDriftAmp.value = 0.2;
@@ -1155,6 +1473,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         onLog: DEV ? (msg, data) => console.log(msg, data) : null,
       });
       materialRef.current = mat;
+      if (DEV && typeof window !== 'undefined') {
+        const bg = window.__webglBackground || {};
+        window.__consciousnessMaterial = mat;
+        window.__webglBackground = {
+          ...bg,
+          material: mat,
+          materialRef,
+        };
+        window.__renderDiag?.register?.('WebGLBackground.material', mat);
+      }
     }
 
     updateMaterialFromConfig(mat, Canonical);
@@ -1271,7 +1599,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // per-frame uniforms (passive)
   useFrame((state, delta) => {
     const mat = materialRef.current;
-    if (!meshRef.current || !mat || !geometryRef.current) return;
+    const points = pointsRef.current;
+    if (!points || !mat || !geometryRef.current) return;
     const sp = clamp01(Number(scrollProgress) || 0);
     if (timeTickEnabledRef.current && mat.uniforms.uTime) {
       mat.uniforms.uTime.value = state.clock.elapsedTime;
@@ -1282,11 +1611,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniforms.uTierCutoff.value     = activeCount;
 
     const deltaSeconds = Number.isFinite(delta) ? delta : state.clock.getDelta();
-    if (meshRef.current && spinRef.current) {
+    if (points && spinRef.current) {
       if (spinRef.current.active) {
         const { velocity, endTime } = spinRef.current;
-        meshRef.current.rotation.z += (velocity.z || 0) * deltaSeconds;
-        meshRef.current.rotation.y += (velocity.y || 0) * deltaSeconds;
+        points.rotation.z += (velocity.z || 0) * deltaSeconds;
+        points.rotation.y += (velocity.y || 0) * deltaSeconds;
         const now = typeof performance !== 'undefined' && performance.now
           ? performance.now()
           : Date.now();
@@ -1295,8 +1624,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           spinRef.current.velocity = { y: 0, z: 0 };
         }
       } else {
-        meshRef.current.rotation.z *= 0.92;
-        meshRef.current.rotation.y *= 0.92;
+        points.rotation.z *= 0.92;
+        points.rotation.y *= 0.92;
       }
     }
     const needsFrame =
@@ -1353,6 +1682,41 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!DEV || typeof window === 'undefined') return;
+    let mounted = true;
+
+    const assignPoints = () => {
+      if (!mounted) return;
+      const points = pointsRef.current;
+      if (points) {
+        const bg = window.__webglBackground || {};
+        window.__webglBackground = {
+          ...bg,
+          points,
+          pointsRef,
+        };
+        window.__renderDiag?.register?.('WebGLBackground.points', points);
+        return;
+      }
+      window.requestAnimationFrame(assignPoints);
+    };
+
+    assignPoints();
+
+    return () => {
+      mounted = false;
+      const points = pointsRef.current;
+      window.__renderDiag?.unregister?.('WebGLBackground.points');
+      const bg = window.__webglBackground || {};
+      if (bg.points === points || bg.pointsRef === pointsRef) {
+        delete bg.points;
+        delete bg.pointsRef;
+        window.__webglBackground = bg;
+      }
+    };
+  }, []);
+
 
   // early-out fallback if not ready
   if (!atlasTexture || !blueprint || !materialRef.current || !geometryRef.current) {
@@ -1368,7 +1732,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   return (
     <points
-      ref={meshRef}
+      ref={pointsRef}
       geometry={geometryRef.current}
       material={materialRef.current}
       frustumCulled={false}

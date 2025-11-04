@@ -122,6 +122,8 @@ export const createRendererMaterial = ({
     uGridSpacing: { value: new Float32Array(gridSpacing) },
     uFlowTurbulence: { value: flowTurbulence },
     uStreakIntensity: { value: streakIntensity },
+    uMotionMode: { value: 1 },
+    uParticlePhase: { value: 0 },
     uMotionParams: {
       value:
         motionParams instanceof Float32Array

@@ -1,0 +1,25 @@
+# MetaCurtis SST v3.0 - Director Pattern Implementation
+
+## 🎭 Architecture Overview
+```text
+TheaterDirector (TIMING BRAIN)
+├── Controls entire show timing
+├── Emits signals via BeatBus
+└── Coordinates all components
+
+ConsciousnessTheater (ORCHESTRATOR)
+├── Starts Director
+├── Renders components
+└── Manages user interaction
+
+ConsciousnessEngine (BLUEPRINT BRAIN)
+├── Builds particle blueprints
+├── Responds to Director signals
+└── Handles emergence mode
+
+WebGLBackground (DUMB RENDERER)
+├── Renders blueprints
+├── Confirms particle settlement
+└── No logic, just rendering
+
+Flow: Director → BeatBus → Components → User Experience

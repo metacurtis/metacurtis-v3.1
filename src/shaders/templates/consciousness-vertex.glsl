@@ -35,6 +35,8 @@ uniform vec4  uTierParams3;
 uniform vec2  uGridSpacing;
 uniform float uFlowTurbulence;
 uniform float uStreakIntensity;
+uniform float uMotionMode;
+uniform float uParticlePhase;
 
 // Varyings
 varying vec3 vPosition;
@@ -100,6 +102,76 @@ vec3 applyTierMovement(vec3 basePos, int tierIndex) {
   return basePos + offset * taper;
 }
 
+vec3 applyMotionMode(vec3 position, vec3 basePos) {
+  float mode = uMotionMode;
+  float time = uTime;
+  vec3 offset = vec3(0.0);
+
+  if (mode < 0.5) {
+    offset = vec3(
+      sin(time * 1.6 + basePos.y * 2.1),
+      cos(time * 1.4 + basePos.x * 1.8),
+      sin(time * 0.9 + basePos.z * 1.5)
+    ) * 0.12;
+  } else if (mode < 1.5) {
+    float chaosGain = 0.22 + clamp(uFlowTurbulence, 0.0, 2.0) * 0.18;
+    offset = vec3(
+      sin(basePos.y * 12.0 + time * 4.0),
+      cos(basePos.x * 11.0 - time * 3.6),
+      sin(basePos.z * 7.0 + time * 2.5)
+    ) * chaosGain;
+  } else if (mode < 2.5) {
+    float flowAmp = 0.12 + clamp(uFlowTurbulence, 0.0, 2.0) * 0.1;
+    vec2 dir = normalize(vec2(0.6, 0.4 + sin(time * 0.5) * 0.2));
+    offset = vec3(
+      dir.x * sin(time * 1.8 + basePos.y) * flowAmp,
+      dir.y * cos(time * 1.6 + basePos.x) * flowAmp,
+      0.0
+    );
+  } else if (mode < 3.5) {
+    offset = vec3(
+      sin(time * 0.9 + basePos.y * 1.2),
+      cos(time * 0.7 + basePos.x * 1.1),
+      0.0
+    ) * 0.05;
+  } else {
+    float radius = 0.18;
+    float angle = time * 0.9 + basePos.x * 0.6;
+    offset = vec3(cos(angle) * radius, sin(angle) * radius, 0.0);
+  }
+
+  return position + offset;
+}
+
+vec3 applyParticlePhase(vec3 position, vec3 atmosphericPos, vec3 textPos, float morph) {
+  float phase = uParticlePhase;
+
+  if (phase < 0.5) {
+    return position;
+  }
+
+  if (phase < 1.5) {
+    float dissolve = clamp(1.0 - morph, 0.0, 1.0);
+    vec3 radial = normalize(vec3(atmosphericPos.xy, 0.0001));
+    position += radial * dissolve * 2.5;
+  } else if (phase < 2.5) {
+    float jitter = 0.3 + clamp(uFlowTurbulence, 0.0, 2.0) * 0.25;
+    position.xy += vec2(
+      sin(uTime * 6.0 + atmosphericPos.y * 12.0),
+      cos(uTime * 5.5 + atmosphericPos.x * 11.0)
+    ) * jitter;
+  } else if (phase < 3.5) {
+    float ease = smoothstep(0.0, 1.0, morph);
+    position = mix(position, textPos, clamp(ease * 1.2, 0.0, 1.0));
+  } else if (phase < 4.5) {
+    position = mix(position, textPos, 0.9);
+  } else {
+    position = mix(position, textPos, morph);
+  }
+
+  return position;
+}
+
 void main() {
   vParticleIndex = particleIndex;
   vTierID = tierData;
@@ -157,6 +229,8 @@ void main() {
   }
 
   vec3 finalPos = basePos + movement;
+  finalPos = applyMotionMode(finalPos, basePos);
+  finalPos = applyParticlePhase(finalPos, atmoPos, textPos, morph);
   
   if (isDissolve > 0.0) {
     vec3 radial = normalize(vec3(basePos.xy, 0.0001));

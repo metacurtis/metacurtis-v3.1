@@ -202,6 +202,9 @@ class ClimaxController {
       index: stepIndex,
     });
 
+    const stageName = this.#engine.currentStage || 'transcendence';
+    const emitTimestamp = now();
+
     BeatBus.emit(EVENTS.CLIMAX_STEP, {
       step: step.name,
       holdDuration,
@@ -209,6 +212,10 @@ class ClimaxController {
       text: step.text ?? null,
       url: step.url ?? null,
       stepIndex,
+      stage: stageName,
+      progress: 0,
+      source: 'climax_controller',
+      timestamp: emitTimestamp,
     });
 
     this.#buildStepBlueprint(step);
