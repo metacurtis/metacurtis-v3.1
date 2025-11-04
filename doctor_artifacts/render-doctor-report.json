@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-23T17:51:16.238Z",
+  "timestamp": "2025-11-04T19:10:01.255Z",
   "engine": {
     "found": [
       "src/engine/ConsciousnessEngine.js",
@@ -11,10 +11,11 @@
   },
   "bus": {
     "found": [
-      "src/modules/orchestration/core/BeatBus.js"
+      "src/modules/orchestration/core/BeatBus.js",
+      "src/theater/bus/index.js"
     ],
     "reachable": [
-      "src/modules/orchestration/core/BeatBus.js"
+      "src/theater/bus/index.js"
     ]
   },
   "renderer": {
@@ -29,15 +30,15 @@
   },
   "events": {
     "BLUEPRINT_READY": {
-      "definedIn": [
-        "src/canon/contracts/events.js"
-      ],
+      "definedIn": [],
       "emits": [
-        "src/engine/ConsciousnessEngine.js"
+        "src/engine/utils/blueprintUtils.js"
       ],
       "subscribers": [
-        "src/canon-guard/runtime/GuardRuntimeInject.js",
-        "src/components/webgl/WebGLBackground.jsx"
+        "src/components/webgl/WebGLBackground.jsx",
+        "src/components/webgl/WebGLCanvas.jsx",
+        "src/dev/attachDiagnostics.js",
+        "src/theater/controllers/OpeningSequenceController.js"
       ]
     }
   },

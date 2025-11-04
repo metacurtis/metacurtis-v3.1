@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* eslint-env node */
-const fs = require('fs'); const _path = require('path'); const CWD = process.cwd();
+const fs = require('fs'); const path = require('path'); const CWD = process.cwd();
 const OUT_JSON = path.join(CWD, 'doctor_artifacts', 'render-doctor-report.json');
 const OUT_MD   = path.join(CWD, 'doctor_artifacts', 'render-doctor-summary.md');
 
@@ -14,7 +14,10 @@ const specialEntrypoints = [
 
 const interest = {
   engine: ['src/engine/ConsciousnessEngine.js','src/engine/NarrativeController.js'],
-  bus:    ['src/modules/orchestration/core/BeatBus.js'],
+  bus:    [
+    'src/modules/orchestration/core/BeatBus.js',
+    'src/theater/bus/index.js'
+  ],
   renderer: ['src/components/webgl/WebGLCanvas.jsx','src/components/webgl/WebGLBackground.jsx']
 };
 
@@ -52,7 +55,11 @@ function resolveSpec(fromFile, spec){
     return null; // external (react, three,...)
   }
   // try exact + extension + index
-  if (fs.existsSync(base)) return base;
+  if (fs.existsSync(base)) {
+    try {
+      if (fs.statSync(base).isFile()) return base;
+    } catch { /* noop */ }
+  }
   for(const e of exts){ if (fs.existsSync(base+e)) return base+e; }
   for(const e of exts){ if (fs.existsSync(base+'/index'+e)) return base+'/index'+e; }
   return null;

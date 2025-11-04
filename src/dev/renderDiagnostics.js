@@ -1,3 +1,5 @@
+import { EVENTS } from '@/theater/events.js';
+
 const DEV =
   typeof import.meta !== 'undefined' &&
   import.meta.env &&
@@ -351,12 +353,364 @@ export function installRenderDiagnostics(options = {}) {
   return registry;
 }
 
+const DIAG_EVENT_DIRECTIVE = EVENTS?.RENDER_DIRECTIVE ?? 'RENDER_DIRECTIVE';
+const DIAG_EVENT_BLUEPRINT = EVENTS?.BLUEPRINT_READY ?? 'BLUEPRINT_READY';
+
+const snapshotUniformValue = (value) => {
+  if (value == null) return value;
+  if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
+    return value;
+  }
+  if (Array.isArray(value)) return value.slice();
+  if (value instanceof Float32Array) return Array.from(value);
+  if (value && typeof value.toArray === 'function') {
+    const out = [];
+    value.toArray(out);
+    return out;
+  }
+  if (value && typeof value === 'object') {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }
+  return value;
+};
+
+function installPipelineDiagnosticSuite() {
+  if (!isBrowser || !DEV) return;
+  if (window.PIPELINE_DIAGNOSTIC) return;
+
+  const getBeatBus = () => window.BeatBus || null;
+  const eventName = DIAG_EVENT_DIRECTIVE;
+
+  const identifySourceFromStack = (stack) => {
+    if (!stack) return 'unknown';
+    if (stack.includes('BlueprintBinder')) return 'BlueprintBinder';
+    if (stack.includes('WebGLBackground')) return 'WebGLBackground';
+    if (stack.includes('OpeningSequenceController')) return 'OpeningSequenceController';
+    return 'unknown';
+  };
+
+  const identifyHandler = (handler) => {
+    if (!handler) return 'unknown';
+    if (handler.name) return handler.name;
+    const src = handler.toString();
+    if (src.includes('BlueprintBinder')) return 'BlueprintBinder';
+    if (src.includes('WebGLBackground')) return 'WebGLBackground';
+    if (src.includes('OpeningSequenceController')) return 'OpeningSequenceController';
+    return 'anonymous';
+  };
+
+  const listDirectiveHandlers = () => {
+    const bus = getBeatBus();
+    if (!bus?.listeners?.get) return [];
+    const set = bus.listeners.get(eventName);
+    return set ? Array.from(set) : [];
+  };
+
+  const diag = {
+    eventLog: [],
+    subscribers: new Map(),
+
+    mapEventFlow() {
+      console.group('🔍 RENDER_DIRECTIVE Event Flow Mapping');
+      const bus = getBeatBus();
+      if (!bus) {
+        console.error('❌ BeatBus not found');
+        console.groupEnd();
+        return { listenerCount: 0, listeners: [] };
+      }
+      const handlers = listDirectiveHandlers();
+      const listenerCount = handlers.length;
+      console.log(`📊 Total ${eventName} listeners: ${listenerCount}`);
+      if (listenerCount > 1) {
+        console.warn(`⚠️ Multiple listeners detected for ${eventName} (expected 1)`);
+      }
+      console.groupEnd();
+      return {
+        listenerCount,
+        listeners: handlers.map((handler) => identifyHandler(handler)),
+      };
+    },
+
+    identifySource(stack) {
+      return identifySourceFromStack(stack);
+    },
+
+    traceDirective(verb = 'diagnostic_trace') {
+      console.group(`🔬 Directive Trace: ${verb}`);
+      const bus = getBeatBus();
+      if (!bus) {
+        console.error('❌ BeatBus not available');
+        console.groupEnd();
+        return [];
+      }
+      const handlers = listDirectiveHandlers();
+      const trace = handlers.map((handler) => ({
+        handler: identifyHandler(handler),
+      }));
+
+      const payload = {
+        verb,
+        effect: {
+          type: 'particle',
+          uMotionMode: 2,
+          uFlowTurbulence: 0.5,
+          uTierHighlight: 1,
+        },
+        source: 'pipeline_diagnostic',
+      };
+
+      const start = performance.now();
+      try {
+        bus.emit(eventName, payload);
+      } catch (error) {
+        console.error('❌ Emitting directive failed', error);
+      }
+      const duration = performance.now() - start;
+
+      console.table(trace);
+      console.log(`⏱️ Emit duration: ${duration.toFixed(2)}ms`);
+      if (trace.length > 2) {
+        console.warn('⚠️ More than two handlers processed the directive');
+      }
+      console.groupEnd();
+      return trace;
+    },
+
+    detectUpdateSource() {
+      const stack = new Error().stack || '';
+      return identifySourceFromStack(stack);
+    },
+
+    monitorUniformUpdates(duration = 5000) {
+      console.group(`🔬 Uniform Update Monitor (${duration}ms)`);
+      const material = window.__webglBackground?.material;
+      if (!material?.uniforms) {
+        console.error('❌ WebGLBackground material not available');
+        console.groupEnd();
+        return [];
+      }
+      const records = [];
+      const baseline = new Map(
+        Object.entries(material.uniforms).map(([key, uniform]) => [
+          key,
+          JSON.stringify(snapshotUniformValue(uniform?.value)),
+        ]),
+      );
+      const start = performance.now();
+      const timer = setInterval(() => {
+        Object.entries(material.uniforms).forEach(([key, uniform]) => {
+          const serialized = JSON.stringify(snapshotUniformValue(uniform?.value));
+          const prev = baseline.get(key);
+          if (serialized !== prev) {
+            records.push({
+              time: `${(performance.now() - start).toFixed(1)}ms`,
+              uniform: key,
+              source: diag.detectUpdateSource(),
+              newValue: snapshotUniformValue(uniform?.value),
+            });
+            baseline.set(key, serialized);
+          }
+        });
+      }, 16);
+
+      setTimeout(() => {
+        clearInterval(timer);
+        console.table(records);
+        const uniqueUniforms = new Set(records.map((record) => record.uniform));
+        console.log(`📊 Updates: ${records.length} · Unique uniforms: ${uniqueUniforms.size}`);
+        if (records.length === 0) {
+          console.log('✅ No uniform changes detected during window');
+        }
+        console.groupEnd();
+      }, duration);
+      return records;
+    },
+
+    getMostUpdated(updates) {
+      if (!updates?.length) return 'none';
+      const counts = updates.reduce((acc, update) => {
+        acc[update.uniform] = (acc[update.uniform] || 0) + 1;
+        return acc;
+      }, {});
+      let maxUniform = 'unknown';
+      let maxCount = 0;
+      Object.entries(counts).forEach(([uniform, count]) => {
+        if (count > maxCount) {
+          maxUniform = uniform;
+          maxCount = count;
+        }
+      });
+      return `${maxUniform} (${maxCount} updates)`;
+    },
+
+    validatePathways() {
+      console.group('🔍 Render Pathway Validation');
+      const checks = {
+        narrationController: Boolean(window.narrationController || window.narrativeAtom),
+        beatBus: Boolean(getBeatBus()),
+        blueprintBinder: Boolean(window.__webglBinder),
+        webglBackground: Boolean(window.__webglBackground),
+        material: Boolean(window.__webglBackground?.material),
+        uniforms: Boolean(window.__webglBackground?.material?.uniforms),
+      };
+      console.table(checks);
+
+      const binderHasHandler =
+        typeof window.__webglBinder?.applyDirective === 'function';
+      const bgHasHandler =
+        typeof window.__webglBackground?.handleDirective === 'function';
+
+      console.log('🔎 Directive handlers:');
+      console.log(`  BlueprintBinder: ${binderHasHandler}`);
+      console.log(`  WebGLBackground: ${bgHasHandler}`);
+
+      const dual = binderHasHandler && bgHasHandler;
+      if (dual) {
+        console.warn('⚠️ Dual RENDER_DIRECTIVE handlers detected');
+      }
+      console.groupEnd();
+      return {
+        checks,
+        dualSubscription: dual,
+        recommendation: dual ? 'Consolidate directive handling to a single source' : 'No action needed',
+      };
+    },
+
+    detectRaces(testDuration = 3000) {
+      console.group(`🔬 Race Condition Detector (${testDuration}ms)`);
+      const bus = getBeatBus();
+      const material = window.__webglBackground?.material;
+      if (!bus || !material) {
+        console.error('❌ Missing BeatBus or material');
+        console.groupEnd();
+        return [];
+      }
+      const races = [];
+      let emitted = 0;
+
+      const tick = setInterval(() => {
+        emitted += 1;
+        const before = material.uniformsNeedUpdate;
+        bus.emit(eventName, {
+          verb: `race_test_${emitted}`,
+          effect: { type: 'particle', uTierHighlight: emitted % 4 },
+          source: 'pipeline_race_test',
+        });
+        setTimeout(() => {
+          if (before === true && material.uniformsNeedUpdate === false) {
+            races.push({
+              directive: emitted,
+              issue: 'uniformsNeedUpdate toggled unexpectedly',
+            });
+          }
+        }, 10);
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(tick);
+        console.log(`📊 Directives emitted: ${emitted}`);
+        if (races.length) {
+          console.warn('⚠️ Potential races detected:');
+          console.table(races);
+        } else {
+          console.log('✅ No race conditions detected');
+        }
+        console.groupEnd();
+      }, testDuration);
+
+      return races;
+    },
+
+    testSimplePath() {
+      console.group('🎯 Simple Pathway Test');
+      const bus = getBeatBus();
+      const material = window.__webglBackground?.material;
+      if (!bus || !material?.uniforms) {
+        console.error('❌ Missing BeatBus or material uniforms');
+        console.groupEnd();
+        return;
+      }
+      const snapshotBefore = {
+        uMotionMode: material.uniforms.uMotionMode?.value,
+        uTierHighlight: material.uniforms.uTierHighlight?.value,
+        uFlowTurbulence: material.uniforms.uFlowTurbulence?.value,
+      };
+      console.log('📊 Before:', snapshotBefore);
+      bus.emit(eventName, {
+        verb: 'simple_test',
+        effect: {
+          type: 'particle',
+          uMotionMode: 3,
+          uTierHighlight: 2,
+          uFlowTurbulence: 0.8,
+        },
+        source: 'pipeline_simple_test',
+      });
+      setTimeout(() => {
+        const snapshotAfter = {
+          uMotionMode: material.uniforms.uMotionMode?.value,
+          uTierHighlight: material.uniforms.uTierHighlight?.value,
+          uFlowTurbulence: material.uniforms.uFlowTurbulence?.value,
+        };
+        console.log('📊 After:', snapshotAfter);
+        const changed = {
+          uMotionMode: snapshotAfter.uMotionMode !== snapshotBefore.uMotionMode,
+          uTierHighlight: snapshotAfter.uTierHighlight !== snapshotBefore.uTierHighlight,
+          uFlowTurbulence: snapshotAfter.uFlowTurbulence !== snapshotBefore.uFlowTurbulence,
+        };
+        console.log('✅ Changes detected:', changed);
+        if (Object.values(changed).every(Boolean)) {
+          console.log('🎉 Directive successfully propagated to shader uniforms');
+        } else {
+          console.warn('⚠️ Some uniforms did not update — investigate directive handling');
+        }
+        console.groupEnd();
+      }, 100);
+    },
+
+    generateReport() {
+      console.group('📋 COMPLETE PIPELINE DIAGNOSTIC REPORT');
+      const flow = this.mapEventFlow();
+      const pathways = this.validatePathways();
+      this.testSimplePath();
+      setTimeout(() => {
+        console.log('📊 Summary recommendations:');
+        if (pathways.dualSubscription) {
+          console.warn('🔴 Dual directive handlers detected · consolidate updates');
+        }
+        if ((flow?.listenerCount ?? 0) > 1) {
+          console.warn('🟡 Multiple RENDER_DIRECTIVE listeners registered');
+        }
+        console.log('Next steps:');
+        console.log('  1. PIPELINE_DIAGNOSTIC.detectRaces()');
+        console.log('  2. PIPELINE_DIAGNOSTIC.monitorUniformUpdates()');
+        console.log('  3. Review directive ownership');
+        console.groupEnd();
+      }, 500);
+    },
+  };
+
+  window.PIPELINE_DIAGNOSTIC = diag;
+
+  console.log('');
+  console.log('🔧 Rendering Pipeline Diagnostics Ready');
+  console.log('════════════════════════════════════════');
+  console.log('📋 Full report: window.PIPELINE_DIAGNOSTIC.generateReport()');
+  console.log('🔬 Utilities: mapEventFlow(), validatePathways(), testSimplePath(), traceDirective(), detectRaces(), monitorUniformUpdates()');
+  console.log('');
+}
+
 if (isBrowser && DEV) {
   window.installRenderDiagnostics =
     window.installRenderDiagnostics || installRenderDiagnostics;
   if (!window.__renderDiag) {
     installRenderDiagnostics({ autoRefresh: true });
   }
+  installPipelineDiagnosticSuite();
 }
 
 export default installRenderDiagnostics;
