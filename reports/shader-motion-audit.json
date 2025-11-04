@@ -9,8 +9,8 @@
   "jsGridChecks": [
     {
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "line": 987,
-      "modeSetLine": 987,
+      "line": 1333,
+      "modeSetLine": 1333,
       "spacingFound": false
     }
   ],
@@ -19,7 +19,7 @@
       "severity": "ERROR",
       "type": "GRID_MODE_NO_SPACING",
       "file": "src/components/webgl/WebGLBackground.jsx",
-      "detail": "uMotionMode=1 set at line 987 without uGridSpacing assignment in ±60 lines",
+      "detail": "uMotionMode=1 set at line 1333 without uGridSpacing assignment in ±60 lines",
       "hint": "Set material.uniforms.uGridSpacing.value = vec2(x,y) before or near mode=1 assignment"
     },
     {

@@ -18,8 +18,8 @@
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 332,
-        "context": "330:         console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);\n331:         BeatBus.emit(EVENTS.CURSOR_SHOW);\n332:         BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });\n333:         if (cursorLeadInMs > 0) {\n334:           const waitResult = await this.director.sleep(cursorLeadInMs);"
+        "line": 342,
+        "context": "340:         console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);\n341:         BeatBus.emit(EVENTS.CURSOR_SHOW);\n342:         BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });\n343:         if (cursorLeadInMs > 0) {\n344:           const waitResult = await this.director.sleep(cursorLeadInMs);"
       },
       {
         "file": "src/theater/events.js",
@@ -51,13 +51,13 @@
   "unlocks": [
     {
       "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-      "line": 453,
-      "context": "451:     };\n452: \n453:     window.addEventListener('keydown', handleKey);\n454:     return () => window.removeEventListener('keydown', handleKey);\n455:   }, [isInitialized]);"
+      "line": 477,
+      "context": "475:     };\n476: \n477:     window.addEventListener('keydown', handleKey);\n478:     return () => window.removeEventListener('keydown', handleKey);\n479:   }, [isInitialized]);"
     },
     {
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 965,
-      "context": "963:     };\n964: \n965:     window.addEventListener('keydown', keyHandler);\n966: \n967:     return () => {"
+      "line": 943,
+      "context": "941:     };\n942: \n943:     window.addEventListener('keydown', keyHandler);\n944: \n945:     return () => {"
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",
@@ -81,8 +81,8 @@
     },
     {
       "file": "src/theater/TheaterDirector.js",
-      "line": 184,
-      "context": "182:     };\n183: \n184:     window.addEventListener('keydown', handler, { passive: false });\n185:     this._skipListener = handler;\n186:   }"
+      "line": 185,
+      "context": "183:     };\n184: \n185:     window.addEventListener('keydown', handler, { passive: false });\n186:     this._skipListener = handler;\n187:   }"
     },
     {
       "file": "src/utils/webgl/ShaderDebugSystem.js",

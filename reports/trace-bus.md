@@ -1,6 +1,6 @@
 # Trace Bus Report
 
-- Files scanned: 107
+- Files scanned: 118
 - Unique events: 10
 - Literal trace sites: 14
 - Dynamic trace sites: 1
@@ -16,29 +16,29 @@
 - `src/engine/ConsciousnessEngine.js:712`
 
 ## DIR
-- `src/components/webgl/managers/BlueprintBinder.js:607`
+- `src/components/webgl/managers/BlueprintBinder.js:688`
 
 ## FENCEPOST_LISTENERS_READY
-- `src/components/webgl/WebGLBackground.jsx:286`
-- `src/components/webgl/WebGLBackground.jsx:361`
+- `src/components/webgl/WebGLBackground.jsx:326`
+- `src/components/webgl/WebGLBackground.jsx:401`
 
 ## WBG:BIND
-- `src/components/webgl/WebGLBackground.jsx:209`
+- `src/components/webgl/WebGLBackground.jsx:249`
 
 ## WBG:FAST_FORWARD
-- `src/components/webgl/WebGLBackground.jsx:350`
+- `src/components/webgl/WebGLBackground.jsx:390`
 
 ## WBG:FENCEPOST
-- `src/components/webgl/WebGLBackground.jsx:227`
+- `src/components/webgl/WebGLBackground.jsx:267`
 
 ## WBG:FREEZE
-- `src/components/webgl/WebGLBackground.jsx:912`
-- `src/components/webgl/managers/BlueprintBinder.js:440`
-- `src/components/webgl/managers/BlueprintBinder.js:1167`
-- `src/components/webgl/managers/BlueprintBinder.js:1200`
+- `src/components/webgl/WebGLBackground.jsx:1214`
+- `src/components/webgl/managers/BlueprintBinder.js:492`
+- `src/components/webgl/managers/BlueprintBinder.js:1277`
+- `src/components/webgl/managers/BlueprintBinder.js:1310`
 
 ## WBG:MORPH_TYPE
-- `src/components/webgl/managers/BlueprintBinder.js:481`
+- `src/components/webgl/managers/BlueprintBinder.js:533`
 
 ## Dynamic trace calls
-- `src/components/webgl/WebGLBackground.jsx:217` → `label`
+- `src/components/webgl/WebGLBackground.jsx:257` → `label`

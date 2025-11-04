@@ -1420,7 +1420,6 @@ export const createBlueprintBinder = ({
   };
 
   let blueprintUnsub = null;
-  let directiveUnsub = null;
 
   const subscribe = () => {
     if (!bus?.on) {
@@ -1433,30 +1432,15 @@ export const createBlueprintBinder = ({
     }
     blueprintUnsub = bus.on(blueprintEvent, bindBlueprint);
 
-    if (directiveUnsub) {
-      directiveUnsub();
-      directiveUnsub = null;
-    }
-    const directiveEvent = events?.RENDER_DIRECTIVE ?? EVENTS.RENDER_DIRECTIVE;
-    if (directiveEvent && bus?.on) {
-      directiveUnsub = bus.on(directiveEvent, applyDirective);
-      if (dev) console.log('✅ [BlueprintBinder] RENDER_DIRECTIVE listener registered');
-    }
-
     return () => {
       blueprintUnsub?.();
       blueprintUnsub = null;
-      directiveUnsub?.();
-      directiveUnsub = null;
-      if (dev) console.log('🧹 [BlueprintBinder] Directive listener removed');
     };
   };
 
   const dispose = () => {
     blueprintUnsub?.();
     blueprintUnsub = null;
-    directiveUnsub?.();
-    directiveUnsub = null;
     rendererState?.cleanupQrMode?.();
     if (geometryRef?.current) {
       disposeAttributes(geometryRef.current);

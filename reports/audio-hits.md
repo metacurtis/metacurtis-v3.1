@@ -6,7 +6,7 @@
 - `src/components/theater/OpeningSequence.jsx:164`
 - `src/config/canonical/sst-v3.3.json:215`
 - `src/theater/bus/schemas.js:119`
-- `src/theater/controllers/OpeningSequenceController.js:332`
+- `src/theater/controllers/OpeningSequenceController.js:342`
 - `src/theater/events.js:48`
 
 ## new Audio(src)
@@ -42,23 +42,23 @@
 ```
 ## Unlock gates
 
-- `src/components/consciousness/ConsciousnessTheater.jsx:453`
+- `src/components/consciousness/ConsciousnessTheater.jsx:477`
 
 ```text
-451:     };
-452: 
-453:     window.addEventListener('keydown', handleKey);
-454:     return () => window.removeEventListener('keydown', handleKey);
-455:   }, [isInitialized]);
+475:     };
+476: 
+477:     window.addEventListener('keydown', handleKey);
+478:     return () => window.removeEventListener('keydown', handleKey);
+479:   }, [isInitialized]);
 ```
-- `src/components/narrative/NarrationController.jsx:965`
+- `src/components/narrative/NarrationController.jsx:943`
 
 ```text
-963:     };
-964: 
-965:     window.addEventListener('keydown', keyHandler);
-966: 
-967:     return () => {
+941:     };
+942: 
+943:     window.addEventListener('keydown', keyHandler);
+944: 
+945:     return () => {
 ```
 - `src/components/theater/OpeningSequence.jsx:61`
 
@@ -96,14 +96,14 @@
 348:     return () => {
 349:       canvas.removeEventListener('pointerdown', handlePointerDown);
 ```
-- `src/theater/TheaterDirector.js:184`
+- `src/theater/TheaterDirector.js:185`
 
 ```text
-182:     };
-183: 
-184:     window.addEventListener('keydown', handler, { passive: false });
-185:     this._skipListener = handler;
-186:   }
+183:     };
+184: 
+185:     window.addEventListener('keydown', handler, { passive: false });
+186:     this._skipListener = handler;
+187:   }
 ```
 - `src/utils/webgl/ShaderDebugSystem.js:195`
 
