@@ -115,8 +115,9 @@ class ConsciousnessEngine {
     this._openingPhase = true;
     this._viewportHint = { width: 120, height: 90, aspect: 4 / 3 };
 
-    // Emergence memory - store only targets, not full blueprint
-    this._lastEmergenceTargets = null;
+    // Emergence memory
+    this._lastEmergenceTargets = null;        // live reference used for post-emergence genesis guard
+    this._lastEmergenceTargetsCache = null;   // stable copy for deterministic re-use
     this._emergenceRaf = null;
     this._pendingEmergenceBlueprint = null;
 
@@ -335,6 +336,7 @@ class ConsciousnessEngine {
   _onPrewarmGenesis() {
     // Clear stale emergence targets so prewarm rebuilds with current VC tuning
     this._lastEmergenceTargets = null;
+    this._lastEmergenceTargetsCache = null;
     console.log('🧠 Engine: Prewarming genesis blueprint');
     const key = this._cacheKey('genesis', 'HIGH');
     if (!this.blueprintCache.has(key)) {
@@ -378,6 +380,7 @@ class ConsciousnessEngine {
 
     if (stage === 'genesis' && fallback) {
       this._lastEmergenceTargets = null;
+      this._lastEmergenceTargetsCache = null;
       this._emergenceDone = false;
       this._rendererFencepostSeen = false;
     }
@@ -392,8 +395,11 @@ class ConsciousnessEngine {
       this._emergenceActive = false;
       this._rendererFencepostSeen = false;
 
-      // Build the emergence blueprint
-      const blueprint = await this.buildEmergenceBlueprint(payload);
+      // Build the emergence blueprint (optionally reusing the last landing targets)
+      const blueprint = await this.buildEmergenceBlueprint({
+        ...payload,
+        reuseLastTargets: this._lastEmergenceTargetsCache,
+      });
       
       // Validate before proceeding
       if (!this._validateBlueprint(blueprint)) {
@@ -403,9 +409,6 @@ class ConsciousnessEngine {
         this._emergenceDone = false;
         return;
       }
-
-      // Store ONLY the target positions (not the full blueprint)
-      this._lastEmergenceTargets = blueprint.text3DPositions;
 
       // Emit emergence blueprint with mode flag (canonical event)
       const variantMode = openingChaosMode ? 'opening_chaos' : 'emergence';
@@ -583,6 +586,7 @@ class ConsciousnessEngine {
       fastForward = false,
       skipMorphAnimation = false,
       targetState = undefined,
+      reuseLastTargets = null,
     } = options || {};
 
     const sanitizedRatios = this._normalizeTierRatios(
@@ -609,28 +613,48 @@ class ConsciousnessEngine {
 
     await this._ensureFontReady(1500);
 
+    const canReuseTargets =
+      reuseLastTargets instanceof Float32Array &&
+      reuseLastTargets.length >= blueprintCount * 3;
+
     let targetPositions;
     let usedFallback = false;
-    try {
-      if (use3D && typeof this.generate3DTextFormation === 'function') {
-        targetPositions = this.generate3DTextFormation(wordRaw, {
-          depth,
-          particles: blueprintCount,
-          viewportHint,
-        });
-        usedFallback = this._lastText3DFallbackUsed;
-        if (usedFallback) {
-          console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
+    if (canReuseTargets) {
+      targetPositions = reuseLastTargets.slice(0, blueprintCount * 3);
+      this._lastText3DFallbackUsed = false;
+      console.log('🧠 Engine: Reusing cached emergence targets for deterministic landing');
+    } else {
+      try {
+        if (use3D && typeof this.generate3DTextFormation === 'function') {
+          targetPositions = this.generate3DTextFormation(wordRaw, {
+            depth,
+            particles: blueprintCount,
+            viewportHint,
+          });
+          usedFallback = this._lastText3DFallbackUsed;
+          if (usedFallback) {
+            console.warn('⚠️ Emergence used text3D FALLBACK (band). FontReady:', this._fontReady);
+          }
+        } else {
+          targetPositions = this.generateConstellationFormation(
+            blueprintCount,
+            sanitizedRatios,
+            viewportHint,
+            { band: false, clampToViewCaps: false },
+          );
+          this._lastText3DFallbackUsed = false;
         }
-      } else {
-        targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false, clampToViewCaps: false });
+      } catch (err) {
+        console.warn('⚠️ 3D text formation failed, falling back to constellation:', err);
+        targetPositions = this.generateConstellationFormation(
+          blueprintCount,
+          sanitizedRatios,
+          viewportHint,
+          { band: false, clampToViewCaps: false },
+        );
+        usedFallback = false;
         this._lastText3DFallbackUsed = false;
       }
-    } catch (err) {
-      console.warn('⚠️ 3D text formation failed, falling back to constellation:', err);
-      targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false, clampToViewCaps: false });
-      usedFallback = false;
-      this._lastText3DFallbackUsed = false;
     }
     if (!(targetPositions instanceof Float32Array)) {
       targetPositions = this.generateConstellationFormation(blueprintCount, sanitizedRatios, viewportHint, { band: false, clampToViewCaps: false });
@@ -644,6 +668,8 @@ class ConsciousnessEngine {
     if (blueprint.positions?.length === atmH.length) {
       blueprint.positions.set(atmH);
     }
+    this._lastEmergenceTargets = blueprint.text3DPositions;
+    this._lastEmergenceTargetsCache = tgtH.slice();
 
     const vw = (viewportHint?.width ?? this._viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint?.height ?? this._viewportHint.height ?? 90) * 0.5;
@@ -1293,6 +1319,7 @@ class ConsciousnessEngine {
   clearCache() {
     this.blueprintCache.clear();
     this._lastEmergenceTargets = null;
+    this._lastEmergenceTargetsCache = null;
     this._text3DCache.clear();
     console.log('🧹 ConsciousnessEngine: caches cleared');
   }
