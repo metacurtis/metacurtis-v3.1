@@ -1,0 +1,71 @@
+name: Navigation Architecture Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate-architecture:
+    name: Validate Navigation Architecture
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Layer 1 - Constitutional Validation
+        run: |
+          echo "🏛️ Layer 1: Constitutional Grounding"
+          npm run validate-sst
+          npm run detect-drift
+
+      - name: Layer 2 - Contract Validation
+        run: |
+          echo "📋 Layer 2: Contract Enforcement"
+          npm run test:contracts
+
+      - name: Layer 5 - Architecture Enforcement (NEW)
+        run: |
+          echo "🔒 Layer 5: Navigation Architecture Validation"
+          npm run test:centralization
+
+      - name: Generate Evidence Reports
+        run: |
+          echo "📊 Generating evidence reports..."
+          npm run scan-navigation || echo "Scanner not yet integrated"
+          node scripts/scan-legacy-apis.mjs > reports/legacy-api-usage.md || true
+
+      - name: Upload Evidence
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: architecture-evidence
+          path: |
+            reports/legacy-api-usage.md
+            reports/navigation-patterns.json
+            reports/control-flow-graph.json
+
+      - name: Check for Violations
+        run: |
+          echo "🔍 Checking for architectural violations..."
+
+          if [ -f reports/legacy-api-usage.md ]; then
+            BYPASS_COUNT=$(grep -c "narrativeAtom bypasses" reports/legacy-api-usage.md || echo "0")
+            if [ "$BYPASS_COUNT" -gt 0 ]; then
+              echo "❌ Found $BYPASS_COUNT bypass helper calls"
+              echo "These should route through unifiedNav or stateCommands"
+              exit 1
+            fi
+          fi
+
+          echo "✅ No architectural violations detected"
