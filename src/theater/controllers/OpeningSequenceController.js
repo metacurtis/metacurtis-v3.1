@@ -14,6 +14,7 @@ import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
 import ScrollOrchestrator from '@/theater/ScrollOrchestrator.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 const DEBUG_OPENING = true;
 
@@ -634,9 +635,9 @@ export class OpeningSequenceController {
       const previousStage = this.director.currentStage ?? 'emergence';
       console.log('🧬 Phase: Genesis stage handoff');
 
-      BeatBus.emit(EVENTS.STAGE_CHANGE, {
-        from: previousStage,
-        to: toStage,
+      stateCommands.requestStageChange(toStage, {
+        reason: 'opening_sequence_handoff',
+        previousStage,
         skipBlueprint: skipGenesisBlueprint,
         preserveEmergence: true,
         targetState,
@@ -647,11 +648,6 @@ export class OpeningSequenceController {
       } catch {}
 
       await this.director._runVisualSchedule?.();
-
-      BeatBus.emit(EVENTS.START_NARRATIVE, {
-        stage: toStage,
-        source: 'opening_complete',
-      });
 
       this.director.emitTune({
         breathingAmp: 0.02,

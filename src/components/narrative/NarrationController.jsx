@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, stageAtom } from '@/state/atoms';
+import stateCommands from '@/state/commands/StateCommands.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -312,7 +313,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           }
 
           const advanceVia = async () => {
-            liveControls.markAutoAdvance?.();
+            stateCommands.markAutoAdvance({ origin: 'narration_auto_advance' });
             try {
               const nav =
                 window.unifiedNav ||

@@ -38,20 +38,12 @@
       "SCROLL_ORCHESTRATOR": [
         {
           "file": "src/theater/controllers/OpeningSequenceController.js",
-          "line": 671
+          "line": 672
         }
       ]
     },
     "mutators": {
       "STAGE_ATOM_SET": [
-        {
-          "file": "src/bootstrap/wireSSTv3.js",
-          "line": 94
-        },
-        {
-          "file": "src/orchestration/navigation/narrativeNavigation.js",
-          "line": 57
-        },
         {
           "file": "src/state/atoms/stageAtom.js",
           "line": 645
@@ -98,23 +90,19 @@
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 237
+          "line": 316
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 305
+          "line": 326
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 324
+          "line": 335
         },
         {
-          "file": "src/theater/TheaterDirector.js",
-          "line": 533
-        },
-        {
-          "file": "src/theater/TheaterDirector.js",
-          "line": 537
+          "file": "src/state/commands/StateCommands.js",
+          "line": 384
         },
         {
           "file": "src/theater/UnifiedNavigationAPI.js",
@@ -123,12 +111,8 @@
       ],
       "JUMP_TO_STAGE": [
         {
-          "file": "src/bootstrap/wireSSTv3.js",
-          "line": 94
-        },
-        {
           "file": "src/orchestration/navigation/narrativeNavigation.js",
-          "line": 97
+          "line": 98
         },
         {
           "file": "src/state/atoms/narrativeAtom.js",
@@ -160,14 +144,10 @@
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 237
+          "line": 326
         }
       ],
       "FALLBACK_JUMP": [
-        {
-          "file": "src/bootstrap/wireSSTv3.js",
-          "line": 93
-        },
         {
           "file": "src/state/atoms/narrativeAtom.js",
           "line": 74
@@ -186,11 +166,7 @@
       "STAGE_CHANGE": [
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 151
-        },
-        {
-          "file": "src/theater/controllers/OpeningSequenceController.js",
-          "line": 637
+          "line": 167
         }
       ],
       "MORPH_PROGRESS": [
@@ -222,14 +198,6 @@
     "directMutations": {
       "STAGE_ATOM_SET": [
         {
-          "file": "src/bootstrap/wireSSTv3.js",
-          "line": 94
-        },
-        {
-          "file": "src/orchestration/navigation/narrativeNavigation.js",
-          "line": 57
-        },
-        {
           "file": "src/state/atoms/stageAtom.js",
           "line": 645
         },
@@ -275,23 +243,19 @@
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 237
+          "line": 316
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 305
+          "line": 326
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 324
+          "line": 335
         },
         {
-          "file": "src/theater/TheaterDirector.js",
-          "line": 533
-        },
-        {
-          "file": "src/theater/TheaterDirector.js",
-          "line": 537
+          "file": "src/state/commands/StateCommands.js",
+          "line": 384
         },
         {
           "file": "src/theater/UnifiedNavigationAPI.js",
@@ -300,12 +264,8 @@
       ],
       "JUMP_TO_STAGE": [
         {
-          "file": "src/bootstrap/wireSSTv3.js",
-          "line": 94
-        },
-        {
           "file": "src/orchestration/navigation/narrativeNavigation.js",
-          "line": 97
+          "line": 98
         },
         {
           "file": "src/state/atoms/narrativeAtom.js",
@@ -337,14 +297,10 @@
         },
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 237
+          "line": 326
         }
       ],
       "FALLBACK_JUMP": [
-        {
-          "file": "src/bootstrap/wireSSTv3.js",
-          "line": 93
-        },
         {
           "file": "src/state/atoms/narrativeAtom.js",
           "line": 74
@@ -360,10 +316,6 @@
       ]
     },
     "multipleEmitters": [
-      {
-        "event": "STAGE_CHANGE",
-        "count": 2
-      },
       {
         "event": "MORPH_PROGRESS",
         "count": 4

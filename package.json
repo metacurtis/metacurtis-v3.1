@@ -104,7 +104,8 @@
     "lint-shaders-motion": "node tools/lint-shaders-motion.mjs",
     "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs",
     "scan-navigation": "node tools/scan-navigation.mjs",
-    "analyze-flow": "node tools/analyze-control-flow.mjs"
+    "analyze-flow": "node tools/analyze-control-flow.mjs",
+    "test:centralization": "vitest run tests/contracts/event-centralization.spec.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.2",

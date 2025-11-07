@@ -745,6 +745,7 @@ if (typeof window !== 'undefined') {
   if (import.meta.env.DEV) {
     console.log('🎭 stageAtom: Enhanced with transition batching and performance optimization');
     console.log('🎮 Available: window.stageControls');
+    console.log('📊 Stage info:', window.stageControls.getStageInfo?.());
     console.log('🧪 Test batching: window.stageControls.testBatching?.()');
     console.log('🧪 Stress test: window.stageControls.stressTest?.(100)');
     console.log('📊 Performance: window.stageControls.getPerformanceMetrics?.()');

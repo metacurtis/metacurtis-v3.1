@@ -3,6 +3,7 @@
 
 import BeatBus from '@/theater/bus';
 import stageAtom from '@/state/atoms/stageAtom.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -507,34 +508,26 @@ class TheaterDirector {
       });
     }
 
-    let autoEnabled = false;
+    const alreadyEnabled =
+      stageAtom?.isAutoAdvanceEnabled?.() ??
+      stageAtom?.getState?.()?.autoAdvanceEnabled ??
+      false;
+
+    let autoEnabled = alreadyEnabled;
     let failureReason = null;
 
-    if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
-      const alreadyEnabled =
-        typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-          ? window.stageControls.isAutoAdvanceEnabled()
-          : window.stageControls.getState?.()?.autoAdvanceEnabled;
-
-      if (alreadyEnabled) {
-        console.log('   Auto-advance already active');
-        autoEnabled = true;
-      } else {
-        window.stageControls.setAutoAdvanceEnabled(true);
-        console.log('✅ Auto-advance enabled for narration-driven progression');
-        autoEnabled = true;
-      }
+    if (alreadyEnabled) {
+      console.log('   Auto-advance already active');
     } else {
-      failureReason = 'setAutoAdvanceEnabled not found';
-      console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
-    }
-
-    if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-      stageAtom.setAutoAdvanceEnabled(true);
-      console.log('✅ Auto-advance enabled via stageAtom fallback');
-      autoEnabled = true;
-    } else if (!autoEnabled) {
-      failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
+      autoEnabled = stateCommands.setAutoAdvanceEnabled(true, {
+        origin: 'director_opening_complete',
+      });
+      if (autoEnabled) {
+        console.log('✅ Auto-advance enabled for narration-driven progression');
+      } else {
+        failureReason = 'stateCommands.setAutoAdvanceEnabled failed';
+        console.warn('⚠️ Unable to enable auto-advance via StateCommands');
+      }
     }
 
     const autoAdvanceAfter =

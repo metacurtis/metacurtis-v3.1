@@ -1,407 +1,38 @@
 # Navigation Pattern Analysis
 
-**Generated:** 2025-11-07T06:07:16.260Z
-**Total Hits:** 336
+**Generated:** 2025-11-07T14:09:17.411Z
+**Total Hits:** 339
 
 ## Summary by Category
 
 | Category | Count |
 |----------|-------|
-| Entry Points | 38 |
-| Narration Controls | 135 |
+| Entry Points | 34 |
+| Narration Controls | 143 |
 | Manual Controls | 6 |
 | Orchestration | 2 |
-| **Race Indicators** | **15** |
+| **Race Indicators** | **14** |
 
 ## Pattern Distribution
 
 | Pattern | Count | Files |
 |---------|-------|-------|
-| JUMP_TO_STAGE | 10 | 5 |
-| STAGE_ATOM_SET | 19 | 6 |
-| FALLBACK_JUMP | 4 | 2 |
 | NAVIGATE_TO_STAGE | 9 | 5 |
 | NARRATION_START | 26 | 10 |
 | ARROW_NAV | 6 | 1 |
 | RAPID_FIRE | 5 | 3 |
 | MORPH_PROGRESS | 45 | 15 |
 | DEBOUNCE | 18 | 4 |
-| AUTO_ADVANCE | 109 | 6 |
+| AUTO_ADVANCE | 117 | 7 |
 | DUPLICATE_EVENT | 6 | 4 |
 | UNIFIED_NAV | 1 | 1 |
 | SETTLE_TIME | 77 | 8 |
+| JUMP_TO_STAGE | 9 | 4 |
+| FALLBACK_JUMP | 3 | 1 |
+| STAGE_ATOM_SET | 16 | 3 |
 | SCROLL_ORCHESTRATOR | 1 | 1 |
 
 ## Detailed Hits by Pattern
-
-### JUMP_TO_STAGE (10 hits)
-
-**src/bootstrap/wireSSTv3.js:94**
-```javascript
-91:     // If stageAtom exists, sync with it
-92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
-93:       // DISABLED: This bypasses orchestration
-94:       // stageAtom.jumpToStage(state.currentStage);
-95:     }
-96:   });
-97:   unsubscribers.push(unsubscribeNarrative);
-```
-
-**src/orchestration/navigation/narrativeNavigation.js:97**
-```javascript
-94:       id: name,
-95:       label,
-96:       isActive: activeStage === name,
-97:       onClick: () => jumpToStage(name, { smooth: true, emitNarration: true }),
-98:       index,
-99:     };
-100:   });
-```
-
-**src/state/atoms/narrativeAtom.js:124**
-```javascript
-121:     const current = get().currentStage;
-122:     const currentIndex = STAGE_ORDER.indexOf(current);
-123:     if (currentIndex < STAGE_ORDER.length - 1) {
-124:       narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex + 1]);
-125:     }
-126:   },
-127: 
-```
-
-**src/state/atoms/narrativeAtom.js:140**
-```javascript
-137:     const current = get().currentStage;
-138:     const currentIndex = STAGE_ORDER.indexOf(current);
-139:     if (currentIndex > 0) {
-140:       narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex - 1]);
-141:     }
-142:   },
-143: 
-```
-
-**src/state/atoms/narrativeAtom.js:146**
-```javascript
-143: 
-144:   setStage: stageIndex => {
-145:     const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];
-146:     narrativeAtom.jumpToStage(stage);
-147:   },
-148: 
-149:   // ===== PROGRESS MANAGEMENT =====
-```
-
-**src/state/atoms/stageAtom.js:623**
-```javascript
-620:       if (import.meta.env.DEV) {
-621:         const clampedIndex = Math.max(0, Math.min(index, STAGE_COUNT - 1));
-622:         const stageName = STAGE_NAMES[clampedIndex];
-623:         actions.jumpToStage(stageName);
-624:       }
-625:     },
-626:     
-```
-
-**src/state/atoms/stageAtom.js:676**
-```javascript
-673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,
-674: 
-675:     // Navigation helpers
-676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
-677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
-678:     next: () => stageAtom.nextStage(),
-679:     prev: () => stageAtom.prevStage(),
-```
-
-**src/state/atoms/stageAtom.js:677**
-```javascript
-674: 
-675:     // Navigation helpers
-676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
-677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
-678:     next: () => stageAtom.nextStage(),
-679:     prev: () => stageAtom.prevStage(),
-680:     setProgress: (progress) => stageAtom.setStageProgress(progress),
-```
-
-**src/state/atoms/stageAtom.js:706**
-```javascript
-703: 
-704:       for (let i = 0; i < iterations; i++) {
-705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
-706:         stageAtom.jumpToStage(randomStage);
-707:         stageAtom.setStageProgress(Math.random());
-708:       }
-709: 
-```
-
-**src/state/commands/StateCommands.js:237**
-```javascript
-234:       const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;
-235:       if (!gateActive || gateTarget === targetStage) {
-236:         if (currentStage !== targetStage) {
-237:           stageAtom.jumpToStage(targetStage);
-238:         }
-239:       }
-240:     }
-```
-
-### STAGE_ATOM_SET (19 hits)
-
-**src/bootstrap/wireSSTv3.js:94**
-```javascript
-91:     // If stageAtom exists, sync with it
-92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
-93:       // DISABLED: This bypasses orchestration
-94:       // stageAtom.jumpToStage(state.currentStage);
-95:     }
-96:   });
-97:   unsubscribers.push(unsubscribeNarrative);
-```
-
-**src/orchestration/navigation/narrativeNavigation.js:57**
-```javascript
-54:   const current = stageAtom.getState().autoAdvanceEnabled;
-55:   const nextValue =
-56:     typeof forcedValue === 'boolean' ? forcedValue : !current;
-57:   stageAtom.setAutoAdvanceEnabled(nextValue);
-58:   return nextValue;
-59: };
-60: 
-```
-
-**src/state/atoms/stageAtom.js:645**
-```javascript
-642: 
-643: // 🔬 DIAGNOSTIC: Stage atom state tracking
-644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {
-645:   const originalSetState = stageAtom.setState?.bind(stageAtom);
-646:   if (originalSetState) {
-647:     stageAtom.setState = function (value, updateType) {
-648:       const previousState = stageAtom.getState?.();
-```
-
-**src/state/atoms/stageAtom.js:647**
-```javascript
-644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {
-645:   const originalSetState = stageAtom.setState?.bind(stageAtom);
-646:   if (originalSetState) {
-647:     stageAtom.setState = function (value, updateType) {
-648:       const previousState = stageAtom.getState?.();
-649:       const nextState = typeof value === 'function' ? value(previousState) : value;
-650:       console.log('🔬 [STAGE_ATOM] State change:', { from: previousState, to: nextState, updateType });
-```
-
-**src/state/atoms/stageAtom.js:676**
-```javascript
-673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,
-674: 
-675:     // Navigation helpers
-676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
-677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
-678:     next: () => stageAtom.nextStage(),
-679:     prev: () => stageAtom.prevStage(),
-```
-
-**src/state/atoms/stageAtom.js:677**
-```javascript
-674: 
-675:     // Navigation helpers
-676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
-677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
-678:     next: () => stageAtom.nextStage(),
-679:     prev: () => stageAtom.prevStage(),
-680:     setProgress: (progress) => stageAtom.setStageProgress(progress),
-```
-
-**src/state/atoms/stageAtom.js:680**
-```javascript
-677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
-678:     next: () => stageAtom.nextStage(),
-679:     prev: () => stageAtom.prevStage(),
-680:     setProgress: (progress) => stageAtom.setStageProgress(progress),
-681:     reset: () => stageAtom.resetStage(),
-682: 
-683:     // Auto-advance
-```
-
-**src/state/atoms/stageAtom.js:684**
-```javascript
-681:     reset: () => stageAtom.resetStage(),
-682: 
-683:     // Auto-advance
-684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
-685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
-686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
-687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
-```
-
-**src/state/atoms/stageAtom.js:685**
-```javascript
-682: 
-683:     // Auto-advance
-684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
-685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
-686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
-687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
-688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
-```
-
-**src/state/atoms/stageAtom.js:686**
-```javascript
-683:     // Auto-advance
-684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
-685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
-686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
-687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
-688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
-689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),
-```
-
-**src/state/atoms/stageAtom.js:706**
-```javascript
-703: 
-704:       for (let i = 0; i < iterations; i++) {
-705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
-706:         stageAtom.jumpToStage(randomStage);
-707:         stageAtom.setStageProgress(Math.random());
-708:       }
-709: 
-```
-
-**src/state/atoms/stageAtom.js:707**
-```javascript
-704:       for (let i = 0; i < iterations; i++) {
-705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
-706:         stageAtom.jumpToStage(randomStage);
-707:         stageAtom.setStageProgress(Math.random());
-708:       }
-709: 
-710:       const endTime = performance.now();
-```
-
-**src/state/atoms/stageAtom.js:728**
-```javascript
-725: 
-726:       for (let i = 0; i < 10; i++) {
-727:         setTimeout(() => {
-728:           stageAtom.setStageProgress(i / 10);
-729:         }, i * 5);
-730:       }
-731: 
-```
-
-**src/state/commands/StateCommands.js:237**
-```javascript
-234:       const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;
-235:       if (!gateActive || gateTarget === targetStage) {
-236:         if (currentStage !== targetStage) {
-237:           stageAtom.jumpToStage(targetStage);
-238:         }
-239:       }
-240:     }
-```
-
-**src/state/commands/StateCommands.js:305**
-```javascript
-302:   }
-303: 
-304:   transitionStage(from, to) {
-305:     stageAtom.setState?.({ currentStage: to, transitioning: true });
-306:     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
-307:   }
-308: 
-```
-
-**src/state/commands/StateCommands.js:324**
-```javascript
-321: 
-322:   restoreSnapshot(snapshot) {
-323:     if (snapshot?.state) {
-324:       stageAtom.setState?.(snapshot.state.stage);
-325:       narrativeAtom.setState?.(snapshot.state.narrative);
-326:       qualityAtom.setState?.(snapshot.state.quality);
-327:       interactionAtom.setState?.(snapshot.state.interaction);
-```
-
-**src/theater/TheaterDirector.js:533**
-```javascript
-530:     }
-531: 
-532:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-533:       stageAtom.setAutoAdvanceEnabled(true);
-534:       console.log('✅ Auto-advance enabled via stageAtom fallback');
-535:       autoEnabled = true;
-536:     } else if (!autoEnabled) {
-```
-
-**src/theater/TheaterDirector.js:537**
-```javascript
-534:       console.log('✅ Auto-advance enabled via stageAtom fallback');
-535:       autoEnabled = true;
-536:     } else if (!autoEnabled) {
-537:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
-538:     }
-539: 
-540:     const autoAdvanceAfter =
-```
-
-**src/theater/UnifiedNavigationAPI.js:8**
-```javascript
-5:  * Guarantees full orchestration (fragments, scroll sync, narration).
-6:  *
-7:  * RULE: Nothing should call narrativeAtom.jumpToStage directly.
-8:  * RULE: Nothing should call stageAtom.jumpToStage directly.
-9:  * RULE: All navigation goes through this API.
-10:  */
-11: 
-```
-
-### FALLBACK_JUMP (4 hits)
-
-**src/bootstrap/wireSSTv3.js:93**
-```javascript
-90: 
-91:     // If stageAtom exists, sync with it
-92:     if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
-93:       // DISABLED: This bypasses orchestration
-94:       // stageAtom.jumpToStage(state.currentStage);
-95:     }
-96:   });
-```
-
-**src/state/atoms/narrativeAtom.js:74**
-```javascript
-71:       function: 'jumpToStage',
-72:       targetStage: stage,
-73:       caller: new Error().stack.split('\n')[2].trim(),
-74:       bypassesOrchestration: true,
-75:       timestamp: performance.now(),
-76:     });
-77: 
-```
-
-**src/state/atoms/narrativeAtom.js:117**
-```javascript
-114:       function: 'nextStage',
-115:       currentStage: get().currentStage,
-116:       caller: new Error().stack.split('\n')[2].trim(),
-117:       bypassesOrchestration: true,
-118:       timestamp: performance.now(),
-119:     });
-120: 
-```
-
-**src/state/atoms/narrativeAtom.js:133**
-```javascript
-130:       function: 'prevStage',
-131:       currentStage: get().currentStage,
-132:       caller: new Error().stack.split('\n')[2].trim(),
-133:       bypassesOrchestration: true,
-134:       timestamp: performance.now(),
-135:     });
-136: 
-```
 
 ### NAVIGATE_TO_STAGE (9 hits)
 
@@ -416,15 +47,15 @@
 266:           source,
 ```
 
-**src/components/narrative/NarrationController.jsx:332**
+**src/components/narrative/NarrationController.jsx:333**
 ```javascript
-329: 
-330:               let success = false;
-331:               if (nextStageName && typeof nav.navigateToStage === 'function') {
-332:                 success = await nav.navigateToStage(nextStageName, {
-333:                   smooth: true,
-334:                   source: 'narration_auto_advance',
-335:                 });
+330: 
+331:               let success = false;
+332:               if (nextStageName && typeof nav.navigateToStage === 'function') {
+333:                 success = await nav.navigateToStage(nextStageName, {
+334:                   smooth: true,
+335:                   source: 'narration_auto_advance',
+336:                 });
 ```
 
 **src/components/ui/narrative/StageNavigation.jsx:45**
@@ -438,37 +69,37 @@
 48:                 source: 'sidebar',
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:39**
+**src/orchestration/navigation/narrativeNavigation.js:40**
 ```javascript
-36:   if (currentStage === stageName) return true;
-37: 
-38:   unifiedNav
-39:     .navigateToStage(stageName, {
-40:       smooth,
-41:       skipNarration: !emitNarration,
-42:       source: 'narrative_navigation',
+37:   if (currentStage === stageName) return true;
+38: 
+39:   unifiedNav
+40:     .navigateToStage(stageName, {
+41:       smooth,
+42:       skipNarration: !emitNarration,
+43:       source: 'narrative_navigation',
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:113**
+**src/orchestration/navigation/narrativeNavigation.js:114**
 ```javascript
-110:   if (!nextStageName || nextStageName === info.currentStage) return false;
-111: 
-112:   unifiedNav
-113:     .navigateToStage(nextStageName, {
-114:       smooth: true,
-115:       skipNarration: false,
-116:       source: 'narrative_navigation_next',
+111:   if (!nextStageName || nextStageName === info.currentStage) return false;
+112: 
+113:   unifiedNav
+114:     .navigateToStage(nextStageName, {
+115:       smooth: true,
+116:       skipNarration: false,
+117:       source: 'narrative_navigation_next',
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:135**
+**src/orchestration/navigation/narrativeNavigation.js:136**
 ```javascript
-132:   if (!prevStageName || prevStageName === info.currentStage) return false;
-133: 
-134:   unifiedNav
-135:     .navigateToStage(prevStageName, {
-136:       smooth: true,
-137:       skipNarration: false,
-138:       source: 'narrative_navigation_prev',
+133:   if (!prevStageName || prevStageName === info.currentStage) return false;
+134: 
+135:   unifiedNav
+136:     .navigateToStage(prevStageName, {
+137:       smooth: true,
+138:       skipNarration: false,
+139:       source: 'narrative_navigation_prev',
 ```
 
 **src/theater/UnifiedNavigationAPI.js:30**
@@ -517,125 +148,125 @@
 197:       }),
 ```
 
-**src/components/narrative/NarrationController.jsx:601**
+**src/components/narrative/NarrationController.jsx:602**
 ```javascript
-598:     [defaultCharsPerSecond, triggerAutoAdvance]
-599:   );
-600: 
-601:   const startNarration = useCallback(
-602:     (stageName, origin = 'internal') => {
-603:       console.log('🔬 [NARRATION] START_NARRATION_CALLED:', {
-604:         requestedStage: stageName,
+599:     [defaultCharsPerSecond, triggerAutoAdvance]
+600:   );
+601: 
+602:   const startNarration = useCallback(
+603:     (stageName, origin = 'internal') => {
+604:       console.log('🔬 [NARRATION] START_NARRATION_CALLED:', {
+605:         requestedStage: stageName,
 ```
 
-**src/components/narrative/NarrationController.jsx:797**
+**src/components/narrative/NarrationController.jsx:798**
 ```javascript
-794:       const surface = {};
-795:       Object.defineProperties(surface, {
-796:         playNarration: {
-797:           value: (stage) => startNarration(stage, 'external'),
-798:           enumerable: true,
-799:         },
-800:         skipNarration: {
+795:       const surface = {};
+796:       Object.defineProperties(surface, {
+797:         playNarration: {
+798:           value: (stage) => startNarration(stage, 'external'),
+799:           enumerable: true,
+800:         },
+801:         skipNarration: {
 ```
 
-**src/components/narrative/NarrationController.jsx:855**
+**src/components/narrative/NarrationController.jsx:856**
 ```javascript
-852:     return () => {
-853:       revokeControlSurface('narrationController');
-854:     };
-855:   }, [skipNarration, startNarration]);
-856: 
-857:   useEffect(() => {
-858:     if (typeof window === 'undefined') return undefined;
+853:     return () => {
+854:       revokeControlSurface('narrationController');
+855:     };
+856:   }, [skipNarration, startNarration]);
+857: 
+858:   useEffect(() => {
+859:     if (typeof window === 'undefined') return undefined;
 ```
 
-**src/components/narrative/NarrationController.jsx:865**
+**src/components/narrative/NarrationController.jsx:866**
 ```javascript
-862:       autoAdvanceEnabled,
-863:       resetStateId: resetState,
-864:       skipNarrationId: skipNarration,
-865:       startNarrationId: startNarration,
-866:     };
-867:     const prevDeps = prevDepsRef.current;
-868:     const changedKeys = Object.keys(deps).filter((key) => prevDeps[key] !== deps[key]);
+863:       autoAdvanceEnabled,
+864:       resetStateId: resetState,
+865:       skipNarrationId: skipNarration,
+866:       startNarrationId: startNarration,
+867:     };
+868:     const prevDeps = prevDepsRef.current;
+869:     const changedKeys = Object.keys(deps).filter((key) => prevDeps[key] !== deps[key]);
 ```
 
-**src/components/narrative/NarrationController.jsx:928**
+**src/components/narrative/NarrationController.jsx:929**
 ```javascript
-925:       });
-926: 
-927:       const origin = source || 'event';
-928:       startNarration(stageName, origin);
-929:       startedStagesRef.current.add(stageName);
-930:       console.log('🎙️ [NarrationController] Added to startedStagesRef', {
-931:         stage: stageName,
+926:       });
+927: 
+928:       const origin = source || 'event';
+929:       startNarration(stageName, origin);
+930:       startedStagesRef.current.add(stageName);
+931:       console.log('🎙️ [NarrationController] Added to startedStagesRef', {
+932:         stage: stageName,
 ```
 
-**src/components/narrative/NarrationController.jsx:959**
+**src/components/narrative/NarrationController.jsx:960**
 ```javascript
-956:       }
-957:     };
-958: 
-959:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);
-960:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);
-961: 
-962:     const keyHandler = (event) => {
+957:       }
+958:     };
+959: 
+960:     const offStart = BeatBus.on?.(EVENTS.START_NARRATIVE, handleStart);
+961:     const offStageChange = BeatBus.on?.(EVENTS.STAGE_CHANGE, handleStageChange);
+962: 
+963:     const keyHandler = (event) => {
 ```
 
-**src/components/narrative/NarrationController.jsx:987**
+**src/components/narrative/NarrationController.jsx:988**
 ```javascript
-984:       window.removeEventListener('keydown', keyHandler);
-985:       resetState();
-986:     };
-987:   }, [currentStage, resetState, skipNarration, startNarration]);
-988: 
-989:   useEffect(() => {
-990:     if (!currentStage) return;
+985:       window.removeEventListener('keydown', keyHandler);
+986:       resetState();
+987:     };
+988:   }, [currentStage, resetState, skipNarration, startNarration]);
+989: 
+990:   useEffect(() => {
+991:     if (!currentStage) return;
 ```
 
-**src/components/narrative/NarrationController.jsx:1034**
+**src/components/narrative/NarrationController.jsx:1035**
 ```javascript
-1031:       segmentCount,
-1032:     });
-1033: 
-1034:     startNarration(currentStage, 'auto');
-1035:     startedStagesRef.current.add(currentStage);
-1036:   }, [currentStage, startNarration]);
-1037: 
+1032:       segmentCount,
+1033:     });
+1034: 
+1035:     startNarration(currentStage, 'auto');
+1036:     startedStagesRef.current.add(currentStage);
+1037:   }, [currentStage, startNarration]);
+1038: 
 ```
 
-**src/components/narrative/NarrationController.jsx:1036**
+**src/components/narrative/NarrationController.jsx:1037**
 ```javascript
-1033: 
-1034:     startNarration(currentStage, 'auto');
-1035:     startedStagesRef.current.add(currentStage);
-1036:   }, [currentStage, startNarration]);
-1037: 
-1038:   useEffect(() => {
-1039:     if (typeof window === 'undefined') return () => {};
+1034: 
+1035:     startNarration(currentStage, 'auto');
+1036:     startedStagesRef.current.add(currentStage);
+1037:   }, [currentStage, startNarration]);
+1038: 
+1039:   useEffect(() => {
+1040:     if (typeof window === 'undefined') return () => {};
 ```
 
-**src/components/narrative/NarrationController.jsx:1054**
+**src/components/narrative/NarrationController.jsx:1055**
 ```javascript
-1051:         stage: pendingStage,
-1052:       });
-1053:       pendingStartRef.current = null;
-1054:       startNarration(pendingStage, 'pending');
-1055:       startedStagesRef.current.add(pendingStage);
-1056:     }, 150);
-1057: 
+1052:         stage: pendingStage,
+1053:       });
+1054:       pendingStartRef.current = null;
+1055:       startNarration(pendingStage, 'pending');
+1056:       startedStagesRef.current.add(pendingStage);
+1057:     }, 150);
+1058: 
 ```
 
-**src/components/narrative/NarrationController.jsx:1059**
+**src/components/narrative/NarrationController.jsx:1060**
 ```javascript
-1056:     }, 150);
-1057: 
-1058:     return () => clearInterval(intervalId);
-1059:   }, [startNarration]);
-1060: 
-1061:   useEffect(() => {
-1062:     return () => {
+1057:     }, 150);
+1058: 
+1059:     return () => clearInterval(intervalId);
+1060:   }, [startNarration]);
+1061: 
+1062:   useEffect(() => {
+1063:     return () => {
 ```
 
 **src/components/narrative/NarrationOverlayBus.jsx:124**
@@ -737,26 +368,26 @@
 27: 
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:20**
+**src/orchestration/navigation/narrativeNavigation.js:21**
 ```javascript
-17: 
-18: const emitStartNarrative = (stageName) => {
-19:   if (!stageName) return;
-20:   BeatBus.emit?.(EVENTS.START_NARRATIVE, {
-21:     stage: stageName,
-22:     source: 'user_action',
-23:   });
+18: 
+19: const emitStartNarrative = (stageName) => {
+20:   if (!stageName) return;
+21:   BeatBus.emit?.(EVENTS.START_NARRATIVE, {
+22:     stage: stageName,
+23:     source: 'user_action',
+24:   });
 ```
 
-**src/theater/TheaterDirector.js:270**
+**src/theater/TheaterDirector.js:271**
 ```javascript
-267:         return;
-268:       }
-269: 
-270:       BeatBus.emit(EVENTS.START_NARRATIVE, {
-271:         stage: newStage,
-272:         source: 'director_stage_change',
-273:         timestamp:
+268:         return;
+269:       }
+270: 
+271:       BeatBus.emit(EVENTS.START_NARRATIVE, {
+272:         stage: newStage,
+273:         source: 'director_stage_change',
+274:         timestamp:
 ```
 
 **src/theater/bus/schemas.js:67**
@@ -770,15 +401,15 @@
 70:   }],
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:651**
+**src/theater/controllers/OpeningSequenceController.js:652**
 ```javascript
-648: 
-649:       await this.director._runVisualSchedule?.();
-650: 
-651:       BeatBus.emit(EVENTS.START_NARRATIVE, {
-652:         stage: toStage,
-653:         source: 'opening_complete',
-654:       });
+649: 
+650:       await this.director._runVisualSchedule?.();
+651: 
+652:       BeatBus.emit(EVENTS.START_NARRATIVE, {
+653:         stage: toStage,
+654:         source: 'opening_complete',
+655:       });
 ```
 
 **src/theater/events.js:29**
@@ -1095,48 +726,48 @@
 47: 
 ```
 
-**src/state/commands/StateCommands.js:201**
+**src/state/commands/StateCommands.js:208**
 ```javascript
-198:     if (qualitySub) this.subscriptions.push(qualitySub);
-199:   }
-200: 
-201:   setMorphProgress(value, options = {}) {
-202:     const morph = clamp01(value);
-203:     narrativeAtom.setMorphProgress?.(morph);
-204: 
+205:     if (qualitySub) this.subscriptions.push(qualitySub);
+206:   }
+207: 
+208:   setMorphProgress(value, options = {}) {
+209:     const morph = clamp01(value);
+210:     narrativeAtom.setMorphProgress?.(morph);
+211: 
 ```
 
-**src/state/commands/StateCommands.js:203**
+**src/state/commands/StateCommands.js:210**
 ```javascript
-200: 
-201:   setMorphProgress(value, options = {}) {
-202:     const morph = clamp01(value);
-203:     narrativeAtom.setMorphProgress?.(morph);
-204: 
-205:     this.morphState = {
-206:       value: morph,
+207: 
+208:   setMorphProgress(value, options = {}) {
+209:     const morph = clamp01(value);
+210:     narrativeAtom.setMorphProgress?.(morph);
+211: 
+212:     this.morphState = {
+213:       value: morph,
 ```
 
-**src/state/commands/StateCommands.js:216**
+**src/state/commands/StateCommands.js:223**
 ```javascript
-213: 
-214:   adjustMorph(delta, options = {}) {
-215:     const current = narrativeAtom.getState?.()?.morphProgress ?? 0;
-216:     return this.setMorphProgress(current + delta, options);
-217:   }
-218: 
-219:   setScrollProgress(progress, options = {}) {
+220: 
+221:   adjustMorph(delta, options = {}) {
+222:     const current = narrativeAtom.getState?.()?.morphProgress ?? 0;
+223:     return this.setMorphProgress(current + delta, options);
+224:   }
+225: 
+226:   setScrollProgress(progress, options = {}) {
 ```
 
-**src/state/commands/StateCommands.js:274**
+**src/state/commands/StateCommands.js:285**
 ```javascript
-271:     const startTime = performance.now();
-272:     const animate = () => {
-273:       const progress = Math.min((performance.now() - startTime) / duration, 1);
-274:       this.setMorphProgress(progress, { origin: 'climax' });
-275: 
-276:       if (progress < 1) {
-277:         requestAnimationFrame(animate);
+282:     const startTime = performance.now();
+283:     const animate = () => {
+284:       const progress = Math.min((performance.now() - startTime) / duration, 1);
+285:       this.setMorphProgress(progress, { origin: 'climax' });
+286: 
+287:       if (progress < 1) {
+288:         requestAnimationFrame(animate);
 ```
 
 **src/theater/ScrollOrchestrator.js:3**
@@ -1270,125 +901,125 @@
 335:   /**
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:34**
-```javascript
-31:   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
-32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
-33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
-34:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
-35:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
-36:   emergence: {
-37:     durationMs: 2000,
-```
-
 **src/theater/controllers/OpeningSequenceController.js:35**
 ```javascript
-32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
-33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
-34:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
-35:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
-36:   emergence: {
-37:     durationMs: 2000,
-38:     waitForFencepost: true,
+32:   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
+33:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
+34:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
+35:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
+36:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
+37:   emergence: {
+38:     durationMs: 2000,
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:445**
+**src/theater/controllers/OpeningSequenceController.js:36**
 ```javascript
-442:           duration: chaosDuration,
-443:           rendererSpin: chaosConfig.rendererSpin || null,
-444:         });
-445:         const chaosTarget = Number.isFinite(chaosConfig.morphTo) ? clamp01(chaosConfig.morphTo) : 0.0;
-446:         const chaosAnimation = animateMorph(currentMorphValue, chaosTarget, chaosDuration, 'chaos');
-447:         if (chaosDuration > 0) {
-448:           const waitResult = await this.director.sleep(chaosDuration);
+33:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
+34:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
+35:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
+36:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
+37:   emergence: {
+38:     durationMs: 2000,
+39:     waitForFencepost: true,
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:465**
+**src/theater/controllers/OpeningSequenceController.js:446**
 ```javascript
-462:         });
-463:         const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);
-464:         this.director.phase = 'coalesce';
-465:         console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
-466:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-467:           name: 'coalesce',
-468:           duration: coalesceDuration,
+443:           duration: chaosDuration,
+444:           rendererSpin: chaosConfig.rendererSpin || null,
+445:         });
+446:         const chaosTarget = Number.isFinite(chaosConfig.morphTo) ? clamp01(chaosConfig.morphTo) : 0.0;
+447:         const chaosAnimation = animateMorph(currentMorphValue, chaosTarget, chaosDuration, 'chaos');
+448:         if (chaosDuration > 0) {
+449:           const waitResult = await this.director.sleep(chaosDuration);
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:469**
+**src/theater/controllers/OpeningSequenceController.js:466**
 ```javascript
-466:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-467:           name: 'coalesce',
-468:           duration: coalesceDuration,
-469:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
-470:         });
-471:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
-472:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
+463:         });
+464:         const coalesceDuration = Math.max(0, Number(coalesceConfig.durationMs) || 0);
+465:         this.director.phase = 'coalesce';
+466:         console.log(`   Phase: Coalesce (${coalesceDuration}ms → morph ${coalesceConfig.morphTo ?? '—'})`);
+467:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+468:           name: 'coalesce',
+469:           duration: coalesceDuration,
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:471**
+**src/theater/controllers/OpeningSequenceController.js:470**
 ```javascript
-468:           duration: coalesceDuration,
-469:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
-470:         });
-471:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
-472:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
-473:         let coalesceAnimation = null;
-474:         if (hasCoalesceTarget) {
+467:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+468:           name: 'coalesce',
+469:           duration: coalesceDuration,
+470:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
+471:         });
+472:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
+473:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:472**
 ```javascript
-469:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
-470:         });
-471:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
-472:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
-473:         let coalesceAnimation = null;
-474:         if (hasCoalesceTarget) {
-475:           coalesceAnimation = animateMorph(currentMorphValue, coalesceTarget, coalesceDuration, 'coalesce');
+469:           duration: coalesceDuration,
+470:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
+471:         });
+472:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
+473:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
+474:         let coalesceAnimation = null;
+475:         if (hasCoalesceTarget) {
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:497**
+**src/theater/controllers/OpeningSequenceController.js:473**
 ```javascript
-494:         });
-495:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
-496:         this.director.phase = 'settle';
-497:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
-500:           duration: settleDuration,
+470:           morphTarget: typeof coalesceConfig.morphTo === 'number' ? coalesceConfig.morphTo : null,
+471:         });
+472:         const hasCoalesceTarget = typeof coalesceConfig.morphTo === 'number';
+473:         const coalesceTarget = hasCoalesceTarget ? clamp01(coalesceConfig.morphTo) : currentMorphValue;
+474:         let coalesceAnimation = null;
+475:         if (hasCoalesceTarget) {
+476:           coalesceAnimation = animateMorph(currentMorphValue, coalesceTarget, coalesceDuration, 'coalesce');
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:501**
+**src/theater/controllers/OpeningSequenceController.js:498**
 ```javascript
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
-500:           duration: settleDuration,
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+495:         });
+496:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
+497:         this.director.phase = 'settle';
+498:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
+501:           duration: settleDuration,
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:503**
+**src/theater/controllers/OpeningSequenceController.js:502**
 ```javascript
-500:           duration: settleDuration,
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
+501:           duration: settleDuration,
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:504**
 ```javascript
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
-507:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+501:           duration: settleDuration,
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
+```
+
+**src/theater/controllers/OpeningSequenceController.js:505**
+```javascript
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
+508:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
 ```
 
 **src/theater/events-safe.js:25**
@@ -1613,402 +1244,402 @@
 262:         stable: manager.stabilityChecks === 0,
 ```
 
-### AUTO_ADVANCE (109 hits)
-
-**src/components/narrative/NarrationController.jsx:36**
-```javascript
-33:   completionEvents: [],
-34:   log(event, data) {
-35:     console.log(`🔬 [NARRATION] ${event}:`, data);
-36:     if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {
-37:       window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);
-38:     }
-39:   },
-```
+### AUTO_ADVANCE (117 hits)
 
 **src/components/narrative/NarrationController.jsx:37**
 ```javascript
-34:   log(event, data) {
-35:     console.log(`🔬 [NARRATION] ${event}:`, data);
-36:     if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {
-37:       window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);
-38:     }
-39:   },
-40: };
+34:   completionEvents: [],
+35:   log(event, data) {
+36:     console.log(`🔬 [NARRATION] ${event}:`, data);
+37:     if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {
+38:       window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);
+39:     }
+40:   },
 ```
 
-**src/components/narrative/NarrationController.jsx:81**
+**src/components/narrative/NarrationController.jsx:38**
 ```javascript
-78: 
-79: export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CHARS_PER_SECOND }) {
-80:   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
-81:   const autoAdvanceEnabled = useAtomValue(stageAtom, (state) => state.autoAdvanceEnabled);
-82:   const [activeNarration, setActiveNarration] = useState(null);
-83: 
-84:   const componentMountIdRef = useRef(null);
+35:   log(event, data) {
+36:     console.log(`🔬 [NARRATION] ${event}:`, data);
+37:     if (typeof window !== 'undefined' && window.__autoAdvanceDiagnostic) {
+38:       window.__autoAdvanceDiagnostic.log(`NARRATION_${event}`, data);
+39:     }
+40:   },
+41: };
 ```
 
-**src/components/narrative/NarrationController.jsx:94**
+**src/components/narrative/NarrationController.jsx:82**
 ```javascript
-91:   const completedSegmentsRef = useRef(0);
-92:   const skipRequestedRef = useRef(false);
-93:   const previousOverflowRef = useRef(null);
-94:   const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);
-95:   const prevDepsRef = useRef({});
-96:   const segmentTokenRef = useRef(0);
-97:   const hasTriggeredAutoAdvanceRef = useRef(false);
+79: 
+80: export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CHARS_PER_SECOND }) {
+81:   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
+82:   const autoAdvanceEnabled = useAtomValue(stageAtom, (state) => state.autoAdvanceEnabled);
+83:   const [activeNarration, setActiveNarration] = useState(null);
+84: 
+85:   const componentMountIdRef = useRef(null);
 ```
 
-**src/components/narrative/NarrationController.jsx:97**
+**src/components/narrative/NarrationController.jsx:95**
 ```javascript
-94:   const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);
-95:   const prevDepsRef = useRef({});
-96:   const segmentTokenRef = useRef(0);
-97:   const hasTriggeredAutoAdvanceRef = useRef(false);
-98:   const startedStagesRef = useRef(new Set());
-99:   const pendingStartRef = useRef(null);
-100: 
+92:   const completedSegmentsRef = useRef(0);
+93:   const skipRequestedRef = useRef(false);
+94:   const previousOverflowRef = useRef(null);
+95:   const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);
+96:   const prevDepsRef = useRef({});
+97:   const segmentTokenRef = useRef(0);
+98:   const hasTriggeredAutoAdvanceRef = useRef(false);
 ```
 
-**src/components/narrative/NarrationController.jsx:142**
+**src/components/narrative/NarrationController.jsx:98**
 ```javascript
-139:       completedSegmentsRef.current = 0;
-140:       skipRequestedRef.current = false;
-141:       segmentTokenRef.current = 0;
-142:       hasTriggeredAutoAdvanceRef.current = false;
-143:       startedStagesRef.current.clear();
-144:       if (DEBUG_NARRATION) {
-145:         console.log('🎙️ [NarrationController] resetState called', {
+95:   const autoAdvanceEnabledRef = useRef(autoAdvanceEnabled);
+96:   const prevDepsRef = useRef({});
+97:   const segmentTokenRef = useRef(0);
+98:   const hasTriggeredAutoAdvanceRef = useRef(false);
+99:   const startedStagesRef = useRef(new Set());
+100:   const pendingStartRef = useRef(null);
+101: 
 ```
 
-**src/components/narrative/NarrationController.jsx:190**
+**src/components/narrative/NarrationController.jsx:143**
 ```javascript
-187:     [clearTimers, unlockScroll]
-188:   );
-189: 
-190:   const triggerAutoAdvance = useCallback(
-191:     (completedStageName, origin = 'narration_complete') => {
-192:       if (!completedStageName) return;
-193:       if (hasTriggeredAutoAdvanceRef.current) {
+140:       completedSegmentsRef.current = 0;
+141:       skipRequestedRef.current = false;
+142:       segmentTokenRef.current = 0;
+143:       hasTriggeredAutoAdvanceRef.current = false;
+144:       startedStagesRef.current.clear();
+145:       if (DEBUG_NARRATION) {
+146:         console.log('🎙️ [NarrationController] resetState called', {
 ```
 
-**src/components/narrative/NarrationController.jsx:193**
+**src/components/narrative/NarrationController.jsx:191**
 ```javascript
-190:   const triggerAutoAdvance = useCallback(
-191:     (completedStageName, origin = 'narration_complete') => {
-192:       if (!completedStageName) return;
-193:       if (hasTriggeredAutoAdvanceRef.current) {
-194:         narrationDiagnostic.log('AUTO_ADVANCE_SKIPPED_DUPLICATE', {
-195:           stage: completedStageName,
-196:           origin,
+188:     [clearTimers, unlockScroll]
+189:   );
+190: 
+191:   const triggerAutoAdvance = useCallback(
+192:     (completedStageName, origin = 'narration_complete') => {
+193:       if (!completedStageName) return;
+194:       if (hasTriggeredAutoAdvanceRef.current) {
 ```
 
-**src/components/narrative/NarrationController.jsx:201**
+**src/components/narrative/NarrationController.jsx:194**
 ```javascript
-198:         return;
-199:       }
-200: 
-201:       hasTriggeredAutoAdvanceRef.current = true;
-202:       narrationDiagnostic.log('AUTO_ADVANCE_TRIGGER_REQUEST', {
-203:         stage: completedStageName,
-204:         origin,
+191:   const triggerAutoAdvance = useCallback(
+192:     (completedStageName, origin = 'narration_complete') => {
+193:       if (!completedStageName) return;
+194:       if (hasTriggeredAutoAdvanceRef.current) {
+195:         narrationDiagnostic.log('AUTO_ADVANCE_SKIPPED_DUPLICATE', {
+196:           stage: completedStageName,
+197:           origin,
 ```
 
-**src/components/narrative/NarrationController.jsx:214**
+**src/components/narrative/NarrationController.jsx:202**
 ```javascript
-211: 
-212:       const controls = window.stageControls;
-213:       const isAutoEnabled =
-214:         controls?.isAutoAdvanceEnabled?.() ??
-215:         controls?.getState?.()?.autoAdvanceEnabled ??
-216:         stageAtom.getState?.()?.autoAdvanceEnabled ??
-217:         false;
+199:         return;
+200:       }
+201: 
+202:       hasTriggeredAutoAdvanceRef.current = true;
+203:       narrationDiagnostic.log('AUTO_ADVANCE_TRIGGER_REQUEST', {
+204:         stage: completedStageName,
+205:         origin,
 ```
 
 **src/components/narrative/NarrationController.jsx:215**
 ```javascript
-212:       const controls = window.stageControls;
-213:       const isAutoEnabled =
-214:         controls?.isAutoAdvanceEnabled?.() ??
-215:         controls?.getState?.()?.autoAdvanceEnabled ??
-216:         stageAtom.getState?.()?.autoAdvanceEnabled ??
-217:         false;
-218: 
+212: 
+213:       const controls = window.stageControls;
+214:       const isAutoEnabled =
+215:         controls?.isAutoAdvanceEnabled?.() ??
+216:         controls?.getState?.()?.autoAdvanceEnabled ??
+217:         stageAtom.getState?.()?.autoAdvanceEnabled ??
+218:         false;
 ```
 
 **src/components/narrative/NarrationController.jsx:216**
 ```javascript
-213:       const isAutoEnabled =
-214:         controls?.isAutoAdvanceEnabled?.() ??
-215:         controls?.getState?.()?.autoAdvanceEnabled ??
-216:         stageAtom.getState?.()?.autoAdvanceEnabled ??
-217:         false;
-218: 
-219:       if (!isAutoEnabled) {
+213:       const controls = window.stageControls;
+214:       const isAutoEnabled =
+215:         controls?.isAutoAdvanceEnabled?.() ??
+216:         controls?.getState?.()?.autoAdvanceEnabled ??
+217:         stageAtom.getState?.()?.autoAdvanceEnabled ??
+218:         false;
+219: 
 ```
 
-**src/components/narrative/NarrationController.jsx:230**
+**src/components/narrative/NarrationController.jsx:217**
 ```javascript
-227:         return;
-228:       }
-229: 
-230:       const scheduleAutoAdvance = (timeoutMs) => {
-231:         const timeoutId = setTimeout(() => {
-232:           timersRef.current.delete(timeoutId);
-233: 
+214:       const isAutoEnabled =
+215:         controls?.isAutoAdvanceEnabled?.() ??
+216:         controls?.getState?.()?.autoAdvanceEnabled ??
+217:         stageAtom.getState?.()?.autoAdvanceEnabled ??
+218:         false;
+219: 
+220:       if (!isAutoEnabled) {
 ```
 
-**src/components/narrative/NarrationController.jsx:237**
+**src/components/narrative/NarrationController.jsx:231**
 ```javascript
-234:           const liveControls = window.stageControls;
-235:           if (!liveControls?.next) return;
-236:           const autoStillEnabled =
-237:             liveControls.isAutoAdvanceEnabled?.() ??
-238:             liveControls.getState?.()?.autoAdvanceEnabled ??
-239:             stageAtom.getState?.()?.autoAdvanceEnabled ??
-240:             false;
+228:         return;
+229:       }
+230: 
+231:       const scheduleAutoAdvance = (timeoutMs) => {
+232:         const timeoutId = setTimeout(() => {
+233:           timersRef.current.delete(timeoutId);
+234: 
 ```
 
 **src/components/narrative/NarrationController.jsx:238**
 ```javascript
-235:           if (!liveControls?.next) return;
-236:           const autoStillEnabled =
-237:             liveControls.isAutoAdvanceEnabled?.() ??
-238:             liveControls.getState?.()?.autoAdvanceEnabled ??
-239:             stageAtom.getState?.()?.autoAdvanceEnabled ??
-240:             false;
-241:           if (!autoStillEnabled) return;
+235:           const liveControls = window.stageControls;
+236:           if (!liveControls?.next) return;
+237:           const autoStillEnabled =
+238:             liveControls.isAutoAdvanceEnabled?.() ??
+239:             liveControls.getState?.()?.autoAdvanceEnabled ??
+240:             stageAtom.getState?.()?.autoAdvanceEnabled ??
+241:             false;
 ```
 
 **src/components/narrative/NarrationController.jsx:239**
 ```javascript
-236:           const autoStillEnabled =
-237:             liveControls.isAutoAdvanceEnabled?.() ??
-238:             liveControls.getState?.()?.autoAdvanceEnabled ??
-239:             stageAtom.getState?.()?.autoAdvanceEnabled ??
-240:             false;
-241:           if (!autoStillEnabled) return;
-242: 
+236:           if (!liveControls?.next) return;
+237:           const autoStillEnabled =
+238:             liveControls.isAutoAdvanceEnabled?.() ??
+239:             liveControls.getState?.()?.autoAdvanceEnabled ??
+240:             stageAtom.getState?.()?.autoAdvanceEnabled ??
+241:             false;
+242:           if (!autoStillEnabled) return;
 ```
 
-**src/components/narrative/NarrationController.jsx:253**
+**src/components/narrative/NarrationController.jsx:240**
 ```javascript
-250:             return;
-251:           }
-252: 
-253:           if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {
-254:             narrationDiagnostic.log('AUTO_ADVANCE_WAIT', {
-255:               stage: completedStageName,
-256:               retryIn: AUTO_ADVANCE_RETRY_MS,
+237:           const autoStillEnabled =
+238:             liveControls.isAutoAdvanceEnabled?.() ??
+239:             liveControls.getState?.()?.autoAdvanceEnabled ??
+240:             stageAtom.getState?.()?.autoAdvanceEnabled ??
+241:             false;
+242:           if (!autoStillEnabled) return;
+243: 
 ```
 
-**src/components/narrative/NarrationController.jsx:266**
+**src/components/narrative/NarrationController.jsx:254**
 ```javascript
-263:                 retryIn: AUTO_ADVANCE_RETRY_MS,
-264:               });
-265:             }
-266:             scheduleAutoAdvance(AUTO_ADVANCE_RETRY_MS);
-267:             return;
-268:           }
-269: 
+251:             return;
+252:           }
+253: 
+254:           if (liveControls.canAutoAdvance && !liveControls.canAutoAdvance()) {
+255:             narrationDiagnostic.log('AUTO_ADVANCE_WAIT', {
+256:               stage: completedStageName,
+257:               retryIn: AUTO_ADVANCE_RETRY_MS,
 ```
 
-**src/components/narrative/NarrationController.jsx:315**
+**src/components/narrative/NarrationController.jsx:267**
 ```javascript
-312:           }
-313: 
-314:           const advanceVia = async () => {
-315:             liveControls.markAutoAdvance?.();
-316:             try {
-317:               const nav =
-318:                 window.unifiedNav ||
+264:                 retryIn: AUTO_ADVANCE_RETRY_MS,
+265:               });
+266:             }
+267:             scheduleAutoAdvance(AUTO_ADVANCE_RETRY_MS);
+268:             return;
+269:           }
+270: 
 ```
 
-**src/components/narrative/NarrationController.jsx:369**
+**src/components/narrative/NarrationController.jsx:316**
 ```javascript
-366:         timersRef.current.add(timeoutId);
-367:       };
-368: 
-369:       scheduleAutoAdvance(AUTO_ADVANCE_DELAY_MS);
-370:     },
-371:     [unlockScroll]
-372:   );
+313:           }
+314: 
+315:           const advanceVia = async () => {
+316:             stateCommands.markAutoAdvance({ origin: 'narration_auto_advance' });
+317:             try {
+318:               const nav =
+319:                 window.unifiedNav ||
 ```
 
-**src/components/narrative/NarrationController.jsx:439**
+**src/components/narrative/NarrationController.jsx:370**
 ```javascript
-436:           reason: 'complete',
-437:           timestamp,
-438:         });
-439:         triggerAutoAdvance(stageName, 'narration_complete');
-440:         activeStageRef.current = null;
-441:       }
-442:     },
+367:         timersRef.current.add(timeoutId);
+368:       };
+369: 
+370:       scheduleAutoAdvance(AUTO_ADVANCE_DELAY_MS);
+371:     },
+372:     [unlockScroll]
+373:   );
 ```
 
-**src/components/narrative/NarrationController.jsx:443**
+**src/components/narrative/NarrationController.jsx:440**
 ```javascript
-440:         activeStageRef.current = null;
-441:       }
-442:     },
-443:     [triggerAutoAdvance]
-444:   );
-445: 
-446:   const scheduleSegment = useCallback(
+437:           reason: 'complete',
+438:           timestamp,
+439:         });
+440:         triggerAutoAdvance(stageName, 'narration_complete');
+441:         activeStageRef.current = null;
+442:       }
+443:     },
 ```
 
-**src/components/narrative/NarrationController.jsx:583**
+**src/components/narrative/NarrationController.jsx:444**
 ```javascript
-580:           const fallbackDelay = durationMs + AUTO_ADVANCE_DELAY_MS + 200;
-581:           const fallbackId = setTimeout(() => {
-582:             timersRef.current.delete(fallbackId);
-583:             if (hasTriggeredAutoAdvanceRef.current) return;
-584:             narrationDiagnostic.log('AUTO_ADVANCE_FALLBACK', {
-585:               stage: stageName,
-586:               origin: 'last_beat_timeout',
+441:         activeStageRef.current = null;
+442:       }
+443:     },
+444:     [triggerAutoAdvance]
+445:   );
+446: 
+447:   const scheduleSegment = useCallback(
 ```
 
-**src/components/narrative/NarrationController.jsx:590**
+**src/components/narrative/NarrationController.jsx:584**
 ```javascript
-587:               fallbackDelay,
-588:               timestamp: Date.now(),
-589:             });
-590:             triggerAutoAdvance(stageName, 'last_beat_timeout');
-591:           }, fallbackDelay);
-592:           timersRef.current.add(fallbackId);
-593:         }
+581:           const fallbackDelay = durationMs + AUTO_ADVANCE_DELAY_MS + 200;
+582:           const fallbackId = setTimeout(() => {
+583:             timersRef.current.delete(fallbackId);
+584:             if (hasTriggeredAutoAdvanceRef.current) return;
+585:             narrationDiagnostic.log('AUTO_ADVANCE_FALLBACK', {
+586:               stage: stageName,
+587:               origin: 'last_beat_timeout',
 ```
 
-**src/components/narrative/NarrationController.jsx:598**
+**src/components/narrative/NarrationController.jsx:591**
 ```javascript
-595: 
-596:       timersRef.current.add(timerId);
-597:     },
-598:     [defaultCharsPerSecond, triggerAutoAdvance]
-599:   );
-600: 
-601:   const startNarration = useCallback(
+588:               fallbackDelay,
+589:               timestamp: Date.now(),
+590:             });
+591:             triggerAutoAdvance(stageName, 'last_beat_timeout');
+592:           }, fallbackDelay);
+593:           timersRef.current.add(fallbackId);
+594:         }
 ```
 
-**src/components/narrative/NarrationController.jsx:609**
+**src/components/narrative/NarrationController.jsx:599**
 ```javascript
-606:         currentStage,
-607:         origin,
-608:         isPlaying: activeStageRef.current !== null,
-609:         autoAdvanceEnabled: autoAdvanceEnabledRef.current,
-610:       });
-611:       const trustedOrigins = new Set([
-612:         'internal',
+596: 
+597:       timersRef.current.add(timerId);
+598:     },
+599:     [defaultCharsPerSecond, triggerAutoAdvance]
+600:   );
+601: 
+602:   const startNarration = useCallback(
 ```
 
-**src/components/narrative/NarrationController.jsx:753**
+**src/components/narrative/NarrationController.jsx:610**
 ```javascript
-750:       componentId,
-751:       effectId,
-752:       stage: currentStage,
-753:       autoAdvance: autoAdvanceEnabled,
-754:     });
-755: 
-756:     narrationDiagnostic.mountHistory.push({
+607:         currentStage,
+608:         origin,
+609:         isPlaying: activeStageRef.current !== null,
+610:         autoAdvanceEnabled: autoAdvanceEnabledRef.current,
+611:       });
+612:       const trustedOrigins = new Set([
+613:         'internal',
 ```
 
-**src/components/narrative/NarrationController.jsx:761**
+**src/components/narrative/NarrationController.jsx:754**
 ```javascript
-758:       componentId,
-759:       effectId,
-760:       stage: currentStage,
-761:       autoAdvance: autoAdvanceEnabled,
-762:       time: subscribedAt,
-763:     });
-764: 
+751:       componentId,
+752:       effectId,
+753:       stage: currentStage,
+754:       autoAdvance: autoAdvanceEnabled,
+755:     });
+756: 
+757:     narrationDiagnostic.mountHistory.push({
 ```
 
-**src/components/narrative/NarrationController.jsx:771**
+**src/components/narrative/NarrationController.jsx:762**
 ```javascript
-768:         componentId,
-769:         effectId,
-770:         stage: currentStage,
-771:         autoAdvance: autoAdvanceEnabled,
-772:         lifespan,
-773:       });
-774:       narrationDiagnostic.unmountHistory.push({
+759:       componentId,
+760:       effectId,
+761:       stage: currentStage,
+762:       autoAdvance: autoAdvanceEnabled,
+763:       time: subscribedAt,
+764:     });
+765: 
 ```
 
-**src/components/narrative/NarrationController.jsx:779**
+**src/components/narrative/NarrationController.jsx:772**
 ```javascript
-776:         componentId,
-777:         effectId,
-778:         stage: currentStage,
-779:         autoAdvance: autoAdvanceEnabled,
-780:         time: Date.now(),
-781:         lifespan,
-782:       });
+769:         componentId,
+770:         effectId,
+771:         stage: currentStage,
+772:         autoAdvance: autoAdvanceEnabled,
+773:         lifespan,
+774:       });
+775:       narrationDiagnostic.unmountHistory.push({
 ```
 
-**src/components/narrative/NarrationController.jsx:784**
+**src/components/narrative/NarrationController.jsx:780**
 ```javascript
-781:         lifespan,
-782:       });
-783:     };
-784:   }, [currentStage, autoAdvanceEnabled]);
-785: 
-786:   useEffect(() => {
-787:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;
+777:         componentId,
+778:         effectId,
+779:         stage: currentStage,
+780:         autoAdvance: autoAdvanceEnabled,
+781:         time: Date.now(),
+782:         lifespan,
+783:       });
 ```
 
-**src/components/narrative/NarrationController.jsx:787**
+**src/components/narrative/NarrationController.jsx:785**
 ```javascript
-784:   }, [currentStage, autoAdvanceEnabled]);
-785: 
-786:   useEffect(() => {
-787:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;
-788:   }, [autoAdvanceEnabled]);
-789: 
-790:   useEffect(() => {
+782:         lifespan,
+783:       });
+784:     };
+785:   }, [currentStage, autoAdvanceEnabled]);
+786: 
+787:   useEffect(() => {
+788:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;
 ```
 
 **src/components/narrative/NarrationController.jsx:788**
 ```javascript
-785: 
-786:   useEffect(() => {
-787:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;
-788:   }, [autoAdvanceEnabled]);
-789: 
-790:   useEffect(() => {
-791:     if (typeof window === 'undefined') return () => {};
+785:   }, [currentStage, autoAdvanceEnabled]);
+786: 
+787:   useEffect(() => {
+788:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;
+789:   }, [autoAdvanceEnabled]);
+790: 
+791:   useEffect(() => {
 ```
 
-**src/components/narrative/NarrationController.jsx:862**
+**src/components/narrative/NarrationController.jsx:789**
 ```javascript
-859: 
-860:     const deps = {
-861:       currentStage,
-862:       autoAdvanceEnabled,
-863:       resetStateId: resetState,
-864:       skipNarrationId: skipNarration,
-865:       startNarrationId: startNarration,
+786: 
+787:   useEffect(() => {
+788:     autoAdvanceEnabledRef.current = autoAdvanceEnabled;
+789:   }, [autoAdvanceEnabled]);
+790: 
+791:   useEffect(() => {
+792:     if (typeof window === 'undefined') return () => {};
 ```
 
-**src/components/narrative/NarrationController.jsx:942**
+**src/components/narrative/NarrationController.jsx:863**
 ```javascript
-939:       narrationDiagnostic.log('STAGE_CHANGE_EVENT', {
-940:         from: payload?.from ?? payload?.previousStage ?? null,
-941:         to: nextStage,
-942:         autoAdvance: autoAdvanceEnabledRef.current,
-943:         isPlaying: activeStageRef.current !== null,
-944:       });
-945:       narrationDiagnostic.stageChangeEvents.push({
+860: 
+861:     const deps = {
+862:       currentStage,
+863:       autoAdvanceEnabled,
+864:       resetStateId: resetState,
+865:       skipNarrationId: skipNarration,
+866:       startNarrationId: startNarration,
 ```
 
-**src/components/narrative/NarrationController.jsx:979**
+**src/components/narrative/NarrationController.jsx:943**
 ```javascript
-976:       console.log('🔬 [NARRATION] CLEANUP_REASON', {
-977:         stage: currentStage,
-978:         wasPlaying: activeStageRef.current !== null,
-979:         autoAdvance: autoAdvanceEnabledRef.current,
-980:         caller: new Error().stack.split('\n')[2] ?? null,
-981:       });
-982:       offStart?.();
+940:       narrationDiagnostic.log('STAGE_CHANGE_EVENT', {
+941:         from: payload?.from ?? payload?.previousStage ?? null,
+942:         to: nextStage,
+943:         autoAdvance: autoAdvanceEnabledRef.current,
+944:         isPlaying: activeStageRef.current !== null,
+945:       });
+946:       narrationDiagnostic.stageChangeEvents.push({
+```
+
+**src/components/narrative/NarrationController.jsx:980**
+```javascript
+977:       console.log('🔬 [NARRATION] CLEANUP_REASON', {
+978:         stage: currentStage,
+979:         wasPlaying: activeStageRef.current !== null,
+980:         autoAdvance: autoAdvanceEnabledRef.current,
+981:         caller: new Error().stack.split('\n')[2] ?? null,
+982:       });
+983:       offStart?.();
 ```
 
 **src/components/ui/NarrativeUIControls.jsx:176**
@@ -2066,59 +1697,59 @@
 248: the consolidated navigation system underneath.
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:53**
-```javascript
-50:   return true;
-51: };
-52: 
-53: const toggleAutoAdvance = (forcedValue) => {
-54:   const current = stageAtom.getState().autoAdvanceEnabled;
-55:   const nextValue =
-56:     typeof forcedValue === 'boolean' ? forcedValue : !current;
-```
-
 **src/orchestration/navigation/narrativeNavigation.js:54**
 ```javascript
-51: };
-52: 
-53: const toggleAutoAdvance = (forcedValue) => {
-54:   const current = stageAtom.getState().autoAdvanceEnabled;
-55:   const nextValue =
-56:     typeof forcedValue === 'boolean' ? forcedValue : !current;
-57:   stageAtom.setAutoAdvanceEnabled(nextValue);
+51:   return true;
+52: };
+53: 
+54: const toggleAutoAdvance = (forcedValue) => {
+55:   const current = stateCommands.isAutoAdvanceEnabled();
+56:   const nextValue =
+57:     typeof forcedValue === 'boolean' ? forcedValue : !current;
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:57**
+**src/orchestration/navigation/narrativeNavigation.js:55**
 ```javascript
-54:   const current = stageAtom.getState().autoAdvanceEnabled;
-55:   const nextValue =
-56:     typeof forcedValue === 'boolean' ? forcedValue : !current;
-57:   stageAtom.setAutoAdvanceEnabled(nextValue);
-58:   return nextValue;
-59: };
-60: 
+52: };
+53: 
+54: const toggleAutoAdvance = (forcedValue) => {
+55:   const current = stateCommands.isAutoAdvanceEnabled();
+56:   const nextValue =
+57:     typeof forcedValue === 'boolean' ? forcedValue : !current;
+58:   stateCommands.setAutoAdvanceEnabled(nextValue, { origin: 'narrative_navigation' });
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:73**
+**src/orchestration/navigation/narrativeNavigation.js:58**
 ```javascript
-70:     currentIndex,
-71:     allStages: stageNames,
-72:     isTransitioning: !!info.isTransitioning,
-73:     autoAdvanceEnabled: !!info.autoAdvanceEnabled,
-74:     canGoPrev: currentIndex > 0,
-75:     canGoNext: currentIndex < totalStages - 1,
-76:   };
+55:   const current = stateCommands.isAutoAdvanceEnabled();
+56:   const nextValue =
+57:     typeof forcedValue === 'boolean' ? forcedValue : !current;
+58:   stateCommands.setAutoAdvanceEnabled(nextValue, { origin: 'narrative_navigation' });
+59:   return nextValue;
+60: };
+61: 
 ```
 
-**src/orchestration/navigation/narrativeNavigation.js:153**
+**src/orchestration/navigation/narrativeNavigation.js:74**
 ```javascript
-150:   nextStage,
-151:   prevStage,
-152:   jumpToStage,
-153:   toggleAutoAdvance,
-154: };
-155: 
-156: if (typeof window !== 'undefined') {
+71:     currentIndex,
+72:     allStages: stageNames,
+73:     isTransitioning: !!info.isTransitioning,
+74:     autoAdvanceEnabled: !!info.autoAdvanceEnabled,
+75:     canGoPrev: currentIndex > 0,
+76:     canGoNext: currentIndex < totalStages - 1,
+77:   };
+```
+
+**src/orchestration/navigation/narrativeNavigation.js:154**
+```javascript
+151:   nextStage,
+152:   prevStage,
+153:   jumpToStage,
+154:   toggleAutoAdvance,
+155: };
+156: 
+157: if (typeof window !== 'undefined') {
 ```
 
 **src/state/atoms/stageAtom.js:30**
@@ -2539,303 +2170,391 @@
 696:   if (import.meta.env.DEV) {
 ```
 
-**src/theater/TheaterDirector.js:17**
+**src/state/commands/StateCommands.js:330**
 ```javascript
-14: 
-15: // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
-16: if (typeof window !== 'undefined') {
-17:   window.__autoAdvanceDiagnostic = {
-18:     initialized: false,
-19:     openingComplete: false,
-20:     autoAdvanceEnabled: false,
+327:     return true;
+328:   }
+329: 
+330:   setAutoAdvanceEnabled(enabled, { origin = 'stateCommands' } = {}) {
+331:     if (typeof stageAtom?.setAutoAdvanceEnabled !== 'function') {
+332:       console.warn('[StateCommands] setAutoAdvanceEnabled unavailable');
+333:       return false;
 ```
 
-**src/theater/TheaterDirector.js:20**
+**src/state/commands/StateCommands.js:331**
 ```javascript
-17:   window.__autoAdvanceDiagnostic = {
-18:     initialized: false,
-19:     openingComplete: false,
-20:     autoAdvanceEnabled: false,
-21:     events: [],
-22:     log: function (event, data) {
-23:       const entry = {
+328:   }
+329: 
+330:   setAutoAdvanceEnabled(enabled, { origin = 'stateCommands' } = {}) {
+331:     if (typeof stageAtom?.setAutoAdvanceEnabled !== 'function') {
+332:       console.warn('[StateCommands] setAutoAdvanceEnabled unavailable');
+333:       return false;
+334:     }
 ```
 
-**src/theater/TheaterDirector.js:71**
+**src/state/commands/StateCommands.js:332**
 ```javascript
-68:     this.scrollOrchestrator = null;
-69:     this.openingController = null;
-70:     this.narrationController = null;
-71:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
-72:     if (autoDiag) {
-73:       autoDiag.initialized = true;
-74:       autoDiag.log?.('DIRECTOR_INITIALIZED', {
+329: 
+330:   setAutoAdvanceEnabled(enabled, { origin = 'stateCommands' } = {}) {
+331:     if (typeof stageAtom?.setAutoAdvanceEnabled !== 'function') {
+332:       console.warn('[StateCommands] setAutoAdvanceEnabled unavailable');
+333:       return false;
+334:     }
+335:     stageAtom.setAutoAdvanceEnabled(Boolean(enabled));
 ```
 
-**src/theater/TheaterDirector.js:494**
+**src/state/commands/StateCommands.js:335**
 ```javascript
-491:   }
-492: 
-493:   handleOpeningComplete({ skipTriggered, opening, elapsed }) {
-494:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
-495:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
-496:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
-497:     const autoAdvanceBefore =
+332:       console.warn('[StateCommands] setAutoAdvanceEnabled unavailable');
+333:       return false;
+334:     }
+335:     stageAtom.setAutoAdvanceEnabled(Boolean(enabled));
+336:     if (import.meta.env?.DEV) {
+337:       console.log('🎚️ [StateCommands] Auto-advance toggled', {
+338:         enabled: Boolean(enabled),
 ```
 
-**src/theater/TheaterDirector.js:497**
+**src/state/commands/StateCommands.js:345**
 ```javascript
-494:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
-495:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
-496:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
-497:     const autoAdvanceBefore =
-498:       stageAtom?.isAutoAdvanceEnabled?.() ??
-499:       currentState.autoAdvanceEnabled ??
-500:       false;
+342:     return true;
+343:   }
+344: 
+345:   markAutoAdvance({ origin = 'stateCommands' } = {}) {
+346:     if (typeof stageAtom?.markAutoAdvance !== 'function') {
+347:       console.warn('[StateCommands] markAutoAdvance unavailable');
+348:       return false;
+```
+
+**src/state/commands/StateCommands.js:346**
+```javascript
+343:   }
+344: 
+345:   markAutoAdvance({ origin = 'stateCommands' } = {}) {
+346:     if (typeof stageAtom?.markAutoAdvance !== 'function') {
+347:       console.warn('[StateCommands] markAutoAdvance unavailable');
+348:       return false;
+349:     }
+```
+
+**src/state/commands/StateCommands.js:347**
+```javascript
+344: 
+345:   markAutoAdvance({ origin = 'stateCommands' } = {}) {
+346:     if (typeof stageAtom?.markAutoAdvance !== 'function') {
+347:       console.warn('[StateCommands] markAutoAdvance unavailable');
+348:       return false;
+349:     }
+350:     stageAtom.markAutoAdvance();
+```
+
+**src/state/commands/StateCommands.js:350**
+```javascript
+347:       console.warn('[StateCommands] markAutoAdvance unavailable');
+348:       return false;
+349:     }
+350:     stageAtom.markAutoAdvance();
+351:     if (import.meta.env?.DEV) {
+352:       console.log('🕒 [StateCommands] markAutoAdvance invoked', { origin });
+353:     }
+```
+
+**src/state/commands/StateCommands.js:352**
+```javascript
+349:     }
+350:     stageAtom.markAutoAdvance();
+351:     if (import.meta.env?.DEV) {
+352:       console.log('🕒 [StateCommands] markAutoAdvance invoked', { origin });
+353:     }
+354:     return true;
+355:   }
+```
+
+**src/state/commands/StateCommands.js:357**
+```javascript
+354:     return true;
+355:   }
+356: 
+357:   canAutoAdvance() {
+358:     return stageAtom?.canAutoAdvance?.() ?? true;
+359:   }
+360: 
+```
+
+**src/state/commands/StateCommands.js:358**
+```javascript
+355:   }
+356: 
+357:   canAutoAdvance() {
+358:     return stageAtom?.canAutoAdvance?.() ?? true;
+359:   }
+360: 
+361:   isAutoAdvanceEnabled() {
+```
+
+**src/state/commands/StateCommands.js:361**
+```javascript
+358:     return stageAtom?.canAutoAdvance?.() ?? true;
+359:   }
+360: 
+361:   isAutoAdvanceEnabled() {
+362:     return (
+363:       stageAtom?.isAutoAdvanceEnabled?.() ??
+364:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+```
+
+**src/state/commands/StateCommands.js:363**
+```javascript
+360: 
+361:   isAutoAdvanceEnabled() {
+362:     return (
+363:       stageAtom?.isAutoAdvanceEnabled?.() ??
+364:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+365:       false
+366:     );
+```
+
+**src/state/commands/StateCommands.js:364**
+```javascript
+361:   isAutoAdvanceEnabled() {
+362:     return (
+363:       stageAtom?.isAutoAdvanceEnabled?.() ??
+364:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+365:       false
+366:     );
+367:   }
+```
+
+**src/theater/TheaterDirector.js:18**
+```javascript
+15: 
+16: // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
+17: if (typeof window !== 'undefined') {
+18:   window.__autoAdvanceDiagnostic = {
+19:     initialized: false,
+20:     openingComplete: false,
+21:     autoAdvanceEnabled: false,
+```
+
+**src/theater/TheaterDirector.js:21**
+```javascript
+18:   window.__autoAdvanceDiagnostic = {
+19:     initialized: false,
+20:     openingComplete: false,
+21:     autoAdvanceEnabled: false,
+22:     events: [],
+23:     log: function (event, data) {
+24:       const entry = {
+```
+
+**src/theater/TheaterDirector.js:72**
+```javascript
+69:     this.scrollOrchestrator = null;
+70:     this.openingController = null;
+71:     this.narrationController = null;
+72:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
+73:     if (autoDiag) {
+74:       autoDiag.initialized = true;
+75:       autoDiag.log?.('DIRECTOR_INITIALIZED', {
+```
+
+**src/theater/TheaterDirector.js:495**
+```javascript
+492:   }
+493: 
+494:   handleOpeningComplete({ skipTriggered, opening, elapsed }) {
+495:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
+496:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
+497:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
+498:     const autoAdvanceBefore =
 ```
 
 **src/theater/TheaterDirector.js:498**
 ```javascript
-495:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
-496:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
-497:     const autoAdvanceBefore =
-498:       stageAtom?.isAutoAdvanceEnabled?.() ??
-499:       currentState.autoAdvanceEnabled ??
-500:       false;
-501: 
+495:     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
+496:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
+497:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
+498:     const autoAdvanceBefore =
+499:       stageAtom?.isAutoAdvanceEnabled?.() ??
+500:       currentState.autoAdvanceEnabled ??
+501:       false;
 ```
 
 **src/theater/TheaterDirector.js:499**
 ```javascript
-496:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
-497:     const autoAdvanceBefore =
-498:       stageAtom?.isAutoAdvanceEnabled?.() ??
-499:       currentState.autoAdvanceEnabled ??
-500:       false;
-501: 
-502:     if (autoDiag) {
+496:     const currentState = stageAtom?.getStageInfo?.() ?? stageAtom?.getState?.() ?? {};
+497:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
+498:     const autoAdvanceBefore =
+499:       stageAtom?.isAutoAdvanceEnabled?.() ??
+500:       currentState.autoAdvanceEnabled ??
+501:       false;
+502: 
 ```
 
-**src/theater/TheaterDirector.js:506**
+**src/theater/TheaterDirector.js:500**
 ```javascript
-503:       autoDiag.openingComplete = true;
-504:       autoDiag.log('OPENING_COMPLETE', {
-505:         stage: currentStage,
-506:         autoAdvanceBefore,
-507:       });
-508:     }
-509: 
+497:     const currentStage = currentState.currentStage ?? stageAtom?.getState?.()?.currentStage ?? null;
+498:     const autoAdvanceBefore =
+499:       stageAtom?.isAutoAdvanceEnabled?.() ??
+500:       currentState.autoAdvanceEnabled ??
+501:       false;
+502: 
+503:     if (autoDiag) {
+```
+
+**src/theater/TheaterDirector.js:507**
+```javascript
+504:       autoDiag.openingComplete = true;
+505:       autoDiag.log('OPENING_COMPLETE', {
+506:         stage: currentStage,
+507:         autoAdvanceBefore,
+508:       });
+509:     }
+510: 
+```
+
+**src/theater/TheaterDirector.js:512**
+```javascript
+509:     }
+510: 
+511:     const alreadyEnabled =
+512:       stageAtom?.isAutoAdvanceEnabled?.() ??
+513:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+514:       false;
+515: 
 ```
 
 **src/theater/TheaterDirector.js:513**
 ```javascript
-510:     let autoEnabled = false;
-511:     let failureReason = null;
-512: 
-513:     if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
-514:       const alreadyEnabled =
-515:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-516:           ? window.stageControls.isAutoAdvanceEnabled()
+510: 
+511:     const alreadyEnabled =
+512:       stageAtom?.isAutoAdvanceEnabled?.() ??
+513:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+514:       false;
+515: 
+516:     let autoEnabled = alreadyEnabled;
 ```
 
-**src/theater/TheaterDirector.js:515**
+**src/theater/TheaterDirector.js:522**
 ```javascript
-512: 
-513:     if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
-514:       const alreadyEnabled =
-515:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-516:           ? window.stageControls.isAutoAdvanceEnabled()
-517:           : window.stageControls.getState?.()?.autoAdvanceEnabled;
-518: 
-```
-
-**src/theater/TheaterDirector.js:516**
-```javascript
-513:     if (typeof window !== 'undefined' && window.stageControls?.setAutoAdvanceEnabled) {
-514:       const alreadyEnabled =
-515:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-516:           ? window.stageControls.isAutoAdvanceEnabled()
-517:           : window.stageControls.getState?.()?.autoAdvanceEnabled;
-518: 
-519:       if (alreadyEnabled) {
-```
-
-**src/theater/TheaterDirector.js:517**
-```javascript
-514:       const alreadyEnabled =
-515:         typeof window.stageControls.isAutoAdvanceEnabled === 'function'
-516:           ? window.stageControls.isAutoAdvanceEnabled()
-517:           : window.stageControls.getState?.()?.autoAdvanceEnabled;
-518: 
-519:       if (alreadyEnabled) {
-520:         console.log('   Auto-advance already active');
-```
-
-**src/theater/TheaterDirector.js:523**
-```javascript
-520:         console.log('   Auto-advance already active');
-521:         autoEnabled = true;
-522:       } else {
-523:         window.stageControls.setAutoAdvanceEnabled(true);
-524:         console.log('✅ Auto-advance enabled for narration-driven progression');
-525:         autoEnabled = true;
-526:       }
+519:     if (alreadyEnabled) {
+520:       console.log('   Auto-advance already active');
+521:     } else {
+522:       autoEnabled = stateCommands.setAutoAdvanceEnabled(true, {
+523:         origin: 'director_opening_complete',
+524:       });
+525:       if (autoEnabled) {
 ```
 
 **src/theater/TheaterDirector.js:528**
 ```javascript
-525:         autoEnabled = true;
-526:       }
-527:     } else {
-528:       failureReason = 'setAutoAdvanceEnabled not found';
-529:       console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
-530:     }
-531: 
-```
-
-**src/theater/TheaterDirector.js:529**
-```javascript
-526:       }
-527:     } else {
-528:       failureReason = 'setAutoAdvanceEnabled not found';
-529:       console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
-530:     }
-531: 
-532:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-```
-
-**src/theater/TheaterDirector.js:532**
-```javascript
-529:       console.warn('⚠️ stageControls.setAutoAdvanceEnabled unavailable; attempting direct stageAtom enable');
-530:     }
-531: 
-532:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-533:       stageAtom.setAutoAdvanceEnabled(true);
-534:       console.log('✅ Auto-advance enabled via stageAtom fallback');
-535:       autoEnabled = true;
+525:       if (autoEnabled) {
+526:         console.log('✅ Auto-advance enabled for narration-driven progression');
+527:       } else {
+528:         failureReason = 'stateCommands.setAutoAdvanceEnabled failed';
+529:         console.warn('⚠️ Unable to enable auto-advance via StateCommands');
+530:       }
+531:     }
 ```
 
 **src/theater/TheaterDirector.js:533**
 ```javascript
-530:     }
-531: 
-532:     if (!autoEnabled && typeof stageAtom?.setAutoAdvanceEnabled === 'function') {
-533:       stageAtom.setAutoAdvanceEnabled(true);
-534:       console.log('✅ Auto-advance enabled via stageAtom fallback');
-535:       autoEnabled = true;
-536:     } else if (!autoEnabled) {
+530:       }
+531:     }
+532: 
+533:     const autoAdvanceAfter =
+534:       stageAtom?.isAutoAdvanceEnabled?.() ??
+535:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+536:       false;
 ```
 
-**src/theater/TheaterDirector.js:537**
+**src/theater/TheaterDirector.js:534**
 ```javascript
-534:       console.log('✅ Auto-advance enabled via stageAtom fallback');
-535:       autoEnabled = true;
-536:     } else if (!autoEnabled) {
-537:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
-538:     }
-539: 
-540:     const autoAdvanceAfter =
+531:     }
+532: 
+533:     const autoAdvanceAfter =
+534:       stageAtom?.isAutoAdvanceEnabled?.() ??
+535:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+536:       false;
+537: 
 ```
 
-**src/theater/TheaterDirector.js:540**
+**src/theater/TheaterDirector.js:535**
 ```javascript
-537:       failureReason = failureReason ?? 'stageAtom.setAutoAdvanceEnabled not available';
-538:     }
-539: 
-540:     const autoAdvanceAfter =
-541:       stageAtom?.isAutoAdvanceEnabled?.() ??
-542:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
-543:       false;
+532: 
+533:     const autoAdvanceAfter =
+534:       stageAtom?.isAutoAdvanceEnabled?.() ??
+535:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
+536:       false;
+537: 
+538:     if (autoDiag) {
 ```
 
-**src/theater/TheaterDirector.js:541**
+**src/theater/TheaterDirector.js:539**
 ```javascript
-538:     }
-539: 
-540:     const autoAdvanceAfter =
-541:       stageAtom?.isAutoAdvanceEnabled?.() ??
-542:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
-543:       false;
-544: 
+536:       false;
+537: 
+538:     if (autoDiag) {
+539:       autoDiag.autoAdvanceEnabled = autoAdvanceAfter;
+540:       if (autoEnabled) {
+541:         autoDiag.log('AUTO_ADVANCE_ENABLED', {
+542:           success: true,
 ```
 
-**src/theater/TheaterDirector.js:542**
+**src/theater/TheaterDirector.js:543**
 ```javascript
-539: 
-540:     const autoAdvanceAfter =
-541:       stageAtom?.isAutoAdvanceEnabled?.() ??
-542:       stageAtom?.getState?.()?.autoAdvanceEnabled ??
-543:       false;
-544: 
-545:     if (autoDiag) {
+540:       if (autoEnabled) {
+541:         autoDiag.log('AUTO_ADVANCE_ENABLED', {
+542:           success: true,
+543:           autoAdvanceAfter,
+544:         });
+545:       } else {
+546:         autoDiag.log('AUTO_ADVANCE_FAILED', {
 ```
 
-**src/theater/TheaterDirector.js:546**
+**src/theater/TheaterDirector.js:548**
 ```javascript
-543:       false;
-544: 
-545:     if (autoDiag) {
-546:       autoDiag.autoAdvanceEnabled = autoAdvanceAfter;
-547:       if (autoEnabled) {
-548:         autoDiag.log('AUTO_ADVANCE_ENABLED', {
-549:           success: true,
+545:       } else {
+546:         autoDiag.log('AUTO_ADVANCE_FAILED', {
+547:           reason: failureReason ?? 'Unable to enable auto-advance',
+548:           autoAdvanceAfter,
+549:         });
+550:       }
+551:     }
 ```
 
-**src/theater/TheaterDirector.js:550**
+**src/theater/controllers/OpeningSequenceController.js:681**
 ```javascript
-547:       if (autoEnabled) {
-548:         autoDiag.log('AUTO_ADVANCE_ENABLED', {
-549:           success: true,
-550:           autoAdvanceAfter,
-551:         });
-552:       } else {
-553:         autoDiag.log('AUTO_ADVANCE_FAILED', {
-```
-
-**src/theater/TheaterDirector.js:555**
-```javascript
-552:       } else {
-553:         autoDiag.log('AUTO_ADVANCE_FAILED', {
-554:           reason: failureReason ?? 'Unable to enable auto-advance',
-555:           autoAdvanceAfter,
-556:         });
-557:       }
-558:     }
-```
-
-**src/theater/controllers/OpeningSequenceController.js:680**
-```javascript
-677:         const timestamp = performance.now();
-678:         console.log('✅ [OPENING COMPLETE]', {
-679:           nextStage: 'discipline',
-680:           shouldAutoAdvance: true,
-681:           timestamp,
-682:         });
-683:       }
+678:         const timestamp = performance.now();
+679:         console.log('✅ [OPENING COMPLETE]', {
+680:           nextStage: 'discipline',
+681:           shouldAutoAdvance: true,
+682:           timestamp,
+683:         });
+684:       }
 ```
 
 ### DUPLICATE_EVENT (6 hits)
 
-**src/components/narrative/NarrationController.jsx:1003**
+**src/components/narrative/NarrationController.jsx:1004**
 ```javascript
-1000:       return;
-1001:     }
-1002: 
-1003:     const isAlreadyPlayingCurrentStage =
-1004:       activeStageRef.current && activeStageRef.current === currentStage;
-1005: 
-1006:     if (isAlreadyPlayingCurrentStage) {
+1001:       return;
+1002:     }
+1003: 
+1004:     const isAlreadyPlayingCurrentStage =
+1005:       activeStageRef.current && activeStageRef.current === currentStage;
+1006: 
+1007:     if (isAlreadyPlayingCurrentStage) {
 ```
 
-**src/components/narrative/NarrationController.jsx:1006**
+**src/components/narrative/NarrationController.jsx:1007**
 ```javascript
-1003:     const isAlreadyPlayingCurrentStage =
-1004:       activeStageRef.current && activeStageRef.current === currentStage;
-1005: 
-1006:     if (isAlreadyPlayingCurrentStage) {
-1007:       narrationDiagnostic.log('AUTO_START_SKIPPED_ALREADY_PLAYING', {
-1008:         stage: currentStage,
-1009:       });
+1004:     const isAlreadyPlayingCurrentStage =
+1005:       activeStageRef.current && activeStageRef.current === currentStage;
+1006: 
+1007:     if (isAlreadyPlayingCurrentStage) {
+1008:       narrationDiagnostic.log('AUTO_START_SKIPPED_ALREADY_PLAYING', {
+1009:         stage: currentStage,
+1010:       });
 ```
 
 **src/engine/ConsciousnessEngine.js:146**
@@ -2849,15 +2568,15 @@
 149: 
 ```
 
-**src/theater/TheaterDirector.js:227**
+**src/theater/TheaterDirector.js:228**
 ```javascript
-224:     const previousStage = this.currentStage;
-225:     if (previousStage === newStage) {
-226:       if (DEBUG_NARRATION) {
-227:         console.log('🎬 [STAGE CHANGE IGNORED] Duplicate stage event', {
-228:           stage: newStage,
-229:           payload,
-230:         });
+225:     const previousStage = this.currentStage;
+226:     if (previousStage === newStage) {
+227:       if (DEBUG_NARRATION) {
+228:         console.log('🎬 [STAGE CHANGE IGNORED] Duplicate stage event', {
+229:           stage: newStage,
+230:           payload,
+231:         });
 ```
 
 **src/theater/UnifiedNavigationAPI.js:155**
@@ -3238,81 +2957,81 @@
 26:     this._reason = reason;
 ```
 
-**src/theater/TheaterDirector.js:91**
+**src/theater/TheaterDirector.js:92**
 ```javascript
-88:         hasTimeline: !!openingProbe?.timeline,
-89:         chaos: openingProbe?.timeline?.chaos,
-90:         coalesce: openingProbe?.timeline?.coalesce,
-91:         settle: openingProbe?.timeline?.settle,
-92:         hasChaosConfig: !!openingProbe?.timeline?.chaos,
-93:       });
-94:     } catch (timelineError) {
+89:         hasTimeline: !!openingProbe?.timeline,
+90:         chaos: openingProbe?.timeline?.chaos,
+91:         coalesce: openingProbe?.timeline?.coalesce,
+92:         settle: openingProbe?.timeline?.settle,
+93:         hasChaosConfig: !!openingProbe?.timeline?.chaos,
+94:       });
+95:     } catch (timelineError) {
 ```
 
-**src/theater/TheaterDirector.js:649**
+**src/theater/TheaterDirector.js:642**
 ```javascript
-646:     if (!this._sleepWaiters) this._sleepWaiters = new Set();
-647: 
-648:     return new Promise((resolve) => {
-649:       let settled = false;
-650:       let timeoutId;
-651: 
-652:       const complete = (reason = 'elapsed') => {
+639:     if (!this._sleepWaiters) this._sleepWaiters = new Set();
+640: 
+641:     return new Promise((resolve) => {
+642:       let settled = false;
+643:       let timeoutId;
+644: 
+645:       const complete = (reason = 'elapsed') => {
 ```
 
-**src/theater/TheaterDirector.js:653**
+**src/theater/TheaterDirector.js:646**
 ```javascript
-650:       let timeoutId;
-651: 
-652:       const complete = (reason = 'elapsed') => {
-653:         if (settled) return;
-654:         settled = true;
-655:         this._clearTimer(timeoutId);
-656:         this._sleepWaiters.delete(complete);
+643:       let timeoutId;
+644: 
+645:       const complete = (reason = 'elapsed') => {
+646:         if (settled) return;
+647:         settled = true;
+648:         this._clearTimer(timeoutId);
+649:         this._sleepWaiters.delete(complete);
 ```
 
-**src/theater/TheaterDirector.js:654**
+**src/theater/TheaterDirector.js:647**
 ```javascript
-651: 
-652:       const complete = (reason = 'elapsed') => {
-653:         if (settled) return;
-654:         settled = true;
-655:         this._clearTimer(timeoutId);
-656:         this._sleepWaiters.delete(complete);
-657:         resolve(reason);
+644: 
+645:       const complete = (reason = 'elapsed') => {
+646:         if (settled) return;
+647:         settled = true;
+648:         this._clearTimer(timeoutId);
+649:         this._sleepWaiters.delete(complete);
+650:         resolve(reason);
 ```
 
-**src/theater/TheaterDirector.js:689**
+**src/theater/TheaterDirector.js:682**
 ```javascript
-686:   _waitForEvent(event, { timeout = 5000, predicate } = {}) {
-687:     if (!event) return Promise.resolve(null);
-688:     return new Promise((resolve) => {
-689:       let settled = false;
-690:       let timeoutId = null;
-691: 
-692:       const finish = (result) => {
+679:   _waitForEvent(event, { timeout = 5000, predicate } = {}) {
+680:     if (!event) return Promise.resolve(null);
+681:     return new Promise((resolve) => {
+682:       let settled = false;
+683:       let timeoutId = null;
+684: 
+685:       const finish = (result) => {
 ```
 
-**src/theater/TheaterDirector.js:693**
+**src/theater/TheaterDirector.js:686**
 ```javascript
-690:       let timeoutId = null;
-691: 
-692:       const finish = (result) => {
-693:         if (settled) return;
-694:         settled = true;
-695:         this._clearTimer(timeoutId);
-696:         off?.();
+683:       let timeoutId = null;
+684: 
+685:       const finish = (result) => {
+686:         if (settled) return;
+687:         settled = true;
+688:         this._clearTimer(timeoutId);
+689:         off?.();
 ```
 
-**src/theater/TheaterDirector.js:694**
+**src/theater/TheaterDirector.js:687**
 ```javascript
-691: 
-692:       const finish = (result) => {
-693:         if (settled) return;
-694:         settled = true;
-695:         this._clearTimer(timeoutId);
-696:         off?.();
-697:         resolve(result);
+684: 
+685:       const finish = (result) => {
+686:         if (settled) return;
+687:         settled = true;
+688:         this._clearTimer(timeoutId);
+689:         off?.();
+690:         resolve(result);
 ```
 
 **src/theater/UnifiedNavigationAPI.js:35**
@@ -3381,378 +3100,692 @@
 8:  * Controller relies on TheaterDirector infrastructure (sleep, waiters, emitters).
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:30**
+**src/theater/controllers/OpeningSequenceController.js:31**
 ```javascript
-27: 
-28: const DEFAULT_OPENING_TIMELINE = {
-29:   blackout: { durationMs: 2000 },
-30:   cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
-31:   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
-32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
-33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
+28: 
+29: const DEFAULT_OPENING_TIMELINE = {
+30:   blackout: { durationMs: 2000 },
+31:   cursor: { blinkCount: 2, intervalMs: 500, leadInMs: 500, settleMs: 1000 },
+32:   typing: { lines: DEFAULT_TYPING_LINES, typeSpeed: 50, lineDelay: 500, completionDelayMs: 800 },
+33:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
+34:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:35**
+**src/theater/controllers/OpeningSequenceController.js:36**
 ```javascript
-32:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
-33:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
-34:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
-35:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
-36:   emergence: {
-37:     durationMs: 2000,
-38:     waitForFencepost: true,
-```
-
-**src/theater/controllers/OpeningSequenceController.js:112**
-```javascript
-109:         ...(openingTimeline.coalesce ?? {}),
-110:         ...(stageTimeline.coalesce ?? {}),
-111:       },
-112:       settle: {
-113:         ...DEFAULT_OPENING_TIMELINE.settle,
-114:         ...(openingTimeline.settle ?? {}),
-115:         ...(stageTimeline.settle ?? {}),
+33:   fill: { text: null, scrollSpeed: 100, durationMs: 2000 },
+34:   chaos: { enabled: true, durationMs: 2000, rendererSpin: { z: 0.5, y: 0.2 } },
+35:   coalesce: { enabled: true, durationMs: 2000, morphTo: 0.6 },
+36:   settle: { enabled: true, durationMs: 1500, morphTo: 1.0 },
+37:   emergence: {
+38:     durationMs: 2000,
+39:     waitForFencepost: true,
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:113**
 ```javascript
-110:         ...(stageTimeline.coalesce ?? {}),
-111:       },
-112:       settle: {
-113:         ...DEFAULT_OPENING_TIMELINE.settle,
-114:         ...(openingTimeline.settle ?? {}),
-115:         ...(stageTimeline.settle ?? {}),
-116:       },
+110:         ...(openingTimeline.coalesce ?? {}),
+111:         ...(stageTimeline.coalesce ?? {}),
+112:       },
+113:       settle: {
+114:         ...DEFAULT_OPENING_TIMELINE.settle,
+115:         ...(openingTimeline.settle ?? {}),
+116:         ...(stageTimeline.settle ?? {}),
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:114**
 ```javascript
-111:       },
-112:       settle: {
-113:         ...DEFAULT_OPENING_TIMELINE.settle,
-114:         ...(openingTimeline.settle ?? {}),
-115:         ...(stageTimeline.settle ?? {}),
-116:       },
-117:       profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
+111:         ...(stageTimeline.coalesce ?? {}),
+112:       },
+113:       settle: {
+114:         ...DEFAULT_OPENING_TIMELINE.settle,
+115:         ...(openingTimeline.settle ?? {}),
+116:         ...(stageTimeline.settle ?? {}),
+117:       },
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:115**
 ```javascript
-112:       settle: {
-113:         ...DEFAULT_OPENING_TIMELINE.settle,
-114:         ...(openingTimeline.settle ?? {}),
-115:         ...(stageTimeline.settle ?? {}),
-116:       },
-117:       profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
-118:       narration: stageTimeline.narration ?? openingTimeline.narration ?? null,
+112:       },
+113:       settle: {
+114:         ...DEFAULT_OPENING_TIMELINE.settle,
+115:         ...(openingTimeline.settle ?? {}),
+116:         ...(stageTimeline.settle ?? {}),
+117:       },
+118:       profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:207**
+**src/theater/controllers/OpeningSequenceController.js:116**
 ```javascript
-204:       ...(timeline?.cursor ?? {}),
-205:     };
-206:     const cursorLeadInMs = Math.max(0, Number(cursorConfig.leadInMs ?? 0));
-207:     const cursorSettleMs = Math.max(0, Number(cursorConfig.settleMs ?? 0));
-208:     const cursorBlinkCount = Math.max(
-209:       0,
-210:       Number(cursorConfig.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount),
+113:       settle: {
+114:         ...DEFAULT_OPENING_TIMELINE.settle,
+115:         ...(openingTimeline.settle ?? {}),
+116:         ...(stageTimeline.settle ?? {}),
+117:       },
+118:       profile: stageTimeline.profile ?? openingTimeline.profile ?? null,
+119:       narration: stageTimeline.narration ?? openingTimeline.narration ?? null,
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:264**
+**src/theater/controllers/OpeningSequenceController.js:208**
 ```javascript
-261: 
-262:     const chaosConfig = timeline?.chaos || {};
-263:     const coalesceConfig = timeline?.coalesce || {};
-264:     const settleConfig = timeline?.settle || {};
-265: 
-266:     const emergenceTimeline = {
-267:       ...DEFAULT_OPENING_TIMELINE.emergence,
+205:       ...(timeline?.cursor ?? {}),
+206:     };
+207:     const cursorLeadInMs = Math.max(0, Number(cursorConfig.leadInMs ?? 0));
+208:     const cursorSettleMs = Math.max(0, Number(cursorConfig.settleMs ?? 0));
+209:     const cursorBlinkCount = Math.max(
+210:       0,
+211:       Number(cursorConfig.blinkCount ?? DEFAULT_OPENING_TIMELINE.cursor.blinkCount),
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:339**
+**src/theater/controllers/OpeningSequenceController.js:265**
 ```javascript
-336:         }
-337:         if (!skipTriggered) {
-338:           BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
-339:           if (cursorSettleMs > 0) {
-340:             const waitResult = await this.director.sleep(cursorSettleMs);
-341:             if (handleWaitResult(waitResult) === 'cancelled') return;
-342:           }
+262: 
+263:     const chaosConfig = timeline?.chaos || {};
+264:     const coalesceConfig = timeline?.coalesce || {};
+265:     const settleConfig = timeline?.settle || {};
+266: 
+267:     const emergenceTimeline = {
+268:       ...DEFAULT_OPENING_TIMELINE.emergence,
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:340**
 ```javascript
-337:         if (!skipTriggered) {
-338:           BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
-339:           if (cursorSettleMs > 0) {
-340:             const waitResult = await this.director.sleep(cursorSettleMs);
-341:             if (handleWaitResult(waitResult) === 'cancelled') return;
-342:           }
-343:         }
+337:         }
+338:         if (!skipTriggered) {
+339:           BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
+340:           if (cursorSettleMs > 0) {
+341:             const waitResult = await this.director.sleep(cursorSettleMs);
+342:             if (handleWaitResult(waitResult) === 'cancelled') return;
+343:           }
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:395**
+**src/theater/controllers/OpeningSequenceController.js:341**
 ```javascript
-392:           } catch (bindError) {
-393:             console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);
-394:           }
-395:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
-396:           if (bindSettleMs > 0) {
-397:             const waitResult = await this.director.sleep(bindSettleMs);
-398:             if (handleWaitResult(waitResult) === 'cancelled') return;
+338:         if (!skipTriggered) {
+339:           BeatBus.emit(EVENTS.CURSOR_BLINK, { count: cursorBlinkCount, interval: cursorIntervalMs });
+340:           if (cursorSettleMs > 0) {
+341:             const waitResult = await this.director.sleep(cursorSettleMs);
+342:             if (handleWaitResult(waitResult) === 'cancelled') return;
+343:           }
+344:         }
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:396**
 ```javascript
-393:             console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);
-394:           }
-395:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
-396:           if (bindSettleMs > 0) {
-397:             const waitResult = await this.director.sleep(bindSettleMs);
-398:             if (handleWaitResult(waitResult) === 'cancelled') return;
-399:           }
+393:           } catch (bindError) {
+394:             console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);
+395:           }
+396:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
+397:           if (bindSettleMs > 0) {
+398:             const waitResult = await this.director.sleep(bindSettleMs);
+399:             if (handleWaitResult(waitResult) === 'cancelled') return;
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:397**
 ```javascript
-394:           }
-395:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
-396:           if (bindSettleMs > 0) {
-397:             const waitResult = await this.director.sleep(bindSettleMs);
-398:             if (handleWaitResult(waitResult) === 'cancelled') return;
-399:           }
-400:         }
+394:             console.warn('🎬 Director: Pre-chaos blueprint bind failed', bindError);
+395:           }
+396:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
+397:           if (bindSettleMs > 0) {
+398:             const waitResult = await this.director.sleep(bindSettleMs);
+399:             if (handleWaitResult(waitResult) === 'cancelled') return;
+400:           }
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:489**
+**src/theater/controllers/OpeningSequenceController.js:398**
 ```javascript
-486:         currentMorphValue = coalesceTarget;
-487:       }
-488: 
-489:       if (!skipTriggered && settleConfig?.enabled !== false) {
-490:         console.log('🔍 [ABOUT TO START SETTLE]', {
-491:           settleConfig,
-492:           currentMorph: currentMorphValue,
+395:           }
+396:           const bindSettleMs = Math.max(0, Number(chaosConfig?.bindLeadInMs ?? 120));
+397:           if (bindSettleMs > 0) {
+398:             const waitResult = await this.director.sleep(bindSettleMs);
+399:             if (handleWaitResult(waitResult) === 'cancelled') return;
+400:           }
+401:         }
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:490**
 ```javascript
-487:       }
-488: 
-489:       if (!skipTriggered && settleConfig?.enabled !== false) {
-490:         console.log('🔍 [ABOUT TO START SETTLE]', {
-491:           settleConfig,
-492:           currentMorph: currentMorphValue,
-493:           timestamp: Date.now(),
+487:         currentMorphValue = coalesceTarget;
+488:       }
+489: 
+490:       if (!skipTriggered && settleConfig?.enabled !== false) {
+491:         console.log('🔍 [ABOUT TO START SETTLE]', {
+492:           settleConfig,
+493:           currentMorph: currentMorphValue,
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:491**
 ```javascript
-488: 
-489:       if (!skipTriggered && settleConfig?.enabled !== false) {
-490:         console.log('🔍 [ABOUT TO START SETTLE]', {
-491:           settleConfig,
-492:           currentMorph: currentMorphValue,
-493:           timestamp: Date.now(),
-494:         });
+488:       }
+489: 
+490:       if (!skipTriggered && settleConfig?.enabled !== false) {
+491:         console.log('🔍 [ABOUT TO START SETTLE]', {
+492:           settleConfig,
+493:           currentMorph: currentMorphValue,
+494:           timestamp: Date.now(),
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:495**
+**src/theater/controllers/OpeningSequenceController.js:492**
 ```javascript
-492:           currentMorph: currentMorphValue,
-493:           timestamp: Date.now(),
-494:         });
-495:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
-496:         this.director.phase = 'settle';
-497:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+489: 
+490:       if (!skipTriggered && settleConfig?.enabled !== false) {
+491:         console.log('🔍 [ABOUT TO START SETTLE]', {
+492:           settleConfig,
+493:           currentMorph: currentMorphValue,
+494:           timestamp: Date.now(),
+495:         });
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:496**
 ```javascript
-493:           timestamp: Date.now(),
-494:         });
-495:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
-496:         this.director.phase = 'settle';
-497:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
+493:           currentMorph: currentMorphValue,
+494:           timestamp: Date.now(),
+495:         });
+496:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
+497:         this.director.phase = 'settle';
+498:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:497**
 ```javascript
-494:         });
-495:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
-496:         this.director.phase = 'settle';
-497:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
-500:           duration: settleDuration,
+494:           timestamp: Date.now(),
+495:         });
+496:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
+497:         this.director.phase = 'settle';
+498:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:499**
+**src/theater/controllers/OpeningSequenceController.js:498**
 ```javascript
-496:         this.director.phase = 'settle';
-497:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
-500:           duration: settleDuration,
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
+495:         });
+496:         const settleDuration = Math.max(0, Number(settleConfig.durationMs) || 0);
+497:         this.director.phase = 'settle';
+498:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
+501:           duration: settleDuration,
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:500**
 ```javascript
-497:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
-500:           duration: settleDuration,
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+497:         this.director.phase = 'settle';
+498:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
+501:           duration: settleDuration,
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:501**
 ```javascript
-498:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
-499:           name: 'settle',
-500:           duration: settleDuration,
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+498:         console.log(`   Phase: Settle (${settleDuration}ms → morph ${settleConfig.morphTo ?? '—'})`);
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
+501:           duration: settleDuration,
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:503**
+**src/theater/controllers/OpeningSequenceController.js:502**
 ```javascript
-500:           duration: settleDuration,
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
+499:         BeatBus.emit(EVENTS.PARTICLE_PHASE, {
+500:           name: 'settle',
+501:           duration: settleDuration,
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:504**
 ```javascript
-501:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
-507:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+501:           duration: settleDuration,
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:505**
 ```javascript
-502:         });
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
-507:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
-508:         } else {
+502:           morphTarget: typeof settleConfig.morphTo === 'number' ? settleConfig.morphTo : null,
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
+508:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:506**
 ```javascript
-503:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
-507:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
-508:         } else {
-509:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
+503:         });
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
+508:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+509:         } else {
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:507**
 ```javascript
-504:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
-505:         let settleAnimation = null;
-506:         if (hasSettleTarget) {
-507:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
-508:         } else {
-509:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
-510:         }
+504:         const hasSettleTarget = typeof settleConfig.morphTo === 'number';
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
+508:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+509:         } else {
+510:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:509**
+**src/theater/controllers/OpeningSequenceController.js:508**
 ```javascript
-506:         if (hasSettleTarget) {
-507:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
-508:         } else {
-509:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
-510:         }
-511:         if (settleDuration > 0) {
-512:           const waitResult = await this.director.sleep(settleDuration);
+505:         const settleTarget = hasSettleTarget ? clamp01(settleConfig.morphTo) : currentMorphValue;
+506:         let settleAnimation = null;
+507:         if (hasSettleTarget) {
+508:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+509:         } else {
+510:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
+511:         }
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:511**
+**src/theater/controllers/OpeningSequenceController.js:510**
 ```javascript
-508:         } else {
-509:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
-510:         }
-511:         if (settleDuration > 0) {
-512:           const waitResult = await this.director.sleep(settleDuration);
-513:           if (handleWaitResult(waitResult) === 'cancelled') return;
-514:         }
+507:         if (hasSettleTarget) {
+508:           settleAnimation = animateMorph(currentMorphValue, settleTarget, settleDuration, 'settle');
+509:         } else {
+510:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
+511:         }
+512:         if (settleDuration > 0) {
+513:           const waitResult = await this.director.sleep(settleDuration);
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:512**
 ```javascript
-509:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
-510:         }
-511:         if (settleDuration > 0) {
-512:           const waitResult = await this.director.sleep(settleDuration);
-513:           if (handleWaitResult(waitResult) === 'cancelled') return;
-514:         }
-515:         if (settleAnimation) {
+509:         } else {
+510:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
+511:         }
+512:         if (settleDuration > 0) {
+513:           const waitResult = await this.director.sleep(settleDuration);
+514:           if (handleWaitResult(waitResult) === 'cancelled') return;
+515:         }
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:515**
+**src/theater/controllers/OpeningSequenceController.js:513**
 ```javascript
-512:           const waitResult = await this.director.sleep(settleDuration);
-513:           if (handleWaitResult(waitResult) === 'cancelled') return;
-514:         }
-515:         if (settleAnimation) {
-516:           await settleAnimation;
-517:         }
-518:         currentMorphValue = settleTarget;
+510:           emitMorphSnapshot(currentMorphValue, 'settle', settleTarget, settleDuration);
+511:         }
+512:         if (settleDuration > 0) {
+513:           const waitResult = await this.director.sleep(settleDuration);
+514:           if (handleWaitResult(waitResult) === 'cancelled') return;
+515:         }
+516:         if (settleAnimation) {
 ```
 
 **src/theater/controllers/OpeningSequenceController.js:516**
 ```javascript
-513:           if (handleWaitResult(waitResult) === 'cancelled') return;
-514:         }
-515:         if (settleAnimation) {
-516:           await settleAnimation;
-517:         }
-518:         currentMorphValue = settleTarget;
-519:       }
+513:           const waitResult = await this.director.sleep(settleDuration);
+514:           if (handleWaitResult(waitResult) === 'cancelled') return;
+515:         }
+516:         if (settleAnimation) {
+517:           await settleAnimation;
+518:         }
+519:         currentMorphValue = settleTarget;
 ```
 
-**src/theater/controllers/OpeningSequenceController.js:518**
+**src/theater/controllers/OpeningSequenceController.js:517**
 ```javascript
-515:         if (settleAnimation) {
-516:           await settleAnimation;
-517:         }
-518:         currentMorphValue = settleTarget;
-519:       }
-520: 
-521:       if (skipTriggered) {
+514:           if (handleWaitResult(waitResult) === 'cancelled') return;
+515:         }
+516:         if (settleAnimation) {
+517:           await settleAnimation;
+518:         }
+519:         currentMorphValue = settleTarget;
+520:       }
+```
+
+**src/theater/controllers/OpeningSequenceController.js:519**
+```javascript
+516:         if (settleAnimation) {
+517:           await settleAnimation;
+518:         }
+519:         currentMorphValue = settleTarget;
+520:       }
+521: 
+522:       if (skipTriggered) {
+```
+
+### JUMP_TO_STAGE (9 hits)
+
+**src/orchestration/navigation/narrativeNavigation.js:98**
+```javascript
+95:       id: name,
+96:       label,
+97:       isActive: activeStage === name,
+98:       onClick: () => jumpToStage(name, { smooth: true, emitNarration: true }),
+99:       index,
+100:     };
+101:   });
+```
+
+**src/state/atoms/narrativeAtom.js:124**
+```javascript
+121:     const current = get().currentStage;
+122:     const currentIndex = STAGE_ORDER.indexOf(current);
+123:     if (currentIndex < STAGE_ORDER.length - 1) {
+124:       narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex + 1]);
+125:     }
+126:   },
+127: 
+```
+
+**src/state/atoms/narrativeAtom.js:140**
+```javascript
+137:     const current = get().currentStage;
+138:     const currentIndex = STAGE_ORDER.indexOf(current);
+139:     if (currentIndex > 0) {
+140:       narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex - 1]);
+141:     }
+142:   },
+143: 
+```
+
+**src/state/atoms/narrativeAtom.js:146**
+```javascript
+143: 
+144:   setStage: stageIndex => {
+145:     const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];
+146:     narrativeAtom.jumpToStage(stage);
+147:   },
+148: 
+149:   // ===== PROGRESS MANAGEMENT =====
+```
+
+**src/state/atoms/stageAtom.js:623**
+```javascript
+620:       if (import.meta.env.DEV) {
+621:         const clampedIndex = Math.max(0, Math.min(index, STAGE_COUNT - 1));
+622:         const stageName = STAGE_NAMES[clampedIndex];
+623:         actions.jumpToStage(stageName);
+624:       }
+625:     },
+626:     
+```
+
+**src/state/atoms/stageAtom.js:676**
+```javascript
+673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,
+674: 
+675:     // Navigation helpers
+676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+678:     next: () => stageAtom.nextStage(),
+679:     prev: () => stageAtom.prevStage(),
+```
+
+**src/state/atoms/stageAtom.js:677**
+```javascript
+674: 
+675:     // Navigation helpers
+676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+678:     next: () => stageAtom.nextStage(),
+679:     prev: () => stageAtom.prevStage(),
+680:     setProgress: (progress) => stageAtom.setStageProgress(progress),
+```
+
+**src/state/atoms/stageAtom.js:706**
+```javascript
+703: 
+704:       for (let i = 0; i < iterations; i++) {
+705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
+706:         stageAtom.jumpToStage(randomStage);
+707:         stageAtom.setStageProgress(Math.random());
+708:       }
+709: 
+```
+
+**src/state/commands/StateCommands.js:326**
+```javascript
+323:       return false;
+324:     }
+325:     this.pendingStageMeta = { ...meta };
+326:     stageAtom.jumpToStage(targetStage);
+327:     return true;
+328:   }
+329: 
+```
+
+### FALLBACK_JUMP (3 hits)
+
+**src/state/atoms/narrativeAtom.js:74**
+```javascript
+71:       function: 'jumpToStage',
+72:       targetStage: stage,
+73:       caller: new Error().stack.split('\n')[2].trim(),
+74:       bypassesOrchestration: true,
+75:       timestamp: performance.now(),
+76:     });
+77: 
+```
+
+**src/state/atoms/narrativeAtom.js:117**
+```javascript
+114:       function: 'nextStage',
+115:       currentStage: get().currentStage,
+116:       caller: new Error().stack.split('\n')[2].trim(),
+117:       bypassesOrchestration: true,
+118:       timestamp: performance.now(),
+119:     });
+120: 
+```
+
+**src/state/atoms/narrativeAtom.js:133**
+```javascript
+130:       function: 'prevStage',
+131:       currentStage: get().currentStage,
+132:       caller: new Error().stack.split('\n')[2].trim(),
+133:       bypassesOrchestration: true,
+134:       timestamp: performance.now(),
+135:     });
+136: 
+```
+
+### STAGE_ATOM_SET (16 hits)
+
+**src/state/atoms/stageAtom.js:645**
+```javascript
+642: 
+643: // 🔬 DIAGNOSTIC: Stage atom state tracking
+644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {
+645:   const originalSetState = stageAtom.setState?.bind(stageAtom);
+646:   if (originalSetState) {
+647:     stageAtom.setState = function (value, updateType) {
+648:       const previousState = stageAtom.getState?.();
+```
+
+**src/state/atoms/stageAtom.js:647**
+```javascript
+644: if (typeof stageAtom !== 'undefined' && !stageAtom.__autoAdvanceDiagnosticWrapped) {
+645:   const originalSetState = stageAtom.setState?.bind(stageAtom);
+646:   if (originalSetState) {
+647:     stageAtom.setState = function (value, updateType) {
+648:       const previousState = stageAtom.getState?.();
+649:       const nextState = typeof value === 'function' ? value(previousState) : value;
+650:       console.log('🔬 [STAGE_ATOM] State change:', { from: previousState, to: nextState, updateType });
+```
+
+**src/state/atoms/stageAtom.js:676**
+```javascript
+673:     getCurrentStageIndex: () => stageAtom.getState().stageIndex,
+674: 
+675:     // Navigation helpers
+676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+678:     next: () => stageAtom.nextStage(),
+679:     prev: () => stageAtom.prevStage(),
+```
+
+**src/state/atoms/stageAtom.js:677**
+```javascript
+674: 
+675:     // Navigation helpers
+676:     jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+678:     next: () => stageAtom.nextStage(),
+679:     prev: () => stageAtom.prevStage(),
+680:     setProgress: (progress) => stageAtom.setStageProgress(progress),
+```
+
+**src/state/atoms/stageAtom.js:680**
+```javascript
+677:     jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+678:     next: () => stageAtom.nextStage(),
+679:     prev: () => stageAtom.prevStage(),
+680:     setProgress: (progress) => stageAtom.setStageProgress(progress),
+681:     reset: () => stageAtom.resetStage(),
+682: 
+683:     // Auto-advance
+```
+
+**src/state/atoms/stageAtom.js:684**
+```javascript
+681:     reset: () => stageAtom.resetStage(),
+682: 
+683:     // Auto-advance
+684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
+685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
+686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
+687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
+```
+
+**src/state/atoms/stageAtom.js:685**
+```javascript
+682: 
+683:     // Auto-advance
+684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
+685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
+686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
+687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
+688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
+```
+
+**src/state/atoms/stageAtom.js:686**
+```javascript
+683:     // Auto-advance
+684:     setAutoAdvanceEnabled: (enabled) => stageAtom.setAutoAdvanceEnabled(Boolean(enabled)),
+685:     toggleAutoAdvance: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled),
+686:     toggleAuto: () => stageAtom.setAutoAdvanceEnabled(!stageAtom.getState().autoAdvanceEnabled), // legacy alias
+687:     isAutoAdvanceEnabled: () => stageAtom.isAutoAdvanceEnabled(),
+688:     pauseAutoAdvance: () => stageAtom.pauseAutoAdvance(),
+689:     resumeAutoAdvance: () => stageAtom.resumeAutoAdvance(),
+```
+
+**src/state/atoms/stageAtom.js:706**
+```javascript
+703: 
+704:       for (let i = 0; i < iterations; i++) {
+705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
+706:         stageAtom.jumpToStage(randomStage);
+707:         stageAtom.setStageProgress(Math.random());
+708:       }
+709: 
+```
+
+**src/state/atoms/stageAtom.js:707**
+```javascript
+704:       for (let i = 0; i < iterations; i++) {
+705:         const randomStage = STAGE_NAMES[Math.floor(Math.random() * STAGE_NAMES.length)];
+706:         stageAtom.jumpToStage(randomStage);
+707:         stageAtom.setStageProgress(Math.random());
+708:       }
+709: 
+710:       const endTime = performance.now();
+```
+
+**src/state/atoms/stageAtom.js:728**
+```javascript
+725: 
+726:       for (let i = 0; i < 10; i++) {
+727:         setTimeout(() => {
+728:           stageAtom.setStageProgress(i / 10);
+729:         }, i * 5);
+730:       }
+731: 
+```
+
+**src/state/commands/StateCommands.js:316**
+```javascript
+313:   }
+314: 
+315:   transitionStage(from, to) {
+316:     stageAtom.setState?.({ currentStage: to, transitioning: true });
+317:     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
+318:   }
+319: 
+```
+
+**src/state/commands/StateCommands.js:326**
+```javascript
+323:       return false;
+324:     }
+325:     this.pendingStageMeta = { ...meta };
+326:     stageAtom.jumpToStage(targetStage);
+327:     return true;
+328:   }
+329: 
+```
+
+**src/state/commands/StateCommands.js:335**
+```javascript
+332:       console.warn('[StateCommands] setAutoAdvanceEnabled unavailable');
+333:       return false;
+334:     }
+335:     stageAtom.setAutoAdvanceEnabled(Boolean(enabled));
+336:     if (import.meta.env?.DEV) {
+337:       console.log('🎚️ [StateCommands] Auto-advance toggled', {
+338:         enabled: Boolean(enabled),
+```
+
+**src/state/commands/StateCommands.js:384**
+```javascript
+381: 
+382:   restoreSnapshot(snapshot) {
+383:     if (snapshot?.state) {
+384:       stageAtom.setState?.(snapshot.state.stage);
+385:       narrativeAtom.setState?.(snapshot.state.narrative);
+386:       qualityAtom.setState?.(snapshot.state.quality);
+387:       interactionAtom.setState?.(snapshot.state.interaction);
+```
+
+**src/theater/UnifiedNavigationAPI.js:8**
+```javascript
+5:  * Guarantees full orchestration (fragments, scroll sync, narration).
+6:  *
+7:  * RULE: Nothing should call narrativeAtom.jumpToStage directly.
+8:  * RULE: Nothing should call stageAtom.jumpToStage directly.
+9:  * RULE: All navigation goes through this API.
+10:  */
+11: 
 ```
 
 ### SCROLL_ORCHESTRATOR (1 hits)
 
-**src/theater/controllers/OpeningSequenceController.js:671**
+**src/theater/controllers/OpeningSequenceController.js:672**
 ```javascript
-668:       if (!this.director.scrollOrchestrator) {
-669:         this.director.scrollOrchestrator = new ScrollOrchestrator();
-670:       }
-671:       this.director.scrollOrchestrator.start?.();
-672:       this.director.monitorFragments?.();
-673: 
-674:       this.director.phase = 'complete';
+669:       if (!this.director.scrollOrchestrator) {
+670:         this.director.scrollOrchestrator = new ScrollOrchestrator();
+671:       }
+672:       this.director.scrollOrchestrator.start?.();
+673:       this.director.monitorFragments?.();
+674: 
+675:       this.director.phase = 'complete';
 ```

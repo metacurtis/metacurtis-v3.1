@@ -64,6 +64,7 @@ class StateCommands {
     this.morphState = null;
     this.subscriptions = []; // Track subscriptions for cleanup
     this.openingComplete = false; // Track opening phase
+    this.pendingStageMeta = null;
     
     // Event emission contracts
     this.eventContracts = {
@@ -140,25 +141,31 @@ class StateCommands {
 
     // Stage changes → BeatBus (only when atom-driven)
     let prevStage = stageAtom.getState?.()?.currentStage;
-    const stageSub = stageAtom.subscribe?.(s => {
+    const stageSub = stageAtom.subscribe?.((s) => {
       const next = s.currentStage;
       if (next !== prevStage) {
         if (next === lastStageFromBus) {
           prevStage = next;
+          this.pendingStageMeta = null;
           return;
         }
-        // Emit stage change events
-        BeatBus.emit(EVENTS.STAGE_CHANGE, { 
-          from: prevStage, 
-          to: next, 
-          stage: next,  // Include for compatibility
-          reason: 'atom' 
-        });
-        
-        // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
-        // This was causing emergence to build on every stage change
-        // Emergence should only be triggered by TheaterDirector during opening
-        
+
+        const meta = this.pendingStageMeta;
+        this.pendingStageMeta = null;
+
+        const payload = {
+          from: prevStage,
+          to: next,
+          stage: next,
+          reason: meta?.reason || 'atom',
+          ...meta,
+        };
+
+        delete payload.fromStage;
+        delete payload.toStage;
+
+        BeatBus.emit(EVENTS.STAGE_CHANGE, payload);
+
         prevStage = next;
         lastStageFromBus = next;
       }
@@ -234,7 +241,11 @@ class StateCommands {
       const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;
       if (!gateActive || gateTarget === targetStage) {
         if (currentStage !== targetStage) {
-          stageAtom.jumpToStage(targetStage);
+          this.requestStageChange(targetStage, {
+            reason: 'scroll',
+            origin: options.origin || 'scroll_progress',
+            targetScroll: clamped,
+          });
         }
       }
     }
@@ -304,6 +315,55 @@ class StateCommands {
   transitionStage(from, to) {
     stageAtom.setState?.({ currentStage: to, transitioning: true });
     narrativeAtom.setState?.(prev => ({ ...prev, paused: true }));
+  }
+
+  requestStageChange(targetStage, meta = {}) {
+    if (!targetStage || typeof stageAtom?.jumpToStage !== 'function') {
+      console.warn('[StateCommands] requestStageChange unavailable', { targetStage });
+      return false;
+    }
+    this.pendingStageMeta = { ...meta };
+    stageAtom.jumpToStage(targetStage);
+    return true;
+  }
+
+  setAutoAdvanceEnabled(enabled, { origin = 'stateCommands' } = {}) {
+    if (typeof stageAtom?.setAutoAdvanceEnabled !== 'function') {
+      console.warn('[StateCommands] setAutoAdvanceEnabled unavailable');
+      return false;
+    }
+    stageAtom.setAutoAdvanceEnabled(Boolean(enabled));
+    if (import.meta.env?.DEV) {
+      console.log('🎚️ [StateCommands] Auto-advance toggled', {
+        enabled: Boolean(enabled),
+        origin,
+      });
+    }
+    return true;
+  }
+
+  markAutoAdvance({ origin = 'stateCommands' } = {}) {
+    if (typeof stageAtom?.markAutoAdvance !== 'function') {
+      console.warn('[StateCommands] markAutoAdvance unavailable');
+      return false;
+    }
+    stageAtom.markAutoAdvance();
+    if (import.meta.env?.DEV) {
+      console.log('🕒 [StateCommands] markAutoAdvance invoked', { origin });
+    }
+    return true;
+  }
+
+  canAutoAdvance() {
+    return stageAtom?.canAutoAdvance?.() ?? true;
+  }
+
+  isAutoAdvanceEnabled() {
+    return (
+      stageAtom?.isAutoAdvanceEnabled?.() ??
+      stageAtom?.getState?.()?.autoAdvanceEnabled ??
+      false
+    );
   }
 
   createSnapshot(label) {

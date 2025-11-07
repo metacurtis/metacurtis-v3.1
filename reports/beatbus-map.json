@@ -11,7 +11,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 807
+        "line": 800
       }
     ],
     "PARTICLES_EMERGED": [
@@ -71,127 +71,123 @@
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 188
+        "line": 195
       }
     ],
     "STAGE_CHANGE": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 151
-      },
-      {
-        "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 637
+        "line": 167
       }
     ],
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 253
+        "line": 264
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 379
+        "line": 380
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 539
+        "line": 540
       }
     ],
     "START_NARRATIVE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 270
+        "line": 271
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 651
+        "line": 652
       }
     ],
     "DIRECTOR_ERROR": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 467
+        "line": 468
       }
     ],
     "DIRECTOR_CANCEL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 616
+        "line": 609
       }
     ],
     "PREWARM_GENESIS_BLUEPRINT": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 622
+        "line": 615
       }
     ],
     "RENDERER_TUNE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 637
+        "line": 630
       }
     ],
     "CURSOR_SHOW": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 331
+        "line": 332
       }
     ],
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 332
+        "line": 333
       }
     ],
     "CURSOR_BLINK": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 338
+        "line": 339
       }
     ],
     "TERMINAL_TYPE": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 349
+        "line": 350
       }
     ],
     "SCREEN_FILL": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 363
+        "line": 364
       }
     ],
     "PARTICLE_PHASE": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 440
+        "line": 441
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 466
+        "line": 467
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 498
+        "line": 499
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 556
+        "line": 557
       }
     ],
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 575
+        "line": 576
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 665
+        "line": 666
       }
     ]
   },
@@ -211,11 +207,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 410
+        "line": 411
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 827
+        "line": 820
       }
     ],
     "ENABLE_SCROLL": [
@@ -225,7 +221,7 @@
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 84
+        "line": 85
       }
     ],
     "START_NARRATIVE": [
@@ -283,7 +279,7 @@
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 595
+        "line": 596
       }
     ],
     "MORPH_PROGRESS": [
@@ -305,7 +301,7 @@
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 605
+        "line": 606
       }
     ],
     "STAGE_CHANGE": [
@@ -315,7 +311,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 127
+        "line": 128
       },
       {
         "file": "src/theater/UnifiedNavigationAPI.js",

@@ -2,6 +2,7 @@
 // Provides a global navigation helper used by Narrative UI controls (prod + dev).
 
 import stageAtom from '@/state/atoms/stageAtom.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
@@ -51,10 +52,10 @@ const jumpToStage = (stageName, options = {}) => {
 };
 
 const toggleAutoAdvance = (forcedValue) => {
-  const current = stageAtom.getState().autoAdvanceEnabled;
+  const current = stateCommands.isAutoAdvanceEnabled();
   const nextValue =
     typeof forcedValue === 'boolean' ? forcedValue : !current;
-  stageAtom.setAutoAdvanceEnabled(nextValue);
+  stateCommands.setAutoAdvanceEnabled(nextValue, { origin: 'narrative_navigation' });
   return nextValue;
 };
 

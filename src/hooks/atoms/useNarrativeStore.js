@@ -18,10 +18,6 @@ export function useNarrativeStore(selector) {
     ...state,
 
     // Actions (bound to atom)
-    jumpToStage: narrativeAtom.jumpToStage,
-    nextStage: narrativeAtom.nextStage,
-    prevStage: narrativeAtom.prevStage,
-    setStage: narrativeAtom.setStage,
     setGlobalProgress: narrativeAtom.setGlobalProgress,
     setScrollProgress: narrativeAtom.setScrollProgress,
     setMorphProgress: narrativeAtom.setMorphProgress,

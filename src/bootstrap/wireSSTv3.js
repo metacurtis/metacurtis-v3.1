@@ -79,24 +79,6 @@ export function wireSSTv3() {
   // Always subscribe to narrative atom (DISABLED)
   console.log('🔗 [WIRESSST] narrativeAtom bridge DISABLED - using UnifiedNavigationAPI');
 
-  /*
-  const unsubscribeNarrative = narrativeAtom.subscribe(state => {
-    console.log('🔗 [WIRESSST BRIDGE - DISABLED]', {
-      event: 'narrativeAtom → stageAtom sync',
-      newStage: state.currentStage,
-      note: 'This bridge is disabled. Use window.unifiedNav instead.',
-      timestamp: performance.now(),
-    });
-
-    // If stageAtom exists, sync with it
-    if (stageAtom && state.currentStage !== stageAtom.getState().currentStage) {
-      // DISABLED: This bypasses orchestration
-      // stageAtom.jumpToStage(state.currentStage);
-    }
-  });
-  unsubscribers.push(unsubscribeNarrative);
-  */
-
   // Cleanup function
   const cleanup = () => {
     unsubscribers.forEach(unsub => unsub());

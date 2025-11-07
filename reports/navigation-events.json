@@ -4,11 +4,7 @@
       "emitters": [
         {
           "file": "src/state/commands/StateCommands.js",
-          "line": 151
-        },
-        {
-          "file": "src/theater/controllers/OpeningSequenceController.js",
-          "line": 637
+          "line": 167
         }
       ],
       "listeners": [
@@ -18,7 +14,7 @@
         },
         {
           "file": "src/theater/TheaterDirector.js",
-          "line": 127
+          "line": 128
         },
         {
           "file": "src/theater/UnifiedNavigationAPI.js",
@@ -30,11 +26,11 @@
       "emitters": [
         {
           "file": "src/theater/TheaterDirector.js",
-          "line": 270
+          "line": 271
         },
         {
           "file": "src/theater/controllers/OpeningSequenceController.js",
-          "line": 651
+          "line": 652
         }
       ],
       "listeners": [
