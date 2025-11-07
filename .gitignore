@@ -22,3 +22,7 @@ reports/source-hits.*
 reports/sst-extract.*
 reports/investigation-*
 !reports/opening-sequence-golden-*
+
+# Playwright test artifacts
+playwright-report/
+test-results/
