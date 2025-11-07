@@ -409,27 +409,34 @@ class ConsciousnessEngine {
 
       // Emit emergence blueprint with mode flag (canonical event)
       const variantMode = openingChaosMode ? 'opening_chaos' : 'emergence';
-      const emissionMode = 'emergence';
-      emitBlueprintReady(BeatBus, EVENTS, blueprint, {
+      blueprint.mode = 'emergence';
+      blueprint.metadata = {
+        ...(blueprint.metadata || {}),
+        mode: 'emergence',
+        variantMode,
+      };
+      const emergencePayload = {
         stage: 'genesis',
         quality: this.currentQuality,
-        mode: emissionMode,
+        mode: 'emergence',
         variantMode,
         cached: false,
         skipMorphAnimation: !!payload.skipMorphAnimation,
         targetState: payload.targetState,
         fastForward: !!payload.fastForward,
         cacheKey: this._cacheKey('genesis', this.currentQuality),
-      });
+      };
+
+      BeatBus.emit(EVENTS.BLUEPRINT_READY, { blueprint, ...emergencePayload });
       
       if (openingChaosMode) {
         console.log('🧠 Engine: Opening chaos blueprint emitted', { count: blueprint.particleCount, mode: variantMode });
         this._openingPreboundBlueprint = blueprint;
         this._log('emergence_built', { count: blueprint.particleCount, mode: variantMode });
       } else {
-        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: emissionMode });
+        console.log('🧠 Engine: Emergence blueprint emitted', { count: blueprint.particleCount, mode: 'emergence' });
         this._openingPreboundBlueprint = null;
-        this._log('emergence_built', { count: blueprint.particleCount, mode: emissionMode });
+        this._log('emergence_built', { count: blueprint.particleCount, mode: 'emergence' });
       }
 
       // Drive implosion → settle via directives; renderer remains passive

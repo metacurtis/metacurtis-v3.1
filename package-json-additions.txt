@@ -1,0 +1,83 @@
+# =============================================================================
+# MetaCurtis Git Forensics - Package.json Script Additions
+# =============================================================================
+#
+# Add these scripts to your package.json "scripts" section
+#
+# Usage:
+#   1. Copy the scripts below
+#   2. Paste into package.json under "scripts": { ... }
+#   3. Or use npm commands provided at bottom
+#
+# =============================================================================
+
+# --- Git Forensics Scripts ---
+
+"forensics:oracle": "./scripts/git-forensics/oracle-opening.sh",
+"forensics:capture": "./scripts/git-forensics/capture-golden-state.sh",
+"forensics:compare": "./scripts/git-forensics/compare-golden.sh",
+"forensics:probe": "./scripts/git-forensics/forensic-probe.sh",
+
+# --- Golden State Aliases (Shorter Commands) ---
+
+"golden:capture": "./scripts/git-forensics/capture-golden-state.sh",
+"golden:compare": "./scripts/git-forensics/compare-golden.sh",
+"golden:list": "git tag -l 'golden/*' --sort=-creatordate",
+"golden:list:all": "git tag -l 'golden/*' --sort=-creatordate -n99",
+
+# --- Quick Validation Stack ---
+
+"validate:full": "npm run validate-sst && npm run detect-drift && npm run test:contracts && npm run build-evidence",
+"validate:pre-golden": "npm run validate-sst && npm run detect-drift && npm run test:contracts",
+
+# =============================================================================
+# OR use these npm commands to add them automatically:
+# =============================================================================
+
+# Copy and paste these into your terminal:
+
+npm pkg set scripts.forensics:oracle="./scripts/git-forensics/oracle-opening.sh"
+npm pkg set scripts.forensics:capture="./scripts/git-forensics/capture-golden-state.sh"
+npm pkg set scripts.forensics:compare="./scripts/git-forensics/compare-golden.sh"
+npm pkg set scripts.forensics:probe="./scripts/git-forensics/forensic-probe.sh"
+
+npm pkg set scripts.golden:capture="./scripts/git-forensics/capture-golden-state.sh"
+npm pkg set scripts.golden:compare="./scripts/git-forensics/compare-golden.sh"
+npm pkg set scripts.golden:list="git tag -l 'golden/*' --sort=-creatordate"
+npm pkg set scripts.golden:list:all="git tag -l 'golden/*' --sort=-creatordate -n99"
+
+npm pkg set scripts.validate:full="npm run validate-sst && npm run detect-drift && npm run test:contracts && npm run build-evidence"
+npm pkg set scripts.validate:pre-golden="npm run validate-sst && npm run detect-drift && npm run test:contracts"
+
+# =============================================================================
+# Verification
+# =============================================================================
+
+# After adding, verify with:
+npm run | grep forensics
+npm run | grep golden
+npm run | grep validate:full
+
+# =============================================================================
+# Usage Examples
+# =============================================================================
+
+# Capture golden state
+npm run golden:capture
+
+# List golden states
+npm run golden:list
+
+# Compare to latest golden
+npm run golden:compare
+
+# Run oracle (check if current commit is good)
+npm run forensics:oracle
+
+# Analyze specific commit
+npm run forensics:probe abc1234
+
+# Full validation before capturing golden
+npm run validate:full
+
+# =============================================================================
