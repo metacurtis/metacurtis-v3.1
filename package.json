@@ -81,7 +81,14 @@
     "system:validate": "node scripts/system.mjs validate",
     "system:doctor": "node scripts/system.mjs doctor",
     "system:query": "node scripts/system.mjs query",
-    "system:fix": "node scripts/system.mjs fix"
+    "system:fix": "node scripts/system.mjs fix",
+    "sst-extract": "node tools/sst-extract.mjs",
+    "trace-bus": "node tools/trace-bus.mjs",
+    "scan-source": "node tools/scan-source.mjs",
+    "build-evidence-report": "node tools/build-evidence-report.mjs",
+    "build-evidence": "npm run sst-extract && npm run trace-bus && npm run scan-source && npm run build-evidence-report",
+    "test:contracts": "npm run validate:opening && npm run ci:fencepost",
+    "test:contracts:opening": "npm run ci:fencepost"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.7",
@@ -107,15 +114,18 @@
     "@tailwindcss/vite": "^4.1.7",
     "@vitejs/plugin-react": "^4.3.4",
     "ajv": "^8.12.0",
+    "ajv-cli": "^5.0.0",
     "ajv-formats": "^2.1.1",
     "autoprefixer": "^10.4.21",
     "chalk": "^5.6.0",
+    "clipboardy": "^3.0.0",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "fast-glob": "^3.3.3",
+    "glob": "^10.3.10",
     "globals": "^16.0.0",
     "husky": "^8.0.3",
     "jsdom": "^26.0.0",
@@ -128,10 +138,7 @@
     "terser": "^5.39.0",
     "vite": "^6.2.5",
     "vite-plugin-glsl": "^1.4.0",
-    "vitest": "^1.4.0",
-    "ajv-cli": "^5.0.0",
-    "glob": "^10.3.10",
-    "clipboardy": "^3.0.0"
+    "vitest": "^1.4.0"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [

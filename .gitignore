@@ -15,3 +15,10 @@ coverage/
 .canon_reports/
 .vision/*.log
 .local-canon/*
+
+# Evidence reports (generated)
+reports/beatbus-map.*
+reports/source-hits.*
+reports/sst-extract.*
+reports/investigation-*
+!reports/opening-sequence-golden-*
