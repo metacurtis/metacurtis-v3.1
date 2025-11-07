@@ -318,34 +318,42 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
                 window.unifiedNav ||
                 (await import('@/theater/UnifiedNavigationAPI.js')).default;
 
-              if (nav) {
-                if (nextStageName) {
-                  await nav.navigateToStage(nextStageName, {
-                    smooth: true,
-                    source: 'narration_auto_advance',
-                  });
-                  return;
-                }
-                if (typeof nav.nextStage === 'function') {
-                  await nav.nextStage({
-                    smooth: true,
-                    source: 'narration_auto_advance',
-                  });
-                  return;
-                }
+              if (!nav) {
+                console.warn('⚠️ [AUTO-ADVANCE] Unified navigation unavailable; skipping advance');
+                narrationDiagnostic.log('AUTO_ADVANCE_ABORTED', {
+                  stage: nextStageName,
+                  reason: 'unified_nav_unavailable',
+                });
+                return;
+              }
+
+              let success = false;
+              if (nextStageName && typeof nav.navigateToStage === 'function') {
+                success = await nav.navigateToStage(nextStageName, {
+                  smooth: true,
+                  source: 'narration_auto_advance',
+                });
+              } else if (typeof nav.nextStage === 'function') {
+                success = await nav.nextStage({
+                  smooth: true,
+                  source: 'narration_auto_advance',
+                });
+              }
+
+              if (!success) {
+                console.warn('⚠️ [AUTO-ADVANCE] Unified navigation rejected request', {
+                  stage: nextStageName,
+                });
+                narrationDiagnostic.log('AUTO_ADVANCE_ABORTED', {
+                  stage: nextStageName,
+                  reason: 'unified_nav_rejected',
+                });
               }
             } catch (error) {
-              console.warn('⚠️ [AUTO-ADVANCE] Unified navigation failed, using fallback', {
-                error,
-                nextStageName,
-              });
-            }
-
-            liveControls.next?.();
-            if (nextStageName) {
-              BeatBus.emit?.(EVENTS.START_NARRATIVE, {
+              console.error('🚨 [AUTO-ADVANCE] Unified navigation error', error);
+              narrationDiagnostic.log('AUTO_ADVANCE_ABORTED', {
                 stage: nextStageName,
-                source: 'auto_advance',
+                reason: 'unified_nav_error',
               });
             }
           };

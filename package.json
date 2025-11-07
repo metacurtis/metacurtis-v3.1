@@ -102,7 +102,9 @@
     "lint-shaders-advanced": "node tools/lint-shaders-advanced.mjs",
     "scan-shaders-motion": "node tools/scanners/shader-motion-audit.mjs",
     "lint-shaders-motion": "node tools/lint-shaders-motion.mjs",
-    "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs"
+    "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs",
+    "scan-navigation": "node tools/scan-navigation.mjs",
+    "analyze-flow": "node tools/analyze-control-flow.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.2",

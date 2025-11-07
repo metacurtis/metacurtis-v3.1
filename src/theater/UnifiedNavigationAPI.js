@@ -12,6 +12,7 @@
 import BeatBus from '@/theater/bus';
 import NavigationGate from '@/theater/NavigationGate.js';
 import { stageAtom } from '@/state/atoms';
+import stateCommands from '@/state/commands/StateCommands.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 class UnifiedNavigationAPI {
@@ -61,7 +62,8 @@ class UnifiedNavigationAPI {
 
     // Calculate target scroll percentage
     const denominator = Math.max(stageCount - 1, 1);
-    const targetScrollPercent = stageCount > 1 ? (targetIndex / denominator) * 100 : 0;
+    const targetProgress = stageCount > 1 ? targetIndex / denominator : 0;
+    const targetScrollPercent = targetProgress * 100;
 
     // Skip narration if requested
     if (skipNarration && window.narrationController?.skipNarration) {
@@ -71,10 +73,9 @@ class UnifiedNavigationAPI {
     // DIAGNOSTIC: Check if scroll is possible
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       console.warn('🚨 [UNIFIED NAV] Window or document unavailable');
-      const currentStage = stageAtom.getState?.()?.currentStage;
-      if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
-      }
+      stateCommands.setScrollProgress(targetProgress, {
+        origin: 'unified_nav_headless',
+      });
       return true;
     }
 
@@ -98,13 +99,14 @@ class UnifiedNavigationAPI {
 
     try {
       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {
-        console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
-        if (window.stageControls?.jumpToStage) {
-          window.stageControls.jumpToStage(targetStage);
-        } else {
-          stageAtom.jumpToStage(targetStage);
-        }
-        finalReason = 'fallback';
+        console.warn('🚨 [UNIFIED NAV] Document not scrollable - navigation aborted', {
+          documentHeight,
+          windowHeight,
+        });
+        stateCommands.setScrollProgress(targetProgress, {
+          origin: 'unified_nav_fallback',
+        });
+        finalReason = 'document_not_scrollable';
         return true;
       }
 
@@ -121,7 +123,9 @@ class UnifiedNavigationAPI {
 
       const currentStage = stageAtom.getState?.()?.currentStage;
       if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
+        stateCommands.setScrollProgress(targetProgress, {
+          origin: 'unified_nav_scroll_sync',
+        });
       }
 
       if (releaseDelayMs > 0) {

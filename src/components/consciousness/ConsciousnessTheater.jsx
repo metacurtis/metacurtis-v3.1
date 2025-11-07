@@ -256,6 +256,24 @@ export default function ConsciousnessTheater() {
       return false;
     };
 
+    const requestUnifiedNavigation = (targetStage, source) => {
+      if (!targetStage) return false;
+      const nav = window.unifiedNav;
+      if (nav?.navigateToStage) {
+        nav.navigateToStage(targetStage, {
+          smooth: true,
+          skipNarration: false,
+          source,
+        });
+        return true;
+      }
+      console.warn('⚠️ [KEY NAV] Unified navigation unavailable; ignoring request', {
+        source,
+        targetStage,
+      });
+      return false;
+    };
+
     const handleKey = (e) => {
       const tagName = e.target?.tagName;
       if (tagName && ['INPUT', 'TEXTAREA'].includes(tagName)) return;
@@ -378,15 +396,7 @@ export default function ConsciousnessTheater() {
             narrationSkipped,
           });
 
-          if (window.unifiedNav) {
-            window.unifiedNav.navigateToStage(targetStage, {
-              smooth: true,
-              skipNarration: false,
-              source: 'number_key',
-            });
-          } else {
-            stageAtom.jumpToStage(targetStage);
-          }
+          requestUnifiedNavigation(targetStage, 'number_key');
         }
         return;
       }
@@ -406,19 +416,14 @@ export default function ConsciousnessTheater() {
         );
         const targetStage = stageNamesRef[nextIndex] || stageNamesRef[stageNamesRef.length - 1];
 
-        if (targetStage && window.unifiedNav?.navigateToStage) {
-          window.unifiedNav.navigateToStage(targetStage, {
-            smooth: true,
-            source: 'keyboard_space',
-          });
-        } else {
-          stageAtom.nextStage();
-        }
-        const after = stageAtom.getState?.();
+        const navigationIssued = targetStage
+          ? requestUnifiedNavigation(targetStage, 'keyboard_space')
+          : false;
+
         console.log('🎬 [KEY NAV]', {
           key: 'Space',
           from: before?.currentStage ?? null,
-          to: after?.currentStage ?? targetStage ?? null,
+          to: navigationIssued ? targetStage : before?.currentStage ?? null,
           narrationSkipped,
         });
         return;
@@ -441,10 +446,11 @@ export default function ConsciousnessTheater() {
           break;
         }
         case 'r':
-        case 'R':
-          stageAtom.jumpToStage('genesis');
+        case 'R': {
+          requestUnifiedNavigation('genesis', 'keyboard_reset');
           morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
           break;
+        }
         default:
           break;
       }
