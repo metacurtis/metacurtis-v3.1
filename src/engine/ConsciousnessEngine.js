@@ -574,7 +574,8 @@ class ConsciousnessEngine {
       emitBlueprintReady(BeatBus, EVENTS, blueprint, {
         stage: 'genesis',
         quality: this.currentQuality,
-        mode: payload.mode || 'emergence',
+        opening: openingChaosMode,
+        channel: 'renderer',
         cached: false,
         skipMorphAnimation: !!payload.skipMorphAnimation,
         targetState: payload.targetState,

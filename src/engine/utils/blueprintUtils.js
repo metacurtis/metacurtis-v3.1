@@ -175,6 +175,8 @@ export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
   const channel = metadata.channel || 'renderer';
   const mode = isOpening ? 'opening_chaos' : (metadata.mode || blueprint?.mode || 'emergence');
 
+  // Canonical emitter reference:
+  // BeatBus.emit(EVENTS.BLUEPRINT_READY, { stage, quality, mode: 'emergence', ... })
   const payload = {
     blueprint,
     stage,

@@ -1,14 +1,17 @@
 import React from 'react';
 // Import Canon Dev-OS (dev only)
-if (import.meta.env.DEV) {
+const enableCanonDevOs = import.meta.env.DEV && import.meta.env.VITE_CANON_DEV_OS === '1';
+if (enableCanonDevOs) {
   console.log('🔧 [DEV MODE] Loading Canon Dev-OS...');
-  import('./canon-console/browser/inject.js')
+  import('../canon-console/browser/inject.js')
     .then(() => {
       console.log('✅ [DEV MODE] Canon Dev-OS loaded');
     })
     .catch((err) => {
       console.warn('⚠️ [DEV MODE] Canon load failed:', err);
     });
+} else if (import.meta.env.DEV) {
+  console.log('ℹ️ [DEV MODE] Canon Dev-OS gated (VITE_CANON_DEV_OS!=1)');
 }
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
