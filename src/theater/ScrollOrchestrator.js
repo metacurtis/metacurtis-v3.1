@@ -13,6 +13,7 @@ import {
   revokeControlSurface,
   isControlAllowed,
 } from '@/utils/runtimeGuards.js';
+import requestMorphProgressEmit from '@/engine/morphProgressChannel.js';
 
 const DEBUG_SCROLL = true;
 
@@ -113,14 +114,11 @@ export default class ScrollOrchestrator {
           const morphProgress = clamp01(value);
           const morphTarget = clamp01(this.morphTarget);
 
-          BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
-            morphProgress,
-            value: morphProgress,
-            morphTarget,
+          requestMorphProgressEmit(morphProgress, {
             target: morphTarget,
             stage: currentStage,
             stageIndex: this.lastStageIndex,
-            schemaVersion: '3.5',
+            origin: 'scroll-orchestrator',
           });
         }
       },

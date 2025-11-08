@@ -1,7 +1,5 @@
 import { VC } from '@/config/visual-controls.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
-import BeatBus from '@/theater/bus';
-import { EVENTS } from '@/theater/events.js';
 import { trace } from '@/dev/trace.js';
 
 const DEFAULT_PHASE_DURATIONS = Object.freeze({
@@ -255,22 +253,10 @@ class MorphController {
   }
 
   #emitMorphProgress(value, target = value) {
-    const engine = this.#engine;
-    const stageLabel = engine.currentStage || 'genesis';
-    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
-    const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
-
-    const payload = {
-      morphProgress: value,
-      value,
-      morphTarget: target,
+    this.#engine.emitMorphProgressFromSource(value, {
       target,
-      stage: stageLabel,
-      schemaVersion: '3.5',
-    };
-    if (stageIndex >= 0) payload.stageIndex = stageIndex;
-
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+      origin: 'morph-controller',
+    });
   }
 }
 

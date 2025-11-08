@@ -31,17 +31,11 @@ function __emitMorphThrottled(BeatBus, EVENTS, v) {
     const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
     const stageIndex = stageState.stageIndex ?? (stageOrder.indexOf(currentStage));
     const payload = {
-      morphProgress: clamped,
-      value: clamped,
-      morphTarget: clamped,
-      target: clamped,
       stage: currentStage,
-      schemaVersion: '3.5',
+      stageIndex: Number.isFinite(stageIndex) && stageIndex >= 0 ? stageIndex : undefined,
+      origin: 'state-commands',
     };
-    if (Number.isFinite(stageIndex) && stageIndex >= 0) {
-      payload.stageIndex = stageIndex;
-    }
-    BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', payload);
+    requestMorphProgressEmit(clamped, payload);
   } catch {}
 }
 
@@ -51,6 +45,7 @@ import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import NavigationGate from '@/theater/NavigationGate.js';
+import requestMorphProgressEmit from '@/engine/morphProgressChannel.js';
 
 const clamp01 = (value) => {
   const num = Number.isFinite(value) ? value : Number(value);

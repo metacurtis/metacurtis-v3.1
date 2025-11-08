@@ -7,7 +7,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 671
+        "line": 700
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -17,51 +17,39 @@
     "PARTICLES_EMERGED": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 310
+        "line": 333
       }
     ],
-    "PREWARM_COMPLETE": [
+    "MORPH_PROGRESS": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 348
+        "line": 216
       }
     ],
     "BLUEPRINT_READY": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 433
+        "line": 223
       },
       {
-        "file": "src/engine/utils/blueprintUtils.js",
-        "line": 166
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 477
+      }
+    ],
+    "PREWARM_COMPLETE": [
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 392
       }
     ],
     "CLIMAX_STEP": [
       {
         "file": "src/engine/modules/ClimaxController.js",
-        "line": 205
+        "line": 204
       },
       {
         "file": "src/engine/modules/ClimaxController.js",
-        "line": 587
-      }
-    ],
-    "MORPH_PROGRESS": [
-      {
-        "file": "src/engine/modules/ClimaxController.js",
-        "line": 249
-      },
-      {
-        "file": "src/engine/modules/MorphController.js",
-        "line": 273
-      },
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 44
-      },
-      {
-        "file": "src/theater/controllers/MorphAnimationController.js",
-        "line": 332
+        "line": 597
       }
     ],
     "QUALITY_CHANGE": [
@@ -71,19 +59,19 @@
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 195
+        "line": 190
       }
     ],
     "STAGE_CHANGE": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 167
+        "line": 162
       }
     ],
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 264
+        "line": 259
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
@@ -91,17 +79,13 @@
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 540
+        "line": 557
       }
     ],
     "START_NARRATIVE": [
       {
         "file": "src/theater/TheaterDirector.js",
         "line": 271
-      },
-      {
-        "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 652
       }
     ],
     "DIRECTOR_ERROR": [
@@ -161,33 +145,33 @@
     "PARTICLE_PHASE": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 441
+        "line": 458
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 467
+        "line": 484
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 499
+        "line": 516
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 557
+        "line": 574
       }
     ],
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 576
+        "line": 593
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 666
+        "line": 678
       }
     ]
   },
@@ -221,7 +205,7 @@
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 85
+        "line": 80
       }
     ],
     "START_NARRATIVE": [
@@ -279,19 +263,25 @@
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 596
+        "line": 613
+      }
+    ],
+    "RENDER_DIRECTIVE": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 843
       }
     ],
     "MORPH_PROGRESS": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1668
+        "line": 1728
       }
     ],
     "PARTICLE_PHASE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1939
+        "line": 1999
       }
     ],
     "BLUEPRINT_READY": [
@@ -301,7 +291,7 @@
       },
       {
         "file": "src/theater/controllers/OpeningSequenceController.js",
-        "line": 606
+        "line": 623
       }
     ],
     "STAGE_CHANGE": [

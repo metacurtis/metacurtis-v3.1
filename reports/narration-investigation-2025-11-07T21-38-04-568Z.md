@@ -1,3 +1,696 @@
+# Narration & Opening Evidence Report
+
+Generated: 11/7/2025, 3:38:04 PM
+
+---
+## 1) SST Extract
+
+```json
+{
+  "source": "sst/canon/v3.5.json",
+  "version": null,
+  "mode": null,
+  "openingPhases": {
+    "rules": {
+      "startAfterViewportHint": true,
+      "stage0ColorLock": true,
+      "scrollLockedUntil": "ENABLE_SCROLL",
+      "emergenceModeRequired": true
+    },
+    "skipKey": "SPACE",
+    "totalDurationMs": 12500,
+    "timeline": {
+      "blackout": {
+        "durationMs": 2000
+      },
+      "cursor": {
+        "blinkCount": 2,
+        "intervalMs": 500
+      },
+      "typing": {
+        "lines": [
+          "READY.",
+          "10 PRINT \"HELLO CURTIS\"",
+          "20 GOTO 10",
+          "RUN"
+        ],
+        "typeSpeed": 50,
+        "lineDelay": 500,
+        "completionDelayMs": 800
+      },
+      "fill": {
+        "text": "HELLO CURTIS ",
+        "scrollSpeed": 100,
+        "durationMs": 2000
+      },
+      "emergence": {
+        "durationMs": 2000,
+        "waitForFencepost": true,
+        "maxWaitMs": 5000,
+        "stabilizeMs": 500,
+        "skipMorphAnimation": false,
+        "skipGenesisBlueprint": true,
+        "targetState": "genesis_initial"
+      },
+      "profile": "chaos_coalesce_settle_v1",
+      "prologue": {
+        "terminalOverlay": true,
+        "fadeOutAtMs": 0
+      },
+      "chaos": {
+        "enabled": true,
+        "durationMs": 2000,
+        "rendererSpin": {
+          "z": 0.55,
+          "y": 0.25
+        }
+      },
+      "coalesce": {
+        "enabled": true,
+        "durationMs": 2000,
+        "morphTo": 0.6
+      },
+      "settle": {
+        "enabled": true,
+        "durationMs": 1500,
+        "morphTo": 1,
+        "constellationCoverage": [
+          0.95,
+          0.8,
+          0.6,
+          0.45
+        ]
+      },
+      "narration": {
+        "startAtMs": 13000,
+        "events": [
+          "START_NARRATIVE",
+          "AUDIO_START_STAGE"
+        ]
+      },
+      "beatGlyph": {
+        "revealMs": 9500,
+        "text": "HELLO CURTIS"
+      }
+    },
+    "emergence": {
+      "target": "random_to_random_gas_cloud",
+      "mode": "emergence",
+      "source": "viewportSpread"
+    }
+  },
+  "stages": [
+    "genesis",
+    "discipline",
+    "neural",
+    "velocity",
+    "architecture",
+    "harmony",
+    "transcendence"
+  ],
+  "morphProfiles": {},
+  "cameraByStage": {
+    "genesis": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "static",
+        "description": "Fixed camera during emergence"
+      },
+      "reveal": {
+        "timing": 8000,
+        "duration": 2000,
+        "target": {
+          "x": 0.8,
+          "y": 0.5,
+          "z": 4.5
+        },
+        "easing": "easeInOutQuad",
+        "description": "Subtle 15° rotation to show depth"
+      },
+      "keyframes": []
+    },
+    "discipline": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": -1,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "orbit",
+        "axis": "y",
+        "degrees": 10,
+        "duration": 35000,
+        "speed": 0.1,
+        "easing": "linear",
+        "description": "Slow orbit to reveal structure"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": -1,
+            "z": 5
+          }
+        },
+        {
+          "time": 35000,
+          "position": {
+            "x": 1.5,
+            "y": -1,
+            "z": 4.5
+          }
+        }
+      ]
+    },
+    "neural": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "orbit_discovery",
+        "axis": "xy",
+        "degrees": 15,
+        "duration": 30000,
+        "speed": 0.3,
+        "wobble": 0.1,
+        "easing": "easeInOutSine",
+        "description": "Curious orbital movement revealing connections"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 10000,
+          "position": {
+            "x": 1,
+            "y": 0.5,
+            "z": 4.8
+          }
+        },
+        {
+          "time": 20000,
+          "position": {
+            "x": -0.5,
+            "y": -0.3,
+            "z": 5.2
+          }
+        },
+        {
+          "time": 30000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        }
+      ]
+    },
+    "velocity": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 6
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "dolly_push",
+        "startZ": 6,
+        "endZ": 4,
+        "duration": 40000,
+        "easing": "easeInQuad",
+        "shake": {
+          "enabled": true,
+          "amplitude": 0.1,
+          "frequency": 5
+        },
+        "description": "Dramatic push-in with energy shake"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 6
+          }
+        },
+        {
+          "time": 20000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 40000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          }
+        }
+      ]
+    },
+    "architecture": {
+      "initial": {
+        "position": {
+          "x": 3,
+          "y": 3,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "isometric_track",
+        "pattern": "blueprint",
+        "degrees": 12,
+        "duration": 35000,
+        "easing": "linear",
+        "description": "Isometric view revealing system structure"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 3,
+            "y": 3,
+            "z": 5
+          }
+        },
+        {
+          "time": 17500,
+          "position": {
+            "x": -3,
+            "y": 3,
+            "z": 5
+          }
+        },
+        {
+          "time": 35000,
+          "position": {
+            "x": 3,
+            "y": 3,
+            "z": 5
+          }
+        }
+      ]
+    },
+    "harmony": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "balletic_orbit",
+        "axis": "xyz",
+        "degrees": 25,
+        "duration": 40000,
+        "speed": 0.2,
+        "smooth": 0.98,
+        "easing": "easeInOutCubic",
+        "description": "Graceful 3-axis ballet revealing golden ratio"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 10000,
+          "position": {
+            "x": 2,
+            "y": 1,
+            "z": 4.5
+          }
+        },
+        {
+          "time": 20000,
+          "position": {
+            "x": 0,
+            "y": 2,
+            "z": 5.5
+          }
+        },
+        {
+          "time": 30000,
+          "position": {
+            "x": -2,
+            "y": 1,
+            "z": 4.5
+          }
+        },
+        {
+          "time": 40000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        }
+      ]
+    },
+    "transcendence": {
+      "initial": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "lookAt": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "movement": {
+        "type": "reverent_orbit",
+        "axis": "y",
+        "degrees": 30,
+        "duration": 50000,
+        "speed": 0.15,
+        "pullback": {
+          "enabled": true,
+          "from": 5,
+          "to": 7,
+          "startTime": 35000,
+          "duration": 10000,
+          "easing": "easeOutQuad"
+        },
+        "description": "Slow orbit with reverent pullback for full view"
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 25000,
+          "position": {
+            "x": 2.5,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 35000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 5
+          }
+        },
+        {
+          "time": 45000,
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 7
+          }
+        }
+      ]
+    }
+  },
+  "beatsByStage": {},
+  "generatedAt": "2025-11-07T21:38:02.716Z"
+}
+```
+
+---
+## 2) BeatBus Emitters/Listeners Map
+
+# BeatBus Event Map
+Total events: 23
+## AUDIO_COMPUTER_HUM
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:333`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:164`
+
+## BLUEPRINT_READY
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:433`
+- `src/engine/utils/blueprintUtils.js:166`
+
+**Listeners**:
+- `src/components/webgl/WebGLCanvas.jsx:264`
+- `src/theater/controllers/OpeningSequenceController.js:606`
+
+## BUILD_EMERGENCE_BLUEPRINT
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:264`
+- `src/theater/controllers/OpeningSequenceController.js:380`
+- `src/theater/controllers/OpeningSequenceController.js:540`
+
+**Listeners**:
+- (none)
+
+## CLIMAX_STEP
+
+**Emitters**:
+- `src/engine/modules/ClimaxController.js:205`
+- `src/engine/modules/ClimaxController.js:587`
+
+**Listeners**:
+- (none)
+
+## CURSOR_BLINK
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:339`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:87`
+
+## CURSOR_SHOW
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:332`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:80`
+
+## DIRECTOR_CANCEL
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:609`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:199`
+
+## DIRECTOR_ERROR
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:468`
+
+**Listeners**:
+- (none)
+
+## ENABLE_SCROLL
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:661`
+
+**Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:189`
+- `src/state/commands/StateCommands.js:85`
+
+## ENGINE_VIEWPORT_HINT
+
+**Emitters**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:230`
+- `src/components/webgl/WebGLBackground.jsx:671`
+- `src/theater/TheaterDirector.js:800`
+
+**Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:173`
+- `src/components/consciousness/ConsciousnessTheater.jsx:217`
+- `src/components/consciousness/ConsciousnessTheater.jsx:237`
+- `src/theater/TheaterDirector.js:411`
+- `src/theater/TheaterDirector.js:820`
+
+## FENCEPOST_LISTENERS_READY
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:576`
+
+**Listeners**:
+- (none)
+
+## MORPH_PROGRESS
+
+**Emitters**:
+- `src/engine/modules/ClimaxController.js:249`
+- `src/engine/modules/MorphController.js:273`
+- `src/state/commands/StateCommands.js:44`
+- `src/theater/controllers/MorphAnimationController.js:332`
+
+**Listeners**:
+- `src/components/webgl/WebGLBackground.jsx:1668`
+
+## PARTICLES_EMERGED
+
+**Emitters**:
+- `src/components/webgl/WebGLBackground.jsx:310`
+
+**Listeners**:
+- `src/components/ui/LCPHero.jsx:32`
+- `src/theater/controllers/OpeningSequenceController.js:596`
+
+## PARTICLES_START_EMERGING
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:557`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:180`
+
+## PARTICLE_PHASE
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:441`
+- `src/theater/controllers/OpeningSequenceController.js:467`
+- `src/theater/controllers/OpeningSequenceController.js:499`
+
+**Listeners**:
+- `src/components/webgl/WebGLBackground.jsx:1939`
+
+## PREWARM_COMPLETE
+
+**Emitters**:
+- `src/engine/ConsciousnessEngine.js:348`
+
+**Listeners**:
+- (none)
+
+## PREWARM_GENESIS_BLUEPRINT
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:615`
+
+**Listeners**:
+- (none)
+
+## QUALITY_CHANGE
+
+**Emitters**:
+- `src/state/atoms/qualityAtom.js:198`
+- `src/state/commands/StateCommands.js:195`
+
+**Listeners**:
+- (none)
+
+## RENDERER_TUNE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:630`
+
+**Listeners**:
+- (none)
+
+## SCREEN_FILL
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:364`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:143`
+
+## STAGE_CHANGE
+
+**Emitters**:
+- `src/state/commands/StateCommands.js:167`
+
+**Listeners**:
+- `src/state/atoms/qualityAtom.js:155`
+- `src/theater/TheaterDirector.js:128`
+- `src/theater/UnifiedNavigationAPI.js:196`
+
+## START_NARRATIVE
+
+**Emitters**:
+- `src/theater/TheaterDirector.js:271`
+
+**Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:194`
+
+## TERMINAL_TYPE
+
+**Emitters**:
+- `src/theater/controllers/OpeningSequenceController.js:350`
+
+**Listeners**:
+- `src/components/theater/OpeningSequence.jsx:102`
+
+
+
+---
+## 3) Source Evidence
+
 # Source Evidence Scan
 
 ## OPENING_PHASE
@@ -3067,4 +3760,5 @@
 34:   START_CLIMAX: 'START_CLIMAX',                  // Trigger climax sequence
 35: 
 ```
+
 

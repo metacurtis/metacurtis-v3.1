@@ -7,7 +7,6 @@ import {
   generateQRPositions,
   generateScatterPositions,
 } from '@/utils/portraitPositions.js';
-import { emitBlueprintReady } from '../utils/blueprintUtils.js';
 import qrCurtis from '@/assets/climax/qr-curtis.json';
 
 const QR_SCALE = 40;
@@ -246,7 +245,18 @@ class ClimaxController {
       morphPayload.stageIndex = stageIndex;
     }
 
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
+    this.#engine.emitMorphProgressFromSource(clamped, {
+      target: 1,
+      origin: 'climax-controller',
+      stage: stageLabel,
+      stageIndex,
+      extra: {
+        postMorphFreeze: morphPayload.postMorphFreeze,
+        source: morphPayload.source,
+        step: morphPayload.step,
+        stepIndex: morphPayload.stepIndex,
+      },
+    });
   }
 
   #runFrame() {
@@ -449,7 +459,7 @@ class ClimaxController {
       cacheKey: this.#engine._cacheKey('transcendence', this.#engine.currentQuality),
     };
 
-    emitBlueprintReady(BeatBus, EVENTS, blueprint, emitPayload);
+    this.#engine.emitBlueprintReady(blueprint, emitPayload);
     this.#log('climax_blueprint_emitted', { step: step.name, particleCount });
   }
 

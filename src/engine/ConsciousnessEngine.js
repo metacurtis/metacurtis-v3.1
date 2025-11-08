@@ -20,7 +20,7 @@ import {
   calculateBounds,
   createBlueprintStructure,
   assignTiersShuffled,
-  emitBlueprintReady,
+  createBlueprintReadyPayload,
   computeStarfieldMetrics,
   synthesizeBandPositions,
   generateViewportSpread as utilsGenerateViewportSpread,
@@ -36,6 +36,12 @@ function aabbOf(arr) {
 const clamp = (value, min, max) => {
   const bounded = value < min ? min : value > max ? max : value;
   return Number.isFinite(bounded) ? bounded : min;
+};
+
+const clamp01 = (value) => {
+  const numeric = Number.isFinite(value) ? value : Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(1, numeric));
 };
 
 const FONT_RESOLVERS = {
@@ -178,6 +184,44 @@ class ConsciousnessEngine {
         console.warn('⚠️ Preload failed (non-critical):', err);
       }
     }, 150);
+  }
+
+  emitMorphProgressFromSource(value, meta = {}) {
+    const clamped = clamp01(value);
+    const target = clamp01(meta.target ?? clamped);
+    const stageLabel = meta.stage || this.currentStage || 'genesis';
+    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
+    let stageIndex = Number.isFinite(meta.stageIndex) ? meta.stageIndex : -1;
+    if ((!Number.isFinite(stageIndex) || stageIndex < 0) && stageOrder) {
+      stageIndex = stageOrder.indexOf(stageLabel);
+    }
+
+    const payload = {
+      morphProgress: clamped,
+      value: clamped,
+      morphTarget: target,
+      target,
+      stage: stageLabel,
+      schemaVersion: '3.5',
+      origin: meta.origin || 'engine',
+    };
+
+    if (Number.isFinite(stageIndex) && stageIndex >= 0) {
+      payload.stageIndex = stageIndex;
+    }
+    if (meta.extra && typeof meta.extra === 'object') {
+      Object.assign(payload, meta.extra);
+    }
+
+    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+    return payload;
+  }
+
+  emitBlueprintReady(blueprint, metadata = {}) {
+    if (!blueprint) return null;
+    const payload = createBlueprintReadyPayload(blueprint, metadata);
+    BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
+    return payload;
   }
 
   init() {
@@ -811,7 +855,7 @@ class ConsciousnessEngine {
               positionsLength: blueprint.positions?.length,
               metadata: blueprint.metadata,
             });
-            emitBlueprintReady(BeatBus, EVENTS, blueprint, {
+            this.emitBlueprintReady(blueprint, {
               stage,
               quality,
               mode: 'post-emergence-guarded',
@@ -839,7 +883,7 @@ class ConsciousnessEngine {
           positionsLength: blueprint.positions?.length,
           metadata: blueprint.metadata,
         });
-        emitBlueprintReady(BeatBus, EVENTS, blueprint, {
+        this.emitBlueprintReady(blueprint, {
           stage,
           quality,
           cached: true,
@@ -863,7 +907,7 @@ class ConsciousnessEngine {
         positionsLength: blueprint.positions?.length,
         metadata: blueprint.metadata,
       });
-      emitBlueprintReady(BeatBus, EVENTS, blueprint, {
+      this.emitBlueprintReady(blueprint, {
         stage,
         quality,
         cached: false,

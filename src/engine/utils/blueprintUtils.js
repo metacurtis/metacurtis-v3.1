@@ -153,18 +153,14 @@ export function assignTiersShuffled(count, ratios, rand = Math.random) {
 }
 
 /**
- * Emit the canonical BLUEPRINT_READY payload through BeatBus.
+ * Build the canonical BLUEPRINT_READY payload.
  *
- * @param {object} BeatBus - BeatBus singleton.
- * @param {object} EVENTS - Theater event constants.
  * @param {object} blueprint - Blueprint object to emit.
  * @param {object} [metadata={}] - Additional payload fields (stage, quality, etc).
- * @returns {object} - Payload emitted for convenience/testing.
+ * @returns {object} - Payload
  */
-export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
-  const payload = { blueprint, ...metadata };
-  BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
-  return payload;
+export function createBlueprintReadyPayload(blueprint, metadata = {}) {
+  return { blueprint, ...metadata };
 }
 
 const DEG2RAD = Math.PI / 180;

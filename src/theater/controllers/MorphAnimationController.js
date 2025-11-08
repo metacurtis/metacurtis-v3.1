@@ -9,8 +9,7 @@
  * Extracted from TheaterDirector._animateMorphPhase and ScrollOrchestrator._update
  */
 
-import BeatBus from '@/theater/bus';
-import { EVENTS } from '@/theater/events.js';
+import requestMorphProgressEmit from '@/engine/morphProgressChannel.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 
@@ -329,19 +328,27 @@ export class MorphAnimationController {
       source: source || 'animator',
     };
 
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+    requestMorphProgressEmit(clampedValue, {
+      target: clampedTarget,
+      stage,
+      origin: source || 'morph-animator',
+      extra: {
+        phase,
+        durationMs: payload.durationMs,
+      },
+    });
   }
 
   /**
    * Emit a snapshot without animation
    * Used for immediate morph updates (skip, fast-forward)
    */
-  emitSnapshot(value, phase, target = value, durationMs = 0, stage = 'genesis') {
+  emitSnapshot(value, phase, target = value, duration = 0, stage = 'genesis') {
     this._emitProgress(value, {
       target,
       stage,
       phase,
-      durationMs,
+      duration,
       source: 'snapshot',
     });
   }

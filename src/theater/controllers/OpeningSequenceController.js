@@ -401,38 +401,55 @@ export class OpeningSequenceController {
         }
 
         if (!this.director._preChaosReady) {
-          const readinessResult = await Promise.race([
-            this.director
-              ._waitForEvent(EVENTS.PARTICLES_EMERGED, {
-                timeout: 1200,
-                predicate: (payload = {}) => {
-                  const stageName = payload?.stage || payload?.stageName;
-                  return !payload || stageName === 'genesis';
-                },
-              })
-              .then((payload) => ({ type: 'particles', payload })),
-            this.director
-              ._waitForEvent(EVENTS.BLUEPRINT_READY, {
-                timeout: 1200,
-                predicate: (payload = {}) => {
-                  const blueprint = payload?.blueprint ?? payload;
-                  const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
-                  const mode = payload?.mode || blueprint?.mode;
-                  return stageName === 'genesis' && mode !== 'emergence';
-                },
-              })
-              .then((payload) => ({ type: 'blueprint', payload })),
-          ]);
-
-          if (!readinessResult) {
-            console.warn('⚠️ Director: Pre-chaos renderer readiness timed out');
+          console.log('🎬 Opening: Waiting for genesis BLUEPRINT_READY (full)');
+          const blueprintPayload = await this.director._waitForEvent(EVENTS.BLUEPRINT_READY, {
+            timeout: 5000,
+            predicate: (payload = {}) => {
+              const blueprint = payload?.blueprint ?? payload;
+              const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
+              const mode = payload?.mode || blueprint?.mode;
+              const variantMode =
+                payload?.variantMode ||
+                blueprint?.variantMode ||
+                blueprint?.metadata?.variantMode;
+              return (
+                stageName === 'genesis' &&
+                (mode !== 'emergence' || variantMode === 'opening_chaos')
+              );
+            },
+          });
+          if (blueprintPayload) {
+            console.log('✅ Blueprint ready (genesis full bind)', {
+              timestamp: Date.now(),
+            });
           } else {
-            console.log('✅ Blueprint bound and particles ready', {
-              via: readinessResult.type,
+            console.warn('⚠️ Director: BLUEPRINT_READY (genesis) timed out');
+          }
+
+          console.log('🎬 Opening: Waiting for PARTICLES_EMERGED (renderer bound)');
+          const particlesPayload = await this.director._waitForEvent(EVENTS.PARTICLES_EMERGED, {
+            timeout: 1500,
+            predicate: (payload = {}) => {
+              const stageName = payload?.stage || payload?.stageName;
+              const source = payload?.source || '';
+              const channel = payload?.channel || '';
+              return (
+                stageName === 'genesis' &&
+                source !== 'renderer-watchdog' &&
+                (channel === 'renderer' || !channel)
+              );
+            },
+          });
+
+          if (!particlesPayload) {
+            console.warn('⚠️ Director: PARTICLES_EMERGED timed out before chaos');
+          } else {
+            console.log('✅ Renderer fencepost received', {
               timestamp: Date.now(),
             });
           }
-          this.director._preChaosReady = true;
+
+          this.director._preChaosReady = Boolean(particlesPayload);
         }
 
         const chaosDuration = Math.max(0, Number(chaosConfig.durationMs) || 0);

@@ -1,4 +1,5 @@
 import { DEFAULT_SCHEMA_VERSION, validateEventPayload } from './schemas.js';
+import { EVENTS } from '@/theater/events.js';
 
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
@@ -537,6 +538,27 @@ class BeatBus {
 }
 
 const beatBus = new BeatBus();
+const DEV_SINGLE_WRITER = typeof import.meta !== 'undefined' && !!import.meta.env?.DEV;
+
+const morphEmitterGuardMiddleware = (eventName, payload = {}) => {
+  if (eventName !== EVENTS.MORPH_PROGRESS) return payload;
+  const origin = payload?.origin || payload?.source || 'unknown';
+  if (!morphEmitterGuardMiddleware.owner) {
+    morphEmitterGuardMiddleware.owner = origin;
+    return payload;
+  }
+  if (origin !== morphEmitterGuardMiddleware.owner) {
+    if (DEV_SINGLE_WRITER) {
+      console.warn('[Guard] Multiple MORPH_PROGRESS emitters detected', {
+        first: morphEmitterGuardMiddleware.owner,
+        attempted: origin,
+      });
+    }
+    return false;
+  }
+  return payload;
+};
+morphEmitterGuardMiddleware.owner = null;
 
 const schemaMiddleware = (eventName, payload) => {
   const result = validateEventPayload(eventName, payload);
@@ -549,6 +571,7 @@ const schemaMiddleware = (eventName, payload) => {
   return payload;
 };
 
+beatBus.use(morphEmitterGuardMiddleware);
 beatBus.use(schemaMiddleware);
 
 // Singleton guard: prevent accidental re-instantiation (DEV fails fast)

@@ -25,6 +25,7 @@ import { particleRaycaster } from '@/utils/particleRaycast.js';
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 import { exposeDiagnostics, exposeControlSurface, revokeControlSurface } from '@/utils/runtimeGuards.js';
+import requestMorphProgressEmit from '@/engine/morphProgressChannel.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const MORPH_TYPE_ENUM = Object.freeze({
@@ -46,6 +47,27 @@ const morphTypeToInt = (value) => {
   return MORPH_TYPE_ENUM.steady;
 };
 const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
+const SINGLE_WRITER_UNIFORMS = new Set([
+  'uMotionMode',
+  'uFlowTurbulence',
+  'uOpacityMin',
+  'uOpacityMax',
+  'uParticleFlash',
+]);
+const BEAT_VISUAL_UNIFORMS = new Set(['uParticleFlash', 'uOpacityMin', 'uOpacityMax', 'uFlowTurbulence']);
+
+const isRendererOrigin = (origin = '') =>
+  typeof origin === 'string' && (origin === 'renderer' || origin.startsWith('renderer'));
+
+const guardUniformWrite = (origin, uniformName) => {
+  if (!DEV) return true;
+  const allowBeatVisual = origin === 'beat_visual' && BEAT_VISUAL_UNIFORMS.has(uniformName);
+  if (isRendererOrigin(origin) || allowBeatVisual) return true;
+  console.warn(
+    `[Guard] Blocked ${origin || 'unknown'} writing ${uniformName} (single-writer: renderer)`
+  );
+  return false;
+};
 
 function pickStageColors(stageName) {
   const s = Canonical?.stages?.[stageName] || {};
@@ -304,8 +326,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     });
   }, []);
 
-  const emitFencepostNow = useCallback((payload) => {
-    if (!payload) return;
+  const emitFencepostNow = useCallback((rawPayload) => {
+    if (!rawPayload) return;
+    const payload = { channel: 'renderer', ...rawPayload };
     trace('WBG:FENCEPOST', payload);
     BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
     if (import.meta?.env?.DEV) {
@@ -360,21 +383,27 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       if (pendingFenceTimeoutRef.current) {
         clearTimeout(pendingFenceTimeoutRef.current);
+        pendingFenceTimeoutRef.current = null;
       }
 
-      pendingFenceTimeoutRef.current = setTimeout(() => {
-        if (!fenceReadyRef.current) {
-          const pending = pendingFenceDataRef.current;
-          trace('FENCEPOST_LISTENERS_READY', {
-            ...(pending || {}),
-            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
-            source: pending?.source ?? 'renderer-fallback',
-            fallback: true,
-          });
-          fenceReadyRef.current = true;
-          flushPendingFencepost();
-        }
-      }, 120);
+      if (import.meta?.env?.DEV) {
+        pendingFenceTimeoutRef.current = setTimeout(() => {
+          if (!fenceReadyRef.current) {
+            trace('FENCEPOST_LISTENERS_READY', {
+              ...(pendingFenceDataRef.current || {}),
+              at:
+                typeof performance !== 'undefined' && performance.now
+                  ? performance.now()
+                  : Date.now(),
+              source: 'renderer-watchdog',
+              fallback: true,
+            });
+            console.warn(
+              '[WebGLBackground] Fencepost still pending after 120ms (diagnostic only)'
+            );
+          }
+        }, 120);
+      }
     },
     [clearPendingFencepost, emitFencepostNow, flushPendingFencepost]
   );
@@ -408,8 +437,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (mat) {
         mat.uniformsNeedUpdate = true;
       }
-
-      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 1, source });
 
       const now =
         typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -774,6 +801,31 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniformsNeedUpdate = true;
   };
 
+  const applyRenderDirective = useCallback((payload = {}) => {
+    const uniforms = materialRef.current?.uniforms;
+    if (!uniforms) return;
+    const origin = payload.source || payload.origin || 'unknown';
+    particleEffectStateRef.current = {
+      ...particleEffectStateRef.current,
+      lastDirective: {
+        payload,
+        origin,
+        at:
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now(),
+      },
+    };
+    SINGLE_WRITER_UNIFORMS.forEach((uniformName) => {
+      if (!(uniformName in payload)) return;
+      if (!guardUniformWrite(origin, uniformName)) return;
+      const uniform = uniforms[uniformName];
+      if (!uniform) return;
+      uniform.value = payload[uniformName];
+      uniform.needsUpdate = true;
+    });
+  }, []);
+
   // Passive fallbacks (OK to keep)
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
@@ -783,6 +835,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     });
     return () => off && off();
   }, []);
+
+  useEffect(() => {
+    if (typeof BeatBus?.on !== 'function') return () => {};
+    const off = BeatBus.on(EVENTS.RENDER_DIRECTIVE, applyRenderDirective);
+    return () => off?.();
+  }, [applyRenderDirective]);
 
   // atlas init
   useEffect(() => {
@@ -1330,7 +1388,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           };
           console.debug('[WBG] AABB bind', { pos: extent('position') }, { atm: extent('atmosphericPosition') }, { tgt: extent('text3DPosition') });
         }
-        BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 0 });
         if (shouldFastForward) {
           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
           if (finalizeEmergence(source)) {
