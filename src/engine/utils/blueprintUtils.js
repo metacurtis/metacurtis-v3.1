@@ -159,7 +159,31 @@ export function assignTiersShuffled(count, ratios, rand = Math.random) {
  * @returns {object} - Payload emitted for convenience/testing.
  */
 export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
-  const payload = { blueprint, ...metadata };
+  const isOpening =
+    metadata.opening === true ||
+    metadata.mode === 'opening_chaos' ||
+    metadata.variantMode === 'opening_chaos' ||
+    metadata.source === 'director:opening';
+
+  const stage =
+    metadata.stage ||
+    blueprint?.stageName ||
+    blueprint?.stage ||
+    'genesis';
+
+  const quality = metadata.quality ?? blueprint?.quality ?? null;
+  const channel = metadata.channel || 'renderer';
+  const mode = isOpening ? 'opening_chaos' : (metadata.mode || blueprint?.mode || 'emergence');
+
+  const payload = {
+    blueprint,
+    stage,
+    quality,
+    mode,
+    opening: !!isOpening,
+    channel,
+    ...metadata,
+  };
   BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
   return payload;
 }
