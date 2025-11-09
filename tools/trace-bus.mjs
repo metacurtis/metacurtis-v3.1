@@ -4,27 +4,51 @@ import { walk } from './lib/walk.mjs';
 const outDir = 'reports';
 await fs.promises.mkdir(outDir, { recursive: true });
 
-const emitRE = /BeatBus\.emit\s*\(\s*(?:EVENTS\.)?['"]?([A-Z0-9_]+)['"]?\s*,?/g;
-const onRE   = /BeatBus\.on\s*\(\s*(?:EVENTS\.)?['"]?([A-Z0-9_]+)['"]?\s*,/g;
+const emitRE =
+  /BeatBus(?:\?\.)?\.?emit(?:\?\.)?\(\s*(?:EVENTS\.)?['"]?([A-Z0-9:_-]+)['"]?\s*,?/g;
+const onRE =
+  /BeatBus(?:\?\.)?\.?on(?:ce)?(?:\?\.)?\(\s*(?:EVENTS\.)?['"]?([A-Z0-9:_-]+)['"]?\s*,/g;
 
 const emitters = {}, listeners = {};
 const record = (map, ev, file, line) => {
   (map[ev] ||= []).push({ file, line });
 };
 
-for await (const file of walk('src')) {
-  const txt = await fs.promises.readFile(file,'utf8');
-  const lines = txt.split('\n');
-  let m;
-  while ((m = emitRE.exec(txt))) {
-    const idx = m.index;
-    const line = txt.slice(0, idx).split('\n').length;
-    record(emitters, m[1], file, line);
+const roots = ['src', 'canon-console'];
+
+for (const root of roots) {
+  try {
+    await fs.promises.access(root);
+  } catch {
+    continue;
   }
-  while ((m = onRE.exec(txt))) {
-    const idx = m.index;
-    const line = txt.slice(0, idx).split('\n').length;
-    record(listeners, m[1], file, line);
+  for await (const file of walk(root)) {
+    const txt = await fs.promises.readFile(file,'utf8');
+    const lines = txt.split('\n');
+    let m;
+    while ((m = emitRE.exec(txt))) {
+      const idx = m.index;
+      const line = txt.slice(0, idx).split('\n').length;
+      record(emitters, m[1], file, line);
+    }
+    while ((m = onRE.exec(txt))) {
+      const idx = m.index;
+      const line = txt.slice(0, idx).split('\n').length;
+      record(listeners, m[1], file, line);
+    }
+    const subscribeRE = /subscribe\(\s*['"]([A-Z0-9:_-]+)['"]/g;
+    while ((m = subscribeRE.exec(txt))) {
+      const idx = m.index;
+      const line = txt.slice(0, idx).split('\n').length;
+      record(listeners, m[1], file, line);
+    }
+    const onceRE =
+      /\.once(?:\?\.)?\(\s*(?:EVENTS\.)?['"]?([A-Z0-9:_-]+)['"]?\s*,/g;
+    while ((m = onceRE.exec(txt))) {
+      const idx = m.index;
+      const line = txt.slice(0, idx).split('\n').length;
+      record(listeners, m[1], file, line);
+    }
   }
 }
 

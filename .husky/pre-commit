@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 . "$(dirname "$0")/_/husky.sh"
 
-echo "🔍 Running constitutional validation..."
+if [ "$SKIP_OWNERSHIP_CHECK" = "1" ]; then
+  echo "[Pattern S] Ownership checks skipped (SKIP_OWNERSHIP_CHECK=1)"
+else
+  echo "[Pattern S] Running opening/topology gates..."
+  npm run gate:opening || exit 1
+  npm run gate:topology || exit 1
+fi
+
+echo "[CI] Running constitutional validation..."
 npm run validate-sst || exit 1
 npm run detect-drift || exit 1
 npm run test:contracts || exit 1
-echo "✅ Pre-commit validation passed"
+echo "[CI] Pre-commit validation passed"

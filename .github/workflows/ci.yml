@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: npm ci # Use 'ci' for clean, faster installs based on package-lock.json
 
+      - name: Pattern S - Opening Gate
+        run: npm run gate:opening
+
+      - name: Pattern S - Topology Gate
+        run: npm run gate:topology
+
       - name: Check Formatting (Prettier)
         run: npm run format:check # Run your Prettier check script
 

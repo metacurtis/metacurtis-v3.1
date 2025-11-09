@@ -1,0 +1,27 @@
+name: Pattern S Gates
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run opening gate (single-writer + ownership)
+        run: npm run gate:opening
+
+      - name: Run topology gate (event orphans)
+        run: npm run gate:topology

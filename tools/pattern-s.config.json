@@ -1,0 +1,6 @@
+{
+  "eventOrphanAllowlist": {
+    "emitterOnly": [],
+    "listenerOnly": []
+  }
+}
