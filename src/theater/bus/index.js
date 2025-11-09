@@ -3,8 +3,24 @@ import { DEFAULT_SCHEMA_VERSION, validateEventPayload } from './schemas.js';
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
 
-const BATCH_EVENTS = new Set(['MORPH_PROGRESS', 'SCROLL_PROGRESS']);
+const BATCH_EVENTS = new Set(['MORPH_PROGRESS', 'SCROLL_PROGRESS', 'RENDER_DIRECTIVE']);
 const SYNC_EVENTS = new Set(['PARTICLES_EMERGED', 'FENCEPOST_LISTENERS_READY', 'ENABLE_SCROLL']);
+const DEV_MODE = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? !!import.meta.env.DEV
+  : (typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : false);
+
+const cloneTracePayload = (payload) => {
+  if (payload === null || payload === undefined) return null;
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(payload); }
+    catch { /* fall through */ }
+  }
+  try {
+    return JSON.parse(JSON.stringify(payload));
+  } catch {
+    return payload;
+  }
+};
 
 class EventProfiler {
   constructor() {
@@ -177,6 +193,18 @@ class EventRecorder {
 }
 
 class BeatBus {
+  static setTraceSink(fn) {
+    BeatBus._traceSink = typeof fn === 'function' ? fn : null;
+  }
+
+  static getTraceSink() {
+    if (BeatBus._traceSink) return BeatBus._traceSink;
+    if (typeof globalThis !== 'undefined' && typeof globalThis.__SST_TRACE_WRITER__ === 'function') {
+      return globalThis.__SST_TRACE_WRITER__;
+    }
+    return null;
+  }
+
   constructor(){
     this.listeners = new Map();
     this.eventLog  = [];
@@ -190,6 +218,7 @@ class BeatBus {
     this.middleware = [];
     this._sequence = 0;
     this._recorder = new EventRecorder(this);
+    this._morphEmitter = null;
     
     // Lazy load contracts
     this._loadContracts();
@@ -335,6 +364,15 @@ class BeatBus {
   }
 
   emit(evt, payload = {}){
+    if (DEV_MODE && evt === 'MORPH_PROGRESS') {
+      const source = payload?.source || 'unknown';
+      if (!this._morphEmitter) {
+        this._morphEmitter = source;
+      } else if (this._morphEmitter !== source) {
+        console.warn('[Pattern S] Blocked MORPH_PROGRESS from', source, `(owner: ${this._morphEmitter})`);
+        return;
+      }
+    }
     const mode = this._mode();
     const { ok:canonOk, out:canonPayload, normalized } = this._canonicalize(evt, payload);
     const { ok:validOk, missing } = this._validate(evt, canonPayload);
@@ -390,7 +428,13 @@ class BeatBus {
   }
 
   _shouldBatch(evt, payload) {
+    if (SYNC_EVENTS.has(evt)) return false;
     if (!BATCH_EVENTS.has(evt)) return false;
+    if (evt === 'RENDER_DIRECTIVE') {
+      if (!payload) return false;
+      if (payload.enterQrMode || payload.exitQrMode) return false;
+      if (payload.kind) return false;
+    }
     return true;
   }
 
@@ -434,6 +478,7 @@ class BeatBus {
     }
 
     this._recorder.record(evt, payload);
+    this._mirrorTrace(evt, payload);
     this._log(evt, { payload, normalized });
     if (!listenerSet || listenerCount === 0) return;
 
@@ -441,6 +486,21 @@ class BeatBus {
       listenerSet.forEach((fn) => this._safeInvoke(fn, evt, payload));
     } else {
       listenerSet.forEach((fn) => this._scheduleAsyncInvoke(fn, evt, payload));
+    }
+  }
+
+  _mirrorTrace(evt, payload) {
+    const sink = BeatBus.getTraceSink();
+    if (typeof sink !== 'function') return;
+    const entry = {
+      ev: evt,
+      ts: this._now(),
+      payload: cloneTracePayload(payload),
+    };
+    try {
+      sink(entry);
+    } catch (error) {
+      console.warn('[BeatBus] trace sink error', error);
     }
   }
 
@@ -482,7 +542,7 @@ class BeatBus {
         const result = fn(evt, current);
         if (result === false) {
           console.warn(`[BeatBus] ${evt} blocked by middleware`, fn.name || 'anonymous');
-          return { blocked: true };
+          continue;
         }
         if (result !== undefined) {
           current = result;
@@ -536,6 +596,8 @@ class BeatBus {
   }
 }
 
+BeatBus._traceSink = null;
+
 const beatBus = new BeatBus();
 
 const schemaMiddleware = (eventName, payload) => {
@@ -586,3 +648,6 @@ if (typeof window !== 'undefined'){
 
 export default beatBus;
 export { BeatBus };
+export function setBeatBusTraceSink(writer) {
+  BeatBus.setTraceSink(writer);
+}

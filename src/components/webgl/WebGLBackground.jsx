@@ -46,6 +46,27 @@ const morphTypeToInt = (value) => {
   return MORPH_TYPE_ENUM.steady;
 };
 const DEV = (typeof import.meta !== 'undefined' && import.meta?.env?.MODE !== 'production');
+const RENDERER_SINGLE_WRITER_UNIFORMS = new Set([
+  'uMotionMode',
+  'uFlowTurbulence',
+  'uMorphProgress',
+  'uStageProgress',
+  'uPointSize',
+]);
+const VISUAL_ONLY_UNIFORMS = new Set(['uOpacityMin', 'uOpacityMax', 'uParticleFlash']);
+const guardUniformWrite = (origin = 'unknown', uniformName) => {
+  if (!DEV || !uniformName) return true;
+  if (VISUAL_ONLY_UNIFORMS.has(uniformName)) {
+    if (origin === 'renderer' || origin === 'beat_visual') return true;
+    console.warn(`[Pattern S] Blocked ${origin} writing ${uniformName} (visual-only: renderer/beat_visual)`);
+    return false;
+  }
+  if (RENDERER_SINGLE_WRITER_UNIFORMS.has(uniformName) && origin !== 'renderer') {
+    console.warn(`[Pattern S] Blocked ${origin} writing ${uniformName} (single-writer: renderer)`);
+    return false;
+  }
+  return true;
+};
 
 function pickStageColors(stageName) {
   const s = Canonical?.stages?.[stageName] || {};
@@ -1598,6 +1619,80 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
   }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, finalizeEmergence]);
+
+  // Bridge render directives back into shader uniforms/draw ranges
+  useEffect(() => {
+    if (typeof BeatBus?.on !== 'function') return;
+    const handleDirective = (payload = {}) => {
+      if (ignoreDirectivesRef.current) return;
+      const mat = materialRef.current;
+      const mesh = meshRef.current;
+      const geometry = geometryRef.current;
+      if (!mat || !geometry || !mat.uniforms) return;
+      const uniforms = mat.uniforms;
+      const origin = payload?.source || 'renderer';
+
+      const applyUniformArray = (uniformName, uniform, value) => {
+        if (!guardUniformWrite(origin, uniformName)) return;
+        if (!uniform) return;
+        if (Array.isArray(value)) {
+          if (Array.isArray(uniform.value)) {
+            for (let i = 0; i < Math.min(uniform.value.length, value.length); i += 1) {
+              uniform.value[i] = value[i];
+            }
+          } else if (uniform.value?.set) {
+            uniform.value.set(...value);
+          } else {
+            uniform.value = value;
+          }
+        } else {
+          uniform.value = value;
+        }
+        uniform.needsUpdate = true;
+      };
+
+      if (payload.pointSize !== undefined && uniforms.uPointSize) {
+        if (guardUniformWrite(origin, 'uPointSize')) {
+          uniforms.uPointSize.value = payload.pointSize;
+          uniforms.uPointSize.needsUpdate = true;
+          lastPointSizeRef.current = payload.pointSize;
+        }
+      }
+
+      if (payload.gaussianSigma !== undefined && uniforms.uGaussianSigma) {
+        uniforms.uGaussianSigma.value = payload.gaussianSigma;
+        uniforms.uGaussianSigma.needsUpdate = true;
+      }
+
+      if (Array.isArray(payload.tierHighlight) && uniforms.uTierHighlight) {
+        applyUniformArray('uTierHighlight', uniforms.uTierHighlight, payload.tierHighlight);
+      }
+
+      if (payload.uniforms && typeof payload.uniforms === 'object') {
+        Object.entries(payload.uniforms).forEach(([key, value]) => {
+          if (uniforms[key]) {
+            applyUniformArray(key, uniforms[key], value);
+          }
+        });
+      }
+
+      const drawCount =
+        Number.isFinite(payload.activeCount)
+          ? payload.activeCount
+          : Number.isFinite(payload.drawCount)
+            ? payload.drawCount
+            : null;
+      if (drawCount !== null && geometry.setDrawRange) {
+        geometry.setDrawRange(0, Math.max(0, Math.floor(drawCount)));
+      } else if (drawCount !== null && mesh?.geometry?.setDrawRange) {
+        mesh.geometry.setDrawRange(0, Math.max(0, Math.floor(drawCount)));
+      }
+
+      mat.uniformsNeedUpdate = true;
+    };
+    const off = BeatBus.on(EVENTS.RENDER_DIRECTIVE, handleDirective);
+    return () => off && off();
+  }, []);
 
   // MORPH_PROGRESS → lightweight timeline updates
   useEffect(() => {

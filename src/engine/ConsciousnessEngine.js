@@ -685,22 +685,22 @@ class ConsciousnessEngine {
       const stageLabel = this.currentStage || 'genesis';
       const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
       const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
-      const emitMorphProgress = (value, target = value) => {
-        const clampedValue = clamp(value, 0, 1);
-        const clampedTarget = clamp(target, 0, 1);
-        const morphPayload = {
-          morphProgress: clampedValue,
-          value: clampedValue,
-          morphTarget: clampedTarget,
-          target: clampedTarget,
-          stage: stageLabel,
-          schemaVersion: '3.5',
+        const emitMorphProgress = (value, target = value) => {
+          const clampedValue = clamp(value, 0, 1);
+          const clampedTarget = clamp(target, 0, 1);
+          const morphPayload = {
+            morphProgress: clampedValue,
+            value: clampedValue,
+            morphTarget: clampedTarget,
+            target: clampedTarget,
+            stage: stageLabel,
+            schemaVersion: '3.5',
+          };
+          if (stageIndex >= 0) {
+            morphPayload.stageIndex = stageIndex;
+          }
+          BeatBus.emit('ENGINE:MORPH_STATE', morphPayload);
         };
-        if (stageIndex >= 0) {
-          morphPayload.stageIndex = stageIndex;
-        }
-        BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
-      };
 
       const step = () => {
         if (!this._emergenceActive || this._rendererFencepostSeen) {
@@ -957,7 +957,7 @@ class ConsciousnessEngine {
       morphPayload.stageIndex = stageIndex;
     }
 
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, morphPayload);
+    BeatBus.emit('ENGINE:MORPH_STATE', morphPayload);
   }
 
   _runClimaxFrame() {

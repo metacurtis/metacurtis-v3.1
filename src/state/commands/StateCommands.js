@@ -1,50 +1,6 @@
 // src/state/commands/StateCommands.js
 // Canon-compliant state command layer with proper event contracts
 
-// >>> Throttled Morph Emitter v1 <<<
-let __lastMorph = -1;
-let __lastMorphEmit = 0;
-
-/** Local throttle config (ms) can be overridden by localStorage.canonMorphThrottleMs */
-function __getMorphThrottleMs() {
-  try {
-    return Math.max(0, parseInt(localStorage.getItem('canonMorphThrottleMs') || '80', 10));
-  } catch {
-    return 80;
-  }
-}
-
-function __emitMorphThrottled(BeatBus, EVENTS, v) {
-  try {
-    const EPS = 0.005; // 0.5% change
-    const now = performance.now();
-    const MIN = __getMorphThrottleMs(); // default 80ms
-    const numeric = Number.isFinite(v) ? v : Number(v);
-    if (!Number.isFinite(numeric)) return;
-    const clamped = Math.max(0, Math.min(1, numeric));
-    if (Math.abs(clamped - __lastMorph) < EPS) return; // no change
-    if (now - __lastMorphEmit < MIN) return; // too soon
-    __lastMorph = clamped;
-    __lastMorphEmit = now;
-    const stageState = stageAtom.getState?.() || {};
-    const currentStage = stageState.currentStage || 'genesis';
-    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
-    const stageIndex = stageState.stageIndex ?? (stageOrder.indexOf(currentStage));
-    const payload = {
-      morphProgress: clamped,
-      value: clamped,
-      morphTarget: clamped,
-      target: clamped,
-      stage: currentStage,
-      schemaVersion: '3.5',
-    };
-    if (Number.isFinite(stageIndex) && stageIndex >= 0) {
-      payload.stageIndex = stageIndex;
-    }
-    BeatBus.emit(EVENTS.MORPH_PROGRESS || 'MORPH_PROGRESS', payload);
-  } catch {}
-}
-
 // State Command Layer with proper cleanup and architectural contracts
 import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom } from '../atoms';
 import BeatBus from '@/theater/bus';
@@ -165,16 +121,17 @@ class StateCommands {
     });
     if (stageSub) this.subscriptions.push(stageSub);
 
-    // Morph progress from narrativeAtom
-    let lastMorph = narrativeAtom.getState?.()?.morphProgress ?? 0;
-    const morphSub = narrativeAtom.subscribe?.(s => {
-      const v = Number(s.morphProgress ?? 0);
-      if (v !== lastMorph) {
-        __emitMorphThrottled(BeatBus, EVENTS, v);
-        lastMorph = v;
-      }
+    // Listen to canonical morph progress emitter
+    const morphBusSub = BeatBus.on?.(EVENTS.MORPH_PROGRESS, (payload = {}) => {
+      const value = clamp01(payload.morphProgress ?? payload.value ?? 0);
+      this.morphState = {
+        value,
+        origin: payload.source || 'animator',
+        updatedAt: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+      };
+      narrativeAtom.setMorphProgress?.(value);
     });
-    if (morphSub) this.subscriptions.push(morphSub);
+    if (morphBusSub) this.subscriptions.push(morphBusSub);
 
     // Quality changes → BeatBus
     let lastQuality = qualityAtom.getState?.()?.currentQualityTier;
