@@ -105,6 +105,12 @@ class TheaterDirector {
     this.timeline = {};
     this.scrollOrchestrator = null;
     this.narrationController = null;
+    this._renderDirectiveContext = null;
+    this._ownsOpeningMorph = false;
+    this._pendingDirectorFencepost = null;
+    this._directorFencepostSent = false;
+    this._lastMorphValue = 0;
+    this._openingModeAnnounced = false;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -344,7 +350,105 @@ class TheaterDirector {
       schemaVersion: '3.5',
       source: source || 'director',
     };
-    BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+    BeatBus.emit('DIRECTOR:MORPH_STATE', payload);
+    this._lastMorphValue = clampedValue;
+    if (this._ownsOpeningMorph) {
+      this._emitRenderDirectiveFrame(clampedValue, {
+        stage: stageName,
+        phase,
+        durationMs,
+        target: clampedTarget,
+      });
+    }
+  }
+
+  _buildRenderDirectiveContext(particleCount = 0) {
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const count = Math.max(1, Math.floor(particleCount) || 1);
+    const pointSizeBase = Number.isFinite(VC?.POINT_SIZE_BASE)
+      ? VC.POINT_SIZE_BASE
+      : (Canonical?.features?.pointSizeDefault ?? 48);
+    const sigmaBase = Number.isFinite(VC?.SIGMA_BASE) ? VC.SIGMA_BASE : 2.5;
+    const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : sigmaBase * 1.6;
+    const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) && VC.POINT_SIZE_KICK > 0
+      ? VC.POINT_SIZE_KICK
+      : 1.4;
+    const tierPeak = Number.isFinite(VC?.T4_HI_PEAK) ? VC.T4_HI_PEAK : 1.7;
+    const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
+    const midValue = clamp(Number.isFinite(VC?.MID_MORPH) ? VC.MID_MORPH : 0.85, 0.05, 0.95);
+    return {
+      particleCount: count,
+      pointSizeBase,
+      sigmaBase,
+      sigmaPeak,
+      pointKick,
+      tierPeak,
+      tierSettle,
+      midValue,
+      clamp,
+      smooth,
+    };
+  }
+
+  _emitRenderDirectiveFrame(value, { stage, phase, target }) {
+    if (!this._ownsOpeningMorph) return;
+    const ctx = this._renderDirectiveContext;
+    if (!ctx) return;
+    const morph = clamp01(value);
+    const stageName = stage || this.currentStage || 'genesis';
+    const { pointSizeBase, pointKick, sigmaBase, sigmaPeak, tierPeak, tierSettle, particleCount, midValue, smooth, clamp } = ctx;
+
+    const mid = midValue || 0.5;
+    const implNorm = mid > 0 ? clamp(morph / mid, 0, 1) : 1;
+    const settleNorm = (1 - mid) > 0 ? clamp((morph - mid) / (1 - mid), 0, 1) : 1;
+    const easeImpl = smooth(implNorm);
+    const easeSettle = smooth(Math.max(0, settleNorm));
+    const inImplosion = morph < mid;
+
+    const drawCount = inImplosion
+      ? Math.max(1, Math.round(particleCount * Math.max(easeImpl, 0.05)))
+      : Math.max(1, Math.round(particleCount));
+    const pointSize = inImplosion
+      ? pointSizeBase * (1 + (pointKick - 1) * easeImpl)
+      : pointSizeBase * (pointKick - (pointKick - 1) * easeSettle);
+    const gaussianSigma = inImplosion
+      ? sigmaBase + (sigmaPeak - sigmaBase) * easeImpl
+      : sigmaPeak - (sigmaPeak - sigmaBase) * easeSettle;
+    const tierHi = inImplosion
+      ? tierPeak
+      : tierPeak - (tierPeak - tierSettle) * easeSettle;
+
+    const directive = {
+      source: 'director:morph',
+      phase,
+      stage: stageName,
+      morphProgress: morph,
+      drawCount,
+      activeCount: drawCount,
+      pointSize,
+      gaussianSigma,
+      tierHighlight: [1, 1, 1, tierHi],
+      timestamp: (typeof performance !== 'undefined' && performance.now)
+        ? performance.now()
+        : Date.now(),
+    };
+
+    if (morph >= 0.999) {
+      directive.uniforms = { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 };
+    }
+
+    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
+
+    if (morph >= 0.995) {
+      this._pendingDirectorFencepost = {
+        at: directive.timestamp,
+        stage: stageName,
+        morph,
+        phase,
+        source: 'director:morph',
+      };
+    }
   }
 
   _animateMorphPhase({ from, to, durationMs, stage, phase, skipSignal }) {
@@ -601,6 +705,7 @@ class TheaterDirector {
     this._openingInProgress = false;
     this._openingPrebound = false;
     this._preChaosReady = false;
+    this._openingModeAnnounced = false;
 
     try {
       window.__canonFencepostSeen = false;
@@ -713,6 +818,9 @@ class TheaterDirector {
       this._openingInProgress = false;
       this._detachSkipListener();
       this.isRunning = false;
+      this._ownsOpeningMorph = false;
+      this._renderDirectiveContext = null;
+      this._pendingDirectorFencepost = null;
       if (this.phase !== 'cancelled' && this.phase !== 'error') {
         this.hasRun = true;
         this.completed = true;
@@ -808,6 +916,11 @@ class TheaterDirector {
 
     const emergenceConfig = { ...DEFAULT_OPENING_EMERGENCE, ...(openingEmergence ?? {}) };
     const genesisCount = this._getGenesisParticleCount();
+    this._renderDirectiveContext = this._buildRenderDirectiveContext(genesisCount);
+    this._ownsOpeningMorph = true;
+    this._pendingDirectorFencepost = null;
+    this._directorFencepostSent = false;
+    this._lastMorphValue = 0;
     const skipLabel = skipKey ?? 'SPACE';
 
     this._attachSkipListener(skipKey);
@@ -906,6 +1019,15 @@ class TheaterDirector {
       if (!this._openingPrebound) {
         try {
           console.log('   Phase: Pre-chaos blueprint bind');
+          if (!this._openingModeAnnounced) {
+            BeatBus.emit(EVENTS.DIRECTOR_OPENING_MODE, {
+              mode: 'opening_chaos',
+              stage: 'genesis',
+              source: 'director:opening',
+              timestamp: Date.now(),
+            });
+            this._openingModeAnnounced = true;
+          }
           BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
             mode: 'opening_chaos',
             source: 'director:opening',
@@ -932,19 +1054,20 @@ class TheaterDirector {
       if (!this._preChaosReady) {
         const readinessResult = await Promise.race([
           this._waitForEvent(EVENTS.PARTICLES_EMERGED, {
-            timeout: 1200,
+            timeout: 2200,
             predicate: (payload = {}) => {
               const stageName = payload?.stage || payload?.stageName;
               return !payload || stageName === 'genesis';
             },
           }).then((payload) => ({ type: 'particles', payload })),
           this._waitForEvent(EVENTS.BLUEPRINT_READY, {
-            timeout: 1200,
+            timeout: 2200,
             predicate: (payload = {}) => {
               const blueprint = payload?.blueprint ?? payload;
               const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
               const mode = payload?.mode || blueprint?.mode;
-              return stageName === 'genesis' && mode !== 'emergence';
+              const isOpening = mode === 'opening_chaos' || payload?.opening === true || blueprint?.opening === true;
+              return stageName === 'genesis' && isOpening;
             },
           }).then((payload) => ({ type: 'blueprint', payload })),
         ]);
@@ -1046,6 +1169,11 @@ class TheaterDirector {
       currentMorphValue = settleTarget;
     }
 
+    if (this._ownsOpeningMorph) {
+      this._ownsOpeningMorph = false;
+      this._renderDirectiveContext = null;
+    }
+
     if (skipTriggered) {
       console.log(`   Opening skip engaged (${this._skipOrigin ?? 'user'}) → fast-forwarding to emergence.`);
       if (currentMorphValue < 1) {
@@ -1103,7 +1231,7 @@ class TheaterDirector {
           this._fencepostReadyEmitted = true;
         }
 
-        const fencepostFallbackMs = Math.min(1200, fencepostWaitMs);
+        const fencepostFallbackMs = Math.min(2200, fencepostWaitMs);
         const fencepostReceived = await new Promise((resolve) => {
           let resolved = false;
           let fenceTimeoutId = null;
@@ -1139,6 +1267,15 @@ class TheaterDirector {
             console.log('   Fallback: BLUEPRINT_READY (genesis full) before fencepost');
             finish({ type: 'blueprint', payload });
           });
+
+          if (this._pendingDirectorFencepost) {
+            const pendingPayload = this._pendingDirectorFencepost;
+            this._pendingDirectorFencepost = null;
+            queueMicrotask(() => {
+              BeatBus.emit(EVENTS.PARTICLES_EMERGED, pendingPayload);
+              this._directorFencepostSent = true;
+            });
+          }
 
           blueprintTimeoutId = this._trackTimer(() => {
             blueprintOff?.();

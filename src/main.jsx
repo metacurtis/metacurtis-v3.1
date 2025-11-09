@@ -14,6 +14,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './styles/index.css';
 import { showToast } from './utils/toast.js';
+import './dev/patternSMonitors.js';
 
 // Trace system for dev event monitoring
 if (typeof window !== 'undefined' && !window.__trace) {

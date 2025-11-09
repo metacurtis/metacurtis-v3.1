@@ -159,7 +159,11 @@ export function assignTiersShuffled(count, ratios, rand = Math.random) {
  * @returns {object} - Payload emitted for convenience/testing.
  */
 export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
-  const payload = { blueprint, ...metadata };
+  const payload = {
+    channel: 'renderer',
+    blueprint,
+    ...metadata,
+  };
   BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
   return payload;
 }

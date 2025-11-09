@@ -327,10 +327,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   const emitFencepostNow = useCallback((payload) => {
     if (!payload) return;
-    trace('WBG:FENCEPOST', payload);
-    BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+    const finalPayload = {
+      channel: payload.channel || 'renderer',
+      ...payload,
+    };
+    trace('WBG:FENCEPOST', finalPayload);
+    BeatBus.emit(EVENTS.PARTICLES_EMERGED, finalPayload);
     if (import.meta?.env?.DEV) {
-      console.log('✅ [RENDERER] PARTICLES_EMERGED emitted', payload);
+      console.log('✅ [RENDERER] PARTICLES_EMERGED emitted', finalPayload);
     }
 
     if (!pageInteractiveDispatchedRef.current) {
@@ -1631,7 +1635,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (!mat || !geometry || !mat.uniforms) return;
       const uniforms = mat.uniforms;
       const origin = payload?.source || 'renderer';
-
       const applyUniformArray = (uniformName, uniform, value) => {
         if (!guardUniformWrite(origin, uniformName)) return;
         if (!uniform) return;
@@ -1651,7 +1654,34 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         uniform.needsUpdate = true;
       };
 
-      if (payload.pointSize !== undefined && uniforms.uPointSize) {
+      const desiredMotionMode =
+        typeof payload.uMotionNote === 'number' ? payload.uMotionNote : payload.uMotionMode;
+      if (typeof desiredMotionMode === 'number' && uniforms.uMotionMode && guardUniformWrite(origin, 'uMotionMode')) {
+        uniforms.uMotionMode.value = desiredMotionMode;
+        uniforms.uMotionMode.needsUpdate = true;
+      }
+      if (typeof payload.uParticlePhase === 'number' && uniforms.uParticlePhase && guardUniformWrite(origin, 'uParticlePhase')) {
+        uniforms.uParticlePhase.value = payload.uParticlePhase;
+        uniforms.uParticlePhase.needsUpdate = true;
+      }
+      if (typeof payload.uFlowTurbulence === 'number' && uniforms.uFlowTurbulence && guardUniformWrite(origin, 'uFlowTurbulence')) {
+        uniforms.uFlowTurbulence.value = payload.uFlowTurbulence;
+        uniforms.uFlowTurbulence.needsUpdate = true;
+      }
+      if (typeof payload.uParticleFlash === 'number' && uniforms.uParticleFlash && guardUniformWrite(origin, 'uParticleFlash')) {
+        uniforms.uParticleFlash.value = payload.uParticleFlash;
+        uniforms.uParticleFlash.needsUpdate = true;
+      }
+      if (typeof payload.uOpacityMin === 'number' && uniforms.uOpacityMin && guardUniformWrite(origin, 'uOpacityMin')) {
+        uniforms.uOpacityMin.value = payload.uOpacityMin;
+        uniforms.uOpacityMin.needsUpdate = true;
+      }
+      if (typeof payload.uOpacityMax === 'number' && uniforms.uOpacityMax && guardUniformWrite(origin, 'uOpacityMax')) {
+        uniforms.uOpacityMax.value = payload.uOpacityMax;
+        uniforms.uOpacityMax.needsUpdate = true;
+      }
+
+      if (typeof payload.pointSize === 'number') {
         if (guardUniformWrite(origin, 'uPointSize')) {
           uniforms.uPointSize.value = payload.pointSize;
           uniforms.uPointSize.needsUpdate = true;
@@ -1659,7 +1689,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         }
       }
 
-      if (payload.gaussianSigma !== undefined && uniforms.uGaussianSigma) {
+      if (payload.gaussianSigma !== undefined && uniforms.uGaussianSigma && guardUniformWrite(origin, 'uGaussianSigma')) {
         uniforms.uGaussianSigma.value = payload.gaussianSigma;
         uniforms.uGaussianSigma.needsUpdate = true;
       }
@@ -1676,16 +1706,26 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         });
       }
 
-      const drawCount =
+      const desiredActiveCount =
         Number.isFinite(payload.activeCount)
           ? payload.activeCount
           : Number.isFinite(payload.drawCount)
             ? payload.drawCount
             : null;
-      if (drawCount !== null && geometry.setDrawRange) {
-        geometry.setDrawRange(0, Math.max(0, Math.floor(drawCount)));
-      } else if (drawCount !== null && mesh?.geometry?.setDrawRange) {
-        mesh.geometry.setDrawRange(0, Math.max(0, Math.floor(drawCount)));
+      if (desiredActiveCount !== null) {
+        const attributeCount =
+          geometry?.attributes?.position?.count ??
+          mesh?.geometry?.attributes?.position?.count ??
+          desiredActiveCount;
+        const safeCount = Math.max(
+          0,
+          Math.min(Math.floor(desiredActiveCount), Math.floor(attributeCount))
+        );
+        if (geometry.setDrawRange) {
+          geometry.setDrawRange(0, safeCount);
+        } else if (mesh?.geometry?.setDrawRange) {
+          mesh.geometry.setDrawRange(0, safeCount);
+        }
       }
 
       mat.uniformsNeedUpdate = true;

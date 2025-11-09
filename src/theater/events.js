@@ -7,6 +7,7 @@ export const EVENTS = {
   CURSOR_BLINK: 'CURSOR_BLINK',
   TERMINAL_TYPE: 'TERMINAL_TYPE',                // { lines[], typeSpeed, lineDelay }
   SCREEN_FILL: 'SCREEN_FILL',                    // { text, scrollSpeed }
+  DIRECTOR_OPENING_MODE: 'DIRECTOR_OPENING_MODE',// { mode, stage }
 
   // Renderer/Theater gates
   ENGINE_VIEWPORT_HINT: 'ENGINE_VIEWPORT_HINT',  // { width, height, aspect }

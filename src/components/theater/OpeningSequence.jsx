@@ -164,9 +164,11 @@ export default function OpeningSequence() {
       BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {
         console.log(`   OpeningSequence: Computer hum at volume ${volume}`);
         if (!humAudioRef.current) {
-          humAudioRef.current = new Audio('/audio/computer-hum.mp3');
-          humAudioRef.current.loop = true;
-          humAudioRef.current.volume = volume;
+          const audio = new Audio('/audio/computer-hum.mp3');
+          audio.preload = 'none';
+          audio.loop = true;
+          audio.volume = volume;
+          humAudioRef.current = audio;
         }
         
         if (audioUnlocked.current) {
@@ -217,6 +219,7 @@ export default function OpeningSequence() {
 
       if (humAudioRef.current) {
         humAudioRef.current.pause();
+        humAudioRef.current = null;
       }
     };
   }, []);

@@ -539,13 +539,13 @@ class BeatBus {
     for (const fn of this.middleware) {
       if (typeof fn !== 'function') continue;
       try {
-        const result = fn(evt, current);
-        if (result === false) {
+        const maybe = fn(evt, current);
+        if (maybe === false) {
           console.warn(`[BeatBus] ${evt} blocked by middleware`, fn.name || 'anonymous');
-          continue;
+          return { blocked: true };
         }
-        if (result !== undefined) {
-          current = result;
+        if (maybe !== undefined) {
+          current = maybe;
         }
       } catch (error) {
         console.error(`[BeatBus] middleware error @ ${evt}`, error);
