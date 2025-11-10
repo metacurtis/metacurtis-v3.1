@@ -552,17 +552,49 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             verb: segment.visual,
             effect: particleEffectPayload,
           });
-          BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, {
-            kind: 'particle-effect',
-            ...particleEffectPayload,
-            verb: segment.visual,
-            stage: stageName,
+          const directivePayload = {
             source: 'beat_visual',
+            channel: 'renderer',
+            phase: particleEffectPayload.phase || 'narration',
+            stage: stageName,
+            verb: segment.visual,
             timestamp:
               typeof performance !== 'undefined' && typeof performance.now === 'function'
                 ? performance.now()
                 : Date.now(),
-          });
+            kind: 'particle-effect',
+          };
+          if (particleEffectPayload.motionMode !== undefined) {
+            directivePayload.uMotionMode = particleEffectPayload.motionMode;
+          }
+          if (particleEffectPayload.particlePhase !== undefined) {
+            directivePayload.uParticlePhase = particleEffectPayload.particlePhase;
+          }
+          if (particleEffectPayload.uFlowTurbulence !== undefined || particleEffectPayload.turbulence !== undefined) {
+            directivePayload.uFlowTurbulence =
+              particleEffectPayload.uFlowTurbulence ?? particleEffectPayload.turbulence;
+          }
+          if (particleEffectPayload.uParticleFlash !== undefined || particleEffectPayload.flash !== undefined) {
+            directivePayload.uParticleFlash =
+              particleEffectPayload.uParticleFlash ?? particleEffectPayload.flash;
+          }
+          if (Array.isArray(particleEffectPayload.opacity)) {
+            directivePayload.uOpacityMin = particleEffectPayload.opacity[0];
+            directivePayload.uOpacityMax = particleEffectPayload.opacity[1];
+          }
+          if (particleEffectPayload.uOpacityMin !== undefined || particleEffectPayload.uOpacityMax !== undefined) {
+            directivePayload.uOpacityMin =
+              directivePayload.uOpacityMin ?? particleEffectPayload.uOpacityMin;
+            directivePayload.uOpacityMax =
+              directivePayload.uOpacityMax ?? particleEffectPayload.uOpacityMax;
+          }
+          if (particleEffectPayload.pointSize !== undefined) {
+            directivePayload.pointSize = particleEffectPayload.pointSize;
+          }
+          if (particleEffectPayload.activeCount !== undefined) {
+            directivePayload.activeCount = particleEffectPayload.activeCount;
+          }
+          BeatBus.emit?.(EVENTS.RENDER_DIRECTIVE, directivePayload);
         }
 
         const isLastBeat =

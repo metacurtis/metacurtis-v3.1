@@ -17,19 +17,12 @@ uColorAccent2 = src/components/webgl/WebGLBackground.jsx
 uColorCurrent = src/components/webgl/WebGLBackground.jsx
 uColorNext = src/components/webgl/WebGLBackground.jsx
 uDevicePixelRatio = src/components/webgl/WebGLBackground.jsx
-uFlowTurbulence = src/components/webgl/WebGLBackground.jsx
-uGaussianSigma = src/components/webgl/WebGLBackground.jsx
 uMorph = src/components/webgl/WebGLBackground.jsx
 uMorphProgress = src/components/webgl/WebGLBackground.jsx
-uMotionMode = src/components/webgl/WebGLBackground.jsx
-uOpacityMax = src/components/webgl/WebGLBackground.jsx
-uOpacityMin = src/components/webgl/WebGLBackground.jsx
 uPalette0 = src/components/webgl/WebGLBackground.jsx
 uPalette1 = src/components/webgl/WebGLBackground.jsx
 uPalette2 = src/components/webgl/WebGLBackground.jsx
 uPalette3 = src/components/webgl/WebGLBackground.jsx
-uParticleFlash = src/components/webgl/WebGLBackground.jsx
-uParticlePhase = src/components/webgl/WebGLBackground.jsx
 uPointSize = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/runtime/materialFactory.js
 uPostMorphFreeze = src/components/webgl/WebGLBackground.jsx
 uScrollProgress = src/components/webgl/WebGLBackground.jsx
@@ -82,12 +75,13 @@ DIRECTOR:MORPH_STATE.emitter = src/theater/TheaterDirector.js
 ENABLE_SCROLL.emitter = src/theater/TheaterDirector.js
 ENGINE_VIEWPORT_HINT.emitter = ⚠️ multiple: src/components/consciousness/ConsciousnessTheater.jsx, src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
 ENGINE:MORPH_STATE.emitter = src/engine/ConsciousnessEngine.js
-FENCEPOST_LISTENERS_READY.emitter = src/theater/TheaterDirector.js
+FENCEPOST_LISTENERS_READY.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
 FENCEPOST_REPORT.emitter = canon-console/runtime/playbooks-extra.js
-MORPH_PROGRESS.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/ScrollOrchestrator.js
+MORPH_PROGRESS.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/controllers/MorphAnimationController.js
 NARRATION_CLEANUP.emitter = src/components/narrative/NarrationController.jsx
 NARRATION_STOPPED.emitter = src/components/narrative/NarrationController.jsx
 NARRATIVE_LINE.emitter = src/components/narrative/NarrationController.jsx
+OPENING_COMPLETE.emitter = src/theater/TheaterDirector.js
 PARTICLE_CLICK_HIT.emitter = src/components/webgl/WebGLBackground.jsx
 PARTICLE_CLICK_REQUEST.emitter = src/components/webgl/WebGLCanvas.jsx
 PARTICLE_PHASE.emitter = src/theater/TheaterDirector.js
@@ -96,7 +90,7 @@ PARTICLES_START_EMERGING.emitter = src/theater/TheaterDirector.js
 PREWARM_COMPLETE.emitter = src/engine/ConsciousnessEngine.js
 PREWARM_GENESIS_BLUEPRINT.emitter = src/theater/TheaterDirector.js
 QUALITY_CHANGE.emitter = ⚠️ multiple: src/state/atoms/qualityAtom.js, src/state/commands/StateCommands.js
-RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/TheaterDirector.js
+RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/ScrollOrchestrator.js, src/theater/TheaterDirector.js
 RENDERER_TUNE.emitter = src/theater/TheaterDirector.js
 SCREEN_FILL.emitter = src/theater/TheaterDirector.js
 SCROLL_PROGRESS.emitter = src/theater/ScrollOrchestrator.js
@@ -122,4 +116,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-11-09 via `tools/generate-ownership.mjs`
+Last updated: 2025-11-10 via `tools/generate-ownership.mjs`

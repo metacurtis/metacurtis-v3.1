@@ -243,6 +243,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return positions;
   }
   const renderGuardRef = useRef(false);
+  const runWithRenderGuard = (fn) => {
+    if (typeof fn !== 'function') return undefined;
+    renderGuardRef.current = true;
+    try {
+      return fn();
+    } finally {
+      renderGuardRef.current = false;
+    }
+  };
   const viewportHintRef = useRef(null);
   const lastBindMetaRef = useRef({ kind: null });
 
@@ -259,6 +268,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
   const ignoreDirectivesRef = useRef(false);
+  const listenersReadyRef = useRef(false);
   const fenceReadyRef = useRef(false);
   const pendingFencepostRef = useRef(false);
   const pendingFenceDataRef = useRef(null);
@@ -363,6 +373,19 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
   }, []);
 
+  const emitRendererFencepostReady = useCallback((reason = 'sink-ready') => {
+    if (typeof BeatBus?.emit !== 'function') return;
+    BeatBus.emit(EVENTS.FENCEPOST_LISTENERS_READY, {
+      channel: 'renderer',
+      source: 'webgl-renderer',
+      reason,
+      timestamp:
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now(),
+    });
+  }, []);
+
   const flushPendingFencepost = useCallback(() => {
     if (pendingFencepostRef.current && pendingFenceDataRef.current) {
       emitFencepostNow(pendingFenceDataRef.current);
@@ -434,7 +457,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         mat.uniformsNeedUpdate = true;
       }
 
-      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 1, source });
+      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+        progress: 1,
+        source,
+        channel: 'renderer',
+        value: 1, // legacy
+      });
 
       const now =
         typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -1238,7 +1266,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const idx = new Float32Array(drawCount > 0 ? drawCount : 0);
       for (let i = 0; i < idx.length; i++) idx[i] = i;
       geo.setAttribute('particleIndex', new THREE.BufferAttribute(idx, 1));
-      geo.setDrawRange(0, drawCount);
+      runWithRenderGuard(() => geo.setDrawRange(0, drawCount));
       geometryRef.current = geo;
       geometryBoundOnceRef.current = true;
       fitsLockedRef.current = false;
@@ -1261,6 +1289,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           cached: !!cached,
         });
         scheduleRuntimeSampling();
+        if (isEmergence || isOpeningChaos) {
+          fenceReadyRef.current = true;
+          flushPendingFencepost();
+          emitRendererFencepostReady(isEmergence ? 'emergence-bind' : 'opening-bind');
+        }
         if (mat?.uniforms?.uMorphProgress) {
           if (isQrBlueprint) {
             mat.uniforms.uMorphProgress.value = 1;
@@ -1355,7 +1388,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           };
           console.debug('[WBG] AABB bind', { pos: extent('position') }, { atm: extent('atmosphericPosition') }, { tgt: extent('text3DPosition') });
         }
-        BeatBus.emit?.(EVENTS.MORPH_PROGRESS, { value: 0 });
+        BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+          progress: 0,
+          source: 'renderer',
+          channel: 'renderer',
+          value: 0,
+        });
         if (shouldFastForward) {
           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
           if (finalizeEmergence(source)) {
@@ -1622,7 +1660,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     };
     const off = BeatBus?.on?.(EVENTS.BLUEPRINT_READY, handleBlueprint);
     return () => off && off();
-  }, [updateBandHeight, logBind, scheduleRuntimeSampling, clearPendingFencepost, queueFencepost, finalizeEmergence]);
+  }, [
+    updateBandHeight,
+    logBind,
+    scheduleRuntimeSampling,
+    clearPendingFencepost,
+    queueFencepost,
+    finalizeEmergence,
+    flushPendingFencepost,
+    emitRendererFencepostReady,
+  ]);
 
   // Bridge render directives back into shader uniforms/draw ranges
   useEffect(() => {
@@ -1634,7 +1681,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const geometry = geometryRef.current;
       if (!mat || !geometry || !mat.uniforms) return;
       const uniforms = mat.uniforms;
-      const origin = payload?.source || 'renderer';
+      const directiveSource = payload?.source || 'renderer:directive';
+      const origin = 'renderer';
+
+      const setUniformNumber = (uniformName, value) => {
+        if (typeof value !== 'number') return;
+        const uniform = uniforms[uniformName];
+        if (!uniform) return;
+        if (!guardUniformWrite(origin, uniformName)) return;
+        uniform.value = value;
+        uniform.needsUpdate = true;
+      };
       const applyUniformArray = (uniformName, uniform, value) => {
         if (!guardUniformWrite(origin, uniformName)) return;
         if (!uniform) return;
@@ -1656,42 +1713,32 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       const desiredMotionMode =
         typeof payload.uMotionNote === 'number' ? payload.uMotionNote : payload.uMotionMode;
-      if (typeof desiredMotionMode === 'number' && uniforms.uMotionMode && guardUniformWrite(origin, 'uMotionMode')) {
-        uniforms.uMotionMode.value = desiredMotionMode;
-        uniforms.uMotionMode.needsUpdate = true;
-      }
-      if (typeof payload.uParticlePhase === 'number' && uniforms.uParticlePhase && guardUniformWrite(origin, 'uParticlePhase')) {
-        uniforms.uParticlePhase.value = payload.uParticlePhase;
-        uniforms.uParticlePhase.needsUpdate = true;
-      }
-      if (typeof payload.uFlowTurbulence === 'number' && uniforms.uFlowTurbulence && guardUniformWrite(origin, 'uFlowTurbulence')) {
-        uniforms.uFlowTurbulence.value = payload.uFlowTurbulence;
-        uniforms.uFlowTurbulence.needsUpdate = true;
-      }
-      if (typeof payload.uParticleFlash === 'number' && uniforms.uParticleFlash && guardUniformWrite(origin, 'uParticleFlash')) {
-        uniforms.uParticleFlash.value = payload.uParticleFlash;
-        uniforms.uParticleFlash.needsUpdate = true;
-      }
-      if (typeof payload.uOpacityMin === 'number' && uniforms.uOpacityMin && guardUniformWrite(origin, 'uOpacityMin')) {
-        uniforms.uOpacityMin.value = payload.uOpacityMin;
-        uniforms.uOpacityMin.needsUpdate = true;
-      }
-      if (typeof payload.uOpacityMax === 'number' && uniforms.uOpacityMax && guardUniformWrite(origin, 'uOpacityMax')) {
-        uniforms.uOpacityMax.value = payload.uOpacityMax;
-        uniforms.uOpacityMax.needsUpdate = true;
+      setUniformNumber('uMotionMode', desiredMotionMode);
+      setUniformNumber('uParticlePhase', payload.uParticlePhase);
+      setUniformNumber('uFlowTurbulence', payload.uFlowTurbulence);
+      setUniformNumber('uParticleFlash', payload.uParticleFlash);
+      setUniformNumber('uOpacityMin', payload.uOpacityMin);
+      setUniformNumber('uOpacityMax', payload.uOpacityMax);
+
+      if (typeof payload.uMorphProgress === 'number') {
+        setUniformNumber('uMorphProgress', payload.uMorphProgress);
+        if (typeof payload.uStageProgress === 'number') {
+          setUniformNumber('uStageProgress', payload.uStageProgress);
+        } else if (uniforms.uStageProgress && guardUniformWrite(origin, 'uStageProgress')) {
+          uniforms.uStageProgress.value = payload.uMorphProgress;
+          uniforms.uStageProgress.needsUpdate = true;
+        }
+      } else if (typeof payload.uStageProgress === 'number') {
+        setUniformNumber('uStageProgress', payload.uStageProgress);
       }
 
       if (typeof payload.pointSize === 'number') {
-        if (guardUniformWrite(origin, 'uPointSize')) {
-          uniforms.uPointSize.value = payload.pointSize;
-          uniforms.uPointSize.needsUpdate = true;
-          lastPointSizeRef.current = payload.pointSize;
-        }
+        setUniformNumber('uPointSize', payload.pointSize);
+        lastPointSizeRef.current = payload.pointSize;
       }
 
-      if (payload.gaussianSigma !== undefined && uniforms.uGaussianSigma && guardUniformWrite(origin, 'uGaussianSigma')) {
-        uniforms.uGaussianSigma.value = payload.gaussianSigma;
-        uniforms.uGaussianSigma.needsUpdate = true;
+      if (payload.gaussianSigma !== undefined) {
+        setUniformNumber('uGaussianSigma', payload.gaussianSigma);
       }
 
       if (Array.isArray(payload.tierHighlight) && uniforms.uTierHighlight) {
@@ -1722,16 +1769,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           Math.min(Math.floor(desiredActiveCount), Math.floor(attributeCount))
         );
         if (geometry.setDrawRange) {
-          geometry.setDrawRange(0, safeCount);
+          runWithRenderGuard(() => geometry.setDrawRange(0, safeCount));
         } else if (mesh?.geometry?.setDrawRange) {
-          mesh.geometry.setDrawRange(0, safeCount);
+          runWithRenderGuard(() => mesh.geometry.setDrawRange(0, safeCount));
         }
       }
 
       mat.uniformsNeedUpdate = true;
     };
     const off = BeatBus.on(EVENTS.RENDER_DIRECTIVE, handleDirective);
-    return () => off && off();
+    if (!listenersReadyRef.current) {
+      listenersReadyRef.current = true;
+      fenceReadyRef.current = true;
+      emitRendererFencepostReady('sink-mounted');
+    }
+    return () => {
+      off && off();
+      listenersReadyRef.current = false;
+    };
   }, []);
 
   // MORPH_PROGRESS → lightweight timeline updates
@@ -1744,7 +1799,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
 
     const handleMorphProgress = (payload = {}) => {
-      const raw = payload?.morphProgress ?? payload?.value ?? null;
+      const raw =
+        payload?.progress ??
+        payload?.morphProgress ??
+        payload?.value ??
+        null;
       const value = Number.isFinite(raw) ? clamp01(raw) : null;
       if (value == null) return;
 

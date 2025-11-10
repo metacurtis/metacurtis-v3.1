@@ -14,6 +14,8 @@ import {
 } from '@/utils/runtimeGuards.js';
 
 const DEBUG_SCROLL = true;
+const MORPH_DIRECTIVE_EPS = 0.005;
+const DEFAULT_MORPH_DIRECTIVE_INTERVAL_MS = 80;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 
@@ -187,20 +189,11 @@ export default class ScrollOrchestrator {
     if (shouldEmit) {
       this._lastEmitVal = this.morph;
       this._lastEmitTs = now;
-      
-      const currentStage = Canonical?.stageOrder?.[this.lastStageIndex] || 'unknown';
-      
-      const morphProgress = clamp01(this.morph);
-      const morphTarget = clamp01(this.morphTarget);
-      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
-        morphProgress,
-        value: morphProgress,
-        morphTarget,
-        target: morphTarget,
-        stage: currentStage,
-        stageIndex: this.lastStageIndex,
-        schemaVersion: '3.5',
-      });
+      const stageName =
+        Canonical?.stageOrder?.[this.lastStageIndex] ||
+        Object.keys(Canonical?.stages || {})[this.lastStageIndex] ||
+        'unknown';
+      __emitMorphDirective(this.morph, stageName);
     }
   }
 
@@ -393,4 +386,32 @@ export default class ScrollOrchestrator {
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
   }
+}
+
+let __lastMorphDirective = 1;
+let __lastMorphDirectiveStamp = 0;
+
+const __getMorphThrottleMs = () =>
+  Canonical?.scrollAndMorph?.morphResponse?.emitIntervalMs ??
+  DEFAULT_MORPH_DIRECTIVE_INTERVAL_MS;
+
+function __emitMorphDirective(value, stageName = 'genesis') {
+  const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+  const diff = Math.abs((value ?? 0) - (__lastMorphDirective ?? 0));
+  if (diff < MORPH_DIRECTIVE_EPS && now - __lastMorphDirectiveStamp < __getMorphThrottleMs()) {
+    return;
+  }
+  __lastMorphDirective = value ?? 0;
+  __lastMorphDirectiveStamp = now;
+
+  BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+    source: 'scroll_orchestrator',
+    channel: 'renderer',
+    phase: 'scroll',
+    stage: stageName,
+    uMorphProgress: clamp01(value ?? 0),
+    morphProgress: clamp01(value ?? 0),
+  });
 }

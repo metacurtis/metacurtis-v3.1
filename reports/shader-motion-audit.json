@@ -2,10 +2,18 @@
   "summary": {
     "morphUnsafeCount": 0,
     "gridNoSpacingCount": 0,
-    "gridGlobalMissing": false,
+    "gridGlobalMissing": true,
     "sstGridIntent": true
   },
   "glslFindings": [],
   "jsGridChecks": [],
-  "issues": []
+  "issues": [
+    {
+      "severity": "ERROR",
+      "type": "GRID_BEHAVIOR_NO_SPACING_ANYWHERE",
+      "file": "(global)",
+      "detail": "SST shows grid_* behavior but renderer never sets uGridSpacing",
+      "hint": "Update dispatcher to set uGridSpacing when grid behavior or mode=1 is selected"
+    }
+  ]
 }

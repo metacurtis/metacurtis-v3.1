@@ -1,7 +1,14 @@
 // src/modules/orchestration/core/BeatBus.js
 // Deprecated shim: re-export the canonical BeatBus from '@/theater/bus'.
 // This keeps legacy tooling alive while guaranteeing a single bus instance.
-import beatBus, { BeatBus } from '@/theater/bus';
+import baseBus, { BeatBus } from '@/theater/bus';
+
+const KEY = Symbol.for('metacurtis.canon.beatbus');
+const globalScope = typeof globalThis !== 'undefined' ? globalThis : {};
+const beatBus = globalScope[KEY] ?? baseBus;
+if (globalScope && !globalScope[KEY]) {
+  globalScope[KEY] = beatBus;
+}
 
 if (typeof globalThis !== 'undefined' && !globalThis.__CANON_BEATBUS_SHIM_WARNED__) {
   try {

@@ -12,6 +12,7 @@ import { narrativeAtom } from '@/state/atoms/narrativeAtom.js';
 import stateCommands from '@/state/commands/StateCommands.js';
 // import _DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor'; // optional
 
+import '@/theater/disableDirectorAutostart.js';
 import director from '@/theater/TheaterDirector.js';
 import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
@@ -211,31 +212,28 @@ export default function ConsciousnessTheater() {
     };
   }, []);
 
-  // --- viewport hint fallback + director start — __VIEWPORT_HINT_FALLBACK__
+  // --- Viewport hint fallback — emit hint if renderer never provided one
   useEffect(() => {
-    let gotHint = false, started = false;
+    let gotHint = false;
     const off = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => { gotHint = true; });
-    const startDirector = () => {
-      if (started) return;
-      try { document.body.style.overflow = 'hidden'; } catch {}
-      try { director?.start?.(); } catch {}
-      started = true;
-    };
-    // if no hint in 800ms, synthesize one and start
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       if (!gotHint) {
         try {
           const w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
           const h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-          BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, { width: w, height: h, aspect: w / Math.max(1, h) });
+          BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
+            width: w,
+            height: h,
+            aspect: w / Math.max(1, h),
+          });
           console.log('📐 Theater: synthetic ENGINE_VIEWPORT_HINT emitted');
         } catch {}
       }
-      startDirector();
     }, 800);
-    // also start when the first real hint arrives
-    const offStart = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => startDirector());
-    return () => { clearTimeout(t); off && off(); offStart && offStart(); };
+    return () => {
+      clearTimeout(timer);
+      off && off();
+    };
   }, []);
 
   // ───────────────── Keyboard navigation (after handoff)
@@ -467,7 +465,10 @@ export default function ConsciousnessTheater() {
       const progress = Math.min(scrollTop / scrollHeight, 1);
 
       stateCommands.setScrollProgress(progress, { origin: 'scroll' });
-      if (!NavigationGate.isInFlight()) {
+      const directorStatus =
+        typeof director.getStatus === 'function' ? director.getStatus() : null;
+      const openingComplete = directorStatus?.phase === 'complete';
+      if (openingComplete && !NavigationGate.isInFlight()) {
         stateCommands.setMorphProgress(Math.min(progress * 2, 1), { origin: 'scroll' });
       }
     };

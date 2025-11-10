@@ -1,12 +1,27 @@
 #!/usr/bin/env node
 /* eslint-env node */
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import {
   parseOwnershipDoc,
   scanUniformAssignments,
   scanEventEmitters,
 } from './lib/ownership.mjs';
+
+let diagnosticPrefixes = [];
+try {
+  const raw = fsSync.readFileSync('tools/pattern-s.config.json', 'utf8');
+  const cfg = JSON.parse(raw);
+  diagnosticPrefixes = Array.isArray(cfg.diagnosticEventPrefixes)
+    ? cfg.diagnosticEventPrefixes
+    : [];
+} catch {
+  diagnosticPrefixes = [];
+}
+
+const isDiagnosticEvent = (eventName = '') =>
+  diagnosticPrefixes.some((prefix) => eventName.startsWith(prefix));
 
 function normalizeList(value) {
   if (!value) return [];
@@ -78,6 +93,7 @@ function compareEvents(docEvents, actualEvents) {
   const actualKeys = new Set(actualEvents.keys());
 
   for (const key of actualKeys) {
+    if (isDiagnosticEvent(key)) continue;
     if (!docKeys.has(key)) {
       issues.push({
         section: 'events',
@@ -89,6 +105,7 @@ function compareEvents(docEvents, actualEvents) {
   }
 
   for (const key of docKeys) {
+    if (isDiagnosticEvent(key)) continue;
     if (!actualKeys.has(key)) {
       issues.push({
         section: 'events',

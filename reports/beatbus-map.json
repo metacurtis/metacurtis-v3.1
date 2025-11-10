@@ -3,111 +3,157 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 269
+        "line": 224
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 633
+        "line": 724
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1113
+        "line": 1835
+      }
+    ],
+    "START_CLIMAX": [
+      {
+        "file": "src/components/fragments/ClimaxSequenceController.jsx",
+        "line": 49
+      }
+    ],
+    "NARRATION_STOPPED": [
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 156
+      },
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 426
+      }
+    ],
+    "NARRATION_CLEANUP": [
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 164
+      }
+    ],
+    "START_NARRATIVE": [
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 346
+      },
+      {
+        "file": "src/orchestration/navigation/narrativeNavigation.js",
+        "line": 20
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 730
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1473
+      }
+    ],
+    "NARRATIVE_LINE": [
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 540
+      }
+    ],
+    "RENDER_DIRECTIVE": [
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 597
+      },
+      {
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 409
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 543
+      },
+      {
+        "file": "canon-console/runtime/hud.js",
+        "line": 408
       }
     ],
     "PARTICLES_EMERGED": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 308
+        "line": 345
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1431
+      }
+    ],
+    "FENCEPOST_LISTENERS_READY": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 378
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1386
+      }
+    ],
+    "MORPH_PROGRESS": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 460
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1391
+      },
+      {
+        "file": "src/theater/controllers/MorphAnimationController.js",
+        "line": 35
+      }
+    ],
+    "PARTICLE_CLICK_HIT": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1058
+      }
+    ],
+    "PARTICLE_CLICK_REQUEST": [
+      {
+        "file": "src/components/webgl/WebGLCanvas.jsx",
+        "line": 337
       }
     ],
     "PREWARM_COMPLETE": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 618
+        "line": 509
       }
     ],
-    "BLUEPRINT_READY": [
+    "ENGINE:MORPH_STATE": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 682
+        "line": 702
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1120
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1740
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1761
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1780
-      }
-    ],
-    "RENDER_DIRECTIVE": [
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 817
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 841
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 866
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1243
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1252
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1284
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 721
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 743
-      }
-    ],
-    "MORPH_PROGRESS": [
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 832
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 857
-      },
-      {
-        "file": "src/engine/ConsciousnessEngine.js",
-        "line": 865
-      },
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 27
+        "line": 960
       }
     ],
     "CLIMAX_STEP": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1027
+        "line": 917
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1353
+        "line": 1288
+      }
+    ],
+    "BLUEPRINT_READY": [
+      {
+        "file": "src/engine/utils/blueprintUtils.js",
+        "line": 167
       }
     ],
     "QUALITY_CHANGE": [
@@ -117,153 +163,161 @@
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 151
+        "line": 147
       }
     ],
     "STAGE_CHANGE": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 110
+        "line": 107
+      },
+      {
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 339
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 820
-      }
-    ],
-    "STAGE_CHANGED": [
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 119
+        "line": 1459
       }
     ],
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 215
+        "line": 212
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 765
-      }
-    ],
-    "MEMORY_FRAGMENT_START": [
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 259
-      }
-    ],
-    "MEMORY_FRAGMENT_END": [
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 265
-      }
-    ],
-    "STAGE_TRANSITION": [
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 271
-      }
-    ],
-    "START_NARRATIVE": [
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 342
+        "line": 1157
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 835
+        "line": 1350
+      }
+    ],
+    "SCROLL_PROGRESS": [
+      {
+        "file": "src/theater/ScrollOrchestrator.js",
+        "line": 317
+      }
+    ],
+    "DIRECTOR:MORPH_STATE": [
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 430
       }
     ],
     "DIRECTOR_ERROR": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 533
+        "line": 941
       }
     ],
     "CURSOR_SHOW": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 655
+        "line": 1098
       }
     ],
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 656
+        "line": 1099
       }
     ],
     "CURSOR_BLINK": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 662
+        "line": 1105
       }
     ],
     "TERMINAL_TYPE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 674
+        "line": 1117
       }
     ],
     "SCREEN_FILL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 689
+        "line": 1132
+      }
+    ],
+    "DIRECTOR_OPENING_MODE": [
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1149
       }
     ],
     "PARTICLE_PHASE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 700
+        "line": 1227
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 715
+        "line": 1260
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 737
+        "line": 1302
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 779
-      }
-    ],
-    "FENCEPOST_LISTENERS_READY": [
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 798
-      }
-    ],
-    "AUDIO_START_STAGE": [
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 827
+        "line": 1367
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 848
+        "line": 1486
+      }
+    ],
+    "OPENING_COMPLETE": [
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1488
       }
     ],
     "DIRECTOR_CANCEL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 997
+        "line": 1644
       }
     ],
     "PREWARM_GENESIS_BLUEPRINT": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1003
+        "line": 1650
       }
     ],
     "RENDERER_TUNE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1018
+        "line": 1665
+      }
+    ],
+    "CANON_VIOLATION": [
+      {
+        "file": "canon-console/browser/inject.js",
+        "line": 444
+      },
+      {
+        "file": "canon-console/runtime/blueprint-guard-v2.js",
+        "line": 252
+      }
+    ],
+    "BLUEPRINT_INVALIDATED": [
+      {
+        "file": "canon-console/runtime/blueprint-guard-v2.js",
+        "line": 62
+      }
+    ],
+    "FENCEPOST_REPORT": [
+      {
+        "file": "canon-console/runtime/playbooks-extra.js",
+        "line": 16
       }
     ]
   },
@@ -271,119 +325,353 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 211
+        "line": 174
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 256
+        "line": 218
       },
       {
-        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 276
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 468
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 387
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1133
+        "line": 875
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1856
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 227
+        "line": 190
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 388
       },
       {
         "file": "src/state/commands/StateCommands.js",
-        "line": 67
+        "line": 40
       }
     ],
     "START_NARRATIVE": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 232
+        "line": 195
+      },
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 983
+      },
+      {
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 203
       }
     ],
-    "CURSOR_SHOW": [
+    "SCROLL_PROGRESS": [
       {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 81
+        "file": "src/components/fragments/AmbientFragment.jsx",
+        "line": 80
       }
     ],
-    "CURSOR_BLINK": [
+    "CLIMAX_STEP": [
       {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 88
-      }
-    ],
-    "TERMINAL_TYPE": [
-      {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 103
-      }
-    ],
-    "SCREEN_FILL": [
-      {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 149
-      }
-    ],
-    "AUDIO_COMPUTER_HUM": [
-      {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 170
-      }
-    ],
-    "AUDIO_KEY_CLICK": [
-      {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 186
-      }
-    ],
-    "PARTICLES_START_EMERGING": [
-      {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 199
-      }
-    ],
-    "DIRECTOR_CANCEL": [
-      {
-        "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 218
-      }
-    ],
-    "RENDER_DIRECTIVE": [
-      {
-        "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 112
-      }
-    ],
-    "PARTICLE_PHASE": [
-      {
-        "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1601
-      }
-    ],
-    "BLUEPRINT_READY": [
-      {
-        "file": "src/dev/BlueprintTap.js",
-        "line": 14
+        "file": "src/components/fragments/ClimaxSequenceController.jsx",
+        "line": 18
       }
     ],
     "STAGE_CHANGE": [
+      {
+        "file": "src/components/narrative/NarrationController.jsx",
+        "line": 984
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 832
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 858
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 389
+      },
       {
         "file": "src/state/atoms/qualityAtom.js",
         "line": 155
       },
       {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 81
+      },
+      {
         "file": "src/theater/TheaterDirector.js",
-        "line": 128
+        "line": 230
       },
       {
         "file": "src/theater/UnifiedNavigationAPI.js",
         "line": 192
+      }
+    ],
+    "NARRATIVE_LINE": [
+      {
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 204
+      }
+    ],
+    "NARRATION_STOPPED": [
+      {
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 205
+      }
+    ],
+    "NARRATION_CLEANUP": [
+      {
+        "file": "src/components/narrative/NarrationOverlayBus.jsx",
+        "line": 206
+      }
+    ],
+    "CURSOR_SHOW": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 104
+      },
+      {
+        "file": "canon-console/runtime/lifecycle-guards.js",
+        "line": 67
+      }
+    ],
+    "CURSOR_BLINK": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 111
+      }
+    ],
+    "TERMINAL_TYPE": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 126
+      }
+    ],
+    "SCREEN_FILL": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 167
+      }
+    ],
+    "AUDIO_COMPUTER_HUM": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 190
+      }
+    ],
+    "PARTICLES_START_EMERGING": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 208
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 849
+      }
+    ],
+    "PARTICLES_EMERGED": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 212
+      },
+      {
+        "file": "src/components/ui/LCPHero.jsx",
+        "line": 32
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 394
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 235
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1406
+      },
+      {
+        "file": "canon-console/runtime/lifecycle-guards.js",
+        "line": 68
+      }
+    ],
+    "OPENING_COMPLETE": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 223
+      }
+    ],
+    "DIRECTOR_CANCEL": [
+      {
+        "file": "src/components/theater/OpeningSequence.jsx",
+        "line": 235
+      }
+    ],
+    "FENCEPOST_LISTENERS_READY": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 494
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 231
+      }
+    ],
+    "PARTICLE_CLICK_REQUEST": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1069
+      }
+    ],
+    "BLUEPRINT_READY": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1661
+      },
+      {
+        "file": "src/components/webgl/WebGLCanvas.jsx",
+        "line": 264
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 239
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1416
+      },
+      {
+        "file": "canon-console/runtime/blueprint-guard-v2.js",
+        "line": 14
+      },
+      {
+        "file": "canon-console/runtime/blueprint-guard-v2.js",
+        "line": 238
+      }
+    ],
+    "RENDER_DIRECTIVE": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1780
+      }
+    ],
+    "MORPH_PROGRESS": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1862
+      },
+      {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 125
+      }
+    ],
+    "PARTICLE_PHASE": [
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 2133
+      }
+    ],
+    "ENGINE:MORPH_STATE": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 33
+      }
+    ],
+    "DIRECTOR:MORPH_STATE": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 38
+      }
+    ],
+    "DIRECTOR_OPENING_MODE": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 43
+      }
+    ],
+    "RENDERER_TUNE": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 48
+      }
+    ],
+    "PARTICLE_CLICK_HIT": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 53
+      }
+    ],
+    "BLUEPRINT_INVALIDATED": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 58
+      },
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 404
+      }
+    ],
+    "DIRECTOR_ERROR": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 63
+      }
+    ],
+    "CANON_VIOLATION": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 67
+      }
+    ],
+    "FENCEPOST_REPORT": [
+      {
+        "file": "src/dev/patternSMonitors.js",
+        "line": 71
+      }
+    ],
+    "QUALITY_CHANGE": [
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 390
+      },
+      {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 89
+      }
+    ],
+    "PREWARM_GENESIS_BLUEPRINT": [
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 391
+      }
+    ],
+    "BUILD_EMERGENCE_BLUEPRINT": [
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 392
+      }
+    ],
+    "START_CLIMAX": [
+      {
+        "file": "src/engine/ConsciousnessEngine.js",
+        "line": 393
+      }
+    ],
+    "PREWARM_COMPLETE": [
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1651
       }
     ]
   }

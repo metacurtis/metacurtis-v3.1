@@ -2,5 +2,13 @@
   "eventOrphanAllowlist": {
     "emitterOnly": [],
     "listenerOnly": []
-  }
+  },
+  "diagnosticEventPrefixes": [
+    "ENGINE:",
+    "DIRECTOR:",
+    "DEV:",
+    "CANON:",
+    "CE:",
+    "TD:"
+  ]
 }

@@ -123,7 +123,9 @@ class StateCommands {
 
     // Listen to canonical morph progress emitter
     const morphBusSub = BeatBus.on?.(EVENTS.MORPH_PROGRESS, (payload = {}) => {
-      const value = clamp01(payload.morphProgress ?? payload.value ?? 0);
+      const value = clamp01(
+        payload.progress ?? payload.morphProgress ?? payload.value ?? 0
+      );
       this.morphState = {
         value,
         origin: payload.source || 'animator',

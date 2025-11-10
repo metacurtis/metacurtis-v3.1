@@ -1,0 +1,141 @@
+
+> metacurtis-v3.1@1.0.0 predev
+> npm run validate
+
+
+> metacurtis-v3.1@1.0.0 validate
+> node scripts/validate-sst.js && node tools/sentinel.mjs
+
+
+🔍 SST Canonical Validator (v3.0 compat / v3.3 aware)
+
+Version: 3.5.0  Mode: TEXT_FIRST_REVEAL
+Date: 11/7/2025
+==================================================
+
+📋 Validating Stage Configurations...
+  Checking genesis...
+  Checking discipline...
+  Checking neural...
+  Checking velocity...
+  Checking architecture...
+  Checking harmony...
+  Checking transcendence...
+
+⏱  Validating Breakpoints vs Ranges...
+
+🎯 Validating Text Formation Behaviors...
+  (Using legacy sst3/tier-behaviors for validation)
+
+💎 Validating Memory Fragments...
+  Stage genesis fragment...
+  Stage discipline fragment...
+  Stage neural fragment...
+  Stage velocity fragment...
+  Stage architecture fragment...
+  Stage harmony fragment...
+  Stage transcendence fragment...
+
+⚡ Validating Performance...
+
+==================================================
+
+📊 Validation Summary:
+
+
+⚠️  14 WARNING(S):
+   1. genesis: brainRegion not provided (ok in TEXT_FIRST)
+   2. discipline: brainRegion not provided (ok in TEXT_FIRST)
+   3. neural: brainRegion not provided (ok in TEXT_FIRST)
+   4. velocity: brainRegion not provided (ok in TEXT_FIRST)
+   5. architecture: brainRegion not provided (ok in TEXT_FIRST)
+   6. harmony: brainRegion not provided (ok in TEXT_FIRST)
+   7. transcendence: brainRegion not provided (ok in TEXT_FIRST)
+   8. genesis: memoryFragment missing triggerPercent
+   9. discipline: memoryFragment missing triggerPercent
+   10. neural: memoryFragment missing triggerPercent
+   11. velocity: memoryFragment missing triggerPercent
+   12. architecture: memoryFragment missing triggerPercent
+   13. harmony: memoryFragment missing triggerPercent
+   14. transcendence: memoryFragment missing triggerPercent
+
+📈 Stats:
+   Stages          : 7
+   Behaviors       : 0 (skipped or legacy)
+   Narrative segs  : 0 
+   Max particles   : 15000
+
+✅ Canonical config is valid.
+
+Opening checks:
+OK OpeningSequence uses single bus
+OK OpeningSequence has no CTF
+OK OpeningSequence overlay-only
+OK Engine gate at top of buildAndEmitBlueprint
+OK Engine emergence emits mode:"emergence"
+OK Engine emergence random->random (no spiral)
+OK Renderer emits PARTICLES_EMERGED fencepost once
+OK Theater start-after-viewport gate present
+OK Engine: no direct GPU writes
+OK Theater: no direct GPU writes
+
+Opening sentinel: OK
+
+Vision: no telemetry in .vision/telemetry — run: npm run agent:run -- --goal=opening:record
+
+> metacurtis-v3.1@1.0.0 dev
+> vite
+
+Port 5173 is in use, trying another one...
+
+  VITE v6.3.5  ready in 670 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: use --host to expose
+9:00:15 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:00:26 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:00:37 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:00:44 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:01:29 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:01:54 PM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+9:11:34 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:11:53 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:12:23 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:12:39 PM [vite] (client) hmr update /src/components/theater/OpeningSequence.jsx
+9:12:49 PM [vite] (client) page reload src/theater/bus/index.js
+9:12:57 PM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+9:29:25 PM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+9:29:34 PM [vite] (client) hmr update /src/components/theater/OpeningSequence.jsx
+9:32:00 PM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+9:32:17 PM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+9:32:37 PM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+9:39:51 PM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+1:37:32 AM [vite] (client) hmr update /src/components/theater/OpeningSequence.jsx
+1:37:32 AM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+1:37:32 AM [vite] (client) page reload src/theater/bus/index.js
+1:37:32 AM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+1:37:44 AM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+1:37:44 AM [vite] (client) hmr update /src/components/narrative/NarrationController.jsx
+1:37:44 AM [vite] (client) hmr update /src/components/webgl/WebGLBackground.jsx
+1:37:44 AM [vite] (client) hmr update /src/App.jsx
+1:37:44 AM [vite] (client) hmr update /src/App.jsx
+1:37:44 AM [vite] (client) page reload src/main.jsx
+1:37:44 AM [vite] (client) hmr update /src/App.jsx
+1:37:44 AM [vite] (client) page reload src/state/atoms/narrativeAtom.js
+1:37:44 AM [vite] (client) page reload src/state/atoms/stageAtom.js
+1:37:44 AM [vite] (client) page reload src/state/commands/StateCommands.js
+1:37:44 AM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+1:37:44 AM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+1:37:44 AM [vite] (client) hmr update /src/App.jsx, /src/components/narrative/NarrationController.jsx
+1:37:44 AM [vite] (client) page reload src/theater/bus/index.js
+1:37:44 AM [vite] (client) page reload playwright-report/index.html
+1:37:44 AM [vite] (client) hmr update /src/App.jsx
+1:37:44 AM [vite] (client) hmr update /src/App.jsx
+1:37:44 AM [vite] (client) page reload src/engine/morphProgressChannel.js
+1:37:44 AM [vite] (client) page reload src/theater/controllers/MorphAnimationController.js
+1:37:44 AM [vite] (client) hmr update /src/components/consciousness/ConsciousnessTheater.jsx
+5:21:58 AM [vite] (client) hmr update /src/App.jsx
+8:17:56 AM [vite] (client) hmr update /src/App.jsx
+8:23:33 AM [vite] (client) hmr update /src/App.jsx
+10:44:37 AM [vite] (client) page reload src/main.jsx
+11:38:46 AM [vite] (client) page reload src/main.jsx

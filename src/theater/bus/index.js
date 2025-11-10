@@ -598,7 +598,16 @@ class BeatBus {
 
 BeatBus._traceSink = null;
 
-const beatBus = new BeatBus();
+const KEY = Symbol.for('metacurtis.canon.beatbus');
+const globalScope = typeof globalThis !== 'undefined' ? globalThis : {};
+
+let beatBus = globalScope[KEY];
+if (!beatBus) {
+  beatBus = new BeatBus();
+  if (globalScope && !globalScope[KEY]) {
+    globalScope[KEY] = beatBus;
+  }
+}
 
 const schemaMiddleware = (eventName, payload) => {
   const result = validateEventPayload(eventName, payload);
@@ -613,14 +622,10 @@ const schemaMiddleware = (eventName, payload) => {
 
 beatBus.use(schemaMiddleware);
 
-// Singleton guard: prevent accidental re-instantiation (DEV fails fast)
+// Legacy singleton marker (for tooling that introspects window.__BEATBUS_SINGLETON__)
 if (typeof globalThis !== 'undefined') {
-  const SYM = '__BEATBUS_SINGLETON__';
-  const existing = globalThis[SYM];
-  if (existing && existing !== beatBus) {
-    throw new Error('[BeatBus] Multiple instances detected');
-  }
-  globalThis[SYM] = beatBus;
+  const LEGACY_KEY = '__BEATBUS_SINGLETON__';
+  globalThis[LEGACY_KEY] = beatBus;
 }
 
 // DEV globals (optional)

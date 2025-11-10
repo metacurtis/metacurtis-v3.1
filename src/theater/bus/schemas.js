@@ -33,8 +33,9 @@ const EVENT_SCHEMAS = new Map([
     },
   }],
   ['MORPH_PROGRESS', {
-    required: { morphProgress: 'number' },
+    required: { progress: 'number' },
     optional: {
+      morphProgress: 'number', // legacy
       stage: 'string',
       target: 'number',
       stageIndex: 'number',
@@ -43,11 +44,23 @@ const EVENT_SCHEMAS = new Map([
   ['RENDER_DIRECTIVE', {
     optional: {
       kind: 'string',
-      morphProgress: 'number',
-      drawCount: 'number',
+      phase: 'string',
+      stage: 'string',
+      uMotionMode: 'number',
+      uParticlePhase: 'number',
+      uFlowTurbulence: 'number',
+      uParticleFlash: 'number',
+      uOpacityMin: 'number',
+      uOpacityMax: 'number',
+      uMorphProgress: 'number',
+      uStageProgress: 'number',
       activeCount: 'number',
       pointSize: 'number',
       gaussianSigma: 'number',
+      tierHighlight: 'object',
+      uniforms: 'object',
+      morphProgress: 'number', // legacy
+      drawCount: 'number',
       enterQrMode: 'boolean',
       exitQrMode: 'boolean',
     },

@@ -8,6 +8,10 @@ import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
+const SCREEN_FILL_MS = 2000;
+const SCREEN_FILL_MIN_VISUAL_MS = 1400;
+const MONO_STACK =
+  "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace";
 
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(false);
@@ -26,6 +30,8 @@ export default function OpeningSequence() {
   const typingToken = useRef(0);
   const mounted = useRef(true);
   const audioUnlocked = useRef(false);
+  const fadedRef = useRef(false);
+  const fillStartRef = useRef(0);
 
   const addTimeout = (fn, ms) => {
     const id = setTimeout(fn, ms);
@@ -44,6 +50,24 @@ export default function OpeningSequence() {
     for (const id of intervals.current) clearInterval(id);
     timers.current.clear();
     intervals.current.clear();
+  };
+
+  const triggerFadeOut = (reason = 'unknown', delayMs = 100) => {
+    if (fadedRef.current) return;
+    fadedRef.current = true;
+    console.log(`   OpeningSequence: fade out (${reason})`);
+    const startId = addTimeout(() => {
+      setVisible(false);
+      addTimeout(() => {
+        setPhase('complete');
+        clearAllTimers();
+        if (humAudioRef.current) {
+          humAudioRef.current.pause();
+          humAudioRef.current = null;
+        }
+      }, 700);
+    }, delayMs);
+    return startId;
   };
 
   // Single audio unlock gate (in useEffect, properly cleaned up)
@@ -143,6 +167,8 @@ export default function OpeningSequence() {
       BeatBus.on(EVENTS.SCREEN_FILL, ({ text = `${GENESIS_STAGE_WORD} `, scrollSpeed = 50 } = {}) => {
         console.log('   OpeningSequence: SCREEN_FILL received');
         setPhase('fill');
+        fillStartRef.current =
+          (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
 
         const fillText = text.repeat(10);
         setScreenFillLines([]);
@@ -180,21 +206,29 @@ export default function OpeningSequence() {
 
       // PARTICLES START EMERGING
       BeatBus.on(EVENTS.PARTICLES_START_EMERGING, () => {
-        console.log('   OpeningSequence: Particles emerging, fading out');
+        triggerFadeOut('particles-start-emerging', 100);
+      }),
 
-        addTimeout(() => {
-          setVisible(false);
+      BeatBus.on(EVENTS.PARTICLES_EMERGED, () => {
+        const now =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        const start = fillStartRef.current || now;
+        const elapsed = now - start;
+        const wait = Math.max(0, SCREEN_FILL_MIN_VISUAL_MS - elapsed);
+        triggerFadeOut('particles-emerged', wait);
+      }),
 
-          addTimeout(() => {
-            setPhase('complete');
-            clearAllTimers();
-
-            if (humAudioRef.current) {
-              humAudioRef.current.pause();
-              humAudioRef.current = null;
-            }
-          }, 700);
-        }, 100);
+      BeatBus.on(EVENTS.OPENING_COMPLETE, () => {
+        const now =
+          typeof performance !== 'undefined' && typeof performance.now === 'function'
+            ? performance.now()
+            : Date.now();
+        const start = fillStartRef.current || now;
+        const elapsed = now - start;
+        const wait = Math.max(0, SCREEN_FILL_MIN_VISUAL_MS - elapsed);
+        triggerFadeOut('opening-complete', wait);
       }),
 
       // DIRECTOR CANCEL
@@ -203,6 +237,7 @@ export default function OpeningSequence() {
         setVisible(false);
         setPhase('complete');
         clearAllTimers();
+        fadedRef.current = true;
 
         if (humAudioRef.current) {
           humAudioRef.current.pause();
@@ -214,8 +249,10 @@ export default function OpeningSequence() {
     // Cleanup
     return () => {
       mounted.current = false;
+      fadedRef.current = true;
       clearAllTimers();
       eventHandlers.forEach(off => off && off());
+      fillStartRef.current = 0;
 
       if (humAudioRef.current) {
         humAudioRef.current.pause();
@@ -240,7 +277,7 @@ export default function OpeningSequence() {
         height: '100vh',
         backgroundColor: '#000000',
         color: '#00FF00',
-        fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
+        fontFamily: MONO_STACK,
         fontSize: '1.5rem',
         lineHeight: 1.4,
         zIndex: 9999,
@@ -294,7 +331,7 @@ export default function OpeningSequence() {
             <pre
               style={{
                 color: '#00FF00',
-                fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
+                fontFamily: MONO_STACK,
                 fontSize: '1.5rem',
                 lineHeight: 1.6,
                 textShadow: 'none', // NO GLOW
@@ -332,13 +369,15 @@ export default function OpeningSequence() {
             height: '100%',
             padding: '1rem',
             overflow: 'hidden',
-            background: 'linear-gradient(180deg, rgba(0,255,0,0.1) 0%, rgba(0,0,0,0.9) 100%)',
+            background: 'transparent',
+            opacity: screenFillLines.length ? 1 : 0,
+            transition: 'opacity 200ms ease-out',
           }}
         >
           <pre
             style={{
               color: '#00FF00',
-              fontFamily: "'Courier New', Courier, 'Lucida Console', 'DejaVu Sans Mono', monospace",
+              fontFamily: MONO_STACK,
               fontSize: '1.2rem',
               lineHeight: 1.2,
               opacity: 0.8,

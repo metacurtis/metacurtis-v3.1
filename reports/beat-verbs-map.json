@@ -58,12 +58,15 @@
       "fusion_pattern",
       "genesis_callback_purple",
       "neural_pathways_light",
+      "particles_accelerate",
       "particles_begin_columns",
       "reform_as_flow",
       "reform_as_structure",
+      "streak_trails_form",
       "tier2_lock_into_grid",
       "tier2_pulse_sync",
-      "tier3_cadence_pulse"
+      "tier3_cadence_pulse",
+      "tier3_lightning_burst"
     ]
   },
   "resolverFile": "src/config/canonical/visualEffects.js",
@@ -71,7 +74,8 @@
     "file": "src/components/webgl/WebGLBackground.jsx",
     "fields": [],
     "uniformWrites": [
-      "uAtmoFit"
+      "uPostMorphFreeze",
+      "uStageProgress"
     ]
   },
   "uniforms": [
@@ -124,14 +128,11 @@
       "master_plan_glow",
       "no_change",
       "orbit_sync_begin",
-      "particles_accelerate",
       "phase_lock_achieve",
       "question_expand",
-      "streak_trails_form",
       "tier2_flicker_increase",
       "tier3_construction_guide",
       "tier3_glow_pulse",
-      "tier3_lightning_burst",
       "tier3_subtle_pulse",
       "tier3_synaptic_flash",
       "transcendent_integration",

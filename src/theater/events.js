@@ -8,6 +8,7 @@ export const EVENTS = {
   TERMINAL_TYPE: 'TERMINAL_TYPE',                // { lines[], typeSpeed, lineDelay }
   SCREEN_FILL: 'SCREEN_FILL',                    // { text, scrollSpeed }
   DIRECTOR_OPENING_MODE: 'DIRECTOR_OPENING_MODE',// { mode, stage }
+  OPENING_COMPLETE: 'OPENING_COMPLETE',          // Overlay fade + scan-bloat contract
 
   // Renderer/Theater gates
   ENGINE_VIEWPORT_HINT: 'ENGINE_VIEWPORT_HINT',  // { width, height, aspect }
@@ -21,10 +22,10 @@ export const EVENTS = {
   FENCEPOST_LISTENERS_READY: 'FENCEPOST_LISTENERS_READY',
 
   // Renderer tuning & morph
-  RENDER_DIRECTIVE: 'RENDER_DIRECTIVE',          // renderer draw/morph directives
+  RENDER_DIRECTIVE: 'RENDER_DIRECTIVE',          // renderer directives (intent → GPU writes)
   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }
   PARTICLE_PHASE: 'PARTICLE_PHASE',              // { name }
-  MORPH_PROGRESS: 'MORPH_PROGRESS',              // { value: 0..1 }
+  MORPH_PROGRESS: 'MORPH_PROGRESS',              // { progress: 0..1 }
 
   // Stage / narrative control
   START_NARRATIVE: 'START_NARRATIVE',            // { id?, stage? }
@@ -56,6 +57,31 @@ export const EVENTS = {
   DIRECTOR_CANCEL: 'DIRECTOR_CANCEL',
   DIRECTOR_ERROR: 'DIRECTOR_ERROR',
 };
+
+// Contract envelope:
+//   • Every emitted contract event SHOULD include { source: string, channel: 'renderer'|'engine'|'director', timestamp?: number }
+//     so waiters can filter by producer/origin.
+//
+// RENDER_DIRECTIVE payload contract (high-level intent that the renderer maps to GPU writes):
+// {
+//   source: 'opening_sequence' | 'narration' | 'diagnostic' | ...,
+//   channel?: 'renderer',              // renderer may add when re-emitting fenceposts
+//   phase?: 'chaos'|'coalesce'|'settle'|'emergence',
+//   stage?: string,
+//   uMotionMode?: number,
+//   uParticlePhase?: number,
+//   uFlowTurbulence?: number,
+//   uParticleFlash?: number,
+//   uOpacityMin?: number,
+//   uOpacityMax?: number,
+//   uMorphProgress?: number,           // renderer maps to the uniform
+//   uStageProgress?: number,
+//   pointSize?: number,                // renderer maps to uPointSize
+//   activeCount?: number,              // renderer maps to geometry.setDrawRange
+//   gaussianSigma?: number,
+//   tierHighlight?: number[],
+//   uniforms?: Record<string, number[]|number>,
+// }
 
 // SST v3.x — Memory Fragment trigger points (scroll %)
 export const FRAGMENT_TRIGGERS = {

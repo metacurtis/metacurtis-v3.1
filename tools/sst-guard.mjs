@@ -5,6 +5,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { runOpeningChecks } from './sentinel/openingChecks.mjs';
 
 const args = new Set(process.argv.slice(2));
 const checkOpening = args.has('--opening') || !args.size;
@@ -27,49 +28,34 @@ let fails = 0;
 
 /* --------------------------- Opening fencepost --------------------------- */
 if (checkOpening) {
-  const opening  = readSafe('src/components/theater/OpeningSequence.jsx');
-  const engine   = readSafe('src/engine/ConsciousnessEngine.js');
-  const renderer = readSafe('src/components/webgl/WebGLBackground.jsx');
-  const theater  = readSafe('src/components/consciousness/ConsciousnessTheater.jsx');
+  const opening   = readSafe('src/components/theater/OpeningSequence.jsx');
+  const engine    = readSafe('src/engine/ConsciousnessEngine.js');
+  const renderer  = readSafe('src/components/webgl/WebGLBackground.jsx');
+  const theater   = readSafe('src/components/consciousness/ConsciousnessTheater.jsx');
+  const director  = readSafe('src/theater/TheaterDirector.js');
+  const blueprint = readSafe('src/engine/utils/blueprintUtils.js');
+  const engineEmitSource = `${engine}\n${blueprint}`;
+  const traceData = loadOpeningTrace();
+  const openingChaosFlag = readOpeningChaosFlag();
+  const openingResult = runOpeningChecks({
+    opening,
+    engine: engineEmitSource,
+    renderer,
+    theater,
+    director,
+    trace: traceData,
+    flags: { opening_chaos: openingChaosFlag }
+  });
+  const hardFailures = openingResult.rows.filter((row) => !row.ok && row.severity !== 'advisory');
+  fails += hardFailures.length;
 
-  const rows = [];
-  const row = (ok, label) => { rows.push((ok ? 'OK ' : 'X  ') + label); if (!ok) fails++; };
-
-  // OpeningSequence: overlay-only + single bus + no CTF
-  row(/import\s+BeatBus\s+from\s+['"]@\/theater\/bus['"]/.test(opening), 'OpeningSequence uses single bus');
-  row(!/CTF_BUILD/.test(opening), 'OpeningSequence has no CTF');
-  row(!/(BufferGeometry|useFrame|THREE\.)/.test(opening), 'OpeningSequence overlay-only');
-
-  // Engine: opening gate + mode:'emergence' + no spiral math
-  row(
-    /buildAndEmitBlueprint[^]*?if\s*\(\s*this\._openingPhase\s*&&\s*stage\s*!==\s*['"]genesis['"]\s*\)/.test(engine),
-    'Engine gate at top of buildAndEmitBlueprint'
-  );
-  row(
-    /BLUEPRINT_READY[^]*mode\s*:\s*['"]emergence['"]/.test(engine),
-    'Engine emergence emits mode:"emergence"'
-  );
-  const spiral =
-    /(swirl|spiral)/.test(engine) ||
-    (/ang\s*=\s*(?:i|t)[^;]*\*/.test(engine) && /\br\s*=\s*(?:i|t)\s*\*/.test(engine));
-  row(!spiral, 'Engine emergence random->random (no spiral)');
-
-  // Renderer: emit-once fencepost present (heuristic)
-  row(/BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/.test(renderer), 'Renderer emits PARTICLES_EMERGED fencepost once');
-
-  // Theater: start after viewport hint present
-  row(/ENGINE_VIEWPORT_HINT/.test(theater), 'Theater start-after-viewport gate present');
-
-  
-  // Single-writer architecture enforcement
-  const engineGPU = /(setAttribute|setDrawRange|material\.uniforms)/.test(engine);
-  const theaterGPU = /(setAttribute|setDrawRange|material\.uniforms)/.test(theater);
-  row(!engineGPU, 'Engine: no direct GPU writes');
-  row(!theaterGPU, 'Theater: no direct GPU writes');
-
-console.log('\nOpening checks:');
-  rows.forEach(l => console.log(l));
-  console.log('\nOpening sentinel:', rows.some(l => l.startsWith('X')) ? 'FAIL' : 'OK');
+  console.log('\nOpening checks:');
+  openingResult.rows.forEach((row) => {
+    const prefix = row.ok ? 'OK ' : (row.severity === 'advisory' ? '!  ' : 'X  ');
+    const note = row.note ? ` — ${row.note}` : '';
+    console.log(prefix + row.label + note);
+  });
+  console.log('\nOpening sentinel:', hardFailures.length ? 'FAIL' : 'OK');
 }
 
 /* ------------------------------ Vision check ---------------------------- */
@@ -123,3 +109,57 @@ if (checkVision) {
 }
 
 process.exit(fails ? 1 : 0);
+
+function loadOpeningTrace() {
+  const candidates = [
+    'reports/trace-bus.json',
+    'reports/trace-bus.ndjson',
+    'reports/trace-bus.jsonl',
+    'reports/opening-trace.json',
+    'reports/opening-trace.ndjson',
+    '.canon_reports/trace-bus.json',
+    '.canon_reports/trace-bus.ndjson',
+    '.logs/trace-bus.json',
+    'logs/trace-bus.json',
+  ];
+
+  for (const file of candidates) {
+    const data = readSafe(file);
+    if (data && data.trim()) return data;
+  }
+  return '';
+}
+
+function readOpeningChaosFlag() {
+  const envCandidates = [
+    process.env.OPENING_CHAOS,
+    process.env.SST_OPENING_CHAOS,
+    process.env.SST_OPENING_MODE,
+  ];
+  for (const value of envCandidates) {
+    if (value == null) continue;
+    if (value === 'opening_chaos') return true;
+    if (value === 'emergence') return false;
+    if (value === 'true' || value === '1') return true;
+    if (value === 'false' || value === '0') return false;
+  }
+
+  const fileCandidates = [
+    'reports/opening-mode.json',
+    '.canon_reports/opening-mode.json',
+    'reports/sentinel-opening-mode.json',
+    '.system/opening-mode.json',
+  ];
+  for (const file of fileCandidates) {
+    try {
+      const txt = fs.readFileSync(file, 'utf8').trim();
+      if (!txt) continue;
+      const json = JSON.parse(txt);
+      if (typeof json.opening_chaos !== 'undefined') return !!json.opening_chaos;
+      if (typeof json.openingChaos !== 'undefined') return !!json.openingChaos;
+      if (typeof json.mode === 'string') return json.mode === 'opening_chaos';
+    } catch { /* ignore */ }
+  }
+
+  return false;
+}

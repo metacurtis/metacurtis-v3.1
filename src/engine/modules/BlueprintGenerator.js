@@ -290,6 +290,49 @@ export default class BlueprintGenerator {
       blueprint.hotspotMap = {};
     }
 
+    const ensureVec3Array = (arr, name) => {
+      if (arr instanceof Float32Array && arr.length === particleCount * 3) {
+        return arr;
+      }
+      console.warn(`[BLUEPRINT] ${stageName}: ${name} missing or invalid, generating fallback data`);
+      const fallback = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i += 1) {
+        const idx = i * 3;
+        const theta = rng() * Math.PI * 2;
+        const phi = Math.acos(2 * rng() - 1);
+        const radius = 0.25 + rng() * 0.35;
+        const sinPhi = Math.sin(phi);
+        fallback[idx] = radius * sinPhi * Math.cos(theta);
+        fallback[idx + 1] = radius * sinPhi * Math.sin(theta);
+        fallback[idx + 2] = radius * Math.cos(phi);
+      }
+      return fallback;
+    };
+
+    const ensureScalarArray = (arr, name) => {
+      if (arr instanceof Float32Array && arr.length === particleCount) {
+        return arr;
+      }
+      console.warn(`[BLUEPRINT] ${stageName}: ${name} missing or invalid, seeding fallback tiers`);
+      const fallback = new Float32Array(particleCount);
+      for (let i = 0; i < particleCount; i += 1) {
+        fallback[i] = tierAssignments[i] ?? 0;
+      }
+      return fallback;
+    };
+
+    blueprint.atmosphericPositions = ensureVec3Array(blueprint.atmosphericPositions, 'atmosphericPositions');
+    blueprint.positions = ensureVec3Array(blueprint.positions, 'positions');
+    blueprint.text3DPositions = ensureVec3Array(blueprint.text3DPositions, 'text3DPositions');
+    blueprint.tierData = ensureScalarArray(blueprint.tierData, 'tierData');
+    if (!(blueprint.tierOf instanceof Uint8Array) || blueprint.tierOf.length !== particleCount) {
+      const fallbackTierOf = new Uint8Array(particleCount);
+      for (let i = 0; i < particleCount; i += 1) {
+        fallbackTierOf[i] = tierAssignments[i] ?? 0;
+      }
+      blueprint.tierOf = fallbackTierOf;
+    }
+
     return blueprint;
   }
 
