@@ -135,6 +135,18 @@ export const PARTICLE_EFFECTS = {
     ],
     uSpreadFactor: 0.12,
   },
+  golden_ratio_spiral: {
+    type: 'particle',
+    uMotionMode: 4,
+    tierModes: [0, 4, 4, 4],
+    tierParams: [
+      [0.50, 0.78, 1.05, 0.0],
+      [0.95, 0.70, 0.22, 0.0],
+      [1.08, 0.80, 0.18, 0.0],
+      [1.34, 0.92, 0.15, 0.0],
+    ],
+    uSpreadFactor: 0.10,
+  },
   fusion_pattern: {
     type: 'particle',
     uMotionMode: 2,

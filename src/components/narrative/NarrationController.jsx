@@ -85,6 +85,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const effectRunCounterRef = useRef(0);
 
   const timersRef = useRef(new Set());
+  const completionFallbacksRef = useRef(new Map());
   const activeStageRef = useRef(null);
   const activeSegmentRef = useRef(null);
   const totalSegmentsRef = useRef(0);
@@ -101,6 +102,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => clearTimeout(id));
     timersRef.current.clear();
+    completionFallbacksRef.current.clear();
   }, []);
 
   const unlockScroll = useCallback(() => {
@@ -393,6 +395,14 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         completedSegmentsRef.current + 1,
         totalSegmentsRef.current
       );
+      if (typeof segmentToken === 'number') {
+        const fallbackTimer = completionFallbacksRef.current.get(segmentToken);
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+          timersRef.current.delete(fallbackTimer);
+          completionFallbacksRef.current.delete(segmentToken);
+        }
+      }
       activeSegmentRef.current = null;
       setActiveNarration(null);
 
@@ -482,48 +492,75 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
           const effectResolver = window.Canonical?.getVisualEffect || Canonical?.getVisualEffect;
           const resolved = effectResolver ? effectResolver(segment.visual) : null;
-          if (!resolved) {
+          const isNoChangeVerb = segment.visual === 'no_change';
+          if (!resolved && !isNoChangeVerb) {
             console.warn('[VISUAL] Unknown verb (skipped):', segment.visual);
-          } else if (resolved.type === 'camera') {
+          } else if (resolved && resolved.type === 'camera') {
             console.log('[VISUAL] camera-only verb:', segment.visual);
           } else {
             const visualKey = (segment.visual || '').toLowerCase();
-            particleEffectPayload = { ...resolved };
+            particleEffectPayload = resolved ? { ...resolved } : null;
 
-            const ensure = (cond, key, value) => {
-              if (cond && (particleEffectPayload[key] === undefined || particleEffectPayload[key] === null)) {
-                particleEffectPayload[key] = value;
-              }
-            };
+            if (particleEffectPayload) {
+              const ensure = (cond, key, value) => {
+                if (cond && (particleEffectPayload[key] === undefined || particleEffectPayload[key] === null)) {
+                  particleEffectPayload[key] = value;
+                }
+              };
 
-            ensure(
-              particleEffectPayload.gridSize === undefined &&
-                (visualKey.includes('grid') ||
-                 visualKey.includes('structure') ||
-                 visualKey.includes('column')),
-              'gridSize',
-              0.45
-            );
+              ensure(
+                particleEffectPayload.gridSize === undefined &&
+                  (visualKey.includes('grid') ||
+                   visualKey.includes('structure') ||
+                   visualKey.includes('column')),
+                'gridSize',
+                0.45
+              );
 
-            ensure(
-              particleEffectPayload.uFlowTurbulence === undefined &&
-                (visualKey.includes('flow') ||
-                 visualKey.includes('stream') ||
-                 visualKey.includes('storm')),
-              'uFlowTurbulence',
-              0.9
-            );
+              ensure(
+                particleEffectPayload.uFlowTurbulence === undefined &&
+                  (visualKey.includes('flow') ||
+                   visualKey.includes('stream') ||
+                   visualKey.includes('storm')),
+                'uFlowTurbulence',
+                0.9
+              );
 
-            ensure(
-              particleEffectPayload.uStreakIntensity === undefined &&
-                (visualKey.includes('streak') ||
-                 visualKey.includes('trail') ||
-                 visualKey.includes('velocity')),
-              'uStreakIntensity',
-              1.0
-            );
+              ensure(
+                particleEffectPayload.uStreakIntensity === undefined &&
+                  (visualKey.includes('streak') ||
+                   visualKey.includes('trail') ||
+                   visualKey.includes('velocity')),
+                'uStreakIntensity',
+                1.0
+              );
+            }
           }
         }
+
+        const textLength = text.length || 0;
+        const estimatedTypingMs =
+          charsPerSecond > 0 ? (textLength / charsPerSecond) * 1000 : 0;
+        const canonicalDurationMs = Math.max(0, Number(segment?.timing?.duration ?? 0));
+        const fallbackDurationMs = Math.max(
+          1500,
+          Math.max(canonicalDurationMs, estimatedTypingMs + 2000) + 500
+        );
+
+        const completionFallback = setTimeout(() => {
+          timersRef.current.delete(completionFallback);
+          completionFallbacksRef.current.delete(token);
+          if (activeSegmentRef.current?.token !== token) return;
+          narrationDiagnostic.log('SEGMENT_COMPLETION_FALLBACK_TRIGGERED', {
+            stage: stageName,
+            segmentIndex,
+            token,
+            fallbackDurationMs,
+          });
+          handleNarrationComplete(token);
+        }, fallbackDurationMs);
+        timersRef.current.add(completionFallback);
+        completionFallbacksRef.current.set(token, completionFallback);
 
         const explicitSpeed = Number(segment?.typeSpeed);
         const fallbackSpeed =
@@ -619,7 +656,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
       timersRef.current.add(timerId);
     },
-    [defaultCharsPerSecond, triggerAutoAdvance]
+    [defaultCharsPerSecond, handleNarrationComplete, triggerAutoAdvance]
   );
 
   const startNarration = useCallback(

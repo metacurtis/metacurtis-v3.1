@@ -24,7 +24,7 @@ function hasLocalOptIn() {
   }
 }
 
-const ALWAYS_ALLOWED_CAPABILITIES = new Set(['renderer:diagnostics']);
+const ALWAYS_ALLOWED_CAPABILITIES = new Set(['renderer:diagnostics', 'narration:control']);
 
 /**
  * Determine if a given capability may be controlled externally.

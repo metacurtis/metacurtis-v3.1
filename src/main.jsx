@@ -15,6 +15,7 @@ import App from './App.jsx';
 import './styles/index.css';
 import { showToast } from './utils/toast.js';
 import './dev/patternSMonitors.js';
+import './devtools/patchReactDevtools.js';
 
 // Trace system for dev event monitoring
 if (typeof window !== 'undefined' && !window.__trace) {

@@ -32,8 +32,10 @@ export default class MorphAnimationController {
       const progressRatio = Math.min(1, elapsed / safeDuration);
       const eased = ease(progressRatio);
       const value = clampedFrom + (clampedTo - clampedFrom) * eased;
+      const clampedValue = clamp01(value);
       BeatBus.emit(EVENTS.MORPH_PROGRESS, {
-        progress: clamp01(value),
+        value: clampedValue,
+        progress: clampedValue,
         source,
         channel: 'renderer',
       });
