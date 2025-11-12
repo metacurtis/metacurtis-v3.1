@@ -10,7 +10,6 @@ import {
   revokeControlSurface,
   isControlAllowed,
 } from '@/utils/runtimeGuards.js';
-import { NarrationFragment } from '../fragments/NarrationFragment.jsx';
 
 const DEBUG_NARRATION = true;
 const DEFAULT_CHARS_PER_SECOND = 15;
@@ -23,6 +22,12 @@ const VALID_START_SOURCES = new Set([
   'auto_advance',
   'director_stage_change',
 ]);
+
+const LINE_TYPE_TEMPLATES = {
+  genesis: ['chapter', 'important', 'context', 'important', 'important'],
+};
+
+const SUPPORTED_LINE_TYPES = new Set(['chapter', 'important', 'context']);
 
 // 🔬 DIAGNOSTIC: Narration lifecycle tracking
 let componentInstanceCounter = 0;
@@ -98,6 +103,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const hasTriggeredAutoAdvanceRef = useRef(false);
   const startedStagesRef = useRef(new Set());
   const pendingStartRef = useRef(null);
+  const stageLineCounterRef = useRef(new Map());
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => clearTimeout(id));
@@ -117,6 +123,29 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       previousOverflowRef.current = null;
     }
   }, []);
+
+  const getFallbackLineType = useCallback((stageName) => {
+    const key = stageName || 'default';
+    const current = stageLineCounterRef.current.get(key) ?? 0;
+    stageLineCounterRef.current.set(key, current + 1);
+    const template = LINE_TYPE_TEMPLATES[key];
+    if (template && template[current]) {
+      return template[current];
+    }
+    if (current === 0) return 'chapter';
+    if (current === 1) return 'important';
+    return 'context';
+  }, []);
+
+  const resolveLineType = useCallback(
+    (stageName, scriptedType) => {
+      if (scriptedType && SUPPORTED_LINE_TYPES.has(scriptedType)) {
+        return scriptedType;
+      }
+      return getFallbackLineType(stageName);
+    },
+    [getFallbackLineType]
+  );
 
   const lockScroll = useCallback(() => {
     if (typeof document === 'undefined') return;
@@ -176,6 +205,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         }
         if (stageBeingCleared) {
           startedStagesRef.current.delete(stageBeingCleared);
+          stageLineCounterRef.current.delete(stageBeingCleared);
         }
         activeStageRef.current = null;
       }
@@ -574,6 +604,9 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
             ? performance.now()
             : Date.now();
 
+        const scriptedType = segment?.lineType || segment?.metadata?.lineType || null;
+        const lineType = resolveLineType(stageName, scriptedType);
+
         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
           stage: stageName,
           segmentId: segment?.id ?? null,
@@ -581,6 +614,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           token,
           text,
           speedMs: speedMs || undefined,
+          type: lineType,
           timestamp: narrativeTimestamp,
         });
 
@@ -656,7 +690,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
       timersRef.current.add(timerId);
     },
-    [defaultCharsPerSecond, handleNarrationComplete, triggerAutoAdvance]
+    [defaultCharsPerSecond, handleNarrationComplete, resolveLineType, triggerAutoAdvance]
   );
 
   const startNarration = useCallback(
@@ -721,6 +755,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
       resetState({ preserveStage: true });
       activeStageRef.current = stageKey;
+      stageLineCounterRef.current.set(stageKey, 0);
       totalSegmentsRef.current = segments.length;
       completedSegmentsRef.current = 0;
       skipRequestedRef.current = false;
@@ -1125,15 +1160,5 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
     };
   }, [resetState]);
 
-  if (!activeNarration?.isActive) return null;
-
-  return (
-    <NarrationFragment
-      text={activeNarration.text}
-      isActive={activeNarration.isActive}
-      onComplete={handleNarrationComplete}
-      charsPerSecond={activeNarration.charsPerSecond}
-      segmentKey={activeNarration.token}
-    />
-  );
+  return null;
 }

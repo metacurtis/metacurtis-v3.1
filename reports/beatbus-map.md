@@ -163,7 +163,7 @@ Total events: 38
 **Emitters**:
 - `src/components/webgl/WebGLBackground.jsx:460`
 - `src/components/webgl/WebGLBackground.jsx:1391`
-- `src/theater/controllers/MorphAnimationController.js:35`
+- `src/theater/controllers/MorphAnimationController.js:36`
 
 **Listeners**:
 - `src/components/webgl/WebGLBackground.jsx:1862`
@@ -172,7 +172,7 @@ Total events: 38
 ## NARRATION_CLEANUP
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:164`
+- `src/components/narrative/NarrationController.jsx:166`
 
 **Listeners**:
 - `src/components/narrative/NarrationOverlayBus.jsx:206`
@@ -180,8 +180,8 @@ Total events: 38
 ## NARRATION_STOPPED
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:156`
-- `src/components/narrative/NarrationController.jsx:426`
+- `src/components/narrative/NarrationController.jsx:158`
+- `src/components/narrative/NarrationController.jsx:436`
 
 **Listeners**:
 - `src/components/narrative/NarrationOverlayBus.jsx:205`
@@ -189,7 +189,7 @@ Total events: 38
 ## NARRATIVE_LINE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:540`
+- `src/components/narrative/NarrationController.jsx:577`
 
 **Listeners**:
 - `src/components/narrative/NarrationOverlayBus.jsx:204`
@@ -288,7 +288,7 @@ Total events: 38
 ## RENDER_DIRECTIVE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:597`
+- `src/components/narrative/NarrationController.jsx:634`
 - `src/theater/ScrollOrchestrator.js:409`
 - `src/theater/TheaterDirector.js:545`
 - `canon-console/runtime/hud.js:408`
@@ -320,7 +320,7 @@ Total events: 38
 - `src/theater/TheaterDirector.js:1461`
 
 **Listeners**:
-- `src/components/narrative/NarrationController.jsx:984`
+- `src/components/narrative/NarrationController.jsx:1021`
 - `src/components/webgl/WebGLBackground.jsx:832`
 - `src/components/webgl/WebGLBackground.jsx:858`
 - `src/engine/ConsciousnessEngine.js:389`
@@ -340,14 +340,14 @@ Total events: 38
 ## START_NARRATIVE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:346`
+- `src/components/narrative/NarrationController.jsx:348`
 - `src/orchestration/navigation/narrativeNavigation.js:20`
 - `src/theater/TheaterDirector.js:732`
 - `src/theater/TheaterDirector.js:1475`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:195`
-- `src/components/narrative/NarrationController.jsx:983`
+- `src/components/narrative/NarrationController.jsx:1020`
 - `src/components/narrative/NarrationOverlayBus.jsx:203`
 
 ## TERMINAL_TYPE

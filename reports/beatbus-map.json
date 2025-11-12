@@ -23,23 +23,23 @@
     "NARRATION_STOPPED": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 156
+        "line": 158
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 426
+        "line": 436
       }
     ],
     "NARRATION_CLEANUP": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 164
+        "line": 166
       }
     ],
     "START_NARRATIVE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 346
+        "line": 348
       },
       {
         "file": "src/orchestration/navigation/narrativeNavigation.js",
@@ -57,13 +57,13 @@
     "NARRATIVE_LINE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 540
+        "line": 577
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 597
+        "line": 634
       },
       {
         "file": "src/theater/ScrollOrchestrator.js",
@@ -109,7 +109,7 @@
       },
       {
         "file": "src/theater/controllers/MorphAnimationController.js",
-        "line": 35
+        "line": 36
       }
     ],
     "PARTICLE_CLICK_HIT": [
@@ -365,7 +365,7 @@
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 983
+        "line": 1020
       },
       {
         "file": "src/components/narrative/NarrationOverlayBus.jsx",
@@ -387,7 +387,7 @@
     "STAGE_CHANGE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 984
+        "line": 1021
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",

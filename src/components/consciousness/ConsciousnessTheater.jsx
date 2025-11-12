@@ -18,7 +18,7 @@ import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import NavigationGate from '@/theater/NavigationGate.js';
-import NarrationOverlayBus from '@/components/narrative/NarrationOverlayBus.jsx';
+import { NarrativeChoreography } from '@/components/narrative/NarrativeChoreography.jsx';
 
 console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe cancel)');
 
@@ -502,8 +502,8 @@ export default function ConsciousnessTheater() {
         />
       )}
 
-      {/* Narrative overlay (bus-driven) */}
-      <NarrationOverlayBus />
+      {/* Narrative choreography overlay */}
+      <NarrativeChoreography />
 
       {/* Memory fragments */}
       {activeFragments.map((fragment) => {

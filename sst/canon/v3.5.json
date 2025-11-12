@@ -1514,7 +1514,8 @@
             "time": 1000,
             "narration": {
               "text": "I was eight years old. End of summer, 1983.",
-              "duration": 3000
+              "duration": 3000,
+              "type": "chapter"
             },
             "visual": "gentle_drift"
           },
@@ -1522,7 +1523,8 @@
             "time": 4000,
             "narration": {
               "text": "The Texas heat was finally breaking, and through my friend's window, that golden hour light made everything feel... possible.",
-              "duration": 6000
+              "duration": 6000,
+              "type": "context"
             },
             "visual": "no_change"
           },
@@ -1530,7 +1532,8 @@
             "time": 10000,
             "narration": {
               "text": "His mom had this programming book. The computer - a Commodore 64 - sat there like some kind of oracle. Waiting.",
-              "duration": 6000
+              "duration": 6000,
+              "type": "context"
             },
             "visual": "tier3_subtle_pulse"
           },
@@ -1538,7 +1541,8 @@
             "time": 16000,
             "narration": {
               "text": "I typed those lines exactly as the book showed. When I pressed RUN and the screen came alive...",
-              "duration": 5000
+              "duration": 5000,
+              "type": "important"
             },
             "visual": "tier2_flicker_increase"
           },
@@ -1546,7 +1550,8 @@
             "time": 22000,
             "narration": {
               "text": "...something lit up inside me. A spark that would wait 39 years to fully ignite.",
-              "duration": 5000
+              "duration": 5000,
+              "type": "important"
             },
             "visual": "tier3_glow_pulse"
           }

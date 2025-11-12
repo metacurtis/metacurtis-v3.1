@@ -91,6 +91,8 @@ function buildStageNarrative(stageName) {
       maxEndMs = endTime;
     }
 
+    const lineType = narration.type || beat?.type || null;
+
     const segment = Object.freeze({
       id: narration.id || beat?.id || `${stageName}_beat_${index}`,
       text,
@@ -99,6 +101,7 @@ function buildStageNarrative(stageName) {
         duration,
       }),
       visual: beat?.visual ?? narration.visual ?? null,
+      lineType: lineType || null,
       charsPerSecond: narration.charsPerSecond
         ? coerceNumber(narration.charsPerSecond, DEFAULT_CHARS_PER_SECOND)
         : computeCharsPerSecond(text, duration || 1),
@@ -171,6 +174,7 @@ export function getNarrationSegments(stageName) {
   return stage.narration.segments.map((segment) => ({
     ...segment,
     timing: { ...segment.timing },
+    lineType: segment.lineType || null,
     metadata: { ...segment.metadata },
   }));
 }
