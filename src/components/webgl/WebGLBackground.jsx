@@ -21,6 +21,7 @@ import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.j
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
 import { VC } from '@/config/visual-controls.js';
 import { particleRaycaster } from '@/utils/particleRaycast.js';
+import { useParticleChoreography } from './ParticleChoreography.jsx';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
@@ -213,6 +214,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const meshRef = useRef();
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
+  const uniformsRef = useRef(null);
   const geometryBoundOnceRef = useRef(false);
   // QR state / restore slots
   const qrModeRef = useRef(false);
@@ -267,6 +269,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const lastBlueprintMetaRef = useRef({});
   const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
+
+  useParticleChoreography(uniformsRef);
   const ignoreDirectivesRef = useRef(false);
   const listenersReadyRef = useRef(false);
   const fenceReadyRef = useRef(false);
@@ -1938,6 +1942,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uTierHighlight:   { value: -1 },
           uGridSpacing:     { value: new Float32Array([0.5, 0.5]) },
           uFlowTurbulence:  { value: 0.0 },
+          uDriftSpeed:      { value: 0.2 },
+          uGlowIntensity:   { value: 1.0 },
+          uVertexGlow:      { value: 1.0 },
+          uEdgeFlicker:     { value: 1.0 },
+          uPulseFrequency:  { value: 0.3 },
+          uPulseAmplitude:  { value: 0.15 },
           uStreakIntensity:{ value: 0.0 },
           uMotionParams:   { value: new Float32Array([0, 0, 0, 0]) },
         },
@@ -1949,9 +1959,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         depthTest: true,
       });
       materialRef.current = mat;
+      uniformsRef.current = mat.uniforms || null;
     }
 
     const uniforms = mat.uniforms || {};
+    uniformsRef.current = mat.uniforms || uniformsRef.current;
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
