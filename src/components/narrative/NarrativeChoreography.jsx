@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAtomValue } from '@/state/atoms/createAtom.js';
 import { stageAtom } from '@/state/atoms/stageAtom.js';
 import BeatBus from '@/theater/bus';
@@ -22,7 +22,8 @@ const CONFIG = {
         left: '50%',
         maxWidth: '70vw',
         textAlign: 'center',
-        wordBreak: 'break-word',
+        wordBreak: 'keep-all',
+        overflowWrap: 'normal',
         whiteSpace: 'pre-wrap',
       },
       transform: 'translateX(-50%)',
@@ -34,7 +35,8 @@ const CONFIG = {
         left: '6%',
         maxWidth: '55vw',
         textAlign: 'left',
-        wordBreak: 'break-word',
+        wordBreak: 'keep-all',
+        overflowWrap: 'normal',
         whiteSpace: 'pre-wrap',
       },
       transform: 'translateX(-4%)',
@@ -46,7 +48,8 @@ const CONFIG = {
         left: '50%',
         maxWidth: '52vw',
         textAlign: 'center',
-        wordBreak: 'break-word',
+        wordBreak: 'keep-all',
+        overflowWrap: 'normal',
         whiteSpace: 'pre-wrap',
       },
       transform: 'translateX(-50%)',
@@ -55,21 +58,30 @@ const CONFIG = {
   },
   palette: {
     chapter: {
-      color: 'rgba(255, 255, 255, 0.96)',
-      glow: '0 0 35px rgba(255, 254, 219, 0.55)',
+      color: 'rgba(255, 244, 214, 0.98)',
+      glow: '0 0 42px rgba(255, 184, 108, 0.6)',
     },
     important: {
-      color: 'rgba(220, 235, 255, 0.95)',
-      glow: '0 0 28px rgba(140, 170, 255, 0.45)',
+      color: 'rgba(198, 239, 255, 0.96)',
+      glow: '0 0 32px rgba(64, 196, 255, 0.5)',
     },
     context: {
-      color: 'rgba(190, 210, 230, 0.93)',
-      glow: '0 0 24px rgba(120, 150, 200, 0.4)',
+      color: 'rgba(210, 205, 255, 0.92)',
+      glow: '0 0 28px rgba(142, 123, 255, 0.45)',
     },
   },
 };
 
-const SCRAMBLE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789▮▯▱';
+const MATERIALIZE = Object.freeze({
+  baseDelay: 40,
+  delayStep: 18,
+  randomWindow: 240,
+  maxOffsetX: 28,
+  maxOffsetY: 34,
+  minScale: 0.65,
+  maxScale: 1.1,
+  maxBlur: 6,
+});
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -80,80 +92,125 @@ const computeHoldDuration = (text = '') => {
   return clamp(raw, minHold, maxHold);
 };
 
-function useScramble(text, durationMs) {
-  const [display, setDisplay] = useState('');
+function useParticleMaterialization(text) {
+  const memoizedParticles = useMemo(() => {
+    if (!text) return { units: [], tokens: [] };
+
+    const units = [];
+    let charCounter = 0;
+
+    const pushUnit = (unit) => {
+      units.push({ ...unit, flatIndex: units.length });
+    };
+
+    for (let i = 0; i < text.length; i += 1) {
+      const char = text[i];
+      if (char === '\n') {
+        pushUnit({ type: 'break', id: `break-${i}` });
+        continue;
+      }
+      if (char === ' ') {
+        pushUnit({ type: 'space', id: `space-${i}` });
+        continue;
+      }
+
+      const unit = {
+        type: 'char',
+        char,
+        id: `char-${i}-${char}-${Math.random().toString(36).slice(2)}`,
+        delay:
+          MATERIALIZE.baseDelay +
+          charCounter * MATERIALIZE.delayStep +
+          Math.random() * MATERIALIZE.randomWindow,
+        offsetX: (Math.random() - 0.5) * MATERIALIZE.maxOffsetX,
+        offsetY: (Math.random() - 0.5) * MATERIALIZE.maxOffsetY,
+        scale: MATERIALIZE.minScale + Math.random() * (MATERIALIZE.maxScale - MATERIALIZE.minScale),
+        blur: Math.random() * MATERIALIZE.maxBlur,
+      };
+      charCounter += 1;
+      pushUnit(unit);
+    }
+
+    const tokens = [];
+    let wordBuffer = [];
+
+    const flushWord = () => {
+      if (!wordBuffer.length) return;
+      tokens.push({
+        type: 'word',
+        id: `word-${tokens.length}-${Math.random().toString(36).slice(2)}`,
+        chars: wordBuffer,
+      });
+      wordBuffer = [];
+    };
+
+    units.forEach((unit) => {
+      if (unit.type === 'char') {
+        wordBuffer.push(unit);
+      } else {
+        flushWord();
+        tokens.push(unit);
+      }
+    });
+
+    flushWord();
+
+    return { units, tokens };
+  }, [text]);
+
+  const { units, tokens } = memoizedParticles;
+  const [revealed, setRevealed] = useState(() =>
+    units.map((unit) => (unit.type === 'char' ? false : true)),
+  );
 
   useEffect(() => {
-    if (!text) {
-      setDisplay('');
+    if (!units.length) {
+      setRevealed([]);
       return undefined;
     }
 
-    const lines = text.split('\n');
-    const outputs = Array(lines.length).fill('');
-    let currentLine = 0;
-    let intervalId = null;
+    setRevealed(units.map((unit) => (unit.type === 'char' ? false : true)));
 
-    const runLine = () => {
-      if (currentLine >= lines.length) {
-        setDisplay(outputs.join('\n'));
-        return;
-      }
-      const lineText = lines[currentLine];
-      if (!lineText.length) {
-        outputs[currentLine] = '';
-        currentLine += 1;
-        runLine();
-        return;
-      }
-      const steps = Math.min(48, Math.max(16, Math.ceil(lineText.length / 5)));
-      const interval = Math.max(35, durationMs / steps);
-      let step = 0;
+    const handles = units.map((unit) => {
+      if (unit.type !== 'char') return null;
+      return setTimeout(() => {
+        setRevealed((prev) => {
+          const next = prev.slice();
+          next[unit.flatIndex] = true;
+          return next;
+        });
+      }, unit.delay);
+    });
 
-      intervalId = setInterval(() => {
-        step += 1;
-        const progress = step / steps;
-        const revealCount = Math.floor(lineText.length * progress);
-        let nextLine = '';
-        for (let i = 0; i < lineText.length; i += 1) {
-          const char = lineText[i];
-          if (char === ' ') {
-            nextLine += ' ';
-          } else if (i < revealCount) {
-            nextLine += char;
-          } else {
-            const charIndex = (i + step) % SCRAMBLE_CHARS.length;
-            nextLine += SCRAMBLE_CHARS[charIndex];
-          }
-        }
-        outputs[currentLine] = nextLine;
-        setDisplay(outputs.join('\n'));
-        if (step >= steps) {
-          outputs[currentLine] = lineText;
-          clearInterval(intervalId);
-          currentLine += 1;
-          runLine();
-        }
-      }, interval);
-    };
-
-    runLine();
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      handles.forEach((handle) => {
+        if (handle) clearTimeout(handle);
+      });
     };
-  }, [text, durationMs]);
+  }, [units]);
 
-  return display;
+  return useMemo(
+    () =>
+      tokens.map((token) => {
+        if (token.type !== 'word') {
+          return token;
+        }
+        return {
+          ...token,
+          chars: token.chars.map((charUnit) => ({
+            ...charUnit,
+            revealed: Boolean(revealed[charUnit.flatIndex]),
+          })),
+        };
+      }),
+    [tokens, revealed],
+  );
 }
 
 function NarrativeCue({ cue, state }) {
   const palette = CONFIG.palette[cue.kind] || CONFIG.palette.context;
   const position = CONFIG.positions[cue.kind] || CONFIG.positions.context;
-  const scrambleDuration =
-    state === 'active'
-      ? CONFIG.timing.fadeInDuration * 1.25
-      : CONFIG.timing.fadeOutDuration * 0.9;
-  const displayText = useScramble(cue.text, scrambleDuration);
+  const particleTokens = useParticleMaterialization(cue.text || '');
   const baseTransform = position.transform || '';
 
   return (
@@ -176,7 +233,52 @@ function NarrativeCue({ cue, state }) {
         transform: baseTransform || 'none',
       }}
     >
-      {displayText}
+      {particleTokens.map((unit) => {
+        if (unit.type === 'break') return <br key={unit.id} />;
+        if (unit.type === 'space') {
+          return (
+            <span
+              key={unit.id}
+              style={{ display: 'inline-block', width: '0.44em', minWidth: '0.44em' }}
+            >
+              &nbsp;
+            </span>
+          );
+        }
+
+        if (unit.type === 'word') {
+          return (
+            <span
+              key={unit.id}
+              style={{
+                display: 'inline-flex',
+                whiteSpace: 'nowrap',
+                gap: '0.02em',
+              }}
+            >
+              {unit.chars.map((charUnit) => (
+                <span
+                  key={charUnit.id}
+                  style={{
+                    display: 'inline-block',
+                    opacity: charUnit.revealed ? 1 : 0,
+                    filter: charUnit.revealed ? 'blur(0px)' : `blur(${charUnit.blur}px)`,
+                    transform: charUnit.revealed
+                      ? 'translate3d(0, 0, 0) scale(1)'
+                      : `translate3d(${charUnit.offsetX}px, ${charUnit.offsetY}px, 0) scale(${charUnit.scale})`,
+                    transition:
+                      'opacity 360ms ease-out, transform 620ms cubic-bezier(0.22, 1, 0.36, 1), filter 480ms ease-out',
+                  }}
+                >
+                  {charUnit.char}
+                </span>
+              ))}
+            </span>
+          );
+        }
+
+        return null;
+      })}
     </div>
   );
 }
