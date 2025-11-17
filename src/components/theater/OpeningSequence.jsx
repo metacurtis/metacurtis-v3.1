@@ -11,7 +11,7 @@ const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || '
 const SCREEN_FILL_MS = 2000;
 const SCREEN_FILL_MIN_VISUAL_MS = 1400;
 const MONO_STACK =
-  "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace";
+  "SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace";
 
 export default function OpeningSequence() {
   const [visible, setVisible] = useState(false);
@@ -32,6 +32,9 @@ export default function OpeningSequence() {
   const audioUnlocked = useRef(false);
   const fadedRef = useRef(false);
   const fillStartRef = useRef(0);
+  const fillTextRef = useRef('');
+  const fillProgressRef = useRef(0);
+  const fillIntervalRef = useRef(null);
 
   const addTimeout = (fn, ms) => {
     const id = setTimeout(fn, ms);
@@ -170,20 +173,56 @@ export default function OpeningSequence() {
         fillStartRef.current =
           (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now());
 
-        const fillText = text.repeat(10);
+        const baseWord = text || `${GENESIS_STAGE_WORD} `;
+
+        // Rough viewport-based estimates for line sizing
+        let approxCharsPerLine = 80;
+        let approxLinesToFill = 20;
+        if (typeof window !== 'undefined') {
+          const vw = window.innerWidth || 1200;
+          const vh = window.innerHeight || 800;
+          approxCharsPerLine = Math.max(40, Math.floor(vw / 10));   // ~10px per char
+          approxLinesToFill = Math.max(10, Math.floor(vh / 24));    // ~24px per line
+        }
+
+        // Build one full-width line template
+        const repeatsForLine = Math.ceil(approxCharsPerLine / baseWord.length) + 1;
+        const longLine = baseWord.repeat(repeatsForLine);
+        const lineTemplate = longLine.slice(0, approxCharsPerLine);
+
+        // Reset fill state
         setScreenFillLines([]);
+        fillTextRef.current = lineTemplate;
+        fillProgressRef.current = 0;
 
+        // Clean up any prior fill interval
+        if (fillIntervalRef.current) {
+          clearInterval(fillIntervalRef.current);
+          intervals.current.delete(fillIntervalRef.current);
+          fillIntervalRef.current = null;
+        }
+
+        // Drop full lines rapidly to flood the viewport
+        const targetLines = approxLinesToFill + 4;
+        let producedLines = 0;
+        const intervalMs = Math.max(15, Math.min(scrollSpeed, 80));
         const intervalId = addInterval(() => {
+          producedLines += 1;
           setScreenFillLines(prev => {
-            if (prev.length >= 30) {
-              return [...prev.slice(1), fillText];
+            const next = [...prev, lineTemplate];
+            if (next.length > targetLines + 10) {
+              return next.slice(-targetLines);
             }
-            return [...prev, fillText];
+            return next;
           });
-        }, scrollSpeed);
+          if (producedLines >= targetLines) {
+            clearInterval(intervalId);
+            intervals.current.delete(intervalId);
+            fillIntervalRef.current = null;
+          }
+        }, intervalMs);
 
-        // Store interval ID for cleanup
-        intervals.current.add(intervalId);
+        fillIntervalRef.current = intervalId;
       }),
 
       // AUDIO COMPUTER HUM
@@ -253,6 +292,13 @@ export default function OpeningSequence() {
       clearAllTimers();
       eventHandlers.forEach(off => off && off());
       fillStartRef.current = 0;
+      fillTextRef.current = '';
+      fillProgressRef.current = 0;
+      if (fillIntervalRef.current) {
+        clearInterval(fillIntervalRef.current);
+        intervals.current.delete(fillIntervalRef.current);
+        fillIntervalRef.current = null;
+      }
 
       if (humAudioRef.current) {
         humAudioRef.current.pause();
@@ -369,7 +415,7 @@ export default function OpeningSequence() {
             height: '100%',
             padding: '1rem',
             overflow: 'hidden',
-            background: 'transparent',
+            background: 'rgba(0, 0, 0, 0.9)',
             opacity: screenFillLines.length ? 1 : 0,
             transition: 'opacity 200ms ease-out',
           }}
@@ -383,13 +429,12 @@ export default function OpeningSequence() {
               opacity: 0.8,
               textShadow: 'none', // NO GLOW
               whiteSpace: 'pre',
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden',
             }}
           >
-            {screenFillLines.map((line, idx) => (
-              <div key={idx} style={{ whiteSpace: 'nowrap' }}>
-                {line}
-              </div>
-            ))}
+            {screenFillLines.join('\n')}
           </pre>
         </div>
       )}

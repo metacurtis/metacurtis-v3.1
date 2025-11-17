@@ -15,6 +15,7 @@ if (typeof window !== 'undefined' && !window.RAYCAST_DIAGNOSTIC) {
 }
 import { EVENTS } from '@/theater/events.js';
 import BeatBus from '@/theater/bus';
+import { emitMorphProgress, emitParticlesEmerged } from '@/theater/bus/emitters.js';
 import { trace } from '@/dev/trace.js';
 
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
@@ -68,6 +69,30 @@ const guardUniformWrite = (origin = 'unknown', uniformName) => {
   }
   return true;
 };
+
+// Lightweight opening-phase detection to avoid premature freezes/fenceposts during the opening sequence
+function isOpeningInProgress() {
+  if (typeof window === 'undefined') return false;
+  const director = window.theaterDirector;
+  try {
+    if (director?.isOpeningInProgress?.()) return true;
+    const phase = director?.phase;
+    const openingPhases = new Set([
+      'black',
+      'cursor',
+      'terminal',
+      'fill',
+      'chaos',
+      'coalesce',
+      'settle',
+      'emergence',
+    ]);
+    if (phase && openingPhases.has(phase)) return true;
+    return director?._openingInProgress === true;
+  } catch {
+    return false;
+  }
+}
 
 function pickStageColors(stageName) {
   const s = Canonical?.stages?.[stageName] || {};
@@ -277,6 +302,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const pendingFencepostRef = useRef(false);
   const pendingFenceDataRef = useRef(null);
   const pendingFenceTimeoutRef = useRef(null);
+  const fencepostEmittedOnceRef = useRef(false);
   const spinRef = useRef({ active: false, velocity: { y: 0, z: 0 }, endTime: 0 });
   const particleEffectStateRef = useRef({
     speedMultiplier: 1.0,
@@ -341,12 +367,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   const emitFencepostNow = useCallback((payload) => {
     if (!payload) return;
+    if (fencepostEmittedOnceRef.current) return;
+    fencepostEmittedOnceRef.current = true;
     const finalPayload = {
       channel: payload.channel || 'renderer',
       ...payload,
     };
     trace('WBG:FENCEPOST', finalPayload);
-    BeatBus.emit(EVENTS.PARTICLES_EMERGED, finalPayload);
+    emitParticlesEmerged(finalPayload);
+    if (typeof window !== 'undefined') {
+      window.__lastParticlesEmerged = finalPayload;
+    }
     if (import.meta?.env?.DEV) {
       console.log('✅ [RENDERER] PARTICLES_EMERGED emitted', finalPayload);
     }
@@ -400,6 +431,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const queueFencepost = useCallback(
     (payload) => {
       if (!payload) return;
+      if (fencepostEmittedOnceRef.current) return;
 
       if (fenceReadyRef.current) {
         emitFencepostNow(payload);
@@ -443,6 +475,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         return false;
       }
 
+      // During opening, skip freezing/fencepost; let Director handle the handoff.
+      if (isOpeningInProgress()) {
+        if (DEV) {
+          console.log('[WBG] finalizeEmergence skipped during opening', { source });
+        }
+        return false;
+      }
+
       const mat = materialRef.current;
       const uniforms = mat?.uniforms;
 
@@ -461,7 +501,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         mat.uniformsNeedUpdate = true;
       }
 
-      BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+      emitMorphProgress({
         progress: 1,
         source,
         channel: 'renderer',
@@ -477,16 +517,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       emergencePendingRef.current = false;
       ignoreDirectivesRef.current = true;
 
-      const payload = {
+      trace('WBG:FAST_FORWARD', {
         at: now,
         source,
         stage: stageNameRef.current || 'genesis',
         morph: 1,
         fastForward: true,
-      };
-
-      queueFencepost(payload);
-      trace('WBG:FAST_FORWARD', payload);
+      });
       return true;
     },
     [queueFencepost]
@@ -1120,13 +1157,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         cached = false;
       }
 
-      // ignore non-genesis full binds while pending (pre-scroll)
-      if (!isEmergence && emergencePendingRef.current) {
-        if ((raw.stageName || st) !== 'genesis') {
-          console.warn('🖼️ Renderer: ignoring pre-scroll full for stage=', raw.stageName || st);
-          return;
-        }
-      }
+      // allow full binds for all stages; only block late emergence rebinding
       // ignore late emergence after handoff
       if (isEmergence && emittedEmergedRef.current) return;
 
@@ -1392,7 +1423,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           };
           console.debug('[WBG] AABB bind', { pos: extent('position') }, { atm: extent('atmosphericPosition') }, { tgt: extent('text3DPosition') });
         }
-        BeatBus.emit?.(EVENTS.MORPH_PROGRESS, {
+        emitMorphProgress({
           progress: 0,
           source: 'renderer',
           channel: 'renderer',
@@ -1414,6 +1445,35 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           fenceReadyRef.current = false;
           clearPendingFencepost();
           geometryBoundOnceRef.current = false;
+        }
+
+        const stageName = raw.stageName || st || 'genesis';
+        const isGenesisFull = stageName === 'genesis' && !isEmergence;
+        if (isGenesisFull && !fencepostEmittedOnceRef.current) {
+          // Avoid emitting the final fencepost during opening; Director will drive it post-opening.
+          if (isOpeningInProgress()) {
+            if (DEV) {
+              console.log('[WBG] Genesis fencepost skipped during opening');
+            }
+          } else {
+            const now =
+              typeof performance !== 'undefined' && typeof performance.now === 'function'
+                ? performance.now()
+                : Date.now();
+            const count =
+              geometryRef.current?.attributes?.position?.count ??
+              raw.activeCount ??
+              raw.particleCount ??
+              0;
+            queueFencepost({
+              at: now,
+              source: 'renderer-full-genesis-bind',
+              stage: stageName,
+              morph: uniforms?.uMorphProgress?.value ?? 1,
+              cached: Boolean(cached),
+              count,
+            });
+          }
         }
 
         if (isClimax) {
@@ -1516,34 +1576,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           }
         }
 
-        if ((raw.stageName || st) === 'genesis' && emergencePendingRef.current && !emittedEmergedRef.current) {
-          const mat = materialRef.current;
-          const freezeUniform = mat?.uniforms?.uPostMorphFreeze;
-          if (freezeUniform && freezeUniform.value !== 1.0) {
-            freezeUniform.value = 1.0;
-            mat.uniformsNeedUpdate = true;
-            trace('WBG:FREEZE', { value: 1, source: 'blueprint' });
-          }
-          const payload = {
-            at: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
-            source: 'renderer-blueprint',
-            stage: raw.stageName || st || 'genesis',
-            count:
-              geometryRef.current?.attributes?.position?.count ??
-              raw.activeCount ??
-              raw.particleCount ??
-              0,
-          };
-          fenceReadyRef.current = true;
-          clearPendingFencepost();
-          emitFencepostNow(payload);
-          if (typeof window !== 'undefined') {
-            window.__lastParticlesEmerged = payload;
-          }
-          emittedEmergedRef.current = true;
-          emergencePendingRef.current = false;
-          console.log('EMERGED once — emitting PARTICLES_EMERGED fencepost');
-        }
       }
 
       if (!isEmergence) {
@@ -1679,7 +1711,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   useEffect(() => {
     if (typeof BeatBus?.on !== 'function') return;
     const handleDirective = (payload = {}) => {
-      if (ignoreDirectivesRef.current) return;
+      if (ignoreDirectivesRef.current) {
+        if (import.meta?.env?.DEV) {
+          console.warn('[Renderer] RENDER_DIRECTIVE ignored due to ignoreDirectivesRef', {
+            verb: payload?.verb,
+            source: payload?.source,
+          });
+        }
+        return;
+      }
       const mat = materialRef.current;
       const mesh = meshRef.current;
       const geometry = geometryRef.current;
@@ -1687,6 +1727,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const uniforms = mat.uniforms;
       const directiveSource = payload?.source || 'renderer:directive';
       const origin = 'renderer';
+
+      const clamp01Local = (x) => Math.max(0, Math.min(1, Number(x)));
 
       const setUniformNumber = (uniformName, value) => {
         if (typeof value !== 'number') return;
@@ -1723,6 +1765,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setUniformNumber('uParticleFlash', payload.uParticleFlash);
       setUniformNumber('uOpacityMin', payload.uOpacityMin);
       setUniformNumber('uOpacityMax', payload.uOpacityMax);
+      if (typeof payload.uSpreadFactor === 'number' && payload.uSpreadFactor > 0) {
+        setUniformNumber('uSpreadFactor', payload.uSpreadFactor);
+      }
+      setUniformNumber('uGaussianSigma', payload.uGaussianSigma);
+      setUniformNumber('uBandFade', payload.bandFade);
+      setUniformNumber('uBandHeight', payload.bandHeight);
 
       if (typeof payload.uMorphProgress === 'number') {
         setUniformNumber('uMorphProgress', payload.uMorphProgress);
@@ -1737,23 +1785,73 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       if (typeof payload.pointSize === 'number') {
-        setUniformNumber('uPointSize', payload.pointSize);
-        lastPointSizeRef.current = payload.pointSize;
+        const clampedSize = Math.max(0.5, Math.min(payload.pointSize, 12.0));
+        setUniformNumber('uPointSize', clampedSize);
+        lastPointSizeRef.current = clampedSize;
       }
 
       if (payload.gaussianSigma !== undefined) {
         setUniformNumber('uGaussianSigma', payload.gaussianSigma);
       }
+      if (payload.bandFade !== undefined) {
+        setUniformNumber('uBandFade', payload.bandFade);
+      }
+      if (payload.bandHeight !== undefined) {
+        setUniformNumber('uBandHeight', payload.bandHeight);
+      }
 
       if (Array.isArray(payload.tierHighlight) && uniforms.uTierHighlight) {
-        applyUniformArray('uTierHighlight', uniforms.uTierHighlight, payload.tierHighlight);
+        applyUniformArray(
+          'uTierHighlight',
+          uniforms.uTierHighlight,
+          payload.tierHighlight.map((v) => clamp01Local(v))
+        );
+      }
+
+      if (uniforms.uTierMode) {
+        const tierModes = Array.isArray(payload.tierModes)
+          ? payload.tierModes
+          : (typeof payload.uMotionMode === 'number'
+              ? [payload.uMotionMode, payload.uMotionMode, payload.uMotionMode, payload.uMotionMode]
+              : null);
+        if (tierModes) {
+          applyUniformArray('uTierMode', uniforms.uTierMode, tierModes);
+        }
+      }
+      if (Array.isArray(payload.tierParams) && payload.tierParams.length >= 4) {
+        const params = payload.tierParams;
+        if (uniforms.uTierParams0) applyUniformArray('uTierParams0', uniforms.uTierParams0, params[0]);
+        if (uniforms.uTierParams1) applyUniformArray('uTierParams1', uniforms.uTierParams1, params[1]);
+        if (uniforms.uTierParams2) applyUniformArray('uTierParams2', uniforms.uTierParams2, params[2]);
+        if (uniforms.uTierParams3) applyUniformArray('uTierParams3', uniforms.uTierParams3, params[3]);
+      } else if (uniforms.uTierParams0) {
+        // Fallback to a gentle drift template when no params provided
+        const template = [0.8, 0.2, 0.5, 0.0];
+        applyUniformArray('uTierParams0', uniforms.uTierParams0, template);
+        if (uniforms.uTierParams1) applyUniformArray('uTierParams1', uniforms.uTierParams1, template);
+        if (uniforms.uTierParams2) applyUniformArray('uTierParams2', uniforms.uTierParams2, template);
+        if (uniforms.uTierParams3) applyUniformArray('uTierParams3', uniforms.uTierParams3, template);
+      }
+      if ((typeof payload.gridX === 'number' || typeof payload.gridY === 'number') && uniforms.uGridSpacing) {
+        const gx = typeof payload.gridX === 'number' ? payload.gridX : uniforms.uGridSpacing.value?.x || 0.2;
+        const gy = typeof payload.gridY === 'number' ? payload.gridY : uniforms.uGridSpacing.value?.y || 0.2;
+        if (gx > 0 && gy > 0) {
+          applyUniformArray('uGridSpacing', uniforms.uGridSpacing, [gx, gy]);
+        }
       }
 
       if (payload.uniforms && typeof payload.uniforms === 'object') {
         Object.entries(payload.uniforms).forEach(([key, value]) => {
-          if (uniforms[key]) {
-            applyUniformArray(key, uniforms[key], value);
+          if (!uniforms[key]) return;
+          if (key === 'uTierHighlight' && Array.isArray(value)) {
+            applyUniformArray(key, uniforms[key], value.map((v) => clamp01Local(v)));
+            return;
           }
+          if (key === 'uOpacityRamp' && Array.isArray(value)) {
+            applyUniformArray(key, uniforms[key], value.map((v) => clamp01Local(v)));
+            return;
+          }
+          applyUniformArray(key, uniforms[key], value);
         });
       }
 
@@ -1833,25 +1931,20 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
       mat.uniformsNeedUpdate = true;
 
+      const skipFreezeForOpening = isOpeningInProgress();
+
       if (emergencePendingRef.current && !emittedEmergedRef.current && value >= 0.995) {
         const now =
           typeof performance !== 'undefined' && typeof performance.now === 'function'
             ? performance.now()
             : Date.now();
 
-        if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+        // During opening/genesis, allow chaos/coalesce/settle to breathe; freeze later stages only.
+        if (!skipFreezeForOpening && uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
           uniforms.uPostMorphFreeze.value = 1.0;
           mat.uniformsNeedUpdate = true;
           trace('WBG:FREEZE', { value: 1, source: 'morph' });
         }
-
-        const currentStage = stageNameRef.current || 'genesis';
-        queueFencepost({
-          at: now,
-          source: 'renderer-morph',
-          stage: currentStage,
-          morph: value,
-        });
 
         emittedEmergedRef.current = true;
         emergencePendingRef.current = false;

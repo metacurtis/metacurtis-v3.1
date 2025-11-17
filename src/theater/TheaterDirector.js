@@ -10,6 +10,7 @@ import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 import MorphAnimationController from '@/theater/controllers/MorphAnimationController.js';
+import { emitRenderDirective } from './bus/emitters.js';
 
 // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
 if (typeof window !== 'undefined') {
@@ -91,30 +92,30 @@ const PHASE_DIRECTIVE_ENVELOPE = {
   chaos: {
     motionMode: 3,
     particlePhase: 2,
-    flowTurbulence: 0.85,
-    particleFlash: 0.95,
-    opacity: [0.45, 0.95],
+    flowTurbulence: 1.5,
+    particleFlash: 1.2,
+    opacity: [0.3, 1.0],
   },
   coalesce: {
     motionMode: 2,
     particlePhase: 3,
-    flowTurbulence: 0.5,
-    particleFlash: 0.6,
-    opacity: [0.35, 0.85],
+    flowTurbulence: 0.8,
+    particleFlash: 0.8,
+    opacity: [0.4, 0.9],
   },
   settle: {
     motionMode: 1,
     particlePhase: 1,
-    flowTurbulence: 0.2,
-    particleFlash: 0.3,
-    opacity: [0.25, 0.75],
+    flowTurbulence: 0.1,
+    particleFlash: 0.2,
+    opacity: [0.4, 0.8],
   },
   emergence: {
     motionMode: 3,
     particlePhase: 2,
-    flowTurbulence: 0.7,
+    flowTurbulence: 1.0,
     particleFlash: 1.0,
-    opacity: [0.5, 1.0],
+    opacity: [0.6, 1.0],
   },
 };
 
@@ -542,7 +543,7 @@ class TheaterDirector {
       directive.uniforms = { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 };
     }
 
-    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, directive);
+    emitRenderDirective(directive);
 
     if (morph >= 0.995) {
       this._pendingDirectorFencepost = {
@@ -1165,8 +1166,8 @@ class TheaterDirector {
             tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
               ? Canonical.stages.genesis.tierMix
               : (Array.isArray(VC?.TIER_RATIOS) ? VC.TIER_RATIOS : undefined),
-            skipMorphAnimation: true,
-            fastForward: true,
+            skipMorphAnimation: false,
+            fastForward: false,
           });
           this._openingPrebound = true;
         } catch (bindError) {
@@ -1426,12 +1427,15 @@ class TheaterDirector {
             finish({ type: 'blueprint', payload });
           });
 
-          if (this._pendingDirectorFencepost) {
+          // Pattern S + single-writer: renderer emits PARTICLES_EMERGED.
+          // If we have a pending payload, treat it only as diagnostic context.
+          if (this._pendingDirectorFencepost && import.meta?.env?.DEV) {
             const pendingPayload = this._pendingDirectorFencepost;
             this._pendingDirectorFencepost = null;
-            queueMicrotask(() => {
-              BeatBus.emit(EVENTS.PARTICLES_EMERGED, pendingPayload);
-              this._directorFencepostSent = true;
+            console.log('🎬 [Director] Waiting for renderer PARTICLES_EMERGED fencepost', {
+              stage: pendingPayload?.stage,
+              mode: pendingPayload?.mode,
+              source: 'opening_emergence',
             });
           }
 
@@ -1456,15 +1460,36 @@ class TheaterDirector {
       
       this.phase = 'genesis';
       const previousStage = this.currentStage ?? 'emergence';
-      console.log('🧬 Phase: Genesis stage handoff');
+      console.log('🧬 Phase: Genesis stage handoff', { from: previousStage, to: toStage });
 
-      BeatBus.emit(EVENTS.STAGE_CHANGE, {
-        from: previousStage,
-        to: toStage,
-        skipBlueprint: skipGenesisBlueprint,
-        preserveEmergence: true,
-        targetState,
-      });
+      // Pattern S + Single Writer: Director NEVER emits STAGE_CHANGE directly.
+      // Director only asks the navigation layer to move stages.
+      const nav =
+        typeof window !== 'undefined' && window.unifiedNav && typeof window.unifiedNav.navigateToStage === 'function'
+          ? window.unifiedNav
+          : null;
+
+      if (nav) {
+        try {
+          await nav.navigateToStage(toStage, {
+            smooth: false,
+            skipNarration: false,
+            source: 'director_opening_handoff',
+            settleMs: 450,
+          });
+        } catch (err) {
+          console.warn('[Director] unifiedNav navigation failed; falling back', err);
+        }
+      } else if (typeof window !== 'undefined' && window.stageControls?.jumpToStage) {
+        console.warn(
+          '[Director] unifiedNav missing; using stageControls.jumpToStage fallback for genesis handoff',
+        );
+        window.stageControls.jumpToStage(toStage);
+      } else {
+        console.warn(
+          '[Director] No unifiedNav or stageControls; cannot complete genesis handoff via navigation',
+        );
+      }
 
       try {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });

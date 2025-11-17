@@ -6,6 +6,7 @@
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { emitRenderDirective } from './bus/emitters.js';
 import {
   exposeDiagnostics,
   exposeControlSurface,
@@ -38,6 +39,7 @@ export default class ScrollOrchestrator {
     this._update = this._update.bind(this);
     this._ensureScrollableArea = this._ensureScrollableArea.bind(this);
     this.running = false;
+    this.enabled = false; // opening gate: unlocked by ENABLE_SCROLL
     this.lastStageIndex = -1;
     this.morph = 1;
     this.morphTarget = 1;
@@ -50,6 +52,15 @@ export default class ScrollOrchestrator {
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
     this._lastScrollLogBucket = null;
+
+    if (typeof BeatBus?.on === 'function') {
+      BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
+        this.enabled = true;
+        if (DEBUG_SCROLL) {
+          console.log('📜 [ScrollOrchestrator] ENABLE_SCROLL received → scroll visual control enabled');
+        }
+      });
+    }
 
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       this._ensureScrollableArea('constructor');
@@ -193,7 +204,14 @@ export default class ScrollOrchestrator {
         Canonical?.stageOrder?.[this.lastStageIndex] ||
         Object.keys(Canonical?.stages || {})[this.lastStageIndex] ||
         'unknown';
-      __emitMorphDirective(this.morph, stageName);
+      if (this.enabled) {
+        __emitMorphDirective(this.morph, stageName);
+      } else if (DEBUG_SCROLL) {
+        console.log('[ScrollOrchestrator] Morph update suppressed until ENABLE_SCROLL', {
+          value: this.morph,
+          stageName,
+        });
+      }
     }
   }
 
@@ -336,12 +354,9 @@ export default class ScrollOrchestrator {
           willTriggerMorph: true,
           timestamp: performance.now(),
         });
-        BeatBus.emit?.(EVENTS.STAGE_CHANGE, { 
-          stage: stageName, 
-          index: stageIdx,
-          scrollPercent: easedPct,
-          localProgress: local
-        });
+        if (import.meta.env?.DEV) {
+          console.warn('[ScrollOrchestrator] STAGE_CHANGE emission disabled; navigation handled via UnifiedNavigation/StateCommands');
+        }
         this._lastScrollLogBucket = null;
         if (DEBUG_SCROLL) {
           console.log(`📜 Stage change: ${stageName} (${stageIdx})`);
@@ -406,7 +421,7 @@ function __emitMorphDirective(value, stageName = 'genesis') {
   __lastMorphDirective = value ?? 0;
   __lastMorphDirectiveStamp = now;
 
-  BeatBus.emit(EVENTS.RENDER_DIRECTIVE, {
+  emitRenderDirective({
     source: 'scroll_orchestrator',
     channel: 'renderer',
     phase: 'scroll',

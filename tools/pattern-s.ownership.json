@@ -1,0 +1,190 @@
+{
+  "events": {
+    "AUDIO_COMPUTER_HUM": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "BLUEPRINT_INVALIDATED": {
+      "emitters": ["canon-console/runtime/blueprint-guard-v2.js"]
+    },
+    "BLUEPRINT_READY": {
+      "emitters": ["src/theater/bus/emitters.js"]
+    },
+    "BUILD_EMERGENCE_BLUEPRINT": {
+      "emitters": [
+        "src/state/commands/StateCommands.js",
+        "src/theater/TheaterDirector.js"
+      ]
+    },
+    "CANON_VIOLATION": {
+      "emitters": [
+        "canon-console/browser/inject.js",
+        "canon-console/runtime/blueprint-guard-v2.js"
+      ]
+    },
+    "CLIMAX_STEP": {
+      "emitters": ["src/engine/ConsciousnessEngine.js"]
+    },
+    "CURSOR_BLINK": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "CURSOR_SHOW": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "DIRECTOR_CANCEL": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "DIRECTOR_ERROR": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "DIRECTOR_OPENING_MODE": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "DIRECTOR:MORPH_STATE": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "ENABLE_SCROLL": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "ENGINE_VIEWPORT_HINT": {
+      "emitters": [
+        "src/components/consciousness/ConsciousnessTheater.jsx",
+        "src/components/webgl/WebGLBackground.jsx",
+        "src/theater/TheaterDirector.js"
+      ]
+    },
+    "ENGINE:MORPH_STATE": {
+      "emitters": ["src/engine/ConsciousnessEngine.js"]
+    },
+    "FENCEPOST_LISTENERS_READY": {
+      "emitters": [
+        "src/components/webgl/WebGLBackground.jsx",
+        "src/theater/TheaterDirector.js"
+      ]
+    },
+    "FENCEPOST_REPORT": {
+      "emitters": ["canon-console/runtime/playbooks-extra.js"]
+    },
+    "MORPH_PROGRESS": {
+      "emitters": ["src/theater/bus/emitters.js"]
+    },
+    "NARRATION_CLEANUP": {
+      "emitters": ["src/components/narrative/NarrationController.jsx"]
+    },
+    "NARRATION_STOPPED": {
+      "emitters": ["src/components/narrative/NarrationController.jsx"]
+    },
+    "NARRATIVE_LINE": {
+      "emitters": ["src/components/narrative/NarrationController.jsx"]
+    },
+    "OPENING_COMPLETE": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "PARTICLE_CLICK_HIT": {
+      "emitters": ["src/components/webgl/WebGLBackground.jsx"]
+    },
+    "PARTICLE_CLICK_REQUEST": {
+      "emitters": ["src/components/webgl/WebGLCanvas.jsx"]
+    },
+    "PARTICLE_PHASE": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "PARTICLES_EMERGED": {
+      "emitters": ["src/theater/bus/emitters.js"]
+    },
+    "PARTICLES_START_EMERGING": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "PREWARM_COMPLETE": {
+      "emitters": ["src/engine/ConsciousnessEngine.js"]
+    },
+    "PREWARM_GENESIS_BLUEPRINT": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "QUALITY_CHANGE": {
+      "emitters": [
+        "src/state/atoms/qualityAtom.js",
+        "src/state/commands/StateCommands.js"
+      ]
+    },
+    "RENDER_DIRECTIVE": {
+      "emitters": ["src/theater/bus/emitters.js"]
+    },
+    "RENDERER_TUNE": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "SCREEN_FILL": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    },
+    "SCROLL_PROGRESS": {
+      "emitters": ["src/theater/ScrollOrchestrator.js"]
+    },
+    "STAGE_CHANGE": {
+      "emitters": ["src/theater/bus/emitters.js"]
+    },
+    "START_CLIMAX": {
+      "emitters": ["src/components/fragments/ClimaxSequenceController.jsx"]
+    },
+    "START_NARRATIVE": {
+      "emitters": [
+        "src/components/narrative/NarrationController.jsx",
+        "src/orchestration/navigation/narrativeNavigation.js",
+        "src/theater/TheaterDirector.js"
+      ]
+    },
+    "TERMINAL_TYPE": {
+      "emitters": ["src/theater/TheaterDirector.js"]
+    }
+  },
+  "gpu": {
+    "uniforms": {
+      "uActiveCount": ["src/components/webgl/WebGLBackground.jsx"],
+      "uAtlasTexture": ["src/components/webgl/WebGLBackground.jsx"],
+      "uBandFade": ["src/components/webgl/WebGLBackground.jsx"],
+      "uBandHeight": ["src/components/webgl/WebGLBackground.jsx"],
+      "uBrainRegion": ["src/components/webgl/WebGLBackground.jsx"],
+      "uColorAccent1": ["src/components/webgl/WebGLBackground.jsx"],
+      "uColorAccent2": ["src/components/webgl/WebGLBackground.jsx"],
+      "uColorCurrent": ["src/components/webgl/WebGLBackground.jsx"],
+      "uColorNext": ["src/components/webgl/WebGLBackground.jsx"],
+      "uDevicePixelRatio": ["src/components/webgl/WebGLBackground.jsx"],
+      "uMorph": ["src/components/webgl/WebGLBackground.jsx"],
+      "uMorphProgress": ["src/components/webgl/WebGLBackground.jsx"],
+      "uPalette0": ["src/components/webgl/WebGLBackground.jsx"],
+      "uPalette1": ["src/components/webgl/WebGLBackground.jsx"],
+      "uPalette2": ["src/components/webgl/WebGLBackground.jsx"],
+      "uPalette3": ["src/components/webgl/WebGLBackground.jsx"],
+      "uPointSize": [
+        "src/components/webgl/WebGLBackground.jsx",
+        "src/runtime/materialFactory.js"
+      ],
+      "uPostMorphFreeze": ["src/components/webgl/WebGLBackground.jsx"],
+      "uScrollProgress": ["src/components/webgl/WebGLBackground.jsx"],
+      "uStageBlend": ["src/components/webgl/WebGLBackground.jsx"],
+      "uStageIndex": ["src/components/webgl/WebGLBackground.jsx"],
+      "uStageProgress": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierCutoff": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierHighlight": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierMode": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierParams0": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierParams1": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierParams2": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTierParams3": ["src/components/webgl/WebGLBackground.jsx"],
+      "uTime": ["src/components/webgl/WebGLBackground.jsx"]
+    },
+    "geometry": {
+      "bind": ["src/components/webgl/WebGLBackground.jsx"],
+      "setDrawRange": ["src/components/webgl/WebGLBackground.jsx"]
+    }
+  },
+  "rules": {
+    "disallowRawBeatBusEmit": true,
+    "unknownCoreEventIsViolation": true,
+    "coreEvents": [
+      "STAGE_CHANGE",
+      "BLUEPRINT_READY",
+      "PARTICLES_EMERGED",
+      "RENDER_DIRECTIVE",
+      "MORPH_PROGRESS"
+    ]
+  }
+}

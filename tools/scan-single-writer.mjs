@@ -1,96 +1,119 @@
-#!/usr/bin/env node
-/* eslint-env node */
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
-import { walk } from './lib/walk.mjs';
-import {
-  parseOwnershipDoc,
-  getGeometryRegex,
-  hasOverride,
-  normalizePath,
-  isTestFile,
-} from './lib/ownership.mjs';
+import { fileURLToPath } from 'node:url';
 
-const CODE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs']);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.join(__dirname, '..');
+const OWNERSHIP_PATH = path.join(__dirname, 'pattern-s.ownership.json');
 
-function buildUniformRules(uniforms) {
-  return Array.from(uniforms.entries()).map(([name, owners]) => ({
-    key: name,
-    regex: new RegExp(`${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.value\\s*=`, 'g'),
-    allow: new Set(owners || []),
-  }));
+function loadOwnership() {
+  const raw = fs.readFileSync(OWNERSHIP_PATH, 'utf8');
+  return JSON.parse(raw);
 }
 
-function buildGeometryRules(geometry) {
-  return Array.from(geometry.entries()).map(([name, owners]) => ({
-    key: name,
-    regex: getGeometryRegex(name),
-    allow: new Set(owners || []),
-  }));
+function walk(dir, filterExt = ['.js', '.jsx', '.ts', '.tsx']) {
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name.startsWith('.')) continue;
+      files.push(...walk(full, filterExt));
+    } else {
+      if (filterExt.includes(path.extname(entry.name))) {
+        files.push(full);
+      }
+    }
+  }
+  return files;
 }
 
-function getLineNumber(text, index) {
-  return text.slice(0, index).split(/\r?\n/).length;
+function normalizePath(p) {
+  return p.replace(ROOT + path.sep, '').replace(/\\/g, '/');
 }
 
-async function main() {
-  const ownership = await parseOwnershipDoc('docs/OWNERSHIP.md');
-  const uniformRules = buildUniformRules(ownership.sections.uniforms);
-  const geometryRules = buildGeometryRules(ownership.sections.geometry || new Map());
+const BEATBUS_EMIT_RE = /BeatBus\.emit\s*\(\s*(?:EVENTS\.([A-Z_]+)|['"]([A-Z_]+)['"])/g;
+const UNIFORM_WRITE_RE = /\.uniforms\.([a-zA-Z0-9_]+)\s*\.value\s*=/g;
+const DRAWRANGE_RE = /\.setDrawRange\s*\(/g;
+
+function scanFile(file, ownership, violations, coreEvents) {
+  const rel = normalizePath(file);
+  const src = fs.readFileSync(file, 'utf8');
+
+  let match;
+
+  // Event emits
+  while ((match = BEATBUS_EMIT_RE.exec(src)) !== null) {
+    const evt = match[1] || match[2];
+    if (coreEvents.size && !coreEvents.has(evt)) continue;
+    const allowedEmitters = ownership.events?.[evt]?.emitters ?? [];
+    const isAllowed = allowedEmitters.includes(rel);
+    const isUnknownCore = ownership.rules?.unknownCoreEventIsViolation && ownership.events?.[evt] === undefined;
+
+    if (isUnknownCore || !isAllowed) {
+      violations.push({
+        type: 'event_emitter',
+        event: evt,
+        file: rel,
+        message: `Unauthorized emitter for ${evt} in ${rel}`,
+      });
+    }
+  }
+
+  // Uniform writes (u*)
+  while ((match = UNIFORM_WRITE_RE.exec(src)) !== null) {
+    const uniform = match[1];
+    if (!uniform.startsWith('u')) continue;
+    const owners =
+      (ownership.gpu?.uniforms?.[uniform]) ??
+      (ownership.gpu?.uniforms?.['u*']) ??
+      [];
+    const isAllowed = owners.includes(rel);
+    if (!isAllowed) {
+      violations.push({
+        type: 'gpu_uniform',
+        uniform,
+        file: rel,
+        message: `Unauthorized uniform write ${uniform} in ${rel}`,
+      });
+    }
+  }
+
+  // Geometry writes
+  if (DRAWRANGE_RE.test(src)) {
+    const owners = ownership.gpu?.geometry?.setDrawRange ?? [];
+    const isAllowed = owners.includes(rel);
+    if (!isAllowed) {
+      violations.push({
+        type: 'gpu_geometry',
+        method: 'setDrawRange',
+        file: rel,
+        message: `Unauthorized setDrawRange call in ${rel}`,
+      });
+    }
+  }
+}
+
+function main() {
+  const ownership = loadOwnership();
+  const coreEvents = new Set(
+    Array.isArray(ownership.rules?.coreEvents)
+      ? ownership.rules.coreEvents
+      : []
+  );
+  const files = walk(path.join(ROOT, 'src'));
+
   const violations = [];
-
-  for await (const file of walk('src', CODE_EXTENSIONS)) {
-    if (isTestFile(file)) continue;
-    const abs = path.resolve(file);
-    const rel = normalizePath(path.relative(process.cwd(), abs));
-    const text = await fs.readFile(file, 'utf8');
-
-    for (const rule of uniformRules) {
-      rule.regex.lastIndex = 0;
-      let match;
-      while ((match = rule.regex.exec(text))) {
-        if (rule.allow.has(rel)) continue;
-        if (hasOverride(text, match.index)) continue;
-        violations.push({
-          type: 'uniform',
-          resource: rule.key,
-          file: rel,
-          line: getLineNumber(text, match.index),
-        });
-        break;
-      }
-    }
-
-    for (const rule of geometryRules) {
-      if (rule.allow.has(rel)) continue;
-      rule.regex.lastIndex = 0;
-      let match;
-      while ((match = rule.regex.exec(text))) {
-        if (hasOverride(text, match.index)) continue;
-        violations.push({
-          type: 'geometry',
-          resource: rule.key,
-          file: rel,
-          line: getLineNumber(text, match.index),
-        });
-        break;
-      }
-    }
+  for (const file of files) {
+    scanFile(file, ownership, violations, coreEvents);
   }
 
-  await fs.mkdir('reports', { recursive: true });
-  const outputPath = path.join('reports', 'single-writer-violations.json');
-  await fs.writeFile(outputPath, JSON.stringify(violations, null, 2));
-
-  if (violations.length) {
-    console.error('[scan-single-writer] violations detected:', outputPath);
-    process.exit(1);
+  if (violations.length > 0) {
+    console.error('❌ Pattern S single-writer violations:');
+    violations.forEach((v) => console.error('-', v.message));
+    process.exitCode = 1;
   } else {
-    console.log('[scan-single-writer] 0 violations');
+    console.log('✅ Pattern S single-writer check passed (strict).');
   }
 }
 
-main().catch((error) => {
-  console.error('[scan-single-writer] failed:', error);
-  process.exit(1);
-});
+main();
