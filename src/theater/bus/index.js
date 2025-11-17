@@ -1,4 +1,5 @@
 import { DEFAULT_SCHEMA_VERSION, validateEventPayload } from './schemas.js';
+import ownership from '../../../tools/pattern-s.ownership.json' assert { type: 'json' };
 
 // BeatBus with Canon Dev-OS contract integration
 // Uses canon-console contract registry for validation
@@ -8,6 +9,33 @@ const SYNC_EVENTS = new Set(['PARTICLES_EMERGED', 'FENCEPOST_LISTENERS_READY', '
 const DEV_MODE = (typeof import.meta !== 'undefined' && import.meta.env)
   ? !!import.meta.env.DEV
   : (typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : false);
+const CORE_EVENTS = new Set(['STAGE_CHANGE', 'BLUEPRINT_READY', 'PARTICLES_EMERGED', 'RENDER_DIRECTIVE', 'MORPH_PROGRESS']);
+
+const getCallerFile = (stack) => {
+  if (!stack) return null;
+  const cwd = (typeof process !== 'undefined' && typeof process.cwd === 'function') ? process.cwd() : '';
+  const ignore = [
+    'canon-console/browser',
+    'contract-tap.js',
+    'lifecycle-guards.js',
+    'violation-tap.js',
+    'consoleSink.js',
+    'installHook.js',
+    'inject.js',
+  ];
+  const lines = stack.split('\n').slice(3);
+  for (const line of lines) {
+    const match = line.match(/\((.*?):\d+:\d+\)/);
+    if (!match || !match[1]) continue;
+    const raw = match[1];
+    const strippedHost = raw.replace(/^https?:\/\/[^/]+\//, '');
+    const file = (cwd ? strippedHost.replace(cwd + '/', '') : strippedHost).replace(/\\/g, '/');
+    if (!file) continue;
+    if (ignore.some((frag) => file.includes(frag))) continue;
+    return file;
+  }
+  return null;
+};
 
 const cloneTracePayload = (payload) => {
   if (payload === null || payload === undefined) return null;
@@ -364,6 +392,20 @@ class BeatBus {
   }
 
   emit(evt, payload = {}){
+    if (DEV_MODE && CORE_EVENTS.has(evt)) {
+      const allowedEmitters = ownership.events?.[evt]?.emitters ?? [];
+      const callerFile = getCallerFile(new Error().stack || '');
+      const isAllowed = callerFile ? allowedEmitters.includes(callerFile) : true;
+      if (!isAllowed) {
+        console.error('[Pattern S] Unauthorized core event emitter', {
+          event: evt,
+          callerFile,
+          allowed: allowedEmitters,
+        });
+        throw new Error(`Pattern S violation: ${evt} emitted from ${callerFile}`);
+      }
+    }
+
     if (DEV_MODE && evt === 'MORPH_PROGRESS') {
       const source = payload?.source || 'unknown';
       if (!this._morphEmitter) {

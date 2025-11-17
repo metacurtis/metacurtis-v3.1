@@ -3,7 +3,7 @@
     "uniformsBlocks": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1793,
+        "line": 1923,
         "names": [
           "uTime"
         ]
@@ -19,242 +19,237 @@
     "uniformSets": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 419,
+        "line": 450,
         "name": "uMorphProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 421,
+        "line": 452,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 426,
+        "line": 457,
         "name": "uPostMorphFreeze"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 560,
+        "line": 596,
         "name": "uBandFade"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 599,
+        "line": 635,
         "name": "uBandHeight"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1114,
+        "line": 1150,
         "name": "uPalette0"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1115,
+        "line": 1151,
         "name": "uPalette1"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1116,
+        "line": 1152,
         "name": "uPalette2"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1117,
+        "line": 1153,
         "name": "uPalette3"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1133,
+        "line": 1169,
         "name": "uTierMode"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1134,
+        "line": 1170,
         "name": "uTierParams0"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1135,
+        "line": 1171,
         "name": "uTierParams1"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1136,
+        "line": 1172,
         "name": "uTierParams2"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1137,
+        "line": 1173,
         "name": "uTierParams3"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1144,
+        "line": 1180,
         "name": "uTierHighlight"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1262,
+        "line": 1303,
         "name": "uMorphProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1263,
+        "line": 1304,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1264,
+        "line": 1305,
         "name": "uPostMorphFreeze"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1266,
+        "line": 1307,
         "name": "uMorphProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1267,
+        "line": 1308,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1299,
+        "line": 1340,
         "name": "uActiveCount"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1303,
+        "line": 1344,
         "name": "uTierCutoff"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1328,
+        "line": 1369,
         "name": "uBandFade"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1466,
+        "line": 1512,
         "name": "shaderMorph"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1598,
+        "line": 1644,
         "name": "uPostMorphFreeze"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1609,
+        "line": 1655,
         "name": "uPointSize"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1656,
-        "name": "uPointSize"
-      },
-      {
-        "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1663,
-        "name": "uGaussianSigma"
-      },
-      {
-        "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1729,
+        "line": 1733,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1740,
+        "line": 1859,
+        "name": "uStageProgress"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1870,
         "name": "uPostMorphFreeze"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1858,
+        "line": 1996,
         "name": "uAtlasTexture"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1859,
+        "line": 1997,
         "name": "uStageIndex"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1860,
+        "line": 1998,
         "name": "uBrainRegion"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1861,
+        "line": 1999,
         "name": "uPointSize"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1863,
+        "line": 2001,
         "name": "uDevicePixelRatio"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1864,
+        "line": 2002,
         "name": "uDevicePixelRatio"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1875,
+        "line": 2013,
         "name": "uBandHeight"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1879,
+        "line": 2017,
         "name": "uColorCurrent"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1880,
+        "line": 2018,
         "name": "uColorNext"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1881,
+        "line": 2019,
         "name": "uColorAccent1"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1882,
+        "line": 2020,
         "name": "uColorAccent2"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1884,
+        "line": 2022,
         "name": "uActiveCount"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1885,
+        "line": 2023,
         "name": "uTierCutoff"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1971,
+        "line": 2109,
         "name": "uTime"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1973,
+        "line": 2111,
         "name": "uScrollProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1974,
+        "line": 2112,
         "name": "uStageBlend"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1975,
+        "line": 2113,
         "name": "uActiveCount"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1976,
+        "line": 2114,
         "name": "uTierCutoff"
       },
       {
@@ -271,8 +266,8 @@
     "materials": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1791,
-        "context": "1789:     if (!mat) {\n1790:       created = true;\n1791:       mat = new THREE.ShaderMaterial({\n1792:         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },\n1793:         uniforms: {"
+        "line": 1921,
+        "context": "1919:     if (!mat) {\n1920:       created = true;\n1921:       mat = new THREE.ShaderMaterial({\n1922:         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },\n1923:         uniforms: {"
       },
       {
         "file": "src/runtime/materialFactory.js",
@@ -283,8 +278,8 @@
     "onBeforeCompile": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1792,
-        "context": "1790:       created = true;\n1791:       mat = new THREE.ShaderMaterial({\n1792:         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },\n1793:         uniforms: {\n1794:           uTime:            { value: 0 },"
+        "line": 1922,
+        "context": "1920:       created = true;\n1921:       mat = new THREE.ShaderMaterial({\n1922:         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },\n1923:         uniforms: {\n1924:           uTime:            { value: 0 },"
       }
     ],
     "textures": []
@@ -671,62 +666,67 @@
     "jsSetsMissingInGLSL": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 421,
+        "line": 452,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1133,
+        "line": 1169,
         "name": "uTierMode"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1263,
+        "line": 1304,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1267,
+        "line": 1308,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1303,
+        "line": 1344,
         "name": "uTierCutoff"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1466,
+        "line": 1512,
         "name": "shaderMorph"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1729,
+        "line": 1733,
         "name": "uStageProgress"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
         "line": 1859,
+        "name": "uStageProgress"
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1997,
         "name": "uStageIndex"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1860,
+        "line": 1998,
         "name": "uBrainRegion"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1885,
+        "line": 2023,
         "name": "uTierCutoff"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1974,
+        "line": 2112,
         "name": "uStageBlend"
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1976,
+        "line": 2114,
         "name": "uTierCutoff"
       }
     ],
@@ -737,6 +737,15 @@
           {
             "file": "src/shaders/templates/consciousness-fragment.glsl",
             "line": 16
+          }
+        ]
+      },
+      {
+        "name": "uGaussianSigma",
+        "locations": [
+          {
+            "file": "src/shaders/templates/consciousness-fragment.glsl",
+            "line": 17
           }
         ]
       },
@@ -844,7 +853,7 @@
   "perf": {
     "updateFrequency": {
       "uMorphProgress": 3,
-      "uStageProgress": 4,
+      "uStageProgress": 5,
       "uPostMorphFreeze": 4,
       "uBandFade": 2,
       "uBandHeight": 2,
@@ -861,8 +870,7 @@
       "uActiveCount": 3,
       "uTierCutoff": 3,
       "shaderMorph": 1,
-      "uPointSize": 5,
-      "uGaussianSigma": 1,
+      "uPointSize": 4,
       "uAtlasTexture": 1,
       "uStageIndex": 1,
       "uBrainRegion": 1,
@@ -879,6 +887,7 @@
   "warnings": [
     "Naming: JS uniform set \"shaderMorph\" not uCamelCase",
     "Unused: GLSL uniform \"uFadeProgress\" not set in JS",
+    "Unused: GLSL uniform \"uGaussianSigma\" not set in JS",
     "Unused: GLSL uniform \"uTotalSprites\" not set in JS",
     "Unused: GLSL uniform \"uResolution\" not set in JS",
     "Unused: GLSL uniform \"uAtmoFit\" not set in JS",

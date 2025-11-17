@@ -518,53 +518,55 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
 
         let particleEffectPayload = null;
         if (segment?.visual) {
-          console.log(`[Narration] Visual cue: ${segment.visual}`);
+          const visualVerb = segment.visual;
+          console.log('[Narration] Visual cue:', visualVerb);
 
-          const effectResolver = window.Canonical?.getVisualEffect || Canonical?.getVisualEffect;
-          const resolved = effectResolver ? effectResolver(segment.visual) : null;
-          const isNoChangeVerb = segment.visual === 'no_change';
+          const effectResolver =
+            window.canonicalAuthority?.getVisualEffect ||
+            window.Canonical?.getVisualEffect ||
+            Canonical?.getVisualEffect;
+          const resolved = typeof effectResolver === 'function'
+            ? effectResolver(visualVerb)
+            : undefined;
+          const isNoChangeVerb = visualVerb === 'no_change';
+
+          const hasUniforms = (payload) => {
+            if (!payload || typeof payload !== 'object') return false;
+            const uniformKeys = [
+              'uMotionMode',
+              'uFlowTurbulence',
+              'uParticleFlash',
+              'uOpacityMin',
+              'uOpacityMax',
+              'uStreakIntensity',
+              'uSpreadFactor',
+              'tierHighlight',
+              'tierModes',
+              'tierParams',
+              'gridX',
+              'gridY',
+              'pointSize',
+              'uniforms',
+              'activeCount',
+              'drawCount',
+            ];
+            return uniformKeys.some((key) => payload[key] !== undefined && payload[key] !== null);
+          };
+
           if (!resolved && !isNoChangeVerb) {
-            console.warn('[VISUAL] Unknown verb (skipped):', segment.visual);
+            console.warn('[VISUAL] Unknown verb (skipped):', visualVerb);
           } else if (resolved && resolved.type === 'camera') {
-            console.log('[VISUAL] camera-only verb:', segment.visual);
+            console.log('[VISUAL] camera-only verb:', visualVerb);
+          } else if (resolved && hasUniforms(resolved)) {
+            particleEffectPayload = {
+              ...resolved,
+              source: resolved.source || 'beat_visual',
+              verb: visualVerb,
+            };
+          } else if (resolved === null) {
+            console.log('[Narration] 📷 Camera-only cue (no particle directive):', visualVerb);
           } else {
-            const visualKey = (segment.visual || '').toLowerCase();
-            particleEffectPayload = resolved ? { ...resolved } : null;
-
-            if (particleEffectPayload) {
-              const ensure = (cond, key, value) => {
-                if (cond && (particleEffectPayload[key] === undefined || particleEffectPayload[key] === null)) {
-                  particleEffectPayload[key] = value;
-                }
-              };
-
-              ensure(
-                particleEffectPayload.gridSize === undefined &&
-                  (visualKey.includes('grid') ||
-                   visualKey.includes('structure') ||
-                   visualKey.includes('column')),
-                'gridSize',
-                0.45
-              );
-
-              ensure(
-                particleEffectPayload.uFlowTurbulence === undefined &&
-                  (visualKey.includes('flow') ||
-                   visualKey.includes('stream') ||
-                   visualKey.includes('storm')),
-                'uFlowTurbulence',
-                0.9
-              );
-
-              ensure(
-                particleEffectPayload.uStreakIntensity === undefined &&
-                  (visualKey.includes('streak') ||
-                   visualKey.includes('trail') ||
-                   visualKey.includes('velocity')),
-                'uStreakIntensity',
-                1.0
-              );
-            }
+            console.warn('[Narration] ⚠️ Could not resolve visual verb:', visualVerb);
           }
         }
 

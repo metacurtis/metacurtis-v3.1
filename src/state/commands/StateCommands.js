@@ -4,6 +4,7 @@
 // State Command Layer with proper cleanup and architectural contracts
 import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom } from '../atoms';
 import BeatBus from '@/theater/bus';
+import { emitStageChange } from '@/theater/bus/emitters.js';
 import { EVENTS } from '@/theater/events';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import NavigationGate from '@/theater/NavigationGate.js';
@@ -103,12 +104,12 @@ class StateCommands {
           prevStage = next;
           return;
         }
-        // Emit stage change events
-        BeatBus.emit(EVENTS.STAGE_CHANGE, { 
-          from: prevStage, 
-          to: next, 
+        // Emit stage change events via the Pattern S façade
+        emitStageChange({
+          from: prevStage,
+          to: next,
           stage: next,  // Include for compatibility
-          reason: 'atom' 
+          reason: 'atom'
         });
         
         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission

@@ -62,7 +62,7 @@ bind = src/components/webgl/WebGLBackground.jsx
 [events]
 AUDIO_COMPUTER_HUM.emitter = src/theater/TheaterDirector.js
 BLUEPRINT_INVALIDATED.emitter = canon-console/runtime/blueprint-guard-v2.js
-BLUEPRINT_READY.emitter = src/engine/utils/blueprintUtils.js
+BLUEPRINT_READY.emitter = src/theater/bus/emitters.js
 BUILD_EMERGENCE_BLUEPRINT.emitter = ⚠️ multiple: src/state/commands/StateCommands.js, src/theater/TheaterDirector.js
 CANON_VIOLATION.emitter = ⚠️ multiple: canon-console/browser/inject.js, canon-console/runtime/blueprint-guard-v2.js
 CLIMAX_STEP.emitter = src/engine/ConsciousnessEngine.js
@@ -77,7 +77,7 @@ ENGINE_VIEWPORT_HINT.emitter = ⚠️ multiple: src/components/consciousness/Con
 ENGINE:MORPH_STATE.emitter = src/engine/ConsciousnessEngine.js
 FENCEPOST_LISTENERS_READY.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
 FENCEPOST_REPORT.emitter = canon-console/runtime/playbooks-extra.js
-MORPH_PROGRESS.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/controllers/MorphAnimationController.js
+MORPH_PROGRESS.emitter = src/theater/bus/emitters.js
 NARRATION_CLEANUP.emitter = src/components/narrative/NarrationController.jsx
 NARRATION_STOPPED.emitter = src/components/narrative/NarrationController.jsx
 NARRATIVE_LINE.emitter = src/components/narrative/NarrationController.jsx
@@ -85,16 +85,16 @@ OPENING_COMPLETE.emitter = src/theater/TheaterDirector.js
 PARTICLE_CLICK_HIT.emitter = src/components/webgl/WebGLBackground.jsx
 PARTICLE_CLICK_REQUEST.emitter = src/components/webgl/WebGLCanvas.jsx
 PARTICLE_PHASE.emitter = src/theater/TheaterDirector.js
-PARTICLES_EMERGED.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
+PARTICLES_EMERGED.emitter = src/theater/bus/emitters.js
 PARTICLES_START_EMERGING.emitter = src/theater/TheaterDirector.js
 PREWARM_COMPLETE.emitter = src/engine/ConsciousnessEngine.js
 PREWARM_GENESIS_BLUEPRINT.emitter = src/theater/TheaterDirector.js
 QUALITY_CHANGE.emitter = ⚠️ multiple: src/state/atoms/qualityAtom.js, src/state/commands/StateCommands.js
-RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/ScrollOrchestrator.js, src/theater/TheaterDirector.js
+RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/bus/emitters.js
 RENDERER_TUNE.emitter = src/theater/TheaterDirector.js
 SCREEN_FILL.emitter = src/theater/TheaterDirector.js
 SCROLL_PROGRESS.emitter = src/theater/ScrollOrchestrator.js
-STAGE_CHANGE.emitter = ⚠️ multiple: src/state/commands/StateCommands.js, src/theater/ScrollOrchestrator.js, src/theater/TheaterDirector.js
+STAGE_CHANGE.emitter = src/theater/bus/emitters.js
 START_CLIMAX.emitter = src/components/fragments/ClimaxSequenceController.jsx
 START_NARRATIVE.emitter = ⚠️ multiple: src/components/narrative/NarrationController.jsx, src/orchestration/navigation/narrativeNavigation.js, src/theater/TheaterDirector.js
 TERMINAL_TYPE.emitter = src/theater/TheaterDirector.js
@@ -116,4 +116,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-11-13 via `tools/generate-ownership.mjs`
+Last updated: 2025-11-17 via `tools/generate-ownership.mjs`

@@ -1,6 +1,7 @@
 // Shared utilities extracted from ConsciousnessEngine.js to reduce duplication.
 // Keep these helpers pure and free of stateful dependencies so they can be
 // reused across future engine modules.
+import { emitBlueprintReady as emitBlueprintReadyEvent } from '@/theater/bus/emitters.js';
 
 /**
  * Calculate an axis-aligned bounding box (AABB) for a flat XYZ position array.
@@ -164,7 +165,7 @@ export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
     blueprint,
     ...metadata,
   };
-  BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
+  emitBlueprintReadyEvent(payload);
   return payload;
 }
 

@@ -17,6 +17,183 @@ function clone(obj) {
   catch { return JSON.parse(JSON.stringify(obj)); }
 }
 
+const RENDER_UNIFORM_KEYS = [
+  'uMotionMode',
+  'uFlowTurbulence',
+  'uParticleFlash',
+  'uOpacityMin',
+  'uOpacityMax',
+  'uStreakIntensity',
+  'tierHighlight',
+  'pointSize',
+  'uniforms',
+  'activeCount',
+  'drawCount',
+];
+
+// Conservative motion-map: stick to renderer-supported modes (0-4)
+const MOTION_MODE_MAP = {
+  drift_perlin: 3,
+  flicker: 0,
+  structuralLock: 1,
+  vertexPulse: 0,
+  grid_drift: 1,
+  breathe: 0,
+  edgeLock: 1,
+  cadencePulse: 0,
+  neural_flow: 2,
+  strokeFlow: 2,
+  synapseFlash: 3,
+  hubNode: 1,
+  lag: 3,
+  streak: 3,
+  burst: 3,
+  lead: 3,
+  grid_flow: 1,
+  modular: 1,
+  blueprintPulse: 0,
+  constructionGuide: 1,
+  laminar_flow: 2,
+  orbit_sync: 4,
+  ballet: 4,
+  conductor: 1,
+  cosmic_dust: 4,
+  galactic_arm: 4,
+  consciousness_node: 0,
+  transcendent: 4,
+};
+
+/** True when the payload already contains renderer-ready fields */
+function hasRendererUniforms(effect) {
+  if (!effect || typeof effect !== 'object') return false;
+  return RENDER_UNIFORM_KEYS.some((key) => effect[key] !== undefined && effect[key] !== null);
+}
+
+/** Lightweight mapper: SST-style effect → renderer-ready directive */
+function translateToRendererDirective(verb, effect = {}) {
+  if (!effect || effect.type === 'camera') return effect;
+
+  // Preserve existing renderer-ready payloads
+  const payload = { ...effect };
+  if (!payload.source) payload.source = 'beat_visual';
+  if (!payload.verb) payload.verb = verb;
+  if (hasRendererUniforms(payload)) return payload;
+
+  const verbKey = String(verb || '').toLowerCase();
+  const translated = {
+    source: payload.source,
+    verb: payload.verb,
+  };
+
+  const normalizedType = String(effect.type || effect.behavior || effect.pattern || '').trim();
+  const mappedMode = normalizedType ? MOTION_MODE_MAP[normalizedType] : undefined;
+  if (mappedMode !== undefined) {
+    translated.uMotionMode = mappedMode;
+  }
+
+  // Tier modes / params (shader actually uses uTierMode/uTierParams)
+  const tierModesPayload = Array.isArray(effect.tierModes) ? effect.tierModes : null;
+  const tierParamsPayload = Array.isArray(effect.tierParams) ? effect.tierParams : null;
+
+  if (tierModesPayload) {
+    translated.tierModes = tierModesPayload;
+  } else {
+    // Heuristic fallback for tierModes if we have a mappedMode
+    const mode = translated.uMotionMode;
+    if (mode !== undefined) {
+      translated.tierModes = [mode, mode, mode, mode];
+    } else if (verbKey.includes('grid') || verbKey.includes('structure') || verbKey.includes('column')) {
+      translated.tierModes = [1, 1, 1, 1];
+      translated.uMotionMode = 1;
+    } else if (verbKey.includes('flow')) {
+      translated.tierModes = [2, 2, 2, 2];
+      translated.uMotionMode = 2;
+    } else if (verbKey.includes('streak') || verbKey.includes('trail') || verbKey.includes('velocity')) {
+      translated.tierModes = [3, 3, 3, 3];
+      translated.uMotionMode = 3;
+    } else if (verbKey.includes('orbit')) {
+      translated.tierModes = [4, 4, 4, 4];
+      translated.uMotionMode = 4;
+    } else if (verbKey.includes('drift')) {
+      translated.tierModes = [0, 0, 0, 0];
+      translated.uMotionMode = 3;
+    }
+  }
+
+  // Turbulence / speed
+  if (typeof effect.speed === 'number') {
+    translated.uFlowTurbulence = Math.max(0, Math.min(2, effect.speed));
+  } else if (typeof effect.amplitude === 'number') {
+    translated.uFlowTurbulence = Math.max(0, Math.min(2, effect.amplitude * 0.5));
+  }
+
+  // Flash / pulse intensity
+  if (effect.pulse && typeof effect.pulse.intensity === 'number') {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.pulse.intensity));
+  } else if (typeof effect.intensity === 'number' && verbKey.includes('pulse')) {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.intensity));
+  } else if (typeof effect.probability === 'number') {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.probability));
+  }
+
+  // Streak intensity / trail length
+  if (typeof effect.trailLength === 'number') {
+    translated.uStreakIntensity = Math.min(effect.trailLength / 3, 1.0);
+  } else if (typeof effect.streakIntensity === 'number') {
+    translated.uStreakIntensity = effect.streakIntensity;
+  }
+
+  // Tier targeting
+  if (Array.isArray(effect.tiers)) {
+    translated.tierHighlight = effect.tiers;
+  } else if (typeof effect.tiers === 'number') {
+    translated.tierHighlight = [effect.tiers];
+  }
+
+  // Opacity range
+  if (Array.isArray(effect.opacity) && effect.opacity.length >= 2) {
+    translated.uOpacityMin = Math.max(0, Math.min(1, effect.opacity[0]));
+    translated.uOpacityMax = Math.max(0, Math.min(1, effect.opacity[1]));
+  } else if (typeof effect.opacity === 'number') {
+    translated.uOpacityMin = Math.max(0, Math.min(1, effect.opacity));
+  }
+  if (typeof effect.fadeTrail === 'number') {
+    translated.uOpacityMax = Math.max(0, Math.min(1, effect.fadeTrail));
+  }
+  if (translated.uOpacityMin === undefined && translated.uOpacityMax !== undefined) {
+    translated.uOpacityMin = Math.max(0, Math.min(1, translated.uOpacityMax * 0.5));
+  }
+  if (translated.uOpacityMax === undefined && translated.uOpacityMin !== undefined) {
+    translated.uOpacityMax = Math.max(translated.uOpacityMin, 1.0);
+  }
+  if (translated.uOpacityMin === undefined && translated.uOpacityMax === undefined) {
+    translated.uOpacityMin = 0.5;
+    translated.uOpacityMax = 1.0;
+  }
+
+  if (typeof effect.uSpreadFactor === 'number') {
+    translated.uSpreadFactor = effect.uSpreadFactor;
+  }
+
+  // Tier params: use provided payload, otherwise derive from speed/amplitude/turbulence
+  if (tierParamsPayload && tierParamsPayload.length >= 4) {
+    translated.tierParams = tierParamsPayload;
+  } else if (translated.tierModes) {
+    const speed = typeof effect.speed === 'number' ? effect.speed : 0.8;
+    const amp = typeof effect.amplitude === 'number' ? effect.amplitude : 0.2;
+    const freq = typeof effect.frequency === 'number' ? effect.frequency : 0.5;
+    const params = [speed, amp, freq, 0.0];
+    translated.tierParams = [params, params, params, params];
+  }
+
+  // Point size from scale
+  if (typeof effect.scale === 'number') {
+    translated.pointSize = Math.max(0.5, Math.min(3.0, effect.scale));
+  }
+
+  return hasRendererUniforms(translated) ? translated : payload;
+}
+
 function buildCanonical(source) {
   const sst = clone(source);
   const stageOrder = Array.isArray(sst.stageOrder) ? sst.stageOrder.slice() : Object.keys(sst.stages || {});
@@ -119,10 +296,12 @@ function buildCanonical(source) {
       return null;
     }
 
+    const translated = translateToRendererDirective(visualVerb, effect);
+
     if (typeof console !== 'undefined' && typeof console.log === 'function') {
-      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, effect);
+      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, translated);
     }
-    return effect;
+    return translated;
   };
 
   const getBeatSheet = (stageName) => {
@@ -147,6 +326,26 @@ function buildCanonical(source) {
     }
 
     return clone(beatSheet);
+  };
+
+  const getAllVisualVerbs = () => Object.keys(visualEffects?.particleEffects || {});
+  const getCoverageStats = () => {
+    const verbs = getAllVisualVerbs();
+    let translatable = 0;
+    let cameraOnly = 0;
+    verbs.forEach((verb) => {
+      const eff = visualEffects?.particleEffects?.[verb] || null;
+      if (eff && eff.type === 'camera') {
+        cameraOnly += 1;
+        return;
+      }
+      const resolved = getVisualEffect(verb);
+      if (resolved) translatable += 1;
+    });
+    const total = verbs.length;
+    const untranslatable = Math.max(0, total - translatable - cameraOnly);
+    const coverage = total > 0 ? ((translatable / total) * 100).toFixed(1) : '0.0';
+    return { total, translatable, cameraOnly, untranslatable, coverage: `${coverage}%` };
   };
 
   const getStageByName = (name) => sst.stages?.[name] ?? null;
@@ -236,6 +435,7 @@ function buildCanonical(source) {
     getStageByName, getStageByIndex, getStageByScroll,
     isFeatureEnabled, getFragmentsForStage, getActiveFragments,
     getVisualEffect, getBeatSheet,
+    getCoverageStats, getAllVisualVerbs,
     SYSTEM_CONSTANTS
   };
   return deepFreeze(Canonical);
@@ -361,6 +561,14 @@ if (typeof window !== 'undefined' && isDev) {
       writable: false,
       configurable: false
     });
+    // Alias for tools expecting canonicalAuthority
+    if (!window.canonicalAuthority) {
+      Object.defineProperty(window, 'canonicalAuthority', {
+        value: Canonical,
+        writable: false,
+        configurable: false
+      });
+    }
     Object.defineProperty(window, 'SST', {
       value: Canonical,
       writable: false,

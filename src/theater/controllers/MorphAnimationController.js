@@ -1,5 +1,6 @@
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { emitMorphProgress } from '../bus/emitters.js';
 
 const clamp01 = (value) => {
   if (!Number.isFinite(value)) return 0;
@@ -33,7 +34,7 @@ export default class MorphAnimationController {
       const eased = ease(progressRatio);
       const value = clampedFrom + (clampedTo - clampedFrom) * eased;
       const clampedValue = clamp01(value);
-      BeatBus.emit(EVENTS.MORPH_PROGRESS, {
+      emitMorphProgress({
         value: clampedValue,
         progress: clampedValue,
         source,

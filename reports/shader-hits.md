@@ -2,54 +2,53 @@
 
 ## JS uniform sets
 
-- `src/components/webgl/WebGLBackground.jsx:419` sets **uMorphProgress**
-- `src/components/webgl/WebGLBackground.jsx:421` sets **uStageProgress**
-- `src/components/webgl/WebGLBackground.jsx:426` sets **uPostMorphFreeze**
-- `src/components/webgl/WebGLBackground.jsx:560` sets **uBandFade**
-- `src/components/webgl/WebGLBackground.jsx:599` sets **uBandHeight**
-- `src/components/webgl/WebGLBackground.jsx:1114` sets **uPalette0**
-- `src/components/webgl/WebGLBackground.jsx:1115` sets **uPalette1**
-- `src/components/webgl/WebGLBackground.jsx:1116` sets **uPalette2**
-- `src/components/webgl/WebGLBackground.jsx:1117` sets **uPalette3**
-- `src/components/webgl/WebGLBackground.jsx:1133` sets **uTierMode**
-- `src/components/webgl/WebGLBackground.jsx:1134` sets **uTierParams0**
-- `src/components/webgl/WebGLBackground.jsx:1135` sets **uTierParams1**
-- `src/components/webgl/WebGLBackground.jsx:1136` sets **uTierParams2**
-- `src/components/webgl/WebGLBackground.jsx:1137` sets **uTierParams3**
-- `src/components/webgl/WebGLBackground.jsx:1144` sets **uTierHighlight**
-- `src/components/webgl/WebGLBackground.jsx:1262` sets **uMorphProgress**
-- `src/components/webgl/WebGLBackground.jsx:1263` sets **uStageProgress**
-- `src/components/webgl/WebGLBackground.jsx:1264` sets **uPostMorphFreeze**
-- `src/components/webgl/WebGLBackground.jsx:1266` sets **uMorphProgress**
-- `src/components/webgl/WebGLBackground.jsx:1267` sets **uStageProgress**
-- `src/components/webgl/WebGLBackground.jsx:1299` sets **uActiveCount**
-- `src/components/webgl/WebGLBackground.jsx:1303` sets **uTierCutoff**
-- `src/components/webgl/WebGLBackground.jsx:1328` sets **uBandFade**
-- `src/components/webgl/WebGLBackground.jsx:1466` sets **shaderMorph**
-- `src/components/webgl/WebGLBackground.jsx:1598` sets **uPostMorphFreeze**
-- `src/components/webgl/WebGLBackground.jsx:1609` sets **uPointSize**
-- `src/components/webgl/WebGLBackground.jsx:1656` sets **uPointSize**
-- `src/components/webgl/WebGLBackground.jsx:1663` sets **uGaussianSigma**
-- `src/components/webgl/WebGLBackground.jsx:1729` sets **uStageProgress**
-- `src/components/webgl/WebGLBackground.jsx:1740` sets **uPostMorphFreeze**
-- `src/components/webgl/WebGLBackground.jsx:1858` sets **uAtlasTexture**
-- `src/components/webgl/WebGLBackground.jsx:1859` sets **uStageIndex**
-- `src/components/webgl/WebGLBackground.jsx:1860` sets **uBrainRegion**
-- `src/components/webgl/WebGLBackground.jsx:1861` sets **uPointSize**
-- `src/components/webgl/WebGLBackground.jsx:1863` sets **uDevicePixelRatio**
-- `src/components/webgl/WebGLBackground.jsx:1864` sets **uDevicePixelRatio**
-- `src/components/webgl/WebGLBackground.jsx:1875` sets **uBandHeight**
-- `src/components/webgl/WebGLBackground.jsx:1879` sets **uColorCurrent**
-- `src/components/webgl/WebGLBackground.jsx:1880` sets **uColorNext**
-- `src/components/webgl/WebGLBackground.jsx:1881` sets **uColorAccent1**
-- `src/components/webgl/WebGLBackground.jsx:1882` sets **uColorAccent2**
-- `src/components/webgl/WebGLBackground.jsx:1884` sets **uActiveCount**
-- `src/components/webgl/WebGLBackground.jsx:1885` sets **uTierCutoff**
-- `src/components/webgl/WebGLBackground.jsx:1971` sets **uTime**
-- `src/components/webgl/WebGLBackground.jsx:1973` sets **uScrollProgress**
-- `src/components/webgl/WebGLBackground.jsx:1974` sets **uStageBlend**
-- `src/components/webgl/WebGLBackground.jsx:1975` sets **uActiveCount**
-- `src/components/webgl/WebGLBackground.jsx:1976` sets **uTierCutoff**
+- `src/components/webgl/WebGLBackground.jsx:450` sets **uMorphProgress**
+- `src/components/webgl/WebGLBackground.jsx:452` sets **uStageProgress**
+- `src/components/webgl/WebGLBackground.jsx:457` sets **uPostMorphFreeze**
+- `src/components/webgl/WebGLBackground.jsx:596` sets **uBandFade**
+- `src/components/webgl/WebGLBackground.jsx:635` sets **uBandHeight**
+- `src/components/webgl/WebGLBackground.jsx:1150` sets **uPalette0**
+- `src/components/webgl/WebGLBackground.jsx:1151` sets **uPalette1**
+- `src/components/webgl/WebGLBackground.jsx:1152` sets **uPalette2**
+- `src/components/webgl/WebGLBackground.jsx:1153` sets **uPalette3**
+- `src/components/webgl/WebGLBackground.jsx:1169` sets **uTierMode**
+- `src/components/webgl/WebGLBackground.jsx:1170` sets **uTierParams0**
+- `src/components/webgl/WebGLBackground.jsx:1171` sets **uTierParams1**
+- `src/components/webgl/WebGLBackground.jsx:1172` sets **uTierParams2**
+- `src/components/webgl/WebGLBackground.jsx:1173` sets **uTierParams3**
+- `src/components/webgl/WebGLBackground.jsx:1180` sets **uTierHighlight**
+- `src/components/webgl/WebGLBackground.jsx:1303` sets **uMorphProgress**
+- `src/components/webgl/WebGLBackground.jsx:1304` sets **uStageProgress**
+- `src/components/webgl/WebGLBackground.jsx:1305` sets **uPostMorphFreeze**
+- `src/components/webgl/WebGLBackground.jsx:1307` sets **uMorphProgress**
+- `src/components/webgl/WebGLBackground.jsx:1308` sets **uStageProgress**
+- `src/components/webgl/WebGLBackground.jsx:1340` sets **uActiveCount**
+- `src/components/webgl/WebGLBackground.jsx:1344` sets **uTierCutoff**
+- `src/components/webgl/WebGLBackground.jsx:1369` sets **uBandFade**
+- `src/components/webgl/WebGLBackground.jsx:1512` sets **shaderMorph**
+- `src/components/webgl/WebGLBackground.jsx:1644` sets **uPostMorphFreeze**
+- `src/components/webgl/WebGLBackground.jsx:1655` sets **uPointSize**
+- `src/components/webgl/WebGLBackground.jsx:1733` sets **uStageProgress**
+- `src/components/webgl/WebGLBackground.jsx:1859` sets **uStageProgress**
+- `src/components/webgl/WebGLBackground.jsx:1870` sets **uPostMorphFreeze**
+- `src/components/webgl/WebGLBackground.jsx:1996` sets **uAtlasTexture**
+- `src/components/webgl/WebGLBackground.jsx:1997` sets **uStageIndex**
+- `src/components/webgl/WebGLBackground.jsx:1998` sets **uBrainRegion**
+- `src/components/webgl/WebGLBackground.jsx:1999` sets **uPointSize**
+- `src/components/webgl/WebGLBackground.jsx:2001` sets **uDevicePixelRatio**
+- `src/components/webgl/WebGLBackground.jsx:2002` sets **uDevicePixelRatio**
+- `src/components/webgl/WebGLBackground.jsx:2013` sets **uBandHeight**
+- `src/components/webgl/WebGLBackground.jsx:2017` sets **uColorCurrent**
+- `src/components/webgl/WebGLBackground.jsx:2018` sets **uColorNext**
+- `src/components/webgl/WebGLBackground.jsx:2019` sets **uColorAccent1**
+- `src/components/webgl/WebGLBackground.jsx:2020` sets **uColorAccent2**
+- `src/components/webgl/WebGLBackground.jsx:2022` sets **uActiveCount**
+- `src/components/webgl/WebGLBackground.jsx:2023` sets **uTierCutoff**
+- `src/components/webgl/WebGLBackground.jsx:2109` sets **uTime**
+- `src/components/webgl/WebGLBackground.jsx:2111` sets **uScrollProgress**
+- `src/components/webgl/WebGLBackground.jsx:2112` sets **uStageBlend**
+- `src/components/webgl/WebGLBackground.jsx:2113` sets **uActiveCount**
+- `src/components/webgl/WebGLBackground.jsx:2114` sets **uTierCutoff**
 - `src/runtime/materialFactory.js:62` sets **uPointSize**
 - `src/runtime/materialFactory.js:63` sets **uPointSize**
 
@@ -134,22 +133,26 @@
 ## Mismatches
 
 ### JS sets a uniform missing in GLSL
-- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:421`
-- **uTierMode** at `src/components/webgl/WebGLBackground.jsx:1133`
-- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1263`
-- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1267`
-- **uTierCutoff** at `src/components/webgl/WebGLBackground.jsx:1303`
-- **shaderMorph** at `src/components/webgl/WebGLBackground.jsx:1466`
-- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1729`
-- **uStageIndex** at `src/components/webgl/WebGLBackground.jsx:1859`
-- **uBrainRegion** at `src/components/webgl/WebGLBackground.jsx:1860`
-- **uTierCutoff** at `src/components/webgl/WebGLBackground.jsx:1885`
-- **uStageBlend** at `src/components/webgl/WebGLBackground.jsx:1974`
-- **uTierCutoff** at `src/components/webgl/WebGLBackground.jsx:1976`
+- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:452`
+- **uTierMode** at `src/components/webgl/WebGLBackground.jsx:1169`
+- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1304`
+- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1308`
+- **uTierCutoff** at `src/components/webgl/WebGLBackground.jsx:1344`
+- **shaderMorph** at `src/components/webgl/WebGLBackground.jsx:1512`
+- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1733`
+- **uStageProgress** at `src/components/webgl/WebGLBackground.jsx:1859`
+- **uStageIndex** at `src/components/webgl/WebGLBackground.jsx:1997`
+- **uBrainRegion** at `src/components/webgl/WebGLBackground.jsx:1998`
+- **uTierCutoff** at `src/components/webgl/WebGLBackground.jsx:2023`
+- **uStageBlend** at `src/components/webgl/WebGLBackground.jsx:2112`
+- **uTierCutoff** at `src/components/webgl/WebGLBackground.jsx:2114`
 
 ### GLSL uniform with no JS set
 - **uFadeProgress** at:
   - `src/shaders/templates/consciousness-fragment.glsl:16`
+
+- **uGaussianSigma** at:
+  - `src/shaders/templates/consciousness-fragment.glsl:17`
 
 - **uTotalSprites** at:
   - `src/shaders/templates/consciousness-vertex.glsl:20`

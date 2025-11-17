@@ -64,9 +64,10 @@ export function runOpeningChecks(options = {}) {
                  (/ang\s*=\s*(?:i|t)[^;]*\*/.test(engine) && /\br\s*=\s*(?:i|t)\s*\*/.test(engine));
   add(!spiral, 'Engine emergence random->random (no spiral)', { source: engine });
 
-  add(/BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/.test(renderer),
+  const emergedFencePattern = /BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED|\bemitParticlesEmerged\b/;
+  add(emergedFencePattern.test(renderer),
       'Renderer emits PARTICLES_EMERGED fencepost once',
-      { source: renderer, pattern: /BeatBus\.emit\(\s*EVENTS\.PARTICLES_EMERGED/ });
+      { source: renderer, pattern: emergedFencePattern });
 
   add(/ENGINE_VIEWPORT_HINT/.test(theater),
       'Theater start-after-viewport gate present',

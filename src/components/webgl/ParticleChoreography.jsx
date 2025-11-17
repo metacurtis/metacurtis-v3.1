@@ -124,12 +124,8 @@ export function useParticleChoreography(uniformsRef) {
       }
     };
 
-    const off = BeatBus.on?.(EVENTS.RENDER_DIRECTIVE, (payload = {}) => {
-      if (payload?.source !== 'beat_visual') return;
-      const verb = payload?.verb || payload?.behavior;
-      if (!verb) return;
-      applyBehavior(verb);
-    });
+    // Single-writer ownership: WebGLBackground handles RENDER_DIRECTIVE → uniforms.
+    const off = null;
 
     return () => {
       off?.();

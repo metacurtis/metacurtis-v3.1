@@ -3,8 +3,8 @@
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 164,
-        "context": "162: \n163:       // AUDIO COMPUTER HUM\n164:       BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {\n165:         console.log(`   OpeningSequence: Computer hum at volume ${volume}`);\n166:         if (!humAudioRef.current) {"
+        "line": 190,
+        "context": "188: \n189:       // AUDIO COMPUTER HUM\n190:       BeatBus.on(EVENTS.AUDIO_COMPUTER_HUM, ({ volume = 0.3 }) => {\n191:         console.log(`   OpeningSequence: Computer hum at volume ${volume}`);\n192:         if (!humAudioRef.current) {"
       },
       {
         "file": "src/config/canonical/sst-v3.3.json",
@@ -13,66 +13,66 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 973,
-        "context": "971:         console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);\n972:         BeatBus.emit(EVENTS.CURSOR_SHOW);\n973:         BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });\n974:         if (cursorLeadInMs > 0) {\n975:           const waitResult = await this.sleep(cursorLeadInMs);"
+        "line": 1101,
+        "context": "1099:         console.log(`   Phase: Cursor (blink x${cursorBlinkCount} @ ${cursorIntervalMs}ms)`);\n1100:         BeatBus.emit(EVENTS.CURSOR_SHOW);\n1101:         BeatBus.emit(EVENTS.AUDIO_COMPUTER_HUM, { volume: cursorHumVolume });\n1102:         if (cursorLeadInMs > 0) {\n1103:           const waitResult = await this.sleep(cursorLeadInMs);"
       },
       {
         "file": "src/theater/bus/schemas.js",
-        "line": 119,
-        "context": "117:     },\n118:   }],\n119:   ['AUDIO_COMPUTER_HUM', {\n120:     optional: { volume: 'number' },\n121:   }],"
+        "line": 132,
+        "context": "130:     },\n131:   }],\n132:   ['AUDIO_COMPUTER_HUM', {\n133:     optional: { volume: 'number' },\n134:   }],"
       },
       {
         "file": "src/theater/events.js",
-        "line": 49,
-        "context": "47: \n48:   // Audio cues\n49:   AUDIO_COMPUTER_HUM: 'AUDIO_COMPUTER_HUM',\n50: \n51:   // Prewarm lifecycle"
+        "line": 50,
+        "context": "48: \n49:   // Audio cues\n50:   AUDIO_COMPUTER_HUM: 'AUDIO_COMPUTER_HUM',\n51: \n52:   // Prewarm lifecycle"
       }
     ]
   },
   "elements": [
     {
       "file": "src/components/theater/OpeningSequence.jsx",
-      "line": 167,
+      "line": 193,
       "src": "/audio/computer-hum.mp3",
-      "context": "165:         console.log(`   OpeningSequence: Computer hum at volume ${volume}`);\n166:         if (!humAudioRef.current) {\n167:           humAudioRef.current = new Audio('/audio/computer-hum.mp3');\n168:           humAudioRef.current.loop = true;\n169:           humAudioRef.current.volume = volume;"
+      "context": "191:         console.log(`   OpeningSequence: Computer hum at volume ${volume}`);\n192:         if (!humAudioRef.current) {\n193:           const audio = new Audio('/audio/computer-hum.mp3');\n194:           audio.preload = 'none';\n195:           audio.loop = true;"
     }
   ],
   "playCalls": [
     {
       "file": "src/components/theater/OpeningSequence.jsx",
-      "line": 57,
-      "context": "55:       // Try to play hum if it exists\n56:       if (humAudioRef.current) {\n57:         humAudioRef.current.play().catch(() => {});\n58:       }\n59:     };"
+      "line": 81,
+      "context": "79:       // Try to play hum if it exists\n80:       if (humAudioRef.current) {\n81:         humAudioRef.current.play().catch(() => {});\n82:       }\n83:     };"
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",
-      "line": 173,
-      "context": "171:         \n172:         if (audioUnlocked.current) {\n173:           humAudioRef.current.play().catch(e => \n174:             console.log('Audio playback waiting for user interaction')\n175:           );"
+      "line": 201,
+      "context": "199:         \n200:         if (audioUnlocked.current) {\n201:           humAudioRef.current.play().catch(e => \n202:             console.log('Audio playback waiting for user interaction')\n203:           );"
     }
   ],
   "unlocks": [
     {
       "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-      "line": 453,
-      "context": "451:     };\n452: \n453:     window.addEventListener('keydown', handleKey);\n454:     return () => window.removeEventListener('keydown', handleKey);\n455:   }, [isInitialized]);"
+      "line": 451,
+      "context": "449:     };\n450: \n451:     window.addEventListener('keydown', handleKey);\n452:     return () => window.removeEventListener('keydown', handleKey);\n453:   }, [isInitialized]);"
     },
     {
       "file": "src/components/narrative/NarrationController.jsx",
-      "line": 965,
-      "context": "963:     };\n964: \n965:     window.addEventListener('keydown', keyHandler);\n966: \n967:     return () => {"
+      "line": 1066,
+      "context": "1064:     };\n1065: \n1066:     window.addEventListener('keydown', keyHandler);\n1067: \n1068:     return () => {"
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",
-      "line": 61,
-      "context": "59:     };\n60: \n61:     window.addEventListener('pointerdown', unlockAudio, { once: true });\n62:     window.addEventListener('touchstart', unlockAudio, { once: true });\n63:     window.addEventListener('keydown', unlockAudio, { once: true });"
+      "line": 85,
+      "context": "83:     };\n84: \n85:     window.addEventListener('pointerdown', unlockAudio, { once: true });\n86:     window.addEventListener('touchstart', unlockAudio, { once: true });\n87:     window.addEventListener('keydown', unlockAudio, { once: true });"
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",
-      "line": 62,
-      "context": "60: \n61:     window.addEventListener('pointerdown', unlockAudio, { once: true });\n62:     window.addEventListener('touchstart', unlockAudio, { once: true });\n63:     window.addEventListener('keydown', unlockAudio, { once: true });\n64: "
+      "line": 86,
+      "context": "84: \n85:     window.addEventListener('pointerdown', unlockAudio, { once: true });\n86:     window.addEventListener('touchstart', unlockAudio, { once: true });\n87:     window.addEventListener('keydown', unlockAudio, { once: true });\n88: "
     },
     {
       "file": "src/components/theater/OpeningSequence.jsx",
-      "line": 63,
-      "context": "61:     window.addEventListener('pointerdown', unlockAudio, { once: true });\n62:     window.addEventListener('touchstart', unlockAudio, { once: true });\n63:     window.addEventListener('keydown', unlockAudio, { once: true });\n64: \n65:     return () => {"
+      "line": 87,
+      "context": "85:     window.addEventListener('pointerdown', unlockAudio, { once: true });\n86:     window.addEventListener('touchstart', unlockAudio, { once: true });\n87:     window.addEventListener('keydown', unlockAudio, { once: true });\n88: \n89:     return () => {"
     },
     {
       "file": "src/components/webgl/WebGLCanvas.jsx",
@@ -81,8 +81,8 @@
     },
     {
       "file": "src/theater/TheaterDirector.js",
-      "line": 269,
-      "context": "267:     };\n268: \n269:     window.addEventListener('keydown', handler, { passive: false });\n270:     this._skipListener = handler;\n271:   }"
+      "line": 348,
+      "context": "346:     };\n347: \n348:     window.addEventListener('keydown', handler, { passive: false });\n349:     this._skipListener = handler;\n350:   }"
     },
     {
       "file": "src/utils/webgl/ShaderDebugSystem.js",
