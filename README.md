@@ -1,68 +1,53 @@
-🚀 MetaCurtis Engine v3.1
-AI-Native WebGL Engine • 15,000+ GPU Particles @ 60 FPS • Deterministic Architecture
+# 🚀 MetaCurtis Engine v3.1
 
-MetaCurtis is a high-performance WebGL engine built using a fully AI-native, deterministic development workflow.
-It renders 15,000+ GPU-accelerated particles at 60 FPS on integrated GPUs while driving a multi-stage narrative system (“Consciousness Theater”).
+**AI-Native WebGL Engine • 15,000+ GPU Particles @ 60 FPS • Deterministic Architecture**
 
-It is the flagship artifact showcasing my AI-Native Engineering Methodology, demonstrating how complex real-time systems can be built safely, predictably, and at 10–15× velocity using orchestrated AI workflows.
+MetaCurtis is a high-performance WebGL engine built using a fully AI-native, deterministic development workflow. It renders **15,000+ GPU-accelerated particles at 60 FPS** on integrated GPUs while driving a multi-stage narrative system (“Consciousness Theater”).
 
-📸 Demo
+It is the flagship artifact showcasing my **AI-Native Engineering Methodology**, demonstrating how complex real-time systems can be built safely, predictably, and at **10–15× velocity** using orchestrated AI workflows.
 
-(Replace with your real GIF or video embed)
+---
 
-🚧 Live Demo: https://metacurtis.com
+## 📸 Demo
 
-🎥 Engine Walkthrough (Coming Soon)
-📷 Add screenshots/GIFs here for visual impact
+> **Live:** https://metacurtis.com  
+> *(Add a GIF/screenshot here for visual impact.)*
 
-🧠 What Makes MetaCurtis Unique?
+---
 
-MetaCurtis is not “just another WebGL project.”
-It is the reference implementation of a new category:
+## 🧠 What Makes MetaCurtis Unique?
 
-AI-Native Engineering
+MetaCurtis is not “just another WebGL project.” It is the reference implementation of a new category:
 
-A deterministic, pattern-driven way to build complex systems using AI as your development engine.
+> **AI-Native Engineering** – a deterministic, pattern-driven way to build complex systems using AI as your development engine.
 
-🔥 Built entirely with AI
+### 🔥 Built entirely with AI
 
 The entire engine — shaders, R3F orchestration, event bus, stage morphing, particle pipelines — was developed using:
 
-Claude as architect/diagnostician
+- **Claude** as architect & diagnostician  
+- **Kodex** as implementer  
+- **Evidence Intelligence System** as deterministic context layer
 
-Kodex as implementer
+### 🔥 Deterministic development workflow
 
-Evidence Intelligence System as deterministic context layer
+Using my **Kodex–Claude Protocol v3.0**, the engineering process enforces:
 
-🔥 Deterministic development workflow
+- Single-writer rendering  
+- Contract enforcement  
+- Evidence-driven debugging  
+- No race conditions  
+- No architectural drift  
+- Reproducible context continuity  
+- **10–15× velocity** over traditional engineering
 
-Using my Kodex-Claude Protocol v3.0, the engineering process enforces:
+### 🔥 Real-time performance
 
-Single-writer rendering
-
-Contract enforcement
-
-Evidence-driven debugging
-
-No race conditions
-
-No architectural drift
-
-Reproducible context continuity
-
-10–15× velocity over traditional engineering
-
-🔥 Real-time performance
-
-15k–20k particles on integrated GPU
-
-60 FPS target
-
-Shader-driven motion
-
-Tiered particle architecture
-
-Adaptive quality system (AQS)
+- 15k–20k particles on integrated GPU  
+- 60 FPS target  
+- Shader-driven motion  
+- Tiered particle architecture  
+- Adaptive Quality System (AQS)
 
 🔥 Modular, event-driven architecture
 
