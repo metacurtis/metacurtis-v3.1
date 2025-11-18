@@ -371,4 +371,4 @@ LinkedIn: https://linkedin.com/in/curtisworton
 
 GitHub: https://github.com/metacurtis
 
-Website: https://curtiswhorton.com# MetaCurtis v3.1
+Website: https://curtiswhorton.com#
