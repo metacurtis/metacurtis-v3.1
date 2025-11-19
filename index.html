@@ -47,6 +47,12 @@
           content="MetaCurtis V3.1—high-performance WebGL site with interactive particles and smooth animations" />
     <meta name="robots" content="index, follow" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script>
+      window.__DISABLE_GPU_WATCHDOG__ = true;
+      try {
+        localStorage.setItem('canonDisableGpuWatchdog', 'true');
+      } catch {}
+    </script>
 
     <!-- STEP 0: LCP Hero Optimization -->
     <link

@@ -414,6 +414,11 @@ class BeatBus {
         console.warn('[Pattern S] Blocked MORPH_PROGRESS from', source, `(owner: ${this._morphEmitter})`);
         return;
       }
+      console.debug('🎚 MORPH_PROGRESS', {
+        owner: this._morphEmitter,
+        source,
+        value: payload?.progress ?? payload?.morphProgress ?? payload?.value ?? null,
+      });
     }
     const mode = this._mode();
     const { ok:canonOk, out:canonPayload, normalized } = this._canonicalize(evt, payload);

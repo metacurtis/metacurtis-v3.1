@@ -30,15 +30,8 @@ export default function wireAtomicToBeatBus() {
     }
   });
 
-  // 2) Use stageAtom's stageProgress for morph
-  let lastMorph = stageAtom.getState().stageProgress ?? 0;
-  stageAtom.subscribe((s) => {
-    const v = Number(s.stageProgress ?? 0);
-    if (v !== lastMorph) {
-      BeatBus.emit(EVENTS.MORPH_PROGRESS, { value: v });
-      lastMorph = v;
-    }
-  });
+  // 2) MORPH_PROGRESS bus traffic is now owned exclusively by MorphAnimationController.
+  //    Do not reintroduce atom-driven morph emits from this legacy bridge.
 
   console.log('🔌 AtomicToBeatBus bridge wired');
 }

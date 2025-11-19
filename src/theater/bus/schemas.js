@@ -35,6 +35,7 @@ const EVENT_SCHEMAS = new Map([
   ['MORPH_PROGRESS', {
     required: { progress: 'number' },
     optional: {
+      source: 'string',
       morphProgress: 'number', // legacy
       stage: 'string',
       target: 'number',

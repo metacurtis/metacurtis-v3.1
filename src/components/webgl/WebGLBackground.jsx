@@ -15,7 +15,7 @@ if (typeof window !== 'undefined' && !window.RAYCAST_DIAGNOSTIC) {
 }
 import { EVENTS } from '@/theater/events.js';
 import BeatBus from '@/theater/bus';
-import { emitMorphProgress, emitParticlesEmerged } from '@/theater/bus/emitters.js';
+import { emitParticlesEmerged } from '@/theater/bus/emitters.js';
 import { trace } from '@/dev/trace.js';
 
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
@@ -506,12 +506,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         mat.uniformsNeedUpdate = true;
       }
 
-      emitMorphProgress({
-        progress: 1,
-        source,
-        channel: 'renderer',
-        value: 1, // legacy
-      });
+      // MORPH_PROGRESS is now owned by MorphAnimationController; renderer only updates uniforms locally.
 
       const now =
         typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -1425,12 +1420,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           };
           console.debug('[WBG] AABB bind', { pos: extent('position') }, { atm: extent('atmosphericPosition') }, { tgt: extent('text3DPosition') });
         }
-        emitMorphProgress({
-          progress: 0,
-          source: 'renderer',
-          channel: 'renderer',
-          value: 0,
-        });
+        // No MORPH_PROGRESS emission here; MorphAnimationController drives the bus after emergence binds.
         if (shouldFastForward) {
           const source = fastForwardRequested ? 'renderer-fastforward' : 'renderer-skip-morph';
           if (finalizeEmergence(source)) {
@@ -1446,7 +1436,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (isOpeningChaos) {
           fenceReadyRef.current = false;
           clearPendingFencepost();
-          geometryBoundOnceRef.current = false;
+          // Keep geometry flagged as bound so opening morph can animate immediately.
+          geometryBoundOnceRef.current = true;
         }
 
         const stageName = raw.stageName || st || 'genesis';
@@ -1713,6 +1704,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   useEffect(() => {
     if (typeof BeatBus?.on !== 'function') return;
     const handleDirective = (payload = {}) => {
+      if (import.meta?.env?.DEV) {
+        console.log('[WBG] handleDirective', {
+          source: payload?.source,
+          phase: payload?.phase,
+          verb: payload?.verb || payload?.effect?.verb || null,
+          keys: Object.keys(payload || {}),
+        });
+      }
       if (ignoreDirectivesRef.current) {
         if (import.meta?.env?.DEV) {
           console.warn('[Renderer] RENDER_DIRECTIVE ignored due to ignoreDirectivesRef', {
@@ -1895,14 +1894,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
   // MORPH_PROGRESS → lightweight timeline updates
   useEffect(() => {
-    if (!blueprint || !materialRef.current?.uniforms) {
-      return;
-    }
     if (typeof BeatBus?.on !== 'function') {
-      return;
+      return undefined;
     }
 
     const handleMorphProgress = (payload = {}) => {
+      if (import.meta?.env?.DEV) {
+        console.log('[WBG] handleMorphProgress', {
+          payload,
+          frozen: emergencePendingRef.current ? emittedEmergedRef.current : false,
+          ignoreDirectives: ignoreDirectivesRef.current,
+        });
+      }
       const raw =
         payload?.progress ??
         payload?.morphProgress ??
@@ -1911,12 +1914,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const value = Number.isFinite(raw) ? clamp01(raw) : null;
       if (value == null) return;
 
-      if (!geometryBoundOnceRef.current) {
+      const hasGeometry =
+        geometryBoundOnceRef.current ||
+        (geometryRef.current?.attributes?.position?.count ?? 0) > 0;
+      if (!hasGeometry) {
         if (DEV) {
           console.log('[WBG] Morph ignored (geometry not yet bound)', payload);
         }
         return;
       }
+      geometryBoundOnceRef.current = true;
 
       fallbackMorphRef.current = value;
 
@@ -1970,7 +1977,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     return () => {
       unsubMorph?.();
     };
-  }, [blueprint, queueFencepost]);
+  }, []);
 
   // build material once atlas+blueprint exist
   useEffect(() => {

@@ -408,6 +408,16 @@
     if (window.__gpuWatchdogInstalled) return;
     window.__gpuWatchdogInstalled = true;
 
+    const disableWatchdog =
+      (typeof window !== 'undefined' && window.__DISABLE_GPU_WATCHDOG__ === true) ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem('canonDisableGpuWatchdog') === 'true');
+    if (disableWatchdog) {
+      if (typeof console !== 'undefined') {
+        console.log('🛑 GPU Watchdog disabled via __DISABLE_GPU_WATCHDOG__ flag');
+      }
+      return;
+    }
+
     const mode = localStorage.getItem('canonSingleWriter') || 'warn';
     const allowlist = [
       'WebGLBackground.jsx',

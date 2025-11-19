@@ -205,6 +205,7 @@ export default class ScrollOrchestrator {
         Object.keys(Canonical?.stages || {})[this.lastStageIndex] ||
         'unknown';
       if (this.enabled) {
+        // TODO(Phase 2): route this scroll-driven morph through MorphAnimationController so MORPH_PROGRESS continues after opening.
         __emitMorphDirective(this.morph, stageName);
       } else if (DEBUG_SCROLL) {
         console.log('[ScrollOrchestrator] Morph update suppressed until ENABLE_SCROLL', {
