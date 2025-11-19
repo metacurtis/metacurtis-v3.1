@@ -6,7 +6,6 @@ import stageAtom from '@/state/atoms/stageAtom.js';
 
 import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
-import { VC } from '@/config/visual-controls.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 import MorphAnimationController from '@/theater/controllers/MorphAnimationController.js';
@@ -87,6 +86,14 @@ const DEFAULT_OPENING_EMERGENCE = {
   mode: 'emergence',
   source: 'viewportSpread',
 };
+
+const DIRECTOR_TIER_RATIOS = [0.7, 0.12, 0.13, 0.05];
+const DIRECTOR_SIGMA_BASE = 2.5;
+const DIRECTOR_SIGMA_PEAK = 3.8;
+const DIRECTOR_POINT_KICK = 1.4;
+const DIRECTOR_TIER_HI_PEAK = 1.0;
+const DIRECTOR_TIER_HI_SETTLE = 0.25;
+const DIRECTOR_MID_MORPH = 0.88;
 
 const PHASE_DIRECTIVE_ENVELOPE = {
   chaos: {
@@ -446,17 +453,13 @@ class TheaterDirector {
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     const smooth = (t) => t * t * (3 - 2 * t);
     const count = Math.max(1, Math.floor(particleCount) || 1);
-    const pointSizeBase = Number.isFinite(VC?.POINT_SIZE_BASE)
-      ? VC.POINT_SIZE_BASE
-      : (Canonical?.features?.pointSizeDefault ?? 48);
-    const sigmaBase = Number.isFinite(VC?.SIGMA_BASE) ? VC.SIGMA_BASE : 2.5;
-    const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : sigmaBase * 1.6;
-    const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) && VC.POINT_SIZE_KICK > 0
-      ? VC.POINT_SIZE_KICK
-      : 1.4;
-    const tierPeak = Number.isFinite(VC?.T4_HI_PEAK) ? VC.T4_HI_PEAK : 1.7;
-    const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
-    const midValue = clamp(Number.isFinite(VC?.MID_MORPH) ? VC.MID_MORPH : 0.85, 0.05, 0.95);
+    const pointSizeBase = Canonical?.features?.pointSizeDefault ?? 48;
+    const sigmaBase = DIRECTOR_SIGMA_BASE;
+    const sigmaPeak = DIRECTOR_SIGMA_PEAK;
+    const pointKick = DIRECTOR_POINT_KICK;
+    const tierPeak = DIRECTOR_TIER_HI_PEAK;
+    const tierSettle = DIRECTOR_TIER_HI_SETTLE;
+    const midValue = clamp(DIRECTOR_MID_MORPH, 0.05, 0.95);
     return {
       particleCount: count,
       pointSizeBase,
@@ -1165,7 +1168,7 @@ class TheaterDirector {
             count: genesisCount,
             tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
               ? Canonical.stages.genesis.tierMix
-              : (Array.isArray(VC?.TIER_RATIOS) ? VC.TIER_RATIOS : undefined),
+              : DIRECTOR_TIER_RATIOS,
             skipMorphAnimation: false,
             fastForward: false,
           });
@@ -1357,7 +1360,7 @@ class TheaterDirector {
         count: genesisCount,
         tierRatios: Array.isArray(Canonical?.stages?.genesis?.tierMix)
           ? Canonical.stages.genesis.tierMix
-          : VC?.TIER_RATIOS,
+          : DIRECTOR_TIER_RATIOS,
         viewportHint,
         fastForward: skipTriggered || skipMorphAnimation,
         skipMorphAnimation,
@@ -1640,7 +1643,7 @@ class TheaterDirector {
   }
 
   async _runVisualSchedule() {
-    // Visual schedule disabled for VC/band opening (renderer is passive)
+    // Visual schedule disabled; renderer remains the sole GPU writer for opening
     return;
   }
 

@@ -3,7 +3,6 @@
 
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { Mesh, Vector3 } from 'three';
-import { VC } from '@/config/visual-controls.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 
@@ -28,6 +27,40 @@ import {
   emitBlueprintReady,
   makeBandFrame,
 } from './utils/blueprintUtils.js';
+
+// Visual behavior constants (formerly VC knobs)
+const STARFIELD_FIT_FRAC = 0.92;
+const STARFIELD_SCALE = 0.95;
+const TIER_RATIOS = [0.7, 0.12, 0.13, 0.05];
+const GAUSS_CLAMP = 1.0;
+const T0_SIGMA_Y_FLATTEN = 1.0;
+const T0_BAND_PROB = 0.25;
+const BAND_ENABLED = true;
+const BAND_T1_PROB = 0.95;
+const BAND_T2_PROB = 0.98;
+const T2_CLUSTER_COUNT = 8;
+const T2_CLUSTER_SIGMA = 0.035;
+const BAND_FRAME_SETTINGS = Object.freeze({
+  BAND_ANGLE_DEG: 0,
+  BAND_LENGTH_SCALE: 2.8,
+  BAND_CORE_WIDTH: 0.06,
+  BAND_FADE_WIDTH: 0.35,
+});
+const POINT_SIZE_KICK = 1.4;
+const SIGMA_BASE = 2.5;
+const SIGMA_PEAK = 3.8;
+const T4_HI_PEAK = 1.0;
+const T4_HI_SETTLE = 0.25;
+const MID_MORPH_TARGET = 0.88;
+const IMPLODE_MS = 2000;
+const SETTLE_MS = 1500;
+const SKIP_IMPL_MS = 320;
+const SKIP_SETTLE_MS = 260;
+const MORPH_HOLD_MS = 250;
+const Z_BACK_MIN = 80;
+const Z_BACK_MAX = 120;
+const ATMO_SCALE = 1.0;
+const ATMO_USE_BAND = true;
 
 const CURATED_QR_POINTS = (() => {
   if (Array.isArray(qrCurtis?.points)) return new Float32Array(qrCurtis.points);
@@ -70,7 +103,7 @@ const FONT_RESOLVERS = {
 };
 
 /** Compute centroid/AABB/fit/anisotropy for a flat Float32Array xyz... */
-export function __computeStarfieldMetrics(arr, hint, fitFrac = VC?.FIT_FRAC ?? 0.92) {
+export function __computeStarfieldMetrics(arr, hint, fitFrac = STARFIELD_FIT_FRAC) {
   const n = ((arr?.length || 0) / 3) | 0;
   let cx = 0;
   let cy = 0;
@@ -105,11 +138,11 @@ export function __computeStarfieldMetrics(arr, hint, fitFrac = VC?.FIT_FRAC ?? 0
 export function __synthesizeBandPositions(N, hint) {
   const out = new Float32Array(N * 3);
   const rnd = createSeededRandom('probe-band');
-  const clampG = VC?.GAUSS_CLAMP ?? 1.0;
+  const clampG = GAUSS_CLAMP;
   const vw = (hint?.width ?? 120) * 0.5;
   const vh = (hint?.height ?? 90) * 0.5;
-  const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
-  const band = makeBandFrame(VC, rnd, () => {
+  const R = STARFIELD_SCALE * vw;
+  const band = makeBandFrame(BAND_FRAME_SETTINGS, rnd, () => {
     let u = 0;
     let v = 0;
     while (u === 0) u = rnd();
@@ -128,17 +161,17 @@ export function __synthesizeBandPositions(N, hint) {
     return [gx, gy];
   };
   // Tier distribution
-  const ratios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15];
+  const ratios = TIER_RATIOS;
   const tc0 = Math.floor(N * ratios[0]);
   const tc1 = Math.floor(N * ratios[1]);
   const tc2 = Math.floor(N * ratios[2]);
   const tc3 = N - (tc0 + tc1 + tc2);
-  const t0y = VC.T0_SIGMA_Y_FLATTEN ?? 0.60;
+  const t0y = T0_SIGMA_Y_FLATTEN;
   let k = 0;
   // T0: 85% band-biased
   for (let i = 0; i < tc0; i++, k++) {
     const j = 3 * k;
-    const useBand = (VC?.BAND_ENABLED ?? true) && rnd() < (VC?.T0_BAND_P ?? 0.85);
+    const useBand = BAND_ENABLED && rnd() < T0_BAND_PROB;
     const [x, y] = useBand
       ? band.sampleBand(1.4, R, R * t0y)
       : sampleEllipse(R, R * t0y);
@@ -149,7 +182,7 @@ export function __synthesizeBandPositions(N, hint) {
   // T1: band preference
   for (let i = 0; i < tc1; i++, k++) {
     const j = 3 * k;
-    const useBand = (VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T1_P ?? 0.85);
+    const useBand = BAND_ENABLED && rnd() < BAND_T1_PROB;
     const [x, y] = useBand
       ? band.sampleBand(1.0, R * 0.75, R * 0.75)
       : sampleEllipse(R * 0.75, R * 0.75);
@@ -158,10 +191,10 @@ export function __synthesizeBandPositions(N, hint) {
     out[j + 2] = 0;
   }
   // T2: clusters along band
-  const cCount = VC.T2_CLUSTER_COUNT ?? 6;
-  const cSigma = (VC.T2_CLUSTER_SIGMA ?? 0.09) * R;
+  const cCount = T2_CLUSTER_COUNT;
+  const cSigma = T2_CLUSTER_SIGMA * R;
   const clusters = Array.from({ length: cCount }, () => {
-    if ((VC?.BAND_ENABLED ?? true) && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
+    if (BAND_ENABLED && rnd() < BAND_T2_PROB) {
       const [bx, by] = band.sampleBand(0.8, R * 0.66, R * 0.66);
       return { cx: bx, cy: by };
     }
@@ -178,7 +211,7 @@ export function __synthesizeBandPositions(N, hint) {
   // T3: anchors on band
   for (let i = 0; i < tc3; i++, k++) {
     const j = 3 * k;
-    const [x, y] = (VC?.BAND_ENABLED ?? true)
+    const [x, y] = BAND_ENABLED
       ? band.sampleBand(0.6, R * 0.28, R * 0.28)
       : sampleEllipse(R * 0.28, R * 0.28);
     out[j] = x;
@@ -186,10 +219,10 @@ export function __synthesizeBandPositions(N, hint) {
     out[j + 2] = 0;
   }
   // recenter + panoramic fit
-  const metrics = __computeStarfieldMetrics(out, hint, VC?.FIT_FRAC ?? 0.92);
+  const metrics = __computeStarfieldMetrics(out, hint, STARFIELD_FIT_FRAC);
   const minView = Math.min(hint?.width ?? 120, hint?.height ?? 90);
   const currentR = Math.max(metrics.extents.w, metrics.extents.h) * 0.5;
-  const targetR = (VC?.FIT_FRAC ?? 0.92) * minView;
+  const targetR = STARFIELD_FIT_FRAC * minView;
   const scale = currentR > 0 ? targetR / currentR : 1;
   if (scale > 0 && Math.abs(scale - 1) > 1e-3) {
     for (let i = 0; i < out.length; i += 3) {
@@ -496,7 +529,7 @@ class ConsciousnessEngine {
   }
 
   async _onPrewarmGenesis() {
-    // Clear stale emergence targets so prewarm rebuilds with current VC tuning
+    // Clear stale emergence targets so prewarm rebuilds with current canonical tuning
     this._lastEmergenceTargets = null;
     console.log('🧠 Engine: Prewarming genesis blueprint');
     const key = this._cacheKey('genesis', 'HIGH');
@@ -634,45 +667,27 @@ class ConsciousnessEngine {
     const smooth = (t) => t * t * (3 - 2 * t);
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
-    const pointSizeBase = Number.isFinite(VC?.POINT_SIZE_BASE)
-      ? VC.POINT_SIZE_BASE
-      : (Canonical?.features?.pointSizeDefault ?? 48);
-    const sigmaBase = Number.isFinite(VC?.SIGMA_BASE) ? VC.SIGMA_BASE : 2.5;
-    const sigmaPeak = Number.isFinite(VC?.SIGMA_PEAK) ? VC.SIGMA_PEAK : sigmaBase * 1.6;
-    const pointKick = Number.isFinite(VC?.POINT_SIZE_KICK) && VC.POINT_SIZE_KICK > 0
-      ? VC.POINT_SIZE_KICK
-      : 1.4;
-    const tierPeak = Number.isFinite(VC?.T4_HI_PEAK) ? VC.T4_HI_PEAK : 1.7;
-    const tierSettle = Number.isFinite(VC?.T4_HI_SETTLE) ? VC.T4_HI_SETTLE : 1.5;
-    const midDefault = clamp(Number.isFinite(VC?.MID_MORPH) ? VC.MID_MORPH : 0.85, 0.05, 0.95);
+    const pointSizeBase = Canonical?.features?.pointSizeDefault ?? 48;
+    const sigmaBase = SIGMA_BASE;
+    const sigmaPeak = SIGMA_PEAK;
+    const pointKick = POINT_SIZE_KICK;
+    const tierPeak = T4_HI_PEAK;
+    const tierSettle = T4_HI_SETTLE;
+    const midDefault = clamp(MID_MORPH_TARGET, 0.05, 0.95);
 
-    const implDefault = (() => {
-      const raw = Number(VC?.IMPLODE_MS);
-      return Number.isFinite(raw) && raw > 0 ? raw : 1100;
-    })();
-    const settleDefault = (() => {
-      const raw = Number(VC?.SETTLE_MS);
-      return Number.isFinite(raw) && raw >= 0 ? raw : 900;
-    })();
+    const implDefault = IMPLODE_MS;
+    const settleDefault = SETTLE_MS;
 
     const fastForward = !!(bp?.fastForward || bp?.metadata?.fastForward);
-    const fastImpl = (() => {
-      const raw = Number(VC?.SKIP_IMPL_MS);
-      const target = Number.isFinite(raw) && raw > 0 ? raw : 320;
-      return Math.max(120, Math.min(target, implDefault));
-    })();
-    const fastSettle = (() => {
-      const raw = Number(VC?.SKIP_SETTLE_MS);
-      const target = Number.isFinite(raw) && raw >= 0 ? raw : 260;
-      return Math.max(90, Math.min(target, settleDefault));
-    })();
+    const fastImpl = Math.max(120, Math.min(SKIP_IMPL_MS, implDefault));
+    const fastSettle = Math.max(90, Math.min(SKIP_SETTLE_MS, settleDefault));
 
     if (this._emergenceRaf) {
       cancel(this._emergenceRaf);
       this._emergenceRaf = null;
     }
 
-    const holdMs = Math.max(0, Number(VC?.MORPH_HOLD_MS ?? 250));
+    const holdMs = Math.max(0, MORPH_HOLD_MS);
 
     const runTimeline = (implMs, settleMs, midValue) => {
       this._emergenceActive = true;
@@ -1383,13 +1398,13 @@ class ConsciousnessEngine {
     const rnd = Math.random;
     const gauss = () => gaussianRandom({ rand: rnd, clamp: 1.2 });
 
-    const useBand = opts.band ?? (VC?.ATMO_USE_BAND ?? true);
+    const useBand = opts.band ?? ATMO_USE_BAND;
     if (useBand) {
       const rx = R;
-      const ry = R * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60);
-      const zMin = -VC.Z_BACK_MAX;
-      const zMax = -VC.Z_BACK_MIN;
-      const band = makeBandFrame(VC, rnd, gauss);
+      const ry = R * T0_SIGMA_Y_FLATTEN;
+      const zMin = -Z_BACK_MAX;
+      const zMax = -Z_BACK_MIN;
+      const band = makeBandFrame(BAND_FRAME_SETTINGS, rnd, gauss);
       for (let i = 0; i < count; i++) {
         const j = i * 3;
         const [x, y] = band.sampleBand(1.0, rx, ry);
@@ -1834,12 +1849,12 @@ class ConsciousnessEngine {
 
     const vw = width * 0.5;
     const vh = height * 0.5;
-    const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
-    const AT = VC?.ATMO_SCALE ?? 1.0;
+    const R = STARFIELD_SCALE * vw;
+    const AT = ATMO_SCALE;
     const rx = R * AT;
-    const ry = R * AT * (VC.T0_SIGMA_Y_FLATTEN ?? 0.60);
-    const zMin = -VC.Z_BACK_MAX;
-    const zMax = -VC.Z_BACK_MIN;
+    const ry = R * AT * T0_SIGMA_Y_FLATTEN;
+    const zMin = -Z_BACK_MAX;
+    const zMax = -Z_BACK_MIN;
 
     const rnd = Math.random;
     const gauss = () => {
@@ -1851,8 +1866,8 @@ class ConsciousnessEngine {
       return Math.max(-1.2, Math.min(1.2, g));
     };
 
-    if (VC?.ATMO_USE_BAND) {
-      const band = makeBandFrame(VC, rnd, gauss);
+    if (ATMO_USE_BAND) {
+      const band = makeBandFrame(BAND_FRAME_SETTINGS, rnd, gauss);
       for (let i = 0; i < N; i++) {
         const j = i * 3;
         const [x, y] = band.sampleBand(1.0, rx, ry);
@@ -1875,7 +1890,7 @@ class ConsciousnessEngine {
 
   generateConstellationFormation(
     N,
-    tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15],
+    tierRatios = TIER_RATIOS,
     hint,
     opts = {},
   ) {
@@ -1910,7 +1925,7 @@ class ConsciousnessEngine {
     return Math.min(Math.floor(baseCount * mult), 15000);
   }
 
-  async loadFont(url = VC?.FONT_URL) {
+  async loadFont(url) {
     if (this._fontReady) return this.font;
 
     let primaryUrl = url || '/fonts/CourierPrime_Regular.typeface.json';

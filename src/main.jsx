@@ -59,7 +59,6 @@ import _StateCommands from "@/state/commands/StateCommands";
 if (import.meta.env.DEV) {
   console.log('🔧 [DEV MODE] Loading dev tools...');
   Promise.all([
-    import('./dev/visual-probes.js'),
     import('./dev/trace.js'),
   ])
     .then(() => {

@@ -1,4 +1,3 @@
-import { VC } from '@/config/visual-controls.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import SST from '@/config/sst-loader.js';
 import { createSeededRandom } from '../../utils/random.js';
@@ -18,6 +17,36 @@ import {
   generateScatterPositions,
 } from '@/utils/portraitPositions.js';
 import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
+
+const DEFAULT_TIER_RATIOS = [0.7, 0.12, 0.13, 0.05];
+const DEFAULT_FIT_FRAC = 0.92;
+const DEFAULT_FIT_FRAC_X = 0.9;
+const DEFAULT_FIT_FRAC_Y = 0.8;
+const DEFAULT_STARFIELD_SCALE = 0.95;
+const DEFAULT_BAND_FADE_WIDTH = 0.35;
+const DEFAULT_BAND_CORE_WIDTH = 0.06;
+const DEFAULT_BAND_LENGTH_SCALE = 2.8;
+const DEFAULT_T0_BAND_P = 0.25;
+const DEFAULT_T0_Z_JITTER = 4;
+const DEFAULT_T1_Z_JITTER = 3;
+const DEFAULT_T2_CLUSTER_COUNT = 8;
+const DEFAULT_T2_CLUSTER_SIGMA = 0.035;
+const DEFAULT_T2_Z_JITTER = 2;
+const DEFAULT_BAND_T1_P = 0.95;
+const DEFAULT_BAND_T2_P = 0.98;
+const USE_TIER3_TEXT = false;
+const TIER3_TEXT =
+  (Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS').toUpperCase();
+const TIER3_TEXT_SCALE = 0.7;
+const TIER3_Z_JITTER = 0.5;
+const TIER_VIEW_CAP_W = 40;
+const TIER_VIEW_CAP_H = 30;
+const BAND_FRAME_SETTINGS = Object.freeze({
+  BAND_ANGLE_DEG: 0,
+  BAND_LENGTH_SCALE: DEFAULT_BAND_LENGTH_SCALE,
+  BAND_CORE_WIDTH: DEFAULT_BAND_CORE_WIDTH,
+  BAND_FADE_WIDTH: DEFAULT_BAND_FADE_WIDTH,
+});
 
 export default class BlueprintGenerator {
   constructor(engine) {
@@ -75,9 +104,7 @@ export default class BlueprintGenerator {
     const tierMix =
       Array.isArray(stageConfig?.tierMix) && stageConfig.tierMix.length === 4
         ? stageConfig.tierMix.slice(0, 4)
-        : Array.isArray(VC?.TIER_RATIOS)
-        ? VC.TIER_RATIOS.slice(0, 4)
-        : [0.7, 0.12, 0.13, 0.05];
+        : DEFAULT_TIER_RATIOS.slice(0, 4);
     const tierCounts = distributeParticles(particleCount, tierMix);
     const tierAssignments = new Array(particleCount);
     let tierCursor = 0;
@@ -211,25 +238,17 @@ export default class BlueprintGenerator {
         visual: safeClone(Canonical?.visual?.camera?.[stageName]) || null,
       },
     };
-    const genesisPalette =
-      stageName === 'genesis' &&
-      Array.isArray(VC?.GENESIS_PALETTE) &&
-      VC.GENESIS_PALETTE.length >= 3
-        ? VC.GENESIS_PALETTE.slice(0, 3)
-        : null;
-    if (genesisPalette) {
-      metadata.colors = genesisPalette;
-    } else if (Array.isArray(stageConfig?.colors) && stageConfig.colors.length >= 3) {
+    if (Array.isArray(stageConfig?.colors) && stageConfig.colors.length >= 3) {
       metadata.colors = stageConfig.colors.slice(0, 3);
     }
 
     const viewportHint = engine._viewportHint || { width: 120, height: 90 };
     const vw = (viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint.height ?? 90) * 0.5;
-    const fitDefault = Number.isFinite(VC?.FIT_FRAC) ? VC.FIT_FRAC : 0.92;
+    const fitDefault = DEFAULT_FIT_FRAC;
     const fitTarget = {
-      x: Number.isFinite(VC?.FIT_FRAC_X) ? VC.FIT_FRAC_X : 0.9,
-      y: Number.isFinite(VC?.FIT_FRAC_Y) ? VC.FIT_FRAC_Y : 0.8,
+      x: DEFAULT_FIT_FRAC_X,
+      y: DEFAULT_FIT_FRAC_Y,
       default: fitDefault,
     };
     fitToViewXY(text3DPositions, vw, vh, fitTarget);
@@ -336,7 +355,7 @@ export default class BlueprintGenerator {
     return blueprint;
   }
 
-  generateConstellationFormation(N, tierRatios = VC?.TIER_RATIOS ?? [0.5, 0.2, 0.15, 0.15], hint, opts = {}) {
+  generateConstellationFormation(N, tierRatios = DEFAULT_TIER_RATIOS, hint, opts = {}) {
     const engine = this.engine;
     const out = new Float32Array(N * 3);
     const rnd = createSeededRandom('starfield');
@@ -348,7 +367,7 @@ export default class BlueprintGenerator {
     const viewportHint = hint || engine._viewportHint || { width: 120, height: 90 };
     const vw = (viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint.height ?? 90) * 0.5;
-    const R = (VC?.STARFIELD_SCALE ?? 0.95) * vw;
+    const R = DEFAULT_STARFIELD_SCALE * vw;
     const gauss = () => gaussianRandom({ rand: rnd, clamp: 1.2 });
     const sampleEllipse = (rx, ry) => {
       const gx = gauss() * rx;
@@ -356,13 +375,13 @@ export default class BlueprintGenerator {
       return [gx, gy];
     };
     const clampToCaps = opts.clampToViewCaps !== false;
-    const bandEnabled = opts.band ?? (VC?.BAND_ENABLED ?? true);
-    const band = bandEnabled ? makeBandFrame(VC, rnd, gauss) : null;
-    const bandHeight = Math.max(1, R * (VC?.BAND_FADE_WIDTH ?? 0.35));
-    const t0BandShare = Math.min(1, Math.max(0, VC?.T0_BAND_P ?? 0.3));
+    const bandEnabled = opts.band ?? true;
+    const band = bandEnabled ? makeBandFrame(BAND_FRAME_SETTINGS, rnd, gauss) : null;
+    const bandHeight = Math.max(1, R * DEFAULT_BAND_FADE_WIDTH);
+    const t0BandShare = Math.min(1, Math.max(0, DEFAULT_T0_BAND_P));
     const scatterWidth = vw * 2.2;
     const scatterHeight = vh * 2.2;
-    const t0BaseZ = VC.T0_Z_JITTER ?? 4;
+    const t0BaseZ = DEFAULT_T0_Z_JITTER;
     const t0ScatterZ = t0BaseZ * 1.5;
 
     const t2Total = tc2;
@@ -391,17 +410,17 @@ export default class BlueprintGenerator {
     }
 
     for (let i = 0; i < tc1; i++) {
-      const useBand = bandEnabled && band && rnd() < (VC?.BAND_T1_P ?? 0.85);
+      const useBand = bandEnabled && band && rnd() < DEFAULT_BAND_T1_P;
       const [x, y] = useBand
         ? band.sampleBand(0.8, R * 0.55, bandHeight * 0.4)
         : sampleEllipse(R * 0.55, bandHeight * 0.4);
-      emit(x, y, (rnd() - 0.5) * (VC.T1_Z_JITTER ?? 3));
+      emit(x, y, (rnd() - 0.5) * DEFAULT_T1_Z_JITTER);
     }
 
-    const cCount = Math.max(1, VC.T2_CLUSTER_COUNT ?? 3);
-    const cSigma = Math.max(1e-3, (VC.T2_CLUSTER_SIGMA ?? 0.04) * R);
+    const cCount = Math.max(1, DEFAULT_T2_CLUSTER_COUNT);
+    const cSigma = Math.max(1e-3, DEFAULT_T2_CLUSTER_SIGMA * R);
     const clusters = Array.from({ length: cCount }, () => {
-      if (bandEnabled && band && rnd() < (VC?.BAND_T2_P ?? 0.95)) {
+      if (bandEnabled && band && rnd() < DEFAULT_BAND_T2_P) {
         const [bx, by] = band.sampleBand(0.5, R * 0.3, bandHeight * 0.18);
         return { cx: bx, cy: by };
       }
@@ -421,14 +440,11 @@ export default class BlueprintGenerator {
       const c = clusters[Math.floor(rnd() * clusters.length)];
       const x = c.cx + gauss() * cSigma * 0.5;
       const y = c.cy + gauss() * cSigma * 0.35;
-      emit(x, y, (rnd() - 0.5) * (VC.T2_Z_JITTER ?? 2));
+      emit(x, y, (rnd() - 0.5) * DEFAULT_T2_Z_JITTER);
     }
 
-    if (tc3 > 0 && (VC.USE_T3_TEXT ?? true) && engine.font) {
-      const tierWord =
-        typeof VC?.T3_TEXT === 'string' && VC.T3_TEXT.trim()
-          ? VC.T3_TEXT.trim()
-          : Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
+    if (tc3 > 0 && USE_TIER3_TEXT && engine.font) {
+      const tierWord = TIER3_TEXT;
       const pts =
         typeof engine.generate3DTextFormation === 'function'
           ? engine.generate3DTextFormation(tierWord, { particles: tc3 })
@@ -436,20 +452,20 @@ export default class BlueprintGenerator {
       const bounds = calculateBounds(pts);
       const width = bounds ? bounds.size.x : 0;
       const height = bounds ? bounds.size.y : 0;
-      const sx = (VC.T3_TEXT_SCALE ?? 0.7) * (R * 0.4) / Math.max(1, width * 0.5);
-      const sy = (VC.T3_TEXT_SCALE ?? 0.7) * (bandHeight * 0.35) / Math.max(1, height * 0.5);
+      const sx = TIER3_TEXT_SCALE * (R * 0.4) / Math.max(1, width * 0.5);
+      const sy = TIER3_TEXT_SCALE * (bandHeight * 0.35) / Math.max(1, height * 0.5);
       for (let i = 0; i < tc3; i++) {
         const s = (i % (pts.length / 3)) * 3;
         const x = pts[s] * sx;
         const y = pts[s + 1] * sy;
-        emit(x, y, (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 0.5));
+        emit(x, y, (rnd() - 0.5) * TIER3_Z_JITTER);
       }
     } else {
       for (let i = 0; i < tc3; i++) {
         const [x, y] = bandEnabled && band
           ? band.sampleBand(0.45, R * 0.16, bandHeight * 0.16)
           : sampleEllipse(R * 0.16, bandHeight * 0.16);
-        emit(x, y, (rnd() - 0.5) * (VC.T3_Z_JITTER ?? 0.5));
+        emit(x, y, (rnd() - 0.5) * TIER3_Z_JITTER);
       }
     }
 
@@ -469,15 +485,15 @@ export default class BlueprintGenerator {
       }
     }
 
-    const fitFrac = VC?.FIT_FRAC ?? 0.92;
+    const fitFrac = DEFAULT_FIT_FRAC;
     if (fitFrac > 0) {
       const vwFit = (viewportHint.width ?? 120) * 0.5;
       const vhFit = (viewportHint.height ?? 90) * 0.5;
-      const rxLimit = clampToCaps && Number.isFinite(VC.VIEW_CAP_HALF_W)
-        ? Math.min(vwFit, VC.VIEW_CAP_HALF_W)
+      const rxLimit = clampToCaps
+        ? Math.min(vwFit, TIER_VIEW_CAP_W)
         : vwFit;
-      const ryLimit = clampToCaps && Number.isFinite(VC.VIEW_CAP_HALF_H)
-        ? Math.min(vhFit, VC.VIEW_CAP_HALF_H)
+      const ryLimit = clampToCaps
+        ? Math.min(vhFit, TIER_VIEW_CAP_H)
         : vhFit;
       const rxFit = rxLimit * fitFrac;
       const ryFit = ryLimit * fitFrac;

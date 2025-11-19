@@ -119,7 +119,6 @@ async function fix(args) {
       'src/engine/ConsciousnessEngine.js',
       'src/components/webgl/WebGLBackground.jsx',
       'src/theater/TheaterDirector.js',
-      'src/config/visual-controls.js',
     ],
     recommendedPatches: (doctor.checks || [])
       .filter((c) => !c.ok)

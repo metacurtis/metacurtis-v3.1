@@ -20,13 +20,18 @@ import { trace } from '@/dev/trace.js';
 
 import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
-import { VC } from '@/config/visual-controls.js';
 import { particleRaycaster } from '@/utils/particleRaycast.js';
 import { useParticleChoreography } from './ParticleChoreography.jsx';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
 import { exposeDiagnostics, exposeControlSurface, revokeControlSurface } from '@/utils/runtimeGuards.js';
+
+const ATMO_FIT_X = 0.92;
+const ATMO_FIT_Y = 0.85;
+const TEXT_FIT_WIDTH = 0.9;
+const TEXT_FIT_MAX_H = 0.8;
+const BAND_FADE_WIDTH = 0.35;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const MORPH_TYPE_ENUM = Object.freeze({
@@ -586,10 +591,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const textAabb = computeAABB(geo, 'text3DPosition') || computeAABB(geo, 'position');
     if (!atmoAabb || !textAabb) return;
 
-    const atmoTargetX = Number.isFinite(VC?.ATMO_FIT_X) ? VC.ATMO_FIT_X : 0.92;
-    const atmoTargetY = Number.isFinite(VC?.ATMO_FIT_Y) ? VC.ATMO_FIT_Y : 0.85;
-    const textTargetWidth = Number.isFinite(VC?.TEXT_FIT_WIDTH) ? VC.TEXT_FIT_WIDTH : 0.9;
-    const textTargetMaxH = Number.isFinite(VC?.TEXT_FIT_MAX_H) ? VC.TEXT_FIT_MAX_H : 0.8;
+    const atmoTargetX = ATMO_FIT_X;
+    const atmoTargetY = ATMO_FIT_Y;
+    const textTargetWidth = TEXT_FIT_WIDTH;
+    const textTargetMaxH = TEXT_FIT_MAX_H;
 
     const halfW = width * 0.5;
     const halfH = height * 0.5;
@@ -661,7 +666,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     blueprintRef.current = blueprint;
   }, [blueprint]);
 
-  const bandScale = VC?.BAND_FADE_WIDTH ?? 0.35;
+  const bandScale = BAND_FADE_WIDTH;
   const bandHeightRef = useRef(null);
   const updateBandHeight = useCallback((viewHeight) => {
     if (!Number.isFinite(viewHeight) || viewHeight <= 0) return;
@@ -838,10 +843,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   };
 
   const applyMetadataColors = (colors) => {
-    const fallback = (Array.isArray(VC?.GENESIS_PALETTE) && VC.GENESIS_PALETTE.length >= 3)
-      ? VC.GENESIS_PALETTE.slice(0, 3)
-      : null;
-    const palette = (Array.isArray(colors) && colors.length >= 3) ? colors : fallback;
+    const palette = (Array.isArray(colors) && colors.length >= 3) ? colors : null;
     if (!palette) return;
     const mat = materialRef.current;
     const u = mat?.uniforms;

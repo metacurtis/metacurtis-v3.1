@@ -116,4 +116,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-11-17 via `tools/generate-ownership.mjs`
+Last updated: 2025-11-19 via `tools/generate-ownership.mjs`

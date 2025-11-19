@@ -48,7 +48,6 @@ Methods only called within this file:
 - `Mesh`, `Vector3` from `three`.
 - `TextGeometry` from `three/examples/jsm/geometries/TextGeometry`.
 - `MeshSurfaceSampler` from `three/examples/jsm/math/MeshSurfaceSampler.js`.
-- `VC` from `@/config/visual-controls.js`.
 - `Canonical` from `@/config/canonical/canonicalAuthority.js`.
 - `SST` from `@/config/sst-loader.js`.
 - `createSeededRandom` from `../utils/random.js`.
