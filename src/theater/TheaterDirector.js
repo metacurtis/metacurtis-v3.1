@@ -9,7 +9,7 @@ import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 import MorphAnimationController from '@/theater/controllers/MorphAnimationController.js';
-import { emitRenderDirective } from './bus/emitters.js';
+import VisualOrchestrator from '@/theater/VisualOrchestrator.js';
 
 // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
 if (typeof window !== 'undefined') {
@@ -126,6 +126,25 @@ const PHASE_DIRECTIVE_ENVELOPE = {
   },
 };
 
+const OPENING_PHASE_VERBS = {
+  chaos: 'opening_constellation_bloom',
+  coalesce: 'opening_grid_converge',
+  settle: 'opening_glyph_lock',
+};
+
+const openingPhaseEffectCache = new Map();
+
+function resolveOpeningPhaseEffect(phase) {
+  const verb = OPENING_PHASE_VERBS[phase] || null;
+  if (!verb) return { verb: null, effect: null };
+  if (!openingPhaseEffectCache.has(verb)) {
+    const effect =
+      typeof Canonical?.getVisualEffect === 'function' ? Canonical.getVisualEffect(verb) : null;
+    openingPhaseEffectCache.set(verb, effect || null);
+  }
+  return { verb, effect: openingPhaseEffectCache.get(verb) || null };
+}
+
 const SKIP_KEY_MAP = {
   SPACE: { codes: ['Space'], keys: [' ', 'Spacebar'] },
   ENTER: { codes: ['Enter', 'NumpadEnter'], keys: ['Enter'] },
@@ -161,6 +180,9 @@ class TheaterDirector {
     this._openingModeAnnounced = false;
     this._morphAnimationController = new MorphAnimationController();
     this._isOpeningSequence = false;
+    this._openingMorphListener = null;
+    this._stageBlueprintUnsubscribe = null;
+    this._handleBlueprintReadyBound = null;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -236,6 +258,28 @@ class TheaterDirector {
       this._latestRendererBlueprint = { type: 'blueprint', payload };
     };
 
+    this._handleBlueprintReady = (payload = {}) => {
+      const blueprint = payload?.blueprint ?? payload;
+      const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
+      const mode = payload?.mode || blueprint?.mode;
+      const channel = payload?.channel || blueprint?.channel;
+      if (channel && channel !== 'renderer') return;
+      if (!stageName) return;
+      // Skip opening/emergence blueprints
+      if (mode === 'emergence' || mode === 'opening_chaos') return;
+      // Skip climax/qr specialty blueprints
+      if (mode && (mode.includes('climax') || mode.includes('qr'))) return;
+      // Do not start stage-entry morph while opening is in progress
+      if (typeof this.isOpeningInProgress === 'function' && this.isOpeningInProgress()) return;
+      this._startStageEntryMorph(stageName);
+    };
+    // Use a safe wrapper so we never blow up if the handler is temporarily undefined
+    this._handleBlueprintReadyBound = (payload) => {
+      if (typeof this._handleBlueprintReady === 'function') {
+        this._handleBlueprintReady(payload);
+      }
+    };
+
     if (typeof BeatBus?.on === 'function') {
       this._stageChangeUnsubscribe = BeatBus.on(EVENTS.STAGE_CHANGE, this._handleStageChangeBound);
       this._rendererFenceUnsubscribe = BeatBus.on(
@@ -249,6 +293,10 @@ class TheaterDirector {
       this._rendererBlueprintUnsubscribe = BeatBus.on(
         EVENTS.BLUEPRINT_READY,
         this._handleRendererBlueprintReady
+      );
+      this._stageBlueprintUnsubscribe = BeatBus.on(
+        EVENTS.BLUEPRINT_READY,
+        this._handleBlueprintReadyBound,
       );
     }
   }
@@ -475,10 +523,49 @@ class TheaterDirector {
     };
   }
 
+  _attachOpeningMorphListener() {
+    if (this._openingMorphListener) return;
+    if (typeof BeatBus?.on !== 'function') return;
+    this._openingMorphListener = BeatBus.on(EVENTS.MORPH_PROGRESS, (payload = {}) => {
+      if (!this._ownsOpeningMorph) return;
+      const value =
+        typeof payload.progress === 'number'
+          ? payload.progress
+          : typeof payload.value === 'number'
+            ? payload.value
+            : null;
+      if (value == null) return;
+      const target = typeof payload.target === 'number' ? payload.target : value;
+      const phase = this.phase || payload.phase || 'opening';
+      const stage = this.currentStage || 'genesis';
+      this._emitRenderDirectiveFrame(value, { stage, phase, target });
+    });
+  }
+
+  _detachOpeningMorphListener() {
+    if (this._openingMorphListener) {
+      try {
+        this._openingMorphListener();
+      } catch {}
+    }
+    this._openingMorphListener = null;
+  }
+
   _emitRenderDirectiveFrame(value, { stage, phase, target }) {
     if (!this._ownsOpeningMorph) return;
-    const ctx = this._renderDirectiveContext;
-    if (!ctx) return;
+    let ctx = this._renderDirectiveContext;
+    if (!ctx) {
+      const fallbackCount = this._latestRendererParticles?.count ?? this._getGenesisParticleCount();
+      this._renderDirectiveContext = this._buildRenderDirectiveContext(fallbackCount);
+      ctx = this._renderDirectiveContext;
+      if (!ctx) {
+        if (!this._loggedMissingDirectiveContext) {
+          console.warn('[Director] Missing render directive context in opening');
+          this._loggedMissingDirectiveContext = true;
+        }
+        return;
+      }
+    }
     const morph = clamp01(value);
     const stageName = stage || this.currentStage || 'genesis';
     const { pointSizeBase, pointKick, sigmaBase, sigmaPeak, tierPeak, tierSettle, particleCount, midValue, smooth, clamp } = ctx;
@@ -521,6 +608,10 @@ class TheaterDirector {
         : Date.now(),
     };
 
+    const { verb: phaseVerb, effect: phaseEffect } = resolveOpeningPhaseEffect(phase);
+    directive.verb = phaseVerb || null;
+    directive.effect = phaseEffect || null;
+
     const envelope = phase ? PHASE_DIRECTIVE_ENVELOPE[phase] : null;
     if (envelope) {
       if (envelope.motionMode !== undefined) {
@@ -546,7 +637,17 @@ class TheaterDirector {
       directive.uniforms = { uChaosSpin: 0, uTrailIntensity: 0, uTrailPersistence: 0 };
     }
 
-    emitRenderDirective(directive);
+    VisualOrchestrator.updateFromOpening(directive);
+    console.log(
+      "%c[OPENING-DIR→VO]",
+      "color:#4dc9ff;font-weight:bold",
+      {
+        phase: directive.phase,
+        verb: directive.verb,
+        hasEffect: !!directive.effect,
+        effect: directive.effect
+      }
+    );
 
     if (morph >= 0.995) {
       this._pendingDirectorFencepost = {
@@ -601,81 +702,51 @@ class TheaterDirector {
       return Promise.resolve();
     }
 
-    const requestFrame =
-      typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame.bind(window)
-        : (cb) => setTimeout(() => cb(Date.now()), 16);
-    const cancelFrame =
-      typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function'
-        ? window.cancelAnimationFrame.bind(window)
-        : clearTimeout;
+    // Route stage-entry morph through MorphAnimationController (canonical MORPH_PROGRESS emitter)
+    this._morphAnimationController?.stop();
+    this._morphAnimationController?.start({
+      from: startValue,
+      to: endValue,
+      duration: duration,
+      // Use the same source tag as opening to satisfy single-emitter guard
+      source: 'raf-timed',
+    });
 
-    const getNow =
-      typeof performance !== 'undefined' && typeof performance.now === 'function'
-        ? () => performance.now()
-        : () => Date.now();
+    // No Promise resolution needed for callers; keep signature consistent
+    return Promise.resolve();
+  }
 
-    return new Promise((resolve) => {
-      const startTime = getNow();
-      let rafHandle = null;
-      let settled = false;
+  _startStageEntryMorph(stageName) {
+    if (!stageName || this.isOpeningInProgress()) return;
+    const entryConfig = Canonical?.scrollAndMorph?.stageEntry || {};
+    const stageConfig = entryConfig?.[stageName] || {};
+    const durationMs =
+      Number.isFinite(stageConfig.durationMs)
+        ? Math.max(0, stageConfig.durationMs)
+        : Number.isFinite(entryConfig.durationMs)
+          ? Math.max(0, entryConfig.durationMs)
+          : 2000;
+    const startValue =
+      Number.isFinite(stageConfig.start)
+        ? clamp01(stageConfig.start)
+        : Number.isFinite(entryConfig.start)
+          ? clamp01(entryConfig.start)
+          : 0;
+    const targetValue =
+      Number.isFinite(stageConfig.target)
+        ? clamp01(stageConfig.target)
+        : Number.isFinite(entryConfig.target)
+          ? clamp01(entryConfig.target)
+          : 1;
 
-      const finalize = () => {
-        if (settled) return;
-        settled = true;
-        this._emitMorphProgress(endValue, {
-          target: endValue,
-          stage,
-          phase,
-          durationMs,
-          source: 'director/morph-finalize',
-        });
-        resolve();
-      };
-
-      const step = () => {
-        if (shouldSkip() || this.cancelled) {
-          finalize();
-          return;
-        }
-
-        const elapsed = getNow() - startTime;
-        const ratio = Math.min(1, elapsed / duration);
-        const value = startValue + (endValue - startValue) * ratio;
-        console.log(`⏱️ [RAF ${phase || 'unknown'}] tick`, {
-          elapsed,
-          targetDuration: duration,
-          currentMorph: value,
-          stage,
-        });
-        this._emitMorphProgress(value, {
-          target: endValue,
-          stage,
-          phase,
-          durationMs,
-          source: 'director/raf',
-        });
-
-        if (ratio >= 1) {
-          finalize();
-          return;
-        }
-        rafHandle = requestFrame(step);
-      };
-
-      rafHandle = requestFrame(step);
-
-      this._activeMorphCancel = () => {
-        if (rafHandle != null) {
-          cancelFrame(rafHandle);
-          rafHandle = null;
-        }
-        finalize();
-      };
-    }).finally(() => {
-      if (this._activeMorphCancel) {
-        this._activeMorphCancel = null;
-      }
+    this._cancelMorphAnimation();
+    this._animateMorphPhase({
+      from: startValue,
+      to: targetValue,
+      durationMs,
+      stage: stageName,
+      phase: 'stage_entry',
+      skipSignal: () => this.cancelled || this.skipRequested,
     });
   }
 
@@ -840,6 +911,12 @@ class TheaterDirector {
       window.__canonFencepostSeen = false;
     } catch {}
 
+    // Unsubscribe stage blueprint listener if any
+    try {
+      this._stageBlueprintUnsubscribe?.();
+    } catch {}
+    this._stageBlueprintUnsubscribe = null;
+
     return this;
   }
 
@@ -873,36 +950,11 @@ class TheaterDirector {
 
     hideInstantLoader();
 
-    // Wait for viewport (non-recursive)
-    if (!this.viewportReady && !this.waitingForViewport) {
-      console.log('🎬 Director: Waiting for ENGINE_VIEWPORT_HINT...');
-      this.waitingForViewport = true;
-
-      const unsubscribe = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, (data) => {
-        console.log('🎬 Director: Viewport ready', data);
-        this.viewportReady = true;
-        this.waitingForViewport = false;
-        unsubscribe?.();
-        // Deferred start to avoid recursion
-        this._trackTimer(() => {
-          if (!this.isRunning && !this.hasRun) this.start();
-        }, 0);
-      });
-
-      // Fallback if viewport hint never arrives
-      this._trackTimer(() => {
-        if (this.waitingForViewport) {
-          console.warn('🎬 Director: Viewport hint timeout, starting anyway');
-          this.viewportReady = true;
-          this.waitingForViewport = false;
-          unsubscribe?.();
-          this._trackTimer(() => {
-            if (!this.isRunning && !this.hasRun) this.start();
-          }, 0);
-        }
-      }, 2000);
-      
-      return;
+    // Proceed immediately; viewport hint will be applied when available.
+    if (!this.viewportReady) {
+      console.log('🎬 Director: Proceeding without waiting for ENGINE_VIEWPORT_HINT (renderer will adjust).');
+      this.viewportReady = true;
+      this.waitingForViewport = false;
     }
 
     // Begin execution
@@ -952,6 +1004,7 @@ class TheaterDirector {
       this.isRunning = false;
       this._ownsOpeningMorph = false;
       this._renderDirectiveContext = null;
+      this._detachOpeningMorphListener();
       this._pendingDirectorFencepost = null;
       if (this.phase !== 'cancelled' && this.phase !== 'error') {
         this.hasRun = true;
@@ -1050,6 +1103,7 @@ class TheaterDirector {
     const genesisCount = this._getGenesisParticleCount();
     this._renderDirectiveContext = this._buildRenderDirectiveContext(genesisCount);
     this._ownsOpeningMorph = true;
+    this._attachOpeningMorphListener();
     this._pendingDirectorFencepost = null;
     this._directorFencepostSent = false;
     this._lastMorphValue = 0;
@@ -1184,46 +1238,19 @@ class TheaterDirector {
       }
 
       if (!this._preChaosReady) {
-        let readinessResult =
+        const readinessResult =
           this._latestRendererFence ||
           this._latestRendererParticles ||
-          this._latestRendererBlueprint;
-
-        if (!readinessResult) {
-          readinessResult = await Promise.race([
-            this._waitForEvent(EVENTS.FENCEPOST_LISTENERS_READY, {
-              timeout: 2200,
-            }).then((payload) => (payload ? { type: 'listeners', payload } : null)),
-            this._waitForEvent(EVENTS.PARTICLES_EMERGED, {
-              timeout: 2200,
-              predicate: (payload = {}) => {
-                const stageName = payload?.stage || payload?.stageName;
-                const channel = payload?.channel;
-                return (!payload || stageName === 'genesis') && (!channel || channel === 'renderer');
-              },
-            }).then((payload) => (payload ? { type: 'particles', payload } : null)),
-            this._waitForEvent(EVENTS.BLUEPRINT_READY, {
-              timeout: 2200,
-              predicate: (payload = {}) => {
-                const blueprint = payload?.blueprint ?? payload;
-                const stageName = payload?.stage || blueprint?.stage || blueprint?.stageName;
-                const mode = payload?.mode || blueprint?.mode;
-                const isOpening = mode === 'opening_chaos' || payload?.opening === true || blueprint?.opening === true;
-                const channel = payload?.channel || blueprint?.channel;
-                return stageName === 'genesis' && isOpening && (!channel || channel === 'renderer');
-              },
-            }).then((payload) => (payload ? { type: 'blueprint', payload } : null)),
-          ]);
-        }
-
-        if (!readinessResult) {
-          console.warn('⚠️ Director: Pre-chaos renderer readiness timed out');
-        } else {
-          console.log('✅ Blueprint bound and particles ready', {
-            via: readinessResult.type,
-            timestamp: Date.now(),
-          });
-        }
+          this._latestRendererBlueprint ||
+          null;
+        console.log('✅ Skipping pre-chaos readiness wait; proceeding with chaos', {
+          via:
+            readinessResult?.type ||
+            (this._latestRendererParticles ? 'particles' : null) ||
+            (this._latestRendererBlueprint ? 'blueprint' : null) ||
+            'none',
+          timestamp: Date.now(),
+        });
         this._preChaosReady = true;
       }
 
@@ -1333,6 +1360,7 @@ class TheaterDirector {
     if (this._ownsOpeningMorph) {
       this._ownsOpeningMorph = false;
       this._renderDirectiveContext = null;
+      this._detachOpeningMorphListener();
     }
 
     if (skipTriggered) {
@@ -1513,6 +1541,10 @@ class TheaterDirector {
         pulseOnce: 1,
       });
 
+      if (!this.scrollOrchestrator) {
+        this.scrollOrchestrator = new ScrollOrchestrator();
+      }
+
       BeatBus.emit(EVENTS.ENABLE_SCROLL);
       this._morphAnimationController?.stop();
       BeatBus.emit(EVENTS.OPENING_COMPLETE, {
@@ -1521,10 +1553,6 @@ class TheaterDirector {
         timestamp: Date.now(),
       });
       this._openingPrebound = false;
-      
-      if (!this.scrollOrchestrator) {
-        this.scrollOrchestrator = new ScrollOrchestrator();
-      }
       this.scrollOrchestrator.start();
       this.monitorFragments();
 

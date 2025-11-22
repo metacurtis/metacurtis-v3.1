@@ -75,6 +75,81 @@ const guardUniformWrite = (origin = 'unknown', uniformName) => {
   return true;
 };
 
+const getMorphEnvelope = (progress) => {
+  const p = clamp01(progress);
+  const clamp01Local = (x) => Math.max(0, Math.min(1, x));
+  const implode = p < 0.2 ? 0 : clamp01Local((p - 0.2) / 0.4);
+  const chaosPhase = clamp01Local((p - 0.2) / 0.6);
+  const chaos = Math.sin(chaosPhase * Math.PI);
+  const coalesce = p <= 0.7 ? 0 : Math.min((p - 0.7) / 0.3, 1.0);
+  const settle = p <= 0.9 ? 0 : Math.min((p - 0.9) / 0.1, 1.0);
+  return { implode, chaos, coalesce, settle };
+};
+
+const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer') => {
+  if (!uniforms) return;
+  const verb = directive?.verb || directive?.effect?.verb;
+  const setUniform = (name, value) => {
+    if (typeof value !== 'number') return;
+    const target = uniforms[name];
+    if (!target) return;
+    if (!guardUniformWrite(origin, name)) return;
+    target.value = value;
+    target.needsUpdate = true;
+  };
+  const applyArrayUniform = (name, value) => {
+    const uniform = uniforms[name];
+    if (!uniform) return;
+    if (!guardUniformWrite(origin, name)) return;
+    if (Array.isArray(value)) {
+      if (uniform.value?.set) {
+        uniform.value.set(...value);
+      } else {
+        uniform.value = value.slice();
+      }
+    } else {
+      uniform.value = value;
+    }
+    uniform.needsUpdate = true;
+  };
+  const clamp1 = (value, fallback = 1) => clamp01(Number.isFinite(value) ? value : fallback);
+
+  if (directive?.effect && typeof directive.effect === 'object') {
+    Object.entries(directive.effect).forEach(([key, value]) => {
+      if (typeof value === 'number') {
+        setUniform(key, value);
+      } else if (Array.isArray(value)) {
+        applyArrayUniform(key, value);
+      }
+    });
+  }
+
+  if (!verb) return;
+
+  switch (verb) {
+    case 'gentle_drift':
+      setUniform('uDriftAmp', clamp1(directive?.amplitude ?? 0.25, 0.25));
+      setUniform('uDriftFreq', Math.max(0.05, directive?.frequency ?? 0.15));
+      break;
+    case 'tier3_subtle_pulse':
+      setUniform('uTier3PulseAmp', clamp1(directive?.amplitude ?? 0.6, 0.6));
+      setUniform('uTier3PulseFreq', Math.max(0.2, directive?.frequency ?? 1.2));
+      break;
+    case 'tier2_flicker_increase':
+      setUniform('uTier2FlickerAmp', clamp1(directive?.amplitude ?? 0.8, 0.8));
+      setUniform('uTier2FlickerFreq', Math.max(0.5, directive?.frequency ?? 3.0));
+      break;
+    case 'particles_begin_columns':
+      setUniform('uColumnMorphStrength', clamp1(directive?.strength ?? 1.0));
+      break;
+    case 'reform_as_structure':
+      setUniform('uStructureBlend', clamp1(directive?.strength ?? 1.0));
+      break;
+    default:
+      break;
+  }
+};
+
 // Lightweight opening-phase detection to avoid premature freezes/fenceposts during the opening sequence
 function isOpeningInProgress() {
   if (typeof window === 'undefined') return false;
@@ -515,7 +590,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       emittedEmergedRef.current = true;
       emergencePendingRef.current = false;
-      ignoreDirectivesRef.current = true;
 
       trace('WBG:FAST_FORWARD', {
         at: now,
@@ -530,6 +604,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   );
 
   const { size, gl, camera } = useThree();
+
+  useEffect(() => {
+    if (!BeatBus?.on) return () => {};
+    const enableDirectives = (reason) => {
+      ignoreDirectivesRef.current = false;
+      if (import.meta?.env?.DEV) {
+        console.log('[WBG] Directives enabled', { reason });
+      }
+    };
+    const offEmerged = BeatBus.on(EVENTS.PARTICLES_EMERGED, () => enableDirectives('particles-emerged'));
+    const offOpeningComplete = BeatBus.on(EVENTS.OPENING_COMPLETE, () => enableDirectives('opening-complete'));
+    const offScroll = BeatBus.on(EVENTS.ENABLE_SCROLL, () => enableDirectives('enable-scroll'));
+    return () => {
+      offEmerged?.();
+      offOpeningComplete?.();
+      offScroll?.();
+    };
+  }, []);
 
   useEffect(() => {
     const offReady = BeatBus?.on?.(EVENTS.FENCEPOST_LISTENERS_READY, (payload = {}) => {
@@ -1313,18 +1405,46 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         freezeUniform.value = 0.0;
         mat.uniformsNeedUpdate = true;
       }
-      if (mat) {
-        applyRendererFits(geo, viewportHintRef.current || viewport);
-        logBind(isEmergence ? 'emergence' : 'stage', {
-          stage: raw.stageName || st || 'genesis',
-          mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
-          cached: !!cached,
-        });
-        scheduleRuntimeSampling();
-        if (isEmergence || isOpeningChaos) {
-          fenceReadyRef.current = true;
-          flushPendingFencepost();
-          emitRendererFencepostReady(isEmergence ? 'emergence-bind' : 'opening-bind');
+        if (mat) {
+          applyRendererFits(geo, viewportHintRef.current || viewport);
+          logBind(isEmergence ? 'emergence' : 'stage', {
+            stage: raw.stageName || st || 'genesis',
+            mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
+            cached: !!cached,
+          });
+          // 🔬 Diagnostics: AABB at bind (atmospheric vs text) to catch collapsed/off-screen data
+          const aabb = (arr) => {
+            if (!(arr instanceof Float32Array) || arr.length < 3) return null;
+            let minX = Infinity, minY = Infinity, minZ = Infinity;
+            let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+            for (let i = 0; i < arr.length; i += 3) {
+              const x = arr[i], y = arr[i + 1], z = arr[i + 2];
+              if (x < minX) minX = x; if (x > maxX) maxX = x;
+              if (y < minY) minY = y; if (y > maxY) maxY = y;
+              if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+            }
+            return {
+              min: { x: +minX.toFixed(2), y: +minY.toFixed(2), z: +minZ.toFixed(2) },
+              max: { x: +maxX.toFixed(2), y: +maxY.toFixed(2), z: +maxZ.toFixed(2) },
+              size: { x: +(maxX - minX).toFixed(2), y: +(maxY - minY).toFixed(2), z: +(maxZ - minZ).toFixed(2) },
+            };
+          };
+          const atmAabb = aabb(raw.atmosphericPositions);
+          const textAabb = aabb(raw.text3DPositions);
+          const posAabb = aabb(geo.attributes?.position?.array);
+          console.log('🔬 BIND_AABB', {
+            stage: raw.stageName || st || 'genesis',
+            mode: mode || raw?.mode,
+            atm: atmAabb,
+            text: textAabb,
+            geo: posAabb,
+            cached: !!cached,
+          });
+          scheduleRuntimeSampling();
+          if (isEmergence || isOpeningChaos) {
+            fenceReadyRef.current = true;
+            flushPendingFencepost();
+            emitRendererFencepostReady(isEmergence ? 'emergence-bind' : 'opening-bind');
         }
         if (mat?.uniforms?.uMorphProgress) {
           if (isQrBlueprint) {
@@ -1336,6 +1456,44 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
           }
           mat.uniformsNeedUpdate = true;
+        }
+        // Reset core uniforms to a safe baseline on every full bind
+        if (mat?.uniforms) {
+          const u = mat.uniforms;
+          if (u.uPostMorphFreeze) {
+            u.uPostMorphFreeze.value = 0.0;
+            u.uPostMorphFreeze.needsUpdate = true;
+          }
+          if (u.uOpacityMin) {
+            u.uOpacityMin.value = 0.5;
+            u.uOpacityMin.needsUpdate = true;
+          }
+          if (u.uOpacityMax) {
+            u.uOpacityMax.value = 1.0;
+            u.uOpacityMax.needsUpdate = true;
+          }
+          if (u.uFadeProgress) {
+            u.uFadeProgress.value = 1.0;
+            u.uFadeProgress.needsUpdate = true;
+          }
+          if (u.uPointSize) {
+            const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+            u.uPointSize.value = Math.max(1.6, 2.2 * dpr);
+            u.uPointSize.needsUpdate = true;
+          }
+          // Ensure active counts and draw range are fully open on bind
+          const geoCount = geometryRef.current?.attributes?.position?.count ?? drawCount;
+          if (u.uActiveCount) {
+            u.uActiveCount.value = geoCount;
+            u.uActiveCount.needsUpdate = true;
+          }
+          if (u.uTierCutoff) {
+            u.uTierCutoff.value = Math.max(u.uTierCutoff.value || 0, geoCount);
+            u.uTierCutoff.needsUpdate = true;
+          }
+          if (geometryRef.current) {
+            geometryRef.current.setDrawRange(0, geoCount);
+          }
         }
         ignoreDirectivesRef.current = false;
 
@@ -1469,105 +1627,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           }
         }
 
-        if (isClimax) {
-          const blueprintForDiag = raw;
-          const geometry = geo;
-          const material = mat;
-          const positionAttr = geometry?.attributes?.position;
-          const positionsArray = positionAttr?.array;
-          const text3DPositions = blueprintForDiag?.text3DPositions;
-          const atmosphericPositions = blueprintForDiag?.atmosphericPositions;
-          const stepName = blueprintForDiag?.climaxStep || blueprintForDiag?.mode?.split?.(':')?.[1] || null;
-          const sample = (arr, start = 0, count = 9) => {
-            if (arr && typeof arr.slice === 'function') {
-              return Array.from(arr.slice(start, start + count));
-            }
-            return 'none';
-          };
-
-          const spreadStats = (arr) => {
-            if (!(arr instanceof Float32Array) || arr.length < 30) {
-              return { avg: 'invalid', min: 'invalid', max: 'invalid' };
-            }
-            let sum = 0;
-            let minDist = Infinity;
-            let maxDist = 0;
-            for (let i = 0; i < 30; i += 3) {
-              const dist = Math.abs(arr[i]) + Math.abs(arr[i + 1]) + Math.abs(arr[i + 2]);
-              sum += dist;
-              if (dist < minDist) minDist = dist;
-              if (dist > maxDist) maxDist = dist;
-            }
-            return {
-              avg: (sum / 10).toFixed(2),
-              min: minDist.toFixed(2),
-              max: maxDist.toFixed(2),
-            };
-          };
-
-          const buffersMatch = (() => {
-            if (!(text3DPositions instanceof Float32Array) || !(positionsArray instanceof Float32Array)) {
-              return 'unknown';
-            }
-            const checks = [0, 99, 999, positionsArray.length - 1].filter((idx) => idx >= 0 && idx < positionsArray.length);
-            return checks.every((idx) => text3DPositions[idx] === positionsArray[idx]);
-          })();
-
-          console.log('🔬 CLIMAX DIAGNOSTIC (ENHANCED):', {
-            climaxStep: stepName,
-            particleCount: blueprintForDiag?.particleCount || 0,
-            hasText3D: text3DPositions instanceof Float32Array,
-            text3DLength: text3DPositions?.length || 0,
-            hasGeometry: positionsArray instanceof Float32Array,
-            geometryLength: positionsArray?.length || 0,
-            text3DStart: sample(text3DPositions, 0, 9),
-            text3DMiddle: sample(text3DPositions, Math.max(0, Math.floor((text3DPositions?.length || 0) / 2) - 4), 9),
-            text3DEnd: sample(text3DPositions, Math.max(0, (text3DPositions?.length || 9) - 9), 9),
-            geometryStart: sample(positionsArray, 0, 9),
-            geometryMiddle: sample(positionsArray, Math.max(0, Math.floor((positionsArray?.length || 0) / 2) - 4), 9),
-            geometryEnd: sample(positionsArray, Math.max(0, (positionsArray?.length || 9) - 9), 9),
-            buffersMatch,
-            shaderMorph: material?.uniforms?.shaderMorph?.value ?? 'undefined',
-            spreadBlueprint: spreadStats(text3DPositions),
-            spreadGeometry: spreadStats(positionsArray),
-          });
-
-          console.log('🔬 SPREAD COMPARISON: Blueprint vs Geometry', {
-            blueprint: spreadStats(text3DPositions),
-            geometry: spreadStats(positionsArray),
-          });
-
-          const posArray = positionsArray;
-          if (posArray && posArray.length >= 30) {
-            let sumX = 0;
-            let sumY = 0;
-            let sumZ = 0;
-            for (let i = 0; i < 30; i += 3) {
-              sumX += Math.abs(posArray[i]);
-              sumY += Math.abs(posArray[i + 1]);
-              sumZ += Math.abs(posArray[i + 2]);
-            }
-            const avgDist = (sumX + sumY + sumZ) / 10;
-            if (avgDist < 0.1) {
-              console.error('🚨 POSITIONS AT ORIGIN! Forming cluster/square');
-            } else {
-              console.log(`✅ Positions spread (avg dist from origin: ${avgDist.toFixed(2)})`);
-            }
-          }
-
-          if (material) {
-            console.log('🔬 SHADER STATE:', {
-              shaderMorph: material?.uniforms?.shaderMorph?.value ?? 'undefined',
-              expectedMorph: 1.0,
-              morphMode: material?.uniforms?.morphMode?.value ?? 'undefined',
-            });
-            if (material?.uniforms?.shaderMorph) {
-              material.uniforms.shaderMorph.value = 1.0;
-              material.uniformsNeedUpdate = true;
-              console.log('✅ Forced shaderMorph = 1.0 for climax');
-            }
-          }
-        }
+        // Note: climax diagnostics/overrides removed to allow normal morph flow
 
       }
 
@@ -1602,59 +1662,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           gl.setClearColor(new THREE.Color(r, g, b), a);
         }
         timeTickEnabledRef.current = true;
-      }
-
-      // ---------- MORPH: start at 0 for FULL binds so we actually see the transition ----------
-      const isEmergenceMode = payload?.mode === 'emergence' || payload?.blueprint?.mode === 'emergence';
-      const matCurrent = materialRef.current;
-      const currentUniforms = matCurrent?.uniforms;
-      if (!isEmergenceMode && currentUniforms?.uMorphProgress) {
-        const director = typeof window !== 'undefined' ? window.theaterDirector : null;
-        const currentStage = director?.getCurrentStage?.() ?? director?.currentStage ?? null;
-        const currentPhase = director?.getCurrentPhase?.() ?? director?.phase ?? null;
-        const isOpeningPhase = currentStage === 'genesis' && currentPhase !== 'emergence';
-        const startMorph = 0.0;
-
-        currentUniforms.uMorphProgress.value = startMorph;
-        if (currentUniforms.uStageProgress) {
-          currentUniforms.uStageProgress.value = startMorph;
-        }
-        fallbackMorphRef.current = startMorph;
-        matCurrent.uniformsNeedUpdate = true;
-
-        if (isOpeningPhase && !geometryBoundOnceRef.current) {
-          geometryBoundOnceRef.current = true;
-          return;
-        }
-
-        if (!geometryBoundOnceRef.current) {
-          geometryBoundOnceRef.current = true;
-        }
-
-        {
-          const startTime = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
-          const duration = 1200;
-          const raf = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-            ? window.requestAnimationFrame
-            : (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : null);
-          if (!raf) return;
-          const step = (now) => {
-            const elapsed = now - startTime;
-            const progress = Math.min(1, elapsed / duration);
-            const liveUniforms = matCurrent.uniforms;
-            if (liveUniforms?.uMorphProgress) {
-              liveUniforms.uMorphProgress.value = startMorph + (1 - startMorph) * progress;
-            }
-            if (liveUniforms?.uStageProgress) {
-              liveUniforms.uStageProgress.value = startMorph + (1 - startMorph) * progress;
-            }
-            matCurrent.uniformsNeedUpdate = true;
-            if (progress < 1) {
-              raf(step);
-            }
-          };
-          raf(step);
-        }
       }
 
       if (isQrBlueprint && !qrModeRef.current) {
@@ -1704,6 +1711,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   useEffect(() => {
     if (typeof BeatBus?.on !== 'function') return;
     const handleDirective = (payload = {}) => {
+      const directive = payload || {};
+      try {
+        console.log('🔬 DIRECTIVE_CONTENTS', {
+          hasMorph: ('uMorphProgress' in directive) || ('morphProgress' in directive),
+          morphValue: directive.uMorphProgress ?? directive.morphProgress ?? 'MISSING',
+          phase: directive.phase,
+          stage: directive.stage,
+          allKeys: Object.keys(directive || {}),
+          timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+        });
+      } catch {}
       if (import.meta?.env?.DEV) {
         console.log('[WBG] handleDirective', {
           source: payload?.source,
@@ -1711,16 +1729,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           verb: payload?.verb || payload?.effect?.verb || null,
           keys: Object.keys(payload || {}),
         });
-      }
-      if (ignoreDirectivesRef.current) {
-        if (import.meta?.env?.DEV) {
-          console.warn('[Renderer] RENDER_DIRECTIVE ignored due to ignoreDirectivesRef', {
-            verb: payload?.verb,
-            source: payload?.source,
+        if (payload?.phase === 'opening') {
+          console.log('[WBG] opening directive', {
+            verb: payload?.verb || payload?.effect?.verb || null,
+            effectKeys: payload?.effect ? Object.keys(payload.effect) : [],
+            hasEffect: !!payload?.effect,
           });
         }
-        return;
       }
+      const phase = payload?.phase || 'unknown';
+      const isScrollPhase = phase === 'scroll';
+
       const mat = materialRef.current;
       const mesh = meshRef.current;
       const geometry = geometryRef.current;
@@ -1733,6 +1752,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       const setUniformNumber = (uniformName, value) => {
         if (typeof value !== 'number') return;
+        if (isScrollPhase && (uniformName === 'uMorphProgress' || uniformName === 'uStageProgress')) {
+          if (DEV) console.warn('[WBG] Scroll-phase directive blocked morph write', { uniformName, value });
+          return;
+        }
         const uniform = uniforms[uniformName];
         if (!uniform) return;
         if (!guardUniformWrite(origin, uniformName)) return;
@@ -1773,7 +1796,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       setUniformNumber('uBandFade', payload.bandFade);
       setUniformNumber('uBandHeight', payload.bandHeight);
 
-      if (typeof payload.uMorphProgress === 'number') {
+      if (!isScrollPhase && typeof payload.uMorphProgress === 'number') {
         setUniformNumber('uMorphProgress', payload.uMorphProgress);
         if (typeof payload.uStageProgress === 'number') {
           setUniformNumber('uStageProgress', payload.uStageProgress);
@@ -1781,7 +1804,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uniforms.uStageProgress.value = payload.uMorphProgress;
           uniforms.uStageProgress.needsUpdate = true;
         }
-      } else if (typeof payload.uStageProgress === 'number') {
+      } else if (!isScrollPhase && typeof payload.uStageProgress === 'number') {
         setUniformNumber('uStageProgress', payload.uStageProgress);
       }
 
@@ -1856,6 +1879,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         });
       }
 
+      if (payload?.verb || payload?.effect?.verb) {
+        applyVisualVerbDirective(payload, uniforms, origin);
+      }
+
       const desiredActiveCount =
         Number.isFinite(payload.activeCount)
           ? payload.activeCount
@@ -1879,6 +1906,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       mat.uniformsNeedUpdate = true;
+      mat.needsUpdate = true;
     };
     const off = BeatBus.on(EVENTS.RENDER_DIRECTIVE, handleDirective);
     if (!listenersReadyRef.current) {
@@ -1898,7 +1926,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       return undefined;
     }
 
-    const handleMorphProgress = (payload = {}) => {
+  const handleMorphProgress = (payload = {}) => {
+      try {
+        console.log('🔬 MORPH_PROGRESS_HANDLER_CALLED', {
+          payload,
+          currentUniform: materialRef.current?.uniforms?.uMorphProgress?.value ?? null,
+          timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+        });
+      } catch {}
       if (import.meta?.env?.DEV) {
         console.log('[WBG] handleMorphProgress', {
           payload,
@@ -1917,13 +1952,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const hasGeometry =
         geometryBoundOnceRef.current ||
         (geometryRef.current?.attributes?.position?.count ?? 0) > 0;
-      if (!hasGeometry) {
-        if (DEV) {
-          console.log('[WBG] Morph ignored (geometry not yet bound)', payload);
-        }
-        return;
+    if (!hasGeometry) {
+      if (DEV) {
+        console.log('[WBG] Morph ignored (geometry not yet bound)', payload);
       }
-      geometryBoundOnceRef.current = true;
+      return;
+    }
+    geometryBoundOnceRef.current = true;
 
       fallbackMorphRef.current = value;
 
@@ -1934,11 +1969,53 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         return;
       }
 
-      __applyMorph(value);
+      const env = getMorphEnvelope(value);
+      const setEnvUniform = (name, val) => {
+        if (!uniforms[name]) return;
+        uniforms[name].value = val;
+        uniforms[name].needsUpdate = true;
+      };
+      setEnvUniform('uImplodeStrength', env.implode);
+      setEnvUniform('uChaosStrength', env.chaos);
+      setEnvUniform('uCoalesceStrength', env.coalesce);
+      setEnvUniform('uSettleStrength', env.settle);
+
+    __applyMorph(value);
+
+    // Ensure visibility baseline on every morph tick (defensive)
+    if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 0.0) {
+      uniforms.uPostMorphFreeze.value = 0.0;
+      mat.uniformsNeedUpdate = true;
+    }
+    if (uniforms.uOpacityMin && uniforms.uOpacityMin.value < 0.4) {
+      uniforms.uOpacityMin.value = 0.5;
+      uniforms.uOpacityMin.needsUpdate = true;
+    }
+    if (uniforms.uOpacityMax && uniforms.uOpacityMax.value < 0.8) {
+      uniforms.uOpacityMax.value = 1.0;
+      uniforms.uOpacityMax.needsUpdate = true;
+    }
+    if (uniforms.uFadeProgress && uniforms.uFadeProgress.value !== 1.0) {
+      uniforms.uFadeProgress.value = 1.0;
+      uniforms.uFadeProgress.needsUpdate = true;
+    }
+    const geoCount = geometryRef.current?.attributes?.position?.count ?? 0;
+    if (geoCount > 0) {
+      geometryRef.current.setDrawRange(0, geoCount);
+      if (uniforms.uActiveCount) {
+        uniforms.uActiveCount.value = geoCount;
+        uniforms.uActiveCount.needsUpdate = true;
+      }
+      if (uniforms.uTierCutoff) {
+        uniforms.uTierCutoff.value = Math.max(uniforms.uTierCutoff.value || 0, geoCount);
+        uniforms.uTierCutoff.needsUpdate = true;
+      }
+    }
       if (uniforms.uStageProgress) {
         uniforms.uStageProgress.value = value;
       }
       mat.uniformsNeedUpdate = true;
+      mat.needsUpdate = true;
 
       const skipFreezeForOpening = isOpeningInProgress();
 
@@ -1957,7 +2034,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
         emittedEmergedRef.current = true;
         emergencePendingRef.current = false;
-        ignoreDirectivesRef.current = true;
       }
 
       if (DEV) {
@@ -1966,6 +2042,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     };
 
     const unsubMorph = BeatBus.on(EVENTS.MORPH_PROGRESS, handleMorphProgress);
+    try {
+      console.log('🔬 MORPH_PROGRESS_SUBSCRIBED', {
+        timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+      });
+    } catch {}
 
     if (DEV) {
       console.log('✅ Renderer subscribed:', {
@@ -2025,6 +2106,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uBrainRegion:     { value: stageIndex },
           uSpreadFactor:    { value: 1.0 },
           uMorphType:       { value: MORPH_TYPE_ENUM.steady },
+          uImplodeStrength: { value: 0.0 },
+          uChaosStrength:   { value: 0.0 },
+          uCoalesceStrength:{ value: 0.0 },
+          uSettleStrength:  { value: 0.0 },
+          uDriftAmp:        { value: 0.0 },
+          uDriftFreq:       { value: 0.25 },
+          uTier3PulseAmp:   { value: 0.0 },
+          uTier3PulseFreq:  { value: 1.0 },
+          uTier2FlickerAmp: { value: 0.0 },
+          uTier2FlickerFreq:{ value: 2.5 },
+          uColumnMorphStrength: { value: 0.0 },
+          uStructureBlend:  { value: 0.0 },
           // Legacy color uniforms (kept for compatibility)
           uColorCurrent:    { value: palette.current.clone() },
           uColorNext:       { value: palette.next.clone() },
