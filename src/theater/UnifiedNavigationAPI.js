@@ -12,12 +12,22 @@
 import BeatBus from '@/theater/bus';
 import NavigationGate from '@/theater/NavigationGate.js';
 import { stageAtom } from '@/state/atoms';
+import { navigateToStageCanonical } from '@/state/commands/NavigationCommands.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 class UnifiedNavigationAPI {
   constructor() {
     this.initialized = false;
     this.currentStage = null;
+    this._lastResizeTs = 0;
+    this._handleResize = () => {
+      this._lastResizeTs = this._now();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this._handleResize, { passive: true });
+      window.addEventListener('orientationchange', this._handleResize, { passive: true });
+    }
 
     console.log('🎯 [UNIFIED NAV] API initialized');
   }
@@ -73,15 +83,29 @@ class UnifiedNavigationAPI {
       console.warn('🚨 [UNIFIED NAV] Window or document unavailable');
       const currentStage = stageAtom.getState?.()?.currentStage;
       if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
+        navigateToStageCanonical(targetStage, { origin: `unifiedNav:nodom:${source}`, viaScroll: false });
       }
       return true;
     }
 
-    const documentHeight = document.body?.scrollHeight ?? 0;
-    const windowHeight = window.innerHeight ?? 0;
-    const maxScroll = Math.max(documentHeight - windowHeight, 0);
-    const scrollTarget = (targetScrollPercent / 100) * maxScroll;
+    let measurement = this._measureScrollableArea();
+    let { documentHeight, windowHeight, maxScroll } = measurement;
+    let scrollTarget = (targetScrollPercent / 100) * maxScroll;
+    const currentScroll = typeof window.scrollY === 'number' ? window.scrollY : 0;
+    const recentlyResized =
+      this._lastResizeTs > 0 && this._now() - this._lastResizeTs < 1500;
+
+    if ((maxScroll <= 0 || Number.isNaN(scrollTarget)) && recentlyResized) {
+      console.warn('🚨 [UNIFIED NAV] Document not scrollable (recent resize) - retrying scroll setup', {
+        targetStage,
+        source,
+        documentHeight,
+        windowHeight,
+      });
+      measurement = await this._awaitScrollableArea();
+      ({ documentHeight, windowHeight, maxScroll } = measurement);
+      scrollTarget = (targetScrollPercent / 100) * maxScroll;
+    }
 
     console.log('🎯 [UNIFIED NAV] Scroll calculation', {
       targetScrollPercent,
@@ -89,7 +113,7 @@ class UnifiedNavigationAPI {
       windowHeight,
       maxScroll,
       scrollTarget,
-      currentScroll: typeof window.scrollY === 'number' ? window.scrollY : 0,
+      currentScroll,
     });
 
     // Check if document is scrollable
@@ -98,12 +122,21 @@ class UnifiedNavigationAPI {
 
     try {
       if (maxScroll <= 0 || Number.isNaN(scrollTarget)) {
-        console.warn('🚨 [UNIFIED NAV] Document not scrollable - using direct stage jump as fallback');
-        if (window.stageControls?.jumpToStage) {
-          window.stageControls.jumpToStage(targetStage);
-        } else {
-          stageAtom.jumpToStage(targetStage);
+        if (recentlyResized) {
+          console.warn(
+            '🚨 [UNIFIED NAV] Document still not scrollable after resize wait – keeping current stage',
+            {
+              documentHeight,
+              windowHeight,
+              targetStage,
+              source,
+            },
+          );
+          finalReason = 'no-scroll-area';
+          return false;
         }
+        console.warn('🚨 [UNIFIED NAV] Document not scrollable - delegating to canonical navigation');
+        navigateToStageCanonical(targetStage, { origin: `unifiedNav_fallback:${source}`, viaScroll: false });
         finalReason = 'fallback';
         return true;
       }
@@ -121,7 +154,7 @@ class UnifiedNavigationAPI {
 
       const currentStage = stageAtom.getState?.()?.currentStage;
       if (currentStage !== targetStage) {
-        stageAtom.jumpToStage(targetStage);
+        navigateToStageCanonical(targetStage, { origin: `unifiedNav_fixup:${source}`, viaScroll: false });
       }
 
       if (releaseDelayMs > 0) {
@@ -190,6 +223,41 @@ class UnifiedNavigationAPI {
    */
   onStageChange(callback) {
     return BeatBus.on('STAGE_CHANGE', callback);
+  }
+
+  _now() {
+    return typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? performance.now()
+      : Date.now();
+  }
+
+  _measureScrollableArea() {
+    if (typeof document === 'undefined' || typeof window === 'undefined') {
+      return { documentHeight: 0, windowHeight: 0, maxScroll: 0 };
+    }
+    const documentHeight = document.body?.scrollHeight ?? 0;
+    const windowHeight = window.innerHeight ?? 0;
+    return {
+      documentHeight,
+      windowHeight,
+      maxScroll: Math.max(documentHeight - windowHeight, 0),
+    };
+  }
+
+  async _awaitScrollableArea(maxAttempts = 5, delayMs = 120) {
+    let measurement = this._measureScrollableArea();
+    if (measurement.maxScroll > 0) {
+      return measurement;
+    }
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      measurement = this._measureScrollableArea();
+      if (measurement.maxScroll > 0) {
+        return measurement;
+      }
+    }
+    return measurement;
   }
 }
 

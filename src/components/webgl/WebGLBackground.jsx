@@ -1969,12 +1969,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         return;
       }
 
-      const env = getMorphEnvelope(value);
+      const lastMeta = lastBlueprintMetaRef.current || {};
       const setEnvUniform = (name, val) => {
         if (!uniforms[name]) return;
         uniforms[name].value = val;
         uniforms[name].needsUpdate = true;
       };
+
+      const env = getMorphEnvelope(value);
       setEnvUniform('uImplodeStrength', env.implode);
       setEnvUniform('uChaosStrength', env.chaos);
       setEnvUniform('uCoalesceStrength', env.coalesce);

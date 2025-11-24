@@ -41,6 +41,13 @@ export default class MorphAnimationController {
         source,
         channel: 'renderer',
       });
+      try {
+        console.log('🔬 MORPH_CONTROLLER_EMIT', {
+          progress: clampedValue,
+          source,
+          timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+        });
+      } catch {}
       if (progressRatio < 1) {
         this._raf = window.requestAnimationFrame(step);
       } else {

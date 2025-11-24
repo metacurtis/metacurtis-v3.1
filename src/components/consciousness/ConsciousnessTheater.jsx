@@ -327,35 +327,6 @@ export default function ConsciousnessTheater() {
         return;
       }
 
-      // Morph controls (retain existing behaviour)
-      if (key === 'ArrowUp' || key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const current = typeof morphProgressRef.current === 'number' ? morphProgressRef.current : 0;
-        const delta = key === 'ArrowUp' ? 0.1 : -0.1;
-        const next = Math.max(0, Math.min(1, Number((current + delta).toFixed(3))));
-
-        if (next !== current) {
-          const updated = stateCommands.setMorphProgress(next, { origin: 'keyboard' });
-          morphProgressRef.current = updated;
-          console.log('🎬 [KEY NAV]', {
-            key,
-            action: key === 'ArrowUp' ? 'increase' : 'decrease',
-            from: current.toFixed(2),
-            to: updated.toFixed(2),
-          });
-        } else {
-          console.log('🎬 [KEY NAV]', {
-            key,
-            action: key === 'ArrowUp' ? 'increase' : 'decrease',
-            ignored: 'clamped',
-            value: current.toFixed(2),
-          });
-        }
-        return;
-      }
-
       // Numeric shortcuts
       if (/^[0-6]$/.test(key)) {
         e.preventDefault();
@@ -383,7 +354,10 @@ export default function ConsciousnessTheater() {
               source: 'number_key',
             });
           } else {
-            stageAtom.jumpToStage(targetStage);
+            window.NavigationCommands?.navigateToStageCanonical?.(targetStage, {
+              origin: 'number_key_fallback',
+              viaScroll: false,
+            });
           }
         }
         return;
@@ -410,7 +384,12 @@ export default function ConsciousnessTheater() {
             source: 'keyboard_space',
           });
         } else {
-          stageAtom.nextStage();
+          const nextStage =
+            stageNamesRef[nextIndex] || stageNamesRef[stageNamesRef.length - 1];
+          window.NavigationCommands?.navigateToStageCanonical?.(nextStage, {
+            origin: 'keyboard_space_fallback',
+            viaScroll: false,
+          });
         }
         const after = stageAtom.getState?.();
         console.log('🎬 [KEY NAV]', {
@@ -428,20 +407,6 @@ export default function ConsciousnessTheater() {
         case 'H':
           window.SHOW_DIRECTOR = !window.SHOW_DIRECTOR;
           window.location.reload();
-          break;
-        case 'm':
-        case 'M': {
-          const current = morphProgressRef.current ?? 0;
-          const target = current > 0.5 ? 0 : 1;
-          morphProgressRef.current = stateCommands.setMorphProgress(target, {
-            origin: 'developer-toggle',
-          });
-          break;
-        }
-        case 'r':
-        case 'R':
-          stageAtom.jumpToStage('genesis');
-          morphProgressRef.current = stateCommands.setMorphProgress(0, { origin: 'reset' });
           break;
         default:
           break;
@@ -465,12 +430,6 @@ export default function ConsciousnessTheater() {
       const progress = Math.min(scrollTop / scrollHeight, 1);
 
       stateCommands.setScrollProgress(progress, { origin: 'scroll' });
-      const directorStatus =
-        typeof director.getStatus === 'function' ? director.getStatus() : null;
-      const openingComplete = directorStatus?.phase === 'complete';
-      if (openingComplete && !NavigationGate.isInFlight()) {
-        stateCommands.setMorphProgress(Math.min(progress * 2, 1), { origin: 'scroll' });
-      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });

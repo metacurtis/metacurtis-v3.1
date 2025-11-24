@@ -183,6 +183,7 @@ class TheaterDirector {
     this._openingMorphListener = null;
     this._stageBlueprintUnsubscribe = null;
     this._handleBlueprintReadyBound = null;
+    this._climaxStepUnsubscribe = null;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -279,6 +280,7 @@ class TheaterDirector {
         this._handleBlueprintReady(payload);
       }
     };
+    this._handleClimaxStepForMorph = (payload = {}) => this._driveClimaxMorph(payload);
 
     if (typeof BeatBus?.on === 'function') {
       this._stageChangeUnsubscribe = BeatBus.on(EVENTS.STAGE_CHANGE, this._handleStageChangeBound);
@@ -297,6 +299,10 @@ class TheaterDirector {
       this._stageBlueprintUnsubscribe = BeatBus.on(
         EVENTS.BLUEPRINT_READY,
         this._handleBlueprintReadyBound,
+      );
+      this._climaxStepUnsubscribe = BeatBus.on(
+        EVENTS.CLIMAX_STEP,
+        this._handleClimaxStepForMorph,
       );
     }
   }
@@ -750,6 +756,37 @@ class TheaterDirector {
     });
   }
 
+  _driveClimaxMorph(payload = {}) {
+    const step = payload?.step || payload?.name;
+    if (!step || step === 'complete') return;
+    if (typeof this.isOpeningInProgress === 'function' && this.isOpeningInProgress()) return;
+
+    const stageName = this.currentStage || payload.stage || null;
+    if (stageName && stageName !== 'transcendence') return;
+
+    const durationMs = Math.max(
+      1,
+      Number(payload.transitionDuration) || Number(payload.duration) || 1500
+    );
+
+    this._cancelMorphAnimation();
+    this._morphAnimationController?.stop();
+    this._morphAnimationController?.start({
+      from: 0,
+      to: 1,
+      duration: durationMs,
+      source: OPENING_MORPH_SOURCE,
+    });
+
+    if (DEBUG_NARRATION) {
+      console.log('🎬 [CLIMAX] Driving morph via MorphAnimationController', {
+        step,
+        durationMs,
+        stage: stageName,
+      });
+    }
+  }
+
   handleStageChange(newStage, payload = {}) {
     if (!newStage) {
       if (DEBUG_NARRATION) {
@@ -916,6 +953,10 @@ class TheaterDirector {
       this._stageBlueprintUnsubscribe?.();
     } catch {}
     this._stageBlueprintUnsubscribe = null;
+    try {
+      this._climaxStepUnsubscribe?.();
+    } catch {}
+    this._climaxStepUnsubscribe = null;
 
     return this;
   }
