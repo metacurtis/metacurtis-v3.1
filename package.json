@@ -79,6 +79,10 @@
     "test:visual:debug": "playwright test tests/visual/ --debug",
     "test:report": "playwright show-report",
     "test:schema": "node sst/tools/test-schema.cjs",
+    "test:schema:sdsst": "node tools/verify-sst3.5-canon.cjs",
+    "test:contract:sst": "node tools/verify-sst3.5-canon.cjs && node tools/audit-visual-canon.cjs && node tools/check-render-directive-single-writer.cjs",
+    "test:contract:renderDirective": "node tools/check-render-directive-fieldset.cjs && node tools/check-render-directive-single-writer.cjs",
+    "audit:canon:visuals": "node tools/audit-visual-canon.cjs",
     "validate-sst": "node sst/tools/validate-sst.cjs",
     "test:sst-all": "npm run test:schema && npm run validate-sst",
     "generate-types": "node sst/tools/generate-jsdoc.cjs",
@@ -108,7 +112,8 @@
     "lint-shaders-advanced": "node tools/lint-shaders-advanced.mjs",
     "scan-shaders-motion": "node tools/scanners/shader-motion-audit.mjs",
     "lint-shaders-motion": "node tools/lint-shaders-motion.mjs",
-    "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs"
+    "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs",
+    "morph:audit": "node scripts/morph-audit.cjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.2",

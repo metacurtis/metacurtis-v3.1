@@ -1,3 +1,18 @@
+/**
+ * RENDER_DIRECTIVE Emitters (Phase 1 Transitional)
+ *
+ * INVARIANTS (Phase 1):
+ * - This module is one of only two allowed RENDER_DIRECTIVE writers:
+ *   - VisualOrchestrator (primary orchestration path)
+ *   - bus/emitters.js (legacy/transitional path)
+ *
+ * - tools/check-render-directive-single-writer.cjs enforces that no additional
+ *   emitters appear outside of these files without intentional allowlist changes.
+ *
+ * FUTURE (Phase 2+):
+ * - Goal is to route all RENDER_DIRECTIVE emissions through a single orchestrator path
+ *   and retire direct use of this module for writes.
+ */
 import BeatBus from './index.js';
 import { EVENTS } from '../events-safe.js';
 

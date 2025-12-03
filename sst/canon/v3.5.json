@@ -2066,6 +2066,88 @@
         "fadeSpeed": 0.7,
         "duration": 2000,
         "description": "Motion blur trails appear behind moving particles"
+      },
+      "reform_as_flow": { "label": "Reform as Flow" },
+      "neural_pathways_light": { "label": "Neural Pathways Light" },
+      "tier3_synaptic_flash": { "label": "Tier 3 Synaptic Flash" },
+      "connection_strengthen": { "label": "Connection Strengthen" },
+      "tier2_pulse_sync": { "label": "Tier 2 Pulse Sync" },
+      "genesis_callback_purple": { "label": "Genesis Callback (Purple)" },
+      "tier3_lightning_burst": { "label": "Tier 3 Lightning Burst" },
+      "fusion_pattern": { "label": "Fusion Pattern" },
+      "cascade_acceleration": { "label": "Cascade Acceleration" },
+      "velocity_peak": { "label": "Velocity Peak" },
+      "blueprint_grid_emerge": { "label": "Blueprint Grid Emerge" },
+      "isometric_view_rotate": { "label": "Isometric View Rotate" },
+      "layer_stack_reveal": { "label": "Layer Stack Reveal" },
+      "blueprint_complete": { "label": "Blueprint Complete" },
+      "tier3_construction_guide": { "label": "Tier 3 Construction Guide" },
+      "master_plan_glow": { "label": "Master Plan Glow" },
+      "golden_ratio_spiral": { "label": "Golden Ratio Spiral" },
+      "orbit_sync_begin": { "label": "Orbit Sync Begin" },
+      "ballet_choreography": { "label": "Ballet Choreography" },
+      "phase_lock_achieve": { "label": "Phase Lock Achieve" },
+      "laminar_flow_perfect": { "label": "Laminar Flow Perfect" },
+      "golden_ratio_complete": { "label": "Golden Ratio Complete" },
+      "cosmic_dust_swirl": { "label": "Cosmic Dust Swirl" },
+      "consciousness_nodes_pulse": { "label": "Consciousness Nodes Pulse" },
+      "all_stages_echo": { "label": "All Stages Echo" },
+      "galactic_arm_rotate": { "label": "Galactic Arm Rotate" },
+      "unified_field": { "label": "Unified Field" },
+      "transcendent_integration": { "label": "Transcendent Integration" },
+      "question_expand": { "label": "Question Expand" },
+      "tier3_sparkle": {
+        "type": "sparkle",
+        "tiers": [
+          3
+        ],
+        "count": 50,
+        "duration": 500,
+        "status": "reserved"
+      },
+      "settle_to_form": {
+        "type": "converge",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad",
+        "status": "reserved"
+      },
+      "static_hold": {
+        "type": "lock",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "rigidity": 1,
+        "status": "reserved"
+      },
+      "prepare_flicker": {
+        "type": "prime",
+        "tiers": [
+          2,
+          3
+        ],
+        "anticipation": 500,
+        "status": "reserved"
+      },
+      "green_flicker": {
+        "type": "color_flash",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "color": "#00FF00",
+        "duration": 300,
+        "status": "reserved"
       }
     },
     "cameraEffects": {

@@ -59,6 +59,47 @@
         }
       }
     },
+    "visualEffects": {
+      "description": "Registry of visual effects / verb clusters referenced by narrative beats.",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "version": { "type": "string" },
+            "particleEffects": {
+              "type": "object",
+              "description": "Visual verb to particle effect mapping",
+              "additionalProperties": true
+            },
+            "cameraEffects": {
+              "type": "object",
+              "description": "Visual verb to camera effect mapping",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the visual effect (referenced by beatSheets[].visual)."
+              },
+              "label": {
+                "type": "string",
+                "description": "Human-readable label used in tools / UI."
+              }
+            },
+            "required": ["id"],
+            "additionalProperties": true
+          }
+        }
+      ]
+    },
     "narrative": {
       "type": "object",
       "required": ["orchestration"],
@@ -140,6 +181,70 @@
             }
           },
           "additionalProperties": true
+        }
+      ,
+        "beatSheets": {
+          "description": "Narrative beats for SST 3.5; each beat may reference a visual effect.",
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "totalDuration": { "type": "integer", "minimum": 0 },
+                  "beats": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "time": { "type": "integer", "minimum": 0 },
+                        "visual": {
+                          "type": "string",
+                          "description": "Identifier of the visual effect / verb used for this beat. Should match an entry in visualEffects if present."
+                        },
+                        "narration": { "type": "object", "additionalProperties": true }
+                      },
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Beat identifier."
+                  },
+                  "visual": {
+                    "description": "The visual effect used for this beat. Should reference visualEffects[*].id if defined.",
+                    "anyOf": [
+                      { "type": "string" },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "effectId": {
+                            "type": "string",
+                            "description": "ID referencing visualEffects[*].id"
+                          }
+                        },
+                        "required": ["effectId"],
+                        "additionalProperties": true
+                      }
+                    ]
+                  },
+                  "narration": { "type": "object", "additionalProperties": true },
+                  "time": { "type": "integer", "minimum": 0 }
+                },
+                "required": ["id"],
+                "additionalProperties": true
+              }
+            }
+          ]
         }
       }
     },

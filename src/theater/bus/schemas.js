@@ -1,3 +1,16 @@
+/**
+ * RENDER_DIRECTIVE Schema
+ *
+ * This file is the schema implementation of the contract defined in:
+ *   docs/render-directive-contract.md
+ *
+ * INVARIANTS:
+ * - The shape of RENDER_DIRECTIVE MUST match the documented contract.
+ * - New fields MUST NOT be added here without updating the doc and
+ *   src/theater/contracts/renderDirectiveFields.js.
+ * - Deprecated fields MUST be explicitly marked as such in both places.
+ */
+import { RENDER_DIRECTIVE_FIELDS } from '../contracts/renderDirectiveFields.js';
 export const DEFAULT_SCHEMA_VERSION = '1.0.0';
 
 const BaseSchema = {
@@ -10,6 +23,39 @@ const BaseSchema = {
     _meta: 'object',
   },
 };
+
+const RENDER_DIRECTIVE_FIELD_TYPE_MAP = {
+  kind: 'string',
+  phase: 'string',
+  stage: 'string',
+  uMotionMode: 'number',
+  uParticlePhase: 'number',
+  uFlowTurbulence: 'number',
+  uParticleFlash: 'number',
+  uOpacityMin: 'number',
+  uOpacityMax: 'number',
+  uMorphProgress: 'number',
+  uStageProgress: 'number',
+  activeCount: 'number',
+  pointSize: 'number',
+  gaussianSigma: 'number',
+  tierHighlight: 'object',
+  uniforms: 'object',
+  // @deprecated — legacy alias for uMorphProgress
+  morphProgress: 'number',
+  drawCount: 'number',
+  enterQrMode: 'boolean',
+  exitQrMode: 'boolean',
+};
+
+const renderDirectiveProperties = {};
+for (const field of RENDER_DIRECTIVE_FIELDS) {
+  if (RENDER_DIRECTIVE_FIELD_TYPE_MAP[field]) {
+    renderDirectiveProperties[field] = RENDER_DIRECTIVE_FIELD_TYPE_MAP[field];
+  }
+}
+
+export const RENDER_DIRECTIVE_SCHEMA_FIELDS = Object.keys(renderDirectiveProperties);
 
 const EVENT_SCHEMAS = new Map([
   ['STAGE_CHANGE', {
@@ -42,29 +88,14 @@ const EVENT_SCHEMAS = new Map([
       stageIndex: 'number',
     },
   }],
-  ['RENDER_DIRECTIVE', {
-    optional: {
-      kind: 'string',
-      phase: 'string',
+  ['GEOMETRY_BOUND', {
+    required: {
       stage: 'string',
-      uMotionMode: 'number',
-      uParticlePhase: 'number',
-      uFlowTurbulence: 'number',
-      uParticleFlash: 'number',
-      uOpacityMin: 'number',
-      uOpacityMax: 'number',
-      uMorphProgress: 'number',
-      uStageProgress: 'number',
-      activeCount: 'number',
-      pointSize: 'number',
-      gaussianSigma: 'number',
-      tierHighlight: 'object',
-      uniforms: 'object',
-      morphProgress: 'number', // legacy
-      drawCount: 'number',
-      enterQrMode: 'boolean',
-      exitQrMode: 'boolean',
+      source: 'string',
     },
+  }],
+  ['RENDER_DIRECTIVE', {
+    optional: renderDirectiveProperties,
   }],
   ['SCROLL_PROGRESS', {
     optional: {
