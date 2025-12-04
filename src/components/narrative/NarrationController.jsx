@@ -972,6 +972,10 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
     prevDepsRef.current = deps;
 
     const handleStart = (payload = {}) => {
+      if (import.meta?.env?.DEV) {
+        console.log('🔬 [NARRATION] START_NARRATIVE event received', payload);
+      }
+
       const stageName = payload?.stage || currentStage || activeStageRef.current;
       if (!stageName) {
         narrationDiagnostic.log('START_EVENT_IGNORED_NO_STAGE', { payload });
@@ -1005,6 +1009,9 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           stage: stageName,
           source,
         });
+        if (import.meta?.env?.DEV) {
+          console.log('🔬 [NARRATION] START_EVENT_SKIPPED_ALREADY_PLAYING', { stage: stageName });
+        }
         return;
       }
 
@@ -1023,6 +1030,14 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       });
 
       const origin = source || 'event';
+
+      if (stageName === 'genesis') {
+        console.log('🎙️ [NARRATION] Starting genesis beatSheet', {
+          stage: stageName,
+          source: origin,
+        });
+      }
+
       startNarration(stageName, origin);
       startedStagesRef.current.add(stageName);
       console.log('🎙️ [NarrationController] Added to startedStagesRef', {

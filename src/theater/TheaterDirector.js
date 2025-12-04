@@ -1569,6 +1569,11 @@ class TheaterDirector {
 
       await this._runVisualSchedule();
 
+      // 🔓 Opening is officially over before we start Genesis narration.
+      // NarrationController uses isOpeningInProgress() to suppress beats;
+      // flip this to false so Genesis beats can flow.
+      this._openingInProgress = false;
+
       BeatBus.emit(EVENTS.START_NARRATIVE, {
         stage: toStage,
         source: 'opening_complete',
