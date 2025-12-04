@@ -248,6 +248,13 @@ export default function OpeningSequence() {
         triggerFadeOut('particles-start-emerging', 100);
       }),
 
+      // Opening chaos phase — start fading overlay early so chaos/coalesce/settle are visible
+      BeatBus.on(EVENTS.PARTICLE_PHASE, (payload = {}) => {
+        const name = payload?.name || payload?.phase || payload;
+        if (name !== 'chaos') return;
+        triggerFadeOut('opening-chaos', 100);
+      }),
+
       BeatBus.on(EVENTS.PARTICLES_EMERGED, () => {
         const now =
           typeof performance !== 'undefined' && typeof performance.now === 'function'

@@ -113,7 +113,8 @@
     "scan-shaders-motion": "node tools/scanners/shader-motion-audit.mjs",
     "lint-shaders-motion": "node tools/lint-shaders-motion.mjs",
     "scan-beat-verbs": "node tools/scanners/scan-beat-verbs.mjs",
-    "morph:audit": "node scripts/morph-audit.cjs"
+    "morph:audit": "node scripts/morph-audit.cjs",
+    "pattern:fromE": "node tools/mc-pattern-from-E.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.1.2",
