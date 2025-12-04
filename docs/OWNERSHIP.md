@@ -17,8 +17,11 @@ uColorAccent2 = src/components/webgl/WebGLBackground.jsx
 uColorCurrent = src/components/webgl/WebGLBackground.jsx
 uColorNext = src/components/webgl/WebGLBackground.jsx
 uDevicePixelRatio = src/components/webgl/WebGLBackground.jsx
+uFadeProgress = src/components/webgl/WebGLBackground.jsx
 uMorph = src/components/webgl/WebGLBackground.jsx
 uMorphProgress = src/components/webgl/WebGLBackground.jsx
+uOpacityMax = src/components/webgl/WebGLBackground.jsx
+uOpacityMin = src/components/webgl/WebGLBackground.jsx
 uPalette0 = src/components/webgl/WebGLBackground.jsx
 uPalette1 = src/components/webgl/WebGLBackground.jsx
 uPalette2 = src/components/webgl/WebGLBackground.jsx
@@ -90,7 +93,7 @@ PARTICLES_START_EMERGING.emitter = src/theater/TheaterDirector.js
 PREWARM_COMPLETE.emitter = src/engine/ConsciousnessEngine.js
 PREWARM_GENESIS_BLUEPRINT.emitter = src/theater/TheaterDirector.js
 QUALITY_CHANGE.emitter = ⚠️ multiple: src/state/atoms/qualityAtom.js, src/state/commands/StateCommands.js
-RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/bus/emitters.js
+RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/VisualOrchestrator.js, src/theater/bus/emitters.js
 RENDERER_TUNE.emitter = src/theater/TheaterDirector.js
 SCREEN_FILL.emitter = src/theater/TheaterDirector.js
 SCROLL_PROGRESS.emitter = src/theater/ScrollOrchestrator.js
@@ -116,4 +119,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-11-19 via `tools/generate-ownership.mjs`
+Last updated: 2025-12-04 via `tools/generate-ownership.mjs`

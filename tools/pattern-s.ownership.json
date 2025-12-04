@@ -107,7 +107,10 @@
       ]
     },
     "RENDER_DIRECTIVE": {
-      "emitters": ["src/theater/bus/emitters.js"]
+      "emitters": [
+        "src/theater/bus/emitters.js",
+        "src/theater/VisualOrchestrator.js"
+      ]
     },
     "RENDERER_TUNE": {
       "emitters": ["src/theater/TheaterDirector.js"]
