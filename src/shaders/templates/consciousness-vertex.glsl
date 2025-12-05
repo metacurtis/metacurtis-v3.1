@@ -63,7 +63,14 @@ float getTierMode(int t) {
 vec3 applyTierMovement(vec3 basePos, int tierIndex) {
   float mode = getTierMode(tierIndex);
   vec4 params = getTierParams(tierIndex);
-  float taper = clamp(1.0 - uMorphProgress, 0.0, 1.0);
+  float baseTaper = clamp(1.0 - uMorphProgress, 0.0, 1.0);
+  float taper = baseTaper;
+
+  // For drift mode, keep a small baseline so the glyph "breathes"
+  if (mode < 0.5) {
+    taper = max(baseTaper, 0.15);
+  }
+
   vec3 offset = vec3(0.0);
 
   if (mode < 0.5) {
@@ -145,14 +152,29 @@ void main() {
   vec3 movement = tierAdjusted - basePos;
 
   float freeze = (uPostMorphFreeze > 0.5) ? 0.0 : 1.0;
-  float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morph);
-  float moveGainY = 1.0 - smoothstep(uMoveDampStartY, 1.0, morph);
 
-  movement.x *= moveGain * freeze;
+  // Existing morph-based damping envelope
+  float moveGainBase  = 1.0 - smoothstep(uMoveDampStart,  1.0, morph);
+  float moveGainYBase = 1.0 - smoothstep(uMoveDampStartY, 1.0, morph);
+
+  // Look up mode again for this vertex
+  float mode = getTierMode(tierIndex);
+  // driftMask = 1.0 when mode < 0.5, else 0.0
+  float driftMask     = step(mode, 0.5);
+  float nonDriftMask  = 1.0 - driftMask;
+
+  // For drift: keep full gain (1.0) even when morph ~ 1
+  // For other modes: use the existing envelope
+  float moveGain  = mix(1.0, moveGainBase,  nonDriftMask);
+  float moveGainY = mix(1.0, moveGainYBase, nonDriftMask);
+
+  movement.x *= moveGain  * freeze;
   movement.y *= moveGainY * freeze;
-  movement.z *= moveGain * freeze;
+  movement.z *= moveGain  * freeze;
 
-  if (morph >= 0.985 || uPostMorphFreeze > 0.5) {
+  // Only the freeze flag should fully kill motion;
+  // drift can continue at a low baseline even when morph ~ 1.0.
+  if (uPostMorphFreeze > 0.5) {
     movement = vec3(0.0);
   }
 

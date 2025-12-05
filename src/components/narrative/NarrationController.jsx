@@ -487,6 +487,15 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           ? Number(segment.charsPerSecond)
           : defaultCharsPerSecond;
 
+        if (DEBUG_NARRATION && stageName === 'genesis' && segmentIndex === 0) {
+          console.log('🔍 [GENESIS SEGMENT]', {
+            index: segmentIndex,
+            time: segment?.timing?.start ?? 0,
+            visual: segment?.visual ?? null,
+            textPreview: (text || '').slice(0, 80),
+          });
+        }
+
         if (DEBUG_NARRATION) {
           const preview = text.length > 50 ? `${text.slice(0, 50)}…` : text;
           console.log('🎙️ [BEAT FIRED]', {
@@ -983,11 +992,12 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       }
 
       const source = typeof payload?.source === 'string' ? payload.source : null;
+      const isOpeningComplete = source === 'opening_complete';
       const openingInProgress =
         typeof window !== 'undefined' &&
         window.theaterDirector?.isOpeningInProgress?.() === true;
 
-      if (openingInProgress && source !== 'opening_complete') {
+      if (openingInProgress && !isOpeningComplete) {
         narrationDiagnostic.log('START_EVENT_DEFERRED_OPENING', {
           stage: stageName,
           source,
@@ -1002,6 +1012,22 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           source,
         });
         return;
+      }
+
+      if (isOpeningComplete && startedStagesRef.current.has(stageName)) {
+        narrationDiagnostic.log('START_EVENT_RESET_STARTED_FLAG', {
+          stage: stageName,
+          source,
+        });
+        startedStagesRef.current.delete(stageName);
+      }
+
+      if (isOpeningComplete && activeStageRef.current === stageName) {
+        narrationDiagnostic.log('START_EVENT_RESET_ACTIVE_FOR_OPENING_COMPLETE', {
+          stage: stageName,
+          source,
+        });
+        resetState({ unlock: false, preserveStage: false });
       }
 
       if (activeStageRef.current && activeStageRef.current === stageName) {
@@ -1102,13 +1128,23 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   useEffect(() => {
     if (!currentStage) return;
 
+    const director = typeof window !== 'undefined' ? window.theaterDirector : null;
     const openingInProgress =
-      typeof window !== 'undefined' &&
-      window.theaterDirector?.isOpeningInProgress?.() === true;
+      director && typeof director.isOpeningInProgress === 'function'
+        ? director.isOpeningInProgress() === true
+        : true; // Default to blocking auto-start until director is ready
+
+    if (currentStage === 'genesis') {
+      narrationDiagnostic.log('AUTO_START_SKIPPED_GENESIS_OPENING_HANDOFF', {
+        stage: currentStage,
+      });
+      return;
+    }
 
     if (openingInProgress) {
       narrationDiagnostic.log('AUTO_START_BLOCKED_OPENING', {
         stage: currentStage,
+        directorReady: !!director,
       });
       return;
     }

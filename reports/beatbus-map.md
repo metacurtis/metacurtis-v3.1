@@ -88,7 +88,7 @@ Total events: 38
 ## DIRECTOR_CANCEL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1743`
+- `src/theater/TheaterDirector.js:1748`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:281`
@@ -112,7 +112,7 @@ Total events: 38
 ## ENABLE_SCROLL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1589`
+- `src/theater/TheaterDirector.js:1594`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:190`
@@ -135,13 +135,13 @@ Total events: 38
 **Emitters**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:224`
 - `src/components/webgl/WebGLBackground.jsx:857`
-- `src/theater/TheaterDirector.js:1934`
+- `src/theater/TheaterDirector.js:1939`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:174`
 - `src/components/consciousness/ConsciousnessTheater.jsx:218`
 - `src/engine/ConsciousnessEngine.js:420`
-- `src/theater/TheaterDirector.js:1955`
+- `src/theater/TheaterDirector.js:1960`
 
 ## FENCEPOST_LISTENERS_READY
 
@@ -201,7 +201,7 @@ Total events: 38
 ## OPENING_COMPLETE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1591`
+- `src/theater/TheaterDirector.js:1596`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:269`
@@ -263,12 +263,12 @@ Total events: 38
 - `src/engine/ConsciousnessEngine.js:542`
 
 **Listeners**:
-- `src/theater/TheaterDirector.js:1750`
+- `src/theater/TheaterDirector.js:1755`
 
 ## PREWARM_GENESIS_BLUEPRINT
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1749`
+- `src/theater/TheaterDirector.js:1754`
 
 **Listeners**:
 - `src/engine/ConsciousnessEngine.js:424`
@@ -286,7 +286,7 @@ Total events: 38
 ## RENDERER_TUNE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1764`
+- `src/theater/TheaterDirector.js:1769`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:48`
@@ -325,7 +325,7 @@ Total events: 38
 - `src/theater/bus/emitters.js:32`
 
 **Listeners**:
-- `src/components/narrative/NarrationController.jsx:1058`
+- `src/components/narrative/NarrationController.jsx:1073`
 - `src/components/narrative/NarrativeChoreography.jsx:382`
 - `src/components/webgl/WebGLBackground.jsx:962`
 - `src/components/webgl/WebGLBackground.jsx:988`
@@ -350,11 +350,11 @@ Total events: 38
 - `src/components/narrative/NarrationController.jsx:378`
 - `src/orchestration/navigation/narrativeNavigation.js:20`
 - `src/theater/TheaterDirector.js:844`
-- `src/theater/TheaterDirector.js:1572`
+- `src/theater/TheaterDirector.js:1577`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:195`
-- `src/components/narrative/NarrationController.jsx:1057`
+- `src/components/narrative/NarrationController.jsx:1072`
 - `src/components/narrative/NarrationOverlayBus.jsx:203`
 
 ## TERMINAL_TYPE

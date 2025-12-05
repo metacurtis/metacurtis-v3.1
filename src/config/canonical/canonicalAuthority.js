@@ -186,6 +186,20 @@ function translateToRendererDirective(verb, effect = {}) {
     translated.tierParams = [params, params, params, params];
   }
 
+  // Drift-specific amplitude/frequency (for renderer + shader semantics)
+  // Pass through explicit SST values, otherwise supply gentle defaults for drift verbs.
+  if (typeof effect.amplitude === 'number') {
+    translated.amplitude = effect.amplitude;
+  } else if (verbKey.includes('drift') && translated.amplitude == null) {
+    translated.amplitude = 0.25; // "breathing" baseline
+  }
+
+  if (typeof effect.frequency === 'number') {
+    translated.frequency = effect.frequency;
+  } else if (verbKey.includes('drift') && translated.frequency == null) {
+    translated.frequency = 0.15;
+  }
+
   // Point size from scale
   if (typeof effect.scale === 'number') {
     translated.pointSize = Math.max(0.5, Math.min(3.0, effect.scale));

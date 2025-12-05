@@ -1,3 +1,662 @@
+You are Agent A – Architect.
+
+Flow: enable_gentle_drift · Step 01
+Generated at: 2025-12-05T03:03:11.127Z
+
+---
+## Mission
+Define clear goals, phases, and invariants for a change. Translate messy reality into a sharp spec and constraints.
+
+## Invariants
+- Base all plans on the current SST v3.5 Canonical (not guesses).
+- Never introduce new event types or new emitters without an explicit contract update.
+- Respect single-writer rules: Renderer is the only geometry/uniform writer; MorphAnimationController is the only MORPH_PROGRESS writer; VisualOrchestrator is the primary RENDER_DIRECTIVE writer.
+- Do not propose changes that break existing contract tests (schema, SST, visual audit, single-writer checks).
+
+## This Step
+Role for this step: Architect
+
+Notes for this step: Define exactly what gentle_drift should do in Genesis beat 0: where it appears, how 'breathing' looks, and how it coexists with opening_glyph_lock.
+
+## Task
+"Make gentle_drift clearly visible as a breathing baseline during the first Genesis narration beat (post-opening), without breaking contracts."
+
+## High-Level Context
+Task: Make gentle_drift clearly visible as a breathing baseline during the first Genesis narration beat (post-opening), without breaking contracts.
+
+Flow: enable_gentle_drift
+
+Included files:
+- src/config/canonical/canonicalAuthority.js
+- src/components/webgl/WebGLBackground.jsx
+- src/shaders/templates/consciousness-vertex.glsl
+
+## Code Context (from repo)
+### File: src/config/canonical/canonicalAuthority.js
+
+// CANONICAL AUTHORITY — SST v3.5 (Unified Single Source)
+import sstRaw from '../sst-loader.js';
+import { PARTICLE_EFFECTS as OVERRIDE_PARTICLE_EFFECTS, CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS } from './visualEffects.js';
+
+/** Deep-freeze utility (keeps Canonical read-only) */
+function deepFreeze(obj) {
+  if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
+    Object.freeze(obj);
+    for (const k of Object.keys(obj)) deepFreeze(obj[k]);
+  }
+  return obj;
+}
+
+/** Safe clone */
+function clone(obj) {
+  try { return typeof structuredClone === 'function' ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)); }
+  catch { return JSON.parse(JSON.stringify(obj)); }
+}
+
+const RENDER_UNIFORM_KEYS = [
+  'uMotionMode',
+  'uFlowTurbulence',
+  'uParticleFlash',
+  'uOpacityMin',
+  'uOpacityMax',
+  'uStreakIntensity',
+  'tierHighlight',
+  'pointSize',
+  'uniforms',
+  'activeCount',
+  'drawCount',
+];
+
+// Conservative motion-map: stick to renderer-supported modes (0-4)
+const MOTION_MODE_MAP = {
+  drift_perlin: 3,
+  flicker: 0,
+  structuralLock: 1,
+  vertexPulse: 0,
+  grid_drift: 1,
+  breathe: 0,
+  edgeLock: 1,
+  cadencePulse: 0,
+  neural_flow: 2,
+  strokeFlow: 2,
+  synapseFlash: 3,
+  hubNode: 1,
+  lag: 3,
+  streak: 3,
+  burst: 3,
+  lead: 3,
+  grid_flow: 1,
+  modular: 1,
+  blueprintPulse: 0,
+  constructionGuide: 1,
+  laminar_flow: 2,
+  orbit_sync: 4,
+  ballet: 4,
+  conductor: 1,
+  cosmic_dust: 4,
+  galactic_arm: 4,
+  consciousness_node: 0,
+  transcendent: 4,
+};
+
+/** True when the payload already contains renderer-ready fields */
+function hasRendererUniforms(effect) {
+  if (!effect || typeof effect !== 'object') return false;
+  return RENDER_UNIFORM_KEYS.some((key) => effect[key] !== undefined && effect[key] !== null);
+}
+
+/** Lightweight mapper: SST-style effect → renderer-ready directive */
+function translateToRendererDirective(verb, effect = {}) {
+  if (!effect || effect.type === 'camera') return effect;
+
+  // Preserve existing renderer-ready payloads
+  const payload = { ...effect };
+  if (!payload.source) payload.source = 'beat_visual';
+  if (!payload.verb) payload.verb = verb;
+  if (hasRendererUniforms(payload)) return payload;
+
+  const verbKey = String(verb || '').toLowerCase();
+  const translated = {
+    source: payload.source,
+    verb: payload.verb,
+  };
+
+  const normalizedType = String(effect.type || effect.behavior || effect.pattern || '').trim();
+  const mappedMode = normalizedType ? MOTION_MODE_MAP[normalizedType] : undefined;
+  if (mappedMode !== undefined) {
+    translated.uMotionMode = mappedMode;
+  }
+
+  // Tier modes / params (shader actually uses uTierMode/uTierParams)
+  const tierModesPayload = Array.isArray(effect.tierModes) ? effect.tierModes : null;
+  const tierParamsPayload = Array.isArray(effect.tierParams) ? effect.tierParams : null;
+
+  if (tierModesPayload) {
+    translated.tierModes = tierModesPayload;
+  } else {
+    // Heuristic fallback for tierModes if we have a mappedMode
+    const mode = translated.uMotionMode;
+    if (mode !== undefined) {
+      translated.tierModes = [mode, mode, mode, mode];
+    } else if (verbKey.includes('grid') || verbKey.includes('structure') || verbKey.includes('column')) {
+      translated.tierModes = [1, 1, 1, 1];
+      translated.uMotionMode = 1;
+    } else if (verbKey.includes('flow')) {
+      translated.tierModes = [2, 2, 2, 2];
+      translated.uMotionMode = 2;
+    } else if (verbKey.includes('streak') || verbKey.includes('trail') || verbKey.includes('velocity')) {
+      translated.tierModes = [3, 3, 3, 3];
+      translated.uMotionMode = 3;
+    } else if (verbKey.includes('orbit')) {
+      translated.tierModes = [4, 4, 4, 4];
+      translated.uMotionMode = 4;
+    } else if (verbKey.includes('drift')) {
+      translated.tierModes = [0, 0, 0, 0];
+      translated.uMotionMode = 3;
+    }
+  }
+
+  // Turbulence / speed
+  if (typeof effect.speed === 'number') {
+    translated.uFlowTurbulence = Math.max(0, Math.min(2, effect.speed));
+  } else if (typeof effect.amplitude === 'number') {
+    translated.uFlowTurbulence = Math.max(0, Math.min(2, effect.amplitude * 0.5));
+  }
+
+  // Flash / pulse intensity
+  if (effect.pulse && typeof effect.pulse.intensity === 'number') {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.pulse.intensity));
+  } else if (typeof effect.intensity === 'number' && verbKey.includes('pulse')) {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.intensity));
+  } else if (typeof effect.probability === 'number') {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.probability));
+  }
+
+  // Streak intensity / trail length
+  if (typeof effect.trailLength === 'number') {
+    translated.uStreakIntensity = Math.min(effect.trailLength / 3, 1.0);
+  } else if (typeof effect.streakIntensity === 'number') {
+    translated.uStreakIntensity = effect.streakIntensity;
+  }
+
+  // Tier targeting
+  if (Array.isArray(effect.tiers)) {
+    translated.tierHighlight = effect.tiers;
+  } else if (typeof effect.tiers === 'number') {
+    translated.tierHighlight = [effect.tiers];
+  }
+
+  // Opacity range
+  if (Array.isArray(effect.opacity) && effect.opacity.length >= 2) {
+    translated.uOpacityMin = Math.max(0, Math.min(1, effect.opacity[0]));
+    translated.uOpacityMax = Math.max(0, Math.min(1, effect.opacity[1]));
+  } else if (typeof effect.opacity === 'number') {
+    translated.uOpacityMin = Math.max(0, Math.min(1, effect.opacity));
+  }
+  if (typeof effect.fadeTrail === 'number') {
+    translated.uOpacityMax = Math.max(0, Math.min(1, effect.fadeTrail));
+  }
+  if (translated.uOpacityMin === undefined && translated.uOpacityMax !== undefined) {
+    translated.uOpacityMin = Math.max(0, Math.min(1, translated.uOpacityMax * 0.5));
+  }
+  if (translated.uOpacityMax === undefined && translated.uOpacityMin !== undefined) {
+    translated.uOpacityMax = Math.max(translated.uOpacityMin, 1.0);
+  }
+  if (translated.uOpacityMin === undefined && translated.uOpacityMax === undefined) {
+    translated.uOpacityMin = 0.5;
+    translated.uOpacityMax = 1.0;
+  }
+
+  if (typeof effect.uSpreadFactor === 'number') {
+    translated.uSpreadFactor = effect.uSpreadFactor;
+  }
+
+  // Tier params: use provided payload, otherwise derive from speed/amplitude/turbulence
+  if (tierParamsPayload && tierParamsPayload.length >= 4) {
+    translated.tierParams = tierParamsPayload;
+  } else if (translated.tierModes) {
+    const speed = typeof effect.speed === 'number' ? effect.speed : 0.8;
+    const amp = typeof effect.amplitude === 'number' ? effect.amplitude : 0.2;
+    const freq = typeof effect.frequency === 'number' ? effect.frequency : 0.5;
+    const params = [speed, amp, freq, 0.0];
+    translated.tierParams = [params, params, params, params];
+  }
+
+  // Point size from scale
+  if (typeof effect.scale === 'number') {
+    translated.pointSize = Math.max(0.5, Math.min(3.0, effect.scale));
+  }
+
+  return hasRendererUniforms(translated) ? translated : payload;
+}
+
+function buildCanonical(source) {
+  const sst = clone(source);
+  const stageOrder = Array.isArray(sst.stageOrder) ? sst.stageOrder.slice() : Object.keys(sst.stages || {});
+  const letterGeometry = sst.visual?.letterGeometry || {};
+
+  // Back-compat aliases for existing code paths
+  for (const key of Object.keys(sst.stages || {})) {
+    const st = sst.stages[key] || {};
+    if (!st.name) st.name = key;
+    if (Array.isArray(st.palette) && !st.colors) st.colors = st.palette.slice(0,3);
+    if (typeof st.particlesBase === 'number' && !st.particleCount) st.particleCount = st.particlesBase;
+    // 👇 add scrollRange alias for validators/tools that still expect it
+    if (Array.isArray(st.scrollRangePercent) && !st.scrollRange) st.scrollRange = st.scrollRangePercent.slice(0,2);
+    if (!st.label) st.label = key;
+    if (!st.word && letterGeometry?.[key]?.word) {
+      st.word = letterGeometry[key].word;
+    }
+  }
+
+  const openingRules = (sst.opening && sst.opening.rules) || sst.openingRules || {};
+  const openingTimeline = (sst.opening && sst.opening.timeline) || sst.stages?.genesis?.openingTimeline || {};
+  const openingFencepost = (sst.opening && (sst.opening.fencepost || sst.opening.fencepostOrder)) || sst.openingFencepost || {};
+  const opening = {
+    ...(sst.opening || {}),
+    rules: openingRules,
+    timeline: openingTimeline,
+    fencepost: openingFencepost
+  };
+
+  const narrativeStages = {};
+  for (const stageName of stageOrder) {
+    const stageNarrative = sst.narrative?.stages?.[stageName] ? clone(sst.narrative.stages[stageName]) : {};
+    const stageData = sst.stages?.[stageName] || {};
+    if (stageData.memoryFragments && !stageData.memoryFragment) {
+      stageData.memoryFragment =
+        stageData.memoryFragments.interactive ||
+        stageData.memoryFragments.ambient ||
+        stageData.memoryFragments.climax ||
+        null;
+    }
+    if (!stageNarrative.word && letterGeometry?.[stageName]?.word) {
+      stageNarrative.word = letterGeometry[stageName].word;
+    }
+    if (!stageNarrative.memoryFragments && stageData.memoryFragments) {
+      stageNarrative.memoryFragments = clone(stageData.memoryFragments);
+    }
+    if (!stageNarrative.memoryFragment) {
+      const primary =
+        stageData.memoryFragments?.interactive ||
+        stageData.memoryFragments?.ambient ||
+        stageData.memoryFragment ||
+        null;
+      if (primary) {
+        stageNarrative.memoryFragment = clone(primary);
+      }
+    }
+    if (!stageNarrative.audio && stageData.audio) {
+      stageNarrative.audio = stageData.audio;
+    }
+    if (!stageNarrative.timeline && stageData.openingTimeline) {
+      stageNarrative.timeline = stageData.openingTimeline;
+    }
+    narrativeStages[stageName] = stageNarrative;
+  }
+
+  const narrative = {
+    ...(sst.narrative || {}),
+    stages: narrativeStages
+  };
+
+  const visualEffects = clone(sst.visualEffects || {});
+  visualEffects.particleEffects = {
+    ...(visualEffects.particleEffects || {}),
+    ...(OVERRIDE_PARTICLE_EFFECTS || {}),
+  };
+  visualEffects.cameraEffects = {
+    ...(visualEffects.cameraEffects || {}),
+    ...(OVERRIDE_CAMERA_EFFECTS || {}),
+  };
+
+  const getVisualEffect = (visualVerb, type = 'particle') => {
+    if (!visualVerb || visualVerb === 'no_change') return null;
+
+    const effectKey = type === 'camera' ? 'cameraEffects' : 'particleEffects';
+    const effects = visualEffects?.[effectKey];
+
+    if (!effects) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] No ${effectKey} registry found`);
+      }
+      return null;
+    }
+
+    const effect = effects[visualVerb];
+
+    if (!effect) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] Unknown visual verb: "${visualVerb}" (type: ${type})`);
+      }
+      return null;
+    }
+
+    const translated = translateToRendererDirective(visualVerb, effect);
+
+    if (typeof console !== 'undefined' && typeof console.log === 'function') {
+      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, translated);
+    }
+    return translated;
+  };
+
+  const getBeatSheet = (stageName) => {
+    if (!stageName) return null;
+
+    const beatSheets = sst.narrative?.beatSheets;
+    if (!beatSheets) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn('🎨 [Canonical] No beat sheets found');
+      }
+      return null;
+    }
+
+    const key = String(stageName);
+    const beatSheet = beatSheets[key];
+
+    if (!beatSheet) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] No beat sheet for stage: "${key}"`);
+      }
+      return null;
+    }
+
+    return clone(beatSheet);
+  };
+
+  const getAllVisualVerbs = () => Object.keys(visualEffects?.particleEffects || {});
+  const getCoverageStats = () => {
+    const verbs = getAllVisualVerbs();
+    let translatable = 0;
+    let cameraOnly = 0;
+    verbs.forEach((verb) => {
+      const eff = visualEffects?.particleEffects?.[verb] || null;
+      if (eff && eff.type === 'camera') {
+        cameraOnly += 1;
+        return;
+      }
+      const resolved = getVisualEffect(verb);
+      if (resolved) translatable += 1;
+    });
+    const total = verbs.length;
+    const untranslatable = Math.max(0, total - translatable - cameraOnly);
+    const coverage = total > 0 ? ((translatable / total) * 100).toFixed(1) : '0.0';
+    return { total, translatable, cameraOnly, untranslatable, coverage: `${coverage}%` };
+  };
+
+  const getStageByName = (name) => sst.stages?.[name] ?? null;
+  const getStageByIndex = (index) => {
+    const safe = Math.max(0, Math.min(stageOrder.length - 1, Number(index) | 0));
+    const name = stageOrder[safe];
+    return sst.stages?.[name] ?? null;
+  };
+  const getStageByScroll = (progress = 0) => {
+    const raw = Number(progress);
+    const percent = Number.isFinite(raw)
+      ? (Math.abs(raw) > 1 ? Math.max(0, Math.min(100, raw)) : Math.max(0, Math.min(1, raw)) * 100)
+      : 0;
+    const bps = sst.scrollAndMorph?.stageBreakpointsPercent || [0,14,28,42,56,70,84,100];
+    for (let i = 0; i < bps.length - 1; i++) {
+      if (percent >= bps[i] && percent < bps[i + 1]) return getStageByIndex(i);
+    }
+    return getStageByIndex(stageOrder.length-1);
+  };
+  const isFeatureEnabled = (k) => Boolean(sst.features && sst.features[k]);
+  const getFragmentsForStage = (stage) => {
+    const st = getStageByName(stage);
+    if (!st) return [];
+    const source =
+      (st.memoryFragments && typeof st.memoryFragments === 'object')
+        ? st.memoryFragments
+        : (st.memoryFragment
+            ? { interactive: st.memoryFragment }
+            : null);
+    if (!source) return [];
+
+    const fragments = [];
+    for (const [tier, fragment] of Object.entries(source)) {
+      if (!fragment || typeof fragment !== 'object') continue;
+      const cloned = clone(fragment);
+      const fallbackName = `${stage} ${tier}`.replace(/_/g, ' ');
+      const normalized = {
+        ...cloned,
+        tier,
+        stage,
+      };
+      if (!normalized.id) normalized.id = `${stage}_${tier}`;
+      if (!normalized.name) normalized.name = normalized.title || fallbackName;
+      if (!normalized.type) normalized.type = tier;
+      fragments.push(normalized);
+    }
+    return fragments;
+  };
+  const getActiveFragments = (stage /*, scroll */) => getFragmentsForStage(stage);
+
+  const SYSTEM_CONSTANTS = {
+    TOTAL_STAGES: stageOrder.length,
+    MIN_STAGE_INDEX: 0,
+    MAX_STAGE_INDEX: stageOrder.length - 1,
+    OPERATIONAL_PARTICLES: sst.quality?.maxParticles ?? 15000,
+    SHOWCASE_PARTICLES: Math.min((sst.quality?.maxParticles ?? 15000)+2000, 17000),
+    TARGET_FPS: sst.performance?.frameRate?.target ?? sst.performance?.frameRate?.targetFps ?? 60,
+    LIGHTHOUSE_TARGET: 90
+  };
+
+  const Canonical = {
+    meta: sst.meta || {},
+    version: sst.meta?.version ?? '3.5',
+    authority: sst.meta?.authority ?? 'ABSOLUTE',
+    stages: sst.stages || {},
+    stageOrder,
+    visual: sst.visual || {},
+    narrative,
+    pipeline: sst.pipeline || {},
+    features: sst.features || {},
+    performance: sst.performance || {},
+    quality: sst.quality || {},
+    shaderContract: sst.shaderContract || {},
+    events: sst.events || [],
+    scrollAndMorph: sst.scrollAndMorph || {},
+    openingFencepost: sst.openingFencepost || {},
+    openingRules: sst.openingRules || {},
+    opening,
+    spriteSemantics: sst.spriteSemantics || {},
+    integrityRules: sst.integrityRules || [],
+    successMetrics: sst.successMetrics || {},
+    implementationPhases: sst.implementationPhases || [],
+    debugSurface: sst.debugSurface || {},
+    changeLog: sst.changeLog || [],
+    dialogue: narrative.stages || {},
+    visualEffects,
+    getStageByName, getStageByIndex, getStageByScroll,
+    isFeatureEnabled, getFragmentsForStage, getActiveFragments,
+    getVisualEffect, getBeatSheet,
+    getCoverageStats, getAllVisualVerbs,
+    SYSTEM_CONSTANTS
+  };
+  return deepFreeze(Canonical);
+}
+
+export const Canonical = buildCanonical(sstRaw);
+
+/** Probe history with temporal analysis utilities (dev only) */
+function createProbeHistory() {
+  const maxSamples = 300;
+  const samples = [];
+  let isRecording = false;
+  let startTime = null;
+
+  const getDuration = () => (samples[samples.length - 1]?.time ?? 0);
+
+  return {
+    start() {
+      isRecording = true;
+      startTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+      samples.length = 0;
+      console.log('[PROBE HISTORY] Recording started');
+      return this;
+    },
+    stop() {
+      isRecording = false;
+      console.log(`[PROBE HISTORY] Recording stopped (${samples.length} samples)`);
+      return this;
+    },
+    clear() {
+      samples.length = 0;
+      console.log('[PROBE HISTORY] Samples cleared');
+      return this;
+    },
+    record(snapshot = {}) {
+      if (!isRecording) return;
+
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const origin = startTime || 0;
+
+      samples.push({
+        time: now - origin,
+        timestamp: Date.now(),
+        ...snapshot
+      });
+
+      if (samples.length > maxSamples) samples.shift();
+    },
+    get samples() {
+      return [...samples];
+    },
+    query(predicate) {
+      return typeof predicate === 'function' ? samples.filter(predicate) : [];
+    },
+    analyze() {
+      if (!samples.length) return { error: 'No samples recorded' };
+
+      const fpsSamples = samples.map((s) => s.fps).filter((v) => typeof v === 'number');
+      const memorySamples = samples.map((s) => s.memory).filter((v) => typeof v === 'number');
+
+      const fps = fpsSamples.length
+        ? {
+            min: Math.min(...fpsSamples),
+            max: Math.max(...fpsSamples),
+            avg: fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length,
+            drops: fpsSamples.filter((f) => f < 55).length
+          }
+        : null;
+
+      const memory = memorySamples.length
+        ? {
+            min: Math.min(...memorySamples),
+            max: Math.max(...memorySamples),
+            trend: memorySamples[memorySamples.length - 1] > memorySamples[0] ? 'increasing' : 'stable'
+          }
+        : null;
+
+      return {
+        duration: getDuration(),
+        sampleCount: samples.length,
+        fps,
+        memory
+      };
+    },
+    plot(metric = 'fps') {
+      const values = samples.map((s) => s[metric]).filter((v) => typeof v === 'number');
+      if (!values.length) return `No data for metric "${metric}"`;
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = max - min || 1;
+
+      return values
+        .map((value, index) => {
+          const normalized = (value - min) / range;
+          const barLength = Math.floor(normalized * 40);
+          return `${index.toString().padStart(3, ' ')}: ${'='.repeat(barLength)} ${value.toFixed(1)}`;
+        })
+        .join('\n');
+    },
+    export() {
+      return {
+        meta: {
+          startTime,
+          duration: getDuration(),
+          sampleCount: samples.length
+        },
+        samples: [...samples]
+      };
+    }
+  };
+}
+
+// DEV exposure
+const isDev =
+  (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV);
+
+if (typeof window !== 'undefined' && isDev) {
+  try {
+    Object.defineProperty(window, 'Canonical', {
+      value: Canonical,
+      writable: false,
+      configurable: false
+    });
+    // Alias for tools expecting canonicalAuthority
+    if (!window.canonicalAuthority) {
+      Object.defineProperty(window, 'canonicalAuthority', {
+        value: Canonical,
+        writable: false,
+        configurable: false
+      });
+    }
+    Object.defineProperty(window, 'SST', {
+      value: Canonical,
+      writable: false,
+      configurable: false
+    });
+    console.log(`📋 SST v${Canonical.version} loaded as window.Canonical + window.SST (read-only)`);
+  } catch (err) {
+    console.warn('Failed to expose SST canonical authority', err);
+  }
+
+  try {
+    if (window.probe) {
+      if (!window.probe.history) {
+        window.probe.history = createProbeHistory();
+      }
+
+      if (typeof window.probe.draw === 'function' && !window.probe.__historyWrapped) {
+        const originalDraw = window.probe.draw;
+        window.probe.draw = function probeDrawWrapper(...args) {
+          const result = originalDraw.apply(this, args);
+          const history = window.probe.history;
+          if (history && typeof history.record === 'function') {
+            const fpsValue = typeof window.probe.fps === 'function' ? window.probe.fps() : undefined;
+            const memoryValue =
+              typeof performance !== 'undefined' && performance.memory
+                ? performance.memory.usedJSHeapSize / 1048576
+                : undefined;
+
+            history.record({
+              fps: typeof fpsValue === 'number' ? fpsValue : undefined,
+              draw: result,
+              memory: memoryValue
+            });
+          }
+          return result;
+        };
+        window.probe.__historyWrapped = true;
+      }
+
+      console.log('✅ Probe History initialized');
+    }
+  } catch (err) {
+    console.warn('Failed to initialize probe history', err);
+  }
+}
+
+export default Canonical;
+
+
+
+### File: src/components/webgl/WebGLBackground.jsx
+
 // src/components/webgl/WebGLBackground.jsx
 // HOT-DORS passive renderer: projection-matrix viewport hint + single directive sink
 // Single writer: binds geometry/material, emits PARTICLES_EMERGED exactly once (on first FULL bind)
@@ -2020,12 +2679,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       mat.needsUpdate = true;
 
       const skipFreezeForOpening = isOpeningInProgress();
-      const currentStage = stageNameRef.current || 'genesis';
-      const isGenesis = currentStage === 'genesis';
-
-      // Only auto-freeze non-Genesis stages after emergence completes.
-      const allowAutoFreeze =
-        !isGenesis && !skipFreezeForOpening;
 
       if (emergencePendingRef.current && !emittedEmergedRef.current && value >= 0.995) {
         const now =
@@ -2033,7 +2686,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
             ? performance.now()
             : Date.now();
 
-        if (allowAutoFreeze && uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
+        // During opening/genesis, allow chaos/coalesce/settle to breathe; freeze later stages only.
+        if (!skipFreezeForOpening && uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 1.0) {
           uniforms.uPostMorphFreeze.value = 1.0;
           mat.uniformsNeedUpdate = true;
           trace('WBG:FREEZE', { value: 1, source: 'morph' });
@@ -2092,7 +2746,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uAtlasTexture:    { value: atlasTexture },
           uTotalSprites:    { value: 16 },
           uPointSize:       { value: POINT_SIZE_DEFAULT },
-          uMotionMode:      { value: 0.0 },
           uDevicePixelRatio:{ value: (() => {
             try { return Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); } catch { return 1; }
           })() },
@@ -2539,3 +3192,215 @@ if (typeof window !== 'undefined') {
   console.log('   1. Click particles once');
   console.log('   2. Run: window.analyzeDiagnostic()');
 }
+
+
+
+### File: src/shaders/templates/consciousness-vertex.glsl
+
+precision mediump float;
+
+// Attributes
+attribute float particleIndex;
+attribute vec3 atmosphericPosition;
+attribute vec3 text3DPosition;
+attribute vec3 animationSeed;
+attribute float atlasIndex;
+attribute float sizeMultiplier;
+attribute float tierData;
+attribute float opacityData;
+
+// Uniforms
+uniform float uTime;
+uniform float uMorphProgress;
+uniform float uScrollProgress;
+uniform float uPointSize;
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform float uTotalSprites;
+uniform float uDevicePixelRatio;
+uniform vec2 uResolution;
+uniform vec2 uAtmoFit;
+uniform vec2 uTextFit;
+uniform float uMoveDampStart;
+uniform float uMoveDampStartY;
+uniform float uPostMorphFreeze;
+uniform float uSpreadFactor;
+uniform float uMorphType;
+uniform float uTierMode[4];
+uniform vec4  uTierParams0;
+uniform vec4  uTierParams1;
+uniform vec4  uTierParams2;
+uniform vec4  uTierParams3;
+uniform vec2  uGridSpacing;
+uniform float uFlowTurbulence;
+uniform float uStreakIntensity;
+
+// Varyings
+varying vec3 vPosition;
+varying float vBlend;
+varying float vAlpha;
+varying vec2 vAtlasUVOffset;
+varying float vTierID;
+varying float vTier;
+varying float vSizeMultiplier;
+varying float vParticleIndex;
+
+const float PI = 3.14159265359;
+const float TWO_PI = 6.28318530718;
+
+vec4 getTierParams(int t) {
+  if (t == 0) return uTierParams0;
+  if (t == 1) return uTierParams1;
+  if (t == 2) return uTierParams2;
+  return uTierParams3;
+}
+
+float getTierMode(int t) {
+  return (t >= 0 && t < 4) ? uTierMode[t] : 0.0;
+}
+
+vec3 applyTierMovement(vec3 basePos, int tierIndex) {
+  float mode = getTierMode(tierIndex);
+  vec4 params = getTierParams(tierIndex);
+  float taper = clamp(1.0 - uMorphProgress, 0.0, 1.0);
+  vec3 offset = vec3(0.0);
+
+  if (mode < 0.5) {
+    float speed = max(0.1, params.x);
+    float amplitude = params.y;
+    float freq = max(0.1, params.z);
+    float signal = sin(dot(basePos.xy, vec2(freq)) + uTime * speed);
+    offset = vec3(signal, -signal, 0.0) * amplitude;
+  } else if (mode < 1.5) {
+    float sx = max(uGridSpacing.x, 1e-4);
+    float sy = max(uGridSpacing.y, 1e-4);
+    vec2 snapped = vec2(
+      floor(basePos.x / sx + 0.5) * sx,
+      floor(basePos.y / sy + 0.5) * sy
+    );
+    vec2 wob = vec2(sin(uTime * 6.28318) * params.x, cos(uTime * 3.14159) * params.x);
+    offset = vec3(snapped.x - basePos.x + wob.x, snapped.y - basePos.y + wob.y, 0.0);
+  } else if (mode < 2.5) {
+    vec2 dir = normalize(vec2(0.7, 0.3));
+    float turbulence = clamp(uFlowTurbulence, 0.0, 2.0);
+    offset = vec3(dir, 0.0) * params.x * (1.0 + turbulence) + vec3(0.0, sin(uTime * 1.5) * params.y * (1.0 + turbulence), 0.0);
+  } else if (mode < 3.5) {
+    float streak = max(0.0, uStreakIntensity + params.x);
+    offset = vec3(streak * 0.3, sin(uTime * 3.0) * (params.y + uStreakIntensity * 0.2), 0.0);
+  } else {
+    float radius = max(0.05, params.y);
+    float speed = max(0.05, params.x);
+    float flatten = clamp(1.0 - params.z, 0.2, 1.0);
+    float angle = uTime * speed + basePos.x * 0.25;
+    vec2 orbit = vec2(cos(angle) * radius, sin(angle) * radius * flatten);
+    offset = vec3(orbit, 0.0);
+  }
+
+  return basePos + offset * taper;
+}
+
+void main() {
+  vParticleIndex = particleIndex;
+  vTierID = tierData;
+  vSizeMultiplier = sizeMultiplier;
+  
+  // Atlas UV setup (4x4 grid)
+  float spritesPerRow = 4.0;
+  float spriteSize = 1.0 / spritesPerRow;
+  float row = floor(atlasIndex / spritesPerRow);
+  float col = mod(atlasIndex, spritesPerRow);
+  vAtlasUVOffset = vec2(col, row) * spriteSize;
+  
+  // Position morphing between atmospheric and text (scale endpoints before mixing)
+  vec3 atmoPos = atmosphericPosition;
+  vec3 textPos = text3DPosition;
+  atmoPos.x *= uAtmoFit.x;
+  atmoPos.y *= uAtmoFit.y;
+  textPos.x *= uTextFit.x;
+  textPos.y *= uTextFit.y;
+
+  float morph = clamp(uMorphProgress, 0.0, 1.0);
+  float spread = max(uSpreadFactor, 0.0);
+  float morphType = uMorphType;
+  float isDissolve = 1.0 - step(0.5, abs(morphType - 1.0));
+  float isReform = 1.0 - step(0.5, abs(morphType - 2.0));
+  float dissolveAmt = clamp(1.0 - morph, 0.0, 1.0);
+  float reformAmt = clamp(morph, 0.0, 1.0);
+
+  if (isDissolve > 0.0) {
+    float dissolveSpread = mix(1.0, clamp(spread, 1.0, 4.0), dissolveAmt);
+    atmoPos.xy *= dissolveSpread;
+  }
+  if (isReform > 0.0) {
+    float reformScale = mix(1.0, clamp(spread, 0.4, 1.0), reformAmt);
+    textPos.xy *= reformScale;
+  }
+
+  vec3 basePos = mix(atmoPos, textPos, morph);
+  int tierIndex = int(clamp(floor(tierData + 0.5), 0.0, 3.0));
+  vec3 tierAdjusted = applyTierMovement(basePos, tierIndex);
+  
+  // Add movement
+  vec3 movement = tierAdjusted - basePos;
+
+  float freeze = (uPostMorphFreeze > 0.5) ? 0.0 : 1.0;
+  float moveGain = 1.0 - smoothstep(uMoveDampStart, 1.0, morph);
+  float moveGainY = 1.0 - smoothstep(uMoveDampStartY, 1.0, morph);
+
+  movement.x *= moveGain * freeze;
+  movement.y *= moveGainY * freeze;
+  movement.z *= moveGain * freeze;
+
+  if (morph >= 0.985 || uPostMorphFreeze > 0.5) {
+    movement = vec3(0.0);
+  }
+
+  vec3 finalPos = basePos + movement;
+  
+  if (isDissolve > 0.0) {
+    vec3 radial = normalize(vec3(basePos.xy, 0.0001));
+    finalPos += radial * (clamp(spread, 1.0, 4.0) - 1.0) * dissolveAmt * 6.0;
+  }
+  if (isReform > 0.0) {
+    vec3 targetDir = normalize(vec3(textPos.xy, 0.0001));
+    finalPos -= targetDir * max(1.0 - clamp(spread, 0.0, 1.0), 0.0) * reformAmt * 4.0;
+  }
+  vPosition = finalPos;
+  
+  // Transform to screen space
+  vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
+  gl_Position = projectionMatrix * mvPosition;
+  
+  // Point size with distance attenuation
+  float dist = length(mvPosition.xyz);
+  // gentler near-camera size; avoid "magnified pixels"
+  float attenuation = 180.0 / dist;
+  float tierSizeBoost = tierData < 0.5 ? 1.25 : (tierData > 2.5 ? 1.1 : 1.0);
+  gl_PointSize = uPointSize * sizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
+  gl_PointSize = clamp(gl_PointSize, 2.0, 36.0);
+  
+  // Pass color blend
+  vBlend = uScrollProgress;
+  
+  // Calculate alpha
+  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
+  vTier = tierData;
+}
+
+
+
+
+## Your Input Expectations
+Problem statement + current constraints + recent logs/behavior description.
+
+## Your Output Expectations
+Short spec: when gentle_drift should be active (Genesis beat 0, post-opening), what it should look like (slow Perlin drift on glyph), and what must stay unchanged (contracts, single-writer, opening fencepost).
+
+---
+## Instructions
+- Stay within your mission and invariants.
+- Respect existing contracts (schema, Canon, tests, single-writer).
+- If you propose code changes, show them as diffs or full snippets.
+- If you rely on behavior from other files not shown, state your assumptions.
+
+## Begin your reasoning and output below:

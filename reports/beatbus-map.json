@@ -11,7 +11,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1934
+        "line": 1939
       }
     ],
     "START_CLIMAX": [
@@ -51,7 +51,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1572
+        "line": 1577
       }
     ],
     "NARRATIVE_LINE": [
@@ -227,31 +227,31 @@
     "ENABLE_SCROLL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1589
+        "line": 1594
       }
     ],
     "OPENING_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1591
+        "line": 1596
       }
     ],
     "DIRECTOR_CANCEL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1743
+        "line": 1748
       }
     ],
     "PREWARM_GENESIS_BLUEPRINT": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1749
+        "line": 1754
       }
     ],
     "RENDERER_TUNE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1764
+        "line": 1769
       }
     ],
     "STAGE_CHANGE": [
@@ -317,7 +317,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1955
+        "line": 1960
       }
     ],
     "ENABLE_SCROLL": [
@@ -349,7 +349,7 @@
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 1057
+        "line": 1072
       },
       {
         "file": "src/components/narrative/NarrationOverlayBus.jsx",
@@ -379,7 +379,7 @@
     "STAGE_CHANGE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 1058
+        "line": 1073
       },
       {
         "file": "src/components/narrative/NarrativeChoreography.jsx",
@@ -699,7 +699,7 @@
     "PREWARM_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1750
+        "line": 1755
       }
     ]
   }

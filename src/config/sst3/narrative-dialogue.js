@@ -25,6 +25,15 @@ const CANONICAL_STAGE_ORDER = Array.isArray(Canonical?.stageOrder)
   ? Canonical.stageOrder
   : Object.keys(Canonical?.stages || {});
 
+function getBeatSheet(stageName) {
+  if (!stageName) return null;
+  if (typeof Canonical?.getBeatSheet === 'function') {
+    const sheet = Canonical.getBeatSheet(stageName);
+    if (sheet) return sheet;
+  }
+  return Canonical?.narrative?.beatSheets?.[stageName] || null;
+}
+
 function normalizeStageName(stageName) {
   if (!stageName) return null;
   const trimmed = String(stageName).trim();
@@ -70,7 +79,7 @@ function buildStageNarrative(stageName) {
   const normalizedName = normalizeStageName(stageName);
   if (!normalizedName) return null;
 
-  const beatSheet = Canonical?.narrative?.beatSheets?.[normalizedName];
+  const beatSheet = getBeatSheet(normalizedName);
   if (!beatSheet) return null;
 
   const beats = Array.isArray(beatSheet.beats) ? beatSheet.beats : [];
