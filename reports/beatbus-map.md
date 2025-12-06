@@ -167,7 +167,7 @@ Total events: 38
 - `src/theater/bus/emitters.js:59`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:2046`
+- `src/components/webgl/WebGLBackground.jsx:2051`
 - `src/state/commands/StateCommands.js:126`
 - `src/theater/TheaterDirector.js:535`
 - `src/theater/VisualOrchestrator.js:53`
@@ -192,7 +192,7 @@ Total events: 38
 ## NARRATIVE_LINE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:612`
+- `src/components/narrative/NarrationController.jsx:621`
 
 **Listeners**:
 - `src/components/narrative/NarrationOverlayBus.jsx:204`
@@ -255,7 +255,7 @@ Total events: 38
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:252`
-- `src/components/webgl/WebGLBackground.jsx:2342`
+- `src/components/webgl/WebGLBackground.jsx:2348`
 
 ## PREWARM_COMPLETE
 
@@ -294,7 +294,7 @@ Total events: 38
 ## RENDER_DIRECTIVE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:670`
+- `src/components/narrative/NarrationController.jsx:679`
 - `src/theater/VisualOrchestrator.js:141`
 - `src/theater/bus/emitters.js:51`
 - `canon-console/runtime/hud.js:408`
@@ -325,7 +325,7 @@ Total events: 38
 - `src/theater/bus/emitters.js:32`
 
 **Listeners**:
-- `src/components/narrative/NarrationController.jsx:1073`
+- `src/components/narrative/NarrationController.jsx:1099`
 - `src/components/narrative/NarrativeChoreography.jsx:382`
 - `src/components/webgl/WebGLBackground.jsx:962`
 - `src/components/webgl/WebGLBackground.jsx:988`
@@ -354,7 +354,7 @@ Total events: 38
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:195`
-- `src/components/narrative/NarrationController.jsx:1072`
+- `src/components/narrative/NarrationController.jsx:1098`
 - `src/components/narrative/NarrationOverlayBus.jsx:203`
 
 ## TERMINAL_TYPE

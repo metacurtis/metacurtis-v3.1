@@ -57,13 +57,13 @@
     "NARRATIVE_LINE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 612
+        "line": 621
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 670
+        "line": 679
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
@@ -349,7 +349,7 @@
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 1072
+        "line": 1098
       },
       {
         "file": "src/components/narrative/NarrationOverlayBus.jsx",
@@ -379,7 +379,7 @@
     "STAGE_CHANGE": [
       {
         "file": "src/components/narrative/NarrationController.jsx",
-        "line": 1073
+        "line": 1099
       },
       {
         "file": "src/components/narrative/NarrativeChoreography.jsx",
@@ -491,7 +491,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2342
+        "line": 2348
       }
     ],
     "PARTICLES_EMERGED": [
@@ -595,7 +595,7 @@
     "MORPH_PROGRESS": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2046
+        "line": 2051
       },
       {
         "file": "src/state/commands/StateCommands.js",
