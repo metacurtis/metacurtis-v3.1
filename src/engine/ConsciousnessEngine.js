@@ -14,6 +14,9 @@ import {
   generatePortraitPositions,
   generateQRPositions,
   generateScatterPositions,
+  DEFAULT_QR_URL,
+  DEFAULT_QUIET_ZONE,
+  DEFAULT_ERROR_CORRECTION,
 } from '@/utils/portraitPositions.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
@@ -77,8 +80,6 @@ const CURATED_QR_META = {
   moduleSize: Number.isFinite(qrCurtis?.moduleSize) ? qrCurtis.moduleSize : undefined,
   quietZone: Number.isFinite(qrCurtis?.quietZone) ? qrCurtis.quietZone : undefined,
 };
-
-const QR_SCALE = 40; // Expand QR formations for dedicated camera framing
 
 function aabbOf(arr) {
   const bounds = calculateBounds(arr);
@@ -1074,31 +1075,42 @@ class ConsciousnessEngine {
           break;
         case 'formQRCode':
         case 'qr': {
-          const url = String(step?.url || '');
-          const SCALE_FACTOR = QR_SCALE;
+          const url = String(step?.url || DEFAULT_QR_URL);
+          const qrMeta = {};
+          let basePositions = generateQRPositions(
+            particleCount,
+            url,
+            DEFAULT_QUIET_ZONE,
+            DEFAULT_ERROR_CORRECTION,
+            qrMeta
+          );
 
-          let basePositions;
-          if (CURATED_QR_POINTS instanceof Float32Array && CURATED_QR_POINTS.length) {
-            basePositions = CURATED_QR_POINTS;
-          } else {
-            console.warn('[QR] curated asset missing; using generated fallback');
-            basePositions = generateQRPositions(particleCount);
+          if (!(basePositions instanceof Float32Array) || basePositions.length === 0) {
+            if (CURATED_QR_POINTS instanceof Float32Array && CURATED_QR_POINTS.length) {
+              console.warn('[QR] Generated QR empty; falling back to curated asset');
+              basePositions = CURATED_QR_POINTS;
+              qrMeta.moduleCount = qrMeta.moduleCount ?? CURATED_QR_META.moduleCount ?? null;
+              qrMeta.quietZone = qrMeta.quietZone ?? CURATED_QR_META.quietZone ?? DEFAULT_QUIET_ZONE;
+              qrMeta.moduleSize = qrMeta.moduleSize ?? CURATED_QR_META.moduleSize ?? undefined;
+            } else {
+              console.warn('[QR] No QR positions available; using scatter fallback');
+              basePositions = generateScatterPositions(particleCount);
+            }
           }
 
-          const scaled = new Float32Array(basePositions.length);
-          for (let i = 0; i < basePositions.length; i += 3) {
-            scaled[i] = basePositions[i] * SCALE_FACTOR;
-            scaled[i + 1] = basePositions[i + 1] * SCALE_FACTOR;
-            scaled[i + 2] = basePositions[i + 2] * SCALE_FACTOR;
-          }
+          positions = basePositions;
+          const moduleSizeEstimate =
+            qrMeta.moduleSize ??
+            (qrMeta.moduleCount
+              ? 1 / (qrMeta.moduleCount + 2 * (qrMeta.quietZone ?? DEFAULT_QUIET_ZONE))
+              : CURATED_QR_META.moduleSize);
 
-          positions = scaled;
           this._pendingQrMetadata = {
             url,
-            moduleCount: CURATED_QR_META.moduleCount ?? null,
-            moduleSize: CURATED_QR_META.moduleSize ?? undefined,
-            quietZone: CURATED_QR_META.quietZone ?? 4,
-            positions: scaled,
+            moduleCount: qrMeta.moduleCount ?? CURATED_QR_META.moduleCount ?? null,
+            moduleSize: moduleSizeEstimate ?? undefined,
+            quietZone: qrMeta.quietZone ?? CURATED_QR_META.quietZone ?? DEFAULT_QUIET_ZONE,
+            positions: basePositions,
           };
           break;
         }

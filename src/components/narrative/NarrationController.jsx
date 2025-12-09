@@ -104,6 +104,9 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
   const startedStagesRef = useRef(new Set());
   const pendingStartRef = useRef(null);
   const stageLineCounterRef = useRef(new Map());
+  // Monotonic run id so overlay can bind to a specific narration run and ignore stale events.
+  const runIdCounterRef = useRef(0);
+  const activeRunIdRef = useRef(null);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => clearTimeout(id));
@@ -159,19 +162,55 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
     }
   }, []);
 
+  // Helper: emit STOP + CLEANUP once per narration run with a canonical reason.
+  const emitStopAndCleanup = useCallback(
+    (stageName, reason) => {
+      if (!stageName) return;
+
+      const timestamp =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+
+      const payloadBase = {
+        stage: stageName,
+        reason,
+        timestamp,
+      };
+
+      const runId = activeRunIdRef.current;
+      const payloadWithRunId =
+        typeof runId === 'number'
+          ? { ...payloadBase, runId }
+          : payloadBase;
+
+      BeatBus.emit?.(EVENTS.NARRATION_STOPPED, payloadWithRunId);
+      BeatBus.emit?.(EVENTS.NARRATION_CLEANUP, payloadWithRunId);
+    },
+    []
+  );
+
   const resetState = useCallback(
     ({ unlock = true, preserveStage = false } = {}) => {
       const hadActiveStage = !!activeStageRef.current;
       const stageBeingCleared = activeStageRef.current;
       clearTimers();
-      setActiveNarration(null);
-      activeSegmentRef.current = null;
-      totalSegmentsRef.current = 0;
-      completedSegmentsRef.current = 0;
-      skipRequestedRef.current = false;
-      segmentTokenRef.current = 0;
-      hasTriggeredAutoAdvanceRef.current = false;
-      startedStagesRef.current.clear();
+      if (!preserveStage) {
+        // Hard reset: clear everything
+        setActiveNarration(null);
+        activeSegmentRef.current = null;
+        totalSegmentsRef.current = 0;
+        completedSegmentsRef.current = 0;
+        skipRequestedRef.current = false;
+        segmentTokenRef.current = 0;
+        hasTriggeredAutoAdvanceRef.current = false;
+        startedStagesRef.current.clear();
+        activeRunIdRef.current = null;
+      } else {
+        // Soft reset: keep current narration and stage; just clear flags
+        skipRequestedRef.current = false;
+        hasTriggeredAutoAdvanceRef.current = false;
+      }
       if (DEBUG_NARRATION) {
         console.log('🎙️ [NarrationController] resetState called', {
           clearedStartedStages: true,
@@ -182,22 +221,6 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         typeof performance !== 'undefined' && typeof performance.now === 'function'
           ? performance.now()
           : Date.now();
-
-      if (hadActiveStage) {
-        BeatBus.emit?.(EVENTS.NARRATION_STOPPED, {
-          stage: stageBeingCleared ?? null,
-          reason: 'reset_state',
-          preserveStage,
-          timestamp,
-        });
-      }
-
-      BeatBus.emit?.(EVENTS.NARRATION_CLEANUP, {
-        stage: stageBeingCleared ?? null,
-        reason: 'reset_state',
-        preserveStage,
-        timestamp,
-      });
 
       if (!preserveStage) {
         if (hadActiveStage && DEBUG_NARRATION) {
@@ -459,20 +482,13 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         if (DEBUG_NARRATION) {
           console.log(`✅ Narration complete: ${stageName}`);
         }
-        const timestamp =
-          typeof performance !== 'undefined' && typeof performance.now === 'function'
-            ? performance.now()
-            : Date.now();
-        BeatBus.emit?.(EVENTS.NARRATION_STOPPED, {
-          stage: stageName,
-          reason: 'complete',
-          timestamp,
-        });
+        // True end-of-run: emit STOP + CLEANUP with reason 'complete'
+        emitStopAndCleanup(stageName, 'complete');
         triggerAutoAdvance(stageName, 'narration_complete');
         activeStageRef.current = null;
       }
     },
-    [triggerAutoAdvance]
+    [emitStopAndCleanup, triggerAutoAdvance]
   );
 
   const scheduleSegment = useCallback(
@@ -618,6 +634,8 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         const scriptedType = segment?.lineType || segment?.metadata?.lineType || null;
         const lineType = resolveLineType(stageName, scriptedType);
 
+        const runId = activeRunIdRef.current;
+
         BeatBus.emit?.(EVENTS.NARRATIVE_LINE, {
           stage: stageName,
           segmentId: segment?.id ?? null,
@@ -627,6 +645,7 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
           speedMs: speedMs || undefined,
           type: lineType,
           timestamp: narrativeTimestamp,
+          ...(typeof runId === 'number' ? { runId } : null),
         });
 
         if (particleEffectPayload) {
@@ -764,6 +783,11 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         null;
       const resolvedStageForLog = normalizedStage || stageName || stageKey;
 
+      // New run id for this stage narration run
+      const newRunId = (runIdCounterRef.current || 0) + 1;
+      runIdCounterRef.current = newRunId;
+      activeRunIdRef.current = newRunId;
+
       resetState({ preserveStage: true });
       activeStageRef.current = stageKey;
       stageLineCounterRef.current.set(stageKey, 0);
@@ -805,12 +829,14 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       if (!activeStageRef.current) return;
       const stageName = activeStageRef.current;
       skipRequestedRef.current = true;
+      // Treat skip as a hard end-of-run for this stage.
+      emitStopAndCleanup(stageName, 'skip');
       resetState({ unlock: true });
       if (DEBUG_NARRATION) {
         console.log(`⏭️ Narration skipped via ${origin}: ${stageName}`);
       }
     },
-    [resetState]
+    [emitStopAndCleanup, resetState]
   );
 
   useEffect(() => {
@@ -1087,10 +1113,15 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
         time: Date.now(),
       });
       if (nextStage && nextStage !== activeStageRef.current) {
+        const fromStage = activeStageRef.current;
         console.log('🎙️ [NarrationController] Stage changed, resetting state', {
-          from: activeStageRef.current,
+          from: fromStage,
           to: nextStage,
         });
+        // Stage change away from an active stage is a hard external end-of-run.
+        if (fromStage) {
+          emitStopAndCleanup(fromStage, 'external');
+        }
         resetState();
       }
     };
@@ -1121,30 +1152,29 @@ export default function NarrationController({ defaultCharsPerSecond = DEFAULT_CH
       offStart?.();
       offStageChange?.();
       window.removeEventListener('keydown', keyHandler);
-      resetState();
+      // Avoid wiping active narration on effect re-runs; only remove listeners here.
     };
-  }, [currentStage, resetState, skipNarration, startNarration]);
+  }, [currentStage, emitStopAndCleanup, resetState, skipNarration, startNarration]);
 
   useEffect(() => {
     if (!currentStage) return;
 
-    const director = typeof window !== 'undefined' ? window.theaterDirector : null;
-    const openingInProgress =
-      director && typeof director.isOpeningInProgress === 'function'
-        ? director.isOpeningInProgress() === true
-        : true; // Default to blocking auto-start until director is ready
-
+    // 🔒 Let Director own Genesis narration start via START_NARRATIVE(opening_complete)
     if (currentStage === 'genesis') {
-      narrationDiagnostic.log('AUTO_START_SKIPPED_GENESIS_OPENING_HANDOFF', {
+      narrationDiagnostic.log('AUTO_START_SKIPPED_GENESIS', {
         stage: currentStage,
+        reason: 'opening-controlled',
       });
       return;
     }
 
+    const openingInProgress =
+      typeof window !== 'undefined' &&
+      window.theaterDirector?.isOpeningInProgress?.() === true;
+
     if (openingInProgress) {
       narrationDiagnostic.log('AUTO_START_BLOCKED_OPENING', {
         stage: currentStage,
-        directorReady: !!director,
       });
       return;
     }

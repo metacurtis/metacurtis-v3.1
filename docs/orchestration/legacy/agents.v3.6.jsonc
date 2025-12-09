@@ -1,0 +1,126 @@
+{
+  "_meta": {
+    "version": "3.6",
+    "description": "Multi-agent orchestration for MetaCurtis (A, B, D, E + F in diagnostic/executor modes).",
+    "fileMap": {
+      "source": "docs/file-map.json"
+    },
+    "flowPattern": [
+      "A",
+      "F:diagnostic",
+      "B",
+      "D",
+      "F:executor",
+      "E"
+    ]
+  },
+
+  "A": {
+    "id": "A",
+    "name": "Architect",
+    "mission": "Turn the human’s goal into a crisp spec with clear success criteria, change constraints, and canonical file surfaces.",
+    "inputFields": [
+      "humanGoal",
+      "issueDescription",
+      "fileGroups",
+      "filesCanonical"
+    ],
+    "outputFields": [
+      "targetBehavior",
+      "risksAndConstraints",
+      "successCriteria",
+      "changeSurface.fileGroups",
+      "changeSurface.filesCanonical"
+    ]
+  },
+
+  "B": {
+    "id": "B",
+    "name": "Critic",
+    "mission": "Stress-test Architect’s spec against repo ground truth and prune the change surface to the safest minimal set.",
+    "inputFields": [
+      "ArchitectSpec",
+      "F_diagnosticFacts",
+      "contracts"
+    ],
+    "outputFields": [
+      "risks",
+      "blockedAssumptions",
+      "forbiddenChanges",
+      "minimalSafeSurface.fileGroups",
+      "minimalSafeSurface.filesCanonical"
+    ]
+  },
+
+  "D": {
+    "id": "D",
+    "name": "Systems Optimizer",
+    "mission": "Implement in tiny, reversible steps, centralizing semantics and reducing complexity.",
+    "inputFields": [
+      "ArchitectSpec",
+      "CriticNotes"
+    ],
+    "outputFields": [
+      "patches",
+      "testPlan",
+      "tracePlan"
+    ]
+  },
+
+  "E": {
+    "id": "E",
+    "name": "Historian",
+    "mission": "Capture what happened as a reusable pattern so we never solve the same class of problem from scratch.",
+    "inputFields": [
+      "humanGoal",
+      "ArchitectSpec",
+      "PatchPlan",
+      "F_executionResult"
+    ],
+    "outputFields": [
+      "patternName",
+      "context",
+      "fileGroupsTouched",
+      "whatWeChanged",
+      "whyItWorked",
+      "testEvidence",
+      "checklistNextTime"
+    ]
+  },
+
+  "F": {
+    "id": "F",
+    "name": "Meta Agent",
+    "mission": "Act as the repo-native ground truth and executor.",
+    "modes": {
+      "diagnostic": {
+        "inputFields": [
+          "fileGroups",
+          "filesCanonical",
+          "issueDescription",
+          "scanDepth"
+        ],
+        "outputFields": [
+          "summariesByFile",
+          "confirmedFacts",
+          "detectedSmells",
+          "constraints",
+          "suggestedFilesetDelta"
+        ]
+      },
+      "executor": {
+        "inputFields": [
+          "patchesFromD",
+          "filesCanonical",
+          "testCommands"
+        ],
+        "outputFields": [
+          "appliedPatches",
+          "testResults",
+          "newDiagnostics",
+          "repoStateSummary"
+        ]
+      }
+    }
+  }
+}

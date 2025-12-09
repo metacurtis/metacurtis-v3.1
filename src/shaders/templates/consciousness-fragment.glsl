@@ -17,6 +17,7 @@ uniform float uFadeProgress;
 uniform float uGaussianSigma;
 uniform float uBandHeight;
 uniform float uBandFade;
+uniform float uQrPhotoMode;
 
 // Varyings
 varying vec3 vPosition;
@@ -52,8 +53,23 @@ void main() {
   if (vParticleIndex >= uActiveCount) {
     discard;
   }
-  
-  // Sample sprite texture
+
+  // QR PHOTO MODE — bypass atlas/bokeh for flat, square modules
+  if (uQrPhotoMode > 0.5) {
+    // Keep a hard square footprint per point (no glow/blur).
+    float edge = 0.08;
+    float maskX = step(edge, gl_PointCoord.x) * step(gl_PointCoord.x, 1.0 - edge);
+    float maskY = step(edge, gl_PointCoord.y) * step(gl_PointCoord.y, 1.0 - edge);
+    float coverage = clamp(maskX * maskY, 0.0, 1.0);
+
+    vec3 onColor = vec3(1.0);   // module (bright)
+    vec3 offColor = vec3(0.0);  // background
+    vec3 baseColor = mix(offColor, onColor, coverage);
+    gl_FragColor = vec4(baseColor, 1.0);
+    return;
+  }
+
+  // Sample sprite texture (non-QR path)
   vec4 sprite = sampleAtlas(vAtlasUVOffset, gl_PointCoord);
   if (sprite.a < 0.01) discard;
 

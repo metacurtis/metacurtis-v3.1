@@ -32,6 +32,11 @@ export default function NarrationOverlayBus() {
 
   const indexRef = useRef(0);
   const speedRef = useRef(config.typewriterSpeedMs);
+  const overlayStageRef = useRef(null);
+  // Track the current narration run so stale events from prior runs don't hide/override.
+  const overlayRunIdRef = useRef(null);
+  // Track the current narration run so stale events from prior runs don't hide/override.
+  const overlayRunIdRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = stateMachine.subscribe(() => diagnostics.recordStateTransition());
@@ -52,6 +57,8 @@ export default function NarrationOverlayBus() {
     indexRef.current = 0;
     setIncomingText('');
     setDisplayText('');
+    overlayRunIdRef.current = null;
+    overlayRunIdRef.current = null;
 
     // Force state to idle (may already be idle during rapid resets)
     if (stateMachine.getState() !== STATES.IDLE) {
@@ -111,7 +118,23 @@ export default function NarrationOverlayBus() {
       length: incomingText.length,
     });
 
-    timers.set('typewriter', typewriterStep, speedRef.current);
+    // Immediately render first character to avoid a blank frame between beats.
+    // We deliberately do NOT clear displayText first here, to avoid a single
+    // frame of empty overlay between lines.
+    const firstChar = incomingText.slice(0, 1);
+    setDisplayText(firstChar);
+    indexRef.current = 1;
+
+    if (incomingText.length > 1) {
+      timers.set('typewriter', typewriterStep, speedRef.current);
+    } else {
+      // Single-character line: mark complete immediately
+      diagnostics.recordDisplay(incomingText.length);
+      stateMachine.transitionTo(STATES.COMPLETE, {
+        reason: 'typing_complete_single_char',
+        length: incomingText.length,
+      });
+    }
     return () => clearTypeTimer();
   }, [incomingText, typewriterStep, clearTypeTimer]);
 
@@ -142,14 +165,17 @@ export default function NarrationOverlayBus() {
         return;
       }
 
+      const stageFromPayload = payload.stage || payload.currentStage || null;
+      if (stageFromPayload) {
+        overlayStageRef.current = stageFromPayload;
+      }
+
+      // Prime state, but do not show overlay until a line arrives.
+      // START_NARRATIVE is a lifecycle signal only; NARRATIVE_LINE is the
+      // sole authority for visible text to avoid prefill-based flashes.
       clearGraceTimer();
       resetOverlay();
-      setVisible(true);
       stateMachine.transitionTo(STATES.STARTING, { source: payload.source });
-
-      if (payload?.prefill) {
-        setIncomingText(String(payload.prefill));
-      }
     };
 
     const handleLine = (payload = {}) => {
@@ -174,6 +200,25 @@ export default function NarrationOverlayBus() {
         return;
       }
 
+      const stageFromPayload = payload.stage || payload.currentStage || null;
+      if (stageFromPayload) {
+        overlayStageRef.current = stageFromPayload;
+      }
+
+      const runIdFromPayload =
+        typeof payload.runId === 'number' ? payload.runId : null;
+      if (runIdFromPayload !== null) {
+        if (overlayRunIdRef.current === null) {
+          overlayRunIdRef.current = runIdFromPayload;
+        } else if (overlayRunIdRef.current !== runIdFromPayload) {
+          diagnostics.recordError('LINE_IGNORED_STALE_RUN', {
+            expectedRunId: overlayRunIdRef.current,
+            receivedRunId: runIdFromPayload,
+          });
+          return;
+        }
+      }
+
       const text = payload.text;
       const speedMs =
         Number.isFinite(payload.speedMs) && payload.speedMs > 0
@@ -184,19 +229,101 @@ export default function NarrationOverlayBus() {
       clearGraceTimer();
       clearTypeTimer();
       indexRef.current = 0;
+      // LINE is the authority to show overlay
       setVisible(true);
       setIncomingText(text);
     };
 
-    const handleStop = () => {
-      diagnostics.recordEvent('NARRATION_STOPPED', {}, true);
+    const handleStop = (payload = {}) => {
+      diagnostics.recordEvent('NARRATION_STOPPED', payload, true);
+
+      if (payload?.preserveStage) {
+        diagnostics.recordError('STOP_IGNORED_PRESERVE_STAGE', payload);
+        return;
+      }
+
+      const stageFromPayload = payload.stage || payload.currentStage || null;
+      const overlayStage = overlayStageRef.current;
+      if (stageFromPayload && overlayStage && stageFromPayload !== overlayStage) {
+        diagnostics.recordError('STOP_IGNORED_OTHER_STAGE', {
+          payloadStage: stageFromPayload,
+          overlayStage,
+        });
+        return;
+      }
+
+      const runIdFromPayload =
+        typeof payload.runId === 'number' ? payload.runId : null;
+      if (
+        overlayRunIdRef.current !== null &&
+        runIdFromPayload !== null &&
+        overlayRunIdRef.current !== runIdFromPayload
+      ) {
+        diagnostics.recordError('STOP_IGNORED_STALE_RUN', {
+          payloadRunId: runIdFromPayload,
+          overlayRunId: overlayRunIdRef.current,
+        });
+        return;
+      }
+
+      const reason = payload.reason || '';
+      const isHardEnd =
+        reason === 'complete' ||
+        reason === 'skip' ||
+        reason === 'user' ||
+        reason === 'external';
+
+      if (!isHardEnd) {
+        diagnostics.recordError('STOP_IGNORED_REASON', { reason, payload });
+        return;
+      }
 
       if (!visible) return;
       scheduleGraceHide();
     };
 
-    const handleCleanup = () => {
-      diagnostics.recordEvent('NARRATION_CLEANUP', {}, true);
+    const handleCleanup = (payload = {}) => {
+      diagnostics.recordEvent('NARRATION_CLEANUP', payload, true);
+      if (payload?.preserveStage) {
+        diagnostics.recordError('CLEANUP_IGNORED_PRESERVE_STAGE', payload);
+        return;
+      }
+
+      const stageFromPayload = payload.stage || payload.currentStage || null;
+      const overlayStage = overlayStageRef.current;
+      if (stageFromPayload && overlayStage && stageFromPayload !== overlayStage) {
+        diagnostics.recordError('CLEANUP_IGNORED_OTHER_STAGE', {
+          payloadStage: stageFromPayload,
+          overlayStage,
+        });
+        return;
+      }
+
+      const runIdFromPayload =
+        typeof payload.runId === 'number' ? payload.runId : null;
+      if (
+        overlayRunIdRef.current !== null &&
+        runIdFromPayload !== null &&
+        overlayRunIdRef.current !== runIdFromPayload
+      ) {
+        diagnostics.recordError('CLEANUP_IGNORED_STALE_RUN', {
+          payloadRunId: runIdFromPayload,
+          overlayRunId: overlayRunIdRef.current,
+        });
+        return;
+      }
+
+      const reason = payload.reason || '';
+      const isHardEnd =
+        reason === 'complete' ||
+        reason === 'skip' ||
+        reason === 'user' ||
+        reason === 'external';
+
+      if (!isHardEnd) {
+        diagnostics.recordError('CLEANUP_IGNORED_REASON', { reason, payload });
+        return;
+      }
       scheduleGraceHide();
     };
 

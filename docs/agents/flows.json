@@ -1,230 +1,114 @@
 {
-  "enable_gentle_drift": {
-    "description": "Make gentle_drift clearly visible as a breathing baseline during the first Genesis narration beat (post-opening), without breaking contracts.",
-    "files": [
-      "src/config/canonical/canonicalAuthority.js",
-      "src/theater/visual/visualEffectSpecs.js",
-      "src/theater/visual/visualCompiler.js",
-      "src/components/webgl/WebGLBackground.jsx",
-      "src/shaders/templates/consciousness-vertex.glsl"
-    ],
-    "phases": [
-      {
-        "id": "plan",
-        "label": "Plan drift baseline",
-        "steps": [
-          {
-            "agent": "A",
-            "role": "Architect",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Define where gentle_drift should be baseline (Genesis beat 0 post-opening; maybe other beats later) and what 'breathing' visually means.",
-            "output_hint": "Spec: which stage/beat(s) use gentle_drift, how it coexists with lock/static visuals, and which contracts must remain green."
-          },
-          {
-            "agent": "B",
-            "role": "Critic",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Stress-test A's plan against Canon (SST v3.5), existing visual verbs, and single-writer constraints.",
-            "output_hint": "List risks and a safe surface: which files can change (specs/compiler/shader) and which must not (BeatBus ownership, contracts)."
-          },
-          {
-            "agent": "D",
-            "role": "Systems Optimizer",
-            "runner": "chatgpt",
-            "requiresApproval": true,
-            "notes": "Design a tiny, 2–3 step implementation plan using visualEffectSpecs + visualCompiler + WebGLBackground; no new events or writers.",
-            "output_hint": "Plan: (1) spec-level gentle_drift behavior, (2) compiler mapping, (3) renderer/shader knobs, plus tests/logs to run."
-          }
-        ]
-      },
-      {
-        "id": "inspect",
-        "label": "Repo truth (drift path)",
-        "steps": [
-          {
-            "agent": "F",
-            "role": "Meta Agent",
-            "runner": "codex",
-            "requiresApproval": true,
-            "notes": "Apply D's plan: inspect Canonical.getVisualEffect, NarrationController, visualEffectSpecs, visualCompiler, WebGLBackground, and the drift GLSL path.",
-            "output_hint": "Report: what gentle_drift currently does end-to-end (directive → uniforms → shader), and where it deviates from A's spec. Optionally propose minimal diffs in allowed files."
-          }
-        ]
-      },
-      {
-        "id": "implement",
-        "label": "Apply diffs & validate",
-        "steps": [
-          {
-            "agent": "D",
-            "role": "Systems Optimizer",
-            "runner": "chatgpt",
-            "requiresApproval": true,
-            "notes": "Take F's ground-truth + diffs and shape them into a minimal, safe patch set.",
-            "output_hint": "Final diffs plus explicit test commands (npm run test:contract:renderDirective, test:contract:sst, audit:canon:visuals) and manual checks (logs & visual)."
-          }
-        ]
-      },
-      {
-        "id": "record",
-        "label": "Record pattern",
-        "steps": [
-          {
-            "agent": "E",
-            "role": "Historian",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Summarize the gentle_drift session into a reusable pattern.",
-            "output_hint": "Pattern doc: CONTEXT, WHAT CHANGED, CURRENT STATE, INVARIANTS, NEXT STEPS, plus a checklist for adding future drift-style verbs."
-          }
-        ]
-      }
-    ]
-  },
-  "diagnose_drift_issue": {
-    "description": "Diagnose why drift-style visuals (e.g. gentle_drift/perlin_drift) are not behaving as expected, using read-only analysis and trace design.",
-    "files": [
-      "src/config/canonical/canonicalAuthority.js",
-      "src/components/narrative/NarrationController.jsx",
-      "src/components/webgl/WebGLBackground.jsx",
-      "src/shaders/templates/consciousness-vertex.glsl"
-    ],
-    "phases": [
-      {
-        "id": "plan",
-        "label": "Design the diagnostic",
-        "steps": [
-          {
-            "agent": "A",
-            "role": "Architect",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Clarify expected vs actual drift behavior (which stage/beat, what 'breathing' should look like).",
-            "output_hint": "Spec: where drift should appear, what you currently see instead, and which events/phases are involved (OPENING, NARRATION, SCROLL)."
-          },
-          {
-            "agent": "B",
-            "role": "Critic",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Identify likely failure modes without touching code.",
-            "output_hint": "Prioritized list of failure modes (wrong verb, wrong mode, freeze flags, shader ignoring uniforms) mapped to specific files/paths."
-          },
-          {
-            "agent": "D",
-            "role": "Systems Optimizer",
-            "runner": "chatgpt",
-            "requiresApproval": true,
-            "notes": "Design a concrete trace plan (what to log where, and how to interpret combos).",
-            "output_hint": "Trace checklist: what to log (VO_COMPOSE_DIRECTIVE, BeatBus RENDER_DIRECTIVE, WBG BEFORE/AFTER, renderer snapshots) and what each scenario implies."
-          }
-        ]
-      },
-      {
-        "id": "inspect",
-        "label": "Repo inspection",
-        "steps": [
-          {
-            "agent": "F",
-            "role": "Meta Agent",
-            "runner": "codex",
-            "requiresApproval": true,
-            "notes": "Execute D's trace plan via repo inspection/log design, and summarize which failure mode(s) actually occur in the current code.",
-            "output_hint": "Ground-truth: which drift failure mode is real (verb selection, mode, freeze, shader), with references to specific functions/lines."
-          }
-        ]
-      },
-      {
-        "id": "record",
-        "label": "Diagnostic pattern",
-        "steps": [
-          {
-            "agent": "E",
-            "role": "Historian",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Capture the drift diagnostic as a repeatable pattern.",
-            "output_hint": "Pattern: 'How to diagnose drift visuals' with steps, logs, and interpretation rules."
-          }
-        ]
-      }
-    ]
-  },
   "tune_opening_sequence": {
-    "description": "Tune the opening chaos→coalesce→settle arc and overlay timing, without breaking contracts or single-writer rules.",
+    "description": "Tune the opening chaos→coalesce→settle arc + breathing glyph, without breaking contracts.",
     "files": [
+      "sst/canon/v3.5.json",
       "src/theater/TheaterDirector.js",
       "src/components/theater/OpeningSequence.jsx",
       "src/components/webgl/WebGLBackground.jsx",
-      "src/shaders/templates/consciousness-vertex.glsl",
-      "sst/canon/v3.5.json"
+      "src/shaders/templates/consciousness-vertex.glsl"
     ],
-    "phases": [
+    "steps": [
       {
-        "id": "plan",
-        "label": "Define the shot list",
-        "steps": [
-          {
-            "agent": "A",
-            "role": "Architect",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Define what 'good' opening looks like: terminal → chaos → coalesce → settle → breathing glyph, plus where narration should start.",
-            "output_hint": "Short shot list + timing: when overlay fades, when chaos/coalesce/settle run, when BeatGlyph appears, and when narration should start."
-          },
-          {
-            "agent": "B",
-            "role": "Critic",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Map the desired arc onto existing fenceposts, MorphAnimationController, and RENDER_DIRECTIVE ownership.",
-            "output_hint": "Safe surface: which pieces to tune (Director opening timeline, morph envelopes, overlay triggers) and which must stay fixed (single-writer, contracts)."
-          }
-        ]
+        "agent": "A",
+        "role": "Architect",
+        "notes": "Define target visual behavior for opening: chaos cloud, coalesce into HELLO CURTIS, settle, then gentle drift. Tie timings to the opening timeline in SST.",
+        "output_hint": "Spec: behavior for chaos/coalesce/settle/drift, timing (4–5s total), exactly when narration starts (after settle), and which files are allowed to change."
       },
       {
-        "id": "inspect",
-        "label": "Repo reality",
-        "steps": [
-          {
-            "agent": "F",
-            "role": "Meta Agent",
-            "runner": "codex",
-            "requiresApproval": true,
-            "notes": "Explain the actual current opening path and why it visually jumps or feels off.",
-            "output_hint": "Event/phase timeline and explanation of whether chaos/coalesce/settle are hidden, too short, or visually indistinguishable."
-          }
-        ]
+        "agent": "B",
+        "role": "Critic",
+        "notes": "Stress-test the spec against existing contracts and event fenceposts (openingFencepost, single-writer guards).",
+        "output_hint": "List risks (e.g., breaking PARTICLES_EMERGED fencepost, introducing a second morph owner) and a minimal safe surface of files/sections that can change."
       },
       {
-        "id": "implement",
-        "label": "Minimal tuning",
-        "steps": [
-          {
-            "agent": "D",
-            "role": "Systems Optimizer",
-            "runner": "chatgpt",
-            "requiresApproval": true,
-            "notes": "Design small, safe envelope + timing tweaks informed by F's report.",
-            "output_hint": "Tiny diffs (Director opening timeline, morph envelope) plus tests: run opening once, visually confirm phases, and check logs/contracts."
-          }
-        ]
+        "agent": "D",
+        "role": "Systems Optimizer",
+        "notes": "Design and propose tiny diffs in Director + WebGLBackground + shader to achieve the spec. No new events or writers.",
+        "output_hint": "Concrete patch plan: 2–4 diffs (Director timing, morph envelope bands, drift application). Include tests/logs the human should run."
       },
       {
-        "id": "record",
-        "label": "Opening pattern",
-        "steps": [
-          {
-            "agent": "E",
-            "role": "Historian",
-            "runner": "chatgpt",
-            "requiresApproval": false,
-            "notes": "Document the opening tuning pattern.",
-            "output_hint": "Pattern: how to tune opening chaos/coalesce/settle + overlay without breaking contracts."
-          }
-        ]
+        "agent": "E",
+        "role": "Historian",
+        "notes": "Summarize the opening tuning as a reusable pattern for future visual arcs.",
+        "output_hint": "Pattern: context, what we changed, how we validated, and a checklist for future opening-tuning flows."
+      }
+    ]
+  },
+  "fix_qr_tile": {
+    "description": "Make the Transcendence climax QR render as a centered, static, hard-edged square tile (photo-like), without breaking other stages or visuals.",
+    "files": [
+      "sst/canon/v3.5.json",
+      "src/components/webgl/WebGLBackground.jsx",
+      "src/shaders/templates/consciousness-fragment.glsl",
+      "src/config/canonical/canonicalAuthority.js",
+      "src/theater/ConsciousnessEngine.js"
+    ],
+    "steps": [
+      {
+        "agent": "A",
+        "role": "Architect",
+        "notes": "Define target QR tile behavior: centered, square, static, hard edge, no glow. Establish ownership: blueprint defines positions; renderer toggles visual mode; shader draws tile.",
+        "output_hint": "Spec: geometry requirements, visual requirements, ownership rules, and what files may change."
+      },
+      {
+        "agent": "B",
+        "role": "Critic",
+        "notes": "Stress-test spec against Pattern-S: no new events, single-writer rules preserved.",
+        "output_hint": "List risks and approve minimal safe change surface."
+      },
+      {
+        "agent": "C",
+        "role": "Implementer",
+        "notes": "Add uQrMode uniform, toggle in WebGLBackground, add QR branch in fragment shader, preserve all existing cinematic code paths.",
+        "output_hint": "Concrete code diffs to implement QR tile mode."
+      },
+      {
+        "agent": "D",
+        "role": "Systems Optimizer",
+        "notes": "Verify implementation, simplify logic, ensure no regressions to other stages.",
+        "output_hint": "Tuning knobs, test plan, and safety checks."
+      },
+      {
+        "agent": "E",
+        "role": "Historian",
+        "notes": "Capture the QR tile fix as a reusable pattern.",
+        "output_hint": "Pattern summary + reuse checklist."
+      }
+    ]
+  },
+  "fix_narration_pipeline_v1": {
+    "description": "DEBUG FLOW: Fix Genesis narration pipeline (no flicker, no blank frame, clean STOP/CLEANUP contract).",
+    "steps": [
+      {
+        "agent": "A",
+        "role": "Architect",
+        "output_hint": "Produce a structured spec: problem, target behavior, contracts (who owns START/LINE/STOP/CLEANUP), allowed change surface, and explicit success criteria for 'no flicker / no blank frame'."
+      },
+      {
+        "agent": "B",
+        "role": "Critic",
+        "output_hint": "Return JSON-like sections: root_causes[], fix_surface[], do_not_touch[]. Each root cause should be labeled (RC1, RC2, …) and mapped to specific files/functions to change."
+      },
+      {
+        "agent": "C",
+        "role": "Implementer",
+        "output_hint": "Produce concrete code diffs grouped by root cause (RC1, RC2, …) that fix behavior across the full Genesis narration pipeline. Include a verification plan: how to reproduce the bug and confirm the fix (logs + visual checks)."
+      },
+      {
+        "agent": "F",
+        "role": "Meta Executor",
+        "output_hint": "Apply the diffs to the repo, run the specified tests/commands (e.g., dev server or focused scripts), and report raw output. Do not paraphrase errors."
+      },
+      {
+        "agent": "D",
+        "role": "Systems Optimizer",
+        "output_hint": "Only run if behavior is confirmed correct. Propose small structural simplifications (guard cleanup, contract centralization) that do not change behavior. Provide a reduction plan plus verification steps."
+      },
+      {
+        "agent": "E",
+        "role": "Historian",
+        "output_hint": "Capture this as pattern_debug_narration_pipeline_v1: context, root_causes, final contracts, and a checklist for next time."
       }
     ]
   }

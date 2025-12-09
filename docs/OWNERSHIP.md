@@ -17,9 +17,14 @@ uColorAccent2 = src/components/webgl/WebGLBackground.jsx
 uColorCurrent = src/components/webgl/WebGLBackground.jsx
 uColorNext = src/components/webgl/WebGLBackground.jsx
 uDevicePixelRatio = src/components/webgl/WebGLBackground.jsx
+uEdgeFlicker = src/components/webgl/WebGLBackground.jsx
 uFadeProgress = src/components/webgl/WebGLBackground.jsx
+uFlowTurbulence = src/components/webgl/WebGLBackground.jsx
+uGaussianSigma = src/components/webgl/WebGLBackground.jsx
+uGlowIntensity = src/components/webgl/WebGLBackground.jsx
 uMorph = src/components/webgl/WebGLBackground.jsx
 uMorphProgress = src/components/webgl/WebGLBackground.jsx
+uMotionMode = src/components/webgl/WebGLBackground.jsx
 uOpacityMax = src/components/webgl/WebGLBackground.jsx
 uOpacityMin = src/components/webgl/WebGLBackground.jsx
 uPalette0 = src/components/webgl/WebGLBackground.jsx
@@ -28,10 +33,14 @@ uPalette2 = src/components/webgl/WebGLBackground.jsx
 uPalette3 = src/components/webgl/WebGLBackground.jsx
 uPointSize = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/runtime/materialFactory.js
 uPostMorphFreeze = src/components/webgl/WebGLBackground.jsx
+uPulseAmplitude = src/components/webgl/WebGLBackground.jsx
+uPulseFrequency = src/components/webgl/WebGLBackground.jsx
+uQrPhotoMode = src/components/webgl/WebGLBackground.jsx
 uScrollProgress = src/components/webgl/WebGLBackground.jsx
 uStageBlend = src/components/webgl/WebGLBackground.jsx
 uStageIndex = src/components/webgl/WebGLBackground.jsx
 uStageProgress = src/components/webgl/WebGLBackground.jsx
+uStreakIntensity = src/components/webgl/WebGLBackground.jsx
 uTierCutoff = src/components/webgl/WebGLBackground.jsx
 uTierHighlight = src/components/webgl/WebGLBackground.jsx
 uTierMode = src/components/webgl/WebGLBackground.jsx
@@ -40,6 +49,7 @@ uTierParams1 = src/components/webgl/WebGLBackground.jsx
 uTierParams2 = src/components/webgl/WebGLBackground.jsx
 uTierParams3 = src/components/webgl/WebGLBackground.jsx
 uTime = src/components/webgl/WebGLBackground.jsx
+uVertexGlow = src/components/webgl/WebGLBackground.jsx
 
 ### Rules
 - Owners are the only files allowed to assign `.value` on these uniforms.
@@ -119,4 +129,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-12-06 via `tools/generate-ownership.mjs`
+Last updated: 2025-12-09 via `tools/generate-ownership.mjs`

@@ -35,6 +35,7 @@ uniform vec4  uTierParams3;
 uniform vec2  uGridSpacing;
 uniform float uFlowTurbulence;
 uniform float uStreakIntensity;
+uniform float uQrPhotoMode;
 
 // Varyings
 varying vec3 vPosition;
@@ -199,8 +200,15 @@ void main() {
   // gentler near-camera size; avoid "magnified pixels"
   float attenuation = 180.0 / dist;
   float tierSizeBoost = tierData < 0.5 ? 1.25 : (tierData > 2.5 ? 1.1 : 1.0);
-  gl_PointSize = uPointSize * sizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
-  gl_PointSize = clamp(gl_PointSize, 2.0, 36.0);
+  float pointSize = uPointSize * sizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
+  pointSize = clamp(pointSize, 2.0, 36.0);
+
+  // In QR photo mode, lock size so modules stay stable and photo-like.
+  if (uQrPhotoMode > 0.5) {
+    pointSize = uPointSize * uDevicePixelRatio;
+    pointSize = max(pointSize, 2.0);
+  }
+  gl_PointSize = pointSize;
   
   // Pass color blend
   vBlend = uScrollProgress;

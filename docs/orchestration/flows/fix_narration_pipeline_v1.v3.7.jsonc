@@ -1,0 +1,195 @@
+{
+  "id": "fix_narration_pipeline_v1",
+  "version": "3.7",
+  "description": "DEBUG FLOW: Fix Genesis narration pipeline (no flicker, no blank frame, clean STOP/CLEANUP contract; overlay appears once and stays until complete/skip).",
+  "fileGroups": [
+    "narration_pipeline",
+    "opening_sequence"
+  ],
+  "inheritedContracts": "auto",
+  "requiredPreflight": [
+    "npm run scan-single-writer",
+    "npm run validate-ownership"
+  ],
+  "requiredPostflight": [
+    "npm run scan-single-writer",
+    "npm run validate-ownership"
+  ],
+  "humanGoal": "Make Genesis narration overlay buttery-smooth: no flicker, no blank frames, clean start/stop semantics.",
+  "issueDescription": "During opening → Genesis handoff, the narration overlay briefly disappears or shows a blank frame between lines, instead of staying mounted and simply changing text.",
+
+  "steps": [
+    {
+      "step": 0,
+      "label": "Contract preflight (Pattern-S, ownership, sentinels)",
+      "phase": "preflight",
+      "agent": "F",
+      "mode": "contract-scan",
+      "tools": ["repo-tools"],
+      "model": null,
+      "commands": [
+        "npm run scan-single-writer",
+        "npm run validate-ownership"
+      ],
+      "haltOnViolation": true,
+      "inputFrom": [
+        "fileMap",
+        "fileGroups",
+        "issueDescription"
+      ],
+      "outputAlias": "ContractScan"
+    },
+    {
+      "step": 1,
+      "label": "Meta diagnostics (file-map, runtime facts)",
+      "phase": "diagnostic",
+      "agent": "F",
+      "mode": "diagnostic",
+      "tools": ["repo-tools"],
+      "model": null,
+      "inputFrom": [
+        "fileMap",
+        "fileGroups",
+        "issueDescription",
+        "ContractScan.F_contractStatus",
+        "ContractScan.F_contracts"
+      ],
+      "outputAlias": "MetaDiagnostics"
+    },
+    {
+      "step": 2,
+      "label": "Architect: spec and contracts",
+      "phase": "design",
+      "agent": "A",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "checkpoint": true,
+      "inputFrom": [
+        "humanGoal",
+        "issueDescription",
+        "fileGroups",
+        "filesCanonical",
+        "MetaDiagnostics.F_fileMapView",
+        "MetaDiagnostics.F_diagnosticFacts",
+        "ContractScan.F_contractStatus",
+        "ContractScan.F_contracts"
+      ],
+      "outputAlias": "ArchitectSpec"
+    },
+    {
+      "step": 3,
+      "label": "Critic: root causes and fix surface",
+      "phase": "design",
+      "agent": "B",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "inputFrom": [
+        "ArchitectSpec",
+        "MetaDiagnostics.F_diagnosticFacts",
+        "filesCanonical",
+        "ContractScan.F_contractStatus",
+        "ContractScan.F_contracts"
+      ],
+      "outputAlias": "CriticDiagnosis"
+    },
+    {
+      "step": 4,
+      "label": "Implementer: behavior fix patches",
+      "phase": "implement",
+      "agent": "C",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "checkpoint": true,
+      "inputFrom": [
+        "ArchitectSpec",
+        "CriticDiagnosis",
+        "MetaDiagnostics.F_diagnosticFacts",
+        "ContractScan.F_contractStatus",
+        "ContractScan.F_contracts",
+        "filesCanonical"
+      ],
+      "outputAlias": "PatchPlan"
+    },
+    {
+      "step": 5,
+      "label": "Meta executor: apply patches and run tests",
+      "phase": "verify",
+      "agent": "F",
+      "mode": "executor",
+      "tools": ["repo-tools"],
+      "model": null,
+      "checkpoint": true,
+      "inputFrom": [
+        "PatchPlan.patches",
+        "filesCanonical",
+        "PatchPlan.verificationPlan"
+      ],
+      "outputAlias": "ExecutionResult"
+    },
+    {
+      "step": 6,
+      "label": "Contract postflight verification",
+      "phase": "verify",
+      "agent": "F",
+      "mode": "contract-verify",
+      "tools": ["repo-tools"],
+      "model": null,
+      "commands": [
+        "npm run scan-single-writer",
+        "npm run validate-ownership"
+      ],
+      "haltOnViolation": true,
+      "checkpoint": true,
+      "inputFrom": [
+        "fileMap",
+        "fileGroups",
+        "ContractScan.F_contractStatus",
+        "ExecutionResult.F_appliedPatches"
+      ],
+      "outputAlias": "PostContracts"
+    },
+    {
+      "step": 7,
+      "label": "Systems Optimizer: structural cleanup (if green)",
+      "phase": "refine",
+      "agent": "D",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "inputFrom": [
+        "ArchitectSpec",
+        "CriticDiagnosis",
+        "PatchPlan",
+        "ExecutionResult",
+        "PostContracts.F_postContractStatus",
+        "ContractScan.F_contracts"
+      ],
+      "outputAlias": "StructuralPlan"
+    },
+    {
+      "step": 8,
+      "label": "Historian: capture debug pattern",
+      "phase": "pattern",
+      "agent": "E",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "inputFrom": [
+        "humanGoal",
+        "issueDescription",
+        "ArchitectSpec",
+        "CriticDiagnosis",
+        "PatchPlan",
+        "StructuralPlan",
+        "ExecutionResult",
+        "ContractScan.F_contractStatus",
+        "PostContracts.F_postContractStatus",
+        "ContractScan.F_contracts"
+      ],
+      "outputAlias": "PatternDoc"
+    }
+  ]
+}

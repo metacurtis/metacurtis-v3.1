@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "groups": {
+    "opening_sequence": {
+      "description": "Genesis opening terminal + chaos→coalesce→settle staging",
+      "files": [
+        "sst/canon/v3.5.json",
+        "src/theater/TheaterDirector.js",
+        "src/components/theater/OpeningSequence.jsx",
+        "src/components/webgl/WebGLBackground.jsx",
+        "src/shaders/templates/consciousness-vertex.glsl"
+      ]
+    },
+
+    "drift_pipeline": {
+      "description": "Drift/perlin/opening motion pipeline for particles",
+      "files": [
+        "src/theater/visual/visualEffectSpecs.js",
+        "src/theater/visual/visualCompiler.js",
+        "src/components/webgl/WebGLBackground.jsx",
+        "src/shaders/templates/consciousness-vertex.glsl"
+      ]
+    },
+
+    "narration_pipeline": {
+      "description": "Narration controller + overlay bus + theater wiring for Genesis narration",
+      "files": [
+        "src/components/narrative/NarrationController.jsx",
+        "src/components/narrative/NarrationOverlayBus.jsx",
+        "src/components/consciousness/ConsciousnessTheater.jsx",
+        "src/theater/events.js",
+        "src/config/sst3/narrative-dialogue.js"
+      ]
+    }
+  }
+}

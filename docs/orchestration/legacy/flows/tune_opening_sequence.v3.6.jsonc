@@ -1,0 +1,100 @@
+{
+  "version": "3.6",
+  "id": "tune_opening_sequence",
+  "description": "Fix and tune the Genesis opening so that chaos→coalesce→settle→breathing GENESIS plays correctly before narration.",
+  "fileGroups": [
+    "opening_sequence",
+    "drift_pipeline"
+  ],
+  "humanGoal": "Make the Genesis opening show a full-screen chaos cloud, then coalesce into GENESIS, settle into a readable glyph, then gently drift, with narration starting only after settle+drift are stable.",
+  "issueDescription": "BeatGlyph text was updated from 'HELLO CURTIS' to 'GENESIS', but the opening still does not reliably show the full chaos→coalesce→settle sequence in the WebGL background. The terminal overlay and morph timing need to be aligned so the particle choreography is visible and deterministic.",
+
+  "steps": [
+    {
+      "step": 1,
+      "agent": "A",
+      "mode": "default",
+      "label": "Architect – Spec for opening sequence",
+      "inputFrom": [
+        "humanGoal",
+        "issueDescription",
+        "fileGroups",
+        "fileMap"
+      ],
+      "outputAlias": "ArchitectSpec",
+      "humanDecisionRequired": false
+    },
+    {
+      "step": 2,
+      "agent": "F",
+      "mode": "diagnostic",
+      "label": "Meta Agent – Repo diagnostic for opening files",
+      "inputFrom": [
+        "fileGroups",
+        "fileMap",
+        "issueDescription"
+      ],
+      "outputAlias": "F_diagnosticFacts",
+      "humanDecisionRequired": false
+    },
+    {
+      "step": 3,
+      "agent": "B",
+      "mode": "default",
+      "label": "Critic – Stress-test spec vs reality",
+      "inputFrom": [
+        "ArchitectSpec",
+        "F_diagnosticFacts",
+        "contracts"
+      ],
+      "outputAlias": "CriticNotes",
+      "humanDecisionRequired": false
+    },
+    {
+      "step": 4,
+      "agent": "D",
+      "mode": "default",
+      "label": "Systems Optimizer – Patches + tests",
+      "inputFrom": [
+        "ArchitectSpec",
+        "CriticNotes"
+      ],
+      "outputAlias": "PatchPlan",
+      "humanDecisionRequired": true
+    },
+    {
+      "step": 5,
+      "agent": "F",
+      "mode": "executor",
+      "label": "Meta Agent – Apply patches + run tests",
+      "inputFrom": [
+        "PatchPlan.patches",
+        "PatchPlan.testPlan.commands",
+        "fileMap"
+      ],
+      "outputAlias": "F_executionResult",
+      "humanDecisionRequired": true
+    },
+    {
+      "step": 6,
+      "agent": "E",
+      "mode": "default",
+      "label": "Historian – Capture opening-sequence pattern",
+      "inputFrom": [
+        "humanGoal",
+        "ArchitectSpec",
+        "PatchPlan",
+        "F_executionResult"
+      ],
+      "outputAlias": "PatternDoc",
+      "humanDecisionRequired": false
+    }
+  ],
+
+  "retryPolicy": {
+    "onTestFailure": {
+      "routeToStep": 2,
+      "notes": "Feed failing test logs + observed behavior into F:diagnostic and rerun steps 2–6."
+    }
+  }
+}

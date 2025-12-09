@@ -5,14 +5,12 @@ import { useState, useEffect } from 'react';
 
 export default function NarrativeUIControls() {
   const [navState, setNavState] = useState(null);
-  const [stageButtons, setStageButtons] = useState([]);
 
   // Subscribe to navigation state updates
   useEffect(() => {
     const updateNavState = () => {
       if (window.narrativeNavigation) {
         setNavState(window.narrativeNavigation.getNavigationState());
-        setStageButtons(window.narrativeNavigation.getStageButtonData());
       }
     };
 
@@ -44,63 +42,6 @@ export default function NarrativeUIControls() {
 
   return (
     <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 22 }}>
-      {/* Stage Buttons (replaces original StageNavigation) */}
-      <div style={{ marginBottom: '1rem' }}>
-        <div
-          style={{
-            color: 'white',
-            fontSize: '0.75rem',
-            marginBottom: '0.5rem',
-            opacity: 0.7,
-          }}
-        >
-          Digital Awakening Timeline
-        </div>
-        <ul
-          style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem',
-          }}
-        >
-          {stageButtons.map(({ id, label, isActive, onClick }) => (
-            <li key={id}>
-              <button
-                onClick={onClick}
-                disabled={navState.isTransitioning}
-                style={{
-                  background: isActive ? '#0D9488' : 'transparent',
-                  border: '1px solid #0D9488',
-                  color: isActive ? '#fff' : '#0D9488',
-                  padding: '0.25rem 0.5rem',
-                  fontSize: '0.75rem',
-                  cursor: navState.isTransitioning ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: navState.isTransitioning ? 0.5 : 1,
-                  width: '100%',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={e => {
-                  if (!isActive && !navState.isTransitioning) {
-                    e.target.style.background = 'rgba(13, 148, 136, 0.1)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    e.target.style.background = 'transparent';
-                  }
-                }}
-              >
-                {label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
       {/* Navigation Controls */}
       <div
         style={{
@@ -230,7 +171,6 @@ export default function NarrativeUIControls() {
 ✅ REPLACES: StageNavigation.jsx
 ✅ USES: narrativeAtom directly
 ✅ FEATURES:
-  - Stage timeline buttons (original functionality)
   - Prev/Next navigation controls
   - Auto-advance toggle
   - Real-time state updates
@@ -239,7 +179,6 @@ export default function NarrativeUIControls() {
 
 ✅ API INTEGRATION:
   - window.narrativeNavigation.getNavigationState()
-  - window.narrativeNavigation.getStageButtonData()
   - window.narrativeNavigation.nextStage()
   - window.narrativeNavigation.prevStage()
   - window.narrativeNavigation.toggleAutoAdvance()

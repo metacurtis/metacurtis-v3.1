@@ -63,6 +63,9 @@ const DEFAULT_OPENING_TIMELINE = {
   },
 };
 
+// Breathing window after settle (HELLO CURTIS fully formed, gentle drift only)
+const OPENING_SETTLE_HOLD_MS = 600;
+
 const clamp01 = (value) => {
   if (!Number.isFinite(value)) return 0;
   if (value <= 0) return 0;
@@ -1398,6 +1401,16 @@ class TheaterDirector {
       currentMorphValue = settleTarget;
     }
 
+    // ───────────────── Post-settle breathing window (HELLO CURTIS locked + gentle drift)
+    if (!skipTriggered && OPENING_SETTLE_HOLD_MS > 0) {
+      this.phase = 'settle_hold';
+      console.log(
+        `   Phase: Settle hold (${OPENING_SETTLE_HOLD_MS}ms breathing window before emergence)`
+      );
+      const waitResult = await this.sleep(OPENING_SETTLE_HOLD_MS);
+      if (handleWaitResult(waitResult) === 'cancelled') return;
+    }
+
     if (this._ownsOpeningMorph) {
       this._ownsOpeningMorph = false;
       this._renderDirectiveContext = null;
@@ -1574,6 +1587,13 @@ class TheaterDirector {
       // flip this to false so Genesis beats can flow.
       this._openingInProgress = false;
 
+      if (!this.scrollOrchestrator) {
+        this.scrollOrchestrator = new ScrollOrchestrator();
+      }
+
+      // Respect opening fencepost order: ENABLE_SCROLL → START_NARRATIVE
+      BeatBus.emit(EVENTS.ENABLE_SCROLL);
+
       BeatBus.emit(EVENTS.START_NARRATIVE, {
         stage: toStage,
         source: 'opening_complete',
@@ -1587,11 +1607,6 @@ class TheaterDirector {
         pulseOnce: 1,
       });
 
-      if (!this.scrollOrchestrator) {
-        this.scrollOrchestrator = new ScrollOrchestrator();
-      }
-
-      BeatBus.emit(EVENTS.ENABLE_SCROLL);
       this._morphAnimationController?.stop();
       BeatBus.emit(EVENTS.OPENING_COMPLETE, {
         stage: 'genesis',

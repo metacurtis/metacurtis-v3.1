@@ -1,0 +1,131 @@
+{
+  "id": "fix_narration_sequence",
+  "version": "3.7",
+  "description": "DEBUG FLOW: Fix narration overlay flash between lines (no ghost/previous text flash between segments).",
+  "fileGroups": [
+    "narration_pipeline"
+  ],
+  "humanGoal": "Make narration overlay text transitions buttery-smooth: each line appears, plays, fades out cleanly, and never flashes again before the next line.",
+  "issueDescription": "During narration, after a line completes and fades out, the previous line briefly flashes very faintly right before the next line begins.",
+
+  "steps": [
+    {
+      "step": 1,
+      "label": "Meta diagnostics (narration pipeline)",
+      "phase": "diagnostic",
+      "agent": "F",
+      "mode": "diagnostic",
+      "tools": ["repo-tools"],
+      "model": null,
+      "inputFrom": [
+        "fileMap",
+        "fileGroups",
+        "issueDescription"
+      ],
+      "outputAlias": "MetaDiagnostics"
+    },
+    {
+      "step": 2,
+      "label": "Architect: spec and contracts for narration",
+      "phase": "design",
+      "agent": "A",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "checkpoint": true,
+      "inputFrom": [
+        "humanGoal",
+        "issueDescription",
+        "fileGroups",
+        "filesCanonical",
+        "MetaDiagnostics.F_diagnosticFacts",
+        "MetaDiagnostics.F_fileMapView"
+      ],
+      "outputAlias": "ArchitectSpec"
+    },
+    {
+      "step": 3,
+      "label": "Critic: root causes and safe change surface",
+      "phase": "design",
+      "agent": "B",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "inputFrom": [
+        "ArchitectSpec",
+        "MetaDiagnostics.F_diagnosticFacts",
+        "filesCanonical",
+        "ArchitectSpec.contracts"
+      ],
+      "outputAlias": "CriticDiagnosis"
+    },
+    {
+      "step": 4,
+      "label": "Implementer: narration behavior fix patches",
+      "phase": "implement",
+      "agent": "C",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "checkpoint": true,
+      "inputFrom": [
+        "ArchitectSpec",
+        "CriticDiagnosis",
+        "MetaDiagnostics.F_diagnosticFacts",
+        "filesCanonical"
+      ],
+      "outputAlias": "PatchPlan"
+    },
+    {
+      "step": 5,
+      "label": "Meta executor: apply narration patches and run verification",
+      "phase": "verify",
+      "agent": "F",
+      "mode": "executor",
+      "tools": ["repo-tools"],
+      "model": null,
+      "checkpoint": true,
+      "inputFrom": [
+        "PatchPlan.patches",
+        "filesCanonical",
+        "PatchPlan.verificationPlan"
+      ],
+      "outputAlias": "ExecutionResult"
+    },
+    {
+      "step": 6,
+      "label": "Systems Optimizer: clean narration pipeline (no behavior change)",
+      "phase": "refine",
+      "agent": "D",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "inputFrom": [
+        "ArchitectSpec",
+        "CriticDiagnosis",
+        "PatchPlan",
+        "ExecutionResult"
+      ],
+      "outputAlias": "StructuralPlan"
+    },
+    {
+      "step": 7,
+      "label": "Historian: capture narration flash fix pattern",
+      "phase": "pattern",
+      "agent": "E",
+      "mode": "default",
+      "tools": ["chat"],
+      "model": "chat",
+      "inputFrom": [
+        "humanGoal",
+        "issueDescription",
+        "ArchitectSpec",
+        "CriticDiagnosis",
+        "PatchPlan",
+        "StructuralPlan",
+        "ExecutionResult"
+      ],
+      "outputAlias": "PatternDoc"
+    }
+  ]
+}

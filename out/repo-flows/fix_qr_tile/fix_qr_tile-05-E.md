@@ -1,3 +1,44 @@
+# Agent E – Historian
+
+Flow: fix_qr_tile · Step 05
+Generated at: 2025-12-08T03:38:28.167Z
+
+---
+## Mission
+Capture what happened as a reusable pattern so we never solve the same class of problem from scratch.
+
+## Invariants
+- Do not propose new changes.
+- Summarize in 1–2 screens of text max.
+- Always end with a checklist for 'next time'.
+
+## This Step
+Role for this step: Historian
+
+Notes for this step: Capture the QR tile fix as a reusable pattern.
+
+## Task
+"Make the Transcendence climax QR tile look like a centered, static, photo-like card, no glow or drift."
+
+## High-Level Context
+Task: Make the Transcendence climax QR tile look like a centered, static, photo-like card, no glow or drift.
+Flow: fix_qr_tile
+Included files:
+- src/components/webgl/WebGLBackground.jsx
+- src/shaders/templates/consciousness-fragment.glsl
+- sst/canon/v3.5.json
+- src/config/canonical/canonicalAuthority.js
+---
+Agent A (Architect) has completed step 01.
+---
+Agent B (Critic) has completed step 02.
+---
+Agent D (Systems Optimizer) has completed step 04.
+
+## Code Context (from repo)
+### File: src/components/webgl/WebGLBackground.jsx
+
+```
 // src/components/webgl/WebGLBackground.jsx
 // HOT-DORS passive renderer: projection-matrix viewport hint + single directive sink
 // Single writer: binds geometry/material, emits PARTICLES_EMERGED exactly once (on first FULL bind)
@@ -326,8 +367,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const pageInteractiveDispatchedRef = useRef(false);
   const restoreClearRef = useRef([0, 0, 0, 1]);
   const lastPointSizeRef = useRef(null);
-  const restoreBlendRef = useRef(null);
-  const restoreTransparentRef = useRef(null);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
 
@@ -1686,19 +1725,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uniformsNow.uPointSize.needsUpdate = true;
           lastPointSizeRef.current = null;
         }
-        if (uniformsNow?.uQrPhotoMode) {
-          uniformsNow.uQrPhotoMode.value = 0.0;
-          uniformsNow.uQrPhotoMode.needsUpdate = true;
-        }
         qrModeRef.current = false;
         if (gl && restoreClearRef.current) {
           const [r, g, b, a] = restoreClearRef.current;
           gl.setClearColor(new THREE.Color(r, g, b), a);
-        }
-        if (materialRef.current && restoreBlendRef.current) {
-          materialRef.current.blending = restoreBlendRef.current;
-          materialRef.current.transparent = restoreTransparentRef.current ?? materialRef.current.transparent;
-          materialRef.current.needsUpdate = true;
         }
         timeTickEnabledRef.current = true;
       }
@@ -1709,17 +1739,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           const previousColor = renderer.getClearColor(new THREE.Color());
           const previousAlpha = typeof renderer.getClearAlpha === 'function' ? renderer.getClearAlpha() : 1;
           restoreClearRef.current = [previousColor.r, previousColor.g, previousColor.b, previousAlpha];
-          // Keep QR on a dark canvas; modules render white via shader.
-          renderer.setClearColor(new THREE.Color(0, 0, 0), 1);
         }
         const uniforms = materialRef.current?.uniforms;
-        if (materialRef.current) {
-          restoreBlendRef.current = materialRef.current.blending;
-          restoreTransparentRef.current = materialRef.current.transparent;
-          materialRef.current.blending = THREE.NormalBlending;
-          materialRef.current.transparent = false;
-          materialRef.current.needsUpdate = true;
-        }
         if (uniforms?.uPostMorphFreeze) {
           uniforms.uPostMorphFreeze.value = 1;
           uniforms.uPostMorphFreeze.needsUpdate = true;
@@ -1732,8 +1753,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (uniforms?.uPointSize) {
           const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
           lastPointSizeRef.current = uniforms.uPointSize.value;
-          // Enlarge modules for readability during QR.
-          uniforms.uPointSize.value = Math.max(6.0, 6.0 * dpr);
+          uniforms.uPointSize.value = Math.max(1.8, 2.2 * dpr);
           uniforms.uPointSize.needsUpdate = true;
         }
         if (uniforms?.uFlowTurbulence) {
@@ -1751,18 +1771,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (uniforms?.uGaussianSigma) {
           uniforms.uGaussianSigma.value = 0.5;
           uniforms.uGaussianSigma.needsUpdate = true;
-        }
-        if (uniforms?.uQrPhotoMode) {
-          uniforms.uQrPhotoMode.value = 1.0;
-          uniforms.uQrPhotoMode.needsUpdate = true;
-        }
-        if (uniforms?.uBandFade) {
-          uniforms.uBandFade.value = 0.0;
-          uniforms.uBandFade.needsUpdate = true;
-        }
-        if (uniforms?.uBandHeight) {
-          uniforms.uBandHeight.value = 0.0;
-          uniforms.uBandHeight.needsUpdate = true;
         }
         if (uniforms?.uGlowIntensity) {
           uniforms.uGlowIntensity.value = 0.0;
@@ -2208,7 +2216,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uGaussianSigma:   { value: 2.5 },
           uBandHeight:      { value: bandHeightRef.current || 0 },
           uBandFade:        { value: 0 },
-          uQrPhotoMode:     { value: 0.0 },
           uGaussianFalloff: { value: Canonical?.features?.gaussianFalloff ?? 1.0 },
           uCenterWeighting: { value: Canonical?.features?.centerWeightingTier4 ?? 1.0 },
           uStageIndex:      { value: stageIndex },
@@ -2640,3 +2647,3166 @@ if (typeof window !== 'undefined') {
   console.log('   1. Click particles once');
   console.log('   2. Run: window.analyzeDiagnostic()');
 }
+
+```
+
+### File: src/shaders/templates/consciousness-fragment.glsl
+
+```
+precision mediump float;
+
+// Uniforms
+uniform sampler2D uAtlasTexture;
+uniform float uTime;
+uniform vec3 uColorCurrent;
+uniform vec3 uColorNext;
+uniform vec3 uColorAccent1;
+uniform vec3 uColorAccent2;
+uniform vec3 uPalette0;
+uniform vec3 uPalette1;
+uniform vec3 uPalette2;
+uniform vec3 uPalette3;
+uniform float uTierHighlight;
+uniform float uActiveCount;
+uniform float uFadeProgress;
+uniform float uGaussianSigma;
+uniform float uBandHeight;
+uniform float uBandFade;
+
+// Varyings
+varying vec3 vPosition;
+varying float vBlend;
+varying float vAlpha;
+varying vec2 vAtlasUVOffset;
+varying float vTierID;
+varying float vTier;
+varying float vSizeMultiplier;
+varying float vParticleIndex;
+
+vec3 getTierColor(int t) {
+  if (t == 0) return uPalette0;
+  if (t == 1) return uPalette1;
+  if (t == 2) return uPalette2;
+  return uPalette3;
+}
+
+float gaussianFalloff(vec2 coord, float sigma) {
+  vec2 centered = coord - 0.5;
+  float distSq = dot(centered, centered);
+  return exp(-distSq * sigma * sigma * 4.0);
+}
+
+vec4 sampleAtlas(vec2 uvOffset, vec2 pointCoord) {
+  float spriteSize = 0.25; // 4x4 grid
+  vec2 uv = uvOffset + pointCoord * spriteSize;
+  return texture2D(uAtlasTexture, uv);
+}
+
+void main() {
+  // Fade particles beyond active count
+  if (vParticleIndex >= uActiveCount) {
+    discard;
+  }
+  
+  // Sample sprite texture
+  vec4 sprite = sampleAtlas(vAtlasUVOffset, gl_PointCoord);
+  if (sprite.a < 0.01) discard;
+
+  int tierIndex = int(clamp(floor(vTier + 0.5), 0.0, 3.0));
+
+  // Core glow accent for galactic band feel
+  float fade = clamp(uBandFade, 0.0, 1.0);
+  float distFromBandCenter = abs(vPosition.y);
+  float bandHalfHeight = max(0.35, uBandHeight * 0.65);
+  float bandCurve = smoothstep(bandHalfHeight, 0.0, distFromBandCenter);
+  float coreStrength = pow(bandCurve, 2.0) * fade;
+  float haloStrength = (1.0 - smoothstep(0.0, bandHalfHeight * 2.4, distFromBandCenter)) * fade;
+  float tierGlowBoost = tierIndex == 3 ? 2.4 : (tierIndex == 2 ? 1.8 : 1.0);
+  vec3 glowGradient = mix(vec3(0.0, 0.95, 0.6), vec3(0.0, 1.0, 0.0), coreStrength);
+  
+  // Base color mix + tier palette influence
+  vec3 color = mix(uColorCurrent, uColorNext, vBlend);
+  vec3 stageColor = getTierColor(tierIndex);
+  color = mix(color, stageColor, 0.35);
+  if (tierIndex == 3) {
+    color = mix(color, uColorAccent1, 0.25);
+  } else if (tierIndex == 2) {
+    color = mix(color, uColorAccent2, 0.2);
+  }
+  
+  // Apply gaussian edge falloff
+  float sigma = uGaussianSigma > 0.0 ? uGaussianSigma : 2.5;
+  float edgeFade = gaussianFalloff(gl_PointCoord, sigma);
+
+  // Add subtle shimmer and additive core glow
+  float shimmer = 1.0 + sin(uTime * 2.0 + vParticleIndex * 0.1) * 0.05;
+  float twinkle = 1.0 + sin(uTime * 5.0 + vParticleIndex * 0.03) * 0.03;
+  vec3 finalColor = color * sprite.rgb * shimmer * twinkle;
+  vec3 haloTint = vec3(0.0, 0.7, 0.4);
+  vec3 ambientGlow = vec3(0.0, 0.25, 0.12) * clamp(1.0 - bandCurve, 0.0, 1.0) * fade;
+  finalColor += glowGradient * (coreStrength * tierGlowBoost * 0.5);
+  finalColor += haloTint * (haloStrength * 0.25);
+  finalColor += ambientGlow;
+
+  // Slightly elevate starfield opacity for Tier 0
+  float tierOpacityBoost = tierIndex == 0 ? 1.6 : (tierIndex == 1 ? 1.1 : 1.0);
+  float baseOpacity = vAlpha * tierOpacityBoost;
+  float alpha = baseOpacity * sprite.a * edgeFade * uFadeProgress;
+
+  if (abs(uTierHighlight - float(tierIndex)) < 0.5) {
+    finalColor *= 1.2;
+    alpha *= 1.1;
+  }
+
+  gl_FragColor = vec4(finalColor, alpha);
+}
+
+```
+
+### File: sst/canon/v3.5.json
+
+```
+{
+  "meta": {
+    "version": "3.5.0",
+    "authority": "ABSOLUTE",
+    "lastUpdated": "2025-10-02",
+    "breaking_changes": [
+      "text3DPosition now represents 3D letter volumes",
+      "Camera angles specified per stage for dimensional reveal"
+    ],
+    "name": "MetaCurtis Consciousness Theater",
+    "mode": "TEXT_FIRST_REVEAL",
+    "documentStatus": "SINGLE_SOURCE_OF_TRUTH",
+    "date": "2025-09-02",
+    "compat": {
+      "accepts": [
+        "3.3",
+        "3.4"
+      ]
+    }
+  },
+  "narrative": {
+    "overlay": {
+      "typewriterSpeedMs": 50,
+      "graceWindowMs": 800,
+      "deduplication": {
+        "enabled": true,
+        "thresholdMs": 100
+      },
+      "style": {
+        "background": "rgba(0, 0, 0, 0.65)",
+        "color": "#fff",
+        "fontSize": 16,
+        "lineHeight": 1.45,
+        "padding": "12px 18px",
+        "borderRadius": 10,
+        "maxWidth": 960,
+        "zIndex": 1000
+      },
+      "animation": {
+        "fadeInDurationMs": 300,
+        "fadeOutDurationMs": 500
+      }
+    }
+  },
+  "features": {
+    "gaussianFalloff": 1,
+    "centerWeightingTier4": 1,
+    "ctfOpening": false,
+    "beatGlyph": true,
+    "scrollOrchestrator": true,
+    "openingFencepostContract": true
+  },
+  "pipeline": {
+    "modules": {
+      "director": {
+        "role": "orchestration",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Prewarm \u2192 terminal \u2192 screen fill \u2192 emergence \u2192 stage change \u2192 enable scroll"
+      },
+      "engine": {
+        "role": "blueprint_author",
+        "writes": [
+          "blueprint"
+        ],
+        "forbidden": [
+          "gpuDraw"
+        ],
+        "blueprintFields": [
+          "atmosphericPositions",
+          "text3DPositions",
+          "tierData",
+          "sizeMultiplier",
+          "opacityData",
+          "atlasIndex",
+          "animationSeed",
+          "activeCount",
+          "particleCount",
+          "maxParticles",
+          "metadata"
+        ],
+        "opening": {
+          "emergence": {
+            "target": "random_to_random_gas_cloud",
+            "blueprintEventMode": "emergence"
+          }
+        }
+      },
+      "renderer": {
+        "role": "dumb_renderer",
+        "writes": [
+          "geometry",
+          "uniforms"
+        ],
+        "forbidden": [
+          "fabricateTargets",
+          "readScroll",
+          "scaleByFov"
+        ],
+        "singleWriter": true,
+        "emits": [
+          "ENGINE_VIEWPORT_HINT",
+          "PARTICLES_EMERGED"
+        ],
+        "emitOnceFencepost": true,
+        "notes": "Emit ENGINE_VIEWPORT_HINT at mount/resize; bind emergence/full blueprints; emit PARTICLES_EMERGED exactly once after the first full genesis bind; may apply subtle mesh rotation during chaos window when PARTICLES_START_EMERGING is received."
+      },
+      "beatBus": {
+        "role": "event_bus",
+        "exposedGlobals": [
+          "BeatBus",
+          "EVENTS"
+        ]
+      },
+      "scrollOrchestrator": {
+        "role": "progress_publisher",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Maps window scroll\u2192stage-local progress; publishes MORPH_PROGRESS; emits STAGE_CHANGE at breakpoints and MEMORY_FRAGMENT_TRIGGER from per-stage triggerPercent. Renderer remains a dumb sink."
+      }
+    },
+    "singleWriterRules": [
+      "Renderer is the ONLY geometry/uniform writer",
+      "Engine is the ONLY blueprint author",
+      "Director NEVER writes geometry/uniforms"
+    ]
+  },
+  "shaderContract": {
+    "attributes": [
+      {
+        "name": "position",
+        "type": "vec3",
+        "semantics": "current position"
+      },
+      {
+        "name": "atmosphericPosition",
+        "type": "vec3",
+        "semantics": "morph source"
+      },
+      {
+        "name": "text3DPosition",
+        "type": "vec3",
+        "semantics": "morph target (stage word)"
+      },
+      {
+        "name": "tierData",
+        "type": "float",
+        "range": [
+          0,
+          3
+        ],
+        "semantics": "tier id"
+      },
+      {
+        "name": "sizeMultiplier",
+        "type": "float",
+        "semantics": "sprite scaling per particle"
+      },
+      {
+        "name": "opacityData",
+        "type": "float",
+        "semantics": "base opacity per particle"
+      },
+      {
+        "name": "atlasIndex",
+        "type": "float",
+        "semantics": "sprite index in atlas"
+      },
+      {
+        "name": "animationSeed",
+        "type": "vec3",
+        "semantics": "per-particle randomization"
+      },
+      {
+        "name": "particleIndex",
+        "type": "float",
+        "semantics": "0..N-1 (renderer-added)"
+      }
+    ],
+    "uniforms": [
+      {
+        "name": "uTime",
+        "type": "float"
+      },
+      {
+        "name": "uMorphProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ],
+        "semantics": "0=atmospheric,1=text"
+      },
+      {
+        "name": "uScrollProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "uStageIndex",
+        "type": "int"
+      },
+      {
+        "name": "uActiveCount",
+        "type": "int"
+      },
+      {
+        "name": "uTierCutoff",
+        "type": "int"
+      },
+      {
+        "name": "uColorCurrent",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorNext",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent1",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent2",
+        "type": "vec3"
+      },
+      {
+        "name": "uAtlasTexture",
+        "type": "sampler2D"
+      },
+      {
+        "name": "uTotalSprites",
+        "type": "int",
+        "value": 16
+      },
+      {
+        "name": "uPointSize",
+        "type": "float"
+      },
+      {
+        "name": "uDevicePixelRatio",
+        "type": "float"
+      },
+      {
+        "name": "uResolution",
+        "type": "vec2"
+      },
+      {
+        "name": "uGaussianSigma",
+        "type": "float"
+      },
+      {
+        "name": "uTierHighlight",
+        "type": "float[4]"
+      },
+      {
+        "name": "uGaussianFalloff",
+        "type": "float"
+      },
+      {
+        "name": "uCenterWeighting",
+        "type": "float"
+      },
+      {
+        "name": "uStageProgress",
+        "type": "float",
+        "aliasOf": "uMorphProgress"
+      },
+      {
+        "name": "uStageBlend",
+        "type": "float",
+        "aliasOf": "uScrollProgress"
+      },
+      {
+        "name": "uChaosSpin",
+        "type": "float",
+        "optional": true,
+        "semantics": "radians/sec multiplier during chaos"
+      },
+      {
+        "name": "uTrailIntensity",
+        "type": "float",
+        "optional": true
+      },
+      {
+        "name": "uTrailPersistence",
+        "type": "float",
+        "optional": true
+      },
+      {
+        "name": "uBrightnessBoost",
+        "type": "float",
+        "optional": true
+      }
+    ]
+  },
+  "events": [
+    {
+      "name": "ENGINE_VIEWPORT_HINT",
+      "emitter": "Renderer",
+      "payload": {
+        "width": "int",
+        "height": "int",
+        "aspect": "float"
+      }
+    },
+    {
+      "name": "PREWARM_GENESIS_BLUEPRINT",
+      "emitter": "Director"
+    },
+    {
+      "name": "PREWARM_COMPLETE",
+      "emitter": "Engine",
+      "payload": {
+        "key": "string"
+      }
+    },
+    {
+      "name": "AUDIO_COMPUTER_HUM",
+      "emitter": "Director",
+      "payload": {
+        "volume": "float[0..1]"
+      }
+    },
+    {
+      "name": "CURSOR_SHOW",
+      "emitter": "Director"
+    },
+    {
+      "name": "CURSOR_BLINK",
+      "emitter": "Director",
+      "payload": {
+        "count": "int",
+        "interval": "ms"
+      }
+    },
+    {
+      "name": "TERMINAL_TYPE",
+      "emitter": "Director",
+      "payload": {
+        "lines": "string[]",
+        "typeSpeed": "ms",
+        "lineDelay": "ms"
+      }
+    },
+    {
+      "name": "SCREEN_FILL",
+      "emitter": "Director",
+      "payload": {
+        "text": "string",
+        "scrollSpeed": "ms"
+      }
+    },
+    {
+      "name": "BUILD_EMERGENCE_BLUEPRINT",
+      "emitter": "Director",
+      "payload": {
+        "sourceText": "string",
+        "count": "int"
+      }
+    },
+    {
+      "name": "BLUEPRINT_READY",
+      "emitter": "Engine",
+      "payload": {
+        "stage": "string",
+        "mode": "string|null"
+      }
+    },
+    {
+      "name": "PARTICLES_START_EMERGING",
+      "emitter": "Director"
+    },
+    {
+      "name": "PARTICLES_EMERGED",
+      "emitter": "Renderer",
+      "semantics": "emit_once_after_first_full_genesis_bind"
+    },
+    {
+      "name": "STAGE_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "ENABLE_SCROLL",
+      "emitter": "Director"
+    },
+    {
+      "name": "QUALITY_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "tier": "LOW|MEDIUM|HIGH|ULTRA"
+      }
+    },
+    {
+      "name": "MORPH_PROGRESS",
+      "emitter": "Director",
+      "payload": {
+        "value": "float[0..1]"
+      }
+    },
+    {
+      "name": "START_NARRATIVE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "AUDIO_START_STAGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "MORPH_TO_BEATGLYPH",
+      "emitter": "Director",
+      "payload": {
+        "text": "string"
+      }
+    },
+    {
+      "name": "MEMORY_FRAGMENT_TRIGGER",
+      "emitter": "Director",
+      "payload": {
+        "id": "string"
+      }
+    }
+  ],
+  "opening": {
+    "rules": {
+      "startAfterViewportHint": true,
+      "stage0ColorLock": true,
+      "scrollLockedUntil": "ENABLE_SCROLL",
+      "emergenceModeRequired": true
+    },
+    "skipKey": "SPACE",
+    "totalDurationMs": 12500,
+    "timeline": {
+      "blackout": {
+        "durationMs": 2000
+      },
+      "cursor": {
+        "blinkCount": 2,
+        "intervalMs": 500
+      },
+      "typing": {
+        "lines": [
+          "SYSTEM BOOTING...",
+          "LOADING MEMORY FRAGMENTS...",
+          "READY.",
+          "10 PRINT \"HELLO CURTIS\"",
+          "20 GOTO 10",
+          "RUN"
+        ],
+        "typeSpeed": 50,
+        "lineDelay": 500,
+        "completionDelayMs": 800
+      },
+      "fill": {
+        "text": "HELLO CURTIS ",
+        "scrollSpeed": 100,
+        "durationMs": 2000
+      },
+      "emergence": {
+        "durationMs": 2000,
+        "waitForFencepost": true,
+        "maxWaitMs": 5000,
+        "stabilizeMs": 500,
+        "skipMorphAnimation": false,
+        "skipGenesisBlueprint": true,
+        "targetState": "genesis_initial"
+      },
+      "profile": "chaos_coalesce_settle_v1",
+      "prologue": {
+        "terminalOverlay": true,
+        "fadeOutAtMs": 0
+      },
+      "chaos": {
+        "enabled": true,
+        "durationMs": 2000,
+        "rendererSpin": {
+          "z": 0.55,
+          "y": 0.25
+        }
+      },
+      "coalesce": {
+        "enabled": true,
+        "durationMs": 2000,
+        "morphTo": 0.6
+      },
+      "settle": {
+        "enabled": true,
+        "durationMs": 1500,
+        "morphTo": 1.0,
+        "constellationCoverage": [
+          0.95,
+          0.8,
+          0.6,
+          0.45
+        ]
+      },
+      "narration": {
+        "startAtMs": 13000,
+        "events": [
+          "START_NARRATIVE",
+          "AUDIO_START_STAGE"
+        ]
+      },
+      "beatGlyph": {
+        "revealMs": 9500,
+        "text": "GENESIS"
+      }
+    },
+    "emergence": {
+      "target": "random_to_random_gas_cloud",
+      "mode": "emergence",
+      "source": "viewportSpread"
+    }
+  },
+  "openingFencepost": {
+    "order": [
+      "ENGINE_VIEWPORT_HINT (Renderer)",
+      "PREWARM_GENESIS_BLUEPRINT (Director)",
+      "TERMINAL_TYPE / SCREEN_FILL (Director, optional overlay)",
+      "PARTICLES_START_EMERGING (Director)",
+      "BLUEPRINT_READY { mode:'emergence', stage:'genesis' } (Engine)",
+      "BLUEPRINT_READY { stage:'genesis' } full (Engine)",
+      "PARTICLES_EMERGED (Renderer, emit_once)",
+      "STAGE_CHANGE { stage:'genesis' } (Director)",
+      "MORPH_PROGRESS settle \u2192 1.0 (Director)",
+      "ENABLE_SCROLL (Director)",
+      "START_NARRATIVE { stage:'genesis' } & AUDIO_START_STAGE { stage:'genesis' } (Director)"
+    ]
+  },
+  "openingRules": {
+    "startAfterViewportHint": true,
+    "stage0ColorLock": true,
+    "scrollLockedUntil": "ENABLE_SCROLL",
+    "emergenceModeRequired": true
+  },
+  "quality": {
+    "multipliers": {
+      "LOW": 0.3,
+      "MEDIUM": 0.6,
+      "HIGH": 1,
+      "ULTRA": 1.5
+    },
+    "maxParticles": 15000
+  },
+  "scrollAndMorph": {
+    "stageBreakpointsPercent": [
+      0,
+      14,
+      28,
+      42,
+      56,
+      70,
+      84,
+      100
+    ],
+    "easing": "exponential_inout_edges",
+    "morphResponse": {
+      "speedMultiplier": 2,
+      "smoothing": 0.15,
+      "overshoot": 0.05
+    },
+    "stageEntry": {
+      "neural": {
+        "durationMs": 5000,
+        "skipMorphAnimation": false,
+        "start": 0,
+        "target": 1
+      }
+    },
+    "ownership": {
+      "publisher": "Director",
+      "rendererReadsScroll": false
+    }
+  },
+  "spriteSemantics": {
+    "substrate": 7,
+    "spatialCircles": [
+      0,
+      1
+    ],
+    "anchorDiamond": 4,
+    "anchorCrystal": 11,
+    "star": 6,
+    "burst": 13,
+    "galaxy": 15
+  },
+  "stageOrder": [
+    "genesis",
+    "discipline",
+    "neural",
+    "velocity",
+    "architecture",
+    "harmony",
+    "transcendence"
+  ],
+  "stages": {
+    "genesis": {
+      "label": "GENESIS SPARK",
+      "ordinal": 0,
+      "scrollRangePercent": [
+        0,
+        14
+      ],
+      "particlesBase": 2000,
+      "word": "GENESIS",
+      "palette": [
+        "#00FF00",
+        "#22c55e",
+        "#15803d"
+      ],
+      "tierMix": [
+        0.6,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "drift_perlin_slow",
+        "tier1": "orbital_micro",
+        "tier2": "twinkle_soft",
+        "tier3": "pulse_soft"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "static",
+          "description": "Fixed camera during emergence"
+        },
+        "reveal": {
+          "timing": 8000,
+          "duration": 2000,
+          "target": { "x": 0.8, "y": 0.5, "z": 4.5 },
+          "easing": "easeInOutQuad",
+          "description": "Subtle 15° rotation to show depth"
+        },
+        "keyframes": []
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "genesis_context",
+            "triggerPercent": 5,
+            "trigger": {
+              "percent": 5
+            },
+            "position": {
+              "anchor": "bottomLeft"
+            },
+            "content": {
+              "text": "1983 \u2022 Dallas, Texas \u2022 Age 8",
+              "fontSize": 14,
+              "color": "#22c55e"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "genesis_code",
+          "hotspot": "letter_H",
+          "content": {
+            "image": "commodore64-screen.png",
+            "caption": "10 PRINT \"HELLO CURTIS\"\\n20 GOTO 10\\nRUN"
+          },
+          "particleEffect": {
+            "behavior": "crtFlicker",
+            "duration": 1200
+          }
+        },
+        "climax": null
+      },
+      "boundaryCues": {
+        "preTransitionPercent": [
+          12,
+          14
+        ],
+        "tintCrossfadeToStage": "discipline"
+      },
+      "audio": {
+        "bed": "1980s_computer_hum",
+        "narrationCue": "onEmergenceThreshold"
+      },
+      "openingNote": "Opening shot list (implemented using the contracts above)",
+      "openingTimeline": {
+        "profile": "chaos_coalesce_settle_v1",
+        "prologue": {
+          "terminalOverlay": true,
+          "fadeOutAtMs": 0
+        },
+        "chaos": {
+          "enabled": true,
+          "durationMs": 2000,
+          "rendererSpin": {
+            "z": 0.55,
+            "y": 0.25
+          }
+        },
+        "coalesce": {
+          "enabled": true,
+          "durationMs": 2000,
+          "morphTo": 0.6
+        },
+        "settle": {
+          "enabled": true,
+          "durationMs": 1500,
+          "morphTo": 1.0,
+          "constellationCoverage": [
+            0.95,
+            0.8,
+            0.6,
+            0.45
+          ]
+        },
+        "narration": {
+          "startAtMs": 13000,
+          "events": [
+            "START_NARRATIVE",
+            "AUDIO_START_STAGE"
+          ]
+        },
+        "beatGlyph": {
+          "revealMs": 9500,
+          "text": "HELLO CURTIS"
+        }
+      }
+    },
+    "discipline": {
+      "label": "DISCIPLINE FORGE",
+      "ordinal": 1,
+      "scrollRangePercent": [
+        14,
+        28
+      ],
+      "particlesBase": 3000,
+      "word": "STRUCTURE",
+      "palette": [
+        "#1e40af",
+        "#3b82f6",
+        "#1d4ed8"
+      ],
+      "tierMix": [
+        0.55,
+        0.25,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_drift",
+        "tier1": "column_orbit",
+        "tier2": "pulse_cadence_120bpm",
+        "tier3": "crystalline_authority"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 0, "y": -1, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "orbit",
+          "axis": "y",
+          "degrees": 10,
+          "duration": 35000,
+          "speed": 0.1,
+          "easing": "linear",
+          "description": "Slow orbit to reveal structure"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": -1, "z": 5 } },
+          { "time": 35000, "position": { "x": 1.5, "y": -1, "z": 4.5 } }
+        ]
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "discipline_context",
+            "triggerPercent": 18,
+            "trigger": {
+              "percent": 18
+            },
+            "position": {
+              "anchor": "topLeft"
+            },
+            "content": {
+              "text": "1998 \u2022 Parris Island \u2022 Discipline Forged",
+              "fontSize": 14,
+              "color": "#3b82f6"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "discipline_emblem",
+          "hotspot": "letter_S",
+          "content": {
+            "image": "discipline-ega.png",
+            "caption": "Honor. Courage. Commitment."
+          },
+          "particleEffect": {
+            "behavior": "snapFormation",
+            "duration": 1000
+          }
+        },
+        "climax": null
+      }
+    },
+    "neural": {
+      "label": "NEURAL AWAKENING",
+      "ordinal": 2,
+      "scrollRangePercent": [
+        28,
+        42
+      ],
+      "particlesBase": 5000,
+      "word": "AWAKENING",
+      "palette": [
+        "#4338ca",
+        "#a855f7",
+        "#7c3aed"
+      ],
+      "tierMix": [
+        0.55,
+        0.2,
+        0.15,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "neural_flow",
+        "tier1": "connection_orbit",
+        "tier2": "synapse_flash_prob_0.02",
+        "tier3": "hub_nodes_temporal"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "orbit_discovery",
+          "axis": "xy",
+          "degrees": 15,
+          "duration": 30000,
+          "speed": 0.3,
+          "wobble": 0.1,
+          "easing": "easeInOutSine",
+          "description": "Curious orbital movement revealing connections"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 10000, "position": { "x": 1, "y": 0.5, "z": 4.8 } },
+          { "time": 20000, "position": { "x": -0.5, "y": -0.3, "z": 5.2 } },
+          { "time": 30000, "position": { "x": 0, "y": 0, "z": 5 } }
+        ]
+      },
+      "uniformOverrides": {
+        "uGaussianSigma": 2
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "neural_context",
+            "triggerPercent": 34,
+            "trigger": {
+              "percent": 34
+            },
+            "position": {
+              "anchor": "topRight"
+            },
+            "content": {
+              "text": "2005 \u2022 Austin, Texas \u2022 Neural Spark",
+              "fontSize": 14,
+              "color": "#a855f7"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "neural_interface",
+          "hotspot": "cluster_alpha",
+          "content": {
+            "image": "neural-diagram.png",
+            "caption": "First machine learning prototype came alive in MATLAB."
+          },
+          "particleEffect": {
+            "behavior": "neuralPulse",
+            "duration": 1400
+          }
+        },
+        "climax": null
+      }
+    },
+    "velocity": {
+      "label": "VELOCITY EXPLOSION",
+      "ordinal": 3,
+      "scrollRangePercent": [
+        42,
+        56
+      ],
+      "particlesBase": 12000,
+      "word": "VELOCITY",
+      "palette": [
+        "#7c3aed",
+        "#9333ea",
+        "#6b21a8"
+      ],
+      "tierMix": [
+        0.45,
+        0.2,
+        0.15,
+        0.2
+      ],
+      "motionBehaviors": {
+        "tier0": "storm_medium",
+        "tier1": "streak_trail",
+        "tier2": "burst_on_beat",
+        "tier3": "lightning_global"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 6 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "dolly_push",
+          "startZ": 6,
+          "endZ": 4,
+          "duration": 40000,
+          "easing": "easeInQuad",
+          "shake": {
+            "enabled": true,
+            "amplitude": 0.1,
+            "frequency": 5
+          },
+          "description": "Dramatic push-in with energy shake"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 6 } },
+          { "time": 20000, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 40000, "position": { "x": 0, "y": 0, "z": 4 } }
+        ]
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.5
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "velocity_context",
+            "triggerPercent": 48,
+            "trigger": {
+              "percent": 48
+            },
+            "position": {
+              "anchor": "bottomRight"
+            },
+            "content": {
+              "text": "2012 \u2022 Silicon Valley \u2022 Launch Velocity",
+              "fontSize": 14,
+              "color": "#9333ea"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "velocity_launch",
+          "hotspot": "orbit_path",
+          "content": {
+            "image": "launch-dashboard.png",
+            "caption": "Realtime analytics firing across 12 markets."
+          },
+          "particleEffect": {
+            "behavior": "hyperdriveBurst",
+            "duration": 1100
+          }
+        },
+        "climax": null
+      }
+    },
+    "architecture": {
+      "label": "ARCHITECTURE CONSCIOUSNESS",
+      "ordinal": 4,
+      "scrollRangePercent": [
+        56,
+        70
+      ],
+      "particlesBase": 8000,
+      "word": "SYSTEMS",
+      "palette": [
+        "#0891b2",
+        "#06b6d4",
+        "#0e7490"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_flow",
+        "tier1": "scaffold_layers_3",
+        "tier2": "blueprint_pulse",
+        "tier3": "cornerstone_nodes_frontal"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 3, "y": 3, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "isometric_track",
+          "pattern": "blueprint",
+          "degrees": 12,
+          "duration": 35000,
+          "easing": "linear",
+          "description": "Isometric view revealing system structure"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 3, "y": 3, "z": 5 } },
+          { "time": 17500, "position": { "x": -3, "y": 3, "z": 5 } },
+          { "time": 35000, "position": { "x": 3, "y": 3, "z": 5 } }
+        ]
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "architecture_context",
+            "triggerPercent": 62,
+            "trigger": {
+              "percent": 62
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 220,
+                "y": 0
+              }
+            },
+            "content": {
+              "text": "2016 \u2022 Seattle \u2022 Systems Reforged",
+              "fontSize": 14,
+              "color": "#06b6d4"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "architecture_blueprint",
+          "hotspot": "pillar_one",
+          "content": {
+            "image": "system-blueprint.png",
+            "caption": "Layered fault-tolerant mesh with self-healing edges."
+          },
+          "particleEffect": {
+            "behavior": "schematicReveal",
+            "duration": 1300
+          }
+        },
+        "climax": null
+      }
+    },
+    "harmony": {
+      "label": "HARMONIC MASTERY",
+      "ordinal": 5,
+      "scrollRangePercent": [
+        70,
+        84
+      ],
+      "particlesBase": 12000,
+      "word": "FLOW STATE",
+      "palette": [
+        "#f59e0b",
+        "#d97706",
+        "#b45309"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "laminar_flow",
+        "tier1": "orbit_sync_groups_4",
+        "tier2": "ballet_fibonacci",
+        "tier3": "conductor_nodes_cerebellar"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "balletic_orbit",
+          "axis": "xyz",
+          "degrees": 25,
+          "duration": 40000,
+          "speed": 0.2,
+          "smooth": 0.98,
+          "easing": "easeInOutCubic",
+          "description": "Graceful 3-axis ballet revealing golden ratio"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 10000, "position": { "x": 2, "y": 1, "z": 4.5 } },
+          { "time": 20000, "position": { "x": 0, "y": 2, "z": 5.5 } },
+          { "time": 30000, "position": { "x": -2, "y": 1, "z": 4.5 } },
+          { "time": 40000, "position": { "x": 0, "y": 0, "z": 5 } }
+        ]
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "harmony_context",
+            "triggerPercent": 78,
+            "trigger": {
+              "percent": 78
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 0,
+                "y": -260
+              }
+            },
+            "content": {
+              "text": "2021 \u2022 Remote \u2022 Human + AI Ensemble",
+              "fontSize": 14,
+              "color": "#f59e0b"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 5000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 5000
+          }
+        ],
+        "interactive": {
+          "id": "harmony_resonance",
+          "hotspot": "orbit_chorus",
+          "content": {
+            "image": "harmony-waveform.png",
+            "caption": "Balanced signal routing for conscious UI."
+          },
+          "particleEffect": {
+            "behavior": "resonantGlow",
+            "duration": 1500
+          }
+        },
+        "climax": null
+      }
+    },
+    "transcendence": {
+      "label": "CONSCIOUSNESS TRANSCENDENCE",
+      "ordinal": 6,
+      "scrollRangePercent": [
+        84,
+        100
+      ],
+      "particlesBase": 15000,
+      "word": "CONSCIOUSNESS",
+      "palette": [
+        "#ffffff",
+        "#f59e0b",
+        "#00ffcc"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "cosmic_dust_galaxy",
+        "tier1": "galactic_arm_slow",
+        "tier2": "consciousness_node_unified",
+        "tier3": "transcendent_swarm"
+      },
+      "camera": {
+        "initial": {
+          "position": { "x": 0, "y": 0, "z": 5 },
+          "lookAt": { "x": 0, "y": 0, "z": 0 }
+        },
+        "movement": {
+          "type": "reverent_orbit",
+          "axis": "y",
+          "degrees": 30,
+          "duration": 50000,
+          "speed": 0.15,
+          "pullback": {
+            "enabled": true,
+            "from": 5,
+            "to": 7,
+            "startTime": 35000,
+            "duration": 10000,
+            "easing": "easeOutQuad"
+          },
+          "description": "Slow orbit with reverent pullback for full view"
+        },
+        "keyframes": [
+          { "time": 0, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 25000, "position": { "x": 2.5, "y": 0, "z": 5 } },
+          { "time": 35000, "position": { "x": 0, "y": 0, "z": 5 } },
+          { "time": 45000, "position": { "x": 0, "y": 0, "z": 7 } }
+        ]
+      },
+      "climax": {
+        "arrivalMorph": 1,
+        "dissolveAfterMs": 1800,
+        "dissolveMorph": 0.6,
+        "increaseSwirl": true
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
+      },
+      "hud": {
+        "liveCounterText": "15,000 conscious moments"
+      },
+      "memoryFragments": {
+        "ambient": [
+          {
+            "id": "transcendence_context",
+            "triggerPercent": 92,
+            "trigger": {
+              "percent": 92
+            },
+            "position": {
+              "anchor": "center",
+              "offset": {
+                "x": 0,
+                "y": 220
+              }
+            },
+            "content": {
+              "text": "2025 \u2022 Worldwide \u2022 Conscious Collective",
+              "fontSize": 14,
+              "color": "#00ffcc"
+            },
+            "timing": {
+              "fadeIn": 1000,
+              "persist": 6000,
+              "fadeOut": 1000
+            },
+            "type": "annotation",
+            "duration": 6000
+          }
+        ],
+        "interactive": {
+          "id": "transcendence_portal",
+          "hotspot": "galaxy_core",
+          "content": {
+            "image": "transcendence-portal.png",
+            "caption": "Particles align into living memory constellations."
+          },
+          "particleEffect": {
+            "behavior": "starlightCascade",
+            "duration": 1600
+          }
+        },
+        "climax": {
+          "id": "transcendence_reveal",
+          "trigger": {
+            "type": "timeline",
+            "time": 35000
+          },
+          "sequence": [
+            {
+              "action": "dissolve",
+              "duration": 2000
+            },
+            {
+              "action": "formPortrait",
+              "duration": 3000,
+              "hold": 2000
+            },
+            {
+              "action": "reformText",
+              "text": "CURTIS WHORTON",
+              "duration": 2000
+            },
+            {
+              "action": "reformText",
+              "text": "AI-NATIVE ENGINEER",
+              "duration": 2000
+            },
+            {
+              "action": "formQRCode",
+              "url": "https://curtisworton.com",
+              "duration": 3000
+            }
+          ]
+        }
+      }
+    }
+  },
+  "visual": {
+    "system": "3d_kinetic_typography",
+    "letterGeometry": {
+      "genesis": {
+        "word": "GENESIS",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.3,
+        "particlesPerLetter": 167,
+        "spacing": 1.2,
+        "scale": 1.0
+      },
+      "discipline": {
+        "word": "STRUCTURE",
+        "font": "Inter",
+        "weight": 900,
+        "depth": 0.8,
+        "particlesPerLetter": 333,
+        "spacing": 1.0,
+        "scale": 1.1
+      },
+      "neural": {
+        "word": "AWAKENING",
+        "font": "Playfair Display",
+        "weight": 600,
+        "depth": 0.5,
+        "particlesPerLetter": 556,
+        "spacing": 1.1,
+        "scale": 1.05
+      },
+      "velocity": {
+        "word": "VELOCITY",
+        "font": "Archivo Black",
+        "weight": 900,
+        "depth": 0.4,
+        "particlesPerLetter": 1500,
+        "spacing": 0.95,
+        "scale": 1.15
+      },
+      "architecture": {
+        "word": "SYSTEMS",
+        "font": "JetBrains Mono",
+        "weight": 500,
+        "depth": 0.6,
+        "particlesPerLetter": 1143,
+        "spacing": 1.15,
+        "scale": 1.0
+      },
+      "harmony": {
+        "word": "FLOW STATE",
+        "font": "Cormorant Garamond",
+        "weight": 600,
+        "depth": 0.5,
+        "particlesPerLetter": 1200,
+        "spacing": 1.08,
+        "scale": 1.0
+      },
+      "transcendence": {
+        "word": "CONSCIOUSNESS",
+        "font": "Montserrat",
+        "weight": 300,
+        "depth": 0.7,
+        "particlesPerLetter": 1154,
+        "spacing": 1.05,
+        "scale": 1.2
+      }
+    },
+    "transitions": {
+      "dissolveDuration": 1500,
+      "reformDuration": 1500,
+      "silenceDuration": 500,
+      "description": "Stage-to-stage morph timings in milliseconds"
+    },
+    "stageWords": {
+      "genesis": "GENESIS",
+      "discipline": "STRUCTURE",
+      "neural": "AWAKENING",
+      "velocity": "VELOCITY",
+      "architecture": "SYSTEMS",
+      "harmony": "FLOW STATE",
+      "transcendence": "CONSCIOUSNESS"
+    },
+    "camera": {
+      "genesis": {
+        "initial": {
+          "x": 0,
+          "y": 0,
+          "z": 5
+        },
+        "reveal": {
+          "timing": 8000,
+          "duration": 2000,
+          "target": {
+            "x": 0.8,
+            "y": 0.5,
+            "z": 4.5
+          }
+        }
+      },
+      "velocity": {
+        "movement": "dramatic_push",
+        "startZ": 6,
+        "endZ": 4,
+        "shake": {
+          "amplitude": 0.1,
+          "frequency": 5
+        },
+        "duration": 40000
+      },
+      "discipline": {
+        "angle": {
+          "x": -20,
+          "y": 0,
+          "z": 5
+        },
+        "movement": "orbit_slow",
+        "degrees": 10
+      }
+    }
+  },
+  "narrative": {
+    "orchestration": {
+      "mode": "narration-driven",
+      "scrollLocked": true,
+      "skipKey": "SPACE"
+    },
+    "beatSheets": {
+      "genesis": {
+        "totalDuration": 30000,
+        "beats": [
+          {
+            "time": 1000,
+            "narration": {
+              "text": "Before the spark, before the system — there was curiosity.",
+              "duration": 3000,
+              "type": "chapter"
+            },
+            "visual": "gentle_drift"
+          },
+          {
+            "time": 4000,
+            "narration": {
+              "text": "The Texas heat was finally breaking, and through my friend's window, that golden hour light made everything feel... possible.",
+              "duration": 6000,
+              "type": "context"
+            },
+            "visual": "no_change"
+          },
+          {
+            "time": 10000,
+            "narration": {
+              "text": "His mom had this programming book. The computer - a Commodore 64 - sat there like some kind of oracle. Waiting.",
+              "duration": 6000,
+              "type": "context"
+            },
+            "visual": "tier3_subtle_pulse"
+          },
+          {
+            "time": 16000,
+            "narration": {
+              "text": "I typed those lines exactly as the book showed. When I pressed RUN and the screen came alive...",
+              "duration": 5000,
+              "type": "important"
+            },
+            "visual": "tier2_flicker_increase"
+          },
+          {
+            "time": 22000,
+            "narration": {
+              "text": "...something lit up inside me. A spark that would wait 39 years to fully ignite.",
+              "duration": 5000,
+              "type": "important"
+            },
+            "visual": "tier3_glow_pulse"
+          }
+        ]
+      },
+      "discipline": {
+        "totalDuration": 35000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "That spark? It got buried. Had to.",
+              "duration": 3000
+            },
+            "visual": "reform_as_structure"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "Home was chaos - unpredictable, unsafe. But then came the Marines. Everything changed.",
+              "duration": 6000
+            },
+            "visual": "particles_begin_columns"
+          },
+          {
+            "time": 11000,
+            "narration": {
+              "text": "'Adapt and overcome.' More than a motto - it became my operating system.",
+              "duration": 5000
+            },
+            "visual": "tier2_lock_into_grid"
+          },
+          {
+            "time": 16000,
+            "narration": {
+              "text": "The chaos didn't disappear, but now I had a framework. Structure. Discipline.",
+              "duration": 5000
+            },
+            "visual": "tier3_cadence_pulse"
+          },
+          {
+            "time": 21000,
+            "narration": {
+              "text": "For 39 years, I built systems. Logistics. Finance. Operations. Always solving, always building.",
+              "duration": 6000
+            },
+            "visual": "breathing_rhythm"
+          },
+          {
+            "time": 29000,
+            "narration": {
+              "text": "...that eight-year-old's spark never died. It was just waiting for the right moment to reignite.",
+              "duration": 5000
+            },
+            "visual": "flicker_fade_back_to_blue"
+          }
+        ]
+      },
+      "neural": {
+        "totalDuration": 40000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "February 2022. I'm sitting in front of my laptop, staring at ChatGPT for the first time.",
+              "duration": 5000
+            },
+            "visual": "reform_as_flow"
+          },
+          {
+            "time": 7000,
+            "narration": {
+              "text": "It answered a question I'd been wrestling with for weeks. Not just answered - understood. Anticipated. Expanded.",
+              "duration": 7000
+            },
+            "visual": "neural_pathways_light"
+          },
+          {
+            "time": 14000,
+            "narration": {
+              "text": "Something fundamental shifted in that moment. This wasn't just a tool. This was a partner.",
+              "duration": 5000
+            },
+            "visual": "tier3_synaptic_flash"
+          },
+          {
+            "time": 19000,
+            "narration": {
+              "text": "I spent the next three years learning to think with AI. Not using it - thinking WITH it.",
+              "duration": 6000
+            },
+            "visual": "connection_strengthen"
+          },
+          {
+            "time": 25000,
+            "narration": {
+              "text": "Every project became a conversation. Every problem became a collaboration. Every solution emerged from synthesis.",
+              "duration": 7000
+            },
+            "visual": "tier2_pulse_sync"
+          },
+          {
+            "time": 32000,
+            "narration": {
+              "text": "That eight-year-old's dream? It was finally coming true - but bigger than I ever imagined.",
+              "duration": 6000
+            },
+            "visual": "genesis_callback_purple"
+          }
+        ]
+      },
+      "velocity": {
+        "totalDuration": 45000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "Then came the explosion.",
+              "duration": 3000
+            },
+            "visual": "particles_accelerate"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "Projects that used to take six weeks? Done in six hours. Systems I'd spent months designing? Architected in an afternoon.",
+              "duration": 7000
+            },
+            "visual": "streak_trails_form"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "February 2025. The breakthrough came with a single question to Claude: 'How would you architect this entire system?'",
+              "duration": 7000
+            },
+            "visual": "tier3_lightning_burst"
+          },
+          {
+            "time": 19000,
+            "narration": {
+              "text": "What emerged wasn't my system or Claude's system. It was OUR system - something neither of us could have built alone.",
+              "duration": 7000
+            },
+            "visual": "fusion_pattern"
+          },
+          {
+            "time": 26000,
+            "narration": {
+              "text": "Questions led to insights. Insights led to patterns. Patterns led to architectures. Every answer opened ten new doors.",
+              "duration": 8000
+            },
+            "visual": "cascade_acceleration"
+          },
+          {
+            "time": 34000,
+            "narration": {
+              "text": "I wasn't just moving faster. I was thinking differently. The constraint wasn't time anymore - it was imagination.",
+              "duration": 8000
+            },
+            "visual": "velocity_peak"
+          }
+        ]
+      },
+      "architecture": {
+        "totalDuration": 42000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "But speed without structure is just chaos.",
+              "duration": 4000
+            },
+            "visual": "blueprint_grid_emerge"
+          },
+          {
+            "time": 6000,
+            "narration": {
+              "text": "I started seeing patterns everywhere. Not just in code - in systems, in processes, in how information flows.",
+              "duration": 7000
+            },
+            "visual": "isometric_view_rotate"
+          },
+          {
+            "time": 13000,
+            "narration": {
+              "text": "The Marine Corps taught me tactical systems. Business taught me operational systems. AI taught me cognitive systems.",
+              "duration": 7000
+            },
+            "visual": "layer_stack_reveal"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "March 2025. I documented the entire MetaCurtis architecture in a Single Source of Truth. Every decision traceable. Every component validated.",
+              "duration": 8000
+            },
+            "visual": "blueprint_complete"
+          },
+          {
+            "time": 28000,
+            "narration": {
+              "text": "Constitutional Development Protocol. Velocity Stack. Probe History. Not just tools - a methodology. A way of building that guarantees quality at speed.",
+              "duration": 9000
+            },
+            "visual": "tier3_construction_guide"
+          },
+          {
+            "time": 37000,
+            "narration": {
+              "text": "This wasn't just software architecture anymore. This was a blueprint for human-AI collaboration.",
+              "duration": 5000
+            },
+            "visual": "master_plan_glow"
+          }
+        ]
+      },
+      "harmony": {
+        "totalDuration": 38000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "And then something unexpected happened. Flow state.",
+              "duration": 4000
+            },
+            "visual": "golden_ratio_spiral"
+          },
+          {
+            "time": 6000,
+            "narration": {
+              "text": "The boundaries started dissolving. Not between me and the AI - between thinking and building.",
+              "duration": 6000
+            },
+            "visual": "orbit_sync_begin"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "I'd describe a vision, Claude would architect it, I'd refine the architecture, Claude would implement it. Back and forth, faster and faster.",
+              "duration": 8000
+            },
+            "visual": "ballet_choreography"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "Until it wasn't back and forth anymore. It was just... flow. One continuous creative process.",
+              "duration": 6000
+            },
+            "visual": "phase_lock_achieve"
+          },
+          {
+            "time": 26000,
+            "narration": {
+              "text": "Three years of collaboration compressed into pure creative velocity. Building, testing, refining - all in harmony.",
+              "duration": 7000
+            },
+            "visual": "laminar_flow_perfect"
+          },
+          {
+            "time": 33000,
+            "narration": {
+              "text": "This is what mastery feels like in the age of AI. Not replacing human creativity - amplifying it to impossible levels.",
+              "duration": 5000
+            },
+            "visual": "golden_ratio_complete"
+          }
+        ]
+      },
+      "transcendence": {
+        "totalDuration": 50000,
+        "beats": [
+          {
+            "time": 2000,
+            "narration": {
+              "text": "And here we are. October 2025.",
+              "duration": 3000
+            },
+            "visual": "cosmic_dust_swirl"
+          },
+          {
+            "time": 5000,
+            "narration": {
+              "text": "From that eight-year-old typing 'HELLO CURTIS' on a Commodore 64, to this moment - building impossible things with AI.",
+              "duration": 7000
+            },
+            "visual": "consciousness_nodes_pulse"
+          },
+          {
+            "time": 12000,
+            "narration": {
+              "text": "Every experience led here. The Marine Corps discipline. The business systems. The AI partnership. The velocity breakthroughs.",
+              "duration": 8000
+            },
+            "visual": "all_stages_echo"
+          },
+          {
+            "time": 20000,
+            "narration": {
+              "text": "This visualization you're experiencing? Built with Claude in six weeks. Traditional team? Six months, maybe more.",
+              "duration": 7000
+            },
+            "visual": "galactic_arm_rotate"
+          },
+          {
+            "time": 27000,
+            "narration": {
+              "text": "But it's not about speed. It's about what becomes possible when human creativity and AI capability truly merge.",
+              "duration": 7000
+            },
+            "visual": "unified_field"
+          },
+          {
+            "time": 34000,
+            "narration": {
+              "text": "I'm not a traditional developer. I'm something new - an AI-native engineer. And this is just the beginning.",
+              "duration": 7000
+            },
+            "visual": "transcendent_integration"
+          },
+          {
+            "time": 41000,
+            "narration": {
+              "text": "What impossible thing can we build together?",
+              "duration": 5000
+            },
+            "visual": "question_expand"
+          }
+        ]
+      }
+    }
+  },
+  "visualEffects": {
+    "description": "Mapping of beat sheet visual verbs to camera/particle directives",
+    "version": "1.0.0",
+    "particleEffects": {
+      "no_change": {
+        "type": "static",
+        "description": "Maintain current state"
+      },
+      "gentle_drift": {
+        "type": "motion",
+        "tiers": [
+          0,
+          1
+        ],
+        "behavior": "perlin_drift",
+        "speed": 0.2,
+        "amplitude": 0.3
+      },
+      "tier2_flicker_increase": {
+        "type": "flicker",
+        "tiers": [
+          2
+        ],
+        "probability": 0.05,
+        "duration": 200
+      },
+      "tier3_subtle_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 0.3,
+        "intensity": 0.2
+      },
+      "tier3_sparkle": {
+        "type": "sparkle",
+        "tiers": [
+          3
+        ],
+        "count": 50,
+        "duration": 500
+      },
+      "tier3_glow_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 0.5,
+        "intensity": 0.6,
+        "glow": true
+      },
+      "settle_to_form": {
+        "type": "converge",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad"
+      },
+      "static_hold": {
+        "type": "lock",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "rigidity": 1
+      },
+      "particles_begin_columns": {
+        "type": "formation",
+        "pattern": "column",
+        "tiers": [
+          1,
+          2
+        ],
+        "duration": 1500
+      },
+      "tier2_lock_into_grid": {
+        "type": "grid_snap",
+        "tiers": [
+          2
+        ],
+        "gridSize": 2,
+        "duration": 800
+      },
+      "tier3_cadence_pulse": {
+        "type": "pulse",
+        "tiers": [
+          3
+        ],
+        "frequency": 2,
+        "intensity": 0.4,
+        "bpm": 120
+      },
+      "breathing_rhythm": {
+        "type": "breathe",
+        "tiers": [
+          0,
+          1,
+          2
+        ],
+        "speed": 0.05,
+        "amplitude": 0.1
+      },
+      "prepare_flicker": {
+        "type": "prime",
+        "tiers": [
+          2,
+          3
+        ],
+        "anticipation": 500
+      },
+      "green_flicker": {
+        "type": "color_flash",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "color": "#00FF00",
+        "duration": 300
+      },
+      "flicker_fade_back_to_blue": {
+        "type": "color_transition",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "fromColor": "#00FF00",
+        "toColor": "#3b82f6",
+        "duration": 1000
+      },
+      "reform_as_structure": {
+        "type": "formation",
+        "pattern": "structure",
+        "tiers": [
+          1,
+          2
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad",
+        "description": "Particles reform from chaos into structured geometry"
+      },
+      "particles_accelerate": {
+        "type": "acceleration",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "speed": 2.5,
+        "direction": "forward",
+        "duration": 1500,
+        "description": "All particles rapidly accelerate forward"
+      },
+      "streak_trails_form": {
+        "type": "trail",
+        "tiers": [
+          1,
+          2
+        ],
+        "trailLength": 3,
+        "fadeSpeed": 0.7,
+        "duration": 2000,
+        "description": "Motion blur trails appear behind moving particles"
+      },
+      "reform_as_flow": { "label": "Reform as Flow" },
+      "neural_pathways_light": { "label": "Neural Pathways Light" },
+      "tier3_synaptic_flash": { "label": "Tier 3 Synaptic Flash" },
+      "connection_strengthen": { "label": "Connection Strengthen" },
+      "tier2_pulse_sync": { "label": "Tier 2 Pulse Sync" },
+      "genesis_callback_purple": { "label": "Genesis Callback (Purple)" },
+      "tier3_lightning_burst": { "label": "Tier 3 Lightning Burst" },
+      "fusion_pattern": { "label": "Fusion Pattern" },
+      "cascade_acceleration": { "label": "Cascade Acceleration" },
+      "velocity_peak": { "label": "Velocity Peak" },
+      "blueprint_grid_emerge": { "label": "Blueprint Grid Emerge" },
+      "isometric_view_rotate": { "label": "Isometric View Rotate" },
+      "layer_stack_reveal": { "label": "Layer Stack Reveal" },
+      "blueprint_complete": { "label": "Blueprint Complete" },
+      "tier3_construction_guide": { "label": "Tier 3 Construction Guide" },
+      "master_plan_glow": { "label": "Master Plan Glow" },
+      "golden_ratio_spiral": { "label": "Golden Ratio Spiral" },
+      "orbit_sync_begin": { "label": "Orbit Sync Begin" },
+      "ballet_choreography": { "label": "Ballet Choreography" },
+      "phase_lock_achieve": { "label": "Phase Lock Achieve" },
+      "laminar_flow_perfect": { "label": "Laminar Flow Perfect" },
+      "golden_ratio_complete": { "label": "Golden Ratio Complete" },
+      "cosmic_dust_swirl": { "label": "Cosmic Dust Swirl" },
+      "consciousness_nodes_pulse": { "label": "Consciousness Nodes Pulse" },
+      "all_stages_echo": { "label": "All Stages Echo" },
+      "galactic_arm_rotate": { "label": "Galactic Arm Rotate" },
+      "unified_field": { "label": "Unified Field" },
+      "transcendent_integration": { "label": "Transcendent Integration" },
+      "question_expand": { "label": "Question Expand" },
+      "tier3_sparkle": {
+        "type": "sparkle",
+        "tiers": [
+          3
+        ],
+        "count": 50,
+        "duration": 500,
+        "status": "reserved"
+      },
+      "settle_to_form": {
+        "type": "converge",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "duration": 2000,
+        "easing": "easeOutQuad",
+        "status": "reserved"
+      },
+      "static_hold": {
+        "type": "lock",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "rigidity": 1,
+        "status": "reserved"
+      },
+      "prepare_flicker": {
+        "type": "prime",
+        "tiers": [
+          2,
+          3
+        ],
+        "anticipation": 500,
+        "status": "reserved"
+      },
+      "green_flicker": {
+        "type": "color_flash",
+        "tiers": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "color": "#00FF00",
+        "duration": 300,
+        "status": "reserved"
+      }
+    },
+    "cameraEffects": {
+      "static": {
+        "type": "fixed",
+        "description": "No camera movement"
+      },
+      "orbit_slow": {
+        "type": "orbit",
+        "degrees": 10,
+        "duration": 35000,
+        "axis": "y"
+      },
+      "orbit_discovery": {
+        "type": "orbit",
+        "degrees": 15,
+        "speed": 0.3,
+        "wobble": 0.1,
+        "axis": "xy",
+        "description": "Curious exploration movement"
+      },
+      "dramatic_push": {
+        "type": "dolly",
+        "startZ": 6,
+        "endZ": 4,
+        "duration": 40000,
+        "shake": {
+          "amplitude": 0.1,
+          "frequency": 5
+        }
+      },
+      "isometric_track": {
+        "type": "track",
+        "pattern": "isometric",
+        "degrees": 12,
+        "duration": 35000,
+        "description": "Blueprint-style camera tracking"
+      },
+      "balletic_orbit": {
+        "type": "orbit",
+        "degrees": 25,
+        "speed": 0.2,
+        "smooth": 0.98,
+        "axis": "xyz",
+        "description": "Graceful 3-axis movement"
+      },
+      "reverent_orbit": {
+        "type": "orbit",
+        "degrees": 30,
+        "speed": 0.15,
+        "pullback": true,
+        "description": "Slow orbit with pullback"
+      }
+    }
+  },
+  "performance": {
+    "frameRate": {
+      "target": 60,
+      "targetFps": 60,
+      "minimum": 55,
+      "minFps": 55,
+      "windowFrames": 60
+    },
+    "particleCount": {
+      "genesis": 2000,
+      "discipline": 3000,
+      "neural": 5000,
+      "velocity": 12000,
+      "architecture": 8000,
+      "harmony": 12000,
+      "transcendence": 15000
+    },
+    "renderTimeMs": {
+      "target": 16.67,
+      "max": 18,
+      "criticalPath": [
+        "particleUpdate",
+        "shaderExecution",
+        "drawCalls"
+      ]
+    },
+    "memory": {
+      "heapLimitMB": 250,
+      "leakToleranceMBPerMin": 0,
+      "gcPauseMaxMs": 3
+    },
+    "adaptiveQuality": {
+      "order": [
+        "tier3",
+        "tier2",
+        "tier1",
+        "tier0"
+      ],
+      "restoreAfterStableSec": 5
+    },
+    "lodThresholds": {
+      "ultra": 0.9,
+      "high": 0.75,
+      "medium": 0.55,
+      "low": 0.35
+    }
+  },
+  "integrityRules": [
+    {
+      "id": "SINGLE_WRITER_GEOMETRY",
+      "detection": "renderer_not_last_writer",
+      "severity": "CRITICAL",
+      "response": "IMMEDIATE_ROLLBACK",
+      "message": "Geometry/uniforms written outside Renderer"
+    },
+    {
+      "id": "RENDERER_SYNTHESIS",
+      "detection": "renderer_fabricates_targets_or_reads_scroll",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must not fabricate targets or read scroll"
+    },
+    {
+      "id": "EMIT_ONCE_FENCEPOST",
+      "detection": "multiple_particles_emerged_events",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must emit PARTICLES_EMERGED exactly once"
+    },
+    {
+      "id": "PERFORMANCE_DEGRADATION",
+      "detection": "fps_below_55_for_60_frames",
+      "severity": "HIGH",
+      "response": "FEATURE_REDUCTION",
+      "message": "Quality reduced to maintain 60 FPS"
+    },
+    {
+      "id": "NARRATIVE_DESYNC",
+      "detection": "morph_vs_stage_mismatch",
+      "severity": "MEDIUM",
+      "response": "RESYNC_TIMELINE",
+      "message": "Realigning stage, morph, and tint"
+    }
+  ],
+  "successMetrics": {
+    "technical": {
+      "fps": ">=60",
+      "loadTimeSec": "<4",
+      "errorRate": "<0.001%",
+      "memoryStable": true
+    },
+    "experiential": {
+      "completionRate": ">80%",
+      "narrativeClarity": ">90%",
+      "emotionalImpact": "high"
+    },
+    "business": {
+      "shareRate": ">30%",
+      "contactConversion": ">15%",
+      "oneWeekRecall": ">90%"
+    }
+  },
+  "implementationPhases": [
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "duration": "1 day",
+      "deliverables": [
+        "v3.3 config loader",
+        "Engine text-first blueprints",
+        "Renderer binding + PARTICLES_EMERGED single-source",
+        "v3.4 config loader (fallback to 3.3)",
+        "Engine text-first blueprints (emergence mode:'emergence')",
+        "Renderer binding + PARTICLES_EMERGED single-source (emit-once)",
+        "ENGINE_VIEWPORT_HINT gate"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Visual Polish",
+      "duration": "1 day",
+      "deliverables": [
+        "Gaussian falloff",
+        "Tier behavior \u2192 glyph mapping",
+        "Sprite atlas verification",
+        "Chaos mesh rotation window"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Narrative Integration",
+      "duration": "1 day",
+      "deliverables": [
+        "Opening beats timing",
+        "Memory fragments",
+        "Audio sync to emergence threshold",
+        "Opening beats timing (chaos\u2192coalesce\u2192settle)",
+        "START_NARRATIVE + AUDIO_START_STAGE",
+        "BeatGlyph reveal timing"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Performance & Cross-Device",
+      "duration": "1 day",
+      "deliverables": [
+        "60 FPS optimization",
+        "Adaptive quality guardrails",
+        "Mobile DPR/point-size audit"
+      ]
+    }
+  ],
+  "debugSurface": {
+    "exposeGlobals": [
+      "BeatBus",
+      "EVENTS",
+      "__consciousnessMaterial",
+      "__particleGeometry",
+      "consciousnessEngine"
+    ],
+    "devHud": {
+      "stageSelector": true,
+      "morphSlider": true,
+      "pointSizeSlider": true,
+      "perfOverlay": true
+    }
+  },
+  "changeLog": [
+    "Swap: anatomy \u2192 stage words (text3DPositions)",
+    "Preserved: tiers, stage order, palettes, fragments, performance",
+    "Clarified: event single-source (Renderer emits PARTICLES_EMERGED)",
+    "Renderer: no synthesis, no scroll, no FOV scaling",
+    "Transcendence: word arrival \u2192 galaxy dissolve",
+    "Added opening fencepost contract and viewport gate",
+    "BLUEPRINT_READY now carries optional mode:'emergence' for emergence blueprints",
+    "Renderer emits ENGINE_VIEWPORT_HINT and PARTICLES_EMERGED (emit-once) by contract",
+    "Stage-0 shot list embedded (chaos\u2192coalesce\u2192settle \u2192 narration \u2192 BeatGlyph)",
+    "Opening rules: settle-before-scroll + Stage-0 color lock",
+    "Optional polish uniforms (uChaosSpin/uTrailIntensity/uTrailPersistence/uBrightnessBoost) are non-breaking"
+  ]
+}
+
+```
+
+### File: src/config/canonical/canonicalAuthority.js
+
+```
+// CANONICAL AUTHORITY — SST v3.5 (Unified Single Source)
+import sstRaw from '../sst-loader.js';
+import { PARTICLE_EFFECTS as OVERRIDE_PARTICLE_EFFECTS, CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS } from './visualEffects.js';
+
+/** Deep-freeze utility (keeps Canonical read-only) */
+function deepFreeze(obj) {
+  if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
+    Object.freeze(obj);
+    for (const k of Object.keys(obj)) deepFreeze(obj[k]);
+  }
+  return obj;
+}
+
+/** Safe clone */
+function clone(obj) {
+  try { return typeof structuredClone === 'function' ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)); }
+  catch { return JSON.parse(JSON.stringify(obj)); }
+}
+
+const RENDER_UNIFORM_KEYS = [
+  'uMotionMode',
+  'uFlowTurbulence',
+  'uParticleFlash',
+  'uOpacityMin',
+  'uOpacityMax',
+  'uStreakIntensity',
+  'tierHighlight',
+  'pointSize',
+  'uniforms',
+  'activeCount',
+  'drawCount',
+];
+
+// Conservative motion-map: stick to renderer-supported modes (0-4)
+const MOTION_MODE_MAP = {
+  drift_perlin: 3,
+  flicker: 0,
+  structuralLock: 1,
+  vertexPulse: 0,
+  grid_drift: 1,
+  breathe: 0,
+  edgeLock: 1,
+  cadencePulse: 0,
+  neural_flow: 2,
+  strokeFlow: 2,
+  synapseFlash: 3,
+  hubNode: 1,
+  lag: 3,
+  streak: 3,
+  burst: 3,
+  lead: 3,
+  grid_flow: 1,
+  modular: 1,
+  blueprintPulse: 0,
+  constructionGuide: 1,
+  laminar_flow: 2,
+  orbit_sync: 4,
+  ballet: 4,
+  conductor: 1,
+  cosmic_dust: 4,
+  galactic_arm: 4,
+  consciousness_node: 0,
+  transcendent: 4,
+};
+
+/** True when the payload already contains renderer-ready fields */
+function hasRendererUniforms(effect) {
+  if (!effect || typeof effect !== 'object') return false;
+  return RENDER_UNIFORM_KEYS.some((key) => effect[key] !== undefined && effect[key] !== null);
+}
+
+/** Lightweight mapper: SST-style effect → renderer-ready directive */
+function translateToRendererDirective(verb, effect = {}) {
+  if (!effect || effect.type === 'camera') return effect;
+
+  // Preserve existing renderer-ready payloads
+  const payload = { ...effect };
+  if (!payload.source) payload.source = 'beat_visual';
+  if (!payload.verb) payload.verb = verb;
+  if (hasRendererUniforms(payload)) return payload;
+
+  const verbKey = String(verb || '').toLowerCase();
+  const translated = {
+    source: payload.source,
+    verb: payload.verb,
+  };
+
+  const normalizedType = String(effect.type || effect.behavior || effect.pattern || '').trim();
+  const mappedMode = normalizedType ? MOTION_MODE_MAP[normalizedType] : undefined;
+  if (mappedMode !== undefined) {
+    translated.uMotionMode = mappedMode;
+  }
+
+  // Tier modes / params (shader actually uses uTierMode/uTierParams)
+  const tierModesPayload = Array.isArray(effect.tierModes) ? effect.tierModes : null;
+  const tierParamsPayload = Array.isArray(effect.tierParams) ? effect.tierParams : null;
+
+  if (tierModesPayload) {
+    translated.tierModes = tierModesPayload;
+  } else {
+    // Heuristic fallback for tierModes if we have a mappedMode
+    const mode = translated.uMotionMode;
+    if (mode !== undefined) {
+      translated.tierModes = [mode, mode, mode, mode];
+    } else if (verbKey.includes('grid') || verbKey.includes('structure') || verbKey.includes('column')) {
+      translated.tierModes = [1, 1, 1, 1];
+      translated.uMotionMode = 1;
+    } else if (verbKey.includes('flow')) {
+      translated.tierModes = [2, 2, 2, 2];
+      translated.uMotionMode = 2;
+    } else if (verbKey.includes('streak') || verbKey.includes('trail') || verbKey.includes('velocity')) {
+      translated.tierModes = [3, 3, 3, 3];
+      translated.uMotionMode = 3;
+    } else if (verbKey.includes('orbit')) {
+      translated.tierModes = [4, 4, 4, 4];
+      translated.uMotionMode = 4;
+    } else if (verbKey.includes('drift')) {
+      translated.tierModes = [0, 0, 0, 0];
+      translated.uMotionMode = 3;
+    }
+  }
+
+  // Turbulence / speed
+  if (typeof effect.speed === 'number') {
+    translated.uFlowTurbulence = Math.max(0, Math.min(2, effect.speed));
+  } else if (typeof effect.amplitude === 'number') {
+    translated.uFlowTurbulence = Math.max(0, Math.min(2, effect.amplitude * 0.5));
+  }
+
+  // Flash / pulse intensity
+  if (effect.pulse && typeof effect.pulse.intensity === 'number') {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.pulse.intensity));
+  } else if (typeof effect.intensity === 'number' && verbKey.includes('pulse')) {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.intensity));
+  } else if (typeof effect.probability === 'number') {
+    translated.uParticleFlash = Math.max(0, Math.min(1, effect.probability));
+  }
+
+  // Streak intensity / trail length
+  if (typeof effect.trailLength === 'number') {
+    translated.uStreakIntensity = Math.min(effect.trailLength / 3, 1.0);
+  } else if (typeof effect.streakIntensity === 'number') {
+    translated.uStreakIntensity = effect.streakIntensity;
+  }
+
+  // Tier targeting
+  if (Array.isArray(effect.tiers)) {
+    translated.tierHighlight = effect.tiers;
+  } else if (typeof effect.tiers === 'number') {
+    translated.tierHighlight = [effect.tiers];
+  }
+
+  // Opacity range
+  if (Array.isArray(effect.opacity) && effect.opacity.length >= 2) {
+    translated.uOpacityMin = Math.max(0, Math.min(1, effect.opacity[0]));
+    translated.uOpacityMax = Math.max(0, Math.min(1, effect.opacity[1]));
+  } else if (typeof effect.opacity === 'number') {
+    translated.uOpacityMin = Math.max(0, Math.min(1, effect.opacity));
+  }
+  if (typeof effect.fadeTrail === 'number') {
+    translated.uOpacityMax = Math.max(0, Math.min(1, effect.fadeTrail));
+  }
+  if (translated.uOpacityMin === undefined && translated.uOpacityMax !== undefined) {
+    translated.uOpacityMin = Math.max(0, Math.min(1, translated.uOpacityMax * 0.5));
+  }
+  if (translated.uOpacityMax === undefined && translated.uOpacityMin !== undefined) {
+    translated.uOpacityMax = Math.max(translated.uOpacityMin, 1.0);
+  }
+  if (translated.uOpacityMin === undefined && translated.uOpacityMax === undefined) {
+    translated.uOpacityMin = 0.5;
+    translated.uOpacityMax = 1.0;
+  }
+
+  if (typeof effect.uSpreadFactor === 'number') {
+    translated.uSpreadFactor = effect.uSpreadFactor;
+  }
+
+  // Tier params: use provided payload, otherwise derive from speed/amplitude/turbulence
+  if (tierParamsPayload && tierParamsPayload.length >= 4) {
+    translated.tierParams = tierParamsPayload;
+  } else if (translated.tierModes) {
+    const speed = typeof effect.speed === 'number' ? effect.speed : 0.8;
+    const amp = typeof effect.amplitude === 'number' ? effect.amplitude : 0.2;
+    const freq = typeof effect.frequency === 'number' ? effect.frequency : 0.5;
+    const params = [speed, amp, freq, 0.0];
+    translated.tierParams = [params, params, params, params];
+  }
+
+  // Drift-specific amplitude/frequency (for renderer + shader semantics)
+  // Pass through explicit SST values, otherwise supply gentle defaults for drift verbs.
+  if (typeof effect.amplitude === 'number') {
+    translated.amplitude = effect.amplitude;
+  } else if (verbKey.includes('drift') && translated.amplitude == null) {
+    translated.amplitude = 0.25; // "breathing" baseline
+  }
+
+  if (typeof effect.frequency === 'number') {
+    translated.frequency = effect.frequency;
+  } else if (verbKey.includes('drift') && translated.frequency == null) {
+    translated.frequency = 0.15;
+  }
+
+  // Point size from scale
+  if (typeof effect.scale === 'number') {
+    translated.pointSize = Math.max(0.5, Math.min(3.0, effect.scale));
+  }
+
+  return hasRendererUniforms(translated) ? translated : payload;
+}
+
+function buildCanonical(source) {
+  const sst = clone(source);
+  const stageOrder = Array.isArray(sst.stageOrder) ? sst.stageOrder.slice() : Object.keys(sst.stages || {});
+  const letterGeometry = sst.visual?.letterGeometry || {};
+
+  // Back-compat aliases for existing code paths
+  for (const key of Object.keys(sst.stages || {})) {
+    const st = sst.stages[key] || {};
+    if (!st.name) st.name = key;
+    if (Array.isArray(st.palette) && !st.colors) st.colors = st.palette.slice(0,3);
+    if (typeof st.particlesBase === 'number' && !st.particleCount) st.particleCount = st.particlesBase;
+    // 👇 add scrollRange alias for validators/tools that still expect it
+    if (Array.isArray(st.scrollRangePercent) && !st.scrollRange) st.scrollRange = st.scrollRangePercent.slice(0,2);
+    if (!st.label) st.label = key;
+    if (!st.word && letterGeometry?.[key]?.word) {
+      st.word = letterGeometry[key].word;
+    }
+  }
+
+  const openingRules = (sst.opening && sst.opening.rules) || sst.openingRules || {};
+  const openingTimeline = (sst.opening && sst.opening.timeline) || sst.stages?.genesis?.openingTimeline || {};
+  const openingFencepost = (sst.opening && (sst.opening.fencepost || sst.opening.fencepostOrder)) || sst.openingFencepost || {};
+  const opening = {
+    ...(sst.opening || {}),
+    rules: openingRules,
+    timeline: openingTimeline,
+    fencepost: openingFencepost
+  };
+
+  const narrativeStages = {};
+  for (const stageName of stageOrder) {
+    const stageNarrative = sst.narrative?.stages?.[stageName] ? clone(sst.narrative.stages[stageName]) : {};
+    const stageData = sst.stages?.[stageName] || {};
+    if (stageData.memoryFragments && !stageData.memoryFragment) {
+      stageData.memoryFragment =
+        stageData.memoryFragments.interactive ||
+        stageData.memoryFragments.ambient ||
+        stageData.memoryFragments.climax ||
+        null;
+    }
+    if (!stageNarrative.word && letterGeometry?.[stageName]?.word) {
+      stageNarrative.word = letterGeometry[stageName].word;
+    }
+    if (!stageNarrative.memoryFragments && stageData.memoryFragments) {
+      stageNarrative.memoryFragments = clone(stageData.memoryFragments);
+    }
+    if (!stageNarrative.memoryFragment) {
+      const primary =
+        stageData.memoryFragments?.interactive ||
+        stageData.memoryFragments?.ambient ||
+        stageData.memoryFragment ||
+        null;
+      if (primary) {
+        stageNarrative.memoryFragment = clone(primary);
+      }
+    }
+    if (!stageNarrative.audio && stageData.audio) {
+      stageNarrative.audio = stageData.audio;
+    }
+    if (!stageNarrative.timeline && stageData.openingTimeline) {
+      stageNarrative.timeline = stageData.openingTimeline;
+    }
+    narrativeStages[stageName] = stageNarrative;
+  }
+
+  const narrative = {
+    ...(sst.narrative || {}),
+    stages: narrativeStages
+  };
+
+  const visualEffects = clone(sst.visualEffects || {});
+  visualEffects.particleEffects = {
+    ...(visualEffects.particleEffects || {}),
+    ...(OVERRIDE_PARTICLE_EFFECTS || {}),
+  };
+  visualEffects.cameraEffects = {
+    ...(visualEffects.cameraEffects || {}),
+    ...(OVERRIDE_CAMERA_EFFECTS || {}),
+  };
+
+  const getVisualEffect = (visualVerb, type = 'particle') => {
+    if (!visualVerb || visualVerb === 'no_change') return null;
+
+    const effectKey = type === 'camera' ? 'cameraEffects' : 'particleEffects';
+    const effects = visualEffects?.[effectKey];
+
+    if (!effects) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] No ${effectKey} registry found`);
+      }
+      return null;
+    }
+
+    const effect = effects[visualVerb];
+
+    if (!effect) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] Unknown visual verb: "${visualVerb}" (type: ${type})`);
+      }
+      return null;
+    }
+
+    const translated = translateToRendererDirective(visualVerb, effect);
+
+    if (typeof console !== 'undefined' && typeof console.log === 'function') {
+      console.log(`🎨 [Canonical] Resolved visual verb: "${visualVerb}" →`, translated);
+    }
+    return translated;
+  };
+
+  const getBeatSheet = (stageName) => {
+    if (!stageName) return null;
+
+    const beatSheets = sst.narrative?.beatSheets;
+    if (!beatSheets) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn('🎨 [Canonical] No beat sheets found');
+      }
+      return null;
+    }
+
+    const key = String(stageName);
+    const beatSheet = beatSheets[key];
+
+    if (!beatSheet) {
+      if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+        console.warn(`🎨 [Canonical] No beat sheet for stage: "${key}"`);
+      }
+      return null;
+    }
+
+    return clone(beatSheet);
+  };
+
+  const getAllVisualVerbs = () => Object.keys(visualEffects?.particleEffects || {});
+  const getCoverageStats = () => {
+    const verbs = getAllVisualVerbs();
+    let translatable = 0;
+    let cameraOnly = 0;
+    verbs.forEach((verb) => {
+      const eff = visualEffects?.particleEffects?.[verb] || null;
+      if (eff && eff.type === 'camera') {
+        cameraOnly += 1;
+        return;
+      }
+      const resolved = getVisualEffect(verb);
+      if (resolved) translatable += 1;
+    });
+    const total = verbs.length;
+    const untranslatable = Math.max(0, total - translatable - cameraOnly);
+    const coverage = total > 0 ? ((translatable / total) * 100).toFixed(1) : '0.0';
+    return { total, translatable, cameraOnly, untranslatable, coverage: `${coverage}%` };
+  };
+
+  const getStageByName = (name) => sst.stages?.[name] ?? null;
+  const getStageByIndex = (index) => {
+    const safe = Math.max(0, Math.min(stageOrder.length - 1, Number(index) | 0));
+    const name = stageOrder[safe];
+    return sst.stages?.[name] ?? null;
+  };
+  const getStageByScroll = (progress = 0) => {
+    const raw = Number(progress);
+    const percent = Number.isFinite(raw)
+      ? (Math.abs(raw) > 1 ? Math.max(0, Math.min(100, raw)) : Math.max(0, Math.min(1, raw)) * 100)
+      : 0;
+    const bps = sst.scrollAndMorph?.stageBreakpointsPercent || [0,14,28,42,56,70,84,100];
+    for (let i = 0; i < bps.length - 1; i++) {
+      if (percent >= bps[i] && percent < bps[i + 1]) return getStageByIndex(i);
+    }
+    return getStageByIndex(stageOrder.length-1);
+  };
+  const isFeatureEnabled = (k) => Boolean(sst.features && sst.features[k]);
+  const getFragmentsForStage = (stage) => {
+    const st = getStageByName(stage);
+    if (!st) return [];
+    const source =
+      (st.memoryFragments && typeof st.memoryFragments === 'object')
+        ? st.memoryFragments
+        : (st.memoryFragment
+            ? { interactive: st.memoryFragment }
+            : null);
+    if (!source) return [];
+
+    const fragments = [];
+    for (const [tier, fragment] of Object.entries(source)) {
+      if (!fragment || typeof fragment !== 'object') continue;
+      const cloned = clone(fragment);
+      const fallbackName = `${stage} ${tier}`.replace(/_/g, ' ');
+      const normalized = {
+        ...cloned,
+        tier,
+        stage,
+      };
+      if (!normalized.id) normalized.id = `${stage}_${tier}`;
+      if (!normalized.name) normalized.name = normalized.title || fallbackName;
+      if (!normalized.type) normalized.type = tier;
+      fragments.push(normalized);
+    }
+    return fragments;
+  };
+  const getActiveFragments = (stage /*, scroll */) => getFragmentsForStage(stage);
+
+  const SYSTEM_CONSTANTS = {
+    TOTAL_STAGES: stageOrder.length,
+    MIN_STAGE_INDEX: 0,
+    MAX_STAGE_INDEX: stageOrder.length - 1,
+    OPERATIONAL_PARTICLES: sst.quality?.maxParticles ?? 15000,
+    SHOWCASE_PARTICLES: Math.min((sst.quality?.maxParticles ?? 15000)+2000, 17000),
+    TARGET_FPS: sst.performance?.frameRate?.target ?? sst.performance?.frameRate?.targetFps ?? 60,
+    LIGHTHOUSE_TARGET: 90
+  };
+
+  const Canonical = {
+    meta: sst.meta || {},
+    version: sst.meta?.version ?? '3.5',
+    authority: sst.meta?.authority ?? 'ABSOLUTE',
+    stages: sst.stages || {},
+    stageOrder,
+    visual: sst.visual || {},
+    narrative,
+    pipeline: sst.pipeline || {},
+    features: sst.features || {},
+    performance: sst.performance || {},
+    quality: sst.quality || {},
+    shaderContract: sst.shaderContract || {},
+    events: sst.events || [],
+    scrollAndMorph: sst.scrollAndMorph || {},
+    openingFencepost: sst.openingFencepost || {},
+    openingRules: sst.openingRules || {},
+    opening,
+    spriteSemantics: sst.spriteSemantics || {},
+    integrityRules: sst.integrityRules || [],
+    successMetrics: sst.successMetrics || {},
+    implementationPhases: sst.implementationPhases || [],
+    debugSurface: sst.debugSurface || {},
+    changeLog: sst.changeLog || [],
+    dialogue: narrative.stages || {},
+    visualEffects,
+    getStageByName, getStageByIndex, getStageByScroll,
+    isFeatureEnabled, getFragmentsForStage, getActiveFragments,
+    getVisualEffect, getBeatSheet,
+    getCoverageStats, getAllVisualVerbs,
+    SYSTEM_CONSTANTS
+  };
+  return deepFreeze(Canonical);
+}
+
+export const Canonical = buildCanonical(sstRaw);
+
+/** Probe history with temporal analysis utilities (dev only) */
+function createProbeHistory() {
+  const maxSamples = 300;
+  const samples = [];
+  let isRecording = false;
+  let startTime = null;
+
+  const getDuration = () => (samples[samples.length - 1]?.time ?? 0);
+
+  return {
+    start() {
+      isRecording = true;
+      startTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+      samples.length = 0;
+      console.log('[PROBE HISTORY] Recording started');
+      return this;
+    },
+    stop() {
+      isRecording = false;
+      console.log(`[PROBE HISTORY] Recording stopped (${samples.length} samples)`);
+      return this;
+    },
+    clear() {
+      samples.length = 0;
+      console.log('[PROBE HISTORY] Samples cleared');
+      return this;
+    },
+    record(snapshot = {}) {
+      if (!isRecording) return;
+
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const origin = startTime || 0;
+
+      samples.push({
+        time: now - origin,
+        timestamp: Date.now(),
+        ...snapshot
+      });
+
+      if (samples.length > maxSamples) samples.shift();
+    },
+    get samples() {
+      return [...samples];
+    },
+    query(predicate) {
+      return typeof predicate === 'function' ? samples.filter(predicate) : [];
+    },
+    analyze() {
+      if (!samples.length) return { error: 'No samples recorded' };
+
+      const fpsSamples = samples.map((s) => s.fps).filter((v) => typeof v === 'number');
+      const memorySamples = samples.map((s) => s.memory).filter((v) => typeof v === 'number');
+
+      const fps = fpsSamples.length
+        ? {
+            min: Math.min(...fpsSamples),
+            max: Math.max(...fpsSamples),
+            avg: fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length,
+            drops: fpsSamples.filter((f) => f < 55).length
+          }
+        : null;
+
+      const memory = memorySamples.length
+        ? {
+            min: Math.min(...memorySamples),
+            max: Math.max(...memorySamples),
+            trend: memorySamples[memorySamples.length - 1] > memorySamples[0] ? 'increasing' : 'stable'
+          }
+        : null;
+
+      return {
+        duration: getDuration(),
+        sampleCount: samples.length,
+        fps,
+        memory
+      };
+    },
+    plot(metric = 'fps') {
+      const values = samples.map((s) => s[metric]).filter((v) => typeof v === 'number');
+      if (!values.length) return `No data for metric "${metric}"`;
+
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = max - min || 1;
+
+      return values
+        .map((value, index) => {
+          const normalized = (value - min) / range;
+          const barLength = Math.floor(normalized * 40);
+          return `${index.toString().padStart(3, ' ')}: ${'='.repeat(barLength)} ${value.toFixed(1)}`;
+        })
+        .join('\n');
+    },
+    export() {
+      return {
+        meta: {
+          startTime,
+          duration: getDuration(),
+          sampleCount: samples.length
+        },
+        samples: [...samples]
+      };
+    }
+  };
+}
+
+// DEV exposure
+const isDev =
+  (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') ||
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV);
+
+if (typeof window !== 'undefined' && isDev) {
+  try {
+    Object.defineProperty(window, 'Canonical', {
+      value: Canonical,
+      writable: false,
+      configurable: false
+    });
+    // Alias for tools expecting canonicalAuthority
+    if (!window.canonicalAuthority) {
+      Object.defineProperty(window, 'canonicalAuthority', {
+        value: Canonical,
+        writable: false,
+        configurable: false
+      });
+    }
+    Object.defineProperty(window, 'SST', {
+      value: Canonical,
+      writable: false,
+      configurable: false
+    });
+    console.log(`📋 SST v${Canonical.version} loaded as window.Canonical + window.SST (read-only)`);
+  } catch (err) {
+    console.warn('Failed to expose SST canonical authority', err);
+  }
+
+  try {
+    if (window.probe) {
+      if (!window.probe.history) {
+        window.probe.history = createProbeHistory();
+      }
+
+      if (typeof window.probe.draw === 'function' && !window.probe.__historyWrapped) {
+        const originalDraw = window.probe.draw;
+        window.probe.draw = function probeDrawWrapper(...args) {
+          const result = originalDraw.apply(this, args);
+          const history = window.probe.history;
+          if (history && typeof history.record === 'function') {
+            const fpsValue = typeof window.probe.fps === 'function' ? window.probe.fps() : undefined;
+            const memoryValue =
+              typeof performance !== 'undefined' && performance.memory
+                ? performance.memory.usedJSHeapSize / 1048576
+                : undefined;
+
+            history.record({
+              fps: typeof fpsValue === 'number' ? fpsValue : undefined,
+              draw: result,
+              memory: memoryValue
+            });
+          }
+          return result;
+        };
+        window.probe.__historyWrapped = true;
+      }
+
+      console.log('✅ Probe History initialized');
+    }
+  } catch (err) {
+    console.warn('Failed to initialize probe history', err);
+  }
+}
+
+export default Canonical;
+
+```
+
+
+## Your Input Expectations
+What changed, why it changed, tests/logs, and human feedback.
+
+## Your Output Expectations
+Pattern summary + reuse checklist.
+
+---
+## Instructions
+- Stay within your mission and invariants.
+- Respect existing contracts (schema, Canon, tests, single-writer).
+- If you propose code changes, show them as diffs or full snippets.
+- If you rely on behavior from other files not shown, state your assumptions.
+
+## Begin your reasoning and output below:

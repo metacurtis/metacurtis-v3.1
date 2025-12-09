@@ -1,7 +1,11 @@
+import QRCode from 'qrcode';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import SST from '@/config/sst-loader.js';
 import portraitPointCloud from '@/assets/climax/portrait-pointcloud.json';
-import qrPointCloud from '@/assets/climax/qr-curtis.json';
+
+export const DEFAULT_QR_URL = 'https://curtiswhorton.com';
+export const DEFAULT_QUIET_ZONE = 4;
+export const DEFAULT_ERROR_CORRECTION = 'M';
 
 /**
  * Resolve the canonical transcendence particle count from configuration.
@@ -68,20 +72,145 @@ export function generatePortraitPositions(count = getCanonicalTranscendenceCount
 /**
  * Generate QR code grid positions
  * @param {number} count - Number of particles (defaults to transcendence count from Canonical)
- * @param {number} size - Grid size (e.g., 50 = 50×50 grid)
- * @returns {Float32Array} Position data [x,y,z,x,y,z,...]
+ * @param {string} url - URL to encode
+ * @param {number} quietZone - Padding modules around QR (standard is 4)
+ * @param {string} errorCorrectionLevel - 'L', 'M', 'Q', or 'H'
+ * @param {object|null} metaOut - Optional object to receive QR metadata
+ * @returns {Float32Array} Position data [x,y,z,x,y,z,...], grid-aligned and centered
  */
-export function generateQRPositions(count = getCanonicalTranscendenceCount()) {
-  const basePoints = Array.isArray(qrPointCloud?.points) ? qrPointCloud.points : [];
+export function generateQRPositions(
+  count = getCanonicalTranscendenceCount(),
+  url = DEFAULT_QR_URL,
+  quietZone = DEFAULT_QUIET_ZONE,
+  errorCorrectionLevel = DEFAULT_ERROR_CORRECTION,
+  metaOut = null
+) {
   const safeCount = Math.max(0, Math.floor(count));
-  const positions = resamplePointCloud(basePoints, safeCount);
-  if (safeCount && import.meta?.env?.DEV) {
-    console.debug('🎨 Using QR point cloud asset', {
-      requested: safeCount,
-      baseCount: Math.floor(basePoints.length / 3),
-    });
+  if (safeCount === 0) return new Float32Array(0);
+
+  try {
+    const qr = QRCode.create(url || DEFAULT_QR_URL, { errorCorrectionLevel });
+    const size = qr?.modules?.size || 0;
+    const data = qr?.modules?.data;
+    if (!size || !data) throw new Error('QR modules missing data');
+
+    let darkCount = 0;
+    for (let i = 0; i < data.length; i += 1) {
+      if (data[i]) darkCount += 1;
+    }
+
+    const maxPoints = Math.min(safeCount, darkCount);
+    const positions = new Float32Array(maxPoints * 3);
+    const span = size + quietZone * 2;
+    const scale = span > 0 ? 1 / span : 1;
+
+    let idx = 0;
+    for (let row = 0; row < size && idx < maxPoints; row += 1) {
+      for (let col = 0; col < size && idx < maxPoints; col += 1) {
+        // Only place particles on dark modules
+        if (!data[row * size + col]) continue;
+
+        // Center grid; flip Y so top stays up
+        const gx = (col + quietZone) - span / 2 + 0.5;
+        const gy = (row + quietZone) - span / 2 + 0.5;
+
+        positions[idx * 3] = gx * scale;
+        positions[idx * 3 + 1] = -gy * scale;
+        positions[idx * 3 + 2] = 0;
+        idx += 1;
+      }
+    }
+
+    if (metaOut && typeof metaOut === 'object') {
+      metaOut.moduleCount = size;
+      metaOut.quietZone = quietZone;
+      metaOut.darkModules = darkCount;
+      metaOut.version = qr?.version ?? null;
+    }
+
+    return idx === maxPoints ? positions : positions.subarray(0, idx * 3);
+  } catch (err) {
+    console.error('[QR] Failed to generate QR positions:', err);
+    return new Float32Array(0);
   }
-  return positions;
+}
+
+/**
+ * Generate QR positions with multiple particles per module for a denser appearance.
+ * @param {number} count - Target particle count
+ * @param {string} url - URL to encode
+ * @param {number} particlesPerModule - Particles to place per dark module
+ * @param {number} jitter - Random offset within module (0 = grid perfect, 0.5 = full module)
+ * @param {number} quietZone - Padding modules around QR (standard is 4)
+ * @param {string} errorCorrectionLevel - 'L', 'M', 'Q', or 'H'
+ * @param {object|null} metaOut - Optional object to receive QR metadata
+ * @returns {Float32Array}
+ */
+export function generateDenseQRPositions(
+  count = getCanonicalTranscendenceCount(),
+  url = DEFAULT_QR_URL,
+  particlesPerModule = 4,
+  jitter = 0.2,
+  quietZone = DEFAULT_QUIET_ZONE,
+  errorCorrectionLevel = DEFAULT_ERROR_CORRECTION,
+  metaOut = null
+) {
+  const safeCount = Math.max(0, Math.floor(count));
+  if (safeCount === 0) return new Float32Array(0);
+
+  const ppm = Math.max(1, Math.floor(particlesPerModule));
+
+  try {
+    const qr = QRCode.create(url || DEFAULT_QR_URL, { errorCorrectionLevel });
+    const size = qr?.modules?.size || 0;
+    const data = qr?.modules?.data;
+    if (!size || !data) throw new Error('QR modules missing data');
+
+    let darkCount = 0;
+    for (let i = 0; i < data.length; i += 1) {
+      if (data[i]) darkCount += 1;
+    }
+
+    const maxPoints = Math.min(safeCount, darkCount * ppm);
+    const positions = new Float32Array(maxPoints * 3);
+    const span = size + quietZone * 2;
+    const scale = span > 0 ? 1 / span : 1;
+    const moduleSize = scale;
+
+    let idx = 0;
+    for (let row = 0; row < size && idx < maxPoints; row += 1) {
+      for (let col = 0; col < size && idx < maxPoints; col += 1) {
+        if (!data[row * size + col]) continue;
+
+        const baseX = (col + quietZone) - span / 2 + 0.5;
+        const baseY = (row + quietZone) - span / 2 + 0.5;
+
+        for (let p = 0; p < ppm && idx < maxPoints; p += 1) {
+          const jx = (Math.random() - 0.5) * jitter * moduleSize;
+          const jy = (Math.random() - 0.5) * jitter * moduleSize;
+
+          positions[idx * 3] = (baseX * scale) + jx;
+          positions[idx * 3 + 1] = -(baseY * scale) + jy;
+          positions[idx * 3 + 2] = 0;
+          idx += 1;
+        }
+      }
+    }
+
+    if (metaOut && typeof metaOut === 'object') {
+      metaOut.moduleCount = size;
+      metaOut.quietZone = quietZone;
+      metaOut.darkModules = darkCount;
+      metaOut.version = qr?.version ?? null;
+      metaOut.particlesPerModule = ppm;
+      metaOut.jitter = jitter;
+    }
+
+    return positions.subarray(0, idx * 3);
+  } catch (err) {
+    console.error('[QR] Failed to generate dense QR positions:', err);
+    return new Float32Array(0);
+  }
 }
 
 /**

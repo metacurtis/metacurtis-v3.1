@@ -1,0 +1,193 @@
+{
+  "_meta": {
+    "version": "3.7",
+    "description": "Multi-agent orchestration for MetaCurtis (F:contract-scan → F:diagnostic → A → B → C → F:executor → F:contract-verify → D → E, grounded in file-map and contracts).",
+    "fileMap": {
+      "source": "docs/file-map.json"
+    },
+    "flowPattern": [
+      "F:contract-scan",
+      "F:diagnostic",
+      "A",
+      "B",
+      "C",
+      "F:executor",
+      "F:contract-verify",
+      "D",
+      "E"
+    ]
+  },
+
+  "A": {
+    "id": "A",
+    "name": "Architect",
+    "mission": "Turn the human’s goal and repo ground truth into a crisp spec with explicit contracts, constraints, and success criteria.",
+    "inputFields": [
+      "humanGoal",
+      "issueDescription",
+      "fileGroups",
+      "filesCanonical",
+      "F_diagnosticFacts",
+      "F_fileMapView",
+      "F_contractStatus",
+      "F_contracts"
+    ],
+    "outputFields": [
+      "targetBehavior",
+      "contracts",
+      "risksAndConstraints",
+      "successCriteria",
+      "changeSurface.fileGroups",
+      "changeSurface.filesCanonical"
+    ]
+  },
+
+  "B": {
+    "id": "B",
+    "name": "Critic",
+    "mission": "Stress-test Architect’s spec against repo ground truth and contracts, and shrink the change surface to the minimal safe set.",
+    "inputFields": [
+      "ArchitectSpec",
+      "F_diagnosticFacts",
+      "F_contractStatus",
+      "F_contracts",
+      "filesCanonical"
+    ],
+    "outputFields": [
+      "root_causes",
+      "fix_surface",
+      "do_not_touch",
+      "diag_requests"
+    ]
+  },
+
+  "C": {
+    "id": "C",
+    "name": "Implementer",
+    "mission": "Make the system behave correctly by implementing a minimal, coherent fix that addresses all root causes identified by B, without violating contracts or adding legacy paths.",
+    "inputFields": [
+      "ArchitectSpec",
+      "CriticDiagnosis",
+      "F_diagnosticFacts",
+      "F_contractStatus",
+      "F_contracts",
+      "filesCanonical"
+    ],
+    "outputFields": [
+      "patches",
+      "verificationPlan",
+      "contractAssertions"
+    ]
+  },
+
+  "D": {
+    "id": "D",
+    "name": "Systems Optimizer",
+    "mission": "After behavior and contracts are confirmed as green, simplify and consolidate the implementation without changing behavior or violating contracts.",
+    "inputFields": [
+      "ArchitectSpec",
+      "CriticDiagnosis",
+      "PatchPlan",
+      "ExecutionResult",
+      "F_postContractStatus",
+      "F_contracts"
+    ],
+    "outputFields": [
+      "reductionPlan",
+      "structuralPatches",
+      "structuralVerificationPlan",
+      "structuralContractAssertions"
+    ]
+  },
+
+  "E": {
+    "id": "E",
+    "name": "Historian",
+    "mission": "Capture what happened as a reusable pattern, including behavior and contract evolution, so we never solve the same class of problem from scratch.",
+    "inputFields": [
+      "humanGoal",
+      "issueDescription",
+      "ArchitectSpec",
+      "CriticDiagnosis",
+      "PatchPlan",
+      "StructuralPlan",
+      "ExecutionResult",
+      "F_contractStatus",
+      "F_postContractStatus",
+      "F_contracts"
+    ],
+    "outputFields": [
+      "patternName",
+      "context",
+      "fileGroupsTouched",
+      "whatWeChanged",
+      "whyItWorked",
+      "finalContracts",
+      "testEvidence",
+      "contractEvidence",
+      "checklistNextTime"
+    ]
+  },
+
+  "F": {
+    "id": "F",
+    "name": "Meta Agent",
+    "mission": "Act as the repo-native ground truth and executor, enforcing contracts and Pattern-S via diagnostics and tests.",
+    "modes": {
+      "contract-scan": {
+        "inputFields": [
+          "fileGroups",
+          "fileMap",
+          "issueDescription"
+        ],
+        "outputFields": [
+          "F_contractStatus",
+          "F_violations",
+          "F_ownershipMap",
+          "F_contracts"
+        ]
+      },
+      "diagnostic": {
+        "inputFields": [
+          "fileGroups",
+          "fileMap",
+          "issueDescription",
+          "F_contractStatus",
+          "F_contracts"
+        ],
+        "outputFields": [
+          "F_fileMapView",
+          "F_diagnosticFacts",
+          "F_constraints",
+          "F_suggestedFileGroups"
+        ]
+      },
+      "executor": {
+        "inputFields": [
+          "patches",
+          "filesCanonical",
+          "verificationPlan"
+        ],
+        "outputFields": [
+          "F_appliedPatches",
+          "F_testResults",
+          "F_newDiagnostics",
+          "F_repoStateSummary"
+        ]
+      },
+      "contract-verify": {
+        "inputFields": [
+          "fileGroups",
+          "fileMap",
+          "F_contractStatus",
+          "F_appliedPatches"
+        ],
+        "outputFields": [
+          "F_postContractStatus",
+          "F_newViolations",
+          "F_regressionDetected"
+        ]
+      }
+    }
+  }
+}

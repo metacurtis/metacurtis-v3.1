@@ -1,0 +1,95 @@
+{
+  "version": "3.6",
+  "id": "TEMPLATE_REPLACE_ME",
+  "description": "TEMPLATE: v3.6 multi-agent flow (A → F:diag → B → D → F:exec → E).",
+  "fileGroups": [],
+  "humanGoal": "<<< fill in: human phrasing of the task / bug / refactor goal >>>",
+  "issueDescription": "<<< short narrative summary of what's broken or desired >>>",
+  "steps": [
+    {
+      "step": 1,
+      "agent": "A",
+      "mode": "default",
+      "label": "Architect",
+      "inputFrom": [
+        "humanGoal",
+        "issueDescription",
+        "fileGroups",
+        "fileMap"
+      ],
+      "outputAlias": "ArchitectSpec",
+      "humanDecisionRequired": false
+    },
+    {
+      "step": 2,
+      "agent": "F",
+      "mode": "diagnostic",
+      "label": "Meta Agent – Diagnostic",
+      "inputFrom": [
+        "fileGroups",
+        "fileMap",
+        "ArchitectSpec.targetBehavior",
+        "issueDescription"
+      ],
+      "outputAlias": "F_diagnosticFacts",
+      "humanDecisionRequired": false
+    },
+    {
+      "step": 3,
+      "agent": "B",
+      "mode": "default",
+      "label": "Critic",
+      "inputFrom": [
+        "ArchitectSpec",
+        "F_diagnosticFacts",
+        "contracts"
+      ],
+      "outputAlias": "CriticNotes",
+      "humanDecisionRequired": false
+    },
+    {
+      "step": 4,
+      "agent": "D",
+      "mode": "default",
+      "label": "Systems Optimizer",
+      "inputFrom": [
+        "ArchitectSpec",
+        "CriticNotes"
+      ],
+      "outputAlias": "PatchPlan",
+      "humanDecisionRequired": true
+    },
+    {
+      "step": 5,
+      "agent": "F",
+      "mode": "executor",
+      "label": "Meta Agent – Executor",
+      "inputFrom": [
+        "PatchPlan.patches",
+        "PatchPlan.testPlan.commands"
+      ],
+      "outputAlias": "F_executionResult",
+      "humanDecisionRequired": true
+    },
+    {
+      "step": 6,
+      "agent": "E",
+      "mode": "default",
+      "label": "Historian",
+      "inputFrom": [
+        "humanGoal",
+        "ArchitectSpec",
+        "PatchPlan",
+        "F_executionResult"
+      ],
+      "outputAlias": "PatternDoc",
+      "humanDecisionRequired": false
+    }
+  ],
+  "retryPolicy": {
+    "onTestFailure": {
+      "routeToStep": 2,
+      "notes": "Feed F:diagnostic the failing test logs + updated repo state and rerun steps 2–6."
+    }
+  }
+}
