@@ -1,192 +1,226 @@
 // src/components/webgl/WebGLCanvas.jsx
-// ✅ MERGED: Extension-Resistant + Camera Z=25 + AQS Integration + Content Integrity
+// SST v3.0 COMPLIANT - Props-driven renderer
 
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PerspectiveCamera } from '@react-three/drei';
-import { usePerformanceStore } from '@/stores/performanceStore';
-import { useNarrativeStore } from '@/stores/narrativeStore';
-import { useQualityStore } from '@/stores/qualityStore';
 import DevPerformanceMonitor from '@/components/dev/DevPerformanceMonitor';
+import DebugExpose from '@/components/dev/DebugExpose';
 
-// Lazy load WebGL components for performance
+// Lazy load WebGL components
 const WebGLBackground = lazy(() => import('./WebGLBackground'));
-const AdaptiveQualitySystem_ReactComponent = lazy(
-  () => import('@/components/quality/AdaptiveQualitySystem')
-);
 
-// ✅ EXTENSION DETECTION: Detect if extensions are interfering with WebGL
-const detectExtensionInterference = () => {
+// WebGL context pool class
+class WebGLContextPool {
+  constructor() {
+    this.contextPool = [];
+    this.maxPoolSize = 3;
+    this.activeContexts = new Set();
+    this.contextStats = {
+      created: 0,
+      reused: 0,
+      disposed: 0,
+      maxConcurrent: 0,
+    };
+    this.stateCache = new Map();
+  }
+
+  createOptimizedContext(canvas, contextAttributes = {}) {
+    const optimizedAttributes = {
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance',
+      failIfMajorPerformanceCaveat: false,
+      premultipliedAlpha: false,
+      stencil: false,
+      depth: true,
+      ...contextAttributes,
+    };
+
+    let context = null;
+    try {
+      context =
+        canvas.getContext('webgl2', optimizedAttributes) ||
+        canvas.getContext('webgl', optimizedAttributes);
+    } catch (error) {
+      console.error('WebGLContextPool: Context creation failed:', error);
+    }
+
+    if (context) {
+      this.contextStats.created++;
+      this.activeContexts.add(context);
+    }
+
+    return context;
+  }
+
+  cacheWebGLState(context) {
+    if (!context) return;
+    this.stateCache.set(context, {
+      timestamp: Date.now(),
+    });
+  }
+
+  getStats() {
+    return { ...this.contextStats };
+  }
+
+  clearPool() {
+    this.contextPool = [];
+    this.stateCache.clear();
+  }
+}
+
+// Performance monitor class
+class CanvasPerformanceMonitor {
+  constructor() {
+    this.metrics = {
+      frameRate: 0,
+      renderTime: 0,
+      memoryUsage: 0,
+      lastUpdate: 0,
+    };
+  }
+
+  updateMetrics(data) {
+    Object.assign(this.metrics, data, { lastUpdate: Date.now() });
+  }
+
+  getPerformanceGrade() {
+    if (this.metrics.frameRate >= 55) return 'A';
+    if (this.metrics.frameRate >= 45) return 'B';
+    if (this.metrics.frameRate >= 30) return 'C';
+    return 'D';
+  }
+}
+
+// Extension interference detection
+const detectAdvancedExtensionInterference = () => {
   try {
-    // Test canvas creation with minimal overhead
     const testCanvas = document.createElement('canvas');
-    testCanvas.width = 1;
-    testCanvas.height = 1;
-
-    // Store original getContext method
-    const originalGetContext = testCanvas.getContext;
-
-    // Check if getContext has been overridden (common extension behavior)
-    const isOverridden = originalGetContext.toString().includes('[native code]') === false;
-
-    if (isOverridden) {
-      console.warn('[WebGLCanvas] Extension interference detected - getContext method overridden');
-      return { interference: true, type: 'method_override' };
-    }
-
-    // Try to create a context to test for blocking
-    const testContext = testCanvas.getContext('webgl2', { alpha: false });
-    if (!testContext) {
-      console.warn('[WebGLCanvas] WebGL context creation blocked or failed');
-      return { interference: true, type: 'context_blocked' };
-    }
-
-    // Clean up test
-    const loseExt = testContext.getExtension('WEBGL_lose_context');
-    if (loseExt) loseExt.loseContext();
+    const ctx = testCanvas.getContext('webgl');
+    const interference = !ctx || typeof ctx.TRIANGLES !== 'number';
     testCanvas.remove();
 
-    return { interference: false, type: 'none' };
+    return {
+      interference,
+      type: interference ? 'webgl_blocked' : 'none',
+    };
   } catch (error) {
-    console.error('[WebGLCanvas] Extension interference detection failed:', error);
-    return { interference: true, type: 'detection_failed', error: error.message };
+    return {
+      interference: true,
+      type: 'detection_failed',
+      error: error.message,
+    };
   }
 };
 
-// ✅ FALLBACK: Create a canvas with retry logic and extension workarounds
-const createExtensionResistantCanvas = () => {
-  const strategies = [
-    // Strategy 1: Standard R3F Canvas
-    () => ({ useStandard: true }),
+// ===== MAIN COMPONENT WITH PROPS =====
+export default function WebGLCanvas({
+  stage = 'genesis',
+  morphProgress = 0,
+  scrollProgress = 0,
+  quality = 'HIGH',
+  particleCount = 5000,
+  webglEnabled = true,
+  fps = 60,
+  frameTime = 16.67,
+}) {
+  // Canvas reference
+  const canvasRef = useRef(null);
 
-    // Strategy 2: Different canvas creation timing
-    () => ({
-      useStandard: true,
-      onCreated: ({ gl, scene, camera, size }) => {
-        // Force immediate context acquisition
-        console.log('[WebGLCanvas] Force context acquisition strategy');
-      },
-    }),
-
-    // Strategy 3: Manual WebGL context with specific options
-    () => ({
-      useStandard: true,
-      gl: {
-        alpha: false,
-        antialias: false,
-        preserveDrawingBuffer: false,
-        powerPreference: 'default', // Less aggressive power preference
-        failIfMajorPerformanceCaveat: true, // Fail fast on issues
-        premultipliedAlpha: false,
-        stencil: false,
-        depth: true,
-      },
-    }),
-  ];
-
-  return strategies;
-};
-
-export default function WebGLCanvas() {
-  const canvasRef = useRef();
+  // Component state
   const [webglSupported, setWebglSupported] = useState(true);
   const [contextLost, setContextLost] = useState(false);
   const [extensionInterference, setExtensionInterference] = useState(null);
   const [canvasStrategy, setCanvasStrategy] = useState(0);
 
-  // Store integrations - CONTENT INTEGRITY: Using approved functions only
-  const enableNarrativeMode = useNarrativeStore(state => state.enableNarrativeMode);
-  const webglEnabled = useQualityStore(state => state.webglEnabled ?? true);
-  const currentQualityTier = useQualityStore(state => state.currentQualityTier || 'HIGH');
+  // Initialize systems with useMemo
+  const contextPool = useMemo(() => new WebGLContextPool(), []);
+  const performanceMonitor = useMemo(() => new CanvasPerformanceMonitor(), []);
 
-  // ✅ EXTENSION INTERFERENCE DETECTION
+  // Update performance monitor with props
   useEffect(() => {
-    const interference = detectExtensionInterference();
-    setExtensionInterference(interference);
+    performanceMonitor.updateMetrics({
+      frameRate: fps,
+      renderTime: frameTime,
+    });
+  }, [fps, frameTime, performanceMonitor]);
 
+  // Event logging
+  const addEventLog = useCallback(
+    (eventName, payload) => {
+      performanceMonitor.updateMetrics({
+        lastEvent: eventName,
+        eventTimestamp: Date.now(),
+        ...payload,
+      });
+
+      if (import.meta.env.DEV) {
+        console.log(`🎯 Canvas Event: ${eventName}`, payload);
+      }
+    },
+    [performanceMonitor]
+  );
+
+  // Extension interference detection
+  useEffect(() => {
+    const interference = detectAdvancedExtensionInterference();
+    setExtensionInterference(interference);
     if (interference.interference) {
       console.warn('[WebGLCanvas] Extension interference detected:', interference);
-
-      // CONTENT INTEGRITY: Use addEventLog for analytics (with safety check)
-      const addEventLog = usePerformanceStore.getState().addEventLog;
-      if (addEventLog) {
-        addEventLog('extension_interference_detected', interference);
-      }
+      addEventLog('extension_interference_detected', interference);
     }
-  }, []);
+  }, [addEventLog]);
 
-  // ✅ CANVAS RETRY LOGIC
-  const handleCanvasError = error => {
-    console.error('[WebGLCanvas] Canvas creation failed:', error);
-
-    // CONTENT INTEGRITY: Use addEventLog for analytics (with safety check)
-    const addEventLog = usePerformanceStore.getState().addEventLog;
-    if (addEventLog) {
+  // Canvas error handler
+  const handleCanvasError = useCallback(
+    error => {
+      console.error('[WebGLCanvas] Canvas creation failed:', error);
       addEventLog('webgl_canvas_error', {
         error: error.message,
         strategy: canvasStrategy,
         extensionInterference: extensionInterference?.interference,
+        contextPoolStats: contextPool.getStats(),
       });
-    }
 
-    const strategies = createExtensionResistantCanvas();
-
-    if (canvasStrategy < strategies.length - 1) {
-      // Try next strategy
-      console.log(`[WebGLCanvas] Trying strategy ${canvasStrategy + 1}/${strategies.length}`);
-      setCanvasStrategy(canvasStrategy + 1);
-    } else {
-      // All strategies failed
-      console.error('[WebGLCanvas] All strategies failed, disabling WebGL');
-      setWebglSupported(false);
-
-      if (addEventLog) {
-        addEventLog('webgl_all_strategies_failed', {
-          totalStrategies: strategies.length,
-          extensionInterference: extensionInterference?.interference,
-        });
+      if (canvasStrategy < 2) {
+        console.log(`[WebGLCanvas] Trying fallback strategy ${canvasStrategy + 1}`);
+        setCanvasStrategy(canvasStrategy + 1);
+      } else {
+        console.error('[WebGLCanvas] All strategies failed, disabling WebGL');
+        setWebglSupported(false);
+        contextPool.clearPool();
       }
-    }
-  };
+    },
+    [canvasStrategy, extensionInterference, contextPool, addEventLog]
+  );
 
-  // WebGL context validation and recovery
+  // Context loss handling
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // ✅ EXTENSION-AWARE: Enhanced context loss detection
     const handleContextLost = event => {
       event.preventDefault();
       setContextLost(true);
-      console.warn('[WebGLCanvas] WebGL context lost, attempting recovery...');
-
-      // Check if this might be extension-related
-      if (extensionInterference?.interference) {
-        console.warn('[WebGLCanvas] Context loss may be extension-related');
-      }
-
-      // CONTENT INTEGRITY: Use addEventLog for analytics (with safety check)
-      const addEventLog = usePerformanceStore.getState().addEventLog;
-      if (addEventLog) {
-        addEventLog('webgl_context_lost', {
-          recovery: 'initiated',
-          extensionInterference: extensionInterference?.interference,
-        });
-      }
+      console.warn('[WebGLCanvas] WebGL context lost, initiating recovery...');
+      addEventLog('webgl_context_lost', {
+        recovery: 'initiated',
+        extensionInterference: extensionInterference?.interference,
+        contextPoolStats: contextPool.getStats(),
+      });
     };
 
     const handleContextRestored = () => {
       setContextLost(false);
       console.log('[WebGLCanvas] WebGL context restored successfully');
-
-      // CONTENT INTEGRITY: Use addEventLog for analytics (with safety check)
-      const addEventLog = usePerformanceStore.getState().addEventLog;
-      if (addEventLog) {
-        addEventLog('webgl_context_restored', {
-          status: 'success',
-          strategy: canvasStrategy,
-        });
-      }
+      addEventLog('webgl_context_restored', {
+        status: 'success',
+        strategy: canvasStrategy,
+        contextPoolStats: contextPool.getStats(),
+      });
     };
 
     canvas.addEventListener('webglcontextlost', handleContextLost);
@@ -196,178 +230,327 @@ export default function WebGLCanvas() {
       canvas.removeEventListener('webglcontextlost', handleContextLost);
       canvas.removeEventListener('webglcontextrestored', handleContextRestored);
     };
-  }, [extensionInterference, canvasStrategy]);
+  }, [extensionInterference, canvasStrategy, contextPool, addEventLog]);
 
-  // ✅ EXTENSION-AWARE: Fallback for unsupported WebGL
+  // Canvas performance monitoring
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        performanceMonitor.updateMetrics({
+          canvasWidth: width,
+          canvasHeight: height,
+          pixelCount: width * height,
+        });
+      }
+    });
+
+    resizeObserver.observe(canvas);
+    return () => resizeObserver.disconnect();
+  }, [performanceMonitor]);
+
+  // Canvas configuration
+  const canvasConfig = useMemo(() => {
+    const baseConfig = {
+      className: 'w-full h-full',
+      gl: {
+        antialias: quality !== 'LOW',
+        alpha: true,
+        preserveDrawingBuffer: false,
+        powerPreference: 'high-performance',
+        failIfMajorPerformanceCaveat: false,
+      },
+    };
+
+    switch (canvasStrategy) {
+      case 1:
+        baseConfig.gl.powerPreference = 'default';
+        break;
+      case 2:
+        baseConfig.gl.antialias = false;
+        baseConfig.gl.alpha = false;
+        break;
+    }
+
+    return baseConfig;
+  }, [quality, canvasStrategy]);
+
+  // Fallback renders
   if (!webglSupported) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="absolute inset-0 opacity-30">
-          {/* Static fallback pattern */}
           <div className="w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]" />
         </div>
-        {/* ✅ EXTENSION WARNING: Show user-friendly message if extensions are interfering */}
-        {extensionInterference?.interference && (
-          <div className="absolute top-4 left-4 bg-yellow-900/80 border border-yellow-600 rounded-lg p-4 max-w-md">
-            <h3 className="text-yellow-400 font-semibold mb-2">Browser Extension Detected</h3>
-            <p className="text-yellow-200 text-sm">
-              A browser extension is interfering with WebGL. Try disabling extensions or using
-              incognito mode for the full experience.
-            </p>
-            <p className="text-yellow-300 text-xs mt-2">
-              Extension type: {extensionInterference.type}
-            </p>
-          </div>
-        )}
+        <div className="absolute bottom-4 right-4 bg-black/80 border border-red-600 rounded-lg p-3 text-red-400 font-mono text-sm">
+          <div className="font-bold mb-2">⚛️ WebGL Not Supported</div>
+          <div>Stage: {stage}</div>
+          <div>Progress: {Math.round(scrollProgress * 100)}%</div>
+        </div>
       </div>
     );
   }
 
-  // Context loss recovery display
   if (contextLost) {
     return (
       <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-green-400">Restoring WebGL context...</p>
-          {extensionInterference?.interference && (
-            <p className="text-yellow-400 text-sm mt-2">Extension interference detected</p>
-          )}
+          <p className="text-green-400 text-lg font-mono">Restoring WebGL context...</p>
         </div>
       </div>
     );
   }
 
-  // ✅ EXTENSION-RESISTANT: Canvas configuration based on strategy
-  const strategies = createExtensionResistantCanvas();
-  const currentStrategy = strategies[canvasStrategy] || strategies[0];
-  const strategyConfig = currentStrategy();
-
-  // ✅ CORRECT INTEGRATION: DevPerformanceMonitor placement
-
   return (
-    <div className="fixed inset-0 w-full h-full">
-      <Canvas
+    <div style={{ position:'fixed', inset:0, width:'100vw', height:'100vh', zIndex:0 }}>
+      <Canvas style={{ display:'block', width:'100%', height:'100%' }}
         ref={canvasRef}
-        className="w-full h-full"
-        gl={{
-          antialias: true,
-          alpha: true,
-          preserveDrawingBuffer: false,
-          powerPreference: 'high-performance',
-          failIfMajorPerformanceCaveat: false,
-          ...strategyConfig.gl,
-        }}
-        onCreated={({ gl, scene, camera }) => {
-          // WebGL optimization settings
-          gl.setClearColor('#0a0a0a', 1);
-          gl.shadowMap.enabled = false; // Disable shadows for performance
-          scene.fog = null; // Disable fog for clarity
+        {...canvasConfig}
+        onCreated={({ gl, scene, camera, size }) => {
+          const startTime = performance.now();
 
-          console.log('[WebGLCanvas] Canvas created successfully with strategy', canvasStrategy, {
+          // Access canvas element
+          const canvasElement = canvasRef.current;
+          if (canvasElement) {
+            canvasElement.setAttribute('data-webgl-version', gl.capabilities.isWebGL2 ? '2' : '1');
+            canvasElement.setAttribute('data-quality-tier', quality);
+            canvasElement.setAttribute('data-particle-count', particleCount.toString());
+          }
+
+          // Context optimization
+          const context = gl.getContext();
+          contextPool.cacheWebGLState(context);
+
+          // Optimal WebGL settings
+          gl.setClearColor('#000000', 1);
+          gl.shadowMap.enabled = false;
+          scene.fog = null;
+
+          // Check point size range
+          const glContext = gl.getContext();
+          const pointSizeRange = glContext.getParameter(glContext.ALIASED_POINT_SIZE_RANGE);
+
+          const setupTime = performance.now() - startTime;
+
+          console.log('[WebGLCanvas] Canvas created with constellation optimization', {
             renderer: gl.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1',
             maxTextures: gl.capabilities.maxTextures,
-            camera_position: camera.position.toArray(),
-            quality_tier: currentQualityTier,
-            aqs_enabled: webglEnabled,
-            extension_interference: extensionInterference?.interference,
+            maxVertexAttributes: gl.capabilities.maxVertexAttributes,
+            pointSizeRange: pointSizeRange,
+            canvasSize: { width: canvasElement?.width, height: canvasElement?.height },
+            setupTime: setupTime.toFixed(2) + 'ms',
+            contextPoolStats: contextPool.getStats(),
+            quality: quality,
+            particles: particleCount,
+            stage: stage,
+            strategy: canvasStrategy,
           });
 
-          // CONTENT INTEGRITY: Use addEventLog for analytics (with safety check)
-          const addEventLog = usePerformanceStore.getState().addEventLog;
-          if (addEventLog) {
-            addEventLog('webgl_canvas_created', {
-              camera: { position: [0, 0, 25], fov: 75 },
-              webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
-              camera_z: camera.position.z,
-              quality_tier: currentQualityTier,
-              aqs_enabled: webglEnabled,
-              strategy: canvasStrategy,
-              extension_interference: extensionInterference?.interference,
-              timestamp: performance.now(),
-            });
-          }
-
-          // Execute strategy-specific onCreated callback
-          if (strategyConfig.onCreated) {
-            strategyConfig.onCreated({ gl, scene, camera });
-          }
+          addEventLog('webgl_canvas_created', {
+            webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
+            point_size_range: pointSizeRange,
+            setup_time: setupTime,
+          });
         }}
         onError={handleCanvasError}
       >
-        {/* ✅ CAMERA Z=25 ATMOSPHERIC: Perfect distance for 20-44px particles */}
-        <PerspectiveCamera
-          makeDefault
-          position={[0, 0, 25]} // ✅ ATMOSPHERIC: Perfect distance for 20-44px particles
-          fov={75} // ✅ OPTIMIZED: Balanced FOV for 35-55 unit particle spread
-          near={0.1}
-          far={100}
-        />
+        {/* Optimal camera for constellation viewing */}
+        <PerspectiveCamera makeDefault position={[0, 0, 80]} fov={75} near={0.1} far={200} />
 
-        {/* Lighting setup optimized for atmospheric particle visibility */}
-        <ambientLight intensity={0.6} />
-        <directionalLight
-          position={[10, 10, 15]}
-          intensity={0.4}
-          castShadow={false} // Disabled for performance
-        />
+        {/* Minimal lighting for particles */}
+        <ambientLight intensity={0.4} />
 
-        {/* ✅ AQS INTEGRATION: Main atmospheric particle system with quality scaling */}
+        {/* Dev tools */}
+        {import.meta.env.DEV && <DebugExpose />}
+
+        {/* Main particle system WITH PROPS */}
         <Suspense fallback={null}>
-          {enableNarrativeMode && webglEnabled && <WebGLBackground />}
-        </Suspense>
-
-        {/* ✅ AQS INTEGRATION: Adaptive Quality System for performance management */}
-        <Suspense fallback={null}>
-          {webglEnabled && <AdaptiveQualitySystem_ReactComponent />}
+          {webglEnabled && (
+            <WebGLBackground
+              stage={stage}
+              morphProgress={morphProgress}
+              scrollProgress={scrollProgress}
+            />
+          )}
         </Suspense>
       </Canvas>
 
-      {/* ✅ CORRECT PLACEMENT: DOM overlay components OUTSIDE Canvas */}
+      {/* Performance monitoring */}
       <DevPerformanceMonitor />
+
+      {/* Debug overlay */}
+      {false &&import.meta.env.DEV && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: 'rgba(0,0,0,0.9)',
+            color: '#00ff88',
+            padding: '16px',
+            borderRadius: '8px',
+            fontFamily: 'Courier New, monospace',
+            fontSize: '12px',
+            border: '1px solid #00ff88',
+            zIndex: 1000,
+            minWidth: '300px',
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#00ffcc' }}>
+            🌌 CONSTELLATION STATUS
+          </div>
+          <div>Stage: {stage}</div>
+          <div>Progress: {Math.round(scrollProgress * 100)}%</div>
+          <div>Morph: {Math.round(morphProgress * 100)}%</div>
+          <div>Quality: {quality}</div>
+          <div>Particles: {particleCount}</div>
+          <div>WebGL: {webglEnabled ? '✓' : '✗'}</div>
+          <div>Canvas: {canvasRef.current ? '✓' : '✗'}</div>
+          <div>Context: {contextLost ? '✗' : '✓'}</div>
+
+          <div
+            style={{
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <div style={{ color: '#00ccff', fontWeight: 'bold', marginBottom: '4px' }}>
+              Performance:
+            </div>
+            <div>Grade: {performanceMonitor.getPerformanceGrade()}</div>
+            <div>FPS: {fps.toFixed(1)}</div>
+            <div>Frame Time: {frameTime.toFixed(1)}ms</div>
+          </div>
+
+          {/* SST v3.0 Props */}
+          <div
+            style={{
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <div style={{ color: '#ffff00', fontWeight: 'bold', marginBottom: '4px' }}>
+              SST v3.0 Props:
+            </div>
+            <div>Stage: {stage}</div>
+            <div>Morph: {morphProgress.toFixed(2)}</div>
+            <div>Scroll: {scrollProgress.toFixed(2)}</div>
+          </div>
+
+          {/* Debug controls */}
+          <div
+            style={{
+              marginTop: '8px',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+            }}
+          >
+            <button
+              onClick={() => {
+                window.location.hash = '#debug-particles';
+                window.location.reload();
+              }}
+              style={{
+                background: '#00ff88',
+                color: '#000',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+                marginRight: '8px',
+              }}
+            >
+              Debug Mode
+            </button>
+            <button
+              onClick={() => {
+                const event = new CustomEvent('webgl-force-init', {
+                  detail: { stage: stage, reason: 'manual_test' },
+                });
+                window.dispatchEvent(event);
+              }}
+              style={{
+                background: '#00ccff',
+                color: '#000',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+              }}
+            >
+              Force Render
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
 
-  /*
-🎯 COMPLETE EXTENSION-RESISTANT + AQS + CONTENT INTEGRITY SYSTEM ✅
+// Global debug access
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.canvasDebug = {
+    getCanvasElement: () => document.querySelector('canvas'),
 
-✅ EXTENSION INTERFERENCE RESOLUTION:
-- Detects browser extension interference with WebGL context creation
-- Multiple fallback strategies for extension resistance  
-- User-friendly extension interference warnings
-- Graceful degradation when all strategies fail
+    getCanvasInfo: () => {
+      const canvas = document.querySelector('canvas');
+      if (!canvas) return 'No canvas found';
 
-✅ CAMERA Z=25 ATMOSPHERIC OPTIMIZATION:
-- Perfect distance for 20-44px atmospheric particle visibility
-- FOV=75° optimized for 35-55 unit particle spread
-- Performance leveraging 90% headroom efficiently
-- Atmospheric lighting setup for particle clarity
+      return {
+        width: canvas.width,
+        height: canvas.height,
+        clientWidth: canvas.clientWidth,
+        clientHeight: canvas.clientHeight,
+        webglVersion: canvas.getAttribute('data-webgl-version'),
+        qualityTier: canvas.getAttribute('data-quality-tier'),
+        particleCount: canvas.getAttribute('data-particle-count'),
+      };
+    },
 
-✅ AQS INTEGRATION:
-- Quality-aware particle scaling (ULTRA 1.2x → LOW 0.4x)
-- Device-appropriate quality selection via AdaptiveQualitySystem
-- Conditional rendering based on webglEnabled flag
-- Performance monitoring via tickFrame (through AQS)
+    testContextPooling: () => {
+      console.log('🧪 Testing WebGL context pooling...');
+      const testCanvas = document.createElement('canvas');
+      const contextPool = new WebGLContextPool();
+      const ctx = contextPool.createOptimizedContext(testCanvas);
+      const stats = contextPool.getStats();
+      testCanvas.remove();
+      return stats;
+    },
 
-✅ CONTENT INTEGRITY COMPLIANCE:
-- ❌ REMOVED: All phantom logPerformanceEvent calls
-- ✅ PRESERVED: tickFrame usage via AQS system
-- ✅ ADDED: addEventLog with safety checks for QA/analytics
-- ✅ DOCUMENTED: All changes explicitly approved
+    detectInterference: () => detectAdvancedExtensionInterference(),
 
-✅ EXTENSION-RESISTANT FEATURES:
-- Strategy 1: Standard R3F Canvas configuration
-- Strategy 2: Alternative timing and context acquisition  
-- Strategy 3: Conservative WebGL context options
-- Automatic fallback progression on failures
+    testWebGLSupport: () => {
+      const canvas = document.createElement('canvas');
+      const webgl2 = canvas.getContext('webgl2');
+      const webgl1 = canvas.getContext('webgl');
 
-✅ DEBUGGING & MONITORING:
-- Comprehensive extension interference logging
-- Strategy progression tracking
-- Performance event correlation with extension status
-- Quality tier integration with fallback support
+      const support = {
+        webgl2: !!webgl2,
+        webgl1: !!webgl1,
+        pointSizeRange: webgl2
+          ? webgl2.getParameter(webgl2.ALIASED_POINT_SIZE_RANGE)
+          : webgl1
+            ? webgl1.getParameter(webgl1.ALIASED_POINT_SIZE_RANGE)
+            : null,
+      };
 
-This system resolves browser extension interference while maintaining
-atmospheric particle rendering, AQS integration, and Content Integrity! 🌟
-*/
+      canvas.remove();
+      console.log('🧪 WebGL Support Test:', support);
+      return support;
+    },
+  };
+
+  console.log('🎯 Enhanced Canvas Debug Tools Available:');
+  console.log('🧪 Test context pooling: window.canvasDebug.testContextPooling()');
+  console.log('🔍 Detect interference: window.canvasDebug.detectInterference()');
+  console.log('🧪 Test WebGL support: window.canvasDebug.testWebGLSupport()');
+  console.log('📊 Get canvas info: window.canvasDebug.getCanvasInfo()');
 }

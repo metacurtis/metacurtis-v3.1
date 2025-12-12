@@ -1,112 +1,285 @@
 // src/utils/performance/AdaptiveQualitySystem.js
-// core engine, no React here
-import qualityPresets from '@/config/qualityPresets.js'; // Ensure this path and file exist
+// ✅ PHASE 2: Quality Tier Stabilization - Enhanced AQS Engine
+// Eliminates tier flapping with intelligent debouncing and variance checking
 
-// NAMED EXPORT for QualityLevels
 export const QualityLevels = {
-  ULTRA: 'ULTRA',
-  HIGH: 'HIGH',
-  MEDIUM: 'MEDIUM',
   LOW: 'LOW',
+  MEDIUM: 'MEDIUM', 
+  HIGH: 'HIGH',
+  ULTRA: 'ULTRA',
 };
 
-// DEFAULT EXPORT for the class
+// ✅ ENHANCED: Stability configuration
+const ENHANCED_STABILITY_CONFIG = {
+  // Tier change requirements
+  consecutiveChecks: 6,        // Require 6 consecutive stable readings
+  debounceMs: 2000,           // 2 second minimum between tier changes
+  fpsVarianceThreshold: 8,    // FPS must be within 8 of target for stability
+  emergencyDropThreshold: 15, // Emergency drop to LOW if FPS < 15
+  
+  // Tier thresholds with clear separation
+  tiers: {
+    ULTRA: { minFps: 55, particles: 15000 },
+    HIGH: { minFps: 45, particles: 12000 },
+    MEDIUM: { minFps: 30, particles: 8000 },
+    LOW: { minFps: 0, particles: 4000 }
+  }
+};
+
+class StabilizedQualityManager {
+  constructor() {
+    this.currentTier = 'HIGH';
+    this.potentialTier = 'HIGH';
+    this.stabilityChecks = 0;
+    this.lastTierChange = 0;
+    this.fpsHistory = [];
+    this.maxHistoryLength = 10;
+  }
+
+  updateFPS(fps) {
+    // Track FPS history for variance calculation
+    this.fpsHistory.push(fps);
+    if (this.fpsHistory.length > this.maxHistoryLength) {
+      this.fpsHistory.shift();
+    }
+
+    const now = Date.now();
+    const timeSinceLastChange = now - this.lastTierChange;
+    
+    // Emergency drop for very low FPS
+    if (fps < ENHANCED_STABILITY_CONFIG.emergencyDropThreshold) {
+      this.emergencyDrop();
+      return this.currentTier;
+    }
+
+    // Calculate what tier FPS suggests
+    const suggestedTier = this.calculateTierFromFPS(fps);
+    
+    // Check if we're in debounce period
+    if (timeSinceLastChange < ENHANCED_STABILITY_CONFIG.debounceMs) {
+      console.log(`🛡️ AQS: Debounce active (${Math.round(timeSinceLastChange)}ms), staying at ${this.currentTier}`);
+      return this.currentTier;
+    }
+
+    // Check FPS variance for stability
+    if (!this.isFPSStable()) {
+      console.log(`⚠️ AQS: FPS unstable (variance: ${this.getFPSVariance().toFixed(1)}), maintaining ${this.currentTier}`);
+      this.stabilityChecks = 0;
+      return this.currentTier;
+    }
+
+    // Handle tier change logic
+    if (suggestedTier !== this.potentialTier) {
+      this.potentialTier = suggestedTier;
+      this.stabilityChecks = 1;
+      console.log(`🔄 AQS: Potential tier change to ${suggestedTier}, checks: 1/${ENHANCED_STABILITY_CONFIG.consecutiveChecks}`);
+    } else if (suggestedTier !== this.currentTier) {
+      this.stabilityChecks++;
+      console.log(`🔄 AQS: Confirming ${suggestedTier}, checks: ${this.stabilityChecks}/${ENHANCED_STABILITY_CONFIG.consecutiveChecks}`);
+      
+      // Only change tier after sufficient consecutive checks
+      if (this.stabilityChecks >= ENHANCED_STABILITY_CONFIG.consecutiveChecks) {
+        this.changeTier(suggestedTier);
+      }
+    } else {
+      // FPS stable at current tier
+      this.stabilityChecks = 0;
+    }
+
+    return this.currentTier;
+  }
+
+  calculateTierFromFPS(fps) {
+    // Conservative tier calculation with clear boundaries
+    if (fps >= ENHANCED_STABILITY_CONFIG.tiers.ULTRA.minFps) return 'ULTRA';
+    if (fps >= ENHANCED_STABILITY_CONFIG.tiers.HIGH.minFps) return 'HIGH';
+    if (fps >= ENHANCED_STABILITY_CONFIG.tiers.MEDIUM.minFps) return 'MEDIUM';
+    return 'LOW';
+  }
+
+  isFPSStable() {
+    if (this.fpsHistory.length < 3) return false;
+    
+    const variance = this.getFPSVariance();
+    return variance <= ENHANCED_STABILITY_CONFIG.fpsVarianceThreshold;
+  }
+
+  getFPSVariance() {
+    if (this.fpsHistory.length < 2) return 0;
+    
+    const recent = this.fpsHistory.slice(-5); // Last 5 readings
+    const max = Math.max(...recent);
+    const min = Math.min(...recent);
+    return max - min;
+  }
+
+  changeTier(newTier) {
+    const oldTier = this.currentTier;
+    this.currentTier = newTier;
+    this.potentialTier = newTier;
+    this.stabilityChecks = 0;
+    this.lastTierChange = Date.now();
+    
+    console.log(`✅ AQS: Stable tier change ${oldTier} → ${newTier} (${ENHANCED_STABILITY_CONFIG.tiers[newTier].particles} particles)`);
+    
+    // Trigger particle count update
+    this.triggerQualityUpdate(newTier);
+  }
+
+  emergencyDrop() {
+    if (this.currentTier !== 'LOW') {
+      console.log(`🚨 AQS: Emergency drop to LOW tier`);
+      this.changeTier('LOW');
+    }
+  }
+
+  triggerQualityUpdate(tier) {
+    // Emit event for WebGL background to update particle count
+    window.dispatchEvent(new CustomEvent('aqsQualityChange', {
+      detail: {
+        tier,
+        particles: ENHANCED_STABILITY_CONFIG.tiers[tier].particles,
+        stable: true
+      }
+    }));
+  }
+}
+
+// Create global instance
+const stabilizedManager = new StabilizedQualityManager();
+
+// ✅ ENHANCED: Main AQS Engine class with stabilization
 export default class AQSEngine {
-  constructor({
-    checkInterval = 1500,
-    windowSize = 90,
-    ultraFps = 55,
-    highFps = 45,
-    mediumFps = 25,
-    initialLevel = QualityLevels.HIGH, // Uses the locally defined QualityLevels
-    hysteresisChecks = 3,
-  } = {}) {
-    this.presets = qualityPresets;
-    this.windowSize = windowSize;
-    this.ultraFps = ultraFps;
-    this.highFps = highFps;
-    this.mediumFps = mediumFps;
-    this.currentLevel = initialLevel;
-    this.frameTimes = [];
-    this.lastTime = performance.now();
-    this.subscribers = new Set();
+  constructor(config = {}) {
+    this.ultraFps = config.ultraFps || 55;
+    this.highFps = config.highFps || 45;
+    this.mediumFps = config.mediumFps || 25;
+    this.checkInterval = config.checkInterval || 1500;
+    this.windowSize = config.windowSize || 90;
+    this.hysteresisChecks = config.hysteresisChecks || 4;
+    this.initialLevel = config.initialLevel || QualityLevels.HIGH;
 
-    this.frameCount = 0;
-    this.checkInterval = checkInterval;
-    this.lastCheckTime = performance.now();
-
-    this.hysteresisChecks = hysteresisChecks;
-    this.checksAtCurrentPotentialTier = 0;
-    this.potentialNewTier = initialLevel;
+    this.currentLevel = this.initialLevel;
+    this.checks = 0;
+    this.potentialLevel = this.currentLevel;
+    this.listeners = new Set();
+    this.isEnabled = true;
 
     console.log(
-      `AQSEngine: Initialized. Level: ${this.currentLevel}, Check Interval: ${checkInterval}ms, FPS Thresholds (U/H/M): ${ultraFps}/${highFps}/${mediumFps}, Hysteresis Checks: ${this.hysteresisChecks}`
+      `AQSEngine: Initialized for Central Clock. Level: ${this.currentLevel}, FPS Thresholds (U/H/M): ${this.ultraFps}/${this.highFps}/${this.mediumFps}, Hysteresis Checks: ${this.hysteresisChecks}`
     );
+
+    // ✅ ENHANCED: Use stabilized manager
+    this.stabilizedManager = stabilizedManager;
   }
 
-  tick() {
-    this.frameCount++;
-    const now = performance.now();
-    const timeSinceLastCheck = now - this.lastCheckTime;
+  handleFPSUpdate(fps) {
+    if (!this.isEnabled) return;
 
-    if (timeSinceLastCheck >= this.checkInterval) {
-      if (this.frameCount > 0 && timeSinceLastCheck > 0) {
-        const fps = (this.frameCount * 1000) / timeSinceLastCheck;
-        // console.log(`AQSEngine: Interval reached. Calculated Avg FPS over ~${(timeSinceLastCheck/1000).toFixed(1)}s: ${fps.toFixed(1)} (Frames: ${this.frameCount})`);
-        this._adjustQuality(fps);
-      } else {
-        // console.log(`AQSEngine: Interval reached, but no frames counted or no time elapsed. Frames: ${this.frameCount}, Time: ${timeSinceLastCheck}`);
+    // ✅ ENHANCED: Route through stabilized manager
+    const newTier = this.stabilizedManager.updateFPS(fps);
+    
+    // Only emit if tier actually changed
+    if (newTier !== this.currentLevel) {
+      const oldLevel = this.currentLevel;
+      this.currentLevel = newTier;
+      
+      console.log(`✅ AQSEngine: STABLE QUALITY TIER CHANGED: ${oldLevel} → ${newTier} (FPS: ${fps.toFixed(1)})`);
+      
+      // Notify listeners
+      this.listeners.forEach(callback => {
+        try {
+          callback(newTier);
+        } catch (error) {
+          console.error('AQSEngine: Listener callback error:', error);
+        }
+      });
+    }
+  }
+
+  subscribe(callback) {
+    this.listeners.add(callback);
+    callback(this.currentLevel);
+    
+    return () => {
+      this.listeners.delete(callback);
+    };
+  }
+
+  getCurrentLevel() {
+    return this.currentLevel;
+  }
+
+  setEnabled(enabled) {
+    this.isEnabled = enabled;
+    console.log(`AQSEngine: ${enabled ? 'Enabled' : 'Disabled'}`);
+  }
+
+  getDebugInfo() {
+    return {
+      currentLevel: this.currentLevel,
+      potentialLevel: this.stabilizedManager.potentialTier,
+      stabilityChecks: this.stabilizedManager.stabilityChecks,
+      fpsHistory: this.stabilizedManager.fpsHistory,
+      fpsVariance: this.stabilizedManager.getFPSVariance(),
+      timeSinceLastChange: Date.now() - this.stabilizedManager.lastTierChange,
+      isEnabled: this.isEnabled,
+      listeners: this.listeners.size,
+      config: {
+        ultraFps: this.ultraFps,
+        highFps: this.highFps,
+        mediumFps: this.mediumFps,
+        checkInterval: this.checkInterval,
+        hysteresisChecks: this.hysteresisChecks
       }
-      this.frameCount = 0;
-      this.lastCheckTime = now;
+    };
+  }
+}
+
+// ✅ ENHANCED: Development access with stability tools
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  window.aqsStabilize = {
+    // Emergency commands for console
+    forceTier: (tier) => {
+      stabilizedManager.changeTier(tier);
+      console.log(`🛠️ Forced tier to ${tier}`);
+    },
+    
+    getTierInfo: () => {
+      console.log('🔍 AQS TIER STABILITY DIAGNOSTIC');
+      console.log('================================');
+      
+      const manager = stabilizedManager;
+      console.log(`Current Tier: ${manager.currentTier}`);
+      console.log(`Potential Tier: ${manager.potentialTier}`);
+      console.log(`Stability Checks: ${manager.stabilityChecks}`);
+      console.log(`FPS History:`, manager.fpsHistory);
+      console.log(`FPS Variance: ${manager.getFPSVariance().toFixed(1)}`);
+      console.log(`Time Since Last Change: ${Date.now() - manager.lastTierChange}ms`);
+      console.log(`Debounce Period: ${ENHANCED_STABILITY_CONFIG.debounceMs}ms`);
+      
+      return {
+        stable: manager.stabilityChecks === 0,
+        variance: manager.getFPSVariance(),
+        recommendation: manager.getFPSVariance() > 10 ? 'Reduce particle count' : 'System stable'
+      };
+    },
+    
+    resetStability: () => {
+      stabilizedManager.stabilityChecks = 0;
+      stabilizedManager.lastTierChange = 0;
+      console.log('🔄 Stability counters reset');
+    },
+    
+    enableConservativeMode: () => {
+      ENHANCED_STABILITY_CONFIG.tiers.ULTRA.minFps = 58;
+      ENHANCED_STABILITY_CONFIG.tiers.HIGH.minFps = 48;
+      ENHANCED_STABILITY_CONFIG.consecutiveChecks = 8;
+      console.log('🛡️ Conservative mode enabled');
     }
-  }
+  };
 
-  _adjustQuality(fps) {
-    let newCalculatedTier;
-    // Uses the locally defined QualityLevels
-    if (fps >= this.ultraFps) newCalculatedTier = QualityLevels.ULTRA;
-    else if (fps >= this.highFps) newCalculatedTier = QualityLevels.HIGH;
-    else if (fps >= this.mediumFps) newCalculatedTier = QualityLevels.MEDIUM;
-    else newCalculatedTier = QualityLevels.LOW;
-
-    // console.log(`AQSEngine _adjustQuality: Current Level: ${this.currentLevel}, Potential New Tier: ${this.potentialNewTier}, Calculated Tier from FPS (${fps.toFixed(1)}): ${newCalculatedTier}, Checks at Potential: ${this.checksAtCurrentPotentialTier}`);
-
-    if (newCalculatedTier === this.potentialNewTier) {
-      this.checksAtCurrentPotentialTier++;
-    } else {
-      this.potentialNewTier = newCalculatedTier;
-      this.checksAtCurrentPotentialTier = 1;
-      // console.log(`AQSEngine _adjustQuality: Potential new tier is now ${this.potentialNewTier}. Resetting stability counter.`);
-    }
-
-    if (
-      this.checksAtCurrentPotentialTier >= this.hysteresisChecks &&
-      this.currentLevel !== this.potentialNewTier
-    ) {
-      const prevLevel = this.currentLevel;
-      this.currentLevel = this.potentialNewTier;
-      console.log(
-        `AQSEngine: !!! QUALITY TIER CHANGED !!! From ${prevLevel} to ${this.currentLevel} (Avg FPS: ~${fps.toFixed(1)})`
-      );
-      this.subscribers.forEach(cb => cb(this.currentLevel));
-      this.checksAtCurrentPotentialTier = 0;
-    } else if (
-      this.currentLevel === this.potentialNewTier &&
-      this.potentialNewTier === newCalculatedTier
-    ) {
-      this.checksAtCurrentPotentialTier = 0;
-    }
-  }
-
-  subscribe(cb) {
-    this.subscribers.add(cb);
-    cb(this.currentLevel);
-    return () => this.subscribers.delete(cb);
-  }
-
-  getCurrentPreset() {
-    // Uses the locally defined QualityLevels
-    return this.presets[this.currentLevel.toLowerCase()] || this.presets.high;
-  }
+  console.log('✅ Quality tier stabilization loaded');
+  console.log('🎮 Use window.aqsStabilize.getTierInfo() to check stability');
+  console.log('🛠️ Use window.aqsStabilize.forceTier("HIGH") for manual control');
 }

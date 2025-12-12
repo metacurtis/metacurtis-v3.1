@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 // --- OPTIMIZED Navbar for Full-Viewport Design ---
 const Navbar = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 bg-gray-900/70 backdrop-blur-md text-white shadow-lg z-50">
+    <header className="fixed top-0 left-0 right-0 bg-transparent/70 backdrop-blur-md text-white shadow-lg z-50">
       <nav className="w-full px-6 py-3 flex justify-between items-center">
         <div className="text-xl font-bold hover:text-primary transition-colors">
           <a href="#hero">MetaCurtis Premium</a>
@@ -31,7 +31,7 @@ const Navbar = () => {
 // --- OPTIMIZED Footer ---
 const Footer = () => {
   return (
-    <footer className="bg-slate-900/50 text-slate-400 py-4 border-t border-slate-700 relative z-30">
+    <footer className="bg-transparent/50 text-slate-400 py-4 border-t border-slate-700 relative z-30">
       <div className="w-full text-center text-sm px-6">
         &copy; {new Date().getFullYear()} MetaCurtis Project. All Rights Reserved.
       </div>

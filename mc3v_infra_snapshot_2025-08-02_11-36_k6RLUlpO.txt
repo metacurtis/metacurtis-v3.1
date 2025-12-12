@@ -1,0 +1,1393 @@
+
+// ===== src/engine/NarrativeController.js =====
+
+// Placeholder - Paste from paste-2.txt
+
+// ===== src/engine/MemoryFragmentController.js =====
+
+// Placeholder - Paste from paste-2.txt
+
+// ===== src/bootstrap/wireSSTv3.js =====
+
+// bootstrap/wireSSTv3.js
+// Central wiring layer for SST v3.0 engine components
+
+import { narrativeController } from "@/engine/NarrativeController.js";
+import { memoryFragmentController } from "@/engine/MemoryFragmentController.js";
+import { stageAtom } from "@/stores/atoms/stageAtom.js";
+import { qualityAtom } from "@/stores/atoms/qualityAtom.js";
+import consciousnessEngine from "@/engine/ConsciousnessEngine.js";
+
+export function wireSSTv3() {
+  console.log("🔌 wireSSTv3: Initializing central event wiring...");
+  
+  // Forward events to window for WebGLBackground
+  if (narrativeController.on) {
+    narrativeController.on("particleCue", (event) => {
+      window.dispatchEvent(new CustomEvent("sst:particleCue", { 
+        detail: event 
+      }));
+    });
+  }
+  
+  if (memoryFragmentController.on) {
+    memoryFragmentController.on("tierHighlightUpdate", (event) => {
+      window.dispatchEvent(new CustomEvent("sst:tierHighlight", { 
+        detail: event 
+      }));
+    });
+  }
+  
+  // Subscribe to atoms
+  stageAtom.subscribe((state) => {
+    window.dispatchEvent(new CustomEvent("sst:stageChange", {
+      detail: {
+        stage: state.currentStage,
+        progress: state.progress,
+        isTransitioning: state.isTransitioning
+      }
+    }));
+  });
+  
+  qualityAtom.subscribe((state) => {
+    window.dispatchEvent(new CustomEvent("sst:qualityChange", {
+      detail: {
+        tier: state.currentTier,
+        particleBudget: state.particleBudget,
+        dpr: state.dpr
+      }
+    }));
+  });
+  
+  console.log("✅ wireSSTv3: Event wiring complete");
+}
+
+// ===== src/components/ui/narrative/MemoryFragments.jsx =====
+
+// src/components/ui/narrative/MemoryFragments.jsx
+// ✅ UPDATED: Works with consolidated narrativeStore architecture
+// ✅ INTEGRATED: Feature gates, memory fragment management, canonical stages
+
+import { useState, useEffect, useMemo } from 'react';
+import { useNarrativeStore } from '@/stores/narrativeStore';
+import { getPreset } from '@/config/narrativeParticleConfig';
+
+function MemoryFragments() {
+  const [activeFragment, setActiveFragment] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // ✅ UPDATED: Use consolidated store
+  const {
+    currentStage,
+    isStageFeatureEnabled,
+    activateMemoryFragment,
+    activeMemoryFragment,
+    userEngagement,
+  } = useNarrativeStore();
+
+  // ✅ INTEGRATED: Feature gate check
+  const memoryFragmentsEnabled = isStageFeatureEnabled('memoryFragments');
+
+  // ✅ UPDATED: Get fragments from current stage preset
+  const stageFragments = useMemo(() => {
+    if (!memoryFragmentsEnabled) return [];
+
+    const preset = getPreset(currentStage);
+    const fragments = preset?.memoryFragments || [];
+
+    // Enhanced fragment data with metadata
+    return fragments.map((fragment, index) => ({
+      id: `${currentStage}-fragment-${index}`,
+      content: fragment,
+      stageOrigin: currentStage,
+      index,
+      isExplored: userEngagement.fragmentsExplored.includes(`${currentStage}-fragment-${index}`),
+    }));
+  }, [currentStage, memoryFragmentsEnabled, userEngagement.fragmentsExplored]);
+
+  // ✅ ENHANCED: Mouse tracking for tooltip positioning
+  useEffect(() => {
+    const handleMouseMove = e => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    if (memoryFragmentsEnabled && stageFragments.length > 0) {
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => window.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [memoryFragmentsEnabled, stageFragments.length]);
+
+  // ✅ NEW: Fragment interaction handlers
+  const handleFragmentHover = fragment => {
+    setActiveFragment(fragment);
+  };
+
+  const handleFragmentLeave = () => {
+    setActiveFragment(null);
+  };
+
+  const handleFragmentClick = fragment => {
+    // ✅ INTEGRATED: Use store's fragment management
+    activateMemoryFragment(fragment.id);
+
+    // Add haptic feedback if supported
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    console.log(`🧠 Memory fragment activated: ${fragment.content}`);
+  };
+
+  // ✅ FEATURE GATE: Don't render if feature not enabled
+  if (!memoryFragmentsEnabled || stageFragments.length === 0) {
+    return null;
+  }
+
+  // ✅ ENHANCED: Stage-specific positioning
+  const getFragmentPosition = (fragment, index) => {
+    const basePositions = {
+      genesis: [
+        { left: '15%', top: '25%' },
+        { left: '85%', top: '30%' },
+        { left: '50%', top: '70%' },
+      ],
+      silent: [
+        { left: '20%', top: '40%' },
+        { left: '80%', top: '20%' },
+        { left: '60%', top: '75%' },
+      ],
+      awakening: [
+        { left: '25%', top: '20%' },
+        { left: '75%', top: '35%' },
+        { left: '45%', top: '65%' },
+      ],
+      acceleration: [
+        { left: '30%', top: '30%' },
+        { left: '70%', top: '25%' },
+        { left: '50%', top: '60%' },
+      ],
+      transcendence: [
+        { left: '35%', top: '15%' },
+        { left: '65%', top: '40%' },
+        { left: '50%', top: '75%' },
+      ],
+    };
+
+    const positions = basePositions[currentStage] || basePositions.genesis;
+    return positions[index] || { left: `${20 + index * 25}%`, top: `${30 + index * 15}%` };
+  };
+
+  return (
+    <>
+      {/* ✅ ENHANCED: Memory Fragment Triggers */}
+      {stageFragments.map(fragment => {
+        const position = getFragmentPosition(fragment, fragment.index);
+        const isExplored = fragment.isExplored;
+        const isActive = activeMemoryFragment === fragment.id;
+
+        return (
+          <div
+            key={fragment.id}
+            className={`memory-trigger ${isExplored ? 'explored' : ''} ${isActive ? 'active' : ''}`}
+            style={{
+              position: 'fixed',
+              width: '14px',
+              height: '14px',
+              background: isExplored
+                ? 'radial-gradient(circle, rgba(13, 148, 136, 0.8) 0%, rgba(13, 148, 136, 0.3) 70%, transparent 100%)'
+                : 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)',
+              borderRadius: '50%',
+              zIndex: 15,
+              cursor: 'pointer',
+              left: position.left,
+              top: position.top,
+              animation: `memory-pulse-${fragment.index} ${2 + fragment.index * 0.5}s ease-in-out infinite`,
+              transition: 'all 0.3s ease',
+              border: isActive ? '2px solid rgba(13, 148, 136, 0.8)' : 'none',
+              boxShadow: isExplored
+                ? '0 0 10px rgba(13, 148, 136, 0.4)'
+                : '0 0 8px rgba(255, 255, 255, 0.2)',
+            }}
+            onMouseEnter={() => handleFragmentHover(fragment)}
+            onMouseLeave={handleFragmentLeave}
+            onClick={() => handleFragmentClick(fragment)}
+            onMouseMove={e => e.stopPropagation()}
+            title={`Memory Fragment: ${fragment.content.substring(0, 50)}...`}
+          />
+        );
+      })}
+
+      {/* ✅ ENHANCED: Active Memory Fragment Tooltip */}
+      {activeFragment && (
+        <div
+          className="memory-fragment-tooltip"
+          style={{
+            position: 'fixed',
+            left: Math.min(mousePosition.x + 15, window.innerWidth - 280),
+            top: Math.max(mousePosition.y - 10, 10),
+            background: 'rgba(0, 0, 0, 0.95)',
+            color: 'white',
+            padding: '1rem 1.25rem',
+            borderRadius: '8px',
+            fontSize: '0.875rem',
+            lineHeight: '1.5',
+            maxWidth: '280px',
+            zIndex: 25,
+            border: activeFragment.isExplored
+              ? '1px solid rgba(13, 148, 136, 0.5)'
+              : '1px solid rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(15px)',
+            fontFamily: '"Courier New", monospace',
+            pointerEvents: 'none',
+            animation: 'memory-fade-in 0.3s ease-out',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          <div
+            style={{
+              marginBottom: '0.5rem',
+              fontSize: '0.75rem',
+              opacity: 0.7,
+              color: activeFragment.isExplored ? '#0D9488' : '#999',
+            }}
+          >
+            {activeFragment.isExplored ? '✓ Explored' : 'Click to explore'} • Stage: {currentStage}
+          </div>
+          <div>{activeFragment.content}</div>
+        </div>
+      )}
+
+      {/* ✅ ENHANCED: Stage-specific notification */}
+      {memoryFragmentsEnabled && stageFragments.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            right: '2rem',
+            background: 'rgba(13, 148, 136, 0.9)',
+            color: 'white',
+            padding: '0.5rem 1rem',
+            borderRadius: '6px',
+            fontSize: '0.75rem',
+            zIndex: 20,
+            animation: 'memory-notification-pulse 3s ease-in-out',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          💭 {stageFragments.length} memory fragment{stageFragments.length !== 1 ? 's' : ''}{' '}
+          available
+        </div>
+      )}
+
+      {/* ✅ ENHANCED: CSS Animations with stage awareness */}
+      {/* eslint-disable-next-line react/no-unknown-property */}
+      <style jsx>{`
+        @keyframes memory-pulse-0 {
+          0%,
+          100% {
+            opacity: 0.4;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.2);
+          }
+        }
+
+        @keyframes memory-pulse-1 {
+          0%,
+          100% {
+            opacity: 0.3;
+            transform: scale(0.9);
+          }
+          50% {
+            opacity: 0.7;
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes memory-pulse-2 {
+          0%,
+          100% {
+            opacity: 0.5;
+            transform: scale(1.1);
+          }
+          50% {
+            opacity: 0.9;
+            transform: scale(1.3);
+          }
+        }
+
+        @keyframes memory-fade-in {
+          0% {
+            opacity: 0;
+            transform: translateY(10px) scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes memory-notification-pulse {
+          0%,
+          100% {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          10%,
+          90% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .memory-trigger:hover {
+          transform: scale(1.6) !important;
+          background: radial-gradient(
+            circle,
+            rgba(13, 148, 136, 0.9) 0%,
+            rgba(13, 148, 136, 0.4) 70%,
+            transparent 100%
+          ) !important;
+          box-shadow: 0 0 15px rgba(13, 148, 136, 0.6) !important;
+        }
+
+        .memory-trigger.explored:hover {
+          background: radial-gradient(
+            circle,
+            rgba(13, 148, 136, 1) 0%,
+            rgba(13, 148, 136, 0.6) 70%,
+            transparent 100%
+          ) !important;
+        }
+
+        .memory-trigger.active {
+          animation-play-state: paused !important;
+          transform: scale(1.4) !important;
+        }
+
+        @media (max-width: 768px) {
+          .memory-trigger {
+            width: 12px !important;
+            height: 12px !important;
+          }
+
+          .memory-fragment-tooltip {
+            max-width: 220px !important;
+            font-size: 0.8rem !important;
+            padding: 0.75rem 1rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .memory-trigger {
+            width: 10px !important;
+            height: 10px !important;
+          }
+
+          .memory-fragment-tooltip {
+            max-width: 200px !important;
+            font-size: 0.75rem !important;
+            padding: 0.5rem 0.75rem !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .memory-trigger {
+            animation: none !important;
+          }
+
+          .memory-fragment-tooltip {
+            animation: none !important;
+          }
+        }
+
+        @media (hover: none) {
+          .memory-trigger:hover {
+            transform: scale(1.2) !important;
+          }
+        }
+      `}</style>
+    </>
+  );
+}
+
+export default MemoryFragments;
+
+/*
+🎯 CONSOLIDATION UPDATES COMPLETE
+
+✅ INTEGRATED WITH CONSOLIDATED ARCHITECTURE:
+- Uses narrativeStore instead of deprecated narrativeTransition
+- Integrated with feature gate system (memoryFragments)
+- Connected to store's memory fragment management
+- Works with canonical stage system
+
+✅ ENHANCED FUNCTIONALITY:
+- Stage-specific fragment positioning
+- Visual distinction for explored fragments
+- Active fragment highlighting
+- Improved accessibility and mobile support
+- Stage-aware notification system
+
+✅ PERFORMANCE OPTIMIZED:
+- Memoized fragment data
+- Conditional event listeners
+- Reduced re-renders with proper state management
+
+✅ USER EXPERIENCE:
+- Better visual feedback for interactions
+- Haptic feedback on supported devices
+- Responsive design for all screen sizes
+- Accessibility considerations
+
+✅ INTEGRATION READY:
+- Automatically unlocks at awakening+ stages
+- Tracks user engagement in store
+- Provides fragment exploration analytics
+- Seamless integration with existing UI
+*/
+
+// ===== src/components/ui/navigation/StageController.jsx =====
+
+// src/components/webgl/narrative/StageController.jsx
+// ENHANCED STAGE CONTROLLER - Threshold triggers + velocity-driven animation
+// Added: Once-only narrative events, scroll velocity animation scaling
+
+import { useEffect, useRef } from 'react';
+import { useNarrativeStore } from '@/stores/narrativeStore';
+import { narrativeTransition } from '@/config/narrativeParticleConfig';
+
+export default function StageController() {
+  const {
+    setGlobalProgress,
+    setStage,
+    currentStage,
+    updateEngagement,
+    isStageFeatureEnabled,
+    getNarrativeSnapshot,
+  } = useNarrativeStore();
+
+  const lastScrollTime = useRef(0);
+  const scrollVelocity = useRef(0);
+
+  // ⚡ B. THRESHOLD-BASED TRIGGERS - Once-only narrative events
+  const stageReached = useRef({
+    structure: false, // 20% - Memory fragments unlock
+    learning: false, // 40% - MetaCurtis awakening
+    building: false, // 60% - AI voice activation
+    mastery: false, // 80% - Full consciousness, contact portal
+    transcendence: false, // 95% - Services transition
+  });
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateScrollProgress);
+        ticking = true;
+      }
+    };
+
+    const updateScrollProgress = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollProgress = Math.min(scrollTop / Math.max(scrollHeight, 1), 1);
+
+      // ⚡ C. SCROLL VELOCITY CALCULATION for animation scaling
+      const now = performance.now();
+      const deltaTime = now - lastScrollTime.current;
+      const deltaScroll = Math.abs(scrollTop - (lastScrollTime.scrollTop || 0));
+      const rawVelocity = deltaTime > 0 ? deltaScroll / deltaTime : 0;
+
+      // Smooth velocity with exponential decay
+      scrollVelocity.current = scrollVelocity.current * 0.8 + rawVelocity * 0.2;
+
+      lastScrollTime.current = now;
+      lastScrollTime.scrollTop = scrollTop;
+
+      // Update narrative state
+      setGlobalProgress(scrollProgress);
+
+      // Calculate target stage based on scroll position
+      const targetStage = Math.floor(scrollProgress * 6);
+      const clampedTargetStage = Math.max(0, Math.min(5, targetStage));
+
+      // Trigger stage change if needed
+      if (clampedTargetStage !== currentStage) {
+        const stageNames = ['genesis', 'awakening', 'structure', 'learning', 'building', 'mastery'];
+        narrativeTransition.setStage(stageNames[clampedTargetStage]);
+        setStage(clampedTargetStage);
+      }
+
+      // ⚡ B. THRESHOLD-BASED TRIGGERS - Once-only narrative events
+      triggerNarrativeEvents(scrollProgress);
+
+      // ⚡ C. UPDATE VELOCITY for shader animation scaling
+      updateScrollVelocityEffects(scrollVelocity.current);
+
+      // Update user engagement
+      updateEngagement({
+        hasScrolled: scrollProgress > 0.01,
+        scrollVelocity: scrollVelocity.current,
+      });
+
+      ticking = false;
+    };
+
+    // ⚡ B. NARRATIVE EVENT TRIGGERS
+    const triggerNarrativeEvents = progress => {
+      // Structure stage (20%) - Memory fragments unlock
+      if (progress > 0.2 && !stageReached.current.structure) {
+        stageReached.current.structure = true;
+        console.log('🧠 Narrative Event: Memory fragments unlocked');
+
+        // Trigger memory fragment unlock animation
+        if (isStageFeatureEnabled('memoryFragments')) {
+          triggerMemoryFragmentUnlock();
+        }
+      }
+
+      // Learning stage (40%) - MetaCurtis awakening
+      if (progress > 0.4 && !stageReached.current.learning) {
+        stageReached.current.learning = true;
+        console.log('🤖 Narrative Event: MetaCurtis awakening');
+
+        // Trigger MetaCurtis emergence
+        if (isStageFeatureEnabled('metacurtisEmergence')) {
+          triggerMetaCurtisAwakening();
+        }
+      }
+
+      // Building stage (60%) - AI voice activation
+      if (progress > 0.6 && !stageReached.current.building) {
+        stageReached.current.building = true;
+        console.log('🗣️ Narrative Event: MetaCurtis voice activated');
+
+        // Trigger AI voice system
+        if (isStageFeatureEnabled('metacurtisDialogue')) {
+          triggerMetaCurtisVoice();
+        }
+      }
+
+      // Mastery stage (80%) - Full consciousness + contact portal
+      if (progress > 0.8 && !stageReached.current.mastery) {
+        stageReached.current.mastery = true;
+        console.log('🌟 Narrative Event: Digital mastery achieved');
+
+        // Trigger full AI interaction + contact portal
+        if (isStageFeatureEnabled('fullAIInteraction')) {
+          triggerFullConsciousness();
+        }
+
+        if (isStageFeatureEnabled('contactPortal')) {
+          triggerContactPortal();
+        }
+      }
+
+      // Transcendence (95%) - Services transition
+      if (progress > 0.95 && !stageReached.current.transcendence) {
+        stageReached.current.transcendence = true;
+        console.log('💼 Narrative Event: Services transition activated');
+
+        triggerServicesTransition();
+      }
+    };
+
+    // ⚡ C. SCROLL VELOCITY EFFECTS for shader animation
+    const updateScrollVelocityEffects = velocity => {
+      // Clamp velocity to reasonable range for shader uniforms
+      const clampedVelocity = Math.max(0.2, Math.min(2.0, velocity * 0.1));
+
+      // Update WebGL uniforms (will be consumed by WebGLBackground)
+      if (window.narrativeVelocityController) {
+        window.narrativeVelocityController.updateVelocity(clampedVelocity);
+      }
+
+      // Store for shader system access
+      if (typeof window !== 'undefined') {
+        window.currentScrollVelocity = clampedVelocity;
+      }
+    };
+
+    // NARRATIVE EVENT HANDLERS
+    const triggerMemoryFragmentUnlock = () => {
+      // Dispatch custom event for memory fragment system
+      window.dispatchEvent(
+        new CustomEvent('narrativeEvent', {
+          detail: { type: 'memoryFragmentsUnlocked', stage: 'structure' },
+        })
+      );
+    };
+
+    const triggerMetaCurtisAwakening = () => {
+      // Dispatch MetaCurtis emergence event
+      window.dispatchEvent(
+        new CustomEvent('narrativeEvent', {
+          detail: {
+            type: 'metacurtisAwakening',
+            stage: 'learning',
+            message: 'The foundation was already there...',
+          },
+        })
+      );
+    };
+
+    const triggerMetaCurtisVoice = () => {
+      // Dispatch AI voice activation
+      window.dispatchEvent(
+        new CustomEvent('narrativeEvent', {
+          detail: {
+            type: 'metacurtisVoiceActivated',
+            stage: 'building',
+            message: "Architecture isn't just code - it's choreography",
+          },
+        })
+      );
+    };
+
+    const triggerFullConsciousness = () => {
+      // Dispatch full AI consciousness event
+      window.dispatchEvent(
+        new CustomEvent('narrativeEvent', {
+          detail: {
+            type: 'fullConsciousness',
+            stage: 'mastery',
+            message: "You've witnessed the journey. Now let's discuss your vision.",
+          },
+        })
+      );
+    };
+
+    const triggerContactPortal = () => {
+      // Dispatch contact portal activation
+      window.dispatchEvent(
+        new CustomEvent('narrativeEvent', {
+          detail: { type: 'contactPortalActivated', stage: 'mastery' },
+        })
+      );
+    };
+
+    const triggerServicesTransition = () => {
+      // Dispatch services transition
+      window.dispatchEvent(
+        new CustomEvent('narrativeEvent', {
+          detail: { type: 'servicesTransition', stage: 'transcendence' },
+        })
+      );
+    };
+
+    // Initial scroll position check
+    updateScrollProgress();
+
+    // Add scroll listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [setGlobalProgress, setStage, currentStage, updateEngagement, isStageFeatureEnabled]);
+
+  // ⚡ C. VELOCITY CONTROLLER for shader integration
+  useEffect(() => {
+    // Create velocity controller for shader system integration
+    if (typeof window !== 'undefined') {
+      window.narrativeVelocityController = {
+        updateVelocity: velocity => {
+          // This will be consumed by WebGLBackground for shader uniforms
+          const event = new CustomEvent('scrollVelocityUpdate', {
+            detail: { velocity },
+          });
+          window.dispatchEvent(event);
+        },
+      };
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete window.narrativeVelocityController;
+        delete window.currentScrollVelocity;
+      }
+    };
+  }, []);
+
+  // Track time on page
+  useEffect(() => {
+    const startTime = Date.now();
+
+    const updateTimeOnPage = () => {
+      const timeOnPage = Date.now() - startTime;
+      updateEngagement({ timeOnPage });
+    };
+
+    const interval = setInterval(updateTimeOnPage, 1000);
+
+    return () => clearInterval(interval);
+  }, [updateEngagement]);
+
+  // Development keyboard shortcuts + velocity testing
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+
+    const handleKeyDown = event => {
+      // Only listen for number keys 0-5 with Ctrl modifier
+      if (event.ctrlKey && event.key >= '0' && event.key <= '5') {
+        const targetStage = parseInt(event.key);
+        const stageNames = ['genesis', 'awakening', 'structure', 'learning', 'building', 'mastery'];
+
+        narrativeTransition.jumpToStage(stageNames[targetStage]);
+        setStage(targetStage);
+
+        console.log(`🎮 Dev shortcut: Jumped to stage ${targetStage} (${stageNames[targetStage]})`);
+        event.preventDefault();
+      }
+
+      // ⚡ Dev: Test velocity effects with Ctrl+V
+      if (event.ctrlKey && event.key === 'v') {
+        const testVelocity = Math.random() * 2;
+        console.log(`🚀 Dev: Testing velocity effect: ${testVelocity.toFixed(2)}`);
+        // TODO: remove or implement updateScrollVelocityEffects
+        event.preventDefault();
+      }
+
+      // ⚡ Dev: Trigger narrative events with Ctrl+T
+      if (event.ctrlKey && event.key === 't') {
+        const snapshot = getNarrativeSnapshot();
+        console.log('📊 Dev: Current narrative state:', snapshot);
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setStage, getNarrativeSnapshot]);
+
+  // This component doesn't render anything - it's just for logic
+  return null;
+}
+
+// Export scroll utility functions for external use
+export const scrollUtils = {
+  // Programmatically scroll to a specific stage
+  scrollToStage: stage => {
+    const stageProgress = stage / 6;
+    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const targetScrollTop = stageProgress * scrollHeight;
+
+    window.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth',
+    });
+  },
+
+  // Get current scroll progress
+  getScrollProgress: () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+    return Math.min(scrollTop / Math.max(scrollHeight, 1), 1);
+  },
+
+  // Get current stage based on scroll position
+  getCurrentStageFromScroll: () => {
+    const progress = scrollUtils.getScrollProgress();
+    return Math.floor(progress * 6);
+  },
+};
+// temp stub — remove when real helper exists
+
+// temp stub — remove when real helper exists
+
+// ===== src/components/consciousness/ConsciousnessTheater.jsx =====
+
+// src/components/consciousness/ConsciousnessTheater.jsx
+// SST v3.0 PRODUCTION - Complete implementation with all fixes
+
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Canonical } from '../../config/canonical/canonicalAuthority';
+import { stageAtom } from '../../stores/atoms/stageAtom';
+import { qualityAtom } from '../../stores/atoms/qualityAtom';
+import { useMemoryFragments } from '../../hooks/useMemoryFragments.js'; // FIXED: Named import
+import WebGLCanvas from '../webgl/WebGLCanvas';
+import DevPerformanceMonitor from '../dev/DevPerformanceMonitor';
+
+console.log('🧬 LOADED: ConsciousnessTheater v3.0'); // Diagnostic
+
+// ===== OPENING SEQUENCE COMPONENTS =====
+const C64Cursor = ({ visible }) => (
+  <span style={{
+    color: '#00FF00',
+    fontFamily: 'Courier New, monospace',
+    fontSize: '2rem',
+    opacity: visible ? 1 : 0,
+    transition: 'opacity 100ms'
+  }}>_</span>
+);
+
+const TerminalText = ({ text, typeSpeed = 50, onComplete, style = {} }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayText(text.slice(0, currentIndex + 1));
+        setCurrentIndex(currentIndex + 1);
+      }, typeSpeed);
+      return () => clearTimeout(timeout);
+    } else if (onComplete) {
+      onComplete();
+    }
+  }, [currentIndex, text, typeSpeed, onComplete]);
+
+  return (
+    <div style={{
+      color: '#00FF00',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '1.5rem',
+      textShadow: '0 0 10px #00FF00',
+      ...style
+    }}>
+      {displayText}
+    </div>
+  );
+};
+
+const ScreenFill = ({ active, onComplete }) => {
+  const [lines, setLines] = useState([]);
+  
+  useEffect(() => {
+    if (!active) return;
+
+    let lineCount = 0;
+    const maxLines = 30;
+    
+    const interval = setInterval(() => {
+      if (lineCount < maxLines) {
+        setLines(prev => [...prev, `HELLO CURTIS `]);
+        lineCount++;
+      } else {
+        clearInterval(interval);
+        setTimeout(onComplete, 500);
+      }
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [active, onComplete]);
+
+  if (!active) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      overflow: 'hidden',
+      color: '#00FF00',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '1.2rem',
+      lineHeight: '1.2',
+      zIndex: 9999, // FIXED: Higher z-index
+      background: 'black',
+      whiteSpace: 'pre',
+      padding: '20px'
+    }}>
+      {lines.map((line, i) => (
+        <div key={i} style={{ display: 'inline' }}>
+          {line.repeat(10)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ===== NARRATION OVERLAY =====
+const NarrationOverlay = ({ segment }) => {
+  if (!segment) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '100px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '80%',
+      maxWidth: '800px',
+      background: 'rgba(0, 0, 0, 0.9)',
+      padding: '20px 30px',
+      borderRadius: '10px',
+      border: '1px solid rgba(0, 255, 0, 0.3)',
+      zIndex: 40
+    }}>
+      <p style={{
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '1.1rem',
+        lineHeight: '1.6',
+        margin: 0,
+        textAlign: 'center'
+      }}>
+        {segment.text}
+      </p>
+    </div>
+  );
+};
+
+// ===== MEMORY FRAGMENT RENDERER =====
+const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
+  if (!fragment) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      background: 'rgba(0, 0, 0, 0.95)',
+      border: '2px solid #00FF00',
+      borderRadius: '10px',
+      padding: '30px',
+      zIndex: 100,
+      minWidth: '400px',
+      maxWidth: '600px'
+    }}>
+      <h3 style={{ 
+        color: '#00FF00', 
+        marginTop: 0,
+        fontFamily: 'Courier New, monospace'
+      }}>
+        {fragment.name}
+      </h3>
+      <div style={{ color: '#ffffff', marginBottom: '20px' }}>
+        {fragment.content.type === 'interactive' && 
+          fragment.content.element === 'commodore_terminal' && (
+            <div style={{
+              background: '#000',
+              padding: '20px',
+              fontFamily: 'Courier New, monospace',
+              color: '#00FF00',
+              border: '1px solid #00FF00'
+            }}>
+              READY.<br/>
+              10 PRINT "HELLO CURTIS"<br/>
+              20 GOTO 10<br/>
+              RUN<br/>
+              <div style={{ marginTop: '10px', opacity: 0.7 }}>
+                {Array(5).fill('HELLO CURTIS ').join('')}...
+              </div>
+            </div>
+          )
+        }
+      </div>
+      <button 
+        onClick={onDismiss}
+        style={{
+          padding: '10px 20px',
+          background: '#00FF00',
+          color: '#000000',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          fontFamily: 'Courier New, monospace',
+          fontWeight: 'bold'
+        }}
+      >
+        Close
+      </button>
+    </div>
+  );
+};
+
+// ===== MAIN CONSCIOUSNESS THEATER =====
+export default function ConsciousnessTheater() {
+  // Core state
+  const [currentStage, setCurrentStage] = useState('genesis');
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [morphProgress, setMorphProgress] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Opening sequence state
+  const [openingPhase, setOpeningPhase] = useState('black');
+  const [showCursor, setShowCursor] = useState(false);
+  const [terminalLines, setTerminalLines] = useState([]);
+  const [screenFillActive, setScreenFillActive] = useState(false);
+  
+  // Narrative state
+  const [activeNarrative, setActiveNarrative] = useState(null);
+  const [narrativeTime, setNarrativeTime] = useState(0);
+  
+  // Stage management
+  const [showCanvas, setShowCanvas] = useState(false);
+  const startTimeRef = useRef(Date.now());
+  const currentStageRef = useRef('genesis'); // FIXED: Track current stage
+
+  // Get configuration
+  const stageConfig = Canonical.stages[currentStage];
+  const narrative = Canonical.dialogue?.[currentStage];
+
+  // Memory fragments
+  const { 
+    activeFragments, 
+    fragmentStates, 
+    triggerFragment, 
+    dismissFragment 
+  } = useMemoryFragments(currentStage, scrollProgress * 100, activeNarrative?.id);
+
+  // ===== LOCK SCROLLING DURING OPENING =====
+  useEffect(() => {
+    // Lock scrolling initially
+    document.body.style.overflow = 'hidden';
+    
+    // Unlock when opening completes
+    if (openingPhase === 'complete') {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [openingPhase]);
+
+  // ===== HARDCODED OPENING SEQUENCE (ALWAYS PLAYS) =====
+  useEffect(() => {
+    console.log('🎬 SST v3.0: Starting opening sequence (hardcoded)');
+    
+    const sequence = [];
+    let currentTime = 0;
+
+    // Black screen - 2 seconds
+    currentTime = 2000;
+
+    // Cursor phase
+    sequence.push({
+      delay: currentTime,
+      action: () => {
+        console.log('Phase: cursor');
+        setOpeningPhase('cursor');
+      }
+    });
+
+    // Cursor blink
+    sequence.push({ delay: currentTime + 500, action: () => setShowCursor(true) });
+    sequence.push({ delay: currentTime + 1000, action: () => setShowCursor(false) });
+    sequence.push({ delay: currentTime + 1200, action: () => setShowCursor(true) });
+
+    // Terminal phase
+    currentTime += 1500;
+    sequence.push({
+      delay: currentTime,
+      action: () => {
+        console.log('Phase: terminal');
+        setOpeningPhase('terminal');
+        setShowCursor(false);
+      }
+    });
+
+    // Terminal lines
+    const terminalData = [
+      { text: 'READY.', delay: 500 },
+      { text: '10 PRINT "HELLO CURTIS"', delay: 1000 },
+      { text: '20 GOTO 10', delay: 1000 },
+      { text: 'RUN', delay: 800 }
+    ];
+
+    terminalData.forEach((line) => {
+      currentTime += line.delay;
+      sequence.push({
+        delay: currentTime,
+        action: () => setTerminalLines(prev => [...prev, {
+          text: line.text,
+          typeSpeed: 50
+        }])
+      });
+    });
+
+    // Screen fill
+    currentTime += 1000;
+    sequence.push({
+      delay: currentTime,
+      action: () => {
+        console.log('Phase: fill');
+        setOpeningPhase('fill');
+        setScreenFillActive(true);
+      }
+    });
+
+    // Complete
+    currentTime += 2000;
+    sequence.push({
+      delay: currentTime,
+      action: () => {
+        console.log('Phase: complete');
+        setOpeningPhase('complete');
+        setIsInitialized(true);
+        setShowCanvas(true);
+        console.log('🎬 Opening sequence complete');
+      }
+    });
+
+    // Execute sequence
+    const timeouts = sequence.map(({ delay, action }) => 
+      setTimeout(action, delay)
+    );
+
+    return () => timeouts.forEach(clearTimeout);
+  }, []); // Only run once on mount
+
+  // ===== KEYBOARD NAVIGATION =====
+  useEffect(() => {
+    if (!isInitialized || openingPhase !== 'complete') return; // FIXED: Check opening complete
+
+    const handleKeyPress = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+          e.preventDefault();
+          stageAtom.nextStage();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          stageAtom.prevStage();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setMorphProgress(prev => Math.min(prev + 0.1, 1));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setMorphProgress(prev => Math.max(prev - 0.1, 0));
+          break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+          const index = parseInt(e.key) - 1;
+          const stages = Object.keys(Canonical.stages);
+          if (stages[index]) {
+            stageAtom.jumpToStage(stages[index]);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isInitialized, openingPhase]);
+
+  // ===== STAGE SUBSCRIPTION WITH SPAM FIX =====
+  useEffect(() => {
+    const unsubscribe = stageAtom.subscribe((state) => {
+      // Only update if stage actually changed
+      if (state.currentStage !== currentStageRef.current) {
+        currentStageRef.current = state.currentStage;
+        setCurrentStage(state.currentStage);
+        qualityAtom.updateParticleBudget(state.currentStage);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // ===== SCROLL HANDLING =====
+  useEffect(() => {
+    if (!isInitialized || openingPhase !== 'complete') return; // FIXED: Check opening complete
+
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const scrollHeight = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1
+      );
+      const progress = Math.min(scrollTop / scrollHeight, 1);
+      
+      setScrollProgress(progress);
+      
+      // Morph progress: 0-50% scroll = 0-1 morph
+      const morph = Math.min(progress * 2, 1);
+      setMorphProgress(morph);
+      
+      // Stage progression
+      const stageProgress = progress * 100;
+      const newStageCfg = Canonical.getStageByScroll(stageProgress);
+      const atomStage = stageAtom.getState().currentStage;
+      
+      if (newStageCfg && newStageCfg.name !== atomStage) {
+        stageAtom.jumpToStage(newStageCfg.name);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isInitialized, openingPhase]);
+
+  // ===== NARRATIVE TIMING =====
+  useEffect(() => {
+    if (!narrative?.narration?.segments || !isInitialized || openingPhase !== 'complete') return;
+
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      setNarrativeTime(elapsed);
+
+      const segment = narrative.narration.segments.find(seg => {
+        const start = seg.timing.start;
+        const end = seg.timing.start + seg.timing.duration;
+        return elapsed >= start && elapsed < end;
+      });
+
+      if (segment && segment.id !== activeNarrative?.id) {
+        setActiveNarrative(segment);
+        
+        if (segment.memoryFragmentTrigger) {
+          const fragment = Canonical.fragments[segment.memoryFragmentTrigger];
+          if (fragment) {
+            triggerFragment(fragment.id);
+          }
+        }
+      } else if (!segment && activeNarrative) {
+        setActiveNarrative(null);
+      }
+    }, 100);
+
+    return () => clearInterval(timer);
+  }, [narrative, isInitialized, openingPhase, activeNarrative, triggerFragment]);
+
+  // ===== RENDER =====
+
+  // Opening sequence
+  if (openingPhase !== 'complete') {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'black',
+        zIndex: 9999, // FIXED: Very high z-index
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden'
+      }}>
+        {openingPhase === 'cursor' && <C64Cursor visible={showCursor} />}
+        
+        {openingPhase === 'terminal' && (
+          <div style={{ width: '100%', maxWidth: '800px', padding: '0 20px' }}>
+            {terminalLines.map((line, i) => (
+              <TerminalText
+                key={i}
+                text={line.text}
+                typeSpeed={line.typeSpeed}
+                style={{ marginBottom: '10px' }}
+              />
+            ))}
+          </div>
+        )}
+        
+        {openingPhase === 'fill' && (
+          <ScreenFill active={screenFillActive} onComplete={() => {}} />
+        )}
+      </div>
+    );
+  }
+
+  // Main theater
+  return (
+    <div className="consciousness-theater-v3">
+      {/* Scroll container */}
+      <div style={{
+        position: 'absolute',
+        width: '1px',
+        height: '700vh',
+        pointerEvents: 'none',
+        zIndex: -1
+      }} />
+
+      {/* WebGL Canvas with props */}
+      {showCanvas && (
+        <WebGLCanvas 
+          stage={currentStage}
+          morphProgress={morphProgress}
+          scrollProgress={scrollProgress}
+        />
+      )}
+
+      {/* Narrative Overlay */}
+      {activeNarrative && (
+        <NarrationOverlay segment={activeNarrative} />
+      )}
+
+      {/* Memory Fragments */}
+      {activeFragments.map(fragment => {
+        const state = fragmentStates[fragment.id];
+        if (state?.state === 'active') {
+          return (
+            <MemoryFragmentRenderer
+              key={fragment.id}
+              fragment={fragment}
+              onDismiss={() => dismissFragment(fragment.id)}
+            />
+          );
+        }
+        return null;
+      })}
+
+      {/* Stage HUD */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        color: '#00FF00',
+        fontFamily: 'Courier New, monospace',
+        fontSize: '0.9rem',
+        opacity: 0.7,
+        zIndex: 50
+      }}>
+        {stageConfig?.title} | {Math.round(scrollProgress * 100)}% | Morph: {Math.round(morphProgress * 100)}%
+      </div>
+
+      {/* Dev Performance Monitor */}
+      <DevPerformanceMonitor />
+
+      {/* Dev controls */}
+      {import.meta.env.DEV && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.8)',
+          color: '#00FF00',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '0.8rem',
+          padding: '15px',
+          borderRadius: '5px',
+          border: '1px solid #00FF00',
+          maxWidth: '300px',
+          zIndex: 100
+        }}>
+          <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>
+            🎮 SST v3.0 Controls
+          </div>
+          <div>← → Navigate stages</div>
+          <div>↑ ↓ Manual morph</div>
+          <div>1-7 Jump to stage</div>
+          <div>Scroll for progression</div>
+          <div style={{ marginTop: '5px', color: '#ffff00' }}>
+            {morphProgress < 0.5 ? '☁️ Atmospheric' : '🧠 Brain'} Mode
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

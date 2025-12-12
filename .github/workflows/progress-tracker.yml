@@ -1,0 +1,34 @@
+name: Progress Tracker
+
+on:
+  push:
+    paths:
+      - 'docs/progress/*.md'
+      - 'IMPLEMENTATION_PLAN.md'
+
+jobs:
+  update-progress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Count Progress
+        run: |
+          echo "## Progress Report" > progress-report.md
+          echo "Generated: $(date)" >> progress-report.md
+          echo "" >> progress-report.md
+          
+          for file in docs/progress/*.md; do
+            total=$(grep -c "^- \[ \]" "$file" || true)
+            completed=$(grep -c "^- \[x\]" "$file" || true)
+            percent=$((completed * 100 / (total + completed)))
+            
+            echo "### $(basename $file .md)" >> progress-report.md
+            echo "Progress: $completed/$((total + completed)) ($percent%)" >> progress-report.md
+            echo "" >> progress-report.md
+          done
+      
+      - name: Update README
+        run: |
+          # Update progress badges in README if needed
+          echo "Progress tracking updated"

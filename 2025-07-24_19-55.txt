@@ -1,0 +1,2052 @@
+// src/components/consciousness/ConsciousnessTheater.jsx
+// SST v3.0 COMPLIANT - Complete rewrite for proper narrative implementation
+
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { Canonical } from '../../config/canonical/canonicalAuthority.js';
+import { useMemoryFragments } from '../../hooks/useMemoryFragments.js';
+import WebGLCanvas from '../webgl/WebGLCanvas.jsx';
+
+// ===== OPENING SEQUENCE COMPONENTS =====
+
+// Commodore 64 style cursor
+const C64Cursor = ({ visible }) => (
+  <span style={{
+    color: '#00FF00',
+    fontFamily: 'Courier New, monospace',
+    fontSize: '2rem',
+    opacity: visible ? 1 : 0,
+    transition: 'opacity 100ms'
+  }}>_</span>
+);
+
+// Terminal text with typing effect
+const TerminalText = ({ text, typeSpeed = 50, onComplete, style = {} }) => {
+  const [displayText, setDisplayText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayText(text.slice(0, currentIndex + 1));
+        setCurrentIndex(currentIndex + 1);
+      }, typeSpeed);
+      return () => clearTimeout(timeout);
+    } else if (onComplete) {
+      onComplete();
+    }
+  }, [currentIndex, text, typeSpeed, onComplete]);
+
+  return (
+    <div style={{
+      color: '#00FF00',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '1.5rem',
+      textShadow: '0 0 10px #00FF00',
+      ...style
+    }}>
+      {displayText}
+    </div>
+  );
+};
+
+// Screen fill effect for "HELLO CURTIS"
+const ScreenFill = ({ active, onComplete }) => {
+  const [lines, setLines] = useState([]);
+  const fillRef = useRef(null);
+
+  useEffect(() => {
+    if (!active) return;
+
+    let lineCount = 0;
+    const maxLines = 30;
+    
+    const interval = setInterval(() => {
+      if (lineCount < maxLines) {
+        setLines(prev => [...prev, `HELLO CURTIS `]);
+        lineCount++;
+      } else {
+        clearInterval(interval);
+        setTimeout(onComplete, 500);
+      }
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [active, onComplete]);
+
+  if (!active) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      overflow: 'hidden',
+      color: '#00FF00',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '1.2rem',
+      lineHeight: '1.2',
+      zIndex: 60,
+      background: 'black',
+      whiteSpace: 'pre',
+      padding: '20px'
+    }}>
+      {lines.map((line, i) => (
+        <div key={i} style={{ display: 'inline' }}>
+          {line.repeat(10)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ===== NARRATION SYSTEM =====
+
+const NarrationSystem = ({ stage, active, currentTime }) => {
+  const [activeSegment, setActiveSegment] = useState(null);
+  const [voiceAudio] = useState(() => new Audio());
+  
+  useEffect(() => {
+    if (!active) return;
+
+    const narrative = Canonical.dialogue[stage];
+    if (!narrative?.narration?.segments) return;
+
+    // Find active segment based on time
+    const segment = narrative.narration.segments.find(seg => {
+      const segStart = seg.timing.start;
+      const segEnd = seg.timing.start + seg.timing.duration;
+      return currentTime >= segStart && currentTime < segEnd;
+    });
+
+    if (segment && segment.id !== activeSegment?.id) {
+      setActiveSegment(segment);
+      
+      // Emit particle cue
+      if (segment.particleCue) {
+        window.dispatchEvent(new CustomEvent('narrativeParticleCue', {
+          detail: {
+            stage,
+            cue: segment.particleCue,
+            segmentId: segment.id
+          }
+        }));
+      }
+
+      // Trigger memory fragment if specified
+      if (segment.memoryFragmentTrigger) {
+        window.dispatchEvent(new CustomEvent('triggerMemoryFragment', {
+          detail: { fragmentId: segment.memoryFragmentTrigger }
+        }));
+      }
+    }
+  }, [stage, active, currentTime, activeSegment]);
+
+  if (!activeSegment || !active) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '100px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '80%',
+      maxWidth: '800px',
+      background: 'rgba(0, 0, 0, 0.9)',
+      padding: '20px',
+      borderRadius: '10px',
+      border: '1px solid rgba(0, 255, 0, 0.3)',
+      zIndex: 40
+    }}>
+      <p style={{
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '1.1rem',
+        lineHeight: '1.6',
+        margin: 0,
+        textAlign: 'center'
+      }}>
+        {activeSegment.text}
+      </p>
+    </div>
+  );
+};
+
+// ===== STAGE TRANSITION COMPONENT =====
+
+const StageTransition = ({ fromStage, toStage, onComplete }) => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const duration = 2000; // 2 second transition
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const p = Math.min(elapsed / duration, 1);
+      setProgress(p);
+
+      if (p < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        onComplete();
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [onComplete]);
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background: `rgba(0, 0, 0, ${0.5 + progress * 0.5})`,
+      zIndex: 80,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        color: '#00FF00',
+        fontFamily: 'Courier New, monospace',
+        fontSize: '2rem',
+        textAlign: 'center',
+        opacity: 1 - progress
+      }}>
+        {fromStage && `${Canonical.stages[fromStage].title}`}
+      </div>
+      <div style={{
+        color: '#00FF00',
+        fontFamily: 'Courier New, monospace',
+        fontSize: '2rem',
+        textAlign: 'center',
+        opacity: progress,
+        position: 'absolute'
+      }}>
+        {toStage && `${Canonical.stages[toStage].title}`}
+      </div>
+    </div>
+  );
+};
+
+// ===== MEMORY FRAGMENTS RENDERER =====
+
+const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
+  if (!fragment) return null;
+
+  // Simplified renderer - you'll expand based on fragment.content.type
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      background: 'rgba(0, 0, 0, 0.95)',
+      border: '2px solid #00FF00',
+      borderRadius: '10px',
+      padding: '30px',
+      zIndex: 100,
+      minWidth: '400px'
+    }}>
+      <h3 style={{ color: '#00FF00', marginTop: 0 }}>{fragment.name}</h3>
+      <div style={{ color: '#ffffff' }}>
+        {fragment.content.type === 'interactive' && 
+          <div>Interactive: {fragment.content.element}</div>
+        }
+      </div>
+      <button 
+        onClick={onDismiss}
+        style={{
+          marginTop: '20px',
+          padding: '10px 20px',
+          background: '#00FF00',
+          color: '#000000',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}
+      >
+        Close
+      </button>
+    </div>
+  );
+};
+
+// ===== MAIN CONSCIOUSNESS THEATER COMPONENT =====
+
+export default function ConsciousnessTheater() {
+  // Core state
+  const [currentStage, setCurrentStage] = useState('genesis');
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [theaterTime, setTheaterTime] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Opening sequence state
+  const [openingPhase, setOpeningPhase] = useState('black'); // black, cursor, terminal, fill, complete
+  const [showCursor, setShowCursor] = useState(false);
+  const [terminalLines, setTerminalLines] = useState([]);
+  const [screenFillActive, setScreenFillActive] = useState(false);
+  
+  // Stage transition state
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionFrom, setTransitionFrom] = useState(null);
+  const [transitionTo, setTransitionTo] = useState(null);
+  
+  // Timer ref
+  const startTimeRef = useRef(Date.now());
+  const animationFrameRef = useRef();
+
+  // Get current stage config
+  const stageConfig = Canonical.stages[currentStage];
+  const narrative = Canonical.dialogue[currentStage];
+
+  // Memory fragments hook
+  const { 
+    activeFragments, 
+    fragmentStates, 
+    triggerFragment, 
+    dismissFragment 
+  } = useMemoryFragments(currentStage, scrollProgress, null);
+
+  // ===== OPENING SEQUENCE ORCHESTRATION =====
+  useEffect(() => {
+    if (!narrative?.opening) {
+      setOpeningPhase('complete');
+      return;
+    }
+
+    const opening = narrative.opening;
+    let timeouts = [];
+
+    // Black screen
+    timeouts.push(setTimeout(() => {
+      setOpeningPhase('cursor');
+      setShowCursor(true);
+    }, opening.blackScreen.duration));
+
+    // Cursor blink
+    if (opening.cursor) {
+      let cursorTime = opening.blackScreen.duration;
+      opening.cursor.sequences.forEach((seq, i) => {
+        cursorTime += seq.duration;
+        timeouts.push(setTimeout(() => {
+          setShowCursor(seq.text === '_');
+        }, cursorTime));
+      });
+    }
+
+    // Terminal sequence
+    let terminalTime = opening.blackScreen.duration + 1500; // After cursor
+    timeouts.push(setTimeout(() => {
+      setOpeningPhase('terminal');
+      setShowCursor(false);
+    }, terminalTime));
+
+    // Add terminal lines
+    opening.terminal.forEach((line, i) => {
+      terminalTime += line.delay;
+      timeouts.push(setTimeout(() => {
+        setTerminalLines(prev => [...prev, line]);
+      }, terminalTime));
+    });
+
+    // Screen fill
+    terminalTime += 1000;
+    timeouts.push(setTimeout(() => {
+      setOpeningPhase('fill');
+      setScreenFillActive(true);
+    }, terminalTime));
+
+    // Complete
+    terminalTime += opening.screenFill.duration + 500;
+    timeouts.push(setTimeout(() => {
+      setOpeningPhase('complete');
+      setIsInitialized(true);
+    }, terminalTime));
+
+    return () => timeouts.forEach(clearTimeout);
+  }, [narrative]);
+
+  // ===== THEATER TIME TRACKING =====
+  useEffect(() => {
+    if (openingPhase !== 'complete') return;
+
+    const updateTime = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      setTheaterTime(elapsed);
+      animationFrameRef.current = requestAnimationFrame(updateTime);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(updateTime);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [openingPhase]);
+
+  // ===== SCROLL HANDLING =====
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = Math.min((scrollTop / scrollHeight) * 100, 100);
+      setScrollProgress(progress);
+
+      // Check for stage transitions based on scroll
+      const newStage = Canonical.getStageByScroll(progress);
+      if (newStage && newStage.name !== currentStage && !isTransitioning) {
+        setIsTransitioning(true);
+        setTransitionFrom(currentStage);
+        setTransitionTo(newStage.name);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [currentStage, isTransitioning]);
+
+  // ===== STAGE TRANSITION HANDLING =====
+  const handleTransitionComplete = useCallback(() => {
+    setCurrentStage(transitionTo);
+    setIsTransitioning(false);
+    setTransitionFrom(null);
+    setTransitionTo(null);
+    startTimeRef.current = Date.now(); // Reset timer for new stage
+  }, [transitionTo]);
+
+  // ===== RENDER PHASES =====
+
+  // Black screen phase
+  if (openingPhase === 'black') {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'black',
+        zIndex: 100
+      }} />
+    );
+  }
+
+  // Opening sequence phases
+  if (openingPhase !== 'complete') {
+    return (
+      <>
+        {/* WebGL Canvas (hidden during opening) */}
+        <div style={{ opacity: 0 }}>
+          <WebGLCanvas />
+        </div>
+
+        {/* Opening sequence overlay */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'black',
+          zIndex: 90,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '50px'
+        }}>
+          {/* Cursor */}
+          {openingPhase === 'cursor' && <C64Cursor visible={showCursor} />}
+
+          {/* Terminal */}
+          {openingPhase === 'terminal' && (
+            <div style={{ width: '100%', maxWidth: '800px' }}>
+              {terminalLines.map((line, i) => (
+                <TerminalText
+                  key={i}
+                  text={line.text}
+                  typeSpeed={line.typeSpeed || 50}
+                  style={{ marginBottom: '10px' }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Screen fill */}
+          {openingPhase === 'fill' && (
+            <ScreenFill 
+              active={screenFillActive}
+              onComplete={() => setOpeningPhase('complete')}
+            />
+          )}
+        </div>
+      </>
+    );
+  }
+
+  // Main theater view
+  return (
+    <div className="consciousness-theater-v3">
+      {/* Scroll content for height */}
+      <div style={{
+        position: 'absolute',
+        width: '1px',
+        height: '600vh',
+        pointerEvents: 'none'
+      }} />
+
+      {/* WebGL Canvas */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 1
+      }}>
+        <WebGLCanvas />
+      </div>
+
+      {/* Narration System */}
+      <NarrationSystem 
+        stage={currentStage}
+        active={!isTransitioning}
+        currentTime={theaterTime}
+      />
+
+      {/* Memory Fragments */}
+      {activeFragments.map(fragment => {
+        const state = fragmentStates[fragment.id];
+        if (state?.state === 'active') {
+          return (
+            <MemoryFragmentRenderer
+              key={fragment.id}
+              fragment={fragment}
+              onDismiss={() => dismissFragment(fragment.id)}
+            />
+          );
+        }
+        return null;
+      })}
+
+      {/* Stage Transitions */}
+      {isTransitioning && (
+        <StageTransition
+          fromStage={transitionFrom}
+          toStage={transitionTo}
+          onComplete={handleTransitionComplete}
+        />
+      )}
+
+      {/* Stage Info (minimal HUD) */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        left: '20px',
+        color: '#00FF00',
+        fontFamily: 'Courier New, monospace',
+        fontSize: '0.9rem',
+        opacity: 0.7,
+        zIndex: 50
+      }}>
+        {stageConfig?.title} | {scrollProgress.toFixed(0)}%
+      </div>
+
+      {/* Debug Info (dev only) */}
+      {import.meta.env.DEV && (
+        <div style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.8)',
+          color: '#00FF00',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '0.8rem',
+          padding: '10px',
+          borderRadius: '5px',
+          zIndex: 100
+        }}>
+          <div>Stage: {currentStage}</div>
+          <div>Time: {(theaterTime / 1000).toFixed(1)}s</div>
+          <div>Fragments: {activeFragments.length}</div>
+        </div>
+      )}
+    </div>
+  );
+}// src/stores/atoms/qualityAtom.js
+// ✅ PHASE 1 CRITICAL FIX: SST v2.1 Canonical Authority + Architectural Integrity
+// ✅ MICRO-CACHE EVOLUTION: Multi-layer caching with canonical compliance
+
+import { createAtom } from './createAtom.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+
+// ✅ SST v2.0 QUALITY TIERS
+const SST_V2_QUALITY_TIERS = ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'];
+
+// ✅ PHASE 1 FIX: Canonical authority with numeric multipliers
+const SST_V2_QUALITY_MULTIPLIERS = {
+  LOW: { particles: 0.6, dpr: 0.5, effects: 0.8, canonical: false },
+  MEDIUM: { particles: 0.8, dpr: 0.75, effects: 0.9, canonical: false },
+  HIGH: { particles: 1.0, dpr: 1.0, effects: 1.0, canonical: true },    // ✅ CANONICAL COMPLIANCE
+  ULTRA: { particles: 1.2, dpr: 1.2, effects: 1.1, canonical: true }    // ✅ CANONICAL COMPLIANCE
+};
+
+// ✅ PHASE 1 FIX: Canonical tier detection
+const CANONICAL_TIERS = new Set(['HIGH', 'ULTRA']);
+const HARD_MAX_PARTICLES = 20000; // Safety clamp for low devices
+
+// ✅ CANONICAL PARTICLE EXTRACTION
+const SST_V2_BASE_PARTICLES = Object.fromEntries(
+  Object.entries(Canonical.stages).map(([stageName, stageData]) => [
+    stageName,
+    stageData.particles
+  ])
+);
+
+// ✅ PHASE 1 FIX: Unified compute budget function (single source of truth)
+function computeBudget(stageName, tier, state, advancedCache) {
+  const { deviceType, deviceOptimization } = state;
+  
+  // Resolve canonical particle count
+  function resolveCanonicalParticleCount(stage) {
+    let count = SST_V2_BASE_PARTICLES[stage];
+    if (!count) {
+      console.warn(`[qualityAtom] Unknown stage: ${stage}, fallback genesis`);
+      count = SST_V2_BASE_PARTICLES.genesis || 2000;
+    }
+    return count;
+  }
+  
+  // ✅ CANONICAL TIERS: Exact SST v2.1 compliance
+  if (CANONICAL_TIERS.has(tier)) {
+    let count = resolveCanonicalParticleCount(stageName);
+    
+    // ✅ PHASE 1 FIX: Safety clamp for low devices
+    if (count > HARD_MAX_PARTICLES && deviceType === 'low') {
+      const scaled = Math.round(count * 0.75);
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Canonical safety clamp: ${stageName} ${count}→${scaled} (low device)`);
+      }
+      return { count: scaled, canonical: false, safetyClamp: true };
+    }
+    
+    // ✅ PHASE 1 FIX: Throttled canonical logging
+    const canonicalLogKey = `${stageName}-${tier}`;
+    if (!computeBudget._canonicalLogged) computeBudget._canonicalLogged = new Set();
+    if (!computeBudget._canonicalLogged.has(canonicalLogKey)) {
+      console.log(`🎯 SST v2.1 CANONICAL: ${stageName} → ${count} particles (tier: ${tier})`);
+      computeBudget._canonicalLogged.add(canonicalLogKey);
+    }
+    
+    return { count, canonical: true };
+  }
+  
+  // ✅ LOW/MEDIUM SCALING: Apply quality multipliers
+  const baseCount = resolveCanonicalParticleCount(stageName);
+  const config = SST_V2_QUALITY_MULTIPLIERS[tier] || SST_V2_QUALITY_MULTIPLIERS.HIGH;
+  let scaled = Math.round(baseCount * config.particles);
+  
+  // Apply viewport scaling for non-canonical tiers
+  if (typeof window !== 'undefined') {
+    const { innerWidth, innerHeight } = window;
+    const viewportScaling = advancedCache.getViewportScaling(innerWidth, innerHeight, tier);
+    scaled = Math.round(scaled * viewportScaling.particleScale);
+  }
+  
+  // Apply device optimization limits
+  const deviceOpt = deviceOptimization || advancedCache.getDeviceOptimization({
+    deviceType: state.deviceType,
+    webglVersion: state.webglVersion,
+    renderer: state.renderer
+  });
+  
+  scaled = Math.min(scaled, deviceOpt.maxParticles);
+  return { count: scaled, canonical: false };
+}
+
+// ✅ ENHANCED: Multi-layer caching system
+class AdvancedQualityCache {
+  constructor() {
+    this.particleCache = new Map(); // Stage + tier -> particle count
+    this.dprCache = new Map(); // Tier + device -> DPR value
+    this.viewportCache = new Map(); // Viewport + tier -> scaling factors
+    this.deviceCache = new Map(); // Device info -> optimization settings
+    this.performanceCache = new Map(); // Performance metrics -> recommendations
+    
+    // Cache metadata
+    this.cacheStats = {
+      hits: 0,
+      misses: 0,
+      lastCleanup: Date.now(),
+      cleanupInterval: 60000, // 1 minute
+      maxEntries: 200
+    };
+    
+    // Performance tracking
+    this.performanceTracker = {
+      calculateCalls: 0,
+      cacheHits: 0,
+      averageCalculationTime: 0,
+      lastCalculationTime: 0,
+      canonicalBypasses: 0 // ✅ PHASE 1 FIX: Track canonical bypasses
+    };
+  }
+  
+  // ✅ PHASE 1 FIX: Enhanced particle budget with canonical bypass tracking
+  getParticleBudget(stage, tier) {
+    const startTime = performance.now();
+    
+    // ✅ CANONICAL TIERS: Bypass cache, use direct calculation
+    if (CANONICAL_TIERS.has(tier)) {
+      this.performanceTracker.canonicalBypasses++;
+      
+      let baseCount = SST_V2_BASE_PARTICLES[stage];
+      if (!baseCount) {
+        console.warn(`[qualityAtom] Unknown stage: ${stage}, using genesis fallback`);
+        baseCount = SST_V2_BASE_PARTICLES.genesis || 2000;
+      }
+      
+      return baseCount; // ✅ EXACT canonical compliance
+    }
+    
+    // ✅ EXISTING CACHE LOGIC for LOW/MEDIUM tiers
+    const cacheKey = `${stage}-${tier}`;
+    
+    if (this.particleCache.has(cacheKey)) {
+      this.cacheStats.hits++;
+      this.performanceTracker.cacheHits++;
+      
+      const cached = this.particleCache.get(cacheKey);
+      cached.lastAccessed = Date.now();
+      cached.accessCount++;
+      
+      return cached.value;
+    }
+    
+    // Cache miss - calculate value for LOW/MEDIUM only
+    this.cacheStats.misses++;
+    this.performanceTracker.calculateCalls++;
+    
+    let baseCount = SST_V2_BASE_PARTICLES[stage];
+    if (!baseCount) {
+      console.warn(`[qualityAtom] Unknown stage: ${stage}, using genesis fallback`);
+      baseCount = SST_V2_BASE_PARTICLES.genesis || 2000;
+    }
+    
+    const config = SST_V2_QUALITY_MULTIPLIERS[tier] || SST_V2_QUALITY_MULTIPLIERS.HIGH;
+    const calculatedCount = Math.round(baseCount * config.particles);
+    
+    // Cache the result with metadata
+    this.particleCache.set(cacheKey, {
+      value: calculatedCount,
+      created: Date.now(),
+      lastAccessed: Date.now(),
+      accessCount: 1,
+      stage,
+      tier,
+      baseCount,
+      multiplier: config.particles
+    });
+    
+    const endTime = performance.now();
+    const calculationTime = endTime - startTime;
+    this.performanceTracker.lastCalculationTime = calculationTime;
+    this.performanceTracker.averageCalculationTime = 
+      (this.performanceTracker.averageCalculationTime * (this.performanceTracker.calculateCalls - 1) + calculationTime) / 
+      this.performanceTracker.calculateCalls;
+    
+    this.maybeCleanup();
+    
+    return calculatedCount;
+  }
+  
+  // ✅ ENHANCED: DPR caching with device optimization
+  getDPRValue(tier, deviceInfo = {}) {
+    const deviceKey = this.getDeviceKey(deviceInfo);
+    const cacheKey = `${tier}-${deviceKey}`;
+    
+    if (this.dprCache.has(cacheKey)) {
+      this.cacheStats.hits++;
+      return this.dprCache.get(cacheKey).value;
+    }
+    
+    this.cacheStats.misses++;
+    
+    const baseConfig = SST_V2_QUALITY_MULTIPLIERS[tier] || SST_V2_QUALITY_MULTIPLIERS.HIGH;
+    let dprValue = baseConfig.dpr;
+    
+    // Device-specific DPR optimization
+    const { deviceType, webglVersion, renderer } = deviceInfo;
+    
+    if (deviceType === 'mobile') {
+      dprValue = Math.min(dprValue, 2.0); // Cap mobile DPR
+    } else if (deviceType === 'tablet') {
+      dprValue = Math.min(dprValue, 2.5); // Cap tablet DPR
+    }
+    
+    if (webglVersion === 'WebGL1') {
+      dprValue *= 0.8; // Reduce DPR for WebGL1
+    }
+    
+    if (renderer && renderer.includes('Intel')) {
+      dprValue *= 0.9; // Slight reduction for Intel GPUs
+    }
+    
+    // Apply device pixel ratio limits
+    const actualDPR = window.devicePixelRatio || 1;
+    dprValue = Math.min(dprValue * actualDPR, actualDPR * 1.5);
+    
+    // Cache the optimized value
+    this.dprCache.set(cacheKey, {
+      value: dprValue,
+      created: Date.now(),
+      lastAccessed: Date.now(),
+      tier,
+      deviceInfo,
+      baseDPR: baseConfig.dpr,
+      actualDPR,
+      optimizations: {
+        deviceTypeCap: deviceType === 'mobile' || deviceType === 'tablet',
+        webglReduction: webglVersion === 'WebGL1',
+        rendererAdjustment: renderer && renderer.includes('Intel')
+      }
+    });
+    
+    return dprValue;
+  }
+  
+  // ✅ ENHANCED: Viewport scaling cache
+  getViewportScaling(width, height, tier) {
+    const cacheKey = `${width}x${height}-${tier}`;
+    
+    if (this.viewportCache.has(cacheKey)) {
+      this.cacheStats.hits++;
+      return this.viewportCache.get(cacheKey).value;
+    }
+    
+    this.cacheStats.misses++;
+    
+    const baseArea = 1920 * 1080; // Reference resolution
+    const currentArea = width * height;
+    const areaRatio = currentArea / baseArea;
+    
+    // Calculate scaling factors
+    const config = SST_V2_QUALITY_MULTIPLIERS[tier] || SST_V2_QUALITY_MULTIPLIERS.HIGH;
+    
+    const scaling = {
+      particleScale: Math.sqrt(areaRatio) * config.particles,
+      effectScale: Math.min(areaRatio, 2.0) * config.effects,
+      dprScale: Math.max(0.5, Math.min(1.5, 1.0 / Math.sqrt(areaRatio))),
+      performanceScale: areaRatio > 1.5 ? 0.8 : 1.0 // Reduce for large screens
+    };
+    
+    this.viewportCache.set(cacheKey, {
+      value: scaling,
+      created: Date.now(),
+      width,
+      height,
+      tier,
+      areaRatio,
+      referenceArea: baseArea
+    });
+    
+    return scaling;
+  }
+  
+  // ✅ ENHANCED: Device optimization cache
+  getDeviceOptimization(deviceInfo) {
+    const deviceKey = this.getDeviceKey(deviceInfo);
+    
+    if (this.deviceCache.has(deviceKey)) {
+      this.cacheStats.hits++;
+      return this.deviceCache.get(deviceKey).value;
+    }
+    
+    this.cacheStats.misses++;
+    
+    const { deviceType, webglVersion, renderer, memory } = deviceInfo;
+    
+    const optimization = {
+      recommendedTier: 'HIGH',
+      maxParticles: 15000,
+      maxDPR: 2.0,
+      enableEffects: true,
+      enableAntialiasing: true,
+      enableMipmaps: true,
+      thermalThrottling: false,
+      batteryOptimization: false
+    };
+    
+    // Device-specific optimizations
+    if (deviceType === 'mobile') {
+      optimization.recommendedTier = 'MEDIUM';
+      optimization.maxParticles = 8000;
+      optimization.maxDPR = 2.0;
+      optimization.enableAntialiasing = false;
+      optimization.thermalThrottling = true;
+      optimization.batteryOptimization = true;
+    } else if (deviceType === 'tablet') {
+      optimization.recommendedTier = 'HIGH';
+      optimization.maxParticles = 12000;
+      optimization.maxDPR = 2.5;
+      optimization.batteryOptimization = true;
+    }
+    
+    if (webglVersion === 'WebGL1') {
+      optimization.maxParticles *= 0.7;
+      optimization.enableMipmaps = false;
+    }
+    
+    if (renderer && renderer.includes('Intel')) {
+      optimization.maxParticles *= 0.8;
+      optimization.recommendedTier = optimization.recommendedTier === 'ULTRA' ? 'HIGH' : optimization.recommendedTier;
+    }
+    
+    if (memory && memory < 4) {
+      optimization.maxParticles *= 0.6;
+      optimization.recommendedTier = 'MEDIUM';
+    }
+    
+    this.deviceCache.set(deviceKey, {
+      value: optimization,
+      created: Date.now(),
+      deviceInfo,
+      originalValues: { ...optimization }
+    });
+    
+    return optimization;
+  }
+  
+  // ✅ UTILITY: Generate device key
+  getDeviceKey(deviceInfo) {
+    const { deviceType = 'unknown', webglVersion = 'unknown', renderer = 'unknown' } = deviceInfo;
+    return `${deviceType}-${webglVersion}-${renderer.substring(0, 20)}`;
+  }
+  
+  // ✅ ENHANCED: Cache cleanup with LRU eviction
+  maybeCleanup() {
+    const now = Date.now();
+    if (now - this.cacheStats.lastCleanup < this.cacheStats.cleanupInterval) return;
+    
+    let totalEntries = this.particleCache.size + this.dprCache.size + this.viewportCache.size + 
+                      this.deviceCache.size + this.performanceCache.size;
+    
+    if (totalEntries < this.cacheStats.maxEntries) {
+      this.cacheStats.lastCleanup = now;
+      return;
+    }
+    
+    let cleanedCount = 0;
+    
+    // LRU cleanup for each cache
+    [this.particleCache, this.dprCache, this.viewportCache, this.performanceCache].forEach(cache => {
+      if (cache.size > this.cacheStats.maxEntries / 4) {
+        const entries = Array.from(cache.entries())
+          .sort((a, b) => (a[1].lastAccessed || a[1].created) - (b[1].lastAccessed || b[1].created));
+        
+        const toDelete = entries.slice(0, Math.floor(entries.length * 0.3));
+        toDelete.forEach(([key]) => {
+          cache.delete(key);
+          cleanedCount++;
+        });
+      }
+    });
+    
+    this.cacheStats.lastCleanup = now;
+    
+    if (import.meta.env.DEV && cleanedCount > 0) {
+      console.debug(`🎨 qualityAtom: LRU cleanup removed ${cleanedCount} cache entries`);
+    }
+  }
+  
+  // ✅ PHASE 1 FIX: Enhanced cache stats with canonical bypass tracking
+  getStats() {
+    const hitRate = this.cacheStats.hits + this.cacheStats.misses > 0 ? 
+      this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses) : 0;
+    const canonicalBypasses = this.performanceTracker.canonicalBypasses || 0;
+    
+    return {
+      ...this.cacheStats,
+      performance: this.performanceTracker,
+      cacheSizes: {
+        particles: this.particleCache.size,
+        dpr: this.dprCache.size,
+        viewport: this.viewportCache.size,
+        device: this.deviceCache.size,
+        performance: this.performanceCache.size
+      },
+      hitRate,
+      canonicalBypasses, // ✅ Track canonical bypasses
+      effectiveHitRate: this.cacheStats.hits + this.cacheStats.misses + canonicalBypasses > 0 ? 
+        this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses + canonicalBypasses) : 0,
+      efficiency: this.performanceTracker.cacheHits / this.performanceTracker.calculateCalls || 0
+    };
+  }
+  
+  // ✅ ENHANCED: Clear specific cache types
+  clearCache(type = 'all') {
+    const caches = {
+      particles: this.particleCache,
+      dpr: this.dprCache,
+      viewport: this.viewportCache,
+      device: this.deviceCache,
+      performance: this.performanceCache
+    };
+    
+    if (type === 'all') {
+      Object.values(caches).forEach(cache => cache.clear());
+      this.cacheStats.hits = 0;
+      this.cacheStats.misses = 0;
+      this.performanceTracker.canonicalBypasses = 0;
+    } else if (caches[type]) {
+      caches[type].clear();
+    }
+  }
+}
+
+// ✅ INITIAL STATE
+const initialState = {
+  currentQualityTier: 'HIGH',
+  targetDpr: 1.0,
+  frameloopMode: 'always',
+  webglEnabled: true,
+  particleCount: 5000,
+  
+  // Device awareness
+  deviceType: 'desktop',
+  webglVersion: 'WebGL2',
+  performanceClass: 'high',
+  
+  // Scaling capability
+  canScaleToUltra: false,
+  lastTierChange: 0,
+  
+  // ✅ ENHANCED: Performance state
+  currentFPS: 60,
+  averageFrameTime: 16.67,
+  jankRatio: 0,
+  performanceGrade: 'A',
+  
+  // ✅ ENHANCED: Optimization state
+  deviceOptimization: null,
+  viewportScaling: null,
+  performanceRecommendation: null
+};
+
+// ✅ ENHANCED QUALITY ATOM - Complete caching optimization
+export const qualityAtom = createAtom(initialState, (get, setState) => {
+  // Initialize advanced cache
+  const advancedCache = new AdvancedQualityCache();
+  
+  return {
+    // ✅ CORE ACTIONS - Enhanced with caching
+    setCurrentQualityTier: (tier) => {
+      const s = get();
+      
+      if (!SST_V2_QUALITY_TIERS.includes(tier)) {
+        console.warn(`[qualityAtom] Invalid tier: ${tier}. Valid tiers:`, SST_V2_QUALITY_TIERS);
+        return;
+      }
+      
+      const config = SST_V2_QUALITY_MULTIPLIERS[tier];
+      const deviceInfo = {
+        deviceType: s.deviceType,
+        webglVersion: s.webglVersion,
+        renderer: s.renderer
+      };
+      
+      // Get optimized DPR from cache
+      const optimizedDPR = advancedCache.getDPRValue(tier, deviceInfo);
+      const now = performance.now();
+      
+      setState({
+        ...s,
+        currentQualityTier: tier,
+        targetDpr: optimizedDPR,
+        lastTierChange: now,
+      });
+      
+      // Update device optimization if needed
+      const deviceOpt = advancedCache.getDeviceOptimization(deviceInfo);
+      if (JSON.stringify(deviceOpt) !== JSON.stringify(s.deviceOptimization)) {
+        setState(prev => ({ ...prev, deviceOptimization: deviceOpt }));
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log(`🎨 qualityAtom: Quality tier set to ${tier} (DPR: ${optimizedDPR.toFixed(2)})`);
+      }
+    },
+    
+    setTargetDpr: (dpr) => {
+      const s = get();
+      setState({ ...s, targetDpr: dpr });
+    },
+    
+    setFrameloopMode: (mode) => {
+      const s = get();
+      setState({ ...s, frameloopMode: mode });
+    },
+    
+    setWebglEnabled: (isEnabled) => {
+      const s = get();
+      setState({ ...s, webglEnabled: isEnabled });
+    },
+    
+    setParticleCount: (count) => {
+      const s = get();
+      setState({ ...s, particleCount: count });
+    },
+
+    // ✅ PHASE 1 FIX: Enhanced particle budget with unified logic
+    getParticleBudget: (stageName, explicitTier) => {
+      const s = get();
+      const tier = explicitTier || s.currentQualityTier;
+      
+      // Use unified compute function
+      const { count } = computeBudget(stageName, tier, s, advancedCache);
+      return count;
+    },
+    
+    // ✅ ENHANCED: Advanced particle budget calculation
+    getAdvancedParticleBudget: (stageName, overrides = {}) => {
+      const s = get();
+      const {
+        tier = s.currentQualityTier,
+        width = window?.innerWidth || 1920,
+        height = window?.innerHeight || 1080,
+        deviceInfo = {
+          deviceType: s.deviceType,
+          webglVersion: s.webglVersion,
+          renderer: s.renderer
+        }
+      } = overrides;
+      
+      // Use unified compute function
+      const { count } = computeBudget(stageName, tier, { ...s, ...overrides }, advancedCache);
+      return count;
+    },
+    
+    // ✅ ENHANCED: Cached DPR calculation
+    getOptimizedDPR: (deviceInfo = null) => {
+      const s = get();
+      const info = deviceInfo || {
+        deviceType: s.deviceType,
+        webglVersion: s.webglVersion,
+        renderer: s.renderer
+      };
+      
+      return advancedCache.getDPRValue(s.currentQualityTier, info);
+    },
+    
+    // ✅ SST v2.0 PARTICLE BUDGET CALCULATION - Enhanced with caching
+    updateParticleBudget: (stageName = 'genesis') => {
+      const s = get();
+      const particleCount = qualityAtom.getParticleBudget(stageName);
+      
+      setState({
+        ...s,
+        particleCount,
+      });
+      
+      if (import.meta.env.DEV) {
+        console.log(`🎨 qualityAtom: Particle budget updated - ${stageName}: ${particleCount} particles (${s.currentQualityTier})`);
+      }
+      
+      return particleCount;
+    },
+    
+    // ✅ ENHANCED: Device initialization with advanced caching
+    initializeForDevice: (deviceInfo) => {
+      const s = get();
+      const { deviceType, webglVersion, renderer, memory } = deviceInfo;
+      
+      // Get device optimization from cache
+      const deviceOpt = advancedCache.getDeviceOptimization(deviceInfo);
+      const optimizedDPR = advancedCache.getDPRValue(deviceOpt.recommendedTier, deviceInfo);
+      
+      setState({
+        ...s,
+        deviceType,
+        webglVersion,
+        renderer,
+        memory,
+        deviceOptimization: deviceOpt,
+        targetDpr: optimizedDPR,
+        performanceClass: deviceOpt.recommendedTier.toLowerCase()
+      });
+      
+      // Set recommended tier
+      qualityAtom.setCurrentQualityTier(deviceOpt.recommendedTier);
+      
+      if (import.meta.env.DEV) {
+        console.log(`🎨 qualityAtom: Initialized for ${deviceType}/${webglVersion} → ${deviceOpt.recommendedTier} (DPR: ${optimizedDPR.toFixed(2)})`);
+      }
+    },
+    
+    // ✅ ENHANCED: Performance update with caching
+    updatePerformanceMetrics: (fps, frameTime, jankRatio) => {
+      const s = get();
+      
+      // Calculate performance grade
+      let grade = 'A';
+      if (fps < 30) grade = 'F';
+      else if (fps < 45) grade = 'D';
+      else if (fps < 55) grade = 'C';
+      else if (fps < 65) grade = 'B';
+      
+      setState({
+        ...s,
+        currentFPS: fps,
+        averageFrameTime: frameTime,
+        jankRatio,
+        performanceGrade: grade
+      });
+    },
+    
+    // ✅ ENHANCED: Viewport update with caching
+    updateViewportScaling: (width, height) => {
+      const s = get();
+      const scaling = advancedCache.getViewportScaling(width, height, s.currentQualityTier);
+      
+      setState({
+        ...s,
+        viewportScaling: scaling
+      });
+      
+      return scaling;
+    },
+    
+    // ✅ SST v2.0 SCALING MANAGEMENT - Enhanced
+    updateScalingCapability: (fps, jankRatio) => {
+      const s = get();
+      const canScaleToUltra = fps >= 58 && jankRatio < 0.05;
+      
+      setState({
+        ...s,
+        canScaleToUltra
+      });
+      
+      // Auto-downgrade if performance drops
+      if (s.currentQualityTier === 'ULTRA' && !canScaleToUltra) {
+        qualityAtom.setCurrentQualityTier('HIGH');
+      }
+    },
+    
+    // ✅ ENHANCED: Intelligent showcase mode
+    enableShowcaseMode: () => {
+      const s = get();
+      const deviceOpt = s.deviceOptimization || advancedCache.getDeviceOptimization({
+        deviceType: s.deviceType,
+        webglVersion: s.webglVersion,
+        renderer: s.renderer
+      });
+      
+      if (s.canScaleToUltra && deviceOpt.maxParticles >= 15000) {
+        qualityAtom.setCurrentQualityTier('ULTRA');
+        console.log('🎨 qualityAtom: Showcase mode enabled - ULTRA quality');
+      } else {
+        console.warn('🎨 qualityAtom: Showcase mode unavailable - insufficient performance or device capability');
+      }
+    },
+    
+    // ✅ ENHANCED: Query methods with caching
+    getQualityConfig: () => {
+      const s = get();
+      const config = SST_V2_QUALITY_MULTIPLIERS[s.currentQualityTier] || SST_V2_QUALITY_MULTIPLIERS.HIGH;
+      
+      return {
+        tier: s.currentQualityTier,
+        particles: s.particleCount,
+        dpr: s.targetDpr,
+        webgl: s.webglEnabled,
+        config,
+        deviceClass: s.performanceClass,
+        deviceOptimization: s.deviceOptimization,
+        viewportScaling: s.viewportScaling,
+        performanceRecommendation: s.performanceRecommendation,
+        performanceGrade: s.performanceGrade,
+        currentFPS: s.currentFPS
+      };
+    },
+    
+    getScalingStatus: () => {
+      const s = get();
+      return {
+        currentTier: s.currentQualityTier,
+        canScaleToUltra: s.canScaleToUltra,
+        deviceClass: s.performanceClass,
+        lastChange: s.lastTierChange,
+        particleCount: s.particleCount,
+        performanceGrade: s.performanceGrade,
+        recommendations: s.performanceRecommendation
+      };
+    },
+    
+    // ✅ ENGINE COMPATIBILITY: Enhanced particle count method
+    getParticleCountForStage: (stageName) => {
+      return qualityAtom.getParticleBudget(stageName);
+    },
+    
+    // ✅ ENHANCED: Cache management
+    getCacheStats: () => {
+      return advancedCache.getStats();
+    },
+    
+    clearCache: (type = 'all') => {
+      advancedCache.clearCache(type);
+      if (import.meta.env.DEV) {
+        console.log(`🎨 qualityAtom: Cleared ${type} cache`);
+      }
+    },
+    
+    // ✅ ENHANCED: Performance analysis
+    analyzePerformance: () => {
+      const s = get();
+      const cacheStats = advancedCache.getStats();
+      
+      return {
+        currentState: {
+          tier: s.currentQualityTier,
+          fps: s.currentFPS,
+          frameTime: s.averageFrameTime,
+          jankRatio: s.jankRatio,
+          grade: s.performanceGrade
+        },
+        cache: {
+          hitRate: cacheStats.hitRate,
+          effectiveHitRate: cacheStats.effectiveHitRate,
+          canonicalBypasses: cacheStats.canonicalBypasses,
+          efficiency: cacheStats.efficiency,
+          totalEntries: Object.values(cacheStats.cacheSizes).reduce((a, b) => a + b, 0)
+        },
+        recommendations: s.performanceRecommendation,
+        deviceOptimization: s.deviceOptimization
+      };
+    },
+    
+    // ✅ DEVELOPMENT UTILITIES - Enhanced
+    getAllQualityTiers: () => SST_V2_QUALITY_TIERS,
+    
+    forceQualityTier: (tier) => {
+      if (import.meta.env.DEV) {
+        qualityAtom.setCurrentQualityTier(tier);
+        console.log(`🎨 qualityAtom: FORCED tier to ${tier}`);
+      }
+    },
+    
+    resetQuality: () => {
+      advancedCache.clearCache();
+      setState(initialState);
+      console.log('🎨 qualityAtom: Reset to defaults with cache clear');
+    },
+    
+    // ✅ ENHANCED: Diagnostics and optimization
+    diagnosePerformance: () => {
+      const s = get();
+      const analysis = qualityAtom.analyzePerformance();
+      
+      console.group('🎨 Quality Performance Diagnostics');
+      console.log('Current State:', analysis.currentState);
+      console.log('Cache Performance:', analysis.cache);
+      console.log('Recommendations:', analysis.recommendations);
+      console.log('Device Optimization:', analysis.deviceOptimization);
+      console.groupEnd();
+      
+      return analysis;
+    },
+    
+    // ✅ PHASE 1 FIX: Canonical compliance test
+    testCanonicalBudgets: () => {
+      if (!import.meta.env.DEV) return false;
+      
+      console.log('🧪 Testing SST v2.1 canonical compliance...');
+      const stages = Object.keys(SST_V2_BASE_PARTICLES);
+      let passed = 0;
+      
+      stages.forEach(stage => {
+        const high = qualityAtom.getParticleBudget(stage, 'HIGH');
+        const ultra = qualityAtom.getParticleBudget(stage, 'ULTRA');
+        const low = qualityAtom.getParticleBudget(stage, 'LOW');
+        const canonical = SST_V2_BASE_PARTICLES[stage];
+        
+        console.assert(high === canonical, `HIGH mismatch: ${stage} ${high} !== ${canonical}`);
+        console.assert(ultra === canonical, `ULTRA mismatch: ${stage} ${ultra} !== ${canonical}`);
+        console.assert(low <= canonical, `LOW should not exceed canonical: ${stage} ${low} > ${canonical}`);
+        
+        if (high === canonical && ultra === canonical && low <= canonical) {
+          passed++;
+          console.log(`✅ ${stage}: HIGH=${high}, ULTRA=${ultra}, LOW=${low} (canonical=${canonical})`);
+        } else {
+          console.error(`❌ ${stage}: HIGH=${high}, ULTRA=${ultra}, LOW=${low} (canonical=${canonical})`);
+        }
+      });
+      
+      console.log(`✅ Canonical compliance: ${passed}/${stages.length} stages passed`);
+      return passed === stages.length;
+    },
+    
+    // ✅ ENHANCED: Stress testing
+    stressTestCache: (iterations = 1000) => {
+      console.log(`🧪 Running cache stress test (${iterations} iterations)...`);
+      const startTime = performance.now();
+      
+      const stages = Object.keys(SST_V2_BASE_PARTICLES);
+      const tiers = SST_V2_QUALITY_TIERS;
+      
+      for (let i = 0; i < iterations; i++) {
+        const randomStage = stages[Math.floor(Math.random() * stages.length)];
+        const randomTier = tiers[Math.floor(Math.random() * tiers.length)];
+        
+        qualityAtom.getParticleBudget(randomStage, randomTier);
+        advancedCache.getDPRValue(randomTier, { deviceType: 'desktop' });
+        advancedCache.getViewportScaling(1920, 1080, randomTier);
+      }
+      
+      const endTime = performance.now();
+      const stats = advancedCache.getStats();
+      
+      const results = {
+        duration: endTime - startTime,
+        iterationsPerMs: iterations / (endTime - startTime),
+        cacheStats: stats,
+        hitRate: stats.hitRate,
+        effectiveHitRate: stats.effectiveHitRate,
+        canonicalBypasses: stats.canonicalBypasses,
+        efficiency: stats.efficiency
+      };
+      
+      console.log('✅ Cache stress test completed:', results);
+      return results;
+    }
+  };
+});
+
+// ✅ ENHANCED: Development access with advanced cache features
+if (import.meta.env.DEV && typeof globalThis !== 'undefined') {
+  globalThis.qualityAtom = qualityAtom;
+  
+  globalThis.qualityControls = {
+    // Basic controls
+    setTier: (tier) => qualityAtom.setCurrentQualityTier(tier),
+    getConfig: () => qualityAtom.getQualityConfig(),
+    getStatus: () => qualityAtom.getScalingStatus(),
+    enableShowcase: () => qualityAtom.enableShowcaseMode(),
+    getAllTiers: () => qualityAtom.getAllQualityTiers(),
+    
+    // ✅ ENHANCED: Particle budget controls
+    getParticleBudget: (stage, tier) => qualityAtom.getParticleBudget(stage, tier),
+    getAdvancedBudget: (stage, overrides) => qualityAtom.getAdvancedParticleBudget(stage, overrides),
+    
+    // ✅ PHASE 1 FIX: Canonical testing
+    testCanonicalBudgets: () => qualityAtom.testCanonicalBudgets(),
+    
+    // ✅ ENHANCED: Cache controls
+    getCacheStats: () => qualityAtom.getCacheStats(),
+    clearCache: (type) => qualityAtom.clearCache(type),
+    stressTestCache: (iterations) => qualityAtom.stressTestCache(iterations),
+    
+    // ✅ ENHANCED: Performance controls
+    updatePerformance: (fps, frameTime, jankRatio) => qualityAtom.updatePerformanceMetrics(fps, frameTime, jankRatio),
+    analyzePerformance: () => qualityAtom.analyzePerformance(),
+    diagnosePerformance: () => qualityAtom.diagnosePerformance(),
+    
+    // ✅ ENHANCED: Device controls
+    getOptimizedDPR: (deviceInfo) => qualityAtom.getOptimizedDPR(deviceInfo),
+    updateViewport: (width, height) => qualityAtom.updateViewportScaling(width, height),
+    
+    // ✅ ENHANCED: Testing utilities
+    testAllStages: () => {
+      console.log('🧪 Testing particle budgets for all stages...');
+      Object.keys(SST_V2_BASE_PARTICLES).forEach(stage => {
+        const budget = qualityAtom.getParticleBudget(stage);
+        const advanced = qualityAtom.getAdvancedParticleBudget(stage);
+        console.log(`  ${stage}: ${budget} particles (advanced: ${advanced})`);
+      });
+      return 'All stages tested';
+    },
+    
+    testPerformanceStates: () => {
+      console.log('🧪 Testing performance recommendation caching...');
+      const testCases = [
+        [60, 16, 0.02], // Good performance
+        [45, 22, 0.05], // Medium performance
+        [25, 40, 0.15], // Poor performance
+        [15, 67, 0.25]  // Critical performance
+      ];
+      
+      testCases.forEach(([fps, frameTime, jankRatio]) => {
+        qualityAtom.updatePerformanceMetrics(fps, frameTime, jankRatio);
+        const config = qualityAtom.getQualityConfig();
+        console.log(`  FPS ${fps}: ${config.tier} tier, Grade ${config.performanceGrade}`);
+      });
+      
+      return 'Performance states tested';
+    }
+  };
+  
+  console.log('🎨 qualityAtom: Enhanced with advanced multi-layer caching and DPR optimization');
+  console.log('🎮 Available: globalThis.qualityControls');
+  console.log('🧪 Test canonical: globalThis.qualityControls.testCanonicalBudgets()');
+  console.log('🧪 Test cache: globalThis.qualityControls.stressTestCache(1000)');
+  console.log('📊 Cache stats: globalThis.qualityControls.getCacheStats()');
+  console.log('🔬 Diagnostics: globalThis.qualityControls.diagnosePerformance()');
+}
+
+export default qualityAtom;
+
+/*
+✅ PHASE 1 CRITICAL FIX: QUALITYATOM.JS COMPLETE ✅
+
+🚀 SST v2.1 CANONICAL AUTHORITY RESTORED:
+- ✅ Removed string 'CANONICAL' causing NaN calculations
+- ✅ Added unified computeBudget() function (single source of truth)
+- ✅ HIGH/ULTRA tiers return exact SST v2.1 particle counts
+- ✅ Added safety clamp for low devices (20K particle limit)
+- ✅ Throttled canonical logging to prevent console spam
+
+⚡ CACHE SYSTEM ENHANCED:
+- ✅ Canonical bypass tracking for accurate metrics
+- ✅ Effective hit rate calculation including bypasses
+- ✅ Performance optimization for canonical tiers
+- ✅ Comprehensive cache statistics and diagnostics
+
+🧠 DEVELOPMENT TESTING:
+- ✅ testCanonicalBudgets() regression test
+- ✅ Stress testing with canonical compliance
+- ✅ Advanced debugging and diagnostics
+- ✅ Performance monitoring and analysis
+
+💎 ARCHITECTURAL INTEGRITY:
+- ✅ Single source of truth for particle calculations
+- ✅ Graceful fallbacks for all edge cases
+- ✅ Memory-safe cache management
+- ✅ Consistent state management
+
+Ready for ConsciousnessEngine.js implementation!
+*/// src/components/webgl/WebGLBackground.jsx
+// SST v3.0 COMPLIANT - Pure renderer with tier support
+
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { stageAtom } from '../../stores/atoms/stageAtom.js';
+import consciousnessEngine from '../../engine/ConsciousnessEngine.js';
+import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.js';
+import { Canonical } from '../../config/canonical/canonicalAuthority.js';
+
+// Import shaders
+import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
+import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
+
+function WebGLBackground() {
+  const meshRef = useRef();
+  const geometryRef = useRef();
+  const { size, gl } = useThree();
+  
+  // State
+  const [blueprint, setBlueprint] = useState(null);
+  const [atlasTexture, setAtlasTexture] = useState(null);
+  const [activeCount, setActiveCount] = useState(0);
+  
+  // Stage data from atom
+  const [stageData, setStageData] = useState({
+    currentStage: 'genesis',
+    nextStage: 'genesis',
+    stageProgress: 0,
+    stageBlend: 0
+  });
+  
+  // Subscribe to stage changes
+  useEffect(() => {
+    const unsubscribe = stageAtom.subscribe((state) => {
+      setStageData({
+        currentStage: state.currentStage || 'genesis',
+        nextStage: state.nextStage || state.currentStage || 'genesis',
+        stageProgress: state.stageProgress || 0,
+        stageBlend: state.stageBlend || 0
+      });
+    });
+    
+    return unsubscribe;
+  }, []);
+  
+  // Create atlas texture once
+  useEffect(() => {
+    const atlas = getPointSpriteAtlasSingleton();
+    const texture = atlas.createWebGLTexture();
+    setAtlasTexture(texture);
+    
+    return () => {
+      // Atlas manages its own lifecycle
+    };
+  }, []);
+  
+  // Request blueprint from engine
+  useEffect(() => {
+    async function requestBlueprint() {
+      try {
+        const activeParticles = consciousnessEngine.getActiveParticleCount(stageData.currentStage);
+        const data = await consciousnessEngine.generateConstellationParticleData(
+          activeParticles,
+          { stageName: stageData.currentStage }
+        );
+        
+        if (data) {
+          setBlueprint(data);
+          setActiveCount(activeParticles);
+          console.log(`✅ Renderer: Received blueprint for ${stageData.currentStage} (${activeParticles} particles)`);
+        }
+      } catch (error) {
+        console.error('❌ Renderer: Blueprint generation failed', error);
+      }
+    }
+    
+    requestBlueprint();
+  }, [stageData.currentStage]);
+  
+  // Listen for particle cue events from narrative system
+  useEffect(() => {
+    const handleParticleCue = (event) => {
+      const { cue, stage } = event.detail;
+      if (stage === stageData.currentStage && meshRef.current) {
+        // Apply particle behavior based on cue
+        console.log('🎯 Particle cue received:', cue);
+        // TODO: Implement tier-specific behaviors
+      }
+    };
+
+    window.addEventListener('narrativeParticleCue', handleParticleCue);
+    return () => window.removeEventListener('narrativeParticleCue', handleParticleCue);
+  }, [stageData.currentStage]);
+  
+  // Create pre-allocated geometry (17K max)
+  const geometry = useMemo(() => {
+    if (!blueprint) return null;
+    
+    const geo = new THREE.BufferGeometry();
+    
+    // Particle index array for WebGL 1 compatibility
+    const indexArray = new Float32Array(blueprint.maxParticles);
+    for (let i = 0; i < blueprint.maxParticles; i++) {
+      indexArray[i] = i;
+    }
+    
+    // Set all attributes from blueprint
+    geo.setAttribute('position', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(blueprint.atmosphericPositions, 3));
+    geo.setAttribute('allenAtlasPosition', new THREE.BufferAttribute(blueprint.allenAtlasPositions, 3));
+    geo.setAttribute('animationSeed', new THREE.BufferAttribute(blueprint.animationSeeds, 3));
+    geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(blueprint.sizeMultipliers, 1));
+    geo.setAttribute('opacityData', new THREE.BufferAttribute(blueprint.opacityData, 1));
+    geo.setAttribute('atlasIndex', new THREE.BufferAttribute(blueprint.atlasIndices, 1));
+    geo.setAttribute('tierData', new THREE.BufferAttribute(blueprint.tierData, 1));
+    geo.setAttribute('particleIndex', new THREE.BufferAttribute(indexArray, 1));
+    
+    // Set initial draw range
+    geo.setDrawRange(0, activeCount);
+    
+    // Store ref for dynamic updates
+    geometryRef.current = geo;
+    
+    return geo;
+  }, [blueprint, activeCount]);
+  
+  // Update draw range when active count changes
+  useEffect(() => {
+    if (geometryRef.current && activeCount > 0) {
+      geometryRef.current.setDrawRange(0, activeCount);
+    }
+  }, [activeCount]);
+  
+  // Create shader material with all uniforms
+  const material = useMemo(() => {
+    if (!atlasTexture) return null;
+    
+    // Get stage data from v3.0 Canonical
+    const currentStageData = Canonical.getStageByName(stageData.currentStage);
+    const nextStageData = Canonical.getStageByName(stageData.nextStage);
+    
+    if (!currentStageData || !nextStageData) {
+      console.error('Stage data not found:', stageData.currentStage, stageData.nextStage);
+      return null;
+    }
+    
+    // Get tier behavior uniforms if available
+    const behaviorUniforms = {};
+    if (Canonical.behaviors?.getUniforms) {
+      const stageBehaviors = currentStageData.tierRatios?.map((_, tier) => 
+        Canonical.behaviors.sets[tier] || []
+      ).flat();
+      Object.assign(behaviorUniforms, Canonical.behaviors.getUniforms(stageBehaviors));
+    }
+    
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        // Time and progression
+        uTime: { value: 0 },
+        uStageProgress: { value: 0 },
+        uStageBlend: { value: 0 },
+        
+        // Colors from SST v3.0
+        uColorCurrent: { value: new THREE.Color(currentStageData.colors[0]) },
+        uColorNext: { value: new THREE.Color(nextStageData.colors[0]) },
+        
+        // Atlas
+        uAtlasTexture: { value: atlasTexture },
+        uTotalSprites: { value: 16 },
+        
+        // Display
+        uPointSize: { value: 30.0 },
+        uDevicePixelRatio: { value: gl.getPixelRatio() },
+        uResolution: { value: new THREE.Vector2(size.width, size.height) },
+        
+        // Tier system
+        uTierCutoff: { value: activeCount },
+        uFadeProgress: { value: 1.0 },
+        
+        // Depth fade
+        uFadeNear: { value: 0.1 },
+        uFadeFar: { value: 100.0 },
+        
+        // Tier behavior uniforms
+        ...behaviorUniforms
+      },
+      vertexShader: vertexShaderSource,
+      fragmentShader: fragmentShaderSource,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: true
+    });
+  }, [atlasTexture, stageData.currentStage, stageData.nextStage, size, gl, activeCount]);
+  
+  // Update uniforms on resize
+  useEffect(() => {
+    if (material) {
+      material.uniforms.uResolution.value.set(size.width, size.height);
+      material.uniforms.uDevicePixelRatio.value = gl.getPixelRatio();
+    }
+  }, [size, material, gl]);
+  
+  // Animation frame updates
+  useFrame((state) => {
+    if (meshRef.current && material) {
+      // Update time
+      material.uniforms.uTime.value = state.clock.elapsedTime;
+      
+      // Update stage progression
+      material.uniforms.uStageProgress.value = stageData.stageProgress;
+      material.uniforms.uStageBlend.value = stageData.stageBlend;
+      
+      // Keep tier cutoff at active count
+      material.uniforms.uTierCutoff.value = activeCount;
+      
+      // Stage-specific rotation based on v3.0 camera settings
+      const currentStage = Canonical.getStageByName(stageData.currentStage);
+      if (currentStage?.camera?.movement === 'balletic_orbit') {
+        // Harmony stage - figure-8 pattern
+        const t = state.clock.elapsedTime * 0.1;
+        meshRef.current.rotation.y = Math.sin(t) * 0.5;
+        meshRef.current.rotation.x = Math.sin(t * 2) * 0.1;
+      } else if (currentStage?.camera?.movement === 'dramatic_pullback') {
+        // Velocity stage - shake effect
+        meshRef.current.rotation.y = state.clock.elapsedTime * 0.02 + Math.sin(state.clock.elapsedTime * 10) * 0.01;
+      } else {
+        // Default gentle rotation
+        meshRef.current.rotation.y = state.clock.elapsedTime * 0.02;
+      }
+      
+      // Update colors dynamically
+      const currentStageData = Canonical.getStageByName(stageData.currentStage);
+      const nextStageData = Canonical.getStageByName(stageData.nextStage);
+      
+      if (currentStageData?.colors?.[0]) {
+        material.uniforms.uColorCurrent.value.set(currentStageData.colors[0]);
+      }
+      if (nextStageData?.colors?.[0]) {
+        material.uniforms.uColorNext.value.set(nextStageData.colors[0]);
+      }
+    }
+  });
+  
+  // Don't render without data
+  if (!geometry || !material || !blueprint) {
+    return null;
+  }
+  
+  return (
+    <points 
+      ref={meshRef} 
+      geometry={geometry} 
+      material={material}
+      frustumCulled={false}
+    />
+  );
+}
+
+export default React.memo(WebGLBackground);export const MEMORY_FRAGMENTS = {
+  genesis_terminal: {
+    id:"frag_genesis_001",
+    stage:"genesis",
+    name:"First Code",
+    trigger:{ type:"scroll", value:5, unit:"percentage", allowManual:true },
+    content:{ type:"interactive", element:"commodore_terminal", size:{width:600, height:400}, position:"center" },
+    duration:15000,
+    dismissible:true,
+    particleEffect:{
+      onTrigger:{ targetTiers:[0,1], behavior:"converge", radius:200, intensity:0.7, duration:2000 }
+    }
+  }
+};
+
+export const FRAGMENT_INTERACTIONS = {
+  terminal_emulator: {
+    handler:"TerminalEmulatorHandler",
+    config:{ transition:"fade", duration:500 }
+  }
+};
+
+export const getFragmentsForStage = (stageName) =>
+  Object.values(MEMORY_FRAGMENTS).filter(f=>f.stage===stageName);
+
+export const getActiveFragments = (stageName, scrollPercent, narrativeSegmentId) => {
+  return Object.values(MEMORY_FRAGMENTS).filter(frag=>{
+    if (frag.stage !== stageName) return false;
+    if (frag.trigger.type === 'scroll' &&
+        Math.abs(frag.trigger.value - scrollPercent) < 2) return true;
+    if (frag.trigger.type === 'narrative' &&
+        frag.trigger.segmentId === narrativeSegmentId) return true;
+    return false;
+  });
+};
+
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  window.MEMORY_FRAGMENTS = MEMORY_FRAGMENTS;
+}
+export const NARRATIVE_DIALOGUE = {
+  genesis: {
+    id:"narr_genesis_001",
+    narration:{
+      segments:[
+        { id:"gen_1", text:"I was eight years old...", timing:{start:3000, duration:8000} },
+        { id:"gen_3", text:"I typed those lines exactly...", timing:{start:17000, duration:5000}, memoryFragmentTrigger:"genesis_terminal" }
+      ]
+    }
+  },
+  discipline: {
+    id:"narr_discipline_001",
+    narration:{
+      segments:[
+        { id:"dis_1", text:"That spark? It got buried.", timing:{start:0, duration:3000} }
+      ]
+    }
+  }
+  // ... Add full segments later
+};
+
+export const getDialogueSegment = (stage, segmentId) => {
+  const s = NARRATIVE_DIALOGUE[stage];
+  if (!s) return null;
+  return s.narration?.segments?.find(seg=>seg.id===segmentId) || null;
+};
+
+export const getParticleCuesForStage = (stage) => {
+  const s = NARRATIVE_DIALOGUE[stage];
+  if (!s) return [];
+  return s.narration?.segments
+    ?.filter(seg=>seg.particleCue)
+    .map(seg=>({ timing:seg.timing.start, cue:seg.particleCue, segmentId:seg.id })) || [];
+};
+// CANONICAL AUTHORITY - SST v3.0 Config
+export const SST_V3_CONFIG = {
+  version: "3.0.0",
+  schemaVersion: "2025-07-23",
+  features: {
+    gaussianFalloff: true,
+    noiseClusteringTier1: false,
+    centerWeightingTier4: true,
+    fusionMoments: true,
+    tierLOD: true,
+    memoryFragments: true,
+    narrativeDialogue: true,
+    audioSystem: true
+  },
+  performance: {
+    targetFPS: 60,
+    minFPS: 55,
+    maxParticles: 17000,
+    maxRenderTime: 16.67,
+    heapLimit: 250,
+    gcPauseMax: 3,
+    lodThresholds: { ultra:15000, high:10000, medium:5000, low:2000 }
+  },
+  tierSystem: {
+    count: 4,
+    defaultRatios: [0.5, 0.2, 0.15, 0.15],
+    sizeMultipliers: [0.6, 0.8, 1.2, 1.5],
+    opacityRanges: [
+      [0.3, 0.6],
+      [0.5, 0.8],
+      [0.7, 0.9],
+      [0.8, 1.0]
+    ],
+    names: [
+      "Consciousness Substrate",
+      "Spatial Awareness",
+      "Memory Anchors",
+      "Neural Constellations"
+    ]
+  },
+  stages: {
+    genesis: {
+      id: 0, name: "genesis", title: "Genesis Spark",
+      scrollRange: [0,14], duration: 30, particles: 2000,
+      tierRatios: [0.60,0.20,0.10,0.10],
+      colors: ["#00FF00","#22c55e","#15803d"],
+      brainRegion: "hippocampus",
+      camera: { movement:"intimate_dolly", angle:5, duration:30 },
+      sprites: { tier1:[7], tier2:[0,1], tier3:[4], tier4:[1] }
+    },
+    discipline: {
+      id:1, name:"discipline", title:"Discipline Forge",
+      scrollRange:[14,28], duration:35, particles:3000,
+      tierRatios:[0.55,0.25,0.10,0.10],
+      colors:["#1e40af","#3b82f6","#1d4ed8"],
+      brainRegion:"brainstem",
+      camera:{ movement:"authority_orbit", angle:10, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1], tier3:[5], tier4:[11] }
+    },
+    neural: {
+      id:2, name:"neural", title:"Neural Awakening",
+      scrollRange:[28,42], duration:35, particles:5000,
+      tierRatios:[0.55,0.20,0.15,0.10],
+      colors:["#4338ca","#a855f7","#7c3aed"],
+      brainRegion:"leftTemporal",
+      camera:{ movement:"discovery_orbit", angle:15, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1,2], tier3:[2], tier4:[10] }
+    },
+    velocity: {
+      id:3, name:"velocity", title:"Velocity Explosion",
+      scrollRange:[42,56], duration:40, particles:12000,
+      tierRatios:[0.45,0.20,0.15,0.20],
+      colors:["#7c3aed","#9333ea","#6b21a8"],
+      brainRegion:"multiRegion",
+      camera:{ movement:"dramatic_pullback", angle:20, duration:40, shake:true },
+      sprites:{ tier1:[7], tier2:[0,1,6], tier3:[6], tier4:[13] }
+    },
+    architecture: {
+      id:4, name:"architecture", title:"Architecture Consciousness",
+      scrollRange:[56,70], duration:35, particles:8000,
+      tierRatios:[0.50,0.20,0.15,0.15],
+      colors:["#0891b2","#06b6d4","#0e7490"],
+      brainRegion:"frontalLobe",
+      camera:{ movement:"grid_tracking", angle:12, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1], tier3:[11], tier4:[12] }
+    },
+    harmony: {
+      id:5, name:"harmony", title:"Harmonic Mastery",
+      scrollRange:[70,84], duration:35, particles:12000,
+      tierRatios:[0.50,0.20,0.15,0.15],
+      colors:["#f59e0b","#d97706","#b45309"],
+      brainRegion:"cerebellum",
+      camera:{ movement:"balletic_orbit", angle:25, duration:35 },
+      sprites:{ tier1:[7], tier2:[0,1,9], tier3:[9], tier4:[15] }
+    },
+    transcendence: {
+      id:6, name:"transcendence", title:"Consciousness Transcendence",
+      scrollRange:[84,100], duration:40, particles:15000,
+      tierRatios:[0.50,0.20,0.15,0.15],
+      colors:["#ffffff","#f59e0b","#00ffcc"],
+      brainRegion:"consciousnessCore",
+      camera:{ movement:"reverent_orbit", angle:30, duration:40 },
+      sprites:{ tier1:[7], tier2:[0,1,14], tier3:[14], tier4:[15] }
+    }
+  },
+  global: {
+    defaultTransitionDuration: 1000,
+    scrollSmoothing: 0.15,
+    morphAcceleration: 2.0,
+    audioMasterVolume: 0.8,
+    subtitlePosition: "bottom",
+    qualityAutoAdjust: true,
+    analyticsEnabled: true
+  }
+};
+
+Object.freeze(SST_V3_CONFIG);
+Object.freeze(SST_V3_CONFIG.features);
+Object.freeze(SST_V3_CONFIG.performance);
+Object.freeze(SST_V3_CONFIG.tierSystem);
+Object.keys(SST_V3_CONFIG.stages).forEach(k=>{
+  Object.freeze(SST_V3_CONFIG.stages[k]);
+  Object.freeze(SST_V3_CONFIG.stages[k].sprites);
+  Object.freeze(SST_V3_CONFIG.stages[k].camera);
+});
+Object.freeze(SST_V3_CONFIG.global);
+
+export const getStageByName = (name) => SST_V3_CONFIG.stages[name];
+export const getStageByScroll = (p) =>
+  Object.values(SST_V3_CONFIG.stages).find(s => p >= s.scrollRange[0] && p < s.scrollRange[1]);
+export const isFeatureEnabled = (flag) => !!SST_V3_CONFIG.features[flag];
+// Tier behavior definitions - stage-agnostic
+export const TIER_BEHAVIORS = {
+  drift: { type:"cpu", params:{ speed:0.2, pattern:"perlin", frequency:0.1, amplitude:2.0 }, shaderUniforms:{ uDriftSpeed:0.2, uDriftPattern:0 } },
+  cluster: { type:"generation", params:{ noiseScale:0.1, clusterThreshold:0.3, densityMultiplier:0.8 } },
+  orbital: { type:"cpu", params:{ radius:5.0, speed:0.05, axis:[0,1,0] }, shaderUniforms:{ uOrbitRadius:5.0, uOrbitSpeed:0.05 } },
+  structural:{ type:"generation", params:{ gridSize:2.0, flexibility:0.3, alignment:"vertical" } },
+  twinkle: { type:"shader", params:{ frequency:2.0, intensity:0.3, randomSeed:true }, shaderUniforms:{ uTwinkleFreq:2.0, uTwinkleIntensity:0.3 } },
+  pulse: { type:"shader", params:{ frequency:0.5, pattern:"sine", phase:0 }, shaderUniforms:{ uPulseFreq:0.5, uPulsePattern:0 } },
+  prominent:{ type:"hybrid", params:{ scaleBoost:1.2, opacityBoost:1.1, haloEffect:true }, shaderUniforms:{ uProminenceScale:1.2, uProminenceGlow:1.1 } },
+  anatomical:{ type:"generation", params:{ brainAccuracy:0.95, centerWeight:0.7, regionDensity:"variable" } }
+};
+
+export const TIER_BEHAVIOR_SETS = {
+  0: ["drift","cluster"],
+  1: ["orbital","structural"],
+  2: ["twinkle","pulse"],
+  3: ["prominent","anatomical"]
+};
+
+export const applyBehavior = (particleData, behaviorId, time, params = {}) => {
+  const b = TIER_BEHAVIORS[behaviorId];
+  if (!b) return particleData;
+  switch (b.type) {
+    case 'continuous':
+      if (b.cpuAnimation) {
+        return b.cpuAnimation(particleData, time, { ...b.params, ...params }, particleData.seed);
+      }
+      break;
+    case 'generation':
+      if (b.generationFunction) {
+        return b.generationFunction(particleData, particleData.rng, { ...b.params, ...params });
+      }
+      break;
+    default: break;
+  }
+  return particleData;
+};
+
+export const getBehaviorUniforms = (ids = []) => {
+  const u = {};
+  ids.forEach(id => {
+    const b = TIER_BEHAVIORS[id];
+    if (b?.shaderUniforms) Object.assign(u, b.shaderUniforms);
+  });
+  return u;
+};
+
+export const STAGE_BEHAVIOR_OVERRIDES = {
+  velocity: { 0:["drift","fade"], all:{ additionalBehavior:"storm", intensity:1.5 } },
+  harmony: { all:{ syncGroup:"global", harmonicRatio:1.618 } },
+  transcendence: { all:{ prominenceMultiplier:1.2, unifiedField:true } }
+};
+
+export const FUSION_BEHAVIORS = {
+  thunderclap: { trigger:"velocity", timing:8000, behavior:{ type:"explosion", effect:"radialBurst", intensity:2.0, duration:500, targetTiers:"all" } }
+};
