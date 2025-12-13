@@ -103,7 +103,7 @@ PARTICLES_START_EMERGING.emitter = src/theater/TheaterDirector.js
 PREWARM_COMPLETE.emitter = src/engine/ConsciousnessEngine.js
 PREWARM_GENESIS_BLUEPRINT.emitter = src/theater/TheaterDirector.js
 QUALITY_CHANGE.emitter = ⚠️ multiple: src/state/atoms/qualityAtom.js, src/state/commands/StateCommands.js
-RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/components/narrative/NarrationController.jsx, src/theater/VisualOrchestrator.js, src/theater/bus/emitters.js
+RENDER_DIRECTIVE.emitter = ⚠️ multiple: canon-console/runtime/hud.js, src/theater/VisualOrchestrator.js, src/theater/bus/emitters.js
 RENDERER_TUNE.emitter = src/theater/TheaterDirector.js
 SCREEN_FILL.emitter = src/theater/TheaterDirector.js
 SCROLL_PROGRESS.emitter = src/theater/ScrollOrchestrator.js
@@ -129,4 +129,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-12-09 via `tools/generate-ownership.mjs`
+Last updated: 2025-12-13 via `tools/generate-ownership.mjs`

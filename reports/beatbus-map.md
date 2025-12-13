@@ -3,7 +3,7 @@ Total events: 38
 ## AUDIO_COMPUTER_HUM
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1200`
+- `src/theater/TheaterDirector.js:1372`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:229`
@@ -15,31 +15,31 @@ Total events: 38
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:58`
-- `src/engine/ConsciousnessEngine.js:437`
+- `src/engine/ConsciousnessEngine.js:438`
 
 ## BLUEPRINT_READY
 
 **Emitters**:
-- `src/theater/bus/emitters.js:40`
+- `src/theater/bus/emitters.js:43`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1697`
+- `src/components/webgl/WebGLBackground.jsx:1798`
 - `src/components/webgl/WebGLCanvas.jsx:264`
-- `src/theater/TheaterDirector.js:295`
-- `src/theater/TheaterDirector.js:299`
-- `src/theater/TheaterDirector.js:1491`
+- `src/theater/TheaterDirector.js:336`
+- `src/theater/TheaterDirector.js:340`
+- `src/theater/TheaterDirector.js:1673`
 - `canon-console/runtime/blueprint-guard-v2.js:14`
 - `canon-console/runtime/blueprint-guard-v2.js:238`
 
 ## BUILD_EMERGENCE_BLUEPRINT
 
 **Emitters**:
-- `src/state/commands/StateCommands.js:213`
-- `src/theater/TheaterDirector.js:1258`
-- `src/theater/TheaterDirector.js:1425`
+- `src/state/commands/StateCommands.js:210`
+- `src/theater/TheaterDirector.js:1430`
+- `src/theater/TheaterDirector.js:1607`
 
 **Listeners**:
-- `src/engine/ConsciousnessEngine.js:425`
+- `src/engine/ConsciousnessEngine.js:426`
 
 ## CANON_VIOLATION
 
@@ -53,17 +53,17 @@ Total events: 38
 ## CLIMAX_STEP
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:932`
-- `src/engine/ConsciousnessEngine.js:1303`
+- `src/engine/ConsciousnessEngine.js:933`
+- `src/engine/ConsciousnessEngine.js:1316`
 
 **Listeners**:
 - `src/components/fragments/ClimaxSequenceController.jsx:18`
-- `src/theater/TheaterDirector.js:303`
+- `src/theater/TheaterDirector.js:344`
 
 ## CURSOR_BLINK
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1206`
+- `src/theater/TheaterDirector.js:1378`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:114`
@@ -71,7 +71,7 @@ Total events: 38
 ## CURSOR_SHOW
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1199`
+- `src/theater/TheaterDirector.js:1371`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:107`
@@ -80,7 +80,7 @@ Total events: 38
 ## DIRECTOR:MORPH_STATE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:494`
+- `src/theater/TheaterDirector.js:535`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:38`
@@ -88,7 +88,7 @@ Total events: 38
 ## DIRECTOR_CANCEL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1748`
+- `src/theater/TheaterDirector.js:1932`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:281`
@@ -96,7 +96,7 @@ Total events: 38
 ## DIRECTOR_ERROR
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1040`
+- `src/theater/TheaterDirector.js:1212`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:63`
@@ -104,7 +104,7 @@ Total events: 38
 ## DIRECTOR_OPENING_MODE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1250`
+- `src/theater/TheaterDirector.js:1422`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:43`
@@ -112,20 +112,21 @@ Total events: 38
 ## ENABLE_SCROLL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1594`
+- `src/theater/TheaterDirector.js:664`
+- `src/theater/TheaterDirector.js:1764`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:190`
-- `src/components/webgl/WebGLBackground.jsx:618`
-- `src/engine/ConsciousnessEngine.js:421`
+- `src/components/webgl/WebGLBackground.jsx:648`
+- `src/engine/ConsciousnessEngine.js:422`
 - `src/state/commands/StateCommands.js:41`
-- `src/theater/ScrollOrchestrator.js:57`
+- `src/theater/ScrollOrchestrator.js:54`
 
 ## ENGINE:MORPH_STATE
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:717`
-- `src/engine/ConsciousnessEngine.js:975`
+- `src/engine/ConsciousnessEngine.js:718`
+- `src/engine/ConsciousnessEngine.js:977`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:33`
@@ -134,24 +135,24 @@ Total events: 38
 
 **Emitters**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:224`
-- `src/components/webgl/WebGLBackground.jsx:857`
-- `src/theater/TheaterDirector.js:1939`
+- `src/components/webgl/WebGLBackground.jsx:887`
+- `src/theater/TheaterDirector.js:2123`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:174`
 - `src/components/consciousness/ConsciousnessTheater.jsx:218`
-- `src/engine/ConsciousnessEngine.js:420`
-- `src/theater/TheaterDirector.js:1960`
+- `src/engine/ConsciousnessEngine.js:421`
+- `src/theater/TheaterDirector.js:2144`
 
 ## FENCEPOST_LISTENERS_READY
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:493`
-- `src/theater/TheaterDirector.js:1461`
+- `src/components/webgl/WebGLBackground.jsx:523`
+- `src/theater/TheaterDirector.js:1643`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:627`
-- `src/theater/TheaterDirector.js:287`
+- `src/components/webgl/WebGLBackground.jsx:657`
+- `src/theater/TheaterDirector.js:328`
 
 ## FENCEPOST_REPORT
 
@@ -164,76 +165,76 @@ Total events: 38
 ## MORPH_PROGRESS
 
 **Emitters**:
-- `src/theater/bus/emitters.js:59`
+- `src/theater/bus/emitters.js:65`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:2051`
-- `src/state/commands/StateCommands.js:126`
-- `src/theater/TheaterDirector.js:535`
+- `src/components/webgl/WebGLBackground.jsx:2147`
+- `src/state/commands/StateCommands.js:125`
+- `src/theater/TheaterDirector.js:576`
 - `src/theater/VisualOrchestrator.js:53`
 
 ## NARRATION_CLEANUP
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:195`
+- `src/components/narrative/NarrationController.jsx:188`
 
 **Listeners**:
-- `src/components/narrative/NarrationOverlayBus.jsx:206`
+- `src/components/narrative/NarrationOverlayBus.jsx:333`
 
 ## NARRATION_STOPPED
 
 **Emitters**:
 - `src/components/narrative/NarrationController.jsx:187`
-- `src/components/narrative/NarrationController.jsx:466`
 
 **Listeners**:
-- `src/components/narrative/NarrationOverlayBus.jsx:205`
+- `src/components/narrative/NarrationOverlayBus.jsx:332`
 
 ## NARRATIVE_LINE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:621`
+- `src/components/narrative/NarrationController.jsx:639`
 
 **Listeners**:
-- `src/components/narrative/NarrationOverlayBus.jsx:204`
+- `src/components/narrative/NarrationOverlayBus.jsx:331`
 - `src/components/narrative/NarrativeChoreography.jsx:377`
 
 ## OPENING_COMPLETE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1596`
+- `src/theater/TheaterDirector.js:668`
+- `src/theater/TheaterDirector.js:1780`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:269`
-- `src/components/webgl/WebGLBackground.jsx:617`
+- `src/components/webgl/WebGLBackground.jsx:647`
 
 ## PARTICLES_EMERGED
 
 **Emitters**:
-- `src/theater/bus/emitters.js:46`
+- `src/theater/bus/emitters.js:49`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:258`
 - `src/components/ui/LCPHero.jsx:32`
-- `src/components/webgl/WebGLBackground.jsx:616`
-- `src/engine/ConsciousnessEngine.js:427`
-- `src/theater/TheaterDirector.js:291`
-- `src/theater/TheaterDirector.js:1481`
+- `src/components/webgl/WebGLBackground.jsx:646`
+- `src/engine/ConsciousnessEngine.js:428`
+- `src/theater/TheaterDirector.js:332`
+- `src/theater/TheaterDirector.js:1663`
 - `canon-console/runtime/lifecycle-guards.js:68`
 
 ## PARTICLES_START_EMERGING
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1442`
+- `src/theater/TheaterDirector.js:1624`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:247`
-- `src/components/webgl/WebGLBackground.jsx:979`
+- `src/components/webgl/WebGLBackground.jsx:1009`
 
 ## PARTICLE_CLICK_HIT
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:1188`
+- `src/components/webgl/WebGLBackground.jsx:1218`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:53`
@@ -244,49 +245,49 @@ Total events: 38
 - `src/components/webgl/WebGLCanvas.jsx:337`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1199`
+- `src/components/webgl/WebGLBackground.jsx:1229`
 
 ## PARTICLE_PHASE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1301`
-- `src/theater/TheaterDirector.js:1334`
-- `src/theater/TheaterDirector.js:1376`
+- `src/theater/TheaterDirector.js:1473`
+- `src/theater/TheaterDirector.js:1506`
+- `src/theater/TheaterDirector.js:1548`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:252`
-- `src/components/webgl/WebGLBackground.jsx:2348`
+- `src/components/webgl/WebGLBackground.jsx:2445`
 
 ## PREWARM_COMPLETE
 
 **Emitters**:
-- `src/engine/ConsciousnessEngine.js:542`
+- `src/engine/ConsciousnessEngine.js:543`
 
 **Listeners**:
-- `src/theater/TheaterDirector.js:1755`
+- `src/theater/TheaterDirector.js:1939`
 
 ## PREWARM_GENESIS_BLUEPRINT
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1754`
+- `src/theater/TheaterDirector.js:1938`
 
 **Listeners**:
-- `src/engine/ConsciousnessEngine.js:424`
+- `src/engine/ConsciousnessEngine.js:425`
 
 ## QUALITY_CHANGE
 
 **Emitters**:
 - `src/state/atoms/qualityAtom.js:198`
-- `src/state/commands/StateCommands.js:148`
+- `src/state/commands/StateCommands.js:145`
 
 **Listeners**:
-- `src/engine/ConsciousnessEngine.js:423`
+- `src/engine/ConsciousnessEngine.js:424`
 - `src/state/commands/StateCommands.js:90`
 
 ## RENDERER_TUNE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1769`
+- `src/theater/TheaterDirector.js:1953`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:48`
@@ -294,18 +295,17 @@ Total events: 38
 ## RENDER_DIRECTIVE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:679`
-- `src/theater/VisualOrchestrator.js:141`
-- `src/theater/bus/emitters.js:51`
+- `src/theater/VisualOrchestrator.js:181`
+- `src/theater/bus/emitters.js:54`
 - `canon-console/runtime/hud.js:408`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1911`
+- `src/components/webgl/WebGLBackground.jsx:2012`
 
 ## SCREEN_FILL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1233`
+- `src/theater/TheaterDirector.js:1405`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:170`
@@ -313,7 +313,7 @@ Total events: 38
 ## SCROLL_PROGRESS
 
 **Emitters**:
-- `src/theater/ScrollOrchestrator.js:336`
+- `src/theater/ScrollOrchestrator.js:310`
 
 **Listeners**:
 - `src/components/fragments/AmbientFragment.jsx:80`
@@ -322,17 +322,17 @@ Total events: 38
 ## STAGE_CHANGE
 
 **Emitters**:
-- `src/theater/bus/emitters.js:32`
+- `src/theater/bus/emitters.js:35`
 
 **Listeners**:
-- `src/components/narrative/NarrationController.jsx:1099`
+- `src/components/narrative/NarrationController.jsx:1085`
 - `src/components/narrative/NarrativeChoreography.jsx:382`
-- `src/components/webgl/WebGLBackground.jsx:962`
-- `src/components/webgl/WebGLBackground.jsx:988`
-- `src/engine/ConsciousnessEngine.js:422`
+- `src/components/webgl/WebGLBackground.jsx:992`
+- `src/components/webgl/WebGLBackground.jsx:1018`
+- `src/engine/ConsciousnessEngine.js:423`
 - `src/state/atoms/qualityAtom.js:155`
 - `src/state/commands/StateCommands.js:82`
-- `src/theater/TheaterDirector.js:286`
+- `src/theater/TheaterDirector.js:327`
 - `src/theater/UnifiedNavigationAPI.js:225`
 - `src/theater/VisualOrchestrator.js:52`
 
@@ -342,25 +342,25 @@ Total events: 38
 - `src/components/fragments/ClimaxSequenceController.jsx:49`
 
 **Listeners**:
-- `src/engine/ConsciousnessEngine.js:426`
+- `src/engine/ConsciousnessEngine.js:427`
 
 ## START_NARRATIVE
 
 **Emitters**:
-- `src/components/narrative/NarrationController.jsx:378`
+- `src/components/narrative/NarrationController.jsx:401`
 - `src/orchestration/navigation/narrativeNavigation.js:20`
-- `src/theater/TheaterDirector.js:844`
-- `src/theater/TheaterDirector.js:1577`
+- `src/theater/TheaterDirector.js:1016`
+- `src/theater/TheaterDirector.js:1766`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:195`
-- `src/components/narrative/NarrationController.jsx:1098`
-- `src/components/narrative/NarrationOverlayBus.jsx:203`
+- `src/components/narrative/NarrationController.jsx:1084`
+- `src/components/narrative/NarrationOverlayBus.jsx:330`
 
 ## TERMINAL_TYPE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1218`
+- `src/theater/TheaterDirector.js:1390`
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:129`
