@@ -64,21 +64,22 @@ export const ContractRegistry = {
         'tierReveal', 'tierSpeedScale', 'breathingAmp',
         'breathingPeriodSec', 'flareProb', 'flareGain', 'pulseOnce'
       ],
+  },
+  
+  MORPH_PROGRESS: {
+    version: '1.0.0',
+    required: ['progress', 'source'],
+    optional: ['timestamp'],
+    constraints: {
+      progress: { min: 0, max: 1 }
     },
+  },
     
-    MORPH_PROGRESS: {
-      version: '1.0.0',
-      required: ['value'],
-      constraints: {
-        value: { min: 0, max: 1 }
-      },
-    },
-    
-    // Stage management (with migration)
-    STAGE_CHANGE: {
-      version: '1.0.0',
-      required: ['from', 'to'],
-      optional: ['duration', 'trigger', 'reason'],
+  // Stage management (with migration)
+  STAGE_CHANGE: {
+    version: '1.0.0',
+    required: ['from', 'to', 'source'],
+    optional: ['duration', 'trigger', 'reason', 'timestamp'],
       deprecated: {
         stage: {
           since: '3.0.0',

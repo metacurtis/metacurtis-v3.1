@@ -10,6 +10,17 @@ const DEV_MODE = (typeof import.meta !== 'undefined' && import.meta.env)
   ? !!import.meta.env.DEV
   : (typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : false);
 const CORE_EVENTS = new Set(['STAGE_CHANGE', 'BLUEPRINT_READY', 'PARTICLES_EMERGED', 'RENDER_DIRECTIVE', 'MORPH_PROGRESS']);
+const STRICT_SOURCE_EVENTS = new Set(['MORPH_PROGRESS', 'STAGE_CHANGE']);
+const ALLOWED_STAGE_SOURCES = new Set([
+  'stateAtom',
+  'StageAuthority',
+  'StateCommands',
+  'UnifiedNavigationAPI',
+  'Navigation',
+  'NavigationAPI',
+  'stageAtom',
+  'StageControls',
+]);
 
 const getCallerFile = (stack) => {
   if (!stack) return null;
@@ -259,15 +270,16 @@ class BeatBus {
       this._contracts = module.default || module.ContractRegistry;
       console.log('🚌 BeatBus: Canon contracts loaded');
     } catch (e) {
-      // Fallback to basic contracts
-      this._contracts = {
-        events: {
-          STAGE_CHANGE: { required: ['from', 'to'] },
+        // Fallback to basic contracts
+        this._contracts = {
+          events: {
+          STAGE_CHANGE: { required: ['from', 'to', 'source'] },
+          MORPH_PROGRESS: { required: ['progress', 'source'] },
           QUALITY_CHANGE: { required: ['tier'] },
           BLUEPRINT_READY: { required: ['stage', 'quality', 'blueprint'] }
-        },
-        validate: (type, payload) => {
-          const contract = this.events[type];
+          },
+          validate: (type, payload) => {
+            const contract = this.events[type];
           if (!contract) return { valid: true, payload };
           const missing = (contract.required || []).filter(f => !(f in (payload || {})));
           return { 
@@ -329,18 +341,15 @@ class BeatBus {
     
     // Fallback canonicalization
     if (evt==='STAGE_CHANGE'){
-      if (p.stage && !p.to) p.to = p.stage;
-      if (!p.from) p.from = this._last.stage || 'unknown';
-      const extended = {};
-      if (p.index !== undefined) extended.index = p.index;
-      if (p.stageIndex !== undefined) extended.stageIndex = p.stageIndex;
-      if (p.scrollPercent !== undefined) extended.scrollPercent = p.scrollPercent;
-      if (p.localProgress !== undefined) extended.localProgress = p.localProgress;
-      if (p.source !== undefined) extended.source = p.source;
-      if (p.stage !== undefined) extended.stage = p.stage;
-      const out = { from: p.from, to: p.to };
-      if (Object.keys(extended).length) out._extended = extended;
-      return { ok: !!(p.from && p.to), out, normalized: ('stage' in payload) };
+      const out = {
+        from: p.from ?? null,
+        to: p.to,
+      };
+      if (p.source !== undefined) out.source = p.source;
+      if (p.timestamp !== undefined) out.timestamp = p.timestamp;
+      const ok = (typeof out.to === 'string' && out.to.length > 0) &&
+        (out.from === null || typeof out.from === 'string');
+      return { ok, out, normalized: false };
     }
     if (evt==='QUALITY_CHANGE'){
       if (p.quality && !p.tier) p.tier = p.quality;
@@ -360,6 +369,13 @@ class BeatBus {
       const blueprint = p.blueprint;
       const out = { stage, quality, blueprint, cached: !!p.cached };
       return { ok: !!(stage && quality && blueprint), out, normalized: ('tier' in p || 'to' in p) };
+    }
+    if (evt==='MORPH_PROGRESS'){
+      const out = { progress: p.progress };
+      if (p.source !== undefined) out.source = p.source;
+      if (p.timestamp !== undefined) out.timestamp = p.timestamp;
+      const ok = typeof out.progress === 'number' && Number.isFinite(out.progress);
+      return { ok, out, normalized: false };
     }
     return { ok: true, out: p, normalized:false };
   }
@@ -406,6 +422,40 @@ class BeatBus {
       }
     }
 
+    if (STRICT_SOURCE_EVENTS.has(evt)) {
+      const missingSource = !payload || typeof payload.source !== 'string' || payload.source.trim() === '';
+      if (missingSource) {
+        console.error('[BeatBus] Missing required payload.source', { event: evt, payload });
+        if (DEV_MODE) {
+          throw new Error(`BeatBus: missing source for ${evt}`);
+        }
+        return;
+      }
+    }
+
+    if (evt === 'RENDER_DIRECTIVE') {
+      const src = payload?.source;
+      if (src !== 'visual_orchestrator') {
+        console.error('[BeatBus] SINGLE_WRITER_VIOLATION: RENDER_DIRECTIVE', { src, payload });
+        if (DEV_MODE) {
+          throw new Error('Single-writer violation: RENDER_DIRECTIVE');
+        }
+        return;
+      }
+    }
+    if (evt === 'STAGE_CHANGE') {
+      console.log('[TAP][STAGE_CHANGE]', payload);
+      const src = payload?.source;
+      if (DEV_MODE && src && !ALLOWED_STAGE_SOURCES.has(src)) {
+        console.error('[BeatBus] STAGE_CHANGE emitter not in allowlist', { src, payload });
+        throw new Error('Stage authority violation');
+      }
+    }
+
+    if (payload && payload.timestamp == null) {
+      payload.timestamp = this._now();
+    }
+
     if (DEV_MODE && evt === 'MORPH_PROGRESS') {
       const source = payload?.source || 'unknown';
       if (!this._morphEmitter) {
@@ -417,7 +467,7 @@ class BeatBus {
       console.debug('🎚 MORPH_PROGRESS', {
         owner: this._morphEmitter,
         source,
-        value: payload?.progress ?? payload?.morphProgress ?? payload?.value ?? null,
+        value: payload?.progress ?? null,
       });
     }
     const mode = this._mode();
@@ -556,7 +606,7 @@ class BeatBus {
     if (typeof payload.timestamp !== 'number' || !Number.isFinite(payload.timestamp)) {
       payload.timestamp = this._now();
     }
-    if (!payload.source) {
+    if (!payload.source && !STRICT_SOURCE_EVENTS.has(evt)) {
       payload.source = this._inferSource(evt, payload);
     }
     if (!payload._meta || typeof payload._meta !== 'object') {
@@ -659,10 +709,14 @@ if (!beatBus) {
 const schemaMiddleware = (eventName, payload) => {
   const result = validateEventPayload(eventName, payload);
   if (!result.valid) {
-    console.warn(`[BeatBus] Schema violation for ${eventName}`, {
+    console.error(`[BeatBus] Schema violation for ${eventName}`, {
       errors: result.errors,
       payload,
     });
+    if (DEV_MODE) {
+      throw new Error(`BeatBus schema fail: ${eventName}`);
+    }
+    return false;
   }
   return payload;
 };

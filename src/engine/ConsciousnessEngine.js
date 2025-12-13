@@ -494,7 +494,7 @@ class ConsciousnessEngine {
   }
 
   _onStageChange(payload = {}) {
-    const stage = payload.stage ?? payload.to;
+    const stage = payload.to;
     if (!stage) return;
     const skipBlueprint = payload.skipBlueprint === true;
     const preserveEmergence = payload.preserveEmergence !== false;
@@ -931,12 +931,13 @@ class ConsciousnessEngine {
     });
 
     BeatBus.emit(EVENTS.CLIMAX_STEP, {
-      step: step.name,
+      step: step.name ?? null,
       holdDuration,
       transitionDuration,
-      text: step.text ?? null,
-      url: step.url ?? null,
+      text: step.text ?? undefined,
+      url: step.url ?? undefined,
       stepIndex,
+      source: 'ConsciousnessEngine',
     });
 
     this._buildClimaxBlueprint(step);
@@ -1312,7 +1313,7 @@ class ConsciousnessEngine {
 
     this._log('climax_complete');
     console.log('🎬 Climax sequence complete');
-    BeatBus.emit(EVENTS.CLIMAX_STEP, { step: 'complete' });
+    BeatBus.emit(EVENTS.CLIMAX_STEP, { step: 'complete', source: 'ConsciousnessEngine' });
   }
 
   _resolveClimaxParticleCount() {

@@ -1,6 +1,21 @@
 // src/theater/events.js
 // SST v3.3 — Complete Event Catalog (canonical, named export)
 
+/**
+ * BeatBus Contract (v3.5+ strict)
+ *
+ * MORPH_PROGRESS payload:
+ *   { progress: number (0..1), source: string, timestamp?: number }
+ *
+ * STAGE_CHANGE payload:
+ *   { from: string|null, to: string, source: string, timestamp?: number }
+ *
+ * Guardrail:
+ *   - source is REQUIRED for both events
+ *   - progress is the ONLY morph progress field (no value/morphProgress)
+ *   - stage change is ONLY {from,to} (no {stage} / {to} alone)
+ */
+
 export const EVENTS = {
   // Opening (overlay-only; Director-driven)
   CURSOR_SHOW: 'CURSOR_SHOW',

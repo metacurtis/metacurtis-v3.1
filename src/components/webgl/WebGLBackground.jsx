@@ -990,7 +990,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   // Passive fallbacks (OK to keep)
   useEffect(() => {
     const off = BeatBus?.on?.(EVENTS.STAGE_CHANGE, (p) => {
-      const st = p?.stage ?? p?.to ?? p?.name ?? String(p);
+      const st = p?.to ?? p?.name ?? String(p);
       setStageName(st);
       __applyStageTint(st);
     });
@@ -2042,11 +2042,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           ignoreDirectives: ignoreDirectivesRef.current,
         });
       }
-      const raw =
-        payload?.progress ??
-        payload?.morphProgress ??
-        payload?.value ??
-        null;
+      const raw = payload?.progress ?? null;
       const value = Number.isFinite(raw) ? clamp01(raw) : null;
       if (value == null) return;
 

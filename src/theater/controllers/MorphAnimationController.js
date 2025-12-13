@@ -36,10 +36,8 @@ export default class MorphAnimationController {
       const clampedValue = clamp01(value);
       // Canonical Morph writer: all MORPH_PROGRESS bus traffic must originate here.
       emitMorphProgress({
-        value: clampedValue,
         progress: clampedValue,
         source,
-        channel: 'renderer',
       });
       try {
         console.log('🔬 MORPH_CONTROLLER_EMIT', {

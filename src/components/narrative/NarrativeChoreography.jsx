@@ -378,14 +378,14 @@ export function NarrativeChoreography() {
     return () => offLine?.();
   }, [currentStage, dispatchNext]);
 
-  useEffect(() => {
-    const offStage = BeatBus.on?.(EVENTS.STAGE_CHANGE, (payload = {}) => {
-      stageSequenceRef.current = {
-        stage: payload?.to || payload?.stage || currentStage,
-        count: 0,
-      };
-      resetState();
-    });
+    useEffect(() => {
+      const offStage = BeatBus.on?.(EVENTS.STAGE_CHANGE, (payload = {}) => {
+        stageSequenceRef.current = {
+          stage: payload?.to || currentStage,
+          count: 0,
+        };
+        resetState();
+      });
     return () => offStage?.();
   }, [resetState]);
 

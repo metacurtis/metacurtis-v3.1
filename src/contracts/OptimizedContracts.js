@@ -5,7 +5,7 @@ import crypto from 'crypto';
 export class BeatBusContract {
   static enforceShape(event, payload) {
     const contracts = {
-      STAGE_CHANGE: ['stage'],
+      STAGE_CHANGE: ['from', 'to', 'source'],
       QUALITY_CHANGE: ['quality'],
       BLUEPRINT_READY: ['blueprint', 'stage', 'quality'],
     };

@@ -103,7 +103,19 @@
   "E": {
     "id": "E",
     "name": "Historian",
-    "mission": "Capture what happened as a reusable pattern, including behavior and contract evolution, so we never solve the same class of problem from scratch.",
+    "mission": "Capture what happened as reusable artifacts (postmortem + extracted patterns), including behavior and contract evolution, so we never solve the same class of problem from scratch.",
+    "artifactTargets": {
+      "postmortemDir": "docs/orchestration/postmortems",
+      "patternsDir": "docs/agents/patterns",
+      "naming": {
+        "postmortem": "{yyyy}-{mm}-{dd}-{slug}.md",
+        "pattern": "{yyyy}-{mm}-{dd}-{slug}.md"
+      },
+      "required": [
+        "postmortem",
+        "patterns"
+      ]
+    },
     "inputFields": [
       "humanGoal",
       "issueDescription",
@@ -114,18 +126,27 @@
       "ExecutionResult",
       "F_contractStatus",
       "F_postContractStatus",
-      "F_contracts"
+      "F_contracts",
+      "F_appliedPatches",
+      "F_testResults",
+      "F_newDiagnostics",
+      "F_repoStateSummary",
+      "F_newViolations",
+      "F_regressionDetected"
     ],
     "outputFields": [
-      "patternName",
-      "context",
-      "fileGroupsTouched",
-      "whatWeChanged",
-      "whyItWorked",
-      "finalContracts",
-      "testEvidence",
-      "contractEvidence",
-      "checklistNextTime"
+      "postmortem.title",
+      "postmortem.slug",
+      "postmortem.path",
+      "postmortem.markdown",
+      "patterns[]",
+      "patterns[].slug",
+      "patterns[].path",
+      "patterns[].category",
+      "patterns[].markdown",
+      "invariants",
+      "traceTemplate",
+      "evidenceIndex"
     ]
   },
 

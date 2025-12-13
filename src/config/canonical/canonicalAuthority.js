@@ -1,6 +1,10 @@
 // CANONICAL AUTHORITY — SST v3.5 (Unified Single Source)
 import sstRaw from '../sst-loader.js';
-import { PARTICLE_EFFECTS as OVERRIDE_PARTICLE_EFFECTS, CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS } from './visualEffects.js';
+import {
+  PARTICLE_EFFECTS as OVERRIDE_PARTICLE_EFFECTS,
+  CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS,
+  VERB_UNIFORM_MAP,
+} from './visualEffects.js';
 
 /** Deep-freeze utility (keeps Canonical read-only) */
 function deepFreeze(obj) {
@@ -318,6 +322,18 @@ function buildCanonical(source) {
     return translated;
   };
 
+  const resolveVisualVerb = (verb) => {
+    if (!verb) return null;
+    const entry = VERB_UNIFORM_MAP?.[verb] || null;
+    if (!entry) {
+      if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+        throw new Error(`[VisualVerb] No uniform mapping for verb "${verb}". Add it to visualEffects.js`);
+      }
+      return null;
+    }
+    return { verb, uniforms: { ...entry } };
+  };
+
   const getBeatSheet = (stageName) => {
     if (!stageName) return null;
 
@@ -448,7 +464,7 @@ function buildCanonical(source) {
     visualEffects,
     getStageByName, getStageByIndex, getStageByScroll,
     isFeatureEnabled, getFragmentsForStage, getActiveFragments,
-    getVisualEffect, getBeatSheet,
+    getVisualEffect, getBeatSheet, resolveVisualVerb,
     getCoverageStats, getAllVisualVerbs,
     SYSTEM_CONSTANTS
   };

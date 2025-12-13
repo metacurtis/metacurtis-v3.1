@@ -18,30 +18,6 @@
       ]
     }
   },
-  "narrative": {
-    "overlay": {
-      "typewriterSpeedMs": 50,
-      "graceWindowMs": 800,
-      "deduplication": {
-        "enabled": true,
-        "thresholdMs": 100
-      },
-      "style": {
-        "background": "rgba(0, 0, 0, 0.65)",
-        "color": "#fff",
-        "fontSize": 16,
-        "lineHeight": 1.45,
-        "padding": "12px 18px",
-        "borderRadius": 10,
-        "maxWidth": 960,
-        "zIndex": 1000
-      },
-      "animation": {
-        "fadeInDurationMs": 300,
-        "fadeOutDurationMs": 500
-      }
-    }
-  },
   "features": {
     "gaussianFalloff": 1,
     "centerWeightingTier4": 1,
@@ -720,46 +696,17 @@
       },
       "openingNote": "Opening shot list (implemented using the contracts above)",
       "openingTimeline": {
-        "profile": "chaos_coalesce_settle_v1",
-        "prologue": {
-          "terminalOverlay": true,
-          "fadeOutAtMs": 0
-        },
-        "chaos": {
-          "enabled": true,
-          "durationMs": 2000,
-          "rendererSpin": {
-            "z": 0.55,
-            "y": 0.25
-          }
-        },
-        "coalesce": {
-          "enabled": true,
-          "durationMs": 2000,
-          "morphTo": 0.6
-        },
-        "settle": {
-          "enabled": true,
-          "durationMs": 1500,
-          "morphTo": 1.0,
-          "constellationCoverage": [
-            0.95,
-            0.8,
-            0.6,
-            0.45
-          ]
-        },
-        "narration": {
-          "startAtMs": 13000,
-          "events": [
-            "START_NARRATIVE",
-            "AUDIO_START_STAGE"
-          ]
-        },
-        "beatGlyph": {
-          "revealMs": 9500,
-          "text": "HELLO CURTIS"
-        }
+        "steps": [
+          { "id": "genesis_010_chaos",          "atMs": 0,     "verb": "chaos" },
+          { "id": "genesis_020_camera_wide",    "atMs": 0,     "camera": { "shot": "genesis_initial" } },
+          { "id": "genesis_030_coalesce",       "atMs": 2000,  "verb": "coalesce" },
+          { "id": "genesis_040_settle",         "atMs": 4200,  "verb": "settle" },
+          { "id": "genesis_050_camera_reveal",  "atMs": 8000,  "camera": { "shot": "genesis_reveal" } },
+          { "id": "genesis_060_gentle_drift",   "atMs": 7500,  "verb": "gentle_drift" },
+          { "id": "genesis_070_breathing",      "atMs": 9000,  "verb": "breathing_rhythm" },
+          { "id": "genesis_080_fade_blue",      "atMs": 10500, "verb": "flicker_fade_back_to_blue" },
+          { "id": "genesis_900_enable_scroll",  "atMs": 11500, "handoff": "ENABLE_SCROLL" }
+        ]
       }
     },
     "discipline": {
@@ -1511,6 +1458,28 @@
     }
   },
   "narrative": {
+    "overlay": {
+      "typewriterSpeedMs": 50,
+      "graceWindowMs": 800,
+      "deduplication": {
+        "enabled": true,
+        "thresholdMs": 100
+      },
+      "style": {
+        "background": "rgba(0, 0, 0, 0.65)",
+        "color": "#fff",
+        "fontSize": 16,
+        "lineHeight": 1.45,
+        "padding": "12px 18px",
+        "borderRadius": 10,
+        "maxWidth": 960,
+        "zIndex": 1000
+      },
+      "animation": {
+        "fadeInDurationMs": 300,
+        "fadeOutDurationMs": 500
+      }
+    },
     "orchestration": {
       "mode": "narration-driven",
       "scrollLocked": true,

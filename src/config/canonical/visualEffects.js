@@ -387,6 +387,50 @@ export const PARTICLE_EFFECTS = {
   },
 };
 
+// Canonical verb → renderer-uniform map.
+// Only fields defined in RENDER_DIRECTIVE_FIELDS/RENDER_DIRECTIVE_FIELD_TYPE_MAP are used.
+export const VERB_UNIFORM_MAP = {
+  chaos: {
+    uMotionMode: 3,
+    uFlowTurbulence: 1.0,
+    uParticleFlash: 0.8,
+    uOpacityMin: 0.4,
+    uOpacityMax: 1.0,
+  },
+  coalesce: {
+    uMotionMode: 1,
+    uFlowTurbulence: 0.35,
+    uParticleFlash: 0.5,
+    uOpacityMin: 0.5,
+    uOpacityMax: 0.9,
+  },
+  settle: {
+    uMotionMode: 1,
+    uFlowTurbulence: 0.15,
+    uParticleFlash: 0.2,
+    uOpacityMin: 0.6,
+    uOpacityMax: 0.9,
+  },
+  gentle_drift: {
+    uMotionMode: 3,
+    uFlowTurbulence: 0.2,
+    uOpacityMin: 0.5,
+    uOpacityMax: 0.8,
+  },
+  breathing_rhythm: {
+    uMotionMode: 0,
+    uParticleFlash: 0.25,
+    uOpacityMin: 0.45,
+    uOpacityMax: 0.85,
+  },
+  flicker_fade_back_to_blue: {
+    uMotionMode: 0,
+    uParticleFlash: 0.35,
+    uOpacityMin: 0.4,
+    uOpacityMax: 0.9,
+  },
+};
+
 export const CAMERA_EFFECTS = {
   breathing_rhythm:        { type: 'camera' },
   genesis_callback_purple: { type: 'camera' },

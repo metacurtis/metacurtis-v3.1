@@ -1,12 +1,11 @@
 // src/theater/ScrollOrchestrator.js
 // BeatGlyph v3.3 — ScrollOrchestrator
-// Purpose: map window scroll -> stage-local progress; publish MORPH_PROGRESS and STAGE_CHANGE.
+// Purpose: map window scroll -> stage-local progress; publish SCROLL_PROGRESS only (no morph/stage writes).
 // Kinetics: speedMultiplier=2.0, smoothing=0.15, overshoot=0.05 (v3.3 canon)
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
-import { emitRenderDirective } from './bus/emitters.js';
 import {
   exposeDiagnostics,
   exposeControlSurface,
@@ -15,8 +14,6 @@ import {
 } from '@/utils/runtimeGuards.js';
 
 const DEBUG_SCROLL = true;
-const MORPH_DIRECTIVE_EPS = 0.005;
-const DEFAULT_MORPH_DIRECTIVE_INTERVAL_MS = 80;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 
@@ -190,30 +187,7 @@ export default class ScrollOrchestrator {
       this._schedule();
     }
 
-    // Emit morph progress (with throttling)
-    const now = Date.now();
-    const shouldEmit = (
-      Math.abs(this.morph - this._lastEmitVal) > 0.005 || // changed enough
-      (now - this._lastEmitTs) > 100 // or 100ms passed
-    );
-    
-    if (shouldEmit) {
-      this._lastEmitVal = this.morph;
-      this._lastEmitTs = now;
-      const stageName =
-        Canonical?.stageOrder?.[this.lastStageIndex] ||
-        Object.keys(Canonical?.stages || {})[this.lastStageIndex] ||
-        'unknown';
-      if (this.enabled) {
-        // TODO(Phase 2): route this scroll-driven morph through MorphAnimationController so MORPH_PROGRESS continues after opening.
-        __emitMorphDirective(this.morph, stageName);
-      } else if (DEBUG_SCROLL) {
-        console.log('[ScrollOrchestrator] Morph update suppressed until ENABLE_SCROLL', {
-          value: this.morph,
-          stageName,
-        });
-      }
-    }
+    // No MORPH_PROGRESS emission here; ScrollOrchestrator is events-only.
   }
 
   _ensureScrollableArea(originOrEvent = 'runtime') {
@@ -340,8 +314,8 @@ export default class ScrollOrchestrator {
         stageIndex: stageIdx,
         stageProgress: local * 100,
         localProgress: local,
-        morphTarget: this.morphTarget,
-        morph: this.morph,
+        source: 'scroll_orchestrator',
+        timestamp: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
       });
 
       // stage change event
@@ -402,32 +376,4 @@ export default class ScrollOrchestrator {
     this._lastEmitVal = 1;
     this._lastEmitTs = 0;
   }
-}
-
-let __lastMorphDirective = 1;
-let __lastMorphDirectiveStamp = 0;
-
-const __getMorphThrottleMs = () =>
-  Canonical?.scrollAndMorph?.morphResponse?.emitIntervalMs ??
-  DEFAULT_MORPH_DIRECTIVE_INTERVAL_MS;
-
-function __emitMorphDirective(value, stageName = 'genesis') {
-  const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
-    ? performance.now()
-    : Date.now();
-  const diff = Math.abs((value ?? 0) - (__lastMorphDirective ?? 0));
-  if (diff < MORPH_DIRECTIVE_EPS && now - __lastMorphDirectiveStamp < __getMorphThrottleMs()) {
-    return;
-  }
-  __lastMorphDirective = value ?? 0;
-  __lastMorphDirectiveStamp = now;
-
-  emitRenderDirective({
-    source: 'scroll_orchestrator',
-    channel: 'renderer',
-    phase: 'scroll',
-    stage: stageName,
-    uMorphProgress: clamp01(value ?? 0),
-    morphProgress: clamp01(value ?? 0),
-  });
 }

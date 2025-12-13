@@ -80,7 +80,7 @@ class StateCommands {
     let lastQualityFromBus = qualityAtom.getState?.()?.currentQualityTier ?? null;
 
     const stageBusSub = BeatBus.on?.(EVENTS.STAGE_CHANGE, (payload = {}) => {
-      const stage = payload.to ?? payload.stage ?? payload.name ?? null;
+      const stage = payload.to ?? null;
       if (stage) {
         lastStageFromBus = stage;
       }
@@ -106,10 +106,9 @@ class StateCommands {
         }
         // Emit stage change events via the Pattern S façade
         emitStageChange({
-          from: prevStage,
+          from: prevStage ?? null,
           to: next,
-          stage: next,  // Include for compatibility
-          reason: 'atom'
+          source: 'stateAtom',
         });
         
         // REMOVED: BUILD_EMERGENCE_BLUEPRINT emission
@@ -124,9 +123,7 @@ class StateCommands {
 
     // Listen to canonical morph progress emitter
     const morphBusSub = BeatBus.on?.(EVENTS.MORPH_PROGRESS, (payload = {}) => {
-      const value = clamp01(
-        payload.progress ?? payload.morphProgress ?? payload.value ?? 0
-      );
+      const value = clamp01(payload.progress ?? 0);
       this.morphState = {
         value,
         origin: payload.source || 'animator',

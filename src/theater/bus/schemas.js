@@ -59,14 +59,8 @@ export const RENDER_DIRECTIVE_SCHEMA_FIELDS = Object.keys(renderDirectivePropert
 
 const EVENT_SCHEMAS = new Map([
   ['STAGE_CHANGE', {
-    required: { from: 'string', to: 'string' },
-    extended: {
-      index: 'number',
-      stageIndex: 'number',
-      scrollPercent: 'number',
-      localProgress: 'number',
-      source: 'string',
-    },
+    required: { from: ['string', null], to: 'string', source: 'string' },
+    optional: { timestamp: 'number' },
   }],
   ['QUALITY_CHANGE', {
     required: { tier: 'string' },
@@ -79,14 +73,8 @@ const EVENT_SCHEMAS = new Map([
     },
   }],
   ['MORPH_PROGRESS', {
-    required: { progress: 'number' },
-    optional: {
-      source: 'string',
-      morphProgress: 'number', // legacy
-      stage: 'string',
-      target: 'number',
-      stageIndex: 'number',
-    },
+    required: { progress: 'number', source: 'string' },
+    optional: { timestamp: 'number' },
   }],
   ['GEOMETRY_BOUND', {
     required: {
@@ -278,6 +266,23 @@ export function validateEventPayload(eventName, payload) {
         }
       }
     }
+  }
+
+  // Strict: reject unexpected top-level fields only when a schema exists
+  const schemaDef = EVENT_SCHEMAS.get(eventName);
+  if (schemaDef) {
+    const allowed = new Set([
+      ...Object.keys(BaseSchema.required || {}),
+      ...Object.keys(BaseSchema.optional || {}),
+    ]);
+    if (schemaDef.required) Object.keys(schemaDef.required).forEach((k) => allowed.add(k));
+    if (schemaDef.optional) Object.keys(schemaDef.optional).forEach((k) => allowed.add(k));
+    if (schemaDef.extended) Object.keys(schemaDef.extended).forEach((k) => allowed.add(k));
+    Object.keys(payload).forEach((key) => {
+      if (!allowed.has(key)) {
+        errors.push(`Unexpected field: ${key}`);
+      }
+    });
   }
 
   return { valid: errors.length === 0, errors };

@@ -153,7 +153,7 @@ export const qualityAtom = createAtom(initialState, (get, setState) => {
     if (unsubscribe) return; // Already initialized
     
     unsubscribe = BeatBus.on(EVENTS.STAGE_CHANGE, (payload) => {
-      const stage = payload?.to || payload?.stage;
+      const stage = payload?.to;
       if (stage && stage !== get().currentStage) {
         const state = get();
         const particleCount = cache.getParticleCount(stage, state.currentQualityTier);

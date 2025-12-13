@@ -25,8 +25,11 @@ function logDev(eventName, payload) {
 }
 
 export function emitStageChange(payload) {
-  if (!payload || !payload.to) {
-    throw new Error('STAGE_CHANGE requires { from, to } payload');
+  if (!payload || payload.to === undefined) {
+    throw new Error('STAGE_CHANGE requires { from, to, source } payload');
+  }
+  if (!payload.source) {
+    throw new Error('STAGE_CHANGE requires payload.source');
   }
   logDev(EVENTS.STAGE_CHANGE, payload);
   BeatBus.emit(EVENTS.STAGE_CHANGE, payload);
@@ -53,7 +56,10 @@ export function emitRenderDirective(payload) {
 
 export function emitMorphProgress(payload) {
   if (!payload || typeof payload.progress !== 'number') {
-    throw new Error('MORPH_PROGRESS requires { progress }');
+    throw new Error('MORPH_PROGRESS requires { progress, source }');
+  }
+  if (!payload.source) {
+    throw new Error('MORPH_PROGRESS requires payload.source');
   }
   logDev(EVENTS.MORPH_PROGRESS, payload);
   BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);

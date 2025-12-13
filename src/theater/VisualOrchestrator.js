@@ -106,22 +106,62 @@ class VisualOrchestrator {
       effect = {},
       phase = 'narration',
       stage,
-      source = 'beat_visual',
+      source = 'visual_orchestrator',
       overrides = {},
     } = payload;
+    const stageName = typeof stage === 'string' ? stage : this.state.stageName;
+    let resolvedEffect = effect && Object.keys(effect).length ? effect : null;
+    if (!resolvedEffect && verb && typeof Canonical?.resolveVisualVerb === 'function') {
+      resolvedEffect = Canonical.resolveVisualVerb(verb) || null;
+    }
+    if (!verb) {
+      console.warn('[VO] applyVerb called without verb', { payload });
+      return;
+    }
+    if (!resolvedEffect) {
+      console.warn('[VO] Unknown visual verb; no effect resolved', { verb, stage: stageName });
+      return;
+    }
     if (typeof stage === 'string') {
-      this.state.stageName = stage;
+      this.state.stageName = stageName;
     }
     this.state.mode = phase || 'narration';
     this.state.lastVerb = verb;
-    this.state.lastEffect = effect && Object.keys(effect).length ? { ...effect } : null;
+    this.state.lastEffect = resolvedEffect && Object.keys(resolvedEffect).length ? { ...resolvedEffect } : null;
     const directive = this._composeDirective({
       phase: phase || 'narration',
       verb,
-      ...effect,
+      stage: stageName,
+      kind: 'uniforms',
+      effect: resolvedEffect,
+      ...(resolvedEffect?.uniforms ? { uniforms: resolvedEffect.uniforms } : resolvedEffect),
       ...overrides,
       source,
     });
+    this._emitDirective(directive);
+  }
+
+  applyCamera(payload = {}) {
+    this.init();
+    const {
+      stage = this.state.stageName,
+      camera = null,
+      cueId = null,
+      source = 'visual_orchestrator',
+      overrides = {},
+    } = payload;
+    if (!camera) {
+      console.warn('[VO] applyCamera called without camera payload', { payload });
+      return;
+    }
+    const directive = {
+      stage,
+      kind: 'camera',
+      camera,
+      cueId,
+      ...overrides,
+      source,
+    };
     this._emitDirective(directive);
   }
 
@@ -186,7 +226,7 @@ class VisualOrchestrator {
   }
 
   _handleStageChange = (payload = {}) => {
-    const stage = payload.to ?? payload.stage;
+    const stage = payload.to;
     if (typeof stage === 'string') {
       this.state.stageName = stage;
       const order = Canonical?.stageOrder || [];
@@ -196,8 +236,7 @@ class VisualOrchestrator {
   };
 
   _handleMorph = (payload = {}) => {
-    const value =
-      payload.progress ?? payload.morphProgress ?? payload.value ?? payload.morphTarget;
+    const value = payload.progress;
     if (Number.isFinite(value)) {
       this.state.morphProgress = clamp01(value);
     }

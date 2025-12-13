@@ -155,6 +155,42 @@ const SKIP_KEY_MAP = {
 };
 
 const OPENING_MORPH_SOURCE = 'raf-timed';
+let __openingToken = 0;
+let __openingTimers = [];
+let __openingActiveStage = null;
+
+function _cancelOpeningSchedule() {
+  for (const id of __openingTimers) clearTimeout(id);
+  __openingTimers = [];
+  __openingToken += 1;
+  __openingActiveStage = null;
+}
+
+function normalizeOpeningTimeline(opening) {
+  if (!opening) return [];
+  const raw =
+    opening.timeline?.steps ??
+    opening.timeline ??
+    opening.steps ??
+    [];
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((s, idx) => {
+      const atMs = Number(s.atMs ?? s.at ?? s.timeMs ?? 0);
+      if (!Number.isFinite(atMs)) return null;
+      return {
+        id: s.id ?? null,
+        atMs,
+        verb: s.verb ?? s.visualVerb ?? s.cue ?? null,
+        camera: s.camera ?? null,
+        handoff: s.handoff ?? null,
+        meta: s.meta ?? null,
+        order: idx,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.atMs - b.atMs || (a.order - b.order));
+}
 
 function matchesSkipActivation(event, skipKey) {
   if (!skipKey || !event) return false;
@@ -187,6 +223,8 @@ class TheaterDirector {
     this._stageBlueprintUnsubscribe = null;
     this._handleBlueprintReadyBound = null;
     this._climaxStepUnsubscribe = null;
+    this._beatScheduleToken = 0;
+    this._beatTimers = [];
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -215,7 +253,7 @@ class TheaterDirector {
     }
 
     this._handleStageChangeBound = (payload = {}) => {
-      const targetStage = payload?.to ?? payload?.stage ?? null;
+      const targetStage = payload?.to ?? null;
       if (!targetStage) return;
       if (targetStage === 'genesis' && this.currentStage) {
         const isOpeningHandoff = payload?.preserveEmergence === true;
@@ -537,12 +575,7 @@ class TheaterDirector {
     if (typeof BeatBus?.on !== 'function') return;
     this._openingMorphListener = BeatBus.on(EVENTS.MORPH_PROGRESS, (payload = {}) => {
       if (!this._ownsOpeningMorph) return;
-      const value =
-        typeof payload.progress === 'number'
-          ? payload.progress
-          : typeof payload.value === 'number'
-            ? payload.value
-            : null;
+      const value = typeof payload.progress === 'number' ? payload.progress : null;
       if (value == null) return;
       const target = typeof payload.target === 'number' ? payload.target : value;
       const phase = this.phase || payload.phase || 'opening';
@@ -558,6 +591,141 @@ class TheaterDirector {
       } catch {}
     }
     this._openingMorphListener = null;
+  }
+
+  _cancelBeatSchedule() {
+    this._beatScheduleToken += 1;
+    if (Array.isArray(this._beatTimers)) {
+      this._beatTimers.forEach((id) => clearTimeout(id));
+    }
+    this._beatTimers = [];
+  }
+
+  _runOpeningSchedule({ stage, source = 'TheaterDirector' } = {}) {
+    _cancelOpeningSchedule();
+    if (!stage) return;
+    const token = __openingToken;
+    __openingActiveStage = stage;
+
+    const opening =
+      (typeof Canonical?.getOpeningTimeline === 'function' && Canonical.getOpeningTimeline(stage)) ||
+      Canonical?.opening?.timeline ||
+      Canonical?.stages?.[stage]?.openingTimeline ||
+      null;
+
+    const timeline = normalizeOpeningTimeline(opening);
+    if (!timeline.length) {
+      if (DEBUG_NARRATION) {
+        console.log('[OpeningSchedule] No timeline for stage', stage);
+      }
+      return;
+    }
+
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    let handoffDone = false;
+    __openingTimers = [];
+
+    if (DEBUG_NARRATION) {
+      console.log('[OpeningSchedule] start', { stage, steps: timeline.length, source });
+    }
+
+    timeline.forEach((step, idx) => {
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const delay = Math.max(0, step.atMs - (now - t0));
+      const id = setTimeout(() => {
+        if (token !== __openingToken) return;
+        if (__openingActiveStage !== stage) return;
+
+        if (step.verb) {
+          VisualOrchestrator.applyVerb?.({
+            stage,
+            verb: step.verb,
+            phase: 'opening',
+            source: 'visual_orchestrator',
+            overrides: {
+              beatIndex: idx,
+              beatId: step.id ?? `opening:${stage}:${idx}`,
+              ...(step.meta ? { meta: step.meta } : {}),
+            },
+          });
+        }
+
+        if (step.camera) {
+          VisualOrchestrator.applyCamera?.({
+            stage,
+            camera: step.camera,
+            cueId: step.id ?? `camera:${stage}:${idx}`,
+            source: 'visual_orchestrator',
+          });
+        }
+
+        if (!handoffDone && step.handoff === 'ENABLE_SCROLL') {
+          handoffDone = true;
+          BeatBus.emit(EVENTS.ENABLE_SCROLL, {
+            source: 'OpeningSchedule',
+            timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+          });
+          BeatBus.emit(EVENTS.OPENING_COMPLETE, {
+            stage,
+            source: 'OpeningSchedule',
+            timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+          });
+          if (DEBUG_NARRATION) {
+            console.log('[OpeningSchedule] handoff ENABLE_SCROLL', { stage });
+          }
+        }
+      }, delay);
+      __openingTimers.push(id);
+    });
+  }
+
+  _startBeatScheduleForStage(stage, source = 'director') {
+    this._cancelBeatSchedule();
+    if (!stage) return;
+    const token = ++this._beatScheduleToken;
+    const beatSheet =
+      (typeof Canonical?.getBeatSheet === 'function' && Canonical.getBeatSheet(stage)) ||
+      Canonical?.narrative?.beatSheets?.[stage] ||
+      null;
+    const beats = Array.isArray(beatSheet?.beats) ? beatSheet.beats : [];
+    if (!beats.length) {
+      if (DEBUG_NARRATION) {
+        console.log('[BeatScheduler] No beat sheet for stage', stage);
+      }
+      return;
+    }
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const timers = [];
+    beats.forEach((beat, idx) => {
+      const atMs = Number(beat?.time ?? beat?.at ?? beat?.atMs ?? 0);
+      const verb = beat?.visual ?? beat?.verb ?? beat?.cue ?? null;
+      if (!verb || !Number.isFinite(atMs)) return;
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const delay = Math.max(0, atMs - (now - t0));
+      const id = setTimeout(() => {
+        if (token !== this._beatScheduleToken) return;
+        try {
+          VisualOrchestrator.applyVerb?.({
+            stage,
+            verb,
+            phase: 'narration',
+            source: 'visual_orchestrator',
+            overrides: {
+              beatIndex: idx,
+              beatId: beat?.id ?? `${stage}:${idx}`,
+              metadata: beat?.metadata ?? beat?.meta ?? {},
+            },
+          });
+        } catch (e) {
+          console.error('[BeatScheduler] applyVerb failed', { stage, verb, idx, e });
+        }
+      }, delay);
+      timers.push(id);
+    });
+    this._beatTimers = timers;
+    if (DEBUG_NARRATION) {
+      console.log('[BeatScheduler] Scheduled beats', { stage, count: timers.length, source });
+    }
   }
 
   _emitRenderDirectiveFrame(value, { stage, phase, target }) {
@@ -764,7 +932,7 @@ class TheaterDirector {
     if (!step || step === 'complete') return;
     if (typeof this.isOpeningInProgress === 'function' && this.isOpeningInProgress()) return;
 
-    const stageName = this.currentStage || payload.stage || null;
+    const stageName = this.currentStage || payload.to || null;
     if (stageName && stageName !== 'transcendence') return;
 
     const durationMs = Math.max(
@@ -821,6 +989,7 @@ class TheaterDirector {
     }
 
     this.currentStage = newStage;
+    this._startBeatScheduleForStage(newStage, 'stage_change');
 
     if (beatSheet) {
       if (DEBUG_NARRATION) {
@@ -1580,7 +1749,7 @@ class TheaterDirector {
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       } catch {}
 
-      await this._runVisualSchedule();
+      await this._runOpeningSchedule({ stage: toStage, source: 'opening_handoff' });
 
       // 🔓 Opening is officially over before we start Genesis narration.
       // NarrationController uses isOpeningInProgress() to suppress beats;
@@ -1731,9 +1900,8 @@ class TheaterDirector {
     }
   }
 
-  async _runVisualSchedule() {
-    // Visual schedule disabled; renderer remains the sole GPU writer for opening
-    return;
+  async _runVisualSchedule({ stage = 'genesis', source = 'TheaterDirector' } = {}) {
+    this._runOpeningSchedule({ stage, source });
   }
 
   cancel() {
@@ -1758,6 +1926,7 @@ class TheaterDirector {
     this.scrollOrchestrator?.stop();
     this._cancelMorphAnimation();
     this._morphAnimationController?.stop();
+    this._cancelBeatSchedule();
     this._wakeSleepWaiters('cancelled');
     this._detachSkipListener();
     BeatBus.emit(EVENTS.DIRECTOR_CANCEL);
@@ -2019,7 +2188,7 @@ export const CANON_CONTRACTS = {
   version: '1.0.1',
   events: {
     STAGE_CHANGE: {
-      required: ['from', 'to'],
+      required: ['from', 'to', 'source'],
       notes: 'Canonical shape. Old `{stage}` payload is deprecated.',
     },
     QUALITY_CHANGE: {
@@ -2037,8 +2206,5 @@ export const CANON_CONTRACTS = {
       notes: 'Corrected contract for viewport spread → constellation emergence.',
     },
   },
-  deprecations: {
-    STAGE_CHANGE: { stage: 'deprecated' },
-    QUALITY_CHANGE: { quality: 'deprecated' },
-  },
+  deprecations: {},
 };
