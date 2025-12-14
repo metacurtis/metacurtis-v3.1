@@ -108,11 +108,12 @@ class VisualOrchestrator {
       stage,
       source = 'visual_orchestrator',
       overrides = {},
+      params = {},
     } = payload;
     const stageName = typeof stage === 'string' ? stage : this.state.stageName;
     let resolvedEffect = effect && Object.keys(effect).length ? effect : null;
     if (!resolvedEffect && verb && typeof Canonical?.resolveVisualVerb === 'function') {
-      resolvedEffect = Canonical.resolveVisualVerb(verb) || null;
+      resolvedEffect = Canonical.resolveVisualVerb(verb, params) || null;
     }
     if (!verb) {
       console.warn('[VO] applyVerb called without verb', { payload });
@@ -136,9 +137,21 @@ class VisualOrchestrator {
       effect: resolvedEffect,
       ...(resolvedEffect?.uniforms ? { uniforms: resolvedEffect.uniforms } : resolvedEffect),
       ...overrides,
+      ...(params && Object.keys(params).length
+        ? { _meta: { ...(resolvedEffect?._meta || {}), params } }
+        : {}),
       source,
     });
     this._emitDirective(directive);
+
+    if (params && params.camera) {
+      this.applyCamera({
+        stage: stageName,
+        camera: params.camera,
+        cueId: overrides?.beatId || null,
+        source,
+      });
+    }
   }
 
   applyCamera(payload = {}) {

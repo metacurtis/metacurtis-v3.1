@@ -225,6 +225,9 @@ class TheaterDirector {
     this._climaxStepUnsubscribe = null;
     this._beatScheduleToken = 0;
     this._beatTimers = [];
+    this._scrollLockToken = null;
+    this._scrollLockReason = null;
+    this._scrollLockPrevOverflow = null;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -599,6 +602,35 @@ class TheaterDirector {
       this._beatTimers.forEach((id) => clearTimeout(id));
     }
     this._beatTimers = [];
+  }
+
+  _lockScroll(reason = 'director') {
+    if (typeof document === 'undefined' || !document?.body) return null;
+    if (this._scrollLockToken) return this._scrollLockToken;
+    const prev = document.body.style.overflow;
+    try {
+      document.body.style.overflow = 'hidden';
+      this._scrollLockPrevOverflow = prev;
+      this._scrollLockReason = reason;
+      this._scrollLockToken = `${reason}:${Date.now()}`;
+      return this._scrollLockToken;
+    } catch {
+      return null;
+    }
+  }
+
+  _unlockScroll(token = null) {
+    if (typeof document === 'undefined' || !document?.body) return;
+    if (token && this._scrollLockToken && token !== this._scrollLockToken) return;
+    try {
+      document.body.style.overflow =
+        typeof this._scrollLockPrevOverflow === 'string' ? this._scrollLockPrevOverflow : '';
+    } catch {
+      // noop
+    }
+    this._scrollLockPrevOverflow = null;
+    this._scrollLockReason = null;
+    this._scrollLockToken = null;
   }
 
   _runOpeningSchedule({ stage, source = 'TheaterDirector' } = {}) {

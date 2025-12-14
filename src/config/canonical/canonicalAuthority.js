@@ -322,7 +322,7 @@ function buildCanonical(source) {
     return translated;
   };
 
-  const resolveVisualVerb = (verb) => {
+  const resolveVisualVerb = (verb, params = {}) => {
     if (!verb) return null;
     const entry = VERB_UNIFORM_MAP?.[verb] || null;
     if (!entry) {
@@ -331,7 +331,50 @@ function buildCanonical(source) {
       }
       return null;
     }
-    return { verb, uniforms: { ...entry } };
+
+    const baseUniforms = typeof entry === 'function' ? entry(params) : entry;
+    if (!baseUniforms || typeof baseUniforms !== 'object') {
+      if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+        throw new Error(`[VisualVerb] Mapping for verb "${verb}" did not return an object`);
+      }
+      return null;
+    }
+
+    const uniforms = { ...baseUniforms };
+    const meta = {};
+
+    if (params && typeof params === 'object') {
+      if (params.color) {
+        uniforms.uColor = params.color;
+        meta.color = params.color;
+      }
+      if (params.bloom) {
+        const { intensity, peak, fadeOut } = params.bloom;
+        if (Number.isFinite(intensity)) uniforms.uBloomIntensity = intensity;
+        if (Number.isFinite(peak)) uniforms.uBloomPeak = peak;
+        if (fadeOut === true) uniforms.uBloomFadeOut = 1;
+        meta.bloom = params.bloom;
+      }
+      if (typeof params.intensity === 'number') {
+        uniforms.uIntensity = params.intensity;
+        meta.intensity = params.intensity;
+      }
+      if (params.text) {
+        meta.text = params.text;
+      }
+      if (params.camera) {
+        meta.camera = params.camera;
+      }
+      if (Number.isFinite(params.durationMs)) {
+        meta.durationMs = params.durationMs;
+      }
+    }
+
+    return {
+      verb,
+      uniforms,
+      ...(Object.keys(meta).length ? { _meta: meta } : {}),
+    };
   };
 
   const getBeatSheet = (stageName) => {

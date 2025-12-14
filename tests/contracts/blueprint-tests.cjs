@@ -9,6 +9,12 @@ async function loadContracts() {
   return mod;
 }
 
+async function loadCanonical() {
+  const modulePath = path.resolve('src/config/canonical/canonicalAuthority.js');
+  const mod = await import(pathToFileURL(modulePath).href);
+  return mod.default || mod;
+}
+
 function createTestHarness() {
   const tests = [];
 
@@ -51,6 +57,7 @@ function createTestHarness() {
 (async () => {
   const { test, assert, run } = createTestHarness();
   const { BeatBusContract, BlueprintContract, CacheKeyGenerator } = await loadContracts();
+  const Canonical = await loadCanonical();
 
   const sampleBlueprint = {
     positions: new Float32Array([0, 0, 0, 1, 1, 1]),
@@ -98,6 +105,20 @@ function createTestHarness() {
     const hashB = CacheKeyGenerator.generate(params);
     assert(hashA === hashB, 'hash should be deterministic');
     assert(hashA.length === 32, 'hash should be md5 length');
+  });
+
+  test('resolveVisualVerb applies params into uniforms/meta', () => {
+    const result = Canonical.resolveVisualVerb('chaos', {
+      color: '#ff0000',
+      bloom: { intensity: 0.5, peak: 0.8, fadeOut: true },
+      text: 'HELLO',
+    });
+    assert(result && result.uniforms, 'resolver returns uniforms');
+    assert(result.uniforms.uColor === '#ff0000', 'color propagated into uniforms');
+    assert(result.uniforms.uBloomIntensity === 0.5, 'bloom intensity propagated');
+    assert(result.uniforms.uBloomPeak === 0.8, 'bloom peak propagated');
+    assert(result.uniforms.uBloomFadeOut === 1, 'bloom fade flag propagated');
+    assert(result._meta && result._meta.text === 'HELLO', 'meta text captured');
   });
 
   await run();
