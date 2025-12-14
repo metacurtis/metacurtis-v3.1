@@ -771,6 +771,14 @@ class TheaterDirector {
   runVisualDemo(demoKey = 'brand_vision_demo') {
     this._cancelVisualDemoSchedule('restart');
 
+    // Stop any competing schedules (stage/narration/opening) before starting the demo
+    this._cancelBeatSchedule();
+    try {
+      _cancelOpeningSchedule();
+    } catch {
+      // optional: not fatal
+    }
+
     const demo = Canonical?.visualDemos?.[demoKey];
     if (!demo) {
       throw new Error(`[TheaterDirector] visual demo not found: ${demoKey}`);

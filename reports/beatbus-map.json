@@ -11,7 +11,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2155
+        "line": 2274
       }
     ],
     "START_CLIMAX": [
@@ -43,11 +43,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1048
+        "line": 1167
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1798
+        "line": 1917
       }
     ],
     "NARRATIVE_LINE": [
@@ -63,7 +63,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1675
+        "line": 1794
       }
     ],
     "PARTICLE_CLICK_HIT": [
@@ -121,11 +121,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1462
+        "line": 1581
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1639
+        "line": 1758
       }
     ],
     "SCROLL_PROGRESS": [
@@ -137,107 +137,107 @@
     "DIRECTOR:MORPH_STATE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 538
+        "line": 539
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 696
+        "line": 753
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1796
+        "line": 1915
       }
     ],
     "OPENING_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 700
+        "line": 757
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1812
+        "line": 1931
       }
     ],
     "DIRECTOR_ERROR": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1244
+        "line": 1363
       }
     ],
     "CURSOR_SHOW": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1403
+        "line": 1522
       }
     ],
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1404
+        "line": 1523
       }
     ],
     "CURSOR_BLINK": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1410
+        "line": 1529
       }
     ],
     "TERMINAL_TYPE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1422
+        "line": 1541
       }
     ],
     "SCREEN_FILL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1437
+        "line": 1556
       }
     ],
     "DIRECTOR_OPENING_MODE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1454
+        "line": 1573
       }
     ],
     "PARTICLE_PHASE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1505
+        "line": 1624
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1538
+        "line": 1657
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1580
+        "line": 1699
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1656
+        "line": 1775
       }
     ],
     "DIRECTOR_CANCEL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1964
+        "line": 2083
       }
     ],
     "PREWARM_GENESIS_BLUEPRINT": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1970
+        "line": 2089
       }
     ],
     "RENDERER_TUNE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1985
+        "line": 2104
       }
     ],
     "RENDER_DIRECTIVE": [
@@ -317,7 +317,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2176
+        "line": 2295
       }
     ],
     "ENABLE_SCROLL": [
@@ -373,7 +373,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 347
+        "line": 348
       }
     ],
     "STAGE_CHANGE": [
@@ -407,7 +407,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 330
+        "line": 331
       },
       {
         "file": "src/theater/UnifiedNavigationAPI.js",
@@ -513,11 +513,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 335
+        "line": 336
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1695
+        "line": 1814
       },
       {
         "file": "canon-console/runtime/lifecycle-guards.js",
@@ -547,7 +547,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 331
+        "line": 332
       }
     ],
     "PARTICLE_CLICK_REQUEST": [
@@ -567,15 +567,15 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 339
+        "line": 340
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 343
+        "line": 344
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1705
+        "line": 1824
       },
       {
         "file": "canon-console/runtime/blueprint-guard-v2.js",
@@ -603,7 +603,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 579
+        "line": 580
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
@@ -699,7 +699,7 @@
     "PREWARM_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1971
+        "line": 2090
       }
     ]
   }
