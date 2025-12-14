@@ -538,6 +538,19 @@ export const VERB_UNIFORM_MAP = {
       },
     };
   },
+  // Legacy narration cues (Discipline) — neutral mappings to prevent hard-fail
+  particles_begin_columns: (params = {}) => ({
+    uniforms: {},
+    _meta: { verb: 'particles_begin_columns', legacyCue: true, params },
+  }),
+  tier2_lock_into_grid: (params = {}) => ({
+    uniforms: {},
+    _meta: { verb: 'tier2_lock_into_grid', legacyCue: true, params },
+  }),
+  reform_as_structure: (params = {}) => ({
+    uniforms: {},
+    _meta: { verb: 'reform_as_structure', legacyCue: true, params },
+  }),
 };
 
 export const CAMERA_EFFECTS = {
