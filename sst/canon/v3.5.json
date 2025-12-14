@@ -2326,6 +2326,85 @@
       ]
     }
   ],
+  "visualDemos": {
+    "brand_vision_demo": {
+      "durationMs": 28000,
+      "scrollLock": true,
+      "beats": [
+        {
+          "atMs": 0,
+          "durationMs": 6000,
+          "verb": "pullIn",
+          "easing": "smoothstep",
+          "params": {
+            "text": "VISION",
+            "color": "#00A4FF",
+            "intensity": 0.18,
+            "bloom": 0.08,
+            "camera": { "mode": "static" }
+          }
+        },
+        {
+          "atMs": 6000,
+          "durationMs": 6000,
+          "verb": "morph",
+          "easing": "expoInOut",
+          "params": {
+            "text": "CREATE",
+            "color": "#19F4C7",
+            "intensity": 0.22,
+            "bloom": 0.10,
+            "camera": { "mode": "push", "rate": 0.02 }
+          }
+        },
+        {
+          "atMs": 12000,
+          "durationMs": 8000,
+          "verb": "sparkDrift",
+          "easing": "linear",
+          "params": {
+            "text": "LAUNCH",
+            "color": "#A37CFF",
+            "intensity": 0.26,
+            "bloom": 0.12,
+            "camera": {
+              "mode": "orbit",
+              "yawDeg": 10,
+              "durationMs": 8000,
+              "dollyY": 0.1
+            }
+          }
+        },
+        {
+          "atMs": 20000,
+          "durationMs": 5000,
+          "verb": "bloomPulse",
+          "easing": "smoothstep",
+          "params": {
+            "text": "",
+            "color": "#A37CFF",
+            "intensity": 0.12,
+            "bloom": { "peak": 0.25, "shape": "rampThenFade" },
+            "camera": { "mode": "hold", "slowZoomOut": true }
+          }
+        }
+      ],
+      "endCard": {
+        "atMs": 25000,
+        "durationMs": 3000,
+        "verb": "endCard",
+        "easing": "smoothstep",
+        "params": {
+          "title": "MetaCurtis",
+          "subtitle": "AI-native visual orchestration",
+          "fadeInMs": 400,
+          "holdMs": 2200,
+          "fadeOutMs": 400,
+          "color": "#FFFFFF"
+        }
+      }
+    }
+  },
   "debugSurface": {
     "exposeGlobals": [
       "BeatBus",

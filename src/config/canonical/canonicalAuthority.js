@@ -348,12 +348,17 @@ function buildCanonical(source) {
         uniforms.uColor = params.color;
         meta.color = params.color;
       }
-      if (params.bloom) {
+      if (params.bloom !== undefined) {
+        if (typeof params.bloom === 'number') {
+          uniforms.uBloomIntensity = params.bloom;
+          meta.bloom = params.bloom;
+        } else {
         const { intensity, peak, fadeOut } = params.bloom;
         if (Number.isFinite(intensity)) uniforms.uBloomIntensity = intensity;
         if (Number.isFinite(peak)) uniforms.uBloomPeak = peak;
         if (fadeOut === true) uniforms.uBloomFadeOut = 1;
-        meta.bloom = params.bloom;
+          meta.bloom = params.bloom;
+        }
       }
       if (typeof params.intensity === 'number') {
         uniforms.uIntensity = params.intensity;

@@ -228,6 +228,7 @@ class TheaterDirector {
     this._scrollLockToken = null;
     this._scrollLockReason = null;
     this._scrollLockPrevOverflow = null;
+    this._visualDemoCancel = null;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -604,15 +605,60 @@ class TheaterDirector {
     this._beatTimers = [];
   }
 
+  _scheduleCancelableBeats({ durationMs = 0, beats = [], onBeat, onComplete, onCancel }) {
+    let cancelled = false;
+    const timers = [];
+
+    const addTimer = (fn, delayMs = 0) => {
+      const id = setTimeout(() => {
+        if (cancelled) return;
+        fn();
+      }, Math.max(0, delayMs));
+      timers.push(id);
+    };
+
+    (beats || []).forEach((beat) => {
+      if (!beat || !Number.isFinite(beat.atMs)) return;
+      addTimer(() => onBeat?.(beat), beat.atMs);
+    });
+
+    addTimer(() => {
+      if (cancelled) return;
+      onComplete?.();
+    }, durationMs);
+
+    return () => {
+      if (cancelled) return;
+      cancelled = true;
+      timers.forEach((id) => clearTimeout(id));
+      onCancel?.();
+    };
+  }
+
+  _cancelVisualDemoSchedule(reason = 'unknown') {
+    try {
+      this._visualDemoCancel?.();
+    } finally {
+      this._visualDemoCancel = null;
+      this._unlockScroll?.({ source: 'visual_demo', reason });
+    }
+  }
+
   _lockScroll(reason = 'director') {
     if (typeof document === 'undefined' || !document?.body) return null;
     if (this._scrollLockToken) return this._scrollLockToken;
+    const reasonStr =
+      typeof reason === 'string'
+        ? reason
+        : reason && typeof reason === 'object'
+          ? [reason.source, reason.key].filter(Boolean).join(':') || 'director'
+          : 'director';
     const prev = document.body.style.overflow;
     try {
       document.body.style.overflow = 'hidden';
       this._scrollLockPrevOverflow = prev;
-      this._scrollLockReason = reason;
-      this._scrollLockToken = `${reason}:${Date.now()}`;
+      this._scrollLockReason = reasonStr;
+      this._scrollLockToken = `${reasonStr}:${Date.now()}`;
       return this._scrollLockToken;
     } catch {
       return null;
@@ -621,7 +667,18 @@ class TheaterDirector {
 
   _unlockScroll(token = null) {
     if (typeof document === 'undefined' || !document?.body) return;
-    if (token && this._scrollLockToken && token !== this._scrollLockToken) return;
+    const tokenStr =
+      token && typeof token === 'object'
+        ? [token.source, token.key].filter(Boolean).join(':')
+        : token;
+    if (
+      tokenStr &&
+      this._scrollLockToken &&
+      this._scrollLockToken !== tokenStr &&
+      !this._scrollLockToken.startsWith(`${tokenStr}:`)
+    ) {
+      return;
+    }
     try {
       document.body.style.overflow =
         typeof this._scrollLockPrevOverflow === 'string' ? this._scrollLockPrevOverflow : '';
@@ -709,6 +766,60 @@ class TheaterDirector {
       }, delay);
       __openingTimers.push(id);
     });
+  }
+
+  runVisualDemo(demoKey = 'brand_vision_demo') {
+    this._cancelVisualDemoSchedule('restart');
+
+    const demo = Canonical?.visualDemos?.[demoKey];
+    if (!demo) {
+      throw new Error(`[TheaterDirector] visual demo not found: ${demoKey}`);
+    }
+
+    if (demo.scrollLock) {
+      this._lockScroll?.({ source: 'visual_demo', key: demoKey });
+    }
+
+    const cancel = this._scheduleCancelableBeats({
+      durationMs: Number(demo.durationMs) || 0,
+      beats: Array.isArray(demo.beats) ? demo.beats : [],
+      onBeat: (beat = {}) => {
+        VisualOrchestrator.applyVerb?.({
+          verb: beat.verb,
+          params: beat.params || {},
+          phase: 'visual_demo',
+          source: `visual_demo:${demoKey}`,
+          overrides: {
+            easing: beat.easing,
+            durationMs: beat.durationMs,
+            atMs: beat.atMs,
+          },
+        });
+      },
+      onComplete: () => {
+        if (demo.endCard) {
+          VisualOrchestrator.applyVerb?.({
+            verb: demo.endCard.verb,
+            params: demo.endCard.params || {},
+            phase: 'visual_demo',
+            source: `visual_demo:${demoKey}:endcard`,
+            overrides: {
+              easing: demo.endCard.easing,
+              durationMs: demo.endCard.durationMs,
+              atMs: demo.endCard.atMs,
+            },
+          });
+        }
+        this._unlockScroll?.({ source: 'visual_demo', key: demoKey });
+        this._visualDemoCancel = null;
+      },
+      onCancel: () => {
+        this._unlockScroll?.({ source: 'visual_demo', key: demoKey });
+        this._visualDemoCancel = null;
+      },
+    });
+
+    this._visualDemoCancel = cancel;
   }
 
   _startBeatScheduleForStage(stage, source = 'director') {

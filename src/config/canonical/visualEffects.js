@@ -387,6 +387,17 @@ export const PARTICLE_EFFECTS = {
   },
 };
 
+const assertAllowedParams = (verb, params, allowed) => {
+  if (!params || typeof params !== 'object' || Array.isArray(params)) return;
+  for (const key of Object.keys(params)) {
+    if (!allowed.includes(key)) {
+      throw new Error(`[visualEffects] ${verb}: unsupported param '${key}'`);
+    }
+  }
+};
+
+const normalizeColor = (c, fallback) => (typeof c === 'string' && c.length ? c : fallback);
+
 // Canonical verb → renderer-uniform map.
 // Only fields defined in RENDER_DIRECTIVE_FIELDS/RENDER_DIRECTIVE_FIELD_TYPE_MAP are used.
 export const VERB_UNIFORM_MAP = {
@@ -429,6 +440,104 @@ export const VERB_UNIFORM_MAP = {
     uOpacityMin: 0.4,
     uOpacityMax: 0.9,
   }),
+  pullIn: (params = {}) => {
+    assertAllowedParams('pullIn', params, ['text', 'color', 'intensity', 'bloom', 'camera']);
+    const color = normalizeColor(params.color, '#00A4FF');
+    const intensity = typeof params.intensity === 'number' ? params.intensity : 0.18;
+    const bloom = typeof params.bloom === 'number' ? params.bloom : 0.08;
+    return {
+      uniforms: {
+        uMotionMode: 1,
+        uFlowTurbulence: 0.5,
+        uParticleFlash: 0.6,
+        uEffectIntensity: intensity,
+        uBloomIntensity: bloom,
+        uColor: color,
+      },
+      _meta: { verb: 'pullIn', color, intensity, bloom, text: params.text || '', camera: params.camera || null },
+    };
+  },
+  morph: (params = {}) => {
+    assertAllowedParams('morph', params, ['text', 'color', 'intensity', 'bloom', 'camera']);
+    const color = normalizeColor(params.color, '#19F4C7');
+    const intensity = typeof params.intensity === 'number' ? params.intensity : 0.22;
+    const bloom = typeof params.bloom === 'number' ? params.bloom : 0.1;
+    return {
+      uniforms: {
+        uMotionMode: 1,
+        uFlowTurbulence: 0.45,
+        uParticleFlash: 0.55,
+        uEffectIntensity: intensity,
+        uBloomIntensity: bloom,
+        uColor: color,
+      },
+      _meta: { verb: 'morph', color, intensity, bloom, text: params.text || '', camera: params.camera || null },
+    };
+  },
+  sparkDrift: (params = {}) => {
+    assertAllowedParams('sparkDrift', params, ['text', 'color', 'intensity', 'bloom', 'camera']);
+    const color = normalizeColor(params.color, '#A37CFF');
+    const intensity = typeof params.intensity === 'number' ? params.intensity : 0.26;
+    const bloom = typeof params.bloom === 'number' ? params.bloom : 0.12;
+    return {
+      uniforms: {
+        uMotionMode: 3,
+        uFlowTurbulence: 0.85,
+        uParticleFlash: 0.7,
+        uEffectIntensity: intensity,
+        uBloomIntensity: bloom,
+        uColor: color,
+      },
+      _meta: { verb: 'sparkDrift', color, intensity, bloom, text: params.text || '', camera: params.camera || null },
+    };
+  },
+  bloomPulse: (params = {}) => {
+    assertAllowedParams('bloomPulse', params, ['text', 'color', 'intensity', 'bloom', 'camera']);
+    const color = normalizeColor(params.color, '#A37CFF');
+    const bloomPeak =
+      typeof params.bloom === 'number'
+        ? params.bloom
+        : typeof params.bloom?.peak === 'number'
+          ? params.bloom.peak
+          : 0.25;
+    const intensity = typeof params.intensity === 'number' ? params.intensity : 0.12;
+    const bloomShape =
+      params.bloom && typeof params.bloom === 'object' && params.bloom.shape
+        ? params.bloom.shape
+        : 'rampThenFade';
+    return {
+      uniforms: {
+        uMotionMode: 0,
+        uFlowTurbulence: 0.2,
+        uParticleFlash: 0.8,
+        uEffectIntensity: intensity,
+        uBloomIntensity: bloomPeak,
+        uBloomShape: bloomShape,
+        uColor: color,
+      },
+      _meta: { verb: 'bloomPulse', color, intensity, bloom: params.bloom ?? bloomPeak, text: params.text || '', camera: params.camera || null },
+    };
+  },
+  endCard: (params = {}) => {
+    assertAllowedParams('endCard', params, ['title', 'subtitle', 'fadeInMs', 'holdMs', 'fadeOutMs', 'color']);
+    const color = normalizeColor(params.color, '#FFFFFF');
+    return {
+      uniforms: {
+        uFadeToBlack: 1,
+        uEndCardAlpha: 1,
+        uEndCardColor: color,
+      },
+      _meta: {
+        verb: 'endCard',
+        title: params.title || 'MetaCurtis',
+        subtitle: params.subtitle || '',
+        fadeInMs: params.fadeInMs ?? 400,
+        holdMs: params.holdMs ?? 2200,
+        fadeOutMs: params.fadeOutMs ?? 400,
+        color,
+      },
+    };
+  },
 };
 
 export const CAMERA_EFFECTS = {
