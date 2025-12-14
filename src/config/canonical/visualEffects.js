@@ -429,41 +429,6 @@ export const VERB_UNIFORM_MAP = {
     uOpacityMin: 0.4,
     uOpacityMax: 0.9,
   },
-  pullIn: {
-    uMotionMode: 2,
-    uFlowTurbulence: 0.6,
-    uParticleFlash: 0.65,
-    uOpacityMin: 0.55,
-    uOpacityMax: 0.95,
-  },
-  morph: {
-    uMotionMode: 1,
-    uFlowTurbulence: 0.5,
-    uParticleFlash: 0.55,
-    uOpacityMin: 0.6,
-    uOpacityMax: 0.95,
-  },
-  sparkDrift: {
-    uMotionMode: 3,
-    uFlowTurbulence: 0.85,
-    uParticleFlash: 0.7,
-    uOpacityMin: 0.45,
-    uOpacityMax: 0.9,
-  },
-  bloomPulse: {
-    uMotionMode: 0,
-    uFlowTurbulence: 0.2,
-    uParticleFlash: 0.8,
-    uOpacityMin: 0.4,
-    uOpacityMax: 0.85,
-  },
-  endCard: {
-    uMotionMode: 0,
-    uFlowTurbulence: 0.1,
-    uParticleFlash: 0.1,
-    uOpacityMin: 0.0,
-    uOpacityMax: 0.2,
-  },
 };
 
 export const CAMERA_EFFECTS = {
