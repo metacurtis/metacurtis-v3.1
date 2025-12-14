@@ -2326,6 +2326,90 @@
       ]
     }
   ],
+  "visualDemos": {
+    "brand_vision_demo": {
+      "id": "brand_vision_demo",
+      "type": "visual_demo",
+      "durationMs": 28000,
+      "scroll": { "lock": true },
+      "palette": {
+        "background": "#0A0A0F",
+        "primary": "#00A4FF",
+        "secondary": "#19F4C7",
+        "accent": "#A37CFF",
+        "bloomBaseline": 0.15
+      },
+      "camera": {
+        "fov": 40,
+        "startPosition": [0, 0, 5],
+        "beat2PushInPerSecond": 0.02,
+        "beat3": { "yawDegrees": 10, "dollyY": 0.1, "durationMs": 8000 }
+      },
+      "beats": [
+        {
+          "id": "vision",
+          "atMs": 0,
+          "durationMs": 6000,
+          "verb": "pullIn",
+          "easing": "smoothstep",
+          "params": {
+            "text": "VISION",
+            "color": "#00A4FF",
+            "bloom": { "intensity": 0.15 }
+          }
+        },
+        {
+          "id": "create",
+          "atMs": 6000,
+          "durationMs": 6000,
+          "verb": "morph",
+          "easing": "expoInOut",
+          "params": {
+            "text": "CREATE",
+            "color": "#19F4C7",
+            "camera": { "pushInPerSecond": 0.02 },
+            "bloom": { "intensity": 0.15 }
+          }
+        },
+        {
+          "id": "launch",
+          "atMs": 12000,
+          "durationMs": 8000,
+          "verb": "sparkDrift",
+          "easing": "linear",
+          "params": {
+            "text": "LAUNCH",
+            "color": "#A37CFF",
+            "camera": { "orbitYawDegrees": 10, "dollyY": 0.1 },
+            "bloom": { "intensity": 0.15 }
+          }
+        },
+        {
+          "id": "bloomOut",
+          "atMs": 20000,
+          "durationMs": 5000,
+          "verb": "bloomPulse",
+          "easing": "smoothstep",
+          "params": {
+            "text": null,
+            "bloom": { "peak": 0.25, "fadeOut": true },
+            "color": "#A37CFF"
+          }
+        },
+        {
+          "id": "end_card",
+          "atMs": 25000,
+          "durationMs": 3000,
+          "verb": "endCard",
+          "easing": "smoothstep",
+          "params": {
+            "fadeToBlack": true,
+            "lines": ["MetaCurtis", "AI-native visual orchestration"]
+          }
+        }
+      ]
+    }
+  },
   "debugSurface": {
     "exposeGlobals": [
       "BeatBus",

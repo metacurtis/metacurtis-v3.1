@@ -225,6 +225,7 @@ class TheaterDirector {
     this._climaxStepUnsubscribe = null;
     this._beatScheduleToken = 0;
     this._beatTimers = [];
+    this._currentVisualDemo = null;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -725,6 +726,115 @@ class TheaterDirector {
     this._beatTimers = timers;
     if (DEBUG_NARRATION) {
       console.log('[BeatScheduler] Scheduled beats', { stage, count: timers.length, source });
+    }
+  }
+
+  _cancelCurrentVisualDemo(reason = 'replaced') {
+    const current = this._currentVisualDemo;
+    if (!current) return;
+
+    current.timers?.forEach((id) => clearTimeout(id));
+    if (current.doneTimer) {
+      clearTimeout(current.doneTimer);
+    }
+
+    if (current.scrollLocked && typeof document !== 'undefined' && document.body) {
+      try {
+        document.body.style.overflow = current.bodyOverflowPrev ?? '';
+      } catch {
+        // noop
+      }
+    }
+
+    this._currentVisualDemo = null;
+    if (DEBUG_NARRATION) {
+      console.log(`[DEMO] cancel ${current.id}`, { reason });
+    }
+  }
+
+  runVisualDemo(demoId) {
+    this._cancelCurrentVisualDemo('cancel');
+
+    const demo = Canonical?.visualDemos?.[demoId];
+    if (!demo) {
+      console.error(`[TheaterDirector] visual demo not found: ${demoId}`);
+      return;
+    }
+
+    const timers = [];
+    const startedAt =
+      (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
+    let scrollLocked = false;
+    let bodyOverflowPrev;
+    if (demo.scroll?.lock && typeof document !== 'undefined' && document.body) {
+      try {
+        bodyOverflowPrev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        scrollLocked = true;
+      } catch {
+        scrollLocked = false;
+      }
+    }
+
+    const beats = Array.isArray(demo.beats) ? demo.beats : [];
+    beats.forEach((beat) => {
+      if (!beat || !beat.verb) return;
+      const atMs = Number(beat.atMs ?? beat.at ?? beat.time ?? 0);
+      if (!Number.isFinite(atMs)) return;
+      const delay = Math.max(0, atMs);
+      const id = setTimeout(() => {
+        const source =
+          beat.id ? `visual_demo:${demoId}:${beat.id}` : `visual_demo:${demoId}`;
+        VisualOrchestrator.applyVerb?.({
+          verb: beat.verb,
+          phase: 'visual_demo',
+          source,
+          overrides: {
+            _extended: {
+              visualDemo: demoId,
+              beatId: beat.id ?? null,
+              easing: beat.easing ?? null,
+              durationMs: beat.durationMs ?? null,
+              params: beat.params ?? null,
+            },
+          },
+        });
+      }, delay);
+      timers.push(id);
+    });
+
+    const durationMs = Number(demo.durationMs ?? 0);
+    const doneTimer = setTimeout(() => {
+      if (scrollLocked && typeof document !== 'undefined' && document.body) {
+        try {
+          document.body.style.overflow = bodyOverflowPrev ?? '';
+        } catch {
+          // noop
+        }
+      }
+      this._currentVisualDemo = null;
+      if (DEBUG_NARRATION) {
+        const finishedAt =
+          (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        console.log(`[DEMO] done ${demoId}`, { elapsedMs: Math.round(finishedAt - startedAt) });
+      }
+    }, Math.max(0, durationMs));
+
+    this._currentVisualDemo = {
+      id: demoId,
+      timers,
+      doneTimer,
+      scrollLocked,
+      bodyOverflowPrev,
+    };
+
+    if (DEBUG_NARRATION) {
+      console.log(`[DEMO] start ${demoId}`, {
+        durationMs: durationMs || null,
+        beats: beats.length,
+        scrollLocked,
+      });
     }
   }
 
