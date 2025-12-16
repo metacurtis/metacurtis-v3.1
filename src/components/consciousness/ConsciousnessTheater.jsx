@@ -17,6 +17,7 @@ import director from '@/theater/TheaterDirector.js';
 import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
+import { emitMorphProgress, emitRenderDirective } from '@/theater/bus/emitters.js';
 import NavigationGate from '@/theater/NavigationGate.js';
 import { NarrativeChoreography } from '@/components/narrative/NarrativeChoreography.jsx';
 
@@ -170,14 +171,104 @@ export default function ConsciousnessTheater() {
 
   // ───────────────── Director start AFTER viewport hint; scroll locked until ENABLE_SCROLL
   useEffect(() => {
+    const demoCleanups = [];
     // 1) Listen for viewport hint sent by WebGLBackground
     const offHint = BeatBus.on(EVENTS.ENGINE_VIEWPORT_HINT, () => {
       viewportReadyRef.current = true;
     });
 
-    // 2) Start Director once, after hint
+    // 2) Start Director once, after hint (demo mode bypasses opening/narration)
     const tick = setInterval(() => {
       if (!directorStartedRef.current && viewportReadyRef.current) {
+        // Demo mode: bypass opening, narration, scroll orchestration
+        if (globalThis.__DEMO_MODE__ && globalThis.__DEMO_KEY__) {
+          console.log(`[ConsciousnessTheater] Demo mode detected, running: ${globalThis.__DEMO_KEY__}`);
+
+          // Stop ScrollOrchestrator if somehow already running
+          if (director.scrollOrchestrator) {
+            director.scrollOrchestrator.stop();
+          }
+
+          const hideInstantLoader = () => {
+            try {
+              const el = document.getElementById('instant-loader');
+              if (el) el.classList.add('hidden');
+            } catch {}
+          };
+
+          // Trigger emergence so renderer binds geometry
+          BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+            mode: 'emergence',
+            target: 'genesis',
+            targetState: 'genesis_initial',
+            source: 'demo',
+            count: 12000,
+            fastForward: true,
+            skipMorphAnimation: true,
+          });
+
+          // Wait for blueprint bind, then start demo
+          let demoBlueprintReady = false;
+          let rendererReady = false;
+          let pendingActiveCount = null;
+
+          const maybeStartDemo = () => {
+            console.log('[DemoGate] maybeStartDemo', {
+              demoBlueprintReady,
+              rendererReady,
+              pendingActiveCount,
+              timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            });
+            if (!demoBlueprintReady || !rendererReady) return;
+            try {
+              hideInstantLoader();
+              emitMorphProgress({ progress: 1, source: 'demo' });
+              emitRenderDirective({
+                source: 'visual_orchestrator',
+                phase: 'visual_demo',
+                stage: 'genesis',
+                uMorphProgress: 1,
+                uStageProgress: 1,
+                activeCount: pendingActiveCount,
+              });
+              director.runVisualDemo(globalThis.__DEMO_KEY__);
+              console.log(`[ConsciousnessTheater] Demo started: ${globalThis.__DEMO_KEY__}`);
+            } catch (err) {
+              console.error('[ConsciousnessTheater] Demo failed to start:', err);
+            }
+          };
+
+          const offBlueprint = BeatBus.on(EVENTS.BLUEPRINT_READY, (p = {}) => {
+            if (p.stage !== 'genesis') return;
+            pendingActiveCount =
+              p?.activeCount ??
+              p?.blueprint?.activeCount ??
+              p?.blueprint?.particleCount ??
+              null;
+            demoBlueprintReady = true;
+            console.log('[DemoGate] BLUEPRINT_READY (genesis)', {
+              pendingActiveCount,
+              timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            });
+            maybeStartDemo();
+          });
+
+          const offRendererReady = BeatBus.on(EVENTS.FENCEPOST_LISTENERS_READY, (payload = {}) => {
+            if (payload?.channel !== 'renderer') return;
+            rendererReady = true;
+            console.log('[DemoGate] FENCEPOST_LISTENERS_READY (renderer)', {
+              payload,
+              timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
+            });
+            maybeStartDemo();
+          });
+          demoCleanups.push(offBlueprint, offRendererReady);
+
+          directorStartedRef.current = true;
+          clearInterval(tick);
+          return;
+        }
+
         try { document.body.style.overflow = 'hidden'; } catch {}
         director.start();
         directorStartedRef.current = true;
@@ -203,6 +294,7 @@ export default function ConsciousnessTheater() {
       clearInterval(tick);
       offHint && offHint();
       offs.forEach((off) => off && off());
+      demoCleanups.forEach((off) => off && off());
       try { document.body.style.overflow = ''; } catch {}
       if (!import.meta.env.DEV || window.__HARD_UNMOUNT__) {
         try { director.cancel(); } catch {}

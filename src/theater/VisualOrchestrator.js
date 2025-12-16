@@ -66,14 +66,19 @@ class VisualOrchestrator {
   updateFromOpening(payload = {}) {
     this.init();
     this.state.mode = 'opening';
-    if (Number.isFinite(payload.uMorphProgress)) {
-      this.state.morphProgress = clamp01(payload.uMorphProgress);
+    const { effect, ...rest } = payload || {};
+    const hasEffect = effect && typeof effect === 'object';
+    const verb = typeof rest.verb === 'string' ? rest.verb : undefined;
+    if (Number.isFinite(rest.uMorphProgress)) {
+      this.state.morphProgress = clamp01(rest.uMorphProgress);
     }
+    this.state.lastEffect = hasEffect ? effect : null;
+    this.state.lastVerb = verb || null;
     const directive = this._composeDirective({
       phase: 'opening',
-      verb: payload.verb ?? null,
-      effect: payload.effect ?? null,
-      ...payload,
+      ...(verb ? { verb } : {}),
+      ...(hasEffect ? { effect } : {}),
+      ...rest,
     });
     this._emitDirective(directive);
   }
@@ -167,31 +172,35 @@ class VisualOrchestrator {
       console.warn('[VO] applyCamera called without camera payload', { payload });
       return;
     }
+    const normalizedCueId = typeof cueId === 'string' && cueId.length ? cueId : undefined;
     const directive = {
       stage,
       kind: 'camera',
       camera,
-      cueId,
+      ...(normalizedCueId ? { cueId: normalizedCueId } : {}),
       ...overrides,
-      source,
+      verb: 'camera',
+      source: 'visual_orchestrator',
+      phase: this.state?.phase ?? 'visual_demo',
     };
     this._emitDirective(directive);
   }
 
   _emitDirective(payload) {
     if (!payload) return;
-    const finalDirective = payload;
-    console.log(
-      "%c[VO→BUS]",
-      "color:#9bff4d;font-weight:bold",
-      {
-        phase: finalDirective.phase,
-        verb: finalDirective.verb,
-        hasEffect: !!finalDirective.effect,
-        effectKeys: finalDirective.effect ? Object.keys(finalDirective.effect) : [],
-      }
-    );
-    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, finalDirective);
+    // Ensure required schema fields
+    payload.timestamp = payload.timestamp ?? performance.now();
+    payload.source = payload.source ?? 'visual_orchestrator';
+
+    // Diagnostic log
+    console.log('[VO→BUS]', {
+      phase: payload.phase,
+      verb: payload.verb,
+      hasEffect: !!payload.effect,
+      effectKeys: payload.effect ? Object.keys(payload.effect) : []
+    });
+
+    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, payload);
   }
 
   _composeDirective(overrides = {}) {

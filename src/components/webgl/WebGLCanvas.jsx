@@ -150,6 +150,7 @@ export default function WebGLCanvas({
   const [canvasStrategy, setCanvasStrategy] = useState(0);
   const [qrCameraActive, setQrCameraActive] = useState(false);
   const [webglBootstrapped, setWebglBootstrapped] = useState(() => typeof window === 'undefined');
+  const isDemoMode = typeof window !== 'undefined' && window.__DEMO_MODE__ === true;
 
   // Initialize systems with useMemo
   const contextPool = useMemo(() => new WebGLContextPool(), []);
@@ -379,7 +380,7 @@ export default function WebGLCanvas({
 
     const baseConfig = {
       className: 'w-full h-full',
-      frameloop: 'demand',
+      frameloop: isDemoMode ? 'always' : 'demand',
       dpr: [1, maxDpr],
       gl: {
         antialias: false,
@@ -402,7 +403,7 @@ export default function WebGLCanvas({
     }
 
     return baseConfig;
-  }, [quality, canvasStrategy]);
+  }, [quality, canvasStrategy, isDemoMode]);
 
   // Fallback renders
   if (!webglSupported) {

@@ -31,6 +31,7 @@ export default function OpeningSequence() {
   const mounted = useRef(true);
   const audioUnlocked = useRef(false);
   const fadedRef = useRef(false);
+  const isDemoMode = typeof window !== 'undefined' && window.__DEMO_MODE__ === true;
   const fillStartRef = useRef(0);
   const fillTextRef = useRef('');
   const fillProgressRef = useRef(0);
@@ -73,8 +74,19 @@ export default function OpeningSequence() {
     return startId;
   };
 
+  // Demo mode: never show the overlay
+  useEffect(() => {
+    if (!isDemoMode) return undefined;
+    setVisible(false);
+    setPhase('complete');
+    fadedRef.current = true;
+    clearAllTimers();
+    return () => {};
+  }, [isDemoMode]);
+
   // Single audio unlock gate (in useEffect, properly cleaned up)
   useEffect(() => {
+    if (isDemoMode) return undefined;
     const unlockAudio = () => {
       if (audioUnlocked.current) return;
       audioUnlocked.current = true;
@@ -98,6 +110,7 @@ export default function OpeningSequence() {
 
   // Main event subscription effect
   useEffect(() => {
+    if (isDemoMode) return () => {};
     mounted.current = true;
     setVisible(true);
     console.log('🎬 OpeningSequence: Ready for Director signals');

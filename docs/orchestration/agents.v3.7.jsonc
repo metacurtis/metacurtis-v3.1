@@ -154,6 +154,7 @@
     "id": "F",
     "name": "Meta Agent",
     "mission": "Act as the repo-native ground truth and executor, enforcing contracts and Pattern-S via diagnostics and tests.",
+    // See docs/patterns/ZAG-001.md for the zero-assumption grounding diagnostic when confidence is high.
     "modes": {
       "contract-scan": {
         "inputFields": [
