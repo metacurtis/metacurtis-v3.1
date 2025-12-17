@@ -3,10 +3,10 @@ Total events: 38
 ## AUDIO_COMPUTER_HUM
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1523`
+- `src/theater/TheaterDirector.js:1531`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:229`
+- `src/components/theater/OpeningSequence.jsx:242`
 
 ## BLUEPRINT_INVALIDATED
 
@@ -23,20 +23,22 @@ Total events: 38
 - `src/theater/bus/emitters.js:43`
 
 **Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:241`
 - `src/components/webgl/WebGLBackground.jsx:1798`
-- `src/components/webgl/WebGLCanvas.jsx:264`
+- `src/components/webgl/WebGLCanvas.jsx:265`
 - `src/theater/TheaterDirector.js:340`
 - `src/theater/TheaterDirector.js:344`
-- `src/theater/TheaterDirector.js:1824`
+- `src/theater/TheaterDirector.js:1832`
 - `canon-console/runtime/blueprint-guard-v2.js:14`
 - `canon-console/runtime/blueprint-guard-v2.js:238`
 
 ## BUILD_EMERGENCE_BLUEPRINT
 
 **Emitters**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:200`
 - `src/state/commands/StateCommands.js:210`
-- `src/theater/TheaterDirector.js:1581`
-- `src/theater/TheaterDirector.js:1758`
+- `src/theater/TheaterDirector.js:1589`
+- `src/theater/TheaterDirector.js:1766`
 
 **Listeners**:
 - `src/engine/ConsciousnessEngine.js:426`
@@ -63,18 +65,18 @@ Total events: 38
 ## CURSOR_BLINK
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1529`
+- `src/theater/TheaterDirector.js:1537`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:114`
+- `src/components/theater/OpeningSequence.jsx:127`
 
 ## CURSOR_SHOW
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1522`
+- `src/theater/TheaterDirector.js:1530`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:107`
+- `src/components/theater/OpeningSequence.jsx:120`
 - `canon-console/runtime/lifecycle-guards.js:67`
 
 ## DIRECTOR:MORPH_STATE
@@ -88,15 +90,15 @@ Total events: 38
 ## DIRECTOR_CANCEL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:2083`
+- `src/theater/TheaterDirector.js:2091`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:281`
+- `src/components/theater/OpeningSequence.jsx:294`
 
 ## DIRECTOR_ERROR
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1363`
+- `src/theater/TheaterDirector.js:1371`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:63`
@@ -104,7 +106,7 @@ Total events: 38
 ## DIRECTOR_OPENING_MODE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1573`
+- `src/theater/TheaterDirector.js:1581`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:43`
@@ -113,10 +115,10 @@ Total events: 38
 
 **Emitters**:
 - `src/theater/TheaterDirector.js:753`
-- `src/theater/TheaterDirector.js:1915`
+- `src/theater/TheaterDirector.js:1923`
 
 **Listeners**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:190`
+- `src/components/consciousness/ConsciousnessTheater.jsx:281`
 - `src/components/webgl/WebGLBackground.jsx:648`
 - `src/engine/ConsciousnessEngine.js:422`
 - `src/state/commands/StateCommands.js:41`
@@ -134,23 +136,24 @@ Total events: 38
 ## ENGINE_VIEWPORT_HINT
 
 **Emitters**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:224`
+- `src/components/consciousness/ConsciousnessTheater.jsx:316`
 - `src/components/webgl/WebGLBackground.jsx:887`
-- `src/theater/TheaterDirector.js:2274`
+- `src/theater/TheaterDirector.js:2282`
 
 **Listeners**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:174`
-- `src/components/consciousness/ConsciousnessTheater.jsx:218`
+- `src/components/consciousness/ConsciousnessTheater.jsx:176`
+- `src/components/consciousness/ConsciousnessTheater.jsx:310`
 - `src/engine/ConsciousnessEngine.js:421`
-- `src/theater/TheaterDirector.js:2295`
+- `src/theater/TheaterDirector.js:2303`
 
 ## FENCEPOST_LISTENERS_READY
 
 **Emitters**:
 - `src/components/webgl/WebGLBackground.jsx:523`
-- `src/theater/TheaterDirector.js:1794`
+- `src/theater/TheaterDirector.js:1802`
 
 **Listeners**:
+- `src/components/consciousness/ConsciousnessTheater.jsx:256`
 - `src/components/webgl/WebGLBackground.jsx:657`
 - `src/theater/TheaterDirector.js:332`
 
@@ -202,10 +205,10 @@ Total events: 38
 
 **Emitters**:
 - `src/theater/TheaterDirector.js:757`
-- `src/theater/TheaterDirector.js:1931`
+- `src/theater/TheaterDirector.js:1939`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:269`
+- `src/components/theater/OpeningSequence.jsx:282`
 - `src/components/webgl/WebGLBackground.jsx:647`
 
 ## PARTICLES_EMERGED
@@ -214,21 +217,21 @@ Total events: 38
 - `src/theater/bus/emitters.js:49`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:258`
+- `src/components/theater/OpeningSequence.jsx:271`
 - `src/components/ui/LCPHero.jsx:32`
 - `src/components/webgl/WebGLBackground.jsx:646`
 - `src/engine/ConsciousnessEngine.js:428`
 - `src/theater/TheaterDirector.js:336`
-- `src/theater/TheaterDirector.js:1814`
+- `src/theater/TheaterDirector.js:1822`
 - `canon-console/runtime/lifecycle-guards.js:68`
 
 ## PARTICLES_START_EMERGING
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1775`
+- `src/theater/TheaterDirector.js:1783`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:247`
+- `src/components/theater/OpeningSequence.jsx:260`
 - `src/components/webgl/WebGLBackground.jsx:1009`
 
 ## PARTICLE_CLICK_HIT
@@ -242,7 +245,7 @@ Total events: 38
 ## PARTICLE_CLICK_REQUEST
 
 **Emitters**:
-- `src/components/webgl/WebGLCanvas.jsx:337`
+- `src/components/webgl/WebGLCanvas.jsx:338`
 
 **Listeners**:
 - `src/components/webgl/WebGLBackground.jsx:1229`
@@ -250,12 +253,12 @@ Total events: 38
 ## PARTICLE_PHASE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1624`
-- `src/theater/TheaterDirector.js:1657`
-- `src/theater/TheaterDirector.js:1699`
+- `src/theater/TheaterDirector.js:1632`
+- `src/theater/TheaterDirector.js:1665`
+- `src/theater/TheaterDirector.js:1707`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:252`
+- `src/components/theater/OpeningSequence.jsx:265`
 - `src/components/webgl/WebGLBackground.jsx:2445`
 
 ## PREWARM_COMPLETE
@@ -264,12 +267,12 @@ Total events: 38
 - `src/engine/ConsciousnessEngine.js:543`
 
 **Listeners**:
-- `src/theater/TheaterDirector.js:2090`
+- `src/theater/TheaterDirector.js:2098`
 
 ## PREWARM_GENESIS_BLUEPRINT
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:2089`
+- `src/theater/TheaterDirector.js:2097`
 
 **Listeners**:
 - `src/engine/ConsciousnessEngine.js:425`
@@ -287,7 +290,7 @@ Total events: 38
 ## RENDERER_TUNE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:2104`
+- `src/theater/TheaterDirector.js:2112`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:48`
@@ -295,7 +298,7 @@ Total events: 38
 ## RENDER_DIRECTIVE
 
 **Emitters**:
-- `src/theater/VisualOrchestrator.js:194`
+- `src/theater/VisualOrchestrator.js:203`
 - `src/theater/bus/emitters.js:54`
 - `canon-console/runtime/hud.js:408`
 
@@ -305,10 +308,10 @@ Total events: 38
 ## SCREEN_FILL
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1556`
+- `src/theater/TheaterDirector.js:1564`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:170`
+- `src/components/theater/OpeningSequence.jsx:183`
 
 ## SCROLL_PROGRESS
 
@@ -349,19 +352,19 @@ Total events: 38
 **Emitters**:
 - `src/components/narrative/NarrationController.jsx:401`
 - `src/orchestration/navigation/narrativeNavigation.js:20`
-- `src/theater/TheaterDirector.js:1167`
-- `src/theater/TheaterDirector.js:1917`
+- `src/theater/TheaterDirector.js:1175`
+- `src/theater/TheaterDirector.js:1925`
 
 **Listeners**:
-- `src/components/consciousness/ConsciousnessTheater.jsx:195`
+- `src/components/consciousness/ConsciousnessTheater.jsx:286`
 - `src/components/narrative/NarrationController.jsx:1084`
 - `src/components/narrative/NarrationOverlayBus.jsx:330`
 
 ## TERMINAL_TYPE
 
 **Emitters**:
-- `src/theater/TheaterDirector.js:1541`
+- `src/theater/TheaterDirector.js:1549`
 
 **Listeners**:
-- `src/components/theater/OpeningSequence.jsx:129`
+- `src/components/theater/OpeningSequence.jsx:142`
 

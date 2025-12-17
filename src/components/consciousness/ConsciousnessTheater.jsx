@@ -222,6 +222,11 @@ export default function ConsciousnessTheater() {
             if (!demoBlueprintReady || !rendererReady) return;
             try {
               hideInstantLoader();
+              const loader = document.getElementById('instant-loader');
+              if (loader) {
+                loader.classList.add('hidden');
+                loader.style.display = 'none';
+              }
               emitMorphProgress({ progress: 1, source: 'demo' });
               emitRenderDirective({
                 source: 'visual_orchestrator',
@@ -229,7 +234,11 @@ export default function ConsciousnessTheater() {
                 stage: 'genesis',
                 uMorphProgress: 1,
                 uStageProgress: 1,
+                uOpacityMin: 0.5,
+                uOpacityMax: 1.0,
+                drawCount: pendingActiveCount,
                 activeCount: pendingActiveCount,
+                pointSize: 48,
               });
               director.runVisualDemo(globalThis.__DEMO_KEY__);
               console.log(`[ConsciousnessTheater] Demo started: ${globalThis.__DEMO_KEY__}`);
@@ -253,6 +262,18 @@ export default function ConsciousnessTheater() {
             maybeStartDemo();
           });
 
+          const checkRendererReady = () => {
+            try {
+              if (window.__rendererListenersReady === true) {
+                rendererReady = true;
+                console.log('[DemoGate] Renderer already ready on check (__rendererListenersReady)');
+                maybeStartDemo();
+                return true;
+              }
+            } catch {}
+            return false;
+          };
+
           const offRendererReady = BeatBus.on(EVENTS.FENCEPOST_LISTENERS_READY, (payload = {}) => {
             if (payload?.channel !== 'renderer') return;
             rendererReady = true;
@@ -263,6 +284,18 @@ export default function ConsciousnessTheater() {
             maybeStartDemo();
           });
           demoCleanups.push(offBlueprint, offRendererReady);
+
+          // Immediate check in case renderer ready fired before listener registration
+          checkRendererReady();
+          // Timeout fallback if fencepost is missed
+          const fallbackTimeout = setTimeout(() => {
+            if (!rendererReady) {
+              console.log('[DemoGate] Forcing rendererReady via timeout fallback');
+              rendererReady = true;
+              maybeStartDemo();
+            }
+          }, 1000);
+          demoCleanups.push(() => clearTimeout(fallbackTimeout));
 
           directorStartedRef.current = true;
           clearInterval(tick);

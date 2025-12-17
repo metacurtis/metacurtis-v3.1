@@ -937,8 +937,16 @@ class TheaterDirector {
     };
 
     const { verb: phaseVerb, effect: phaseEffect } = resolveOpeningPhaseEffect(phase);
-    directive.verb = phaseVerb || null;
-    directive.effect = phaseEffect || null;
+    if (phaseVerb) {
+      directive.verb = phaseVerb;
+    } else {
+      delete directive.verb;
+    }
+    if (phaseEffect) {
+      directive.effect = phaseEffect;
+    } else {
+      delete directive.effect;
+    }
 
     const envelope = phase ? PHASE_DIRECTIVE_ENVELOPE[phase] : null;
     if (envelope) {

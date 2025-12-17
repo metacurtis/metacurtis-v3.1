@@ -40,7 +40,9 @@ const getCallerFile = (stack) => {
     if (!match || !match[1]) continue;
     const raw = match[1];
     const strippedHost = raw.replace(/^https?:\/\/[^/]+\//, '');
-    const file = (cwd ? strippedHost.replace(cwd + '/', '') : strippedHost).replace(/\\/g, '/');
+    const file = (cwd ? strippedHost.replace(cwd + '/', '') : strippedHost)
+      .replace(/\\/g, '/')
+      .split('?')[0]; // strip Vite ?t= query noise for ownership matching
     if (!file) continue;
     if (ignore.some((frag) => file.includes(frag))) continue;
     return file;

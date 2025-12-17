@@ -1,0 +1,154 @@
+{
+  "pattern": {
+    "id": "demo_isolation",
+    "version": "1.0.0",
+    "created": "2025-12-15",
+    "category": "feature_implementation",
+    "title": "Isolated Demo Rendering via URL Parameter",
+    "summary": "Pattern for rendering standalone visual demos that bypass normal app initialization (opening, narration, scroll) while properly initializing the particle system."
+  },
+
+  "problem": {
+    "description": "Need to render isolated demos for OBS capture and marketing assets without the full app experience interfering",
+    "symptoms": [
+      "Demo won't render independently due to app state machine interference",
+      "Orchestrators (Scroll, Navigation) conflict with demo playback",
+      "Particles don't appear because BLUEPRINT_READY never fires",
+      "Beat-driven visuals need particle system already initialized"
+    ],
+    "constraints": [
+      "Must not break normal app operation",
+      "Must leverage existing runVisualDemo() infrastructure",
+      "Must respect single-writer and schema contracts",
+      "Must initialize particles before demo beats fire"
+    ]
+  },
+
+  "solution": {
+    "architecture": {
+      "entryPoint": "URL parameter ?demo=<demoKey>",
+      "interceptLocation": "ConsciousnessTheater.jsx viewport-hint handler",
+      "initialization": "BUILD_EMERGENCE_BLUEPRINT → BLUEPRINT_READY → runVisualDemo()",
+      "bypass": ["director.start()", "ScrollOrchestrator", "NarrationController", "OpeningSequence"]
+    },
+
+    "files": {
+      "modify": [
+        {
+          "file": "src/theater/disableDirectorAutostart.js",
+          "purpose": "Detect demo mode from URL, set global flags",
+          "changes": "Add URL param detection, set __DEMO_MODE__ and __DEMO_KEY__"
+        },
+        {
+          "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+          "purpose": "Intercept normal startup, bootstrap demo instead",
+          "changes": "Add demo mode branch before director.start(), emit BUILD_EMERGENCE_BLUEPRINT, wait for BLUEPRINT_READY, call runVisualDemo()"
+        },
+        {
+          "file": "src/config/canonical/canonicalAuthority.js",
+          "purpose": "Expose visualDemos from canon",
+          "changes": "Add visualDemos: sst.visualDemos || {} to Canonical object"
+        },
+        {
+          "file": "src/theater/bus/schemas.js",
+          "purpose": "Allow demo-related fields in RENDER_DIRECTIVE",
+          "changes": "Add verb, effect, camera, cueId, stageIndex, scrollPercent, easing, durationMs, atMs to optional fields"
+        }
+      ],
+      "readOnly": [
+        "sst/canon/v3.5.json (demo definitions)",
+        "src/theater/TheaterDirector.js (runVisualDemo method)",
+        "src/theater/VisualOrchestrator.js (applyVerb method)",
+        "src/components/webgl/WebGLBackground.jsx (handleDirective, handleBlueprint)"
+      ]
+    },
+
+    "implementation": {
+      "step1_urlDetection": {
+        "file": "src/theater/disableDirectorAutostart.js",
+        "code": "if (typeof window !== 'undefined') {\\n  try {\\n    const urlParams = new URLSearchParams(window.location.search);\\n    const demoKey = urlParams.get('demo');\\n    if (demoKey) {\\n      globalThis.__DEMO_MODE__ = true;\\n      globalThis.__DEMO_KEY__ = demoKey;\\n      console.log(`[DisableAutostart] Demo mode enabled: ${demoKey}`);\\n    }\\n  } catch (e) {}\\n}"
+      },
+      "step2_canonicalExposure": {
+        "file": "src/config/canonical/canonicalAuthority.js",
+        "code": "// In Canonical object definition, add:\\nvisualDemos: sst.visualDemos || {},"
+      },
+      "step3_demoIntercept": {
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "location": "Inside viewport-hint useEffect, before director.start()",
+        "code": "if (globalThis.__DEMO_MODE__ && globalThis.__DEMO_KEY__) {\\n  console.log(`[ConsciousnessTheater] Demo mode detected, running: ${globalThis.__DEMO_KEY__}`);\\n\\n  if (director.scrollOrchestrator) {\\n    director.scrollOrchestrator.stop();\\n  }\\n\\n  BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {\\n    mode: 'emergence',\\n    target: 'genesis',\\n    targetState: 'genesis_initial',\\n    source: 'demo',\\n    count: 12000,\\n    fastForward: true,\\n    skipMorphAnimation: true,\\n  });\\n\\n  const offBlueprint = BeatBus.on(EVENTS.BLUEPRINT_READY, (p = {}) => {\\n    if (p.stage !== 'genesis') return;\\n    offBlueprint?.();\\n    try {\\n      director.runVisualDemo(globalThis.__DEMO_KEY__);\\n      console.log(`[ConsciousnessTheater] Demo started: ${globalThis.__DEMO_KEY__}`);\\n    } catch (err) {\\n      console.error('[ConsciousnessTheater] Demo failed to start:', err);\\n    }\\n  });\\n\\n  directorStartedRef.current = true;\\n  clearInterval(tick);\\n  return;\\n}"
+      },
+      "step4_schemaExtension": {
+        "file": "src/theater/bus/schemas.js",
+        "code": "// Add to RENDER_DIRECTIVE optional fields:\\n'verb', 'effect', 'stageIndex', 'scrollPercent', 'easing', 'durationMs', 'atMs', 'camera', 'cueId'"
+      }
+    },
+
+    "contracts": {
+      "BUILD_EMERGENCE_BLUEPRINT": {
+        "required": ["mode", "target", "source", "count"],
+        "optional": ["targetState", "skipMorphAnimation", "fastForward"],
+        "example": {
+          "mode": "emergence",
+          "target": "genesis",
+          "targetState": "genesis_initial",
+          "source": "demo",
+          "count": 12000,
+          "fastForward": true,
+          "skipMorphAnimation": true
+        }
+      },
+      "RENDER_DIRECTIVE": {
+        "required": ["timestamp", "source"],
+        "demoFields": ["verb", "effect", "camera", "cueId", "easing", "durationMs", "atMs"]
+      }
+    }
+  },
+
+  "verification": {
+    "normalMode": [
+      "Load app without ?demo param",
+      "Opening sequence runs",
+      "Narration works",
+      "Scroll works",
+      "No console errors"
+    ],
+    "demoMode": [
+      "Load ?demo=brand_vision_demo",
+      "Console: [DisableAutostart] Demo mode enabled",
+      "Console: [ConsciousnessTheater] Demo mode detected",
+      "No BUILD_EMERGENCE_BLUEPRINT contract errors",
+      "BLUEPRINT_READY received",
+      "Console: [ConsciousnessTheater] Demo started",
+      "Particles visible on screen",
+      "Beats fire: pullIn → morph → sparkDrift → bloomPulse → endCard",
+      "No RENDER_DIRECTIVE schema errors",
+      "28-second sequence completes"
+    ]
+  },
+
+  "antiPatterns": {
+    "doNot": [
+      "Use setTimeout to wait for particle initialization (race condition)",
+      "Intercept in TheaterDirector ENGINE_VIEWPORT_HINT handler (disabled when autostart off)",
+      "Move RENDER_DIRECTIVE fields to _meta (renderer reads from top level)",
+      "Skip BUILD_EMERGENCE_BLUEPRINT (particles won't initialize)",
+      "Omit source/target from BUILD_EMERGENCE_BLUEPRINT (contract violation)"
+    ]
+  },
+
+  "keyInsights": [
+    "TheaterDirector.runVisualDemo() already exists and handles beat scheduling",
+    "Demo definitions live in sst/canon/v3.5.json under visualDemos",
+    "Particle initialization requires BLUEPRINT_READY event, not just time delay",
+    "ConsciousnessTheater controls startup, not TheaterDirector when autostart is disabled",
+    "Schema is strict - unknown top-level fields cause validation failures",
+    "handleDirective reads verb/effect from top level, not _meta"
+  ],
+
+  "futureWork": [
+    "Add more demo definitions to canon",
+    "Support demo chaining (multiple demos in sequence)",
+    "Add demo-specific quality settings",
+    "Implement demo recording triggers for automated capture"
+  ]
+}

@@ -76,7 +76,7 @@ bind = src/components/webgl/WebGLBackground.jsx
 AUDIO_COMPUTER_HUM.emitter = src/theater/TheaterDirector.js
 BLUEPRINT_INVALIDATED.emitter = canon-console/runtime/blueprint-guard-v2.js
 BLUEPRINT_READY.emitter = src/theater/bus/emitters.js
-BUILD_EMERGENCE_BLUEPRINT.emitter = ⚠️ multiple: src/state/commands/StateCommands.js, src/theater/TheaterDirector.js
+BUILD_EMERGENCE_BLUEPRINT.emitter = ⚠️ multiple: src/components/consciousness/ConsciousnessTheater.jsx, src/state/commands/StateCommands.js, src/theater/TheaterDirector.js
 CANON_VIOLATION.emitter = ⚠️ multiple: canon-console/browser/inject.js, canon-console/runtime/blueprint-guard-v2.js
 CLIMAX_STEP.emitter = src/engine/ConsciousnessEngine.js
 CURSOR_BLINK.emitter = src/theater/TheaterDirector.js
@@ -129,4 +129,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-12-14 via `tools/generate-ownership.mjs`
+Last updated: 2025-12-17 via `tools/generate-ownership.mjs`

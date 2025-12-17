@@ -28,6 +28,7 @@ const RENDER_DIRECTIVE_FIELD_TYPE_MAP = {
   kind: 'string',
   phase: 'string',
   stage: 'string',
+  channel: 'string',
   uMotionMode: 'number',
   uParticlePhase: 'number',
   uFlowTurbulence: 'number',
@@ -46,6 +47,15 @@ const RENDER_DIRECTIVE_FIELD_TYPE_MAP = {
   drawCount: 'number',
   enterQrMode: 'boolean',
   exitQrMode: 'boolean',
+  verb: 'string',
+  effect: 'object',
+  stageIndex: 'number',
+  scrollPercent: 'number',
+  easing: 'string',
+  durationMs: 'number',
+  atMs: 'number',
+  camera: 'object',
+  cueId: 'string',
 };
 
 const renderDirectiveProperties = {};

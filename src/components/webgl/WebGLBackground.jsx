@@ -145,6 +145,39 @@ const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer')
     case 'reform_as_structure':
       setUniform('uStructureBlend', clamp1(directive?.strength ?? 1.0));
       break;
+    // Demo verbs → apply motion/visibility baselines
+    case 'pullIn': {
+      setUniform('uMotionMode', directive?.uMotionMode ?? 1);
+      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.5);
+      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.6);
+      setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
+      setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
+      break;
+    }
+    case 'morph': {
+      setUniform('uMotionMode', directive?.uMotionMode ?? 1);
+      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.45);
+      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.55);
+      setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
+      setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
+      break;
+    }
+    case 'sparkDrift': {
+      setUniform('uMotionMode', directive?.uMotionMode ?? 3);
+      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.85);
+      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.7);
+      setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
+      setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
+      break;
+    }
+    case 'bloomPulse': {
+      setUniform('uMotionMode', directive?.uMotionMode ?? 0);
+      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.2);
+      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.8);
+      setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
+      setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
+      break;
+    }
     default:
       break;
   }

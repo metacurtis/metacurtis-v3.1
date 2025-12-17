@@ -509,6 +509,7 @@ function buildCanonical(source) {
     debugSurface: sst.debugSurface || {},
     changeLog: sst.changeLog || [],
     dialogue: narrative.stages || {},
+    visualDemos: sst.visualDemos || {},
     visualEffects,
     getStageByName, getStageByIndex, getStageByScroll,
     isFeatureEnabled, getFragmentsForStage, getActiveFragments,

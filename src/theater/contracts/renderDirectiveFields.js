@@ -14,6 +14,7 @@ export const RENDER_DIRECTIVE_FIELDS = [
   'kind',
   'phase',
   'stage',
+  'channel',
   'uMotionMode',
   'uParticlePhase',
   'uFlowTurbulence',
@@ -31,6 +32,16 @@ export const RENDER_DIRECTIVE_FIELDS = [
   'drawCount',
   'enterQrMode',
   'exitQrMode',
+  // Extended optional fields (schema-authorized)
+  'verb',
+  'effect',
+  'stageIndex',
+  'scrollPercent',
+  'easing',
+  'durationMs',
+  'atMs',
+  'camera',
+  'cueId',
 ];
 
 export default RENDER_DIRECTIVE_FIELDS;

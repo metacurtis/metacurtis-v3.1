@@ -1,9 +1,27 @@
 {
   "emitters": {
+    "BUILD_EMERGENCE_BLUEPRINT": [
+      {
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 200
+      },
+      {
+        "file": "src/state/commands/StateCommands.js",
+        "line": 210
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1589
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1766
+      }
+    ],
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 224
+        "line": 316
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
@@ -11,7 +29,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2274
+        "line": 2282
       }
     ],
     "START_CLIMAX": [
@@ -43,11 +61,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1167
+        "line": 1175
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1917
+        "line": 1925
       }
     ],
     "NARRATIVE_LINE": [
@@ -63,7 +81,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1794
+        "line": 1802
       }
     ],
     "PARTICLE_CLICK_HIT": [
@@ -75,7 +93,7 @@
     "PARTICLE_CLICK_REQUEST": [
       {
         "file": "src/components/webgl/WebGLCanvas.jsx",
-        "line": 337
+        "line": 338
       }
     ],
     "PREWARM_COMPLETE": [
@@ -114,20 +132,6 @@
         "line": 145
       }
     ],
-    "BUILD_EMERGENCE_BLUEPRINT": [
-      {
-        "file": "src/state/commands/StateCommands.js",
-        "line": 210
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 1581
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 1758
-      }
-    ],
     "SCROLL_PROGRESS": [
       {
         "file": "src/theater/ScrollOrchestrator.js",
@@ -147,7 +151,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1915
+        "line": 1923
       }
     ],
     "OPENING_COMPLETE": [
@@ -157,93 +161,93 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1931
+        "line": 1939
       }
     ],
     "DIRECTOR_ERROR": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1363
+        "line": 1371
       }
     ],
     "CURSOR_SHOW": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1522
+        "line": 1530
       }
     ],
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1523
+        "line": 1531
       }
     ],
     "CURSOR_BLINK": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1529
+        "line": 1537
       }
     ],
     "TERMINAL_TYPE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1541
+        "line": 1549
       }
     ],
     "SCREEN_FILL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1556
+        "line": 1564
       }
     ],
     "DIRECTOR_OPENING_MODE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1573
+        "line": 1581
       }
     ],
     "PARTICLE_PHASE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1624
+        "line": 1632
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1657
+        "line": 1665
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1699
+        "line": 1707
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1775
+        "line": 1783
       }
     ],
     "DIRECTOR_CANCEL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2083
+        "line": 2091
       }
     ],
     "PREWARM_GENESIS_BLUEPRINT": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2089
+        "line": 2097
       }
     ],
     "RENDERER_TUNE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2104
+        "line": 2112
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/theater/VisualOrchestrator.js",
-        "line": 194
+        "line": 203
       },
       {
         "file": "src/theater/bus/emitters.js",
@@ -305,11 +309,11 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 174
+        "line": 176
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 218
+        "line": 310
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -317,13 +321,61 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2295
+        "line": 2303
+      }
+    ],
+    "BLUEPRINT_READY": [
+      {
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 241
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 1798
+      },
+      {
+        "file": "src/components/webgl/WebGLCanvas.jsx",
+        "line": 265
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 340
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 344
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 1832
+      },
+      {
+        "file": "canon-console/runtime/blueprint-guard-v2.js",
+        "line": 14
+      },
+      {
+        "file": "canon-console/runtime/blueprint-guard-v2.js",
+        "line": 238
+      }
+    ],
+    "FENCEPOST_LISTENERS_READY": [
+      {
+        "file": "src/components/consciousness/ConsciousnessTheater.jsx",
+        "line": 256
+      },
+      {
+        "file": "src/components/webgl/WebGLBackground.jsx",
+        "line": 657
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 332
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 190
+        "line": 281
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
@@ -345,7 +397,7 @@
     "START_NARRATIVE": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 195
+        "line": 286
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
@@ -443,7 +495,7 @@
     "CURSOR_SHOW": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 107
+        "line": 120
       },
       {
         "file": "canon-console/runtime/lifecycle-guards.js",
@@ -453,31 +505,31 @@
     "CURSOR_BLINK": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 114
+        "line": 127
       }
     ],
     "TERMINAL_TYPE": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 129
+        "line": 142
       }
     ],
     "SCREEN_FILL": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 170
+        "line": 183
       }
     ],
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 229
+        "line": 242
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 247
+        "line": 260
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
@@ -487,7 +539,7 @@
     "PARTICLE_PHASE": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 252
+        "line": 265
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
@@ -497,7 +549,7 @@
     "PARTICLES_EMERGED": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 258
+        "line": 271
       },
       {
         "file": "src/components/ui/LCPHero.jsx",
@@ -517,7 +569,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1814
+        "line": 1822
       },
       {
         "file": "canon-console/runtime/lifecycle-guards.js",
@@ -527,7 +579,7 @@
     "OPENING_COMPLETE": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 269
+        "line": 282
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
@@ -537,53 +589,13 @@
     "DIRECTOR_CANCEL": [
       {
         "file": "src/components/theater/OpeningSequence.jsx",
-        "line": 281
-      }
-    ],
-    "FENCEPOST_LISTENERS_READY": [
-      {
-        "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 657
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 332
+        "line": 294
       }
     ],
     "PARTICLE_CLICK_REQUEST": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
         "line": 1229
-      }
-    ],
-    "BLUEPRINT_READY": [
-      {
-        "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1798
-      },
-      {
-        "file": "src/components/webgl/WebGLCanvas.jsx",
-        "line": 264
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 340
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 344
-      },
-      {
-        "file": "src/theater/TheaterDirector.js",
-        "line": 1824
-      },
-      {
-        "file": "canon-console/runtime/blueprint-guard-v2.js",
-        "line": 14
-      },
-      {
-        "file": "canon-console/runtime/blueprint-guard-v2.js",
-        "line": 238
       }
     ],
     "RENDER_DIRECTIVE": [
@@ -699,7 +711,7 @@
     "PREWARM_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2090
+        "line": 2098
       }
     ]
   }
