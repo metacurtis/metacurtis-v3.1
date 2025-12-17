@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 export async function* walk(dir, exts = new Set(['.js','.jsx','.ts','.tsx','.glsl','.cjs','.mjs','.json'])) {
-  const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+  const entries = (await fs.promises.readdir(dir, { withFileTypes: true }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   for (const e of entries) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) {
