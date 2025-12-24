@@ -41,6 +41,8 @@ export const EVENTS = {
   RENDERER_TUNE: 'RENDERER_TUNE',                // { rotZdegPerSec, swirl, vibAmp, flutter, trails, ... }
   PARTICLE_PHASE: 'PARTICLE_PHASE',              // { name }
   MORPH_PROGRESS: 'MORPH_PROGRESS',              // { progress: 0..1 }
+  TEXT_MORPH: 'TEXT_MORPH',                      // { word, stage?, particles?, transitionDuration?, source? }
+  TEXT_POSITIONS_READY: 'TEXT_POSITIONS_READY',  // { positions, word, stage?, count? }
 
   // Stage / narrative control
   START_NARRATIVE: 'START_NARRATIVE',            // { id?, stage? }

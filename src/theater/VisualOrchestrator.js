@@ -36,7 +36,9 @@ class VisualOrchestrator {
       mode: 'opening',
       lastVerb: null,
       lastEffect: null,
+      demoKey: (typeof globalThis !== 'undefined' && globalThis.__DEMO_KEY__) || null,
     };
+    this._currentText = null;
   }
 
   init() {
@@ -116,6 +118,12 @@ class VisualOrchestrator {
       params = {},
     } = payload;
     const stageName = typeof stage === 'string' ? stage : this.state.stageName;
+    const demoKey =
+      (typeof globalThis !== 'undefined' && globalThis.__DEMO_KEY__) || this.state.demoKey || null;
+    if (phase === 'visual_demo' && demoKey && demoKey !== this.state.demoKey) {
+      this.state.demoKey = demoKey;
+    }
+    const isBrandVisionDemo = phase === 'visual_demo' && demoKey === 'brand_vision_demo';
     let resolvedEffect = effect && Object.keys(effect).length ? effect : null;
     if (!resolvedEffect && verb && typeof Canonical?.resolveVisualVerb === 'function') {
       resolvedEffect = Canonical.resolveVisualVerb(verb, params) || null;
@@ -130,6 +138,22 @@ class VisualOrchestrator {
     }
     if (typeof stage === 'string') {
       this.state.stageName = stageName;
+    }
+    const nextText = typeof params?.text === 'string' ? params.text.trim() : '';
+    if (nextText && nextText !== this._currentText) {
+      const morphStage = typeof params?.stage === 'string' ? params.stage : stageName;
+      const transitionDuration = Number.isFinite(params?.transitionDuration)
+        ? params.transitionDuration
+        : 2000;
+      const particles = Number.isFinite(params?.particles) ? params.particles : undefined;
+      BeatBus.emit(EVENTS.TEXT_MORPH, {
+        word: nextText,
+        stage: morphStage || 'genesis',
+        ...(particles ? { particles } : {}),
+        transitionDuration,
+        source: 'visual_orchestrator',
+      });
+      this._currentText = nextText;
     }
     this.state.mode = phase || 'narration';
     this.state.lastVerb = verb;
@@ -149,7 +173,7 @@ class VisualOrchestrator {
     });
     this._emitDirective(directive);
 
-    if (params && params.camera) {
+    if (params && params.camera && !isBrandVisionDemo) {
       this.applyCamera({
         stage: stageName,
         camera: params.camera,
@@ -255,6 +279,7 @@ class VisualOrchestrator {
       const idx = order.indexOf(stage);
       this.state.stageIndex = idx >= 0 ? idx : this.state.stageIndex;
     }
+    this._currentText = null;
   };
 
   _handleMorph = (payload = {}) => {

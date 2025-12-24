@@ -67,6 +67,12 @@
     "MORPH_PROGRESS": {
       "emitters": ["src/theater/bus/emitters.js"]
     },
+    "TEXT_MORPH": {
+      "emitters": ["src/theater/VisualOrchestrator.js"]
+    },
+    "TEXT_POSITIONS_READY": {
+      "emitters": ["src/theater/bus/emitters.js"]
+    },
     "NARRATION_CLEANUP": {
       "emitters": ["src/components/narrative/NarrationController.jsx"]
     },

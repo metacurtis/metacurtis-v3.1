@@ -19,9 +19,9 @@ import {
 import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
 
 const DEFAULT_TIER_RATIOS = [0.7, 0.12, 0.13, 0.05];
-const DEFAULT_FIT_FRAC = 0.92;
-const DEFAULT_FIT_FRAC_X = 0.9;
-const DEFAULT_FIT_FRAC_Y = 0.8;
+const DEFAULT_FIT_FRAC = 0.5;
+const DEFAULT_FIT_FRAC_X = 0.5;
+const DEFAULT_FIT_FRAC_Y = 0.4;
 const DEFAULT_STARFIELD_SCALE = 0.95;
 const DEFAULT_BAND_FADE_WIDTH = 0.35;
 const DEFAULT_BAND_CORE_WIDTH = 0.06;

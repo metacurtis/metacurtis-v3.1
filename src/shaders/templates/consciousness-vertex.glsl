@@ -188,6 +188,13 @@ void main() {
   if (isReform > 0.0) {
     vec3 targetDir = normalize(vec3(textPos.xy, 0.0001));
     finalPos -= targetDir * max(1.0 - clamp(spread, 0.0, 1.0), 0.0) * reformAmt * 4.0;
+    // Break coherent reform lines coming from atmospheric positions
+    vec3 reformNoise = vec3(
+      sin(particleIndex * 0.1 + uTime),
+      cos(particleIndex * 0.13 + uTime * 1.1),
+      0.0
+    ) * (1.0 - morph) * 8.0;
+    finalPos += reformNoise;
   }
   vPosition = finalPos;
   

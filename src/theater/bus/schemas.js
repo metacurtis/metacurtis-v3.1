@@ -144,6 +144,19 @@ const EVENT_SCHEMAS = new Map([
       stepIndex: 'number',
     },
   }],
+  ['TEXT_MORPH', {
+    required: { word: 'string' },
+    optional: {
+      stage: 'string',
+      particles: 'number',
+      transitionDuration: 'number',
+      source: 'string',
+    },
+  }],
+  ['TEXT_POSITIONS_READY', {
+    required: { positions: 'object', word: 'string' },
+    optional: { stage: 'string', count: 'number' },
+  }],
   ['PARTICLE_CLICK_REQUEST', {
     optional: {
       mouse: 'object',

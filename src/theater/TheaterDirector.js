@@ -617,9 +617,9 @@ class TheaterDirector {
       timers.push(id);
     };
 
-    (beats || []).forEach((beat) => {
+    (beats || []).forEach((beat, idx) => {
       if (!beat || !Number.isFinite(beat.atMs)) return;
-      addTimer(() => onBeat?.(beat), beat.atMs);
+      addTimer(() => onBeat?.(beat, idx), beat.atMs);
     });
 
     addTimer(() => {
@@ -788,10 +788,44 @@ class TheaterDirector {
       this._lockScroll?.({ source: 'visual_demo', key: demoKey });
     }
 
+    const cameraCueForBeat = (beatIndex) => {
+      switch (beatIndex) {
+        case 0: // VISION
+          return { position: { x: 0, y: 0, z: 55 }, fov: 90, durationMs: 500 };
+        case 1: // CREATE
+          return { position: { x: 0, y: 0, z: 52 }, fov: 88, durationMs: 6000 };
+        case 2: // LAUNCH
+          return { position: { x: 0, y: 1, z: 48 }, fov: 82, durationMs: 8000 };
+        case 3: // Bloom Out
+          return { position: { x: 0, y: 0, z: 55 }, fov: 90, durationMs: 5000 };
+        case 'endcard':
+          return { position: { x: 0, y: 0, z: 55 }, fov: 90, durationMs: 2000 };
+        default:
+          return null;
+      }
+    };
+
+    const applyCameraCue = (cue, { stage, cueId } = {}) => {
+      if (!cue) return;
+      const stageForCamera = stage || this.currentStage || 'genesis';
+      try {
+        VisualOrchestrator.applyCamera?.({
+          stage: stageForCamera,
+          camera: cue,
+          cueId: cueId || cue.cueId,
+          source: `visual_demo:${demoKey}`,
+        });
+      } catch (err) {
+        console.warn('[VisualDemo] applyCamera failed', { cue, err });
+      }
+    };
+
     const cancel = this._scheduleCancelableBeats({
       durationMs: Number(demo.durationMs) || 0,
       beats: Array.isArray(demo.beats) ? demo.beats : [],
-      onBeat: (beat = {}) => {
+      onBeat: (beat = {}, idx = 0) => {
+        const stageForCamera = this.currentStage || beat.stage || 'genesis';
+
         VisualOrchestrator.applyVerb?.({
           verb: beat.verb,
           params: beat.params || {},
@@ -803,6 +837,9 @@ class TheaterDirector {
             atMs: beat.atMs,
           },
         });
+
+        const cue = cameraCueForBeat(idx);
+        applyCameraCue(cue, { stage: stageForCamera, cueId: `demo_camera:${idx}` });
       },
       onComplete: () => {
         if (demo.endCard) {
@@ -817,6 +854,8 @@ class TheaterDirector {
               atMs: demo.endCard.atMs,
             },
           });
+          const endCardCamera = cameraCueForBeat('endcard');
+          applyCameraCue(endCardCamera, { cueId: 'demo_camera:endcard' });
         }
         this._unlockScroll?.({ source: 'visual_demo', key: demoKey });
         this._visualDemoCancel = null;

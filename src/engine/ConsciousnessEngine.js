@@ -30,6 +30,7 @@ import {
   emitBlueprintReady,
   makeBandFrame,
 } from './utils/blueprintUtils.js';
+import { emitMorphProgress, emitTextPositionsReady } from '@/theater/bus/emitters.js';
 
 // Visual behavior constants (formerly VC knobs)
 const STARFIELD_FIT_FRAC = 0.92;
@@ -289,6 +290,9 @@ class ConsciousnessEngine {
     this._rendererFencepostSeen = false;
     this._pendingQrMetadata = null;
     this._openingPreboundBlueprint = null;
+    this._textMorphTimers = [];
+    this._textMorphRaf = null;
+    this._textMorphLastValue = null;
 
     // Opening gates
     this._openingPhase = true;
@@ -424,6 +428,7 @@ class ConsciousnessEngine {
     subscribe('QUALITY_CHANGE', this._onQualityChange.bind(this));
     subscribe('PREWARM_GENESIS_BLUEPRINT', this._onPrewarmGenesis.bind(this));
     subscribe('BUILD_EMERGENCE_BLUEPRINT', this._onBuildEmergence.bind(this));
+    subscribe('TEXT_MORPH', this._onTextMorph.bind(this));
     subscribe('START_CLIMAX', this._handleStartClimax.bind(this));
     subscribe('PARTICLES_EMERGED', () => {
       this._rendererFencepostSeen = true;
@@ -578,6 +583,136 @@ class ConsciousnessEngine {
       this._emergenceDone = false;
       this._rendererFencepostSeen = false;
     }
+  }
+
+  _clearTextMorphTimers() {
+    if (Array.isArray(this._textMorphTimers) && this._textMorphTimers.length) {
+      this._textMorphTimers.forEach((id) => clearTimeout(id));
+    }
+    this._textMorphTimers = [];
+    if (this._textMorphRaf != null) {
+      if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(this._textMorphRaf);
+      } else {
+        clearTimeout(this._textMorphRaf);
+      }
+      this._textMorphRaf = null;
+    }
+  }
+
+  _onTextMorph(payload = {}) {
+    const wordRaw = typeof payload.word === 'string' ? payload.word.trim() : '';
+    if (!wordRaw) return;
+
+    const stage =
+      typeof payload.stage === 'string'
+        ? payload.stage
+        : (this.currentStage || this._lastBlueprint?.stageName || 'genesis');
+
+    const countCandidate = Number.isFinite(payload.particles)
+      ? Math.max(1, Math.floor(payload.particles))
+      : (this._lastBlueprint?.particleCount
+          || this._lastBlueprint?.activeCount
+          || SST?.performance?.particleCount?.[stage]
+          || SST?.performance?.particleCount?.genesis
+          || 12000);
+    const count = Math.max(1, Math.floor(countCandidate));
+
+    const letterGeom = Canonical?.visual?.letterGeometry?.[stage] || {};
+    const depth = Number(letterGeom.depth) || 0.3;
+    const letterSpacing = Number(letterGeom.spacing ?? letterGeom.letterSpacing) || 1;
+    const scale = Number(letterGeom.scale) || 1;
+    const fontKey = typeof letterGeom.font === 'string' ? letterGeom.font : null;
+
+    const transitionDuration = Number.isFinite(payload.transitionDuration)
+      ? payload.transitionDuration
+      : 2000;
+    const durationMs = Math.max(0, transitionDuration);
+    const dissolveDuration = 800;
+    const reformDelay = 200;
+    const reformDuration = Math.max(0, durationMs - dissolveDuration - reformDelay);
+
+    this._clearTextMorphTimers();
+
+    const morphSource = 'demo';
+    const nowMs = () =>
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const schedule = (fn) =>
+      typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame(fn)
+        : setTimeout(() => fn(nowMs()), 16);
+    const ease = (t) => t * t * (3 - 2 * t);
+    const emitMorph = (value) => {
+      const clamped = clamp(value, 0, 1);
+      emitMorphProgress({ progress: clamped, source: morphSource });
+      this._textMorphLastValue = clamped;
+    };
+    const animateMorph = (from, to, duration, onComplete) => {
+      if (!Number.isFinite(duration) || duration <= 0) {
+        emitMorph(to);
+        if (typeof onComplete === 'function') onComplete();
+        return;
+      }
+      const start = nowMs();
+      const step = (timestamp) => {
+        const elapsed = (Number.isFinite(timestamp) ? timestamp : nowMs()) - start;
+        const t = clamp(elapsed / duration, 0, 1);
+        const eased = ease(t);
+        const value = from + (to - from) * eased;
+        emitMorph(value);
+        if (t < 1) {
+          this._textMorphRaf = schedule(step);
+        } else {
+          this._textMorphRaf = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      };
+      this._textMorphRaf = schedule(step);
+    };
+
+    const emitPositions = () => {
+      const positions = this.generate3DTextFormation(wordRaw, {
+        particles: count,
+        depth,
+        letterSpacing,
+        scale,
+        fontKey,
+        stage,
+        viewportHint: this._viewportHint,
+      });
+      if (this._lastBlueprint?.text3DPositions instanceof Float32Array
+        && this._lastBlueprint.text3DPositions.length === positions.length) {
+        this._lastBlueprint.text3DPositions.set(positions);
+      }
+      emitTextPositionsReady({
+        positions,
+        word: wordRaw,
+        stage,
+        count,
+      });
+      console.log(`[Engine] TEXT_MORPH: Generated ${count} positions for "${wordRaw}"`);
+    };
+
+    if (!durationMs) {
+      emitPositions();
+      return;
+    }
+
+    const startValue = Number.isFinite(this._textMorphLastValue) ? this._textMorphLastValue : 1;
+    animateMorph(startValue, 0, dissolveDuration, () => {
+      emitPositions();
+      const scheduleReform = () => {
+        animateMorph(0, 1, reformDuration, null);
+      };
+      if (reformDelay > 0) {
+        const reformTimer = setTimeout(scheduleReform, reformDelay);
+        this._textMorphTimers.push(reformTimer);
+      } else {
+        scheduleReform();
+      }
+    });
   }
 
   async _onBuildEmergence(payload = {}) {
@@ -2270,6 +2405,7 @@ class ConsciousnessEngine {
   // Cleanup for HMR
   destroy() {
     this._stopClimaxLoop();
+    this._clearTextMorphTimers();
     if (this._climaxState) {
       this._climaxState.active = false;
       this._climaxState.currentStep = null;

@@ -1,3 +1,6 @@
+
+
+
 precision mediump float;
 
 // Uniforms
@@ -121,3 +124,4 @@ void main() {
 
   gl_FragColor = vec4(finalColor, alpha);
 }
+

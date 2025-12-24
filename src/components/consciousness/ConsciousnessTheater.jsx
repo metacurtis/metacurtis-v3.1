@@ -232,7 +232,7 @@ export default function ConsciousnessTheater() {
                 source: 'visual_orchestrator',
                 phase: 'visual_demo',
                 stage: 'genesis',
-                uMorphProgress: 1,
+                uMorphProgress: 0.94,
                 uStageProgress: 1,
                 uOpacityMin: 0.5,
                 uOpacityMax: 1.0,

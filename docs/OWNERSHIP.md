@@ -24,6 +24,7 @@ uGaussianSigma = src/components/webgl/WebGLBackground.jsx
 uGlowIntensity = src/components/webgl/WebGLBackground.jsx
 uMorph = src/components/webgl/WebGLBackground.jsx
 uMorphProgress = src/components/webgl/WebGLBackground.jsx
+uMorphType = src/components/webgl/WebGLBackground.jsx
 uMotionMode = src/components/webgl/WebGLBackground.jsx
 uOpacityMax = src/components/webgl/WebGLBackground.jsx
 uOpacityMin = src/components/webgl/WebGLBackground.jsx
@@ -37,6 +38,7 @@ uPulseAmplitude = src/components/webgl/WebGLBackground.jsx
 uPulseFrequency = src/components/webgl/WebGLBackground.jsx
 uQrPhotoMode = src/components/webgl/WebGLBackground.jsx
 uScrollProgress = src/components/webgl/WebGLBackground.jsx
+uSpreadFactor = src/components/webgl/WebGLBackground.jsx
 uStageBlend = src/components/webgl/WebGLBackground.jsx
 uStageIndex = src/components/webgl/WebGLBackground.jsx
 uStageProgress = src/components/webgl/WebGLBackground.jsx
@@ -111,6 +113,8 @@ STAGE_CHANGE.emitter = src/theater/bus/emitters.js
 START_CLIMAX.emitter = src/components/fragments/ClimaxSequenceController.jsx
 START_NARRATIVE.emitter = ⚠️ multiple: src/components/narrative/NarrationController.jsx, src/orchestration/navigation/narrativeNavigation.js, src/theater/TheaterDirector.js
 TERMINAL_TYPE.emitter = src/theater/TheaterDirector.js
+TEXT_MORPH.emitter = src/theater/VisualOrchestrator.js
+TEXT_POSITIONS_READY.emitter = src/theater/bus/emitters.js
 
 ### Rules
 - Events listed here must be emitted by the owner only.
@@ -129,4 +133,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-12-17 via `tools/generate-ownership.mjs`
+Last updated: 2025-12-23 via `tools/generate-ownership.mjs`

@@ -34,6 +34,37 @@ const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
+const formatNumber = (value, precision = 3) => {
+  if (!Number.isFinite(value)) return 'null';
+  return Number(value).toFixed(precision);
+};
+const toArray = (value) => {
+  if (value == null) return null;
+  if (typeof value.toArray === 'function') {
+    const tmp = [];
+    value.toArray(tmp, 0);
+    return tmp;
+  }
+  if (Array.isArray(value)) return value;
+  if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView?.(value)) {
+    return Array.from(value);
+  }
+  if (typeof value.x === 'number' || typeof value.y === 'number') {
+    return [value.x ?? 0, value.y ?? 0];
+  }
+  return null;
+};
+const formatVec2 = (value, precision = 3) => {
+  const arr = toArray(value);
+  if (!arr || arr.length < 2) return 'null';
+  return `[${formatNumber(arr[0], precision)}, ${formatNumber(arr[1], precision)}]`;
+};
+const formatArray = (value, count = 4, precision = 2) => {
+  const arr = toArray(value);
+  if (!arr || arr.length === 0) return 'null';
+  return `[${arr.slice(0, count).map((v) => formatNumber(v, precision)).join(', ')}]`;
+};
 const MORPH_TYPE_ENUM = Object.freeze({
   steady: 0,
   dissolve: 1,
@@ -102,8 +133,21 @@ const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer')
     if (!uniform) return;
     if (!guardUniformWrite(origin, name)) return;
     if (Array.isArray(value)) {
-      if (uniform.value?.set) {
-        uniform.value.set(...value);
+      const current = uniform.value;
+      const isTypedArray =
+        current &&
+        ArrayBuffer.isView(current) &&
+        !(current instanceof DataView) &&
+        typeof current.set === 'function';
+
+      if (isTypedArray) {
+        current.set(value);
+      } else if (Array.isArray(current)) {
+        for (let i = 0; i < Math.min(current.length, value.length); i += 1) {
+          current[i] = value[i];
+        }
+      } else if (current?.set) {
+        current.set(...value);
       } else {
         uniform.value = value.slice();
       }
@@ -147,33 +191,54 @@ const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer')
       break;
     // Demo verbs → apply motion/visibility baselines
     case 'pullIn': {
-      setUniform('uMotionMode', directive?.uMotionMode ?? 1);
-      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.5);
-      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.6);
+      // Gentle grid wobble - keep glyph readable
+      setUniform('uMorphProgress', typeof directive?.uMorphProgress === 'number' ? directive.uMorphProgress : 0.97);
+      applyArrayUniform('uGridSpacing', [0.08, 0.08]);
+      applyArrayUniform('uTierMode', [1, 1, 1, 1]);
+      applyArrayUniform('uTierParams0', [0.005, 0, 0, 0]);
+      applyArrayUniform('uTierParams1', [0.004, 0, 0, 0]);
+      applyArrayUniform('uTierParams2', [0.004, 0, 0, 0]);
+      applyArrayUniform('uTierParams3', [0.003, 0, 0, 0]);
       setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
       setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
       break;
     }
     case 'morph': {
-      setUniform('uMotionMode', directive?.uMotionMode ?? 1);
-      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.45);
-      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.55);
+      // Subtle drift (all tiers) - stable text formation
+      setUniform('uMorphProgress', typeof directive?.uMorphProgress === 'number' ? directive.uMorphProgress : 0.96);
+      applyArrayUniform('uTierMode', [0, 0, 0, 0]);
+      applyArrayUniform('uTierParams0', [0.4, 0.02, 0.3, 0]);
+      applyArrayUniform('uTierParams1', [0.3, 0.015, 0.2, 0]);
+      applyArrayUniform('uTierParams2', [0.25, 0.018, 0.25, 0]);
+      applyArrayUniform('uTierParams3', [0.35, 0.022, 0.2, 0]);
       setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
       setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
       break;
     }
     case 'sparkDrift': {
-      setUniform('uMotionMode', directive?.uMotionMode ?? 3);
-      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.85);
-      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.7);
+      // Gentle flow vibe (but keep it readable) - drift-only + low turbulence/streak.
+      setUniform('uMorphProgress', typeof directive?.uMorphProgress === 'number' ? directive.uMorphProgress : 0.96);
+      setUniform('uFlowTurbulence', typeof directive?.uFlowTurbulence === 'number' ? directive.uFlowTurbulence : 0.3);
+      setUniform('uStreakIntensity', typeof directive?.uStreakIntensity === 'number' ? directive.uStreakIntensity : 0.2);
+      applyArrayUniform('uTierMode', [0, 0, 0, 0]);
+      applyArrayUniform('uTierParams0', [0.5, 0.025, 0.35, 0]);
+      applyArrayUniform('uTierParams1', [0.4, 0.02, 0.25, 0]);
+      applyArrayUniform('uTierParams2', [0.45, 0.022, 0.3, 0]);
+      applyArrayUniform('uTierParams3', [0.55, 0.028, 0.35, 0]);
       setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
       setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
       break;
     }
     case 'bloomPulse': {
-      setUniform('uMotionMode', directive?.uMotionMode ?? 0);
-      setUniform('uFlowTurbulence', directive?.uFlowTurbulence ?? 0.2);
-      setUniform('uParticleFlash', directive?.uParticleFlash ?? 0.8);
+      // Very gentle breathing drift - crystal clear glyph
+      setUniform('uMorphProgress', typeof directive?.uMorphProgress === 'number' ? directive.uMorphProgress : 0.98);
+      setUniform('uFlowTurbulence', typeof directive?.uFlowTurbulence === 'number' ? directive.uFlowTurbulence : 0.2);
+      setUniform('uStreakIntensity', typeof directive?.uStreakIntensity === 'number' ? directive.uStreakIntensity : 0.0);
+      applyArrayUniform('uTierMode', [0, 0, 0, 0]);
+      applyArrayUniform('uTierParams0', [0.2, 0.01, 0.15, 0]);
+      applyArrayUniform('uTierParams1', [0.15, 0.008, 0.1, 0]);
+      applyArrayUniform('uTierParams2', [0.25, 0.012, 0.18, 0]);
+      applyArrayUniform('uTierParams3', [0.3, 0.015, 0.22, 0]);
       setUniform('uOpacityMin', directive?.uOpacityMin ?? 0.5);
       setUniform('uOpacityMax', directive?.uOpacityMax ?? 1.0);
       break;
@@ -437,6 +502,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const lastBlueprintMetaRef = useRef({});
   const hotspotMapRef = useRef({});
   const fitsLockedRef = useRef(false);
+  const cameraOwnerRef = useRef('default'); // 'default' | 'directive' | 'demo'
+  const cameraTargetRef = useRef({
+    position: new THREE.Vector3(0, 0, 50),
+    lookAt: new THREE.Vector3(0, 0, 0),
+    fov: 100,
+    active: false,
+    duration: 1000,
+    startTime: 0,
+  });
 
   useParticleChoreography(uniformsRef);
   const ignoreDirectivesRef = useRef(false);
@@ -455,6 +529,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     streakIntensity: 1.0,
     activeMode: 0,
     activeEffects: [],
+  });
+  const morphDriftRef = useRef({
+    active: false,
+    tierModes: null,
+    flowTurbulence: null,
+    streakIntensity: null,
+    spreadFactor: null,
+    morphType: null,
   });
 
   const logBind = useCallback((kind, meta = {}) => {
@@ -505,6 +587,190 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       stage: meta.stage || null,
       mode: meta.mode || null,
       posAABB: arrayAabb(arr),
+    });
+  }, []);
+
+  const uniformVec2 = (u, fallback = [1, 1]) => {
+    const arr = toArray(u?.value ?? u);
+    if (Array.isArray(arr) && arr.length >= 2) {
+      const x = Number.isFinite(arr[0]) ? arr[0] : fallback[0];
+      const y = Number.isFinite(arr[1]) ? arr[1] : fallback[1];
+      return [x, y];
+    }
+    return fallback;
+  };
+
+  // Approximate shader finalPos on CPU for diagnostics (ignores tier motion/damping).
+  const computeFinalPosDiag = (idx, ctx) => {
+    const i3 = idx * 3;
+    const ax = (ctx.atmoArr?.[i3] ?? 0) * ctx.atmoFit[0];
+    const ay = (ctx.atmoArr?.[i3 + 1] ?? 0) * ctx.atmoFit[1];
+    const az = ctx.atmoArr?.[i3 + 2] ?? 0;
+    const tx = (ctx.textArr?.[i3] ?? ax) * ctx.textFit[0];
+    const ty = (ctx.textArr?.[i3 + 1] ?? ay) * ctx.textFit[1];
+    const tz = ctx.textArr?.[i3 + 2] ?? az;
+
+    const morph = ctx.morph;
+    const spread = Math.max(ctx.spread, 0);
+    const isDissolve = Math.abs(ctx.morphType - MORPH_TYPE_ENUM.dissolve) < 0.5 ? 1 : 0;
+    const isReform = Math.abs(ctx.morphType - MORPH_TYPE_ENUM.reform) < 0.5 ? 1 : 0;
+    const dissolveAmt = Math.min(Math.max(1 - morph, 0), 1);
+    const reformAmt = Math.min(Math.max(morph, 0), 1);
+
+    const clamp = (v, mn, mx) => Math.min(mx, Math.max(mn, v));
+
+    let atmoPosX = ax;
+    let atmoPosY = ay;
+    if (isDissolve) {
+      const dissolveSpread = (1 - dissolveAmt) * 1.0 + dissolveAmt * clamp(spread, 1, 4);
+      atmoPosX *= dissolveSpread;
+      atmoPosY *= dissolveSpread;
+    }
+
+    let textPosX = tx;
+    let textPosY = ty;
+    if (isReform) {
+      const reformScale = (1 - reformAmt) * 1.0 + reformAmt * clamp(spread, 0.4, 1.0);
+      textPosX *= reformScale;
+      textPosY *= reformScale;
+    }
+
+    const basePosX = atmoPosX * (1 - morph) + textPosX * morph;
+    const basePosY = atmoPosY * (1 - morph) + textPosY * morph;
+    const basePosZ = az * (1 - morph) + tz * morph;
+    let finalX = basePosX;
+    let finalY = basePosY;
+    let finalZ = basePosZ;
+
+    if (isDissolve) {
+      const len = Math.max(Math.sqrt(basePosX * basePosX + basePosY * basePosY), 1e-4);
+      const radialX = basePosX / len;
+      const radialY = basePosY / len;
+      const strength = (clamp(spread, 1, 4) - 1) * dissolveAmt * 6.0;
+      finalX += radialX * strength;
+      finalY += radialY * strength;
+    }
+
+    if (isReform) {
+      const len = Math.max(Math.sqrt(textPosX * textPosX + textPosY * textPosY), 1e-4);
+      const dirX = textPosX / len;
+      const dirY = textPosY / len;
+      const pull = Math.max(1 - clamp(spread, 0, 1), 0) * reformAmt * 4.0;
+      finalX -= dirX * pull;
+      finalY -= dirY * pull;
+      const noiseX = Math.sin(idx * 0.1 + ctx.time) * (1 - morph) * 8.0;
+      const noiseY = Math.cos(idx * 0.13 + ctx.time * 1.1) * (1 - morph) * 8.0;
+      finalX += noiseX;
+      finalY += noiseY;
+    }
+
+    return [finalX, finalY, finalZ];
+  };
+
+  const runReformDiagnostics = useCallback((morphValue = 0) => {
+    const geo = geometryRef.current;
+    const mat = materialRef.current;
+    const uniforms = mat?.uniforms;
+    if (!geo || !uniforms) return;
+
+    const morphType = uniforms.uMorphType?.value ?? MORPH_TYPE_ENUM.steady;
+    if (Math.abs(morphType - MORPH_TYPE_ENUM.reform) > 0.5) return;
+
+    const atmoArr = geo.attributes?.atmosphericPosition?.array;
+    const textArr = geo.attributes?.text3DPosition?.array || atmoArr;
+    const count = geo.attributes?.position?.count ?? 0;
+    if (!count || !atmoArr) return;
+
+    const ctx = {
+      atmoArr,
+      textArr,
+      atmoFit: uniformVec2(uniforms.uAtmoFit, [1, 1]),
+      textFit: uniformVec2(uniforms.uTextFit, [1, 1]),
+      spread: uniforms.uSpreadFactor?.value ?? 1.0,
+      morph: morphValue,
+      morphType,
+      time: uniforms.uTime?.value ?? 0,
+    };
+
+    const sampleCount = Math.min(count, 20000);
+    const xAll = new Float32Array(sampleCount);
+    const yAll = new Float32Array(sampleCount);
+    const first = [];
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    let sumX = 0, sumY = 0;
+    for (let i = 0; i < sampleCount; i += 1) {
+      const [fx, fy, fz] = computeFinalPosDiag(i, ctx);
+      xAll[i] = fx;
+      yAll[i] = fy;
+      if (first.length < 20) first.push([+fx.toFixed(2), +fy.toFixed(2), +fz.toFixed(2)]);
+      if (fx < minX) minX = fx;
+      if (fx > maxX) maxX = fx;
+      if (fy < minY) minY = fy;
+      if (fy > maxY) maxY = fy;
+      sumX += fx;
+      sumY += fy;
+    }
+
+    const nearEdge = (val, maxAbs) => (maxAbs > 1e-5 ? Math.abs(val) > maxAbs * 0.9 : false);
+    let nearEdgeX = 0;
+    let nearEdgeY = 0;
+    const maxAbsX = Math.max(Math.abs(minX), Math.abs(maxX));
+    const maxAbsY = Math.max(Math.abs(minY), Math.abs(maxY));
+    for (let i = 0; i < sampleCount; i += 1) {
+      if (nearEdge(xAll[i], maxAbsX)) nearEdgeX += 1;
+      if (nearEdge(yAll[i], maxAbsY)) nearEdgeY += 1;
+    }
+
+    const quantiles = (arr) => {
+      if (!arr?.length) return null;
+      const copy = Array.from(arr);
+      copy.sort((a, b) => a - b);
+      const pick = (p) => {
+        const idx = Math.min(copy.length - 1, Math.max(0, Math.floor(p * (copy.length - 1))));
+        return copy[idx];
+      };
+      return {
+        p05: pick(0.05),
+        p25: pick(0.25),
+        p50: pick(0.5),
+        p75: pick(0.75),
+        p95: pick(0.95),
+      };
+    };
+
+    const hist = (arr, min, max, buckets = 6) => {
+      if (!arr?.length || !Number.isFinite(min) || !Number.isFinite(max)) return [];
+      const span = Math.max(max - min, 1e-6);
+      const out = new Array(buckets).fill(0);
+      for (let i = 0; i < arr.length; i += 1) {
+        const t = Math.min(buckets - 1, Math.max(0, Math.floor(((arr[i] - min) / span) * buckets)));
+        out[t] += 1;
+      }
+      return out.map((v) => +(v / arr.length).toFixed(3));
+    };
+
+    console.log('🔬 REFORM_DIAG', {
+      morph: +morphValue.toFixed(3),
+      count: sampleCount,
+      first20: first,
+      xStats: {
+        min: +minX.toFixed(2),
+        max: +maxX.toFixed(2),
+        mean: +(sumX / sampleCount).toFixed(2),
+        nearEdgeRatio: +(nearEdgeX / sampleCount).toFixed(3),
+        hist: hist(xAll, minX, maxX),
+        quantiles: quantiles(xAll),
+      },
+      yStats: {
+        min: +minY.toFixed(2),
+        max: +maxY.toFixed(2),
+        mean: +(sumY / sampleCount).toFixed(2),
+        nearEdgeRatio: +(nearEdgeY / sampleCount).toFixed(3),
+        hist: hist(yAll, minY, maxY),
+        quantiles: quantiles(yAll),
+      },
+      note: 'CPU approximation of vertex finalPos; tier motion/damping omitted.',
     });
   }, []);
 
@@ -737,32 +1003,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       return;
     }
 
-    const atmoAabb = computeAABB(geo, 'atmosphericPosition') || computeAABB(geo, 'position');
     const textAabb = computeAABB(geo, 'text3DPosition') || computeAABB(geo, 'position');
-    if (!atmoAabb || !textAabb) return;
+    if (!textAabb) return;
 
-    const atmoTargetX = ATMO_FIT_X;
-    const atmoTargetY = ATMO_FIT_Y;
-    const textTargetWidth = TEXT_FIT_WIDTH;
-    const textTargetMaxH = TEXT_FIT_MAX_H;
-
-    const halfW = width * 0.5;
-    const halfH = height * 0.5;
-
-    const atmoFitX = atmoAabb.extX > 1e-6 ? clampFit((halfW * atmoTargetX) / atmoAabb.extX) : 1;
-    const atmoFitY = atmoAabb.extY > 1e-6 ? clampFit((halfH * atmoTargetY) / atmoAabb.extY) : 1;
-
-    const textWidthScale = textAabb.extX > 1e-6 ? (halfW * textTargetWidth) / textAabb.extX : 1;
-    let textFitY = textWidthScale;
-    if (textAabb.extY > 1e-6) {
-      const maxScaleY = (halfH * textTargetMaxH) / textAabb.extY;
-      textFitY = Math.min(textFitY, maxScaleY);
-    }
-    const textFitX = clampFit(textWidthScale);
-    textFitY = clampFit(textFitY);
-
-    const newAtmo = [atmoFitX, atmoFitY];
-    const newText = [textFitX, textFitY];
+    // Generator already fits text/atmo to the viewport; keep renderer identity fits.
+    const newAtmo = [1, 1];
+    const newText = [1, 1];
+    const [atmoFitX, atmoFitY] = newAtmo;
+    const [textFitX, textFitY] = newText;
 
     const uniforms = material.uniforms;
     let changed = false;
@@ -804,9 +1052,80 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     lastFitStampRef.current = { geoId, width, height };
     fitsLockedRef.current = true;
   }, [size.width, size.height]);
+  const cameraRef = useRef(null);
+  useEffect(() => {
+    if (camera) {
+      cameraRef.current = camera;
+    }
+  }, [camera]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__cameraOwner = cameraOwnerRef.current;
+    }
+    return () => {
+      if (typeof window !== 'undefined' && window.__cameraOwner === cameraOwnerRef.current) {
+        delete window.__cameraOwner;
+      }
+    };
+  }, []);
+
+  const handleTextPositions = useCallback((payload = {}) => {
+    const geo = geometryRef.current;
+    if (!geo) return;
+
+    const stage = payload?.stage;
+    if (typeof stage === 'string' && stageNameRef.current && stage !== stageNameRef.current) {
+      return;
+    }
+
+    const attr = geo.attributes?.text3DPosition;
+    if (!attr?.array) {
+      console.warn('[WBG] No text3DPosition attribute to update');
+      return;
+    }
+
+    const positions = payload?.positions;
+    const next = positions instanceof Float32Array
+      ? positions
+      : Array.isArray(positions)
+        ? new Float32Array(positions)
+        : null;
+    if (!next) {
+      console.warn('[WBG] Invalid text positions payload', payload);
+      return;
+    }
+
+    const target = attr.array;
+    const copyLength = Math.min(target.length, next.length);
+    if (copyLength === 0) return;
+    target.set(next.subarray(0, copyLength));
+    if (copyLength !== target.length) {
+      console.warn('[WBG] Text positions length mismatch', {
+        expected: target.length,
+        received: next.length,
+      });
+    }
+    attr.needsUpdate = true;
+
+    fitsLockedRef.current = false;
+    lastFitStampRef.current = { geoId: null, width: 0, height: 0 };
+    applyRendererFits(geo, viewportHintRef.current || window?.__viewportHint);
+    const count = payload?.count || Math.floor(target.length / 3);
+    console.log(`[WBG] Text positions updated for "${payload?.word || 'unknown'}" (${count} particles)`);
+  }, [applyRendererFits]);
 
   const lastBlueprintIdRef = useRef(null);
   const fallbackMorphRef = useRef(0);
+  const lastMorphProgressRef = useRef(null);
+  const textMorphRef = useRef({
+    active: false,
+    timeoutId: null,
+    stage: null,
+  });
+  const dissolveLogRef = useRef(false);
+  const uniformOverlayRef = useRef(null);
+  const uniformOverlayEnabledRef = useRef(false);
+  const reformDiagRef = useRef({ lastMorphLogged: -1 });
 
   useEffect(() => {
     stageNameRef.current = stageName;
@@ -815,6 +1134,93 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   useEffect(() => {
     blueprintRef.current = blueprint;
   }, [blueprint]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const ensureOverlay = () => {
+      const params = new URLSearchParams(window.location.search);
+      const enabled = params.get('debug') === 'uniforms';
+      uniformOverlayEnabledRef.current = enabled;
+      if (!enabled) {
+        if (uniformOverlayRef.current) {
+          uniformOverlayRef.current.remove();
+          uniformOverlayRef.current = null;
+        }
+        return;
+      }
+      if (!uniformOverlayRef.current) {
+        const el = document.createElement('div');
+        el.style.position = 'fixed';
+        el.style.top = '8px';
+        el.style.left = '8px';
+        el.style.zIndex = '10000';
+        el.style.padding = '6px 8px';
+        el.style.borderRadius = '4px';
+        el.style.background = 'rgba(0, 0, 0, 0.6)';
+        el.style.color = '#fff';
+        el.style.fontSize = '11px';
+        el.style.lineHeight = '1.4';
+        el.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace';
+        el.style.whiteSpace = 'pre';
+        el.style.pointerEvents = 'none';
+        el.textContent = 'uniform overlay';
+        document.body.appendChild(el);
+        uniformOverlayRef.current = el;
+      }
+    };
+    ensureOverlay();
+    window.addEventListener('popstate', ensureOverlay);
+    window.addEventListener('hashchange', ensureOverlay);
+    return () => {
+      window.removeEventListener('popstate', ensureOverlay);
+      window.removeEventListener('hashchange', ensureOverlay);
+      if (uniformOverlayRef.current) {
+        uniformOverlayRef.current.remove();
+        uniformOverlayRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof BeatBus?.on !== 'function') {
+      return undefined;
+    }
+    const off = BeatBus.on(EVENTS.TEXT_MORPH, (payload = {}) => {
+      const stage = typeof payload.stage === 'string' ? payload.stage : null;
+      if (stage && stageNameRef.current && stage !== stageNameRef.current) {
+        return;
+      }
+      const durationMs = Number.isFinite(payload.transitionDuration)
+        ? payload.transitionDuration
+        : 2000;
+      const bufferMs = 250;
+      if (textMorphRef.current.timeoutId) {
+        clearTimeout(textMorphRef.current.timeoutId);
+        textMorphRef.current.timeoutId = null;
+      }
+      textMorphRef.current.active = true;
+      textMorphRef.current.stage = stage;
+      textMorphRef.current.timeoutId = setTimeout(() => {
+        textMorphRef.current.active = false;
+        textMorphRef.current.stage = null;
+        textMorphRef.current.timeoutId = null;
+      }, Math.max(0, durationMs + bufferMs));
+      if (DEV) {
+        console.log('[WBG] TEXT_MORPH received - forcing drift window', {
+          word: payload?.word,
+          stage: stage || stageNameRef.current,
+          durationMs,
+        });
+      }
+    });
+    return () => {
+      off?.();
+      if (textMorphRef.current.timeoutId) {
+        clearTimeout(textMorphRef.current.timeoutId);
+        textMorphRef.current.timeoutId = null;
+      }
+    };
+  }, []);
 
   const bandScale = BAND_FADE_WIDTH;
   const bandHeightRef = useRef(null);
@@ -829,12 +1235,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     }
   }, [bandScale]);
 
-  // Point size (once) — raw base only; shader multiplies by uDevicePixelRatio
+  // Point size (once) — base only; shader multiplies by tier/size multipliers
   useEffect(() => {
     const u = materialRef.current?.uniforms;
     if (!u?.uPointSize) return;
-    const base = Canonical?.features?.pointSizeDefault ?? 48.0;
-    u.uPointSize.value = base;
+    const dpr = typeof gl?.getPixelRatio === 'function'
+      ? Math.min(gl.getPixelRatio(), 1.5)
+      : (typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 1.5) : 1);
+    u.uPointSize.value = computeBasePointSize(dpr);
   }, []);
 
   // Viewport hint from projection matrix
@@ -1437,6 +1845,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (primaryPositions instanceof Float32Array) {
         geo.setAttribute('position', new THREE.BufferAttribute(primaryPositions, 3));
       }
+      console.log('[WBG] atmosphericPositions check:', {
+        exists: 'atmosphericPositions' in raw,
+        type: typeof raw.atmosphericPositions,
+        isFloat32Array: raw.atmosphericPositions instanceof Float32Array,
+        constructor: raw.atmosphericPositions?.constructor?.name,
+        length: raw.atmosphericPositions?.length,
+      });
       if (raw.atmosphericPositions instanceof Float32Array) {
         geo.setAttribute('atmosphericPosition', new THREE.BufferAttribute(raw.atmosphericPositions, 3));
       }
@@ -1448,6 +1863,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       if (raw.opacityData)     geo.setAttribute('opacityData',    new THREE.BufferAttribute(raw.opacityData, 1));
       if (raw.atlasIndices)    geo.setAttribute('atlasIndex',     new THREE.BufferAttribute(raw.atlasIndices, 1));
       if (raw.tierData)        geo.setAttribute('tierData',       new THREE.BufferAttribute(raw.tierData, 1));
+      if (DEV) {
+        console.log('[WBG] Geometry attributes:', Object.keys(geo.attributes || {}));
+      }
       const inferredCount = primaryPositions instanceof Float32Array ? primaryPositions.length / 3 : 0;
       const drawCount = raw.activeCount || raw.particleCount || inferredCount;
       const idx = new Float32Array(drawCount > 0 ? drawCount : 0);
@@ -1457,6 +1875,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       geometryRef.current = geo;
       geometryBoundOnceRef.current = true;
       fitsLockedRef.current = false;
+      if (DEV) {
+        const atmoAttr = geo.attributes?.atmosphericPosition;
+        if (atmoAttr?.array && atmoAttr.array.length >= 30) {
+          const arr = atmoAttr.array;
+          console.log('[WBG] atmosphericPosition samples:', {
+            p0: [arr[0], arr[1], arr[2]],
+            p1: [arr[3], arr[4], arr[5]],
+            p2: [arr[6], arr[7], arr[8]],
+            xValues: [arr[0], arr[3], arr[6], arr[9], arr[12], arr[15], arr[18], arr[21], arr[24], arr[27]],
+          });
+        } else if (atmoAttr?.array) {
+          console.log('[WBG] atmosphericPosition samples: insufficient data', {
+            length: atmoAttr.array.length,
+          });
+        } else {
+          console.log('[WBG] atmosphericPosition samples: attribute missing');
+        }
+      }
       if (isEmergence) {
         fenceReadyRef.current = false;
         clearPendingFencepost();
@@ -1470,6 +1906,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
         if (mat) {
           applyRendererFits(geo, viewportHintRef.current || viewport);
+          if (DEV) {
+            const atmoFit = mat.uniforms?.uAtmoFit?.value;
+            const atmoFitValue = atmoFit?.toArray
+              ? atmoFit.toArray().slice(0, 2)
+              : (Array.isArray(atmoFit)
+                  ? atmoFit.slice(0, 2)
+                  : (atmoFit && typeof atmoFit.x === 'number' && typeof atmoFit.y === 'number')
+                    ? [atmoFit.x, atmoFit.y]
+                    : atmoFit);
+            console.log('[WBG] uAtmoFit after bind:', atmoFitValue);
+          }
           logBind(isEmergence ? 'emergence' : 'stage', {
             stage: raw.stageName || st || 'genesis',
             mode: mode || raw?.mode || (isEmergence ? 'emergence' : 'full'),
@@ -1541,7 +1988,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           }
           if (u.uPointSize) {
             const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
-            u.uPointSize.value = Math.max(1.6, 2.2 * dpr);
+            u.uPointSize.value = computeBasePointSize(dpr);
             u.uPointSize.needsUpdate = true;
           }
           // Ensure active counts and draw range are fully open on bind
@@ -1841,6 +2288,12 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     emitRendererFencepostReady,
   ]);
 
+  useEffect(() => {
+    if (typeof BeatBus?.on !== 'function') return undefined;
+    const off = BeatBus.on(EVENTS.TEXT_POSITIONS_READY, handleTextPositions);
+    return () => off && off();
+  }, [handleTextPositions]);
+
   // Bridge render directives back into shader uniforms/draw ranges
   useEffect(() => {
     if (typeof BeatBus?.on !== 'function') return;
@@ -1882,6 +2335,50 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const directiveSource = payload?.source || 'renderer:directive';
       const origin = 'renderer';
 
+      const resolveDirectiveColor = () => {
+        if (typeof payload?.color === 'string') return payload.color;
+        if (typeof payload?.uColor === 'string') return payload.uColor;
+        if (typeof payload?.uniforms?.uColor === 'string') return payload.uniforms.uColor;
+        if (typeof payload?.effect?.uColor === 'string') return payload.effect.uColor;
+        if (typeof payload?.effect?.uniforms?.uColor === 'string') return payload.effect.uniforms.uColor;
+        return null;
+      };
+
+      const colorHex = resolveDirectiveColor();
+      if (typeof colorHex === 'string' && colorHex.startsWith('#')) {
+        let color = null;
+        try {
+          color = new THREE.Color(colorHex);
+        } catch {}
+
+        if (color) {
+          const applyColorUniform = (uniform) => {
+            if (!uniform) return;
+            const target = uniform.value ?? uniform;
+            if (target?.setRGB) {
+              target.setRGB(color.r, color.g, color.b);
+            } else if (ArrayBuffer.isView(target) && !(target instanceof DataView)) {
+              target[0] = color.r;
+              target[1] = color.g;
+              target[2] = color.b;
+            } else if (Array.isArray(target)) {
+              target[0] = color.r;
+              target[1] = color.g;
+              target[2] = color.b;
+            } else if (target?.set) {
+              target.set(color.r, color.g, color.b);
+            } else {
+              uniform.value = [color.r, color.g, color.b];
+            }
+            uniform.needsUpdate = true;
+          };
+
+          applyColorUniform(uniforms.uColorCurrent);
+          applyColorUniform(uniforms.uPalette0);
+          console.log('[WBG] Applied directive color:', colorHex);
+        }
+      }
+
       const clamp01Local = (x) => Math.max(0, Math.min(1, Number(x)));
 
       const setUniformNumber = (uniformName, value) => {
@@ -1900,12 +2397,21 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (!guardUniformWrite(origin, uniformName)) return;
         if (!uniform) return;
         if (Array.isArray(value)) {
-          if (Array.isArray(uniform.value)) {
-            for (let i = 0; i < Math.min(uniform.value.length, value.length); i += 1) {
-              uniform.value[i] = value[i];
+          const current = uniform.value;
+          const isTypedArray =
+            current &&
+            ArrayBuffer.isView(current) &&
+            !(current instanceof DataView) &&
+            typeof current.set === 'function';
+
+          if (isTypedArray) {
+            current.set(value);
+          } else if (Array.isArray(current)) {
+            for (let i = 0; i < Math.min(current.length, value.length); i += 1) {
+              current[i] = value[i];
             }
-          } else if (uniform.value?.set) {
-            uniform.value.set(...value);
+          } else if (current?.set) {
+            current.set(...value);
           } else {
             uniform.value = value;
           }
@@ -1983,12 +2489,30 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (uniforms.uTierParams2) applyUniformArray('uTierParams2', uniforms.uTierParams2, params[2]);
         if (uniforms.uTierParams3) applyUniformArray('uTierParams3', uniforms.uTierParams3, params[3]);
       } else if (uniforms.uTierParams0) {
-        // Fallback to a gentle drift template when no params provided
+        // Seed a gentle drift template only when tier params are still unset.
         const template = [0.8, 0.2, 0.5, 0.0];
-        applyUniformArray('uTierParams0', uniforms.uTierParams0, template);
-        if (uniforms.uTierParams1) applyUniformArray('uTierParams1', uniforms.uTierParams1, template);
-        if (uniforms.uTierParams2) applyUniformArray('uTierParams2', uniforms.uTierParams2, template);
-        if (uniforms.uTierParams3) applyUniformArray('uTierParams3', uniforms.uTierParams3, template);
+        const isUnsetTuple = (uniform) => {
+          const current = uniform?.value;
+          if (!current) return true;
+          const length = current.length;
+          if (typeof length !== 'number') return false;
+          for (let i = 0; i < length; i += 1) {
+            const n = current[i];
+            if (Number.isFinite(n) && n !== 0) return false;
+          }
+          return true;
+        };
+
+        if (isUnsetTuple(uniforms.uTierParams0)) applyUniformArray('uTierParams0', uniforms.uTierParams0, template);
+        if (uniforms.uTierParams1 && isUnsetTuple(uniforms.uTierParams1)) {
+          applyUniformArray('uTierParams1', uniforms.uTierParams1, template);
+        }
+        if (uniforms.uTierParams2 && isUnsetTuple(uniforms.uTierParams2)) {
+          applyUniformArray('uTierParams2', uniforms.uTierParams2, template);
+        }
+        if (uniforms.uTierParams3 && isUnsetTuple(uniforms.uTierParams3)) {
+          applyUniformArray('uTierParams3', uniforms.uTierParams3, template);
+        }
       }
       if ((typeof payload.gridX === 'number' || typeof payload.gridY === 'number') && uniforms.uGridSpacing) {
         const gx = typeof payload.gridX === 'number' ? payload.gridX : uniforms.uGridSpacing.value?.x || 0.2;
@@ -2015,6 +2539,44 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
       if (payload?.verb || payload?.effect?.verb) {
         applyVisualVerbDirective(payload, uniforms, origin);
+      }
+
+      // Camera directive handling
+      if (payload.kind === 'camera' || payload.camera) {
+        const camPayload = payload.camera || payload;
+        cameraOwnerRef.current = payload.source === 'demo' ? 'demo' : 'directive';
+        if (typeof window !== 'undefined') window.__cameraOwner = cameraOwnerRef.current;
+        const target = cameraTargetRef.current;
+        if (camPayload.position) {
+          target.position.set(
+            camPayload.position.x ?? 0,
+            camPayload.position.y ?? 0,
+            camPayload.position.z ?? 50
+          );
+        }
+        if (camPayload.dolly) {
+          target.position.x += camPayload.dolly.x ?? 0;
+          target.position.y += camPayload.dolly.y ?? 0;
+          target.position.z += camPayload.dolly.z ?? 0;
+        }
+        if (camPayload.lookAt) {
+          target.lookAt.set(
+            camPayload.lookAt.x ?? 0,
+            camPayload.lookAt.y ?? 0,
+            camPayload.lookAt.z ?? 0
+          );
+        }
+        if (camPayload.fov !== undefined) {
+          target.fov = camPayload.fov;
+        }
+        if (camPayload.durationMs !== undefined) {
+          target.duration = camPayload.durationMs;
+        }
+        target.active = true;
+        target.startTime = typeof performance !== 'undefined' && performance.now
+          ? performance.now()
+          : Date.now();
+        console.log('[WBG] Camera directive received:', camPayload);
       }
 
       const desiredActiveCount =
@@ -2114,6 +2676,148 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     __applyMorph(value);
 
+    const lastValue = lastMorphProgressRef.current;
+    const isAscending = Number.isFinite(lastValue) ? value >= lastValue : false;
+    const isAscendingStrict = Number.isFinite(lastValue) ? value > lastValue : false;
+    const isDescending = Number.isFinite(lastValue) ? value < lastValue : false;
+    lastMorphProgressRef.current = value;
+
+    const driftState = morphDriftRef.current;
+    const forceDrift = textMorphRef.current.active;
+    if (uniforms.uTierMode && uniforms.uTierMode.value) {
+      const tierArr = uniforms.uTierMode.value;
+      const dissolveThreshold = 0.5;
+      const reformThreshold = 0.95;
+      const shouldForce = forceDrift || value <= dissolveThreshold;
+
+      if (shouldForce) {
+        if (!driftState.active) {
+          driftState.active = true;
+          const prevTierMode = Array.from(tierArr);
+          driftState.tierModes = prevTierMode;
+          console.log('[WBG] Morph dissolve - forcing drift mode', {
+            morphProgress: value,
+            prevTierMode,
+            newTierMode: [0, 0, 0, 0],
+          });
+          if (uniforms.uFlowTurbulence) {
+            driftState.flowTurbulence = uniforms.uFlowTurbulence.value;
+          }
+          if (uniforms.uStreakIntensity) {
+            driftState.streakIntensity = uniforms.uStreakIntensity.value;
+          }
+          if (uniforms.uSpreadFactor) {
+            driftState.spreadFactor = uniforms.uSpreadFactor.value;
+          }
+          if (uniforms.uMorphType) {
+            driftState.morphType = uniforms.uMorphType.value;
+          }
+        }
+
+        let tierChanged = false;
+        for (let i = 0; i < tierArr.length; i += 1) {
+          if (tierArr[i] !== 0) {
+            tierArr[i] = 0;
+            tierChanged = true;
+          }
+        }
+        if (tierChanged) {
+          uniforms.uTierMode.needsUpdate = true;
+          console.log('[WBG] uTierMode after override:', Array.from(tierArr));
+        }
+        if (forceDrift && isDescending && uniforms.uMorphType
+          && uniforms.uMorphType.value !== MORPH_TYPE_ENUM.dissolve) {
+          uniforms.uMorphType.value = MORPH_TYPE_ENUM.dissolve;
+          uniforms.uMorphType.needsUpdate = true;
+        } else if (forceDrift && isAscendingStrict && value < reformThreshold && uniforms.uMorphType
+          && uniforms.uMorphType.value !== MORPH_TYPE_ENUM.reform) {
+          uniforms.uMorphType.value = MORPH_TYPE_ENUM.reform;
+          uniforms.uMorphType.needsUpdate = true;
+        }
+
+        if (uniforms.uFlowTurbulence && uniforms.uFlowTurbulence.value !== 0.4) {
+          uniforms.uFlowTurbulence.value = 0.4;
+          uniforms.uFlowTurbulence.needsUpdate = true;
+        }
+        if (uniforms.uStreakIntensity && uniforms.uStreakIntensity.value !== 0.1) {
+          uniforms.uStreakIntensity.value = 0.1;
+          uniforms.uStreakIntensity.needsUpdate = true;
+        }
+        if (uniforms.uSpreadFactor) {
+          const targetSpread = forceDrift && isDescending ? 2.0 : 1.2;
+          if (uniforms.uSpreadFactor.value !== targetSpread) {
+            uniforms.uSpreadFactor.value = targetSpread;
+            uniforms.uSpreadFactor.needsUpdate = true;
+          }
+        }
+      }
+
+      if (driftState.active && isAscending && value >= reformThreshold) {
+        if (textMorphRef.current.active) {
+          textMorphRef.current.active = false;
+          if (textMorphRef.current.timeoutId) {
+            clearTimeout(textMorphRef.current.timeoutId);
+            textMorphRef.current.timeoutId = null;
+          }
+          textMorphRef.current.stage = null;
+        }
+        if (Array.isArray(driftState.tierModes)) {
+          for (let i = 0; i < tierArr.length; i += 1) {
+            tierArr[i] = driftState.tierModes[i] ?? tierArr[i];
+          }
+          uniforms.uTierMode.needsUpdate = true;
+        }
+        if (uniforms.uFlowTurbulence && Number.isFinite(driftState.flowTurbulence)) {
+          uniforms.uFlowTurbulence.value = driftState.flowTurbulence;
+          uniforms.uFlowTurbulence.needsUpdate = true;
+        }
+        if (uniforms.uStreakIntensity && Number.isFinite(driftState.streakIntensity)) {
+          uniforms.uStreakIntensity.value = driftState.streakIntensity;
+          uniforms.uStreakIntensity.needsUpdate = true;
+        }
+        if (uniforms.uSpreadFactor && Number.isFinite(driftState.spreadFactor)) {
+          uniforms.uSpreadFactor.value = driftState.spreadFactor;
+          uniforms.uSpreadFactor.needsUpdate = true;
+        }
+        if (uniforms.uMorphType && Number.isFinite(driftState.morphType)) {
+          uniforms.uMorphType.value = driftState.morphType;
+          uniforms.uMorphType.needsUpdate = true;
+        }
+        driftState.active = false;
+        driftState.tierModes = null;
+        driftState.flowTurbulence = null;
+        driftState.streakIntensity = null;
+        driftState.spreadFactor = null;
+        driftState.morphType = null;
+      }
+    }
+
+    if (isAscendingStrict && value > 0.5) {
+      const lastLogged = reformDiagRef.current.lastMorphLogged ?? -1;
+      if (value - lastLogged >= 0.1) {
+        runReformDiagnostics(value);
+        reformDiagRef.current.lastMorphLogged = value;
+      }
+    } else if (isDescending) {
+      reformDiagRef.current.lastMorphLogged = -1;
+    }
+
+    if (value < 0.1) {
+      if (!dissolveLogRef.current) {
+        dissolveLogRef.current = true;
+        console.log('[WBG] DISSOLVE UNIFORM STATE:', {
+          uAtmoFit: mat.uniforms.uAtmoFit?.value,
+          uTierMode: mat.uniforms.uTierMode?.value,
+          uGridSpacing: mat.uniforms.uGridSpacing?.value,
+          uMorphProgress: value,
+          uMorphType: mat.uniforms.uMorphType?.value,
+          uSpreadFactor: mat.uniforms.uSpreadFactor?.value,
+        });
+      }
+    } else if (value > 0.8) {
+      dissolveLogRef.current = false;
+    }
+
     // Ensure visibility baseline on every morph tick (defensive)
     if (uniforms.uPostMorphFreeze && uniforms.uPostMorphFreeze.value !== 0.0) {
       uniforms.uPostMorphFreeze.value = 0.0;
@@ -2201,9 +2905,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (!atlasTexture || !blueprint) return;
 
     const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
-    const POINT_SIZE_DEFAULT = Canonical?.features?.pointSizeDefault ?? 48.0;
     const palette = pickStageColors(stageName);
     const blueprintCount = blueprint?.activeCount || blueprint?.particleCount || blueprint?.maxParticles || 0;
+    const resolveDpr = () => {
+      try { return Math.min(gl?.getPixelRatio?.() ?? window?.devicePixelRatio ?? 1, 1.5); }
+      catch { return 1; }
+    };
+    const basePointSize = computeBasePointSize(resolveDpr());
 
     let mat = materialRef.current;
     let created = false;
@@ -2220,11 +2928,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uStageBlend:      { value: 0 },
           uAtlasTexture:    { value: atlasTexture },
           uTotalSprites:    { value: 16 },
-          uPointSize:       { value: POINT_SIZE_DEFAULT },
+          uPointSize:       { value: basePointSize },
           uMotionMode:      { value: 0.0 },
-          uDevicePixelRatio:{ value: (() => {
-            try { return Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); } catch { return 1; }
-          })() },
+          uDevicePixelRatio:{ value: resolveDpr() },
           uResolution:      { value: new THREE.Vector2(1, 1) },
           uAtmoFit:         { value: new THREE.Vector2(1, 1) },
           uTextFit:         { value: new THREE.Vector2(1, 1) },
@@ -2302,9 +3008,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
-    if (uniforms.uPointSize) uniforms.uPointSize.value = POINT_SIZE_DEFAULT;
+    if (uniforms.uPointSize) uniforms.uPointSize.value = basePointSize;
     if (uniforms.uDevicePixelRatio) {
-      try { uniforms.uDevicePixelRatio.value = Math.min(gl?.getPixelRatio?.() ?? 1, 1.5); }
+      try { uniforms.uDevicePixelRatio.value = resolveDpr(); }
       catch { uniforms.uDevicePixelRatio.value = 1; }
     }
 
@@ -2393,6 +3099,104 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     };
   }, [atlasTexture, blueprint, stageName, applyRendererFits, bandScale, gl, logBind, scheduleRuntimeSampling]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__cameraDebug = {
+      getCamera: () => cameraRef.current,
+      getTarget: () => cameraTargetRef.current,
+      forceMove: (z = 30, fov = null) => {
+        const cam = cameraRef.current;
+        if (!cam) {
+          console.warn('[CAM] No camera available to force move');
+          return null;
+        }
+        cam.position.z = z;
+        if (Number.isFinite(fov)) {
+          cam.fov = fov;
+          cam.updateProjectionMatrix();
+        }
+        cam.updateMatrixWorld?.();
+        console.log('[CAM] Forced to', { z, fov });
+        return { position: cam.position.toArray(), fov: cam.fov };
+      },
+    };
+    let camLogInterval = null;
+    if (import.meta?.env?.DEV) {
+      camLogInterval = window.setInterval(() => {
+        const cam = cameraRef.current;
+        if (!cam) return;
+        const pos = typeof cam.position?.toArray === 'function'
+          ? cam.position.toArray().map((v) => Number.isFinite(v) ? Number(v.toFixed(2)) : v)
+          : null;
+        const fov = Number.isFinite(cam.fov) ? Number(cam.fov.toFixed(1)) : cam.fov;
+        const zoom = Number.isFinite(cam.zoom) ? Number(cam.zoom.toFixed(2)) : cam.zoom;
+        console.log('[CAM STATE]', { pos, fov, zoom });
+      }, 1000);
+    }
+    return () => {
+      if (camLogInterval) {
+        window.clearInterval(camLogInterval);
+      }
+      if (window.__cameraDebug) delete window.__cameraDebug;
+    };
+  }, []);
+
+  // Dev helper: full visual state snapshot + uniform accessor (direct from materialRef)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !import.meta?.env?.DEV) return undefined;
+
+    const readUniform = (name) => {
+      const mat = materialRef.current;
+      const uniform = mat?.uniforms?.[name];
+      if (!uniform) return 'NOT FOUND';
+      const val = uniform.value;
+      if (val == null) return null;
+      if (typeof val === 'number' || typeof val === 'string' || typeof val === 'boolean') return val;
+      if (Array.isArray(val)) return [...val];
+      if (val?.toArray) {
+        const out = [];
+        val.toArray(out);
+        return out;
+      }
+      if (typeof val.x !== 'undefined' || typeof val.y !== 'undefined') {
+        return [val.x, val.y, val.z].filter((v) => typeof v !== 'undefined');
+      }
+      return val;
+    };
+
+    window.__getUniform = readUniform;
+    window.__fullVisualState = () => {
+      const cam = window.__cameraDebug?.getCamera?.();
+      return {
+        camera: {
+          position: cam?.position?.toArray?.() ?? null,
+          fov: cam?.fov ?? null,
+          zoom: cam?.zoom ?? null,
+          near: cam?.near ?? null,
+          far: cam?.far ?? null,
+        },
+        uniforms: {
+          uTextFit: readUniform('uTextFit'),
+          uAtmoFit: readUniform('uAtmoFit'),
+          uPointSize: readUniform('uPointSize'),
+          uSpreadFactor: readUniform('uSpreadFactor'),
+          uMorphProgress: readUniform('uMorphProgress'),
+          uStageBlend: readUniform('uStageBlend'),
+        },
+        viewport: {
+          width: typeof window !== 'undefined' ? window.innerWidth : null,
+          height: typeof window !== 'undefined' ? window.innerHeight : null,
+          pixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : null,
+        },
+      };
+    };
+    return () => {
+      if (window.__fullVisualState) delete window.__fullVisualState;
+      if (window.__getUniform) delete window.__getUniform;
+    };
+  }, []);
+
+
   // keep resolution/DPR updated
   useEffect(() => {
     const u = materialRef.current?.uniforms;
@@ -2418,8 +3222,48 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value    = activeCount;
     mat.uniforms.uTierCutoff.value     = activeCount;
+    if (uniformOverlayEnabledRef.current && uniformOverlayRef.current) {
+      const u = mat.uniforms;
+      const atmoFit = u.uAtmoFit?.value ?? u.uAtmoFit;
+      const tierMode = u.uTierMode?.value ?? u.uTierMode;
+      const gridSpacing = u.uGridSpacing?.value ?? u.uGridSpacing;
+      const morphValue = u.uMorphProgress?.value;
+      uniformOverlayRef.current.textContent = [
+        `uAtmoFit: ${formatVec2(atmoFit)}`,
+        `uTierMode: ${formatArray(tierMode, 4, 2)}`,
+        `uGridSpacing: ${formatVec2(gridSpacing)}`,
+        `uMorphProgress: ${formatNumber(morphValue, 3)}`,
+      ].join('\n');
+    }
 
     const deltaSeconds = Number.isFinite(delta) ? delta : state.clock.getDelta();
+    const target = cameraTargetRef.current;
+    if (target?.active && (cameraRef.current || state?.camera)) {
+      const cam = cameraRef.current || state.camera;
+      const lerpSpeed = Math.min(deltaSeconds * 2, 0.1);
+      cam.position.lerp(target.position, lerpSpeed);
+      if (target.lookAt) {
+        cam.lookAt(target.lookAt);
+      }
+      if (Math.abs(cam.fov - target.fov) > 0.01) {
+        cam.fov = THREE.MathUtils.lerp(cam.fov, target.fov, lerpSpeed);
+        cam.updateProjectionMatrix();
+      }
+      const positionDist = cam.position.distanceTo(target.position);
+      const fovDist = Math.abs(cam.fov - target.fov);
+      if (target.debug) {
+        console.log('[CAM] tick', {
+          pos: cam.position.toArray(),
+          fov: cam.fov,
+          dist: positionDist,
+          target: target.position.toArray(),
+        });
+      }
+      if (positionDist < 0.01 && fovDist < 0.1) {
+        target.active = false;
+        console.log('[WBG] Camera reached target');
+      }
+    }
     if (meshRef.current && spinRef.current) {
       if (spinRef.current.active) {
         const { velocity, endTime } = spinRef.current;
@@ -2441,7 +3285,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       timeTickEnabledRef.current ||
       Boolean(spinRef.current?.active) ||
       emergencePendingRef.current ||
-      !emittedEmergedRef.current;
+      !emittedEmergedRef.current ||
+      cameraTargetRef.current?.active;
 
     if (needsFrame && typeof state.invalidate === 'function') {
       state.invalidate();

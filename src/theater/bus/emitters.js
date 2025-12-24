@@ -64,3 +64,11 @@ export function emitMorphProgress(payload) {
   logDev(EVENTS.MORPH_PROGRESS, payload);
   BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
 }
+
+export function emitTextPositionsReady(payload) {
+  if (!payload || !payload.positions || typeof payload.word !== 'string') {
+    throw new Error('TEXT_POSITIONS_READY requires { positions, word }');
+  }
+  logDev(EVENTS.TEXT_POSITIONS_READY, payload);
+  BeatBus.emit(EVENTS.TEXT_POSITIONS_READY, payload);
+}

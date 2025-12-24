@@ -277,6 +277,9 @@ export default function WebGLCanvas({
     const camera = cameraRef.current;
     if (!webglBootstrapped || !camera) return;
 
+    const owner = (typeof window !== 'undefined' && window.__cameraOwner) || 'default';
+    if (owner !== 'default') return;
+
     const target = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
 
     if (camera.position.z !== target.positionZ) {
@@ -450,10 +453,13 @@ export default function WebGLCanvas({
           onCreated={({ gl, scene, camera, size }) => {
             const startTime = performance.now();
             cameraRef.current = camera;
-            const initial = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
-            camera.position.z = initial.positionZ;
-            camera.fov = initial.fov;
-            camera.updateProjectionMatrix();
+            const owner = (typeof window !== 'undefined' && window.__cameraOwner) || 'default';
+            if (owner === 'default') {
+              const initial = qrCameraActive ? QR_CAMERA_SETTINGS : DEFAULT_CAMERA_SETTINGS;
+              camera.position.z = initial.positionZ;
+              camera.fov = initial.fov;
+              camera.updateProjectionMatrix();
+            }
 
             // Access canvas element
             const canvasElement = canvasRef.current;

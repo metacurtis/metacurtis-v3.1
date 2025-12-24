@@ -206,7 +206,7 @@ export function makeBandFrame(vc, rnd, gauss) {
  * @param {number} vh
  * @param {number|object|Array} fitFrac
  */
-export function fitToViewXY(out, vw, vh, fitFrac = 0.86) {
+export function fitToViewXY(out, vw, vh, fitFrac = 0.5) {
   if (!fitFrac || fitFrac <= 0 || !out?.length) return;
 
   const computeScale = () => {
