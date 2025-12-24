@@ -133,4 +133,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-12-23 via `tools/generate-ownership.mjs`
+Last updated: 2025-12-24 via `tools/generate-ownership.mjs`
