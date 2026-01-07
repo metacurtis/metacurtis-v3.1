@@ -1,0 +1,11 @@
+{
+  "behaviors": {
+    "motion": [
+      {
+        "name": "sea_wave_gentle",
+        "label": "Ocean Wave (Gentle)",
+        "description": "Coherent sine/cosine wave field with soft drift."
+      }
+    ]
+  }
+}

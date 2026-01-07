@@ -8,8 +8,10 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useNarrativeStore } from '@/stores/narrativeStore';
 import { useQualityStore } from '@/stores/qualityStore';
+import { useParticleConfigStore } from '@/stores/particleConfigStore';
 import { usePerformanceStore } from '@/stores/performanceStore';
 import { shaderDebugSystem } from '@/utils/webgl/ShaderDebugSystem';
+import { applyMotionBehavior, DEFAULT_MOTION_BEHAVIOR } from '@/config/motionBehaviors';
 
 /* ────────────────────────────────────────────────────────────────────────────
    ✅ DIGITAL AWAKENING: Curtis Whorton's cognitive transformation stages
@@ -29,6 +31,7 @@ const DIGITAL_AWAKENING_STAGES = {
     colors: ['#22c55e', '#16a34a', '#15803d'], // Bright greens
     description:
       'Curtis Whorton struggling alone with traditional development (amygdala dominance)',
+    motionBehavior: DEFAULT_MOTION_BEHAVIOR,
     // ✅ NEURAL SHIFT: Movement patterns representing cognitive state
     reactiveScatter: 1.2, // High reactivity, anxious movement
     processingDepth: 0.8, // Shallow, defensive thinking
@@ -46,6 +49,7 @@ const DIGITAL_AWAKENING_STAGES = {
     particles: 6000,
     colors: ['#3b82f6', '#2563eb', '#1d4ed8'], // Bright blues
     description: 'Processing, questioning - "Something needs to change"',
+    motionBehavior: DEFAULT_MOTION_BEHAVIOR,
     reactiveScatter: 1.0, // Reduced chaos
     processingDepth: 1.0, // Beginning to deepen
     strategicFlow: 0.5, // Emerging organization
@@ -61,6 +65,7 @@ const DIGITAL_AWAKENING_STAGES = {
     particles: 10000,
     colors: ['#a855f7', '#9333ea', '#7c3aed'], // Bright purples
     description: 'The breakthrough - AI collaboration clicks (neural reorganization)',
+    motionBehavior: DEFAULT_MOTION_BEHAVIOR,
     reactiveScatter: 0.6, // Dramatic reduction in chaos
     processingDepth: 1.5, // Deep transformation
     strategicFlow: 1.2, // Rapid strategic emergence
@@ -76,6 +81,7 @@ const DIGITAL_AWAKENING_STAGES = {
     particles: 14000,
     colors: ['#06b6d4', '#0891b2', '#0e7490'], // Bright cyans
     description: 'Strategic AI-enhanced development mastery (prefrontal cortex dominance)',
+    motionBehavior: DEFAULT_MOTION_BEHAVIOR,
     reactiveScatter: 0.4, // Minimal reactivity
     processingDepth: 1.2, // Controlled depth
     strategicFlow: 1.6, // High strategic organization
@@ -91,6 +97,7 @@ const DIGITAL_AWAKENING_STAGES = {
     particles: 20000,
     colors: ['#f59e0b', '#d97706', '#b45309'], // Bright golds
     description: 'Human-AI collaborative mastery achieved (integrated consciousness)',
+    motionBehavior: DEFAULT_MOTION_BEHAVIOR,
     reactiveScatter: 0.2, // Almost no reactivity
     processingDepth: 1.0, // Deep, harmonious consciousness
     strategicFlow: 1.8, // Perfect strategic integration
@@ -111,11 +118,17 @@ const selectStageProgress = state => state.stageProgress || 0;
 const selectIsTransitioning = state => state.isTransitioning || false;
 const selectQualityTier = state => state.currentQualityTier || 'HIGH';
 const selectWebglEnabled = state => state.webglEnabled ?? true;
+const selectMotionBehavior = state => state.motionBehavior || state.motionType || null;
 
 /* ────────────────────────────────────────────────────────────────────────────
    ✅ DIGITAL AWAKENING: Configuration with AQS integration
    ------------------------------------------------------------------------- */
-const getDigitalAwakeningStageConfig = (stageName, progress, qualityTier = 'HIGH') => {
+const getDigitalAwakeningStageConfig = (
+  stageName,
+  progress,
+  qualityTier = 'HIGH',
+  motionBehaviorOverride = null
+) => {
   const stageIndex = DIGITAL_AWAKENING_STAGE_NAME_TO_INDEX[stageName] || 0;
   const baseConfig = DIGITAL_AWAKENING_STAGES[stageIndex] || DIGITAL_AWAKENING_STAGES[0];
 
@@ -129,7 +142,7 @@ const getDigitalAwakeningStageConfig = (stageName, progress, qualityTier = 'HIGH
 
   const multiplier = qualityMultipliers[qualityTier] || qualityMultipliers.HIGH;
 
-  return {
+  const scaledConfig = {
     ...baseConfig,
     particles: Math.round(baseConfig.particles * multiplier.particles),
     stageIndex,
@@ -142,6 +155,11 @@ const getDigitalAwakeningStageConfig = (stageName, progress, qualityTier = 'HIGH
     flagAmplitude: baseConfig.flagAmplitude * multiplier.effects,
     shimmerIntensity: baseConfig.shimmerIntensity * multiplier.effects,
   };
+
+  const resolvedBehavior =
+    motionBehaviorOverride || baseConfig.motionBehavior || DEFAULT_MOTION_BEHAVIOR;
+
+  return applyMotionBehavior(scaledConfig, resolvedBehavior);
 };
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -198,14 +216,15 @@ export default function WebGLBackground() {
   // ✅ DIGITAL AWAKENING: Quality selectors
   const qualityTier = useQualityStore(selectQualityTier);
   const webglEnabled = useQualityStore(selectWebglEnabled);
+  const motionBehavior = useParticleConfigStore(selectMotionBehavior);
 
   // ✅ FIXED: All hooks MUST be at component top level - no conditional hooks
 
   // ✅ DIGITAL AWAKENING: Get cognitive transformation configuration
   const digitalAwakeningConfig = useMemo(() => {
     if (!webglEnabled) return null;
-    return getDigitalAwakeningStageConfig(currentStage, stageProgress, qualityTier);
-  }, [currentStage, stageProgress, qualityTier, webglEnabled]);
+    return getDigitalAwakeningStageConfig(currentStage, stageProgress, qualityTier, motionBehavior);
+  }, [currentStage, stageProgress, qualityTier, webglEnabled, motionBehavior]);
 
   // ✅ DIGITAL AWAKENING: Generate particle data representing Curtis Whorton's journey
   const digitalAwakeningParticleData = useMemo(() => {
@@ -248,10 +267,10 @@ export default function WebGLBackground() {
       uRippleStrength: { value: 0 },
 
       // ✅ NEURAL SHIFT: Map cognitive transformation to existing flag/living uniforms
-      uFlagWaveEnabled: { value: true },
+      uFlagWaveEnabled: { value: digitalAwakeningConfig.flagWaveEnabled ?? true },
       uFlagAmplitude: { value: digitalAwakeningConfig.flagAmplitude },
       uFlagFrequency: { value: 0.8 + digitalAwakeningConfig.stageIndex * 0.1 },
-      uFlagSpeed: { value: digitalAwakeningConfig.livingSpeed },
+      uFlagSpeed: { value: digitalAwakeningConfig.flagSpeed ?? digitalAwakeningConfig.livingSpeed },
 
       uLivingAmplitude: { value: digitalAwakeningConfig.livingAmplitude },
       uLivingFrequency: { value: digitalAwakeningConfig.livingFrequency },
@@ -362,6 +381,10 @@ export default function WebGLBackground() {
         digitalAwakeningConfig.livingFrequency;
       digitalAwakeningMaterial.uniforms.uLivingSpeed.value = digitalAwakeningConfig.livingSpeed;
       digitalAwakeningMaterial.uniforms.uFlagAmplitude.value = digitalAwakeningConfig.flagAmplitude;
+      digitalAwakeningMaterial.uniforms.uFlagWaveEnabled.value =
+        digitalAwakeningConfig.flagWaveEnabled ?? true;
+      digitalAwakeningMaterial.uniforms.uFlagSpeed.value =
+        digitalAwakeningConfig.flagSpeed ?? digitalAwakeningConfig.livingSpeed;
       digitalAwakeningMaterial.uniforms.uShimmerIntensity.value =
         digitalAwakeningConfig.shimmerIntensity;
 
