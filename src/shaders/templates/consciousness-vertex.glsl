@@ -221,6 +221,11 @@ void main() {
   vBlend = uScrollProgress;
   
   // Calculate alpha
-  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress);
+  vec2 ndc = gl_Position.xy / max(gl_Position.w, 1e-4);
+  float edgeDist = max(abs(ndc.x), abs(ndc.y));
+  float edgeFade = 1.0 - smoothstep(0.7, 1.0, edgeDist);
+  float morphFade = smoothstep(0.15, 0.55, uMorphProgress);
+  float atmosphericFade = mix(edgeFade, 1.0, morphFade);
+  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress) * atmosphericFade;
   vTier = tierData;
 }

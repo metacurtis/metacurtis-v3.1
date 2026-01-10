@@ -142,12 +142,17 @@ export default class BlueprintGenerator {
     } = blueprint;
 
     const rng = createSeededRandom(`${stageName}|scatter`);
-    const tierSpread = [
-      { x: 120, y: 90, z: 40 },
-      { x: 95, y: 70, z: 32 },
-      { x: 72, y: 56, z: 28 },
-      { x: 48, y: 38, z: 22 },
-    ];
+    const viewportHint = engine._viewportHint || { width: 120, height: 90 };
+    const baseWidth = (viewportHint.width ?? 120) * 1.3;
+    const baseHeight = (viewportHint.height ?? 90) * 1.3;
+    const baseDepth = Math.max(baseWidth, baseHeight) * 0.6;
+    const tierScale = [1.0, 0.85, 0.7, 0.55];
+    const tierSpread = tierScale.map((scale) => ({
+      x: baseWidth * scale,
+      y: baseHeight * scale,
+      z: baseDepth * scale,
+    }));
+    const gauss = () => gaussianRandom({ rand: rng, clamp: 2.2 });
     const sizeBase = [0.55, 0.75, 1.05, 1.35];
     const opacityRanges = [
       [0.32, 0.6],
@@ -161,9 +166,12 @@ export default class BlueprintGenerator {
       const spread = tierSpread[tier] || tierSpread[0];
       const baseIndex = i * 3;
 
-      const ax = (rng() - 0.5) * spread.x;
-      const ay = (rng() - 0.5) * spread.y;
-      const az = (rng() - 0.5) * spread.z;
+      const rx = spread.x * 0.5;
+      const ry = spread.y * 0.5;
+      const rz = spread.z * 0.5;
+      const ax = gauss() * rx;
+      const ay = gauss() * ry;
+      const az = gauss() * rz;
 
       atmosphericPositions[baseIndex] = ax;
       atmosphericPositions[baseIndex + 1] = ay;
@@ -242,7 +250,6 @@ export default class BlueprintGenerator {
       metadata.colors = stageConfig.colors.slice(0, 3);
     }
 
-    const viewportHint = engine._viewportHint || { width: 120, height: 90 };
     const vw = (viewportHint.width ?? 120) * 0.5;
     const vh = (viewportHint.height ?? 90) * 0.5;
     const fitDefault = DEFAULT_FIT_FRAC;
@@ -251,9 +258,14 @@ export default class BlueprintGenerator {
       y: DEFAULT_FIT_FRAC_Y,
       default: fitDefault,
     };
+    const fitTargetAtmo = {
+      x: DEFAULT_FIT_FRAC_X * 2.2,
+      y: DEFAULT_FIT_FRAC_Y * 2.2,
+      default: fitDefault * 2.2,
+    };
     fitToViewXY(text3DPositions, vw, vh, fitTarget);
-    fitToViewXY(atmosphericPositions, vw, vh, fitTarget);
-    fitToViewXY(positions, vw, vh, fitTarget);
+    fitToViewXY(atmosphericPositions, vw, vh, fitTargetAtmo);
+    fitToViewXY(positions, vw, vh, fitTargetAtmo);
 
     if (import.meta?.env?.DEV) {
       const aabbExtents = (arr) => {

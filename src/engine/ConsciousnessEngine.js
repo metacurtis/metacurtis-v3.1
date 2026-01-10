@@ -1542,9 +1542,12 @@ class ConsciousnessEngine {
     const height = viewportHint?.height ?? viewportHint?.h ?? 9;
     const base = Math.max(1.0, Math.min(width, height));
     const R = base * 0.45;
+    const spreadWidth = width * 1.3;
+    const spreadHeight = height * 1.3;
+    const spreadDepth = Math.max(spreadWidth, spreadHeight) * 0.6;
 
     const rnd = Math.random;
-    const gauss = () => gaussianRandom({ rand: rnd, clamp: 1.2 });
+    const gauss = () => gaussianRandom({ rand: rnd, clamp: 2.2 });
 
     const useBand = opts.band ?? ATMO_USE_BAND;
     if (useBand) {
@@ -1563,11 +1566,14 @@ class ConsciousnessEngine {
       return out;
     }
 
+    const rx = spreadWidth * 0.5;
+    const ry = spreadHeight * 0.5;
+    const rz = spreadDepth * 0.5;
     for (let i = 0; i < count; i++) {
       const j = i * 3;
-      out[j + 0] = gauss() * R;
-      out[j + 1] = gauss() * R;
-      out[j + 2] = gauss() * (R * 0.6);
+      out[j + 0] = gauss() * rx;
+      out[j + 1] = gauss() * ry;
+      out[j + 2] = gauss() * rz;
     }
     return out;
   }

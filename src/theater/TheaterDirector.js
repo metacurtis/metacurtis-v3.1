@@ -10,6 +10,7 @@ import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
 import MorphAnimationController from '@/theater/controllers/MorphAnimationController.js';
 import VisualOrchestrator from '@/theater/VisualOrchestrator.js';
+import { emitMorphProgress } from '@/theater/bus/emitters.js';
 
 // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
 if (typeof window !== 'undefined') {
@@ -229,6 +230,13 @@ class TheaterDirector {
     this._scrollLockReason = null;
     this._scrollLockPrevOverflow = null;
     this._visualDemoCancel = null;
+    this._demoMorphRaf = 0;
+    this._demoMorphValue = 0;
+    this._demoMorphActive = false;
+    this._demoScrollOff = null;
+    this._demoInteractiveTimer = null;
+    this._demoCaptionTimer = null;
+    this._demoInteractiveEnabled = false;
     const autoDiag = typeof window !== 'undefined' ? window.__autoAdvanceDiagnostic : null;
     if (autoDiag) {
       autoDiag.initialized = true;
@@ -521,6 +529,115 @@ class TheaterDirector {
     this._activeMorphCancel = null;
   }
 
+  _stopDemoMorphDriver() {
+    this._demoMorphActive = false;
+    if (this._demoMorphRaf) {
+      cancelAnimationFrame(this._demoMorphRaf);
+      this._demoMorphRaf = 0;
+    }
+  }
+
+  _animateDemoMorphTo(target, durationMs) {
+    const nextTarget = clamp01(target);
+    const from = Number.isFinite(this._demoMorphValue) ? this._demoMorphValue : 0;
+    const duration = Math.max(0, Number(durationMs) || 0);
+
+    this._stopDemoMorphDriver();
+
+    if (duration === 0 || Math.abs(nextTarget - from) < 1e-4) {
+      this._demoMorphValue = nextTarget;
+      emitMorphProgress({ progress: nextTarget, source: 'demo' });
+      return;
+    }
+
+    const start = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
+    const ease = (t) => t * t * (3 - 2 * t);
+    this._demoMorphActive = true;
+
+    const step = (now) => {
+      if (!this._demoMorphActive) return;
+      const current = Number.isFinite(now) ? now : ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now());
+      const elapsed = current - start;
+      const t = clamp01(elapsed / duration);
+      const eased = ease(t);
+      const value = from + (nextTarget - from) * eased;
+      this._demoMorphValue = value;
+      emitMorphProgress({ progress: value, source: 'demo' });
+      if (t < 1) {
+        this._demoMorphRaf = requestAnimationFrame(step);
+      } else {
+        this._demoMorphActive = false;
+        this._demoMorphRaf = 0;
+      }
+    };
+
+    this._demoMorphRaf = requestAnimationFrame(step);
+  }
+
+  _clearDemoInteractive() {
+    if (this._demoScrollOff) {
+      this._demoScrollOff();
+      this._demoScrollOff = null;
+    }
+    if (this._demoInteractiveTimer) {
+      this._clearTimer(this._demoInteractiveTimer);
+      this._demoInteractiveTimer = null;
+    }
+    if (this._demoCaptionTimer) {
+      this._clearTimer(this._demoCaptionTimer);
+      this._demoCaptionTimer = null;
+    }
+    this._demoInteractiveEnabled = false;
+  }
+
+  _enableDemoInteractive(demoKey, demo = {}) {
+    if (this._demoInteractiveEnabled) return;
+    this._demoInteractiveEnabled = true;
+    this._stopDemoMorphDriver();
+
+    if (!this.scrollOrchestrator) {
+      this.scrollOrchestrator = new ScrollOrchestrator();
+    }
+    if (!this.scrollOrchestrator.running) {
+      this.scrollOrchestrator.start();
+    }
+
+    const mapping = demo?.interactive?.scrollMapping || 'position';
+    const handleScroll = (payload = {}) => {
+      let next = null;
+      if (mapping === 'position') {
+        if (Number.isFinite(payload.scrollPercent)) {
+          next = payload.scrollPercent / 100;
+        } else if (Number.isFinite(payload.localProgress)) {
+          next = payload.localProgress;
+        }
+      }
+      if (!Number.isFinite(next)) return;
+      const clamped = clamp01(next);
+      this._demoMorphValue = clamped;
+      emitMorphProgress({ progress: clamped, source: 'demo' });
+    };
+
+    this._demoScrollOff = BeatBus.on(EVENTS.SCROLL_PROGRESS, handleScroll);
+    if (demo?.ui?.scrollPrompt !== false) {
+      BeatBus.emit('DEMO_INTERACTIVE_READY', { demo: demoKey, source: 'demo' });
+    }
+
+    if (demo?.ui?.endCaption) {
+      const delayMs = Number.isFinite(demo?.ui?.endCaptionDelayMs)
+        ? demo.ui.endCaptionDelayMs
+        : 2000;
+      this._demoCaptionTimer = this._trackTimer(() => {
+        BeatBus.emit('DEMO_SHOW_CAPTION', {
+          text: demo.ui.endCaption,
+          source: 'demo',
+        });
+      }, delayMs);
+    }
+  }
+
   _emitMorphProgress(value, { target, stage, phase, durationMs, source }) {
     const stageName = stage || this.currentStage || 'genesis';
     const clampedValue = clamp01(value);
@@ -640,6 +757,8 @@ class TheaterDirector {
       this._visualDemoCancel?.();
     } finally {
       this._visualDemoCancel = null;
+      this._clearDemoInteractive();
+      this._stopDemoMorphDriver();
       this._unlockScroll?.({ source: 'visual_demo', reason });
     }
   }
@@ -783,6 +902,13 @@ class TheaterDirector {
     if (!demo) {
       throw new Error(`[TheaterDirector] visual demo not found: ${demoKey}`);
     }
+    const isIntentDemo = demoKey === 'demo_intent_v2';
+
+    if (isIntentDemo) {
+      this._clearDemoInteractive();
+      this._stopDemoMorphDriver();
+      this._demoMorphValue = 0;
+    }
 
     if (demo.scrollLock) {
       this._lockScroll?.({ source: 'visual_demo', key: demoKey });
@@ -838,8 +964,15 @@ class TheaterDirector {
           },
         });
 
-        const cue = cameraCueForBeat(idx);
-        applyCameraCue(cue, { stage: stageForCamera, cueId: `demo_camera:${idx}` });
+        if (isIntentDemo && Number.isFinite(beat.morphTarget)) {
+          const durationMs = Number.isFinite(beat.durationMs) ? beat.durationMs : 0;
+          this._animateDemoMorphTo(beat.morphTarget, durationMs);
+        }
+
+        if (!isIntentDemo) {
+          const cue = cameraCueForBeat(idx);
+          applyCameraCue(cue, { stage: stageForCamera, cueId: `demo_camera:${idx}` });
+        }
       },
       onComplete: () => {
         if (demo.endCard) {
@@ -857,10 +990,22 @@ class TheaterDirector {
           const endCardCamera = cameraCueForBeat('endcard');
           applyCameraCue(endCardCamera, { cueId: 'demo_camera:endcard' });
         }
+        if (isIntentDemo && demo?.interactive?.enabled) {
+          const delayMs = Number.isFinite(demo?.interactive?.startAfterMs)
+            ? demo.interactive.startAfterMs
+            : 0;
+          this._demoInteractiveTimer = this._trackTimer(() => {
+            this._enableDemoInteractive(demoKey, demo);
+          }, delayMs);
+        }
         this._unlockScroll?.({ source: 'visual_demo', key: demoKey });
         this._visualDemoCancel = null;
       },
       onCancel: () => {
+        if (isIntentDemo) {
+          this._clearDemoInteractive();
+          this._stopDemoMorphDriver();
+        }
         this._unlockScroll?.({ source: 'visual_demo', key: demoKey });
         this._visualDemoCancel = null;
       },

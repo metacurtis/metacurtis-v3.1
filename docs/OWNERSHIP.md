@@ -83,6 +83,8 @@ CANON_VIOLATION.emitter = ⚠️ multiple: canon-console/browser/inject.js, cano
 CLIMAX_STEP.emitter = src/engine/ConsciousnessEngine.js
 CURSOR_BLINK.emitter = src/theater/TheaterDirector.js
 CURSOR_SHOW.emitter = src/theater/TheaterDirector.js
+DEMO_INTERACTIVE_READY.emitter = src/theater/TheaterDirector.js
+DEMO_SHOW_CAPTION.emitter = src/theater/TheaterDirector.js
 DIRECTOR_CANCEL.emitter = src/theater/TheaterDirector.js
 DIRECTOR_ERROR.emitter = src/theater/TheaterDirector.js
 DIRECTOR_OPENING_MODE.emitter = src/theater/TheaterDirector.js
@@ -133,4 +135,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2025-12-24 via `tools/generate-ownership.mjs`
+Last updated: 2026-01-10 via `tools/generate-ownership.mjs`

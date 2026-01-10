@@ -182,10 +182,11 @@ export default function ConsciousnessTheater() {
       if (!directorStartedRef.current && viewportReadyRef.current) {
         // Demo mode: bypass opening, narration, scroll orchestration
         if (globalThis.__DEMO_MODE__ && globalThis.__DEMO_KEY__) {
-          console.log(`[ConsciousnessTheater] Demo mode detected, running: ${globalThis.__DEMO_KEY__}`);
+          const demoKey = globalThis.__DEMO_KEY__;
+          console.log(`[ConsciousnessTheater] Demo mode detected, running: ${demoKey}`);
 
-          // Stop ScrollOrchestrator if somehow already running
-          if (director.scrollOrchestrator) {
+          // Stop ScrollOrchestrator for non-interactive demos only
+          if (director.scrollOrchestrator && demoKey !== 'demo_intent_v2') {
             director.scrollOrchestrator.stop();
           }
 
@@ -227,12 +228,13 @@ export default function ConsciousnessTheater() {
                 loader.classList.add('hidden');
                 loader.style.display = 'none';
               }
-              emitMorphProgress({ progress: 1, source: 'demo' });
+              const startMorph = demoKey === 'demo_intent_v2' ? 0 : 0.98;
+              emitMorphProgress({ progress: startMorph, source: 'demo' });
               emitRenderDirective({
                 source: 'visual_orchestrator',
                 phase: 'visual_demo',
                 stage: 'genesis',
-                uMorphProgress: 0.94,
+                uMorphProgress: startMorph,
                 uStageProgress: 1,
                 uOpacityMin: 0.5,
                 uOpacityMax: 1.0,
@@ -240,8 +242,8 @@ export default function ConsciousnessTheater() {
                 activeCount: pendingActiveCount,
                 pointSize: 48,
               });
-              director.runVisualDemo(globalThis.__DEMO_KEY__);
-              console.log(`[ConsciousnessTheater] Demo started: ${globalThis.__DEMO_KEY__}`);
+              director.runVisualDemo(demoKey);
+              console.log(`[ConsciousnessTheater] Demo started: ${demoKey}`);
             } catch (err) {
               console.error('[ConsciousnessTheater] Demo failed to start:', err);
             }

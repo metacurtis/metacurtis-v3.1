@@ -506,11 +506,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const cameraTargetRef = useRef({
     position: new THREE.Vector3(0, 0, 50),
     lookAt: new THREE.Vector3(0, 0, 0),
+    startPosition: new THREE.Vector3(0, 0, 50),
+    startLookAt: new THREE.Vector3(0, 0, 0),
+    currentLookAt: new THREE.Vector3(0, 0, 0),
     fov: 100,
+    startFov: 100,
+    easingMode: 'ease-in-out',
     active: false,
     duration: 1000,
     startTime: 0,
   });
+  const cameraLookAtTempRef = useRef(new THREE.Vector3(0, 0, 0));
 
   useParticleChoreography(uniformsRef);
   const ignoreDirectivesRef = useRef(false);
@@ -2547,12 +2553,33 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         cameraOwnerRef.current = payload.source === 'demo' ? 'demo' : 'directive';
         if (typeof window !== 'undefined') window.__cameraOwner = cameraOwnerRef.current;
         const target = cameraTargetRef.current;
+        const cam = cameraRef.current;
+        if (cam) {
+          target.startPosition.copy(cam.position);
+          target.startFov = cam.fov;
+        } else {
+          target.startPosition.copy(target.position);
+          target.startFov = target.fov;
+        }
+        if (target.currentLookAt) {
+          target.startLookAt.copy(target.currentLookAt);
+        } else {
+          target.startLookAt.copy(target.lookAt);
+        }
         if (camPayload.position) {
-          target.position.set(
-            camPayload.position.x ?? 0,
-            camPayload.position.y ?? 0,
-            camPayload.position.z ?? 50
-          );
+          if (Array.isArray(camPayload.position)) {
+            target.position.set(
+              camPayload.position[0] ?? 0,
+              camPayload.position[1] ?? 0,
+              camPayload.position[2] ?? 50
+            );
+          } else {
+            target.position.set(
+              camPayload.position.x ?? 0,
+              camPayload.position.y ?? 0,
+              camPayload.position.z ?? 50
+            );
+          }
         }
         if (camPayload.dolly) {
           target.position.x += camPayload.dolly.x ?? 0;
@@ -2560,17 +2587,34 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           target.position.z += camPayload.dolly.z ?? 0;
         }
         if (camPayload.lookAt) {
-          target.lookAt.set(
-            camPayload.lookAt.x ?? 0,
-            camPayload.lookAt.y ?? 0,
-            camPayload.lookAt.z ?? 0
-          );
+          if (Array.isArray(camPayload.lookAt)) {
+            target.lookAt.set(
+              camPayload.lookAt[0] ?? 0,
+              camPayload.lookAt[1] ?? 0,
+              camPayload.lookAt[2] ?? 0
+            );
+          } else {
+            target.lookAt.set(
+              camPayload.lookAt.x ?? 0,
+              camPayload.lookAt.y ?? 0,
+              camPayload.lookAt.z ?? 0
+            );
+          }
         }
         if (camPayload.fov !== undefined) {
           target.fov = camPayload.fov;
         }
-        if (camPayload.durationMs !== undefined) {
-          target.duration = camPayload.durationMs;
+        if (camPayload.durationMs !== undefined || camPayload.duration !== undefined) {
+          const durationMs =
+            camPayload.durationMs !== undefined
+              ? camPayload.durationMs
+              : camPayload.duration;
+          target.duration = durationMs;
+        }
+        if (typeof camPayload.easingMode === 'string' && camPayload.easingMode.length) {
+          target.easingMode = camPayload.easingMode;
+        } else {
+          target.easingMode = 'ease-in-out';
         }
         target.active = true;
         target.startTime = typeof performance !== 'undefined' && performance.now
@@ -3240,26 +3284,49 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const target = cameraTargetRef.current;
     if (target?.active && (cameraRef.current || state?.camera)) {
       const cam = cameraRef.current || state.camera;
-      const lerpSpeed = Math.min(deltaSeconds * 2, 0.1);
-      cam.position.lerp(target.position, lerpSpeed);
-      if (target.lookAt) {
-        cam.lookAt(target.lookAt);
+      const nowMs = typeof performance !== 'undefined' && performance.now
+        ? performance.now()
+        : Date.now();
+      const durationMs = Number.isFinite(target.duration) && target.duration > 0 ? target.duration : 1;
+      const elapsed = nowMs - (target.startTime || nowMs);
+      const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
+      const easingMode = target.easingMode || 'ease-in-out';
+      let eased = t * t * (3 - 2 * t);
+      if (easingMode === 'linear') {
+        eased = t;
+      } else if (easingMode === 'ease-in') {
+        eased = t * t;
+      } else if (easingMode === 'ease-out') {
+        eased = 1 - (1 - t) * (1 - t);
       }
-      if (Math.abs(cam.fov - target.fov) > 0.01) {
-        cam.fov = THREE.MathUtils.lerp(cam.fov, target.fov, lerpSpeed);
+
+      cam.position.lerpVectors(target.startPosition, target.position, eased);
+
+      if (target.lookAt) {
+        const lookAtTarget = cameraLookAtTempRef.current;
+        lookAtTarget.lerpVectors(target.startLookAt, target.lookAt, eased);
+        cam.lookAt(lookAtTarget);
+        if (target.currentLookAt) {
+          target.currentLookAt.copy(lookAtTarget);
+        }
+      }
+
+      if (Number.isFinite(target.fov)) {
+        const startFov = Number.isFinite(target.startFov) ? target.startFov : cam.fov;
+        cam.fov = THREE.MathUtils.lerp(startFov, target.fov, eased);
         cam.updateProjectionMatrix();
       }
-      const positionDist = cam.position.distanceTo(target.position);
-      const fovDist = Math.abs(cam.fov - target.fov);
+
       if (target.debug) {
         console.log('[CAM] tick', {
           pos: cam.position.toArray(),
           fov: cam.fov,
-          dist: positionDist,
+          t: Number.isFinite(t) ? Number(t.toFixed(3)) : t,
           target: target.position.toArray(),
         });
       }
-      if (positionDist < 0.01 && fovDist < 0.1) {
+
+      if (t >= 1) {
         target.active = false;
         console.log('[WBG] Camera reached target');
       }

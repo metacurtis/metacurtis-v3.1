@@ -8,6 +8,8 @@ import AmbientFragmentManager from '@/components/fragments/AmbientFragmentManage
 import ClimaxSequenceController from '@/components/fragments/ClimaxSequenceController.jsx';
 import NarrationController from '@/components/narrative/NarrationController.jsx';
 import NarrativeUIControls from '@/components/ui/NarrativeUIControls.jsx';
+import DemoOverlay from '@/components/demo/DemoOverlay.jsx';
+import DemoLauncher from '@/components/dev/DemoLauncher.jsx';
 import { clockAtom } from '@/state/atoms';
 
 import '@/orchestration/navigation/narrativeNavigation.js';
@@ -67,6 +69,7 @@ export default function App() {
     <div className="relative min-h-screen">
       {/* STEP 0: Instant LCP hero – fades once particles emerge */}
       <LCPHero />
+      <DemoLauncher />
       <ConsciousnessTheater />
       <AmbientFragmentManager />
       <ClimaxSequenceController />
@@ -81,6 +84,7 @@ export default function App() {
         console.log('🔬 [APP] Mounting NarrativeUIControls');
         return <NarrativeUIControls />;
       })()}
+      <DemoOverlay />
     </div>
   );
 }
