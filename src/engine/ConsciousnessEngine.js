@@ -280,6 +280,11 @@ class ConsciousnessEngine {
           return entries;
         },
       };
+      window.__fontDebug = {
+        getFont: () => this.font,
+        getShapes: (text, size = 32) => this.font?.generateShapes(text, size),
+        getLetterShape: (letter, size = 32) => this.font?.generateShapes(letter, size)?.[0],
+      };
 
       console.log('🔧 Engine debug API exposed at window.engineDebug');
     }
