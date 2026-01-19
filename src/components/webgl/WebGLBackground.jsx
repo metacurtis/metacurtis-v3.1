@@ -501,6 +501,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const blueprintRef = useRef(blueprint);
   const lastBlueprintMetaRef = useRef({});
   const hotspotMapRef = useRef({});
+  const glyphTargetRef = useRef(null);
   const fitsLockedRef = useRef(false);
   const cameraOwnerRef = useRef('default'); // 'default' | 'directive' | 'demo'
   const cameraTargetRef = useRef({
@@ -2547,6 +2548,50 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         applyVisualVerbDirective(payload, uniforms, origin);
       }
 
+      if (payload?.clearGlyphTarget && uniforms) {
+        glyphTargetRef.current = null;
+        if (uniforms.uGlyphTargetActive) uniforms.uGlyphTargetActive.value = 0.0;
+        if (uniforms.uGlyphPulseIntensity) uniforms.uGlyphPulseIntensity.value = 0.0;
+      }
+
+      if (payload?.targetGlyph && uniforms) {
+        const target = payload.targetGlyph;
+        const centroid = target.centroid;
+        const bounds = target.bounds;
+        const center = centroid
+          ? { x: centroid.x ?? 0, y: centroid.y ?? 0, z: centroid.z ?? 0 }
+          : bounds
+            ? {
+                x: (bounds.minX + bounds.maxX) * 0.5,
+                y: (bounds.minY + bounds.maxY) * 0.5,
+                z: (bounds.minZ + bounds.maxZ) * 0.5,
+              }
+            : { x: 0, y: 0, z: 0 };
+        const width = bounds ? bounds.maxX - bounds.minX : 0;
+        const height = bounds ? bounds.maxY - bounds.minY : 0;
+        const depth = bounds ? bounds.maxZ - bounds.minZ : 0;
+        const maxExtent = Math.max(width, height, depth, 1);
+        const radius = Number.isFinite(target.radius)
+          ? target.radius
+          : maxExtent * 0.6;
+        const intensity = Number.isFinite(target.intensity) ? target.intensity : 0.6;
+
+        glyphTargetRef.current = {
+          letter: target.letter || null,
+          occurrence: target.occurrence || 1,
+          center,
+          radius,
+          intensity,
+        };
+
+        if (uniforms.uGlyphTargetActive) uniforms.uGlyphTargetActive.value = 1.0;
+        if (uniforms.uGlyphTargetCenter?.value?.set) {
+          uniforms.uGlyphTargetCenter.value.set(center.x, center.y, center.z);
+        }
+        if (uniforms.uGlyphTargetRadius) uniforms.uGlyphTargetRadius.value = radius;
+        if (uniforms.uGlyphPulseIntensity) uniforms.uGlyphPulseIntensity.value = intensity;
+      }
+
       // Camera directive handling
       if (payload.kind === 'camera' || payload.camera) {
         const camPayload = payload.camera || payload;
@@ -3033,6 +3078,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
           uPulseAmplitude:  { value: 0.15 },
           uStreakIntensity:{ value: 0.0 },
           uMotionParams:   { value: new Float32Array([0, 0, 0, 0]) },
+          uGlyphTargetActive: { value: 0.0 },
+          uGlyphTargetCenter: { value: new THREE.Vector3(0, 0, 0) },
+          uGlyphTargetRadius: { value: 1.0 },
+          uGlyphPulseIntensity: { value: 0.0 },
         },
         vertexShader: vertexShaderSource,
         fragmentShader: fragmentShaderSource,

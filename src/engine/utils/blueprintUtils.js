@@ -2,6 +2,9 @@
 // Keep these helpers pure and free of stateful dependencies so they can be
 // reused across future engine modules.
 import { emitBlueprintReady as emitBlueprintReadyEvent } from '@/theater/bus/emitters.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
+import { glyphSpace } from '../GlyphSpace.js';
 
 /**
  * Calculate an axis-aligned bounding box (AABB) for a flat XYZ position array.
@@ -160,11 +163,63 @@ export function assignTiersShuffled(count, ratios, rand = Math.random) {
  * @returns {object} - Payload emitted for convenience/testing.
  */
 export function emitBlueprintReady(BeatBus, EVENTS, blueprint, metadata = {}) {
+  console.log('[emitBlueprintReady] CALLED', {
+    hasBlueprint: !!blueprint,
+    word: blueprint?.word,
+    hasHotspotLookup: !!blueprint?.hotspotLookup,
+    hasText3D: !!blueprint?.text3DPositions,
+    metadata,
+  });
   const payload = {
     channel: 'renderer',
     blueprint,
     ...metadata,
   };
+  let hotspotLookup = blueprint?.hotspotLookup || null;
+  let resolvedWord = typeof blueprint?.word === 'string' ? blueprint.word : '';
+  if (!resolvedWord && hotspotLookup?.word) {
+    resolvedWord = hotspotLookup.word;
+  }
+  if (!resolvedWord) {
+    const metaWord = metadata?.word || metadata?.text || metadata?.stageWord;
+    resolvedWord = typeof metaWord === 'string' ? metaWord : '';
+  }
+  if (!resolvedWord) {
+    const demoKey = typeof globalThis !== 'undefined' ? globalThis.__DEMO_KEY__ : null;
+    const demoWord = demoKey ? Canonical?.visualDemos?.[demoKey]?.word : null;
+    resolvedWord = typeof demoWord === 'string' ? demoWord : '';
+  }
+  if (!resolvedWord) {
+    const lastWord = typeof globalThis !== 'undefined' ? globalThis.__LAST_TEXT_MORPH_WORD__ : null;
+    resolvedWord = typeof lastWord === 'string' ? lastWord : '';
+  }
+  if (resolvedWord) {
+    console.log('[emitBlueprintReady] Resolved word:', resolvedWord);
+  }
+
+  const builtOnFly = !hotspotLookup;
+  if (!hotspotLookup && blueprint?.text3DPositions && resolvedWord) {
+    console.log('[emitBlueprintReady] Building hotspotLookup on the fly for:', resolvedWord);
+    try {
+      hotspotLookup = buildHotspotLookup({
+        stageName: blueprint?.stageName || metadata?.stage || 'unknown',
+        text3DPositions: blueprint.text3DPositions,
+        wordOverride: resolvedWord,
+      });
+      blueprint.hotspotLookup = hotspotLookup;
+    } catch (error) {
+      console.warn('[emitBlueprintReady] Failed to build hotspotLookup:', error);
+    }
+  }
+  if (hotspotLookup && resolvedWord) {
+    console.log('[emitBlueprintReady] Registering GlyphSpace:', {
+      word: resolvedWord,
+      source: metadata?.source || metadata?.mode || metadata?.stage || 'unknown',
+      glyphCount: hotspotLookup?.glyphs?.length || 0,
+      builtOnFly,
+    });
+    glyphSpace.register(resolvedWord, hotspotLookup);
+  }
   emitBlueprintReadyEvent(payload);
   return payload;
 }

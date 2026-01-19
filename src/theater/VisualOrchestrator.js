@@ -16,6 +16,7 @@
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
+import { glyphSpace } from '@/engine/GlyphSpace.js';
 
 const clamp01 = (value) => {
   if (!Number.isFinite(value)) return 0;
@@ -171,6 +172,36 @@ class VisualOrchestrator {
         : {}),
       source,
     });
+
+    const glyphKey = params?.glyph ?? params?.targetGlyph;
+    const glyphOccurrence = Number.isFinite(params?.glyphOccurrence)
+      ? params.glyphOccurrence
+      : 1;
+    if (glyphKey !== undefined && glyphKey !== null) {
+      const glyphData = glyphSpace.getGlyph(glyphKey, glyphOccurrence);
+      if (glyphData) {
+        const intensity = Number.isFinite(params?.glyphIntensity)
+          ? params.glyphIntensity
+          : Number.isFinite(params?.intensity)
+            ? params.intensity
+            : 0.6;
+        directive.targetGlyph = {
+          id: glyphData.id,
+          letter: glyphData.letter,
+          occurrence: glyphData.occurrence,
+          centroid: glyphData.centroid,
+          bounds: glyphData.bounds,
+          indices: glyphData.indices,
+          particleCount: glyphData.particleCount,
+          intensity,
+        };
+      } else {
+        console.warn('[VO] Glyph target not found', { glyphKey, glyphOccurrence, verb });
+      }
+    } else if (params?.clearGlyphTarget) {
+      directive.clearGlyphTarget = true;
+    }
+
     this._emitDirective(directive);
 
     if (params && params.camera && !isBrandVisionDemo) {
@@ -196,11 +227,30 @@ class VisualOrchestrator {
       console.warn('[VO] applyCamera called without camera payload', { payload });
       return;
     }
+    let resolvedCamera = camera;
+    if (camera?.targetGlyph) {
+      const mode = camera.mode || 'frame';
+      const occurrence = Number.isFinite(camera.glyphOccurrence) ? camera.glyphOccurrence : 1;
+      const glyphCamera = glyphSpace.getCameraTarget(camera.targetGlyph, mode, occurrence);
+      if (glyphCamera) {
+        resolvedCamera = {
+          ...camera,
+          position: glyphCamera.position,
+          lookAt: glyphCamera.lookAt,
+        };
+      } else {
+        console.warn('[VO] Camera glyph target not found', {
+          targetGlyph: camera.targetGlyph,
+          mode,
+          occurrence,
+        });
+      }
+    }
     const normalizedCueId = typeof cueId === 'string' && cueId.length ? cueId : undefined;
     const directive = {
       stage,
       kind: 'camera',
-      camera,
+      camera: resolvedCamera,
       ...(normalizedCueId ? { cueId: normalizedCueId } : {}),
       ...overrides,
       verb: 'camera',

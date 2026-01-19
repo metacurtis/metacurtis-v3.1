@@ -56,6 +56,8 @@ const RENDER_DIRECTIVE_FIELD_TYPE_MAP = {
   atMs: 'number',
   camera: 'object',
   cueId: 'string',
+  targetGlyph: 'object',
+  clearGlyphTarget: 'boolean',
 };
 
 const renderDirectiveProperties = {};
@@ -156,6 +158,10 @@ const EVENT_SCHEMAS = new Map([
   ['TEXT_POSITIONS_READY', {
     required: { positions: 'object', word: 'string' },
     optional: { stage: 'string', count: 'number' },
+  }],
+  ['GLYPH_MAP_READY', {
+    required: { word: 'string', glyphs: 'object', source: 'string' },
+    optional: { stage: 'string' },
   }],
   ['PARTICLE_CLICK_REQUEST', {
     optional: {

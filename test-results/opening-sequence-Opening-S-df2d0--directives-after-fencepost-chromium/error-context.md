@@ -1,0 +1,263 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic:
+    - generic: LOADING...
+  - generic [ref=e2]:
+    - generic:
+      - generic [ref=e3]:
+        - generic [ref=e4]:
+          - generic [ref=e5]: Demo Launcher
+          - button "Collapse" [ref=e6] [cursor=pointer]
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - checkbox "autoplay" [checked] [ref=e9]
+            - text: autoplay
+          - generic [ref=e10]:
+            - text: delay
+            - spinbutton "delay" [ref=e11]: "300"
+          - generic [ref=e12]:
+            - text: record param
+            - checkbox "record param" [ref=e13]
+          - generic [ref=e14]:
+            - text: new tab
+            - checkbox "new tab" [ref=e15]
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - generic [ref=e19]: brand_vision_demo
+              - generic [ref=e20]: 28.0s
+            - generic [ref=e21]:
+              - button "Run" [ref=e22] [cursor=pointer]
+              - button "Copy" [ref=e23] [cursor=pointer]
+          - generic [ref=e24]:
+            - generic [ref=e25]:
+              - generic [ref=e26]: demo_intent_v2
+              - generic [ref=e27]: 22.3s
+            - generic [ref=e28]:
+              - button "Run" [ref=e29] [cursor=pointer]
+              - button "Copy" [ref=e30] [cursor=pointer]
+      - generic:
+        - generic [ref=e33]: GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS GENESIS
+        - generic:
+          - generic:
+            - generic:
+              - generic: I
+            - generic:
+              - generic: t
+              - generic: "y"
+              - generic: p
+              - generic: e
+              - generic: d
+            - generic:
+              - generic: t
+              - generic: h
+              - generic: o
+              - generic: s
+              - generic: e
+            - generic:
+              - generic: l
+              - generic: i
+              - generic: "n"
+              - generic: e
+              - generic: s
+            - generic:
+              - generic: e
+              - generic: x
+              - generic: a
+              - generic: c
+              - generic: t
+              - generic: l
+              - generic: "y"
+            - generic:
+              - generic: a
+              - generic: s
+            - generic:
+              - generic: t
+              - generic: h
+              - generic: e
+            - generic:
+              - generic: b
+              - generic: o
+              - generic: o
+              - generic: k
+            - generic:
+              - generic: s
+              - generic: h
+              - generic: o
+              - generic: w
+              - generic: e
+              - generic: d
+              - generic: .
+            - generic:
+              - generic: W
+              - generic: h
+              - generic: e
+              - generic: "n"
+            - generic:
+              - generic: I
+            - generic:
+              - generic: p
+              - generic: r
+              - generic: e
+              - generic: s
+              - generic: s
+              - generic: e
+              - generic: d
+            - generic:
+              - generic: R
+              - generic: U
+              - generic: "N"
+            - generic:
+              - generic: a
+              - generic: "n"
+              - generic: d
+            - generic:
+              - generic: t
+              - generic: h
+              - generic: e
+            - generic:
+              - generic: s
+              - generic: c
+              - generic: r
+              - generic: e
+              - generic: e
+              - generic: "n"
+            - generic:
+              - generic: c
+              - generic: a
+              - generic: m
+              - generic: e
+            - generic:
+              - generic: a
+              - generic: l
+              - generic: i
+              - generic: v
+              - generic: e
+              - generic: .
+              - generic: .
+              - generic: .
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - button "← Prev" [disabled] [ref=e41]
+            - button "Next →" [ref=e42] [cursor=pointer]
+          - button "⏸️ Auto" [ref=e43] [cursor=pointer]
+        - generic [ref=e44]: Stage 1 of 7
+        - generic [ref=e45]:
+          - generic [ref=e46]: "Keyboard:"
+          - generic [ref=e47]: "→ / Space: Next"
+          - generic [ref=e48]: "← : Previous"
+          - generic [ref=e49]: "Ctrl+P: Auto-advance"
+          - generic [ref=e50]: "Home/End: First/Last"
+  - generic [ref=e51]:
+    - generic [ref=e52]:
+      - generic [ref=e53]: CANON HUD
+      - generic [ref=e54]:
+        - button "Pin✓" [ref=e55] [cursor=pointer]
+        - button "Collapse" [ref=e56] [cursor=pointer]
+        - button "Hide" [ref=e57] [cursor=pointer]
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - generic [ref=e61]: FPS
+          - generic [ref=e62]: "51"
+        - generic [ref=e63]:
+          - generic [ref=e64]: Mode
+          - generic [ref=e65]: TELEMETRY
+        - generic [ref=e66]:
+          - generic [ref=e67]: Bus
+          - generic [ref=e68]: 330/34/3
+      - generic [ref=e69]:
+        - button "STRICT" [ref=e70] [cursor=pointer]
+        - button "TELEMETRY" [ref=e71] [cursor=pointer]
+        - button "TOLERANT" [ref=e72] [cursor=pointer]
+      - generic [ref=e73]:
+        - button "Run Opening Macro" [ref=e74] [cursor=pointer]
+        - button "Verify FPS" [ref=e75] [cursor=pointer]
+        - button "Fencepost Report" [ref=e76] [cursor=pointer]
+    - generic [ref=e77]:
+      - heading "Bus emit 330 on 34 off 3 ▾" [level=4] [ref=e78] [cursor=pointer]:
+        - generic [ref=e79] [cursor=pointer]: Bus
+        - generic [ref=e80] [cursor=pointer]:
+          - generic [ref=e81] [cursor=pointer]: emit 330
+          - generic [ref=e82] [cursor=pointer]: on 34
+          - generic [ref=e83] [cursor=pointer]: off 3
+          - text: ▾
+      - generic [ref=e84]:
+        - generic [ref=e85]: BeatBus
+        - generic [ref=e86]: online
+    - generic [ref=e87]:
+      - heading "Incidents last 0 ▾" [level=4] [ref=e88] [cursor=pointer]:
+        - generic [ref=e89] [cursor=pointer]: Incidents
+        - generic [ref=e90] [cursor=pointer]:
+          - generic [ref=e91] [cursor=pointer]: last 0
+          - text: ▾
+      - generic [ref=e93]: None
+    - generic [ref=e94]:
+      - heading "Opening Fencepost FULL ▾" [level=4] [ref=e95] [cursor=pointer]:
+        - generic [ref=e96] [cursor=pointer]: Opening Fencepost
+        - generic [ref=e97] [cursor=pointer]:
+          - generic [ref=e98] [cursor=pointer]: FULL
+          - text: ▾
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - generic [ref=e101]: t0→emerg
+          - generic [ref=e102]: 0ms
+        - generic [ref=e103]:
+          - generic [ref=e104]: emerg→full
+          - generic [ref=e105]: 77ms
+        - generic [ref=e106]:
+          - generic [ref=e107]: full→emerged
+          - generic [ref=e108]: "-11893ms"
+    - generic [ref=e109]:
+      - heading "Theater complete stopped hasRun ▾" [level=4] [ref=e110] [cursor=pointer]:
+        - generic [ref=e111] [cursor=pointer]: Theater
+        - generic [ref=e112] [cursor=pointer]:
+          - generic [ref=e113] [cursor=pointer]: complete
+          - generic [ref=e114] [cursor=pointer]: stopped
+          - generic [ref=e115] [cursor=pointer]: hasRun
+          - text: ▾
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - button "Start" [ref=e118] [cursor=pointer]
+          - button "Cancel" [ref=e119] [cursor=pointer]
+          - button "Emit Hint" [ref=e120] [cursor=pointer]
+        - generic [ref=e121]:
+          - generic [ref=e122]: Elapsed
+          - generic [ref=e123]: 42950ms
+    - generic [ref=e124]:
+      - heading "Renderer opening_chaos count 2000 ▾" [level=4] [ref=e125] [cursor=pointer]:
+        - generic [ref=e126] [cursor=pointer]: Renderer
+        - generic [ref=e127] [cursor=pointer]:
+          - generic [ref=e128] [cursor=pointer]: opening_chaos
+          - generic [ref=e129] [cursor=pointer]: count 2000
+          - text: ▾
+      - generic [ref=e130]:
+        - generic [ref=e131]:
+          - generic [ref=e132]: Atlas
+          - generic [ref=e133]: "no"
+        - generic [ref=e134]:
+          - generic [ref=e135]: drawRange
+          - generic [ref=e136]: —
+        - button "Fix drawRange" [ref=e137] [cursor=pointer]
+    - generic [ref=e138]:
+      - heading "Stage / Morph / Scroll genesis m 0 s 0 ▾" [level=4] [ref=e139] [cursor=pointer]:
+        - generic [ref=e140] [cursor=pointer]: Stage / Morph / Scroll
+        - generic [ref=e141] [cursor=pointer]:
+          - generic [ref=e142] [cursor=pointer]: genesis
+          - generic [ref=e143] [cursor=pointer]: m 0
+          - generic [ref=e144] [cursor=pointer]: s 0
+          - text: ▾
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - generic [ref=e147]: Stage
+          - generic [ref=e148]: genesis
+        - generic [ref=e149]:
+          - generic [ref=e150]: Morph
+          - generic [ref=e151]: "0"
+        - generic [ref=e152]:
+          - generic [ref=e153]: Scroll
+          - generic [ref=e154]: "0"
+```

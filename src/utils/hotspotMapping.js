@@ -358,10 +358,13 @@ function resolveStageWord(stageName) {
  * @param {string} params.stageName
  * @param {Float32Array} params.text3DPositions
  * @param {Array<string>} [params.hotspotIds]
+ * @param {string} [params.wordOverride]
  * @returns {HotspotLookup}
  */
-export function buildHotspotLookup({ stageName, text3DPositions, hotspotIds }) {
-  const word = resolveStageWord(stageName);
+export function buildHotspotLookup({ stageName, text3DPositions, hotspotIds, wordOverride }) {
+  const word = (typeof wordOverride === 'string' && wordOverride)
+    ? wordOverride
+    : resolveStageWord(stageName);
   const { glyphs } = clusterTextGlyphs(word, text3DPositions);
 
   const resolvedFromSst = resolveStageHotspots(stageName);

@@ -43,6 +43,7 @@ export const EVENTS = {
   MORPH_PROGRESS: 'MORPH_PROGRESS',              // { progress: 0..1 }
   TEXT_MORPH: 'TEXT_MORPH',                      // { word, stage?, particles?, transitionDuration?, source? }
   TEXT_POSITIONS_READY: 'TEXT_POSITIONS_READY',  // { positions, word, stage?, count? }
+  GLYPH_MAP_READY: 'GLYPH_MAP_READY',            // { word, stage?, glyphs[], source }
 
   // Stage / narrative control
   START_NARRATIVE: 'START_NARRATIVE',            // { id?, stage? }

@@ -42,6 +42,8 @@ export const RENDER_DIRECTIVE_FIELDS = [
   'atMs',
   'camera',
   'cueId',
+  'targetGlyph',
+  'clearGlyphTarget',
 ];
 
 export default RENDER_DIRECTIVE_FIELDS;

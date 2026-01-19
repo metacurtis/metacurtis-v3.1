@@ -41,6 +41,8 @@ type RenderDirective = {
   kind?: string;               // semantic tag for directive kind
   phase?: string;              // e.g. 'opening' | 'scroll' | 'narration'
   stage?: string;              // SST stage identifier
+  targetGlyph?: object;        // glyph targeting payload (letter/centroid/indices)
+  clearGlyphTarget?: boolean;  // clear glyph targeting state
 
   /** Renderer/morph uniforms */
   uMotionMode?: number;

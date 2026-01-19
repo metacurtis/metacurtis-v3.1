@@ -36,6 +36,10 @@ uniform vec2  uGridSpacing;
 uniform float uFlowTurbulence;
 uniform float uStreakIntensity;
 uniform float uQrPhotoMode;
+uniform float uGlyphTargetActive;
+uniform vec3 uGlyphTargetCenter;
+uniform float uGlyphTargetRadius;
+uniform float uGlyphPulseIntensity;
 
 // Varyings
 varying vec3 vPosition;
@@ -226,6 +230,14 @@ void main() {
   float edgeFade = 1.0 - smoothstep(0.7, 1.0, edgeDist);
   float morphFade = smoothstep(0.15, 0.55, uMorphProgress);
   float atmosphericFade = mix(edgeFade, 1.0, morphFade);
-  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress) * atmosphericFade;
+  float glyphInfluence = 0.0;
+  if (uGlyphTargetActive > 0.5) {
+    float glyphRadius = max(uGlyphTargetRadius, 0.001);
+    float glyphDist = distance(finalPos, uGlyphTargetCenter);
+    glyphInfluence = 1.0 - smoothstep(glyphRadius, glyphRadius * 1.6, glyphDist);
+  }
+  float glyphPulse = 0.5 + 0.5 * sin(uTime * 5.0);
+  float glyphBoost = glyphInfluence * glyphPulse * uGlyphPulseIntensity * uGlyphTargetActive;
+  vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress) * atmosphericFade * (1.0 + glyphBoost);
   vTier = tierData;
 }

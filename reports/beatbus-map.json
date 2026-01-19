@@ -3,7 +3,7 @@
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 200
+        "line": 201
       },
       {
         "file": "src/state/commands/StateCommands.js",
@@ -11,25 +11,25 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1628
+        "line": 1773
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1805
+        "line": 1950
       }
     ],
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 349
+        "line": 351
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1328
+        "line": 1334
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2321
+        "line": 2466
       }
     ],
     "START_CLIMAX": [
@@ -61,11 +61,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1214
+        "line": 1359
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1964
+        "line": 2109
       }
     ],
     "NARRATIVE_LINE": [
@@ -77,17 +77,17 @@
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 822
+        "line": 828
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1841
+        "line": 1986
       }
     ],
     "PARTICLE_CLICK_HIT": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1659
+        "line": 1665
       }
     ],
     "PARTICLE_CLICK_REQUEST": [
@@ -182,110 +182,122 @@
         "line": 310
       }
     ],
+    "DEMO_INTERACTIVE_READY": [
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 625
+      }
+    ],
+    "DEMO_SHOW_CAPTION": [
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 633
+      }
+    ],
     "DIRECTOR:MORPH_STATE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 539
+        "line": 656
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 753
+        "line": 872
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1962
+        "line": 2107
       }
     ],
     "OPENING_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 757
+        "line": 876
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1978
+        "line": 2123
       }
     ],
     "DIRECTOR_ERROR": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1410
+        "line": 1555
       }
     ],
     "CURSOR_SHOW": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1569
+        "line": 1714
       }
     ],
     "AUDIO_COMPUTER_HUM": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1570
+        "line": 1715
       }
     ],
     "CURSOR_BLINK": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1576
+        "line": 1721
       }
     ],
     "TERMINAL_TYPE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1588
+        "line": 1733
       }
     ],
     "SCREEN_FILL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1603
+        "line": 1748
       }
     ],
     "DIRECTOR_OPENING_MODE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1620
+        "line": 1765
       }
     ],
     "PARTICLE_PHASE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1671
+        "line": 1816
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1704
+        "line": 1849
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1746
+        "line": 1891
       }
     ],
     "PARTICLES_START_EMERGING": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1822
+        "line": 1967
       }
     ],
     "DIRECTOR_CANCEL": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2130
+        "line": 2275
       }
     ],
     "PREWARM_GENESIS_BLUEPRINT": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2136
+        "line": 2281
       }
     ],
     "RENDERER_TUNE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2151
+        "line": 2296
       }
     ],
     "TEXT_MORPH": [
@@ -325,7 +337,7 @@
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 343
+        "line": 345
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -333,17 +345,17 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2342
+        "line": 2487
       }
     ],
     "BLUEPRINT_READY": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 250
+        "line": 252
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2278
+        "line": 2284
       },
       {
         "file": "src/components/webgl/WebGLCanvas.jsx",
@@ -351,15 +363,15 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 340
+        "line": 348
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 344
+        "line": 352
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1871
+        "line": 2016
       },
       {
         "file": "canon-console/runtime/blueprint-guard-v2.js",
@@ -373,25 +385,25 @@
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 277
+        "line": 279
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 956
+        "line": 962
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 332
+        "line": 340
       }
     ],
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 314
+        "line": 316
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 947
+        "line": 953
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -409,7 +421,7 @@
     "START_NARRATIVE": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 319
+        "line": 321
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
@@ -420,10 +432,30 @@
         "line": 330
       }
     ],
+    "DEMO_INTERACTIVE_READY": [
+      {
+        "file": "src/components/demo/DemoOverlay.jsx",
+        "line": 73
+      }
+    ],
+    "DEMO_SHOW_CAPTION": [
+      {
+        "file": "src/components/demo/DemoOverlay.jsx",
+        "line": 74
+      }
+    ],
     "SCROLL_PROGRESS": [
+      {
+        "file": "src/components/demo/DemoOverlay.jsx",
+        "line": 75
+      },
       {
         "file": "src/components/fragments/AmbientFragment.jsx",
         "line": 80
+      },
+      {
+        "file": "src/theater/TheaterDirector.js",
+        "line": 623
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
@@ -437,7 +469,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 348
+        "line": 356
       }
     ],
     "STAGE_CHANGE": [
@@ -451,11 +483,11 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1433
+        "line": 1439
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1459
+        "line": 1465
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -471,7 +503,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 331
+        "line": 339
       },
       {
         "file": "src/theater/UnifiedNavigationAPI.js",
@@ -545,7 +577,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1450
+        "line": 1456
       }
     ],
     "PARTICLE_PHASE": [
@@ -555,7 +587,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 3323
+        "line": 3390
       }
     ],
     "PARTICLES_EMERGED": [
@@ -569,7 +601,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 945
+        "line": 951
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -577,11 +609,11 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 336
+        "line": 344
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 1861
+        "line": 2006
       },
       {
         "file": "canon-console/runtime/lifecycle-guards.js",
@@ -595,7 +627,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 946
+        "line": 952
       }
     ],
     "DIRECTOR_CANCEL": [
@@ -607,7 +639,7 @@
     "TEXT_MORPH": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1188
+        "line": 1194
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -617,25 +649,25 @@
     "PARTICLE_CLICK_REQUEST": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1670
+        "line": 1676
       }
     ],
     "TEXT_POSITIONS_READY": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2293
+        "line": 2299
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2607
+        "line": 2651
       }
     ],
     "MORPH_PROGRESS": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2884
+        "line": 2928
       },
       {
         "file": "src/state/commands/StateCommands.js",
@@ -643,7 +675,7 @@
       },
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 580
+        "line": 697
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
@@ -739,7 +771,7 @@
     "PREWARM_COMPLETE": [
       {
         "file": "src/theater/TheaterDirector.js",
-        "line": 2137
+        "line": 2282
       }
     ]
   }

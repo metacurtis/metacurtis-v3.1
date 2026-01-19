@@ -22,6 +22,9 @@ uFadeProgress = src/components/webgl/WebGLBackground.jsx
 uFlowTurbulence = src/components/webgl/WebGLBackground.jsx
 uGaussianSigma = src/components/webgl/WebGLBackground.jsx
 uGlowIntensity = src/components/webgl/WebGLBackground.jsx
+uGlyphPulseIntensity = src/components/webgl/WebGLBackground.jsx
+uGlyphTargetActive = src/components/webgl/WebGLBackground.jsx
+uGlyphTargetRadius = src/components/webgl/WebGLBackground.jsx
 uMorph = src/components/webgl/WebGLBackground.jsx
 uMorphProgress = src/components/webgl/WebGLBackground.jsx
 uMorphType = src/components/webgl/WebGLBackground.jsx
@@ -94,6 +97,7 @@ ENGINE_VIEWPORT_HINT.emitter = ⚠️ multiple: src/components/consciousness/Con
 ENGINE:MORPH_STATE.emitter = src/engine/ConsciousnessEngine.js
 FENCEPOST_LISTENERS_READY.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
 FENCEPOST_REPORT.emitter = canon-console/runtime/playbooks-extra.js
+GLYPH_MAP_READY.emitter = src/engine/GlyphSpace.js
 MORPH_PROGRESS.emitter = src/theater/bus/emitters.js
 NARRATION_CLEANUP.emitter = src/components/narrative/NarrationController.jsx
 NARRATION_STOPPED.emitter = src/components/narrative/NarrationController.jsx
@@ -135,4 +139,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2026-01-10 via `tools/generate-ownership.mjs`
+Last updated: 2026-01-11 via `tools/generate-ownership.mjs`

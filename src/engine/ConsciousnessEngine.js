@@ -603,6 +603,9 @@ class ConsciousnessEngine {
   _onTextMorph(payload = {}) {
     const wordRaw = typeof payload.word === 'string' ? payload.word.trim() : '';
     if (!wordRaw) return;
+    if (typeof globalThis !== 'undefined') {
+      globalThis.__LAST_TEXT_MORPH_WORD__ = wordRaw;
+    }
 
     const stage =
       typeof payload.stage === 'string'
