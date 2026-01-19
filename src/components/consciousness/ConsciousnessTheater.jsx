@@ -183,10 +183,12 @@ export default function ConsciousnessTheater() {
         // Demo mode: bypass opening, narration, scroll orchestration
         if (globalThis.__DEMO_MODE__ && globalThis.__DEMO_KEY__) {
           const demoKey = globalThis.__DEMO_KEY__;
+          const demo = Canonical?.visualDemos?.[demoKey];
+          const isIntentDemo = demo?.intentDemo === true || demoKey === 'demo_intent_v2';
           console.log(`[ConsciousnessTheater] Demo mode detected, running: ${demoKey}`);
 
           // Stop ScrollOrchestrator for non-interactive demos only
-          if (director.scrollOrchestrator && demoKey !== 'demo_intent_v2') {
+          if (director.scrollOrchestrator && !isIntentDemo) {
             director.scrollOrchestrator.stop();
           }
 
@@ -228,7 +230,7 @@ export default function ConsciousnessTheater() {
                 loader.classList.add('hidden');
                 loader.style.display = 'none';
               }
-              const startMorph = demoKey === 'demo_intent_v2' ? 0 : 0.98;
+              const startMorph = isIntentDemo ? 0 : 0.98;
               emitMorphProgress({ progress: startMorph, source: 'demo' });
               emitRenderDirective({
                 source: 'visual_orchestrator',

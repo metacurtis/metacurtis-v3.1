@@ -623,8 +623,14 @@ class ConsciousnessEngine {
 
     const letterGeom = Canonical?.visual?.letterGeometry?.[stage] || {};
     const depth = Number(letterGeom.depth) || 0.3;
-    const letterSpacing = Number(letterGeom.spacing ?? letterGeom.letterSpacing) || 1;
-    const scale = Number(letterGeom.scale) || 1;
+    const baseLetterSpacing = Number(letterGeom.spacing ?? letterGeom.letterSpacing) || 1;
+    const letterSpacing = Number.isFinite(payload.letterSpacing) && payload.letterSpacing > 0
+      ? payload.letterSpacing
+      : baseLetterSpacing;
+    const baseScale = Number(letterGeom.scale) || 1;
+    const scale = Number.isFinite(payload.scale) && payload.scale > 0
+      ? payload.scale
+      : baseScale;
     const fontKey = typeof letterGeom.font === 'string' ? letterGeom.font : null;
 
     const transitionDuration = Number.isFinite(payload.transitionDuration)
@@ -2206,7 +2212,7 @@ class ConsciousnessEngine {
     return loadPromise;
   }
 
-  _build3DLetters(word, { particles, depth, letterSpacing = 1, scale = 1 }) {
+  _build3DLetters(word, { particles, depth, depthScale = null, letterSpacing = 1, scale = 1 }) {
     if (!particles || particles <= 0) {
       return new Float32Array();
     }
@@ -2237,7 +2243,10 @@ class ConsciousnessEngine {
       const scratch = new Vector3();
       const normal = new Vector3();
 
-      const baseDepth = depth ?? 0.3;
+      const baseDepth = Number.isFinite(depth) ? depth : 0.3;
+      const resolvedDepthScale = Number.isFinite(depthScale)
+        ? Math.max(0.01, depthScale)
+        : Math.max(0.5, baseDepth);
       const thickness = Math.max(0.002, baseDepth * 0.25);
       const tangentJitter = thickness * 0.4;
 
@@ -2249,7 +2258,6 @@ class ConsciousnessEngine {
       const buckets = new Map();
 
       let accepted = 0;
-      let attempts = 0;
       const maxAttempts = particles * 40;
 
       const registerPoint = (dest, x, y) => {
@@ -2264,42 +2272,54 @@ class ConsciousnessEngine {
         }
       };
 
-      while (accepted < particles && attempts < maxAttempts) {
-        attempts += 1;
-        sampler.sample(scratch, normal);
+      const sampleWithFilter = (limit, filter) => {
+        let attempts = 0;
+        while (accepted < limit && attempts < maxAttempts) {
+          attempts += 1;
+          sampler.sample(scratch, normal);
+          if (filter && !filter(normal)) continue;
 
-        const angle = Math.random() * Math.PI * 2;
-        const radius = Math.random() * tangentJitter;
-        const px = scratch.x + Math.cos(angle) * radius;
-        const py = scratch.y + Math.sin(angle) * radius;
-        const pz = (Math.random() - 0.5) * thickness;
+          const angle = Math.random() * Math.PI * 2;
+          const radius = Math.random() * tangentJitter;
+          const px = scratch.x + Math.cos(angle) * radius;
+          const py = scratch.y + Math.sin(angle) * radius;
+          const pz = scratch.z * resolvedDepthScale;
 
-        const cellX = Math.floor(px * invCell);
-        const cellY = Math.floor(py * invCell);
-        let tooClose = false;
-        for (let gx = cellX - 1; gx <= cellX + 1 && !tooClose; gx++) {
-          for (let gy = cellY - 1; gy <= cellY + 1 && !tooClose; gy++) {
-            const bucket = buckets.get(`${gx}:${gy}`);
-            if (!bucket) continue;
-            for (let i = 0; i < bucket.length; i += 1) {
-              const idx = bucket[i];
-              const dx = px - out[idx];
-              const dy = py - out[idx + 1];
-              if (dx * dx + dy * dy < minDistSq) {
-                tooClose = true;
-                break;
+          const cellX = Math.floor(px * invCell);
+          const cellY = Math.floor(py * invCell);
+          let tooClose = false;
+          for (let gx = cellX - 1; gx <= cellX + 1 && !tooClose; gx++) {
+            for (let gy = cellY - 1; gy <= cellY + 1 && !tooClose; gy++) {
+              const bucket = buckets.get(`${gx}:${gy}`);
+              if (!bucket) continue;
+              for (let i = 0; i < bucket.length; i += 1) {
+                const idx = bucket[i];
+                const dx = px - out[idx];
+                const dy = py - out[idx + 1];
+                if (dx * dx + dy * dy < minDistSq) {
+                  tooClose = true;
+                  break;
+                }
               }
             }
           }
-        }
-        if (tooClose) continue;
+          if (tooClose) continue;
 
-        const dest = accepted * 3;
-        out[dest] = px;
-        out[dest + 1] = py;
-        out[dest + 2] = pz;
-        registerPoint(dest, px, py);
-        accepted += 1;
+          const dest = accepted * 3;
+          out[dest] = px;
+          out[dest + 1] = py;
+          out[dest + 2] = pz;
+          registerPoint(dest, px, py);
+          accepted += 1;
+        }
+      };
+
+      // Bias sampling to shell surfaces: favor side walls, then faces, then fallback.
+      const sideTarget = Math.max(0, Math.min(particles, Math.round(particles * 0.25)));
+      sampleWithFilter(sideTarget, (n) => Math.abs(n.z) < 0.25);
+      sampleWithFilter(particles, (n) => Math.abs(n.z) > 0.85);
+      if (accepted < particles) {
+        sampleWithFilter(particles, null);
       }
 
       if (accepted < particles) {
@@ -2308,7 +2328,7 @@ class ConsciousnessEngine {
           const dest = accepted * 3;
           out[dest] = scratch.x;
           out[dest + 1] = scratch.y;
-          out[dest + 2] = (Math.random() - 0.5) * thickness;
+          out[dest + 2] = scratch.z * resolvedDepthScale;
           accepted += 1;
         }
       }

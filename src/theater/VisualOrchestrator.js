@@ -147,11 +147,19 @@ class VisualOrchestrator {
         ? params.transitionDuration
         : 2000;
       const particles = Number.isFinite(params?.particles) ? params.particles : undefined;
+      const textScale = Number.isFinite(params?.textScale) ? params.textScale : undefined;
+      const textLetterSpacing = Number.isFinite(params?.textLetterSpacing)
+        ? params.textLetterSpacing
+        : Number.isFinite(params?.letterSpacing)
+          ? params.letterSpacing
+          : undefined;
       BeatBus.emit(EVENTS.TEXT_MORPH, {
         word: nextText,
         stage: morphStage || 'genesis',
         ...(particles ? { particles } : {}),
         transitionDuration,
+        ...(Number.isFinite(textScale) ? { scale: textScale } : {}),
+        ...(Number.isFinite(textLetterSpacing) ? { letterSpacing: textLetterSpacing } : {}),
         source: 'visual_orchestrator',
       });
       this._currentText = nextText;

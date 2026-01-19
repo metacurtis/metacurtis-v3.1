@@ -2407,6 +2407,7 @@
     "demo_intent_v2": {
       "durationMs": 22300,
       "word": "INTENT",
+      "intentDemo": true,
       "beats": [
         {
           "id": "cloud",
@@ -2415,6 +2416,159 @@
           "verb": "chaos",
           "params": {
             "text": "INTENT",
+            "transitionDuration": 0,
+            "color": "#00A4FF"
+          },
+          "morphTarget": 0
+        },
+        {
+          "id": "coalesce",
+          "atMs": 800,
+          "durationMs": 1500,
+          "verb": "coalesce",
+          "params": {},
+          "morphTarget": 0.5
+        },
+        {
+          "id": "form",
+          "atMs": 2300,
+          "durationMs": 2000,
+          "verb": "settle",
+          "params": {},
+          "morphTarget": 1.0
+        },
+        {
+          "id": "hold_formed",
+          "atMs": 4300,
+          "durationMs": 1500,
+          "verb": "gentle_drift",
+          "params": {},
+          "morphTarget": 1.0
+        },
+        {
+          "id": "flythrough_start",
+          "atMs": 5800,
+          "durationMs": 2000,
+          "verb": "breathing_rhythm",
+          "params": {
+            "camera": {
+              "position": { "x": -25, "y": 0, "z": 25 },
+              "lookAt": { "x": -10, "y": 0, "z": 0 },
+              "durationMs": 2000,
+              "easingMode": "ease-in"
+            }
+          },
+          "morphTarget": 1.0
+        },
+        {
+          "id": "flythrough_mid1",
+          "atMs": 7800,
+          "durationMs": 2500,
+          "verb": "breathing_rhythm",
+          "params": {
+            "camera": {
+              "position": { "x": -15, "y": 5, "z": 10 },
+              "lookAt": { "x": -5, "y": 0, "z": 0 },
+              "durationMs": 2500,
+              "easingMode": "linear"
+            }
+          },
+          "morphTarget": 1.0
+        },
+        {
+          "id": "flythrough_mid2",
+          "atMs": 10300,
+          "durationMs": 2500,
+          "verb": "breathing_rhythm",
+          "params": {
+            "camera": {
+              "position": { "x": 0, "y": 0, "z": -5 },
+              "lookAt": { "x": 0, "y": 0, "z": 0 },
+              "durationMs": 2500,
+              "easingMode": "linear"
+            }
+          },
+          "morphTarget": 1.0
+        },
+        {
+          "id": "flythrough_mid3",
+          "atMs": 12800,
+          "durationMs": 2500,
+          "verb": "breathing_rhythm",
+          "params": {
+            "camera": {
+              "position": { "x": 15, "y": -5, "z": 10 },
+              "lookAt": { "x": 5, "y": 0, "z": 0 },
+              "durationMs": 2500,
+              "easingMode": "linear"
+            }
+          },
+          "morphTarget": 1.0
+        },
+        {
+          "id": "flythrough_settle",
+          "atMs": 15300,
+          "durationMs": 3000,
+          "verb": "breathing_rhythm",
+          "params": {
+            "camera": {
+              "position": { "x": 0, "y": 0, "z": 55 },
+              "lookAt": { "x": 0, "y": 0, "z": 0 },
+              "durationMs": 3000,
+              "easingMode": "ease-out"
+            }
+          },
+          "morphTarget": 1.0
+        },
+        {
+          "id": "hold_before_dissolve",
+          "atMs": 18300,
+          "durationMs": 1500,
+          "verb": "gentle_drift",
+          "params": {},
+          "morphTarget": 1.0
+        },
+        {
+          "id": "auto_dissolve",
+          "atMs": 19800,
+          "durationMs": 2000,
+          "verb": "chaos",
+          "params": {},
+          "morphTarget": 0
+        },
+        {
+          "id": "atmosphere_settle",
+          "atMs": 21800,
+          "durationMs": 500,
+          "verb": "gentle_drift",
+          "params": {},
+          "morphTarget": 0
+        }
+      ],
+      "interactive": {
+        "enabled": true,
+        "scrollMapping": "position",
+        "startAfterMs": 300
+      },
+      "ui": {
+        "scrollPrompt": true,
+        "endCaption": "BUILT IN REAL TIME"
+      }
+    },
+    "demo_technologist": {
+      "durationMs": 22300,
+      "word": "TECHNOLOGIST",
+      "intentDemo": true,
+      "beats": [
+        {
+          "id": "cloud",
+          "atMs": 0,
+          "durationMs": 800,
+          "verb": "chaos",
+          "params": {
+            "text": "TECHNOLOGIST",
+            "textScale": 0.65,
+            "textLetterSpacing": 0.5,
             "transitionDuration": 0,
             "color": "#00A4FF"
           },

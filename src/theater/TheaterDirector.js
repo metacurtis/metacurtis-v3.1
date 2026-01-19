@@ -902,7 +902,7 @@ class TheaterDirector {
     if (!demo) {
       throw new Error(`[TheaterDirector] visual demo not found: ${demoKey}`);
     }
-    const isIntentDemo = demoKey === 'demo_intent_v2';
+    const isIntentDemo = demo?.intentDemo === true || demoKey === 'demo_intent_v2';
 
     if (isIntentDemo) {
       this._clearDemoInteractive();

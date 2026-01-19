@@ -152,6 +152,8 @@ const EVENT_SCHEMAS = new Map([
       stage: 'string',
       particles: 'number',
       transitionDuration: 'number',
+      scale: 'number',
+      letterSpacing: 'number',
       source: 'string',
     },
   }],

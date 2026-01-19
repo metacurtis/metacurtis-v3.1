@@ -134,6 +134,29 @@ export async function waitForTheaterReady(page: Page, timeout = 30_000) {
   console.log('[THEATER] ✅ Director ready, fencepost contract satisfied');
 }
 
+export async function waitForDemoReady(
+  page: Page,
+  options: { demoKey?: string; word?: string; timeout?: number } = {},
+) {
+  const { demoKey, word, timeout = 30_000 } = options;
+
+  await page.waitForFunction(
+    ({ demoKey: expectedDemoKey, expectedWord }) => {
+      const w = window as any;
+      if (!w.__DEMO_MODE__) return false;
+      if (expectedDemoKey && w.__DEMO_KEY__ !== expectedDemoKey) return false;
+      if (expectedWord && w.__LAST_TEXT_MORPH_WORD__ !== expectedWord) return false;
+      if (!w.__rendererDiagnostics?.getAttributeArray) return false;
+      if (!w.__viewportHint) return false;
+      return true;
+    },
+    { demoKey, expectedWord: word },
+    { timeout },
+  );
+
+  console.log('[DEMO] ✅ Demo ready', { demoKey, word });
+}
+
 export async function sampleTextAabb(page: Page) {
   return page.evaluate(() => {
     const probe = (window as any).probe;
