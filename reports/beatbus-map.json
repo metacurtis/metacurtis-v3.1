@@ -3,7 +3,7 @@
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 201
+        "line": 203
       },
       {
         "file": "src/state/commands/StateCommands.js",
@@ -21,11 +21,11 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 351
+        "line": 353
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1334
+        "line": 1335
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -77,7 +77,7 @@
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 828
+        "line": 829
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -87,7 +87,7 @@
     "PARTICLE_CLICK_HIT": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1665
+        "line": 1666
       }
     ],
     "PARTICLE_CLICK_REQUEST": [
@@ -105,21 +105,27 @@
     "ENGINE:MORPH_STATE": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 853
+        "line": 862
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1112
+        "line": 1121
       }
     ],
     "CLIMAX_STEP": [
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1068
+        "line": 1077
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
-        "line": 1451
+        "line": 1460
+      }
+    ],
+    "GLYPH_MAP_READY": [
+      {
+        "file": "src/engine/GlyphSpace.js",
+        "line": 29
       }
     ],
     "QUALITY_CHANGE": [
@@ -157,7 +163,7 @@
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
-        "line": 227
+        "line": 285
       },
       {
         "file": "canon-console/runtime/hud.js",
@@ -303,7 +309,7 @@
     "TEXT_MORPH": [
       {
         "file": "src/theater/VisualOrchestrator.js",
-        "line": 149
+        "line": 156
       }
     ],
     "CANON_VIOLATION": [
@@ -337,7 +343,7 @@
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 345
+        "line": 347
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -351,11 +357,11 @@
     "BLUEPRINT_READY": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 252
+        "line": 254
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2284
+        "line": 2285
       },
       {
         "file": "src/components/webgl/WebGLCanvas.jsx",
@@ -385,11 +391,11 @@
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 279
+        "line": 281
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 962
+        "line": 963
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -399,11 +405,11 @@
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 316
+        "line": 318
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 953
+        "line": 954
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -421,7 +427,7 @@
     "START_NARRATIVE": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 321
+        "line": 323
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
@@ -459,7 +465,7 @@
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
-        "line": 56
+        "line": 57
       }
     ],
     "CLIMAX_STEP": [
@@ -483,11 +489,11 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1439
+        "line": 1440
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1465
+        "line": 1466
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -511,7 +517,7 @@
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
-        "line": 54
+        "line": 55
       }
     ],
     "NARRATIVE_LINE": [
@@ -577,7 +583,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1456
+        "line": 1457
       }
     ],
     "PARTICLE_PHASE": [
@@ -587,7 +593,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 3390
+        "line": 3439
       }
     ],
     "PARTICLES_EMERGED": [
@@ -601,7 +607,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 951
+        "line": 952
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -627,7 +633,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 952
+        "line": 953
       }
     ],
     "DIRECTOR_CANCEL": [
@@ -639,7 +645,7 @@
     "TEXT_MORPH": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1194
+        "line": 1195
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -649,25 +655,25 @@
     "PARTICLE_CLICK_REQUEST": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1676
+        "line": 1677
       }
     ],
     "TEXT_POSITIONS_READY": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2299
+        "line": 2300
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2651
+        "line": 2696
       }
     ],
     "MORPH_PROGRESS": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2928
+        "line": 2973
       },
       {
         "file": "src/state/commands/StateCommands.js",
@@ -679,7 +685,7 @@
       },
       {
         "file": "src/theater/VisualOrchestrator.js",
-        "line": 55
+        "line": 56
       }
     ],
     "ENGINE:MORPH_STATE": [
