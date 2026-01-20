@@ -224,6 +224,7 @@ export const getLetterShapes = (font, text, size = 32, options = {}) => {
     letters.push({
       letter: char,
       index: i,
+      shape: shapes[0],
       shapes,
       hasVoid,
       bounds,

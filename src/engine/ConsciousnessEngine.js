@@ -31,6 +31,7 @@ import {
   makeBandFrame,
 } from './utils/blueprintUtils.js';
 import { emitMorphProgress, emitTextPositionsReady } from '@/theater/bus/emitters.js';
+import { getLetterShapes, getShapeBounds, getVoidCenter } from '@/typography/LetterShapes.js';
 
 // Visual behavior constants (formerly VC knobs)
 const STARFIELD_FIT_FRAC = 0.92;
@@ -284,6 +285,12 @@ class ConsciousnessEngine {
         getFont: () => this.font,
         getShapes: (text, size = 32) => this.font?.generateShapes(text, size),
         getLetterShape: (letter, size = 32) => this.font?.generateShapes(letter, size)?.[0],
+      };
+      window.__letterShapes = {
+        getLetterShapes: (text, size = 32, options = {}) =>
+          getLetterShapes(this.font, text, size, options),
+        getShapeBounds,
+        getVoidCenter,
       };
 
       console.log('🔧 Engine debug API exposed at window.engineDebug');

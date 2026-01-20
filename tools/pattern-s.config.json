@@ -1,6 +1,8 @@
 {
   "eventOrphanAllowlist": {
-    "emitterOnly": [],
+    "emitterOnly": [
+      "GLYPH_MAP_READY"
+    ],
     "listenerOnly": []
   },
   "diagnosticEventPrefixes": [
