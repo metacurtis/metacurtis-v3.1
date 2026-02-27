@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Landing Slice Determinism Audit</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.35; margin: 24px; color: #111; }
+    h1, h2, h3 { margin-top: 22px; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; }
+    th, td { border: 1px solid #bbb; padding: 8px; vertical-align: top; text-align: left; font-size: 13px; }
+    th { background: #f3f3f3; }
+    code, pre { background: #f7f7f7; border: 1px solid #e1e1e1; padding: 2px 4px; }
+    pre { padding: 10px; overflow-x: auto; }
+    .sev-critical { color: #b00020; font-weight: 700; }
+    .sev-high { color: #9a4d00; font-weight: 700; }
+    .sev-medium { color: #1a5f9e; font-weight: 700; }
+    .pass { color: #0a6b2a; font-weight: 700; }
+    .fail { color: #b00020; font-weight: 700; }
+    .needs { color: #7a4f00; font-weight: 700; }
+    ul { margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Landing Slice Determinism Audit</h1>
+  <p><strong>Role:</strong> Agent F (Codebase Auditor + Determinism Engineer)</p>
+  <p><strong>Repo:</strong> <code>/home/curtis/projects/metacurtis-v3.1</code></p>
+  <p><strong>Method:</strong> Zero-Assumption Grounding. Every claim below includes concrete file/symbol/line evidence or explicit "Needs confirmation".</p>
+
+  <h2>1) Executive Summary (Top 5 Issues)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Severity</th>
+        <th>Issue</th>
+        <th>Grounded Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td class="sev-critical">Critical</td>
+        <td>Dual stage/progress authority: both <code>stageAtom</code> and <code>narrativeAtom</code> expose narrative writers.</td>
+        <td>
+          <code>src/state/atoms/stageAtom.js:376-501</code> (<code>setStage</code>, <code>jumpToStage</code>, <code>setGlobalProgress</code>)<br/>
+          <code>src/state/atoms/narrativeAtom.js:69-175</code> (<code>jumpToStage</code>, <code>setStage</code>, <code>setGlobalProgress</code>, <code>setScrollProgress</code>)<br/>
+          <code>src/hooks/atoms/useNarrativeStore.js:21-27</code> re-exports narrative writers.
+        </td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td class="sev-critical">Critical</td>
+        <td>Two production scroll listeners can drive progression concurrently; stage derivation also happens in multiple modules.</td>
+        <td>
+          Scroll listeners: <code>src/theater/ScrollOrchestrator.js:78</code>, <code>src/components/consciousness/ConsciousnessTheater.jsx:734</code> (plus form camera scroll at <code>:280</code>).<br/>
+          Scroll orchestration started by Director: <code>src/theater/TheaterDirector.js:2132</code>.<br/>
+          Stage derivation from scroll/progress: <code>src/theater/ScrollOrchestrator.js:263-315</code>, <code>src/state/commands/StateCommands.js:183-195</code>, <code>src/state/atoms/stageAtom.js:478-486</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td class="sev-high">High</td>
+        <td><code>MORPH_PROGRESS</code> has competing writers while BeatBus enforces single-source ownership at runtime.</td>
+        <td>
+          Single-owner guard: <code>src/theater/bus/index.js:461-467</code> (blocks source mismatch).<br/>
+          Writers: <code>src/theater/controllers/MorphAnimationController.js:37-41</code>, <code>src/theater/TheaterDirector.js:549,567,620</code>, <code>src/engine/ConsciousnessEngine.js:642-655</code>.
+        </td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td class="sev-high">High</td>
+        <td>Navigation contract mismatch and fallback bypasses determinism path.</td>
+        <td>
+          <code>src/state/commands/NavigationCommands.js:38-40</code> calls <code>window.StateCommands.setStage(...)</code>.<br/>
+          No <code>setStage()</code> exists in <code>StateCommands</code>: <code>rg -n "setStage\(" src/state/commands/StateCommands.js</code> returned <code>NO_MATCH</code>.<br/>
+          Dev fallback bypass: <code>src/state/commands/NavigationCommands.js:52</code> (<code>stageAtom.jumpToStage</code>).
+        </td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td class="sev-medium">Medium</td>
+        <td>Legacy naming/model drift remains (store paths + stage naming), increasing slice config risk.</td>
+        <td>
+          Missing requested store paths: <code>ls src/stores</code> -> <code>No such file or directory</code>.<br/>
+          Legacy dynamic imports to missing store files: <code>src/utils/featureFlags.js:173,177</code>.<br/>
+          Non-canonical stage keys in UI file: <code>src/components/ui/narrative/MemoryFragments.jsx:89-104</code> uses <code>silent/awakening/acceleration</code>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Core Invariants (Pass/Fail)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Invariant</th>
+        <th>Status</th>
+        <th>Grounding</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>I1) Exactly one module derives <code>stageIndex/stageProgress</code> from <code>globalProgress</code>.</td>
+        <td class="fail">Fail</td>
+        <td><code>stageAtom.setGlobalProgress</code> (<code>stageAtom.js:475-500</code>) + <code>StateCommands.setScrollProgress</code> (<code>StateCommands.js:176-195</code>) + <code>ScrollOrchestrator._onScroll</code> (<code>ScrollOrchestrator.js:263-315</code>).</td>
+      </tr>
+      <tr>
+        <td>I2) Exactly one place attaches production scroll listener that drives progress.</td>
+        <td class="fail">Fail</td>
+        <td><code>ScrollOrchestrator.js:78</code> and <code>ConsciousnessTheater.jsx:734</code> both attach scroll listeners.</td>
+      </tr>
+      <tr>
+        <td>I3) No component besides orchestrator/store writes narrative state in <code>useEffect</code> (except lifecycle binding).</td>
+        <td class="fail">Fail</td>
+        <td><code>ConsciousnessTheater.jsx:731</code> writes via <code>stateCommands.setScrollProgress</code>; <code>WebGLBackground.jsx:1810</code> directly calls <code>window.narrativeAtom.activateMemoryFragment</code>.</td>
+      </tr>
+      <tr>
+        <td>I4) Renderer/WebGLBackground is sink-only (no narrative-control writes).</td>
+        <td class="fail">Fail</td>
+        <td>Renderer performs direct narrative write on click: <code>WebGLBackground.jsx:1810</code>.</td>
+      </tr>
+      <tr>
+        <td>I5) Platform stage count is 7; legacy 5/6 assumptions surfaced.</td>
+        <td class="pass">Pass (with caveats)</td>
+        <td>Canonical stage order is 7: <code>sst/canon/v3.5.runtime.json:382-390</code>, <code>src/config/canonical/sst-v3.3.json:334-341</code>; no <code>Math.floor(progress*5|6)</code> hits in <code>src</code>. Caveat: hard-coded key range <code>/^[0-6]$/</code> in <code>ConsciousnessTheater.jsx:629</code>.</td>
+      </tr>
+      <tr>
+        <td>I6) One canonical <code>useNarrativeStore</code> meaning.</td>
+        <td class="fail">Fail</td>
+        <td>Actual hook is <code>src/hooks/atoms/useNarrativeStore.js</code>; stale references to non-existent <code>@/stores/narrativeStore*.js</code> remain in <code>src/utils/featureFlags.js:173,177</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2) Files Touched Index</h2>
+
+  <h3>Primary (Requested vs actual)</h3>
+  <table>
+    <thead><tr><th>Requested</th><th>Status</th><th>Actual Equivalent Inspected</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>src/stores/narrativeStore.js</code></td>
+        <td>Missing</td>
+        <td><code>src/state/atoms/narrativeAtom.js</code></td>
+        <td><code>ls src/stores</code> -> no such directory</td>
+      </tr>
+      <tr>
+        <td><code>src/stores/useNarrativeStore.js</code></td>
+        <td>Missing</td>
+        <td><code>src/hooks/atoms/useNarrativeStore.js</code></td>
+        <td><code>rg --files src/hooks src/state | rg "useNarrativeStore|narrativeAtom"</code></td>
+      </tr>
+      <tr>
+        <td><code>src/components/StageController.jsx</code></td>
+        <td>Missing</td>
+        <td><code>src/components/consciousness/ConsciousnessTheater.jsx</code></td>
+        <td><code>rg --files src/components | rg "StageController\.jsx"</code> -> no hit</td>
+      </tr>
+      <tr>
+        <td><code>src/components/WebGLBackground.jsx</code></td>
+        <td>Path moved</td>
+        <td><code>src/components/webgl/WebGLBackground.jsx</code></td>
+        <td><code>rg --files src/components | rg "WebGLBackground\.jsx"</code></td>
+      </tr>
+      <tr>
+        <td><code>src/components/WebGLCanvas.jsx</code></td>
+        <td>Path moved</td>
+        <td><code>src/components/webgl/WebGLCanvas.jsx</code></td>
+        <td><code>rg --files src/components | rg "WebGLCanvas\.jsx"</code></td>
+      </tr>
+      <tr>
+        <td><code>src/App.jsx</code></td>
+        <td>Present</td>
+        <td><code>src/App.jsx</code></td>
+        <td><code>src/App.jsx:33-40,95-103</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Secondary</h3>
+  <p><code>src/state/atoms/stageAtom.js</code>, <code>src/state/commands/StateCommands.js</code>, <code>src/state/commands/NavigationCommands.js</code>, <code>src/theater/ScrollOrchestrator.js</code>, <code>src/theater/UnifiedNavigationAPI.js</code>, <code>src/theater/TheaterDirector.js</code>, <code>src/theater/VisualOrchestrator.js</code>, <code>src/theater/bus/index.js</code>, <code>src/theater/bus/emitters.js</code>, <code>src/theater/bus/schemas.js</code>, <code>src/theater/controllers/MorphAnimationController.js</code>, <code>src/engine/ConsciousnessEngine.js</code>, <code>src/state/atoms/qualityAtom.js</code>, <code>src/state/atoms/performanceAtom.js</code>, <code>src/components/dev/DemoLauncher.jsx</code>, <code>src/config/canonical/canonicalAuthority.js</code>, <code>src/config/sst-loader.js</code>, <code>sst/canon/v3.5.runtime.json</code>, <code>tools/pattern-s.ownership.json</code>.</p>
+
+  <h3>Tertiary</h3>
+  <p><code>src/components/ui/narrative/MemoryFragments.jsx</code>, <code>src/components/ui/narrative/StageNavigation.jsx</code>, <code>src/components/webgl/consciousness/PointSpriteAtlas.js</code>, <code>src/bootstrap/wireSSTv3.js</code>, <code>src/hooks/useMemoryFragments.js</code>, <code>src/utils/featureFlags.js</code>, <code>src/utils/performance/AdaptiveQualitySystem.js</code>, <code>src/components/fragments/AmbientFragment.jsx</code>, <code>src/components/narrative/NarrationController.jsx</code>.</p>
+
+  <h2>3) Authority Graph (Writers/Readers by Field)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>State Field</th>
+        <th>Writers (file::symbol)</th>
+        <th>Readers (file::symbol)</th>
+        <th>Evidence</th>
+        <th>Risk if unchanged</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>globalProgress</code></td>
+        <td>
+          <code>narrativeAtom.js::setGlobalProgress</code><br/>
+          <code>stageAtom.js::setStage/jumpToStage/setGlobalProgress</code>
+        </td>
+        <td>
+          <code>narrativeAtom.js::getNarrativeSnapshot</code><br/>
+          <code>stageAtom.js::getStageInfo</code>
+        </td>
+        <td>
+          <code>narrativeAtom.js:150-154,283-291</code><br/>
+          <code>stageAtom.js:390,421,491,571-579</code>
+        </td>
+        <td>Store drift between atom families; hard-to-reproduce stage/progress desync.</td>
+      </tr>
+      <tr>
+        <td><code>stageIndex</code></td>
+        <td><code>stageAtom.js::setStage/jumpToStage/setGlobalProgress</code></td>
+        <td>
+          <code>narrativeNavigation.js::buildNavigationState/nextStage/prevStage</code><br/>
+          <code>NarrationController.jsx::auto-advance logic</code>
+        </td>
+        <td>
+          <code>stageAtom.js:389,420,493</code><br/>
+          <code>narrativeNavigation.js:66,106,128</code><br/>
+          <code>NarrationController.jsx:331-354</code>
+        </td>
+        <td>Index may be interpreted differently across modules when derived in more than one place.</td>
+      </tr>
+      <tr>
+        <td><code>stageKey</code> (current stage slug)</td>
+        <td>
+          <code>stageAtom.js::setStage/jumpToStage/setGlobalProgress</code><br/>
+          <code>narrativeAtom.js::jumpToStage</code>
+        </td>
+        <td>
+          <code>ConsciousnessTheater.jsx</code>, <code>NarrationController.jsx</code>, <code>qualityAtom.js</code>, others
+        </td>
+        <td>
+          <code>stageAtom.js:388,419,492</code><br/>
+          <code>narrativeAtom.js:69-97</code><br/>
+          <code>ConsciousnessTheater.jsx:207</code>, <code>NarrationController.jsx:85</code>, <code>qualityAtom.js:155-164</code>
+        </td>
+        <td>Two stage keys can coexist (<code>stageAtom.currentStage</code> vs <code>narrativeAtom.currentStage</code>).</td>
+      </tr>
+      <tr>
+        <td><code>stageProgress</code></td>
+        <td>
+          <code>stageAtom.js::setStageProgress</code> (0..1)<br/>
+          <code>ScrollOrchestrator.js::_onScroll</code> emits event value (0..100)
+        </td>
+        <td>
+          <code>DevPerformanceMonitor.jsx</code> (expects 0..1 then x100)<br/>
+          <code>AmbientFragment.jsx</code> (expects percentage)
+        </td>
+        <td>
+          <code>stageAtom.js:457-468</code><br/>
+          <code>ScrollOrchestrator.js:315</code><br/>
+          <code>DevPerformanceMonitor.jsx:116</code><br/>
+          <code>AmbientFragment.jsx:52-59</code>
+        </td>
+        <td>Unit mismatch causes trigger thresholds and diagnostics to disagree.</td>
+      </tr>
+      <tr>
+        <td><code>qualityTier</code></td>
+        <td>
+          <code>qualityAtom.js::setCurrentQualityTier</code><br/>
+          <code>performanceAtom.js::setTier</code> (parallel quality channel)
+        </td>
+        <td>
+          <code>StateCommands.js::qualitySub</code><br/>
+          <code>DevPerformanceMonitor.jsx</code>
+        </td>
+        <td>
+          <code>qualityAtom.js:179-205</code><br/>
+          <code>performanceAtom.js:58-67</code><br/>
+          <code>StateCommands.js:137-153</code><br/>
+          <code>DevPerformanceMonitor.jsx:108</code>
+        </td>
+        <td>Split quality authority and duplicated QUALITY_CHANGE emission paths.</td>
+      </tr>
+      <tr>
+        <td><code>beatEvents</code> (BeatBus narrative stream)</td>
+        <td>
+          <code>bus/emitters.js</code>, <code>VisualOrchestrator.js</code>, <code>TheaterDirector.js</code>, <code>ScrollOrchestrator.js</code>, <code>StateCommands.js</code>, <code>qualityAtom.js</code>
+        </td>
+        <td>
+          <code>WebGLBackground.jsx</code>, <code>NarrationController.jsx</code>, <code>StateCommands.js</code>, etc.
+        </td>
+        <td>
+          Writers: <code>emitters.js:35,54,65</code>, <code>VisualOrchestrator.js:277</code>, <code>TheaterDirector.js:1776,2110,2112</code>, <code>ScrollOrchestrator.js:310</code>, <code>StateCommands.js:145</code>, <code>qualityAtom.js:198</code>.<br/>
+          Readers: <code>WebGLBackground.jsx:2864,3141</code>, <code>NarrationController.jsx:1084-1085</code>, <code>StateCommands.js:82,90,125</code>.
+        </td>
+        <td>Contention/order races, schema violations, and single-owner guard blocks.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4) Writer Audit (Complete List Requested)</h2>
+
+  <h3>4.1 Callsites: <code>setGlobalProgress / setStage / jumpToStage / setStageProgress / setQualityTier / getState().set*</code></h3>
+  <ul>
+    <li><code>src/state/atoms/narrativeAtom.js:173</code> calls <code>narrativeAtom.setGlobalProgress(progress)</code>.</li>
+    <li><code>src/state/atoms/narrativeAtom.js:124,140,146</code> call <code>narrativeAtom.jumpToStage(...)</code>.</li>
+    <li><code>src/state/commands/StateCommands.js:194</code> calls <code>stageAtom.jumpToStage(targetStage)</code>.</li>
+    <li><code>src/state/commands/NavigationCommands.js:52</code> calls <code>stageAtom.jumpToStage(targetStage)</code>.</li>
+    <li><code>src/theater/TheaterDirector.js:2087</code> calls <code>window.stageControls.jumpToStage(toStage)</code> fallback.</li>
+    <li><code>src/state/atoms/stageAtom.js:440,450</code> call internal <code>actions.setStage(...)</code>.</li>
+    <li><code>src/state/atoms/stageAtom.js:680,707,728</code> call <code>setStageProgress(...)</code> via wrapper/dev tools.</li>
+    <li><code>src/state/commands/NavigationCommands.js:40</code> attempts <code>window.StateCommands.setStage(...)</code> (dead path in current code).</li>
+    <li><code>src/state/atoms/qualityAtom.js:298,307,411</code> call <code>qualityAtom.setCurrentQualityTier(...)</code>.</li>
+    <li><code>src/state/atoms/performanceAtom.js:58</code> has separate <code>setTier(...)</code> writer (<code>currentTier</code> branch).</li>
+    <li><strong>getState().set*</strong>: no matches found by <code>rg -n "getState\(\)\.set" src</code>.</li>
+  </ul>
+  <p><strong>Complete grep inventory used for this section:</strong></p>
+  <pre><code>rg -n "setGlobalProgress|setStage\b|jumpToStage|setStageProgress|getState\(\)\.set|setCurrentQualityTier|setQualityTier|setTier\(" src/state src/theater src/components
+src/state/commands/StateCommands.js:194:          stageAtom.jumpToStage(targetStage);
+src/state/commands/NavigationCommands.js:38:  if (typeof window !== 'undefined' && window.StateCommands?.setStage) {
+src/state/commands/NavigationCommands.js:40:      window.StateCommands.setStage(targetStage, { origin });
+src/state/commands/NavigationCommands.js:43:      console.warn('[NAV_CANON] StateCommands.setStage failed; checking dev fallback', { err, targetStage, origin });
+src/state/commands/NavigationCommands.js:52:  stageAtom.jumpToStage(targetStage);
+src/theater/TheaterDirector.js:2083:      } else if (typeof window !== 'undefined' && window.stageControls?.jumpToStage) {
+src/theater/TheaterDirector.js:2085:          '[Director] unifiedNav missing; using stageControls.jumpToStage fallback for genesis handoff',
+src/theater/TheaterDirector.js:2087:        window.stageControls.jumpToStage(toStage);
+src/theater/UnifiedNavigationAPI.js:7: * RULE: Nothing should call narrativeAtom.jumpToStage directly.
+src/theater/UnifiedNavigationAPI.js:8: * RULE: Nothing should call stageAtom.jumpToStage directly.
+src/state/atoms/qualityAtom.js:179:    setCurrentQualityTier: (tier) => {
+src/state/atoms/qualityAtom.js:298:        qualityAtom.setCurrentQualityTier('LOW');
+src/state/atoms/qualityAtom.js:307:        qualityAtom.setCurrentQualityTier('ULTRA');
+src/state/atoms/qualityAtom.js:411:    setTier: (tier) => qualityAtom.setCurrentQualityTier(tier),
+src/state/atoms/narrativeAtom.js:69:  jumpToStage: stage => {
+src/state/atoms/narrativeAtom.js:71:      function: 'jumpToStage',
+src/state/atoms/narrativeAtom.js:124:      narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex + 1]);
+src/state/atoms/narrativeAtom.js:140:      narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex - 1]);
+src/state/atoms/narrativeAtom.js:144:  setStage: stageIndex => {
+src/state/atoms/narrativeAtom.js:146:    narrativeAtom.jumpToStage(stage);
+src/state/atoms/narrativeAtom.js:150:  setGlobalProgress: progress => {
+src/state/atoms/narrativeAtom.js:173:    narrativeAtom.setGlobalProgress(progress);
+src/state/atoms/stageAtom.js:376:    setStage: (stageInput) => {
+src/state/atoms/stageAtom.js:395:      batchedSetState(updates, 'setStage');
+src/state/atoms/stageAtom.js:407:    jumpToStage: (stageInput) => {
+src/state/atoms/stageAtom.js:427:      batchedSetState(updates, 'jumpToStage');
+src/state/atoms/stageAtom.js:440:        actions.setStage(nextStageName);
+src/state/atoms/stageAtom.js:450:        actions.setStage(prevStageName);
+src/state/atoms/stageAtom.js:455:    setStageProgress: (progress) => {
+src/state/atoms/stageAtom.js:475:    setGlobalProgress: (progress) => {
+src/state/atoms/stageAtom.js:500:      batchedSetState(updates, 'setGlobalProgress');
+src/state/atoms/stageAtom.js:551:    resetStage: () => {
+src/state/atoms/stageAtom.js:623:        actions.jumpToStage(stageName);
+src/state/atoms/stageAtom.js:676:    jumpToStage: (stage) => stageAtom.jumpToStage(stage),
+src/state/atoms/stageAtom.js:677:    jumpTo: (stage) => stageAtom.jumpToStage(stage), // legacy alias
+src/state/atoms/stageAtom.js:680:    setProgress: (progress) => stageAtom.setStageProgress(progress),
+src/state/atoms/stageAtom.js:681:    reset: () => stageAtom.resetStage(),
+src/state/atoms/stageAtom.js:706:        stageAtom.jumpToStage(randomStage);
+src/state/atoms/stageAtom.js:707:        stageAtom.setStageProgress(Math.random());
+src/state/atoms/stageAtom.js:728:          stageAtom.setStageProgress(i / 10);</code></pre>
+
+  <h3>4.2 Scroll listener attachments</h3>
+  <ul>
+    <li><code>src/theater/ScrollOrchestrator.js:78</code> <code>window.addEventListener('scroll', this._onScroll)</code>.</li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx:280</code> form camera scroll listener.</li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx:734</code> narrative scroll listener -> <code>stateCommands.setScrollProgress</code>.</li>
+    <li><strong>wheel/touchmove:</strong> no matches in <code>src</code> (<code>NO_MATCH: wheel/touchmove listeners not found</code>).</li>
+  </ul>
+  <p><strong>Complete grep inventory used for this section:</strong></p>
+  <pre><code>rg -n "addEventListener\('scroll'|addEventListener\('wheel'|addEventListener\('touchmove'|removeEventListener\('scroll'|removeEventListener\('wheel'|removeEventListener\('touchmove'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+src/theater/ScrollOrchestrator.js:104:      window.removeEventListener('scroll', this._onScroll);
+src/components/consciousness/ConsciousnessTheater.jsx:280:    window.addEventListener('scroll', handleScroll, { passive: true });
+src/components/consciousness/ConsciousnessTheater.jsx:282:    return () => window.removeEventListener('scroll', handleScroll);
+src/components/consciousness/ConsciousnessTheater.jsx:734:    window.addEventListener('scroll', handleScroll, { passive: true });
+src/components/consciousness/ConsciousnessTheater.jsx:736:    return () => window.removeEventListener('scroll', handleScroll);</code></pre>
+
+  <h3>4.3 requestAnimationFrame loops that mutate state/events</h3>
+  <ul>
+    <li><code>src/theater/controllers/MorphAnimationController.js:30-41</code> emits <code>MORPH_PROGRESS</code> every frame.</li>
+    <li><code>src/theater/TheaterDirector.js:559-569</code> demo morph RAF emits <code>MORPH_PROGRESS</code> every frame.</li>
+    <li><code>src/engine/ConsciousnessEngine.js:663-671</code> text morph RAF emits <code>MORPH_PROGRESS</code> every frame.</li>
+    <li><code>src/state/commands/StateCommands.js:229-237</code> RAF updates morph and atom state during climax.</li>
+    <li><code>src/state/atoms/stageAtom.js:188-207</code> RAF updates smoother internal state (local controller state).</li>
+    <li><code>src/theater/ScrollOrchestrator.js:166-188</code> RAF mutates orchestrator internal morph state (<code>this.morph</code>).</li>
+  </ul>
+
+  <h3>4.4 Narrative-related <code>window.dispatchEvent</code> / <code>BeatBus.emit</code></h3>
+  <ul>
+    <li><code>src/state/atoms/narrativeAtom.js:105,193,239</code> dispatches stage/fragment/narrative custom DOM events.</li>
+    <li><code>src/state/atoms/qualityAtom.js:198</code> emits <code>QUALITY_CHANGE</code>.</li>
+    <li><code>src/state/commands/StateCommands.js:145,210</code> emits <code>QUALITY_CHANGE</code> and <code>BUILD_EMERGENCE_BLUEPRINT</code>.</li>
+    <li><code>src/theater/bus/emitters.js:35,54,65</code> emits <code>STAGE_CHANGE</code>, <code>RENDER_DIRECTIVE</code>, <code>MORPH_PROGRESS</code>.</li>
+    <li><code>src/theater/VisualOrchestrator.js:277</code> emits <code>RENDER_DIRECTIVE</code>.</li>
+    <li><code>src/theater/TheaterDirector.js:872,1362,1776,1953,2110,2112</code> emits opening/narrative control events.</li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx:353,521</code> emits <code>BUILD_EMERGENCE_BLUEPRINT</code>/<code>ENGINE_VIEWPORT_HINT</code>.</li>
+    <li><code>src/bootstrap/wireSSTv3.js:30,40,51,66</code> dispatches <code>sst:*</code> window events.</li>
+  </ul>
+  <p><strong>Complete grep inventory used for this section:</strong></p>
+  <pre><code>rg -n "BeatBus\.emit\(|window\.dispatchEvent\(" src
+src/theater/VisualOrchestrator.js:150:      BeatBus.emit(EVENTS.TEXT_MORPH, {
+src/theater/VisualOrchestrator.js:277:    BeatBus.emit(EVENTS.RENDER_DIRECTIVE, payload);
+src/theater/bus/emitters.js:35:  BeatBus.emit(EVENTS.STAGE_CHANGE, payload);
+src/theater/bus/emitters.js:43:  BeatBus.emit(EVENTS.BLUEPRINT_READY, payload);
+src/theater/bus/emitters.js:49:  BeatBus.emit(EVENTS.PARTICLES_EMERGED, payload);
+src/theater/bus/emitters.js:54:  BeatBus.emit(EVENTS.RENDER_DIRECTIVE, payload);
+src/theater/bus/emitters.js:65:  BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+src/theater/bus/emitters.js:73:  BeatBus.emit(EVENTS.TEXT_POSITIONS_READY, payload);
+src/theater/TheaterDirector.js:872:          BeatBus.emit(EVENTS.ENABLE_SCROLL, {
+src/theater/TheaterDirector.js:876:          BeatBus.emit(EVENTS.OPENING_COMPLETE, {
+src/theater/TheaterDirector.js:1362:      BeatBus.emit(EVENTS.START_NARRATIVE, {
+src/theater/TheaterDirector.js:1776:          BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+src/theater/TheaterDirector.js:1953:      BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+src/theater/TheaterDirector.js:2110:      BeatBus.emit(EVENTS.ENABLE_SCROLL);
+src/theater/TheaterDirector.js:2112:      BeatBus.emit(EVENTS.START_NARRATIVE, {
+src/theater/TheaterDirector.js:2126:      BeatBus.emit(EVENTS.OPENING_COMPLETE, {
+src/components/consciousness/ConsciousnessTheater.jsx:353:          BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+src/components/consciousness/ConsciousnessTheater.jsx:521:          BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, {
+src/components/webgl/WebGLBackground.jsx:889:    BeatBus.emit(EVENTS.FENCEPOST_LISTENERS_READY, {
+src/components/webgl/WebGLBackground.jsx:1503:      BeatBus.emit(EVENTS.ENGINE_VIEWPORT_HINT, hint);
+src/state/atoms/narrativeAtom.js:105:    window.dispatchEvent(
+src/state/atoms/narrativeAtom.js:193:    window.dispatchEvent(
+src/state/atoms/narrativeAtom.js:239:      window.dispatchEvent(
+src/state/atoms/qualityAtom.js:198:      BeatBus.emit(EVENTS.QUALITY_CHANGE, {
+src/state/commands/StateCommands.js:145:        BeatBus.emit(EVENTS.QUALITY_CHANGE, {
+src/state/commands/StateCommands.js:210:    BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+src/state/atoms/performanceAtom.js:62:    window.dispatchEvent(</code></pre>
+
+  <h2>5) Duplication / Double Writer Findings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Finding</th>
+        <th>Writer #1</th>
+        <th>Writer #2</th>
+        <th>Conflict</th>
+        <th>Recommended consolidation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Stage authority split</td>
+        <td><code>stageAtom.js::setStage/jumpToStage/setGlobalProgress</code></td>
+        <td><code>narrativeAtom.js::jumpToStage/setStage/setGlobalProgress</code></td>
+        <td>Two independent stores can hold stage/progress truth.</td>
+        <td>Make <code>stageAtom</code> sole writer; remove stage/progress mutation from <code>narrativeAtom</code> or mirror read-only.</td>
+      </tr>
+      <tr>
+        <td>Scroll progression writers</td>
+        <td><code>ScrollOrchestrator.js:78,263-315</code></td>
+        <td><code>ConsciousnessTheater.jsx:734</code> -> <code>StateCommands.setScrollProgress</code></td>
+        <td>Two scroll handlers + two stage-derivation paths can race.</td>
+        <td>Single scroll binding in one orchestrator module; all others consume emitted state.</td>
+      </tr>
+      <tr>
+        <td>Stage derivation logic duplicated</td>
+        <td><code>StateCommands.js:183-195</code></td>
+        <td><code>stageAtom.js:478-486</code></td>
+        <td>Both derive stage from progress and can disagree on timing/source.</td>
+        <td>Centralize derivation in one place (proposed <code>StageOrchestrator</code> contract).</td>
+      </tr>
+      <tr>
+        <td>Morph event ownership collision</td>
+        <td><code>MorphAnimationController.js:37-41</code></td>
+        <td><code>TheaterDirector.js:549,567,620</code> and <code>ConsciousnessEngine.js:654</code></td>
+        <td>BeatBus single-owner guard blocks non-owner source (<code>bus/index.js:461-467</code>).</td>
+        <td>Route all morph bus emission through one canonical writer with one source contract.</td>
+      </tr>
+      <tr>
+        <td>QUALITY_CHANGE duplicated</td>
+        <td><code>qualityAtom.js:198</code></td>
+        <td><code>StateCommands.js:145</code></td>
+        <td>Potential duplicate quality events and source ambiguity.</td>
+        <td>One publisher only (prefer quality atom); bridge layer should not re-emit same event.</td>
+      </tr>
+      <tr>
+        <td>Renderer sink leak</td>
+        <td><code>WebGLBackground.jsx:1810</code> direct narrative write</td>
+        <td>Orchestrator/store path expected</td>
+        <td>Renderer mutates narrative state directly.</td>
+        <td>Emit intent event (<code>PARTICLE_CLICK_HIT</code>) only; let orchestrator/store activate fragment.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6) Stage Model Consistency Check</h2>
+
+  <h3>Canonical Stage Count</h3>
+  <ul>
+    <li><code>sst/canon/v3.5.runtime.json:382-390</code> stageOrder has 7 entries.</li>
+    <li><code>src/config/canonical/sst-v3.3.json:334-341</code> stageOrder has 7 entries.</li>
+    <li><code>src/state/atoms/stageAtom.js:14-17</code> derives <code>STAGE_COUNT</code> from canonical stage order.</li>
+  </ul>
+
+  <h3>Legacy 5/6 assumptions</h3>
+  <ul>
+    <li>No <code>Math.floor(progress*5)</code> or <code>*6</code> stage mapping found: <code>NO_MATCH: Math.floor(progress*5|6) patterns not found</code>.</li>
+    <li>Hard-coded 7-key shortcut exists: <code>ConsciousnessTheater.jsx:629</code> uses <code>/^[0-6]$/</code>.</li>
+  </ul>
+
+  <h3>Stage naming/model drift</h3>
+  <ul>
+    <li><code>MemoryFragments.jsx:89-104</code> contains non-canonical keys <code>silent</code>, <code>awakening</code>, <code>acceleration</code> while canonical stages are <code>genesis..transcendence</code>.</li>
+    <li><code>PointSpriteAtlas.js:512</code> uses canonical 7-stage array (good reference).</li>
+  </ul>
+
+  <h3>Type/contract mismatches</h3>
+  <ul>
+    <li><code>narrativeAtom.setStage(stageIndex)</code> is index-based (<code>narrativeAtom.js:144-146</code>), while navigation surfaces are stage-name based.</li>
+    <li><code>NavigationCommands.js:40</code> calls missing <code>StateCommands.setStage</code> API.</li>
+    <li><code>stageProgress</code> semantics split: atom uses 0..1 (<code>stageAtom.js:457-468</code>), scroll event uses 0..100 (<code>ScrollOrchestrator.js:315</code>).</li>
+  </ul>
+
+  <h2>7) useEffect / Lifecycle Audit</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Effect / Lifecycle</th>
+        <th>Writes narrative state or controls?</th>
+        <th>Hidden writer flag</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ConsciousnessTheater.jsx:269-283</code></td>
+        <td>Form-mode scroll listener updates local camera state.</td>
+        <td>No narrative store write (local UI only).</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td><code>ConsciousnessTheater.jsx:719-737</code></td>
+        <td>Scroll listener calls <code>stateCommands.setScrollProgress</code>.</td>
+        <td>Yes; writes <code>narrativeAtom.scrollProgress</code> and stage via <code>stageAtom.jumpToStage</code>.</td>
+        <td class="needs">Yes</td>
+      </tr>
+      <tr>
+        <td><code>ConsciousnessTheater.jsx:318-510</code></td>
+        <td>Director/demo boot effect emits orchestration events.</td>
+        <td>Narrative/event control path (<code>BUILD_EMERGENCE_BLUEPRINT</code>, demo sequencing).</td>
+        <td>No (expected orchestration surface)</td>
+      </tr>
+      <tr>
+        <td><code>WebGLBackground.jsx:1659-1847</code></td>
+        <td>Particle click handler within effect.</td>
+        <td>Yes; direct <code>window.narrativeAtom.activateMemoryFragment</code>.</td>
+        <td class="needs">Yes</td>
+      </tr>
+      <tr>
+        <td><code>NarrationController.jsx:945-1112</code></td>
+        <td>Registers <code>START_NARRATIVE</code>/<code>STAGE_CHANGE</code> listeners + keydown.</td>
+        <td>Indirect control path (narration run lifecycle, emits narrative events).</td>
+        <td>No (expected subsystem owner)</td>
+      </tr>
+      <tr>
+        <td><code>NarrationController.jsx:1172-1193</code></td>
+        <td><code>setInterval</code> poll for pending start.</td>
+        <td>Calls <code>startNarration</code> when opening gate clears.</td>
+        <td>No (but time-driven control complexity)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>8) Recommendations (Grounded)</h2>
+
+  <h3>R1. Collapse stage/progress writes to one authority</h3>
+  <p><strong>What to change:</strong> Remove stage/progress mutation from <code>narrativeAtom</code> (<code>jumpToStage/setStage/setGlobalProgress/setScrollProgress</code>) and make it read-only/derived from stage authority.</p>
+  <p><strong>Why:</strong> Restores single-writer invariant for narrative time and stage state.</p>
+  <p><strong>Evidence:</strong> <code>stageAtom.js:376-501</code> and <code>narrativeAtom.js:69-175</code> both mutate overlapping fields.</p>
+  <p><strong>Expected outcome:</strong> Deterministic stage/progress with no atom drift.</p>
+  <p><strong>Risk / rollback:</strong> Medium. Keep compatibility shim (<code>useNarrativeStore</code>) for one release; rollback by re-enabling adapter-only methods.</p>
+
+  <h3>R2. Single scroll binding contract</h3>
+  <p><strong>What to change:</strong> Keep one production scroll listener (recommended: <code>ScrollOrchestrator</code>), remove <code>ConsciousnessTheater</code> production scroll binding at <code>:734</code>.</p>
+  <p><strong>Why:</strong> Eliminates race between two progress writers.</p>
+  <p><strong>Evidence:</strong> <code>ScrollOrchestrator.js:78</code>, <code>ConsciousnessTheater.jsx:734</code>, <code>TheaterDirector.js:2132</code>.</p>
+  <p><strong>Expected outcome:</strong> Stable stage progression and consistent fragment triggers.</p>
+  <p><strong>Risk / rollback:</strong> Medium. If UX regresses, temporarily gate old listener behind dev flag only.</p>
+
+  <h3>R3. Canonical morph writer only</h3>
+  <p><strong>What to change:</strong> Route all morph updates through one emitter path (prefer <code>MorphAnimationController</code>), remove direct <code>emitMorphProgress(... source:'demo')</code> in Director/Engine.</p>
+  <p><strong>Why:</strong> BeatBus enforces single source owner.</p>
+  <p><strong>Evidence:</strong> <code>bus/index.js:461-467</code>, <code>MorphAnimationController.js:37-41</code>, <code>TheaterDirector.js:549,567,620</code>, <code>ConsciousnessEngine.js:654</code>.</p>
+  <p><strong>Expected outcome:</strong> No blocked morph events; demo/form slice morph behaves consistently.</p>
+  <p><strong>Risk / rollback:</strong> Medium-high. Validate demo timing snapshots before removing old emitters.</p>
+
+  <h3>R4. Fix navigation contract mismatch</h3>
+  <p><strong>What to change:</strong> Replace <code>window.StateCommands.setStage(...)</code> path with canonical <code>unifiedNav.navigateToStage(...)</code> or implement explicit <code>StateCommands.setStage</code> contract.</p>
+  <p><strong>Why:</strong> Current path points to missing method and silently falls to bypass fallback.</p>
+  <p><strong>Evidence:</strong> <code>NavigationCommands.js:38-43</code>; <code>StateCommands.js</code> has no <code>setStage</code> method (no grep hits).</p>
+  <p><strong>Expected outcome:</strong> Deterministic stage transitions, fewer hidden fallbacks.</p>
+  <p><strong>Risk / rollback:</strong> Low-medium. Keep fallback behind explicit dev-only guard.</p>
+
+  <h3>R5. Enforce renderer sink boundary</h3>
+  <p><strong>What to change:</strong> Remove direct <code>window.narrativeAtom.activateMemoryFragment</code> from renderer; emit intent event and let store/orchestrator handle activation.</p>
+  <p><strong>Why:</strong> Renderer should not mutate narrative state.</p>
+  <p><strong>Evidence:</strong> <code>WebGLBackground.jsx:1809-1811</code>.</p>
+  <p><strong>Expected outcome:</strong> Cleaner authority separation and testable event flow.</p>
+  <p><strong>Risk / rollback:</strong> Low. Keep current behavior behind temporary compatibility flag during transition.</p>
+
+  <h3>R6. Remove legacy naming drift surfaces</h3>
+  <p><strong>What to change:</strong> Delete or update stale store paths and stage-name remnants (<code>featureFlags.js</code>, <code>MemoryFragments.jsx</code>).</p>
+  <p><strong>Why:</strong> Reduces accidental invocation of dead architecture and stage-model mismatch.</p>
+  <p><strong>Evidence:</strong> <code>featureFlags.js:173,177</code>; <code>MemoryFragments.jsx:89-104</code>.</p>
+  <p><strong>Expected outcome:</strong> One canonical naming model for landing slices and store APIs.</p>
+  <p><strong>Risk / rollback:</strong> Low. These paths appear unused; can restore from VCS if needed.</p>
+
+  <h2>9) Proposed Refactor Plan (Minimal Steps First)</h2>
+  <ol>
+    <li><strong>Rename/merge store surfaces:</strong> treat <code>stageAtom</code> as canonical stage/progress authority; convert <code>narrativeAtom</code> to non-authoritative narrative metadata only.</li>
+    <li><strong>Define StageOrchestrator contract:</strong> explicit API for <code>setScrollProgress</code> -> derives <code>stageIndex/stageProgress/currentStage</code> once; no duplicate derivation elsewhere.</li>
+    <li><strong>Move scroll binding to one place:</strong> keep only orchestrator-bound scroll listener in production. Remove duplicate <code>ConsciousnessTheater</code> progression scroll effect.</li>
+    <li><strong>Unify morph ownership:</strong> one source string and one writer module for <code>MORPH_PROGRESS</code>; all demos use that pathway.</li>
+    <li><strong>Make beats data-driven at one seam:</strong> demos emit verbs via VisualOrchestrator only; avoid direct render directive writes except transition shim explicitly tagged.</li>
+    <li><strong>Clean legacy names:</strong> remove <code>@/stores/narrativeStore*.js</code> references and stale non-canonical stage keys.</li>
+  </ol>
+
+  <h2>10) Verification Checklist (Probes/Tests + Commands)</h2>
+
+  <h3>Static checks</h3>
+  <pre><code># 1) State writer inventory
+rg -n "setGlobalProgress|setStage\\b|jumpToStage|setStageProgress|getState\\(\\)\\.set|setQuality|qualityTier|stageProgress|globalProgress" src
+
+# 2) Scroll/time handlers
+rg -n "addEventListener\\(|removeEventListener\\(|scroll\\b|wheel\\b|touchmove\\b|requestAnimationFrame\\b|cancelAnimationFrame\\b" src
+
+# 3) Naming collisions / duplicate exports
+rg -n "export\\s+const\\s+useNarrativeStore|export\\s+default\\s+useNarrativeStore|from\\s+['\\\"]@/stores/useNarrativeStore['\\\"]|from\\s+['\\\"]@/stores/narrativeStore['\\\"]" src
+
+# 4) Stage count assumptions
+rg -n "Math\\.floor\\(.*\\*\\s*[0-9]+\\)|clamp\\(|stageNames\\b|stages\\s*=|\\[\\s*'genesis'|transcendence|silent|neural|velocity|architecture|harmony" src</code></pre>
+
+  <h3>Runtime probes (dev-only)</h3>
+  <pre><code>// Warn if &gt;1 scroll listener is registered
+(() =&gt; {
+  const orig = window.addEventListener;
+  const counts = { scroll: 0 };
+  window.addEventListener = function(type, ...rest) {
+    if (type === 'scroll') {
+      counts.scroll += 1;
+      if (counts.scroll &gt; 1) console.warn('[probe] Multiple scroll listeners', counts.scroll, new Error().stack);
+    }
+    return orig.call(this, type, ...rest);
+  };
+})();
+
+// Check stageCount against slice spec (7)
+(() =&gt; {
+  const len = (window.Canonical?.stageOrder || []).length;
+  if (len !== 7) console.error('[probe] stageOrder mismatch', len);
+  else console.log('[probe] stageOrder OK', len);
+})();</code></pre>
+
+  <h3>Determinism scripts</h3>
+  <pre><code># Stage count must be 7 in runtime canonical
+node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('sst/canon/v3.5.runtime.json','utf8'));console.log('stageOrder',j.stageOrder.length);if(j.stageOrder.length!==7)process.exit(1);"
+
+# Ensure only one production scroll binder remains (target state: one hit)
+rg -n "addEventListener\\('scroll'" src
+
+# Ensure stage derivation logic has one canonical home (target state: one module)
+rg -n "getStageByScroll|stageBreakpointsPercent|Math\\.floor\\(clampedProgress \* \(STAGE_COUNT - 1\)\)" src</code></pre>
+
+  <h2>Needs Confirmation</h2>
+  <ul>
+    <li class="needs">Runtime source tag <code>form_opening_slice</code> was not found in repository search (<code>rg -n "form_opening_slice" src docs tools</code> returned no hits). This likely originates from runtime-injected config/build not present in this workspace.</li>
+    <li class="needs">Exact root cause of the observed <code>RENDER_DIRECTIVE</code> schema violation requires the concrete runtime <code>errors[]</code> payload values; code shows strict unexpected-field rejection at <code>src/theater/bus/schemas.js:300-314</code>.</li>
+  </ul>
+
+  <h2>Evidence Pack</h2>
+  <ul>
+    <li><strong>Dual writers exist:</strong> <code>stageAtom.js:376-501</code> and <code>narrativeAtom.js:69-175</code> both mutate stage/progress fields.</li>
+    <li><strong>Two scroll listeners in production flow:</strong> <code>ScrollOrchestrator.js:78</code> and <code>ConsciousnessTheater.jsx:734</code>; Director starts orchestrator at <code>TheaterDirector.js:2132</code>.</li>
+    <li><strong>Morph owner lock:</strong> BeatBus blocks non-owner morph source (<code>bus/index.js:461-467</code>) while Director/Engine emit <code>source:'demo'</code> (<code>TheaterDirector.js:549,567,620</code>, <code>ConsciousnessEngine.js:654</code>).</li>
+    <li><strong>Navigation mismatch:</strong> <code>NavigationCommands.js:40</code> calls missing <code>StateCommands.setStage</code> (no hits in <code>StateCommands.js</code>).</li>
+    <li><strong>Renderer boundary leak:</strong> <code>WebGLBackground.jsx:1810</code> directly calls <code>window.narrativeAtom.activateMemoryFragment</code>.</li>
+  </ul>
+</body>
+</html>

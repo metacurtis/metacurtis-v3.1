@@ -1,0 +1,1639 @@
+{
+  "meta": {
+    "name": "MetaCurtis Consciousness Theater",
+    "version": "3.5.0",
+    "authority": "ABSOLUTE",
+    "date": "2026-01-29",
+    "documentStatus": "SINGLE_SOURCE_OF_TRUTH",
+    "mode": "TEXT_FIRST_REVEAL",
+    "lastUpdated": "2026-01-29"
+  },
+  "features": {
+    "gaussianFalloff": 1,
+    "centerWeightingTier4": 1,
+    "ctfOpening": false,
+    "beatGlyph": true,
+    "scrollOrchestrator": true
+  },
+  "pipeline": {
+    "modules": {
+      "director": {
+        "role": "orchestration",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Prewarm → terminal → screen fill → emergence → stage change → enable scroll"
+      },
+      "engine": {
+        "role": "blueprint_author",
+        "writes": [
+          "blueprint"
+        ],
+        "forbidden": [
+          "gpuDraw"
+        ],
+        "blueprintFields": [
+          "atmosphericPositions",
+          "text3DPositions",
+          "tierData",
+          "sizeMultiplier",
+          "opacityData",
+          "atlasIndex",
+          "animationSeed",
+          "activeCount",
+          "particleCount",
+          "maxParticles",
+          "metadata"
+        ]
+      },
+      "renderer": {
+        "role": "dumb_renderer",
+        "writes": [
+          "geometry",
+          "uniforms"
+        ],
+        "forbidden": [
+          "fabricateTargets",
+          "readScroll",
+          "scaleByFov"
+        ],
+        "singleWriter": true,
+        "emits": [
+          "PARTICLES_EMERGED"
+        ]
+      },
+      "beatBus": {
+        "role": "event_bus",
+        "exposedGlobals": [
+          "BeatBus",
+          "EVENTS"
+        ]
+      },
+      "scrollOrchestrator": {
+        "role": "progress_publisher",
+        "writes": [
+          "eventsOnly"
+        ],
+        "forbidden": [
+          "geometry",
+          "uniforms"
+        ],
+        "notes": "Maps window scroll→stage-local progress; publishes MORPH_PROGRESS; emits STAGE_CHANGE at breakpoints and MEMORY_FRAGMENT_TRIGGER from per-stage triggerPercent. Renderer remains a dumb sink."
+      }
+    },
+    "singleWriterRules": [
+      "Renderer is the ONLY geometry/uniform writer",
+      "Engine is the ONLY blueprint author",
+      "Director NEVER writes geometry/uniforms"
+    ]
+  },
+  "shaderContract": {
+    "attributes": [
+      {
+        "name": "position",
+        "type": "vec3",
+        "semantics": "current position"
+      },
+      {
+        "name": "atmosphericPosition",
+        "type": "vec3",
+        "semantics": "morph source"
+      },
+      {
+        "name": "text3DPosition",
+        "type": "vec3",
+        "semantics": "morph target (stage word)"
+      },
+      {
+        "name": "tierData",
+        "type": "float",
+        "range": [
+          0,
+          3
+        ],
+        "semantics": "tier id"
+      },
+      {
+        "name": "sizeMultiplier",
+        "type": "float",
+        "semantics": "sprite scaling per particle"
+      },
+      {
+        "name": "opacityData",
+        "type": "float",
+        "semantics": "base opacity per particle"
+      },
+      {
+        "name": "atlasIndex",
+        "type": "float",
+        "semantics": "sprite index in atlas"
+      },
+      {
+        "name": "animationSeed",
+        "type": "vec3",
+        "semantics": "per-particle randomization"
+      },
+      {
+        "name": "particleIndex",
+        "type": "float",
+        "semantics": "0..N-1 (renderer-added)"
+      }
+    ],
+    "uniforms": [
+      {
+        "name": "uTime",
+        "type": "float"
+      },
+      {
+        "name": "uMorphProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ],
+        "semantics": "0=atmospheric,1=text"
+      },
+      {
+        "name": "uScrollProgress",
+        "type": "float",
+        "range": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "uStageIndex",
+        "type": "int"
+      },
+      {
+        "name": "uActiveCount",
+        "type": "int"
+      },
+      {
+        "name": "uTierCutoff",
+        "type": "int"
+      },
+      {
+        "name": "uColorCurrent",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorNext",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent1",
+        "type": "vec3"
+      },
+      {
+        "name": "uColorAccent2",
+        "type": "vec3"
+      },
+      {
+        "name": "uAtlasTexture",
+        "type": "sampler2D"
+      },
+      {
+        "name": "uTotalSprites",
+        "type": "int",
+        "value": 16
+      },
+      {
+        "name": "uPointSize",
+        "type": "float"
+      },
+      {
+        "name": "uDevicePixelRatio",
+        "type": "float"
+      },
+      {
+        "name": "uResolution",
+        "type": "vec2"
+      },
+      {
+        "name": "uGaussianSigma",
+        "type": "float"
+      },
+      {
+        "name": "uTierHighlight",
+        "type": "float[4]"
+      },
+      {
+        "name": "uGaussianFalloff",
+        "type": "float"
+      },
+      {
+        "name": "uCenterWeighting",
+        "type": "float"
+      },
+      {
+        "name": "uStageProgress",
+        "type": "float",
+        "aliasOf": "uMorphProgress"
+      },
+      {
+        "name": "uStageBlend",
+        "type": "float",
+        "aliasOf": "uScrollProgress"
+      }
+    ]
+  },
+  "events": [
+    {
+      "name": "PREWARM_GENESIS_BLUEPRINT",
+      "emitter": "Director"
+    },
+    {
+      "name": "AUDIO_COMPUTER_HUM",
+      "emitter": "Director",
+      "payload": {
+        "volume": "float[0..1]"
+      }
+    },
+    {
+      "name": "CURSOR_SHOW",
+      "emitter": "Director"
+    },
+    {
+      "name": "CURSOR_BLINK",
+      "emitter": "Director",
+      "payload": {
+        "count": "int",
+        "interval": "ms"
+      }
+    },
+    {
+      "name": "TERMINAL_TYPE",
+      "emitter": "Director",
+      "payload": {
+        "lines": "string[]",
+        "typeSpeed": "ms",
+        "lineDelay": "ms"
+      }
+    },
+    {
+      "name": "SCREEN_FILL",
+      "emitter": "Director",
+      "payload": {
+        "text": "string",
+        "scrollSpeed": "ms"
+      }
+    },
+    {
+      "name": "BUILD_EMERGENCE_BLUEPRINT",
+      "emitter": "Director",
+      "payload": {
+        "sourceText": "string",
+        "count": "int"
+      }
+    },
+    {
+      "name": "BLUEPRINT_READY",
+      "emitter": "Engine"
+    },
+    {
+      "name": "PARTICLES_START_EMERGING",
+      "emitter": "Director"
+    },
+    {
+      "name": "PARTICLES_EMERGED",
+      "emitter": "Renderer"
+    },
+    {
+      "name": "STAGE_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "stage": "string"
+      }
+    },
+    {
+      "name": "ENABLE_SCROLL",
+      "emitter": "Director"
+    },
+    {
+      "name": "QUALITY_CHANGE",
+      "emitter": "Director",
+      "payload": {
+        "tier": "LOW|MEDIUM|HIGH|ULTRA"
+      }
+    },
+    {
+      "name": "MORPH_PROGRESS",
+      "emitter": "Director",
+      "payload": {
+        "value": "float[0..1]"
+      }
+    },
+    {
+      "name": "MEMORY_FRAGMENT_TRIGGER",
+      "emitter": "Director",
+      "payload": {
+        "id": "string"
+      }
+    }
+  ],
+  "quality": {
+    "multipliers": {
+      "LOW": 0.3,
+      "MEDIUM": 0.6,
+      "HIGH": 1,
+      "ULTRA": 1.5
+    },
+    "maxParticles": 15000
+  },
+  "scrollAndMorph": {
+    "stageBreakpointsPercent": [
+      0,
+      14,
+      28,
+      42,
+      56,
+      70,
+      84,
+      100
+    ],
+    "easing": "exponential_inout_edges",
+    "morphResponse": {
+      "speedMultiplier": 2,
+      "smoothing": 0.15,
+      "overshoot": 0.05
+    },
+    "ownership": {
+      "publisher": "Director",
+      "rendererReadsScroll": false
+    }
+  },
+  "spriteSemantics": {
+    "substrate": 7,
+    "spatialCircles": [
+      0,
+      1
+    ],
+    "anchorDiamond": 4,
+    "anchorCrystal": 11,
+    "star": 6,
+    "burst": 13,
+    "galaxy": 15
+  },
+  "stageOrder": [
+    "genesis",
+    "discipline",
+    "neural",
+    "velocity",
+    "architecture",
+    "harmony",
+    "transcendence"
+  ],
+  "stages": {
+    "genesis": {
+      "label": "GENESIS SPARK",
+      "ordinal": 0,
+      "scrollRangePercent": [
+        0,
+        14
+      ],
+      "particlesBase": 2000,
+      "word": "HELLO CURTIS",
+      "palette": [
+        "#00FF00",
+        "#22c55e",
+        "#15803d"
+      ],
+      "tierMix": [
+        0.6,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "drift_perlin_slow",
+        "tier1": "orbital_micro",
+        "tier2": "twinkle_soft",
+        "tier3": "pulse_soft"
+      },
+      "camera": {
+        "movement": "dolly_in",
+        "degrees": 5,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragment": {
+        "id": "genesis_spark",
+        "triggerPercent": 5,
+        "content": "Commodore 64 Terminal",
+        "interaction": "type_enabled",
+        "durationMs": 10000,
+        "effects": {
+          "targetTier": 0,
+          "behavior": "converge",
+          "intensity": 0.7
+        }
+      },
+      "boundaryCues": {
+        "preTransitionPercent": [
+          12,
+          14
+        ],
+        "tintCrossfadeToStage": "discipline"
+      },
+      "audio": {
+        "bed": "1980s_computer_hum",
+        "narrationCue": "onEmergenceThreshold"
+      }
+    },
+    "discipline": {
+      "label": "DISCIPLINE FORGE",
+      "ordinal": 1,
+      "scrollRangePercent": [
+        14,
+        28
+      ],
+      "particlesBase": 3000,
+      "word": "STRUCTURE",
+      "palette": [
+        "#1e40af",
+        "#3b82f6",
+        "#1d4ed8"
+      ],
+      "tierMix": [
+        0.55,
+        0.25,
+        0.1,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_drift",
+        "tier1": "column_orbit",
+        "tier2": "pulse_cadence_120bpm",
+        "tier3": "crystalline_authority"
+      },
+      "camera": {
+        "movement": "authority_orbit",
+        "degrees": 10,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0,
+          "frequency": 0
+        }
+      },
+      "memoryFragment": {
+        "id": "discipline_motto",
+        "triggerPercent": 20,
+        "content": "Marine Corps EGA",
+        "interaction": "hover_tooltip",
+        "effects": {
+          "allTiers": "snap_to_attention",
+          "durationMs": 800
+        }
+      }
+    },
+    "neural": {
+      "label": "NEURAL AWAKENING",
+      "ordinal": 2,
+      "scrollRangePercent": [
+        28,
+        42
+      ],
+      "particlesBase": 5000,
+      "word": "AWAKENING",
+      "palette": [
+        "#4338ca",
+        "#a855f7",
+        "#7c3aed"
+      ],
+      "tierMix": [
+        0.55,
+        0.2,
+        0.15,
+        0.1
+      ],
+      "motionBehaviors": {
+        "tier0": "neural_flow",
+        "tier1": "connection_orbit",
+        "tier2": "synapse_flash_prob_0.02",
+        "tier3": "hub_nodes_temporal"
+      },
+      "camera": {
+        "movement": "discovery_orbit",
+        "degrees": 15,
+        "shake": false
+      },
+      "uniformOverrides": {
+        "uGaussianSigma": 2
+      },
+      "memoryFragment": {
+        "id": "neural_first_ai_chat",
+        "triggerPercent": 35,
+        "content": "Chat transcript",
+        "interaction": "auto_type",
+        "effects": {
+          "sequence": "pathways_light_up"
+        }
+      }
+    },
+    "velocity": {
+      "label": "VELOCITY EXPLOSION",
+      "ordinal": 3,
+      "scrollRangePercent": [
+        42,
+        56
+      ],
+      "particlesBase": 12000,
+      "word": "VELOCITY",
+      "palette": [
+        "#7c3aed",
+        "#9333ea",
+        "#6b21a8"
+      ],
+      "tierMix": [
+        0.45,
+        0.2,
+        0.15,
+        0.2
+      ],
+      "motionBehaviors": {
+        "tier0": "storm_medium",
+        "tier1": "streak_trail",
+        "tier2": "burst_on_beat",
+        "tier3": "lightning_global"
+      },
+      "camera": {
+        "movement": "dramatic_pullback",
+        "degrees": 20,
+        "shake": true
+      },
+      "morphProfile": {
+        "arrival": 1,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.5
+        }
+      },
+      "memoryFragment": {
+        "id": "velocity_github_surge",
+        "triggerPercent": 49,
+        "content": "GitHub graph",
+        "interaction": "cursor_trails",
+        "effects": {
+          "acceleration": "toward_cursor"
+        }
+      }
+    },
+    "architecture": {
+      "label": "ARCHITECTURE CONSCIOUSNESS",
+      "ordinal": 4,
+      "scrollRangePercent": [
+        56,
+        70
+      ],
+      "particlesBase": 8000,
+      "word": "SYSTEMS",
+      "palette": [
+        "#0891b2",
+        "#06b6d4",
+        "#0e7490"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "grid_flow",
+        "tier1": "scaffold_layers_3",
+        "tier2": "blueprint_pulse",
+        "tier3": "cornerstone_nodes_frontal"
+      },
+      "camera": {
+        "movement": "calm_track",
+        "degrees": 12,
+        "shake": false
+      },
+      "memoryFragment": {
+        "id": "architecture_perf_breakthrough",
+        "triggerPercent": 63,
+        "content": "15→84 FPS metric",
+        "interaction": "click_to_overlay_diagram",
+        "effects": {
+          "form": "temporary_blueprint"
+        }
+      }
+    },
+    "harmony": {
+      "label": "HARMONIC MASTERY",
+      "ordinal": 5,
+      "scrollRangePercent": [
+        70,
+        84
+      ],
+      "particlesBase": 12000,
+      "word": "FLOW STATE",
+      "palette": [
+        "#f59e0b",
+        "#d97706",
+        "#b45309"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "laminar_flow",
+        "tier1": "orbit_sync_groups_4",
+        "tier2": "ballet_fibonacci",
+        "tier3": "conductor_nodes_cerebellar"
+      },
+      "camera": {
+        "movement": "balletic_orbit",
+        "degrees": 25,
+        "shake": false
+      },
+      "morphProfile": {
+        "arrival": 0.95,
+        "easing": "smoothstep",
+        "elasticity": {
+          "amplitude": 0.05,
+          "frequency": 0.2
+        }
+      },
+      "memoryFragment": {
+        "id": "harmony_conduct",
+        "triggerPercent": 77,
+        "content": "Conduct particles",
+        "interaction": "pointer_conduct",
+        "effects": {
+          "trail_follow": true,
+          "bell_on_perfect": true
+        }
+      }
+    },
+    "transcendence": {
+      "label": "CONSCIOUSNESS TRANSCENDENCE",
+      "ordinal": 6,
+      "scrollRangePercent": [
+        84,
+        100
+      ],
+      "particlesBase": 15000,
+      "word": "CONSCIOUSNESS",
+      "palette": [
+        "#ffffff",
+        "#f59e0b",
+        "#00ffcc"
+      ],
+      "tierMix": [
+        0.5,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "motionBehaviors": {
+        "tier0": "cosmic_dust_galaxy",
+        "tier1": "galactic_arm_slow",
+        "tier2": "consciousness_node_unified",
+        "tier3": "transcendent_swarm"
+      },
+      "camera": {
+        "movement": "reverent_orbit",
+        "degrees": 30,
+        "shake": false
+      },
+      "climax": {
+        "arrivalMorph": 1,
+        "dissolveAfterMs": 1800,
+        "dissolveMorph": 0.6,
+        "increaseSwirl": true
+      },
+      "hud": {
+        "liveCounterText": "15,000 conscious moments"
+      },
+      "memoryFragment": {
+        "id": "transcendence_initials",
+        "triggerPercent": 92,
+        "content": "User initials",
+        "interaction": "click",
+        "effects": {
+          "form_initials_brief": true
+        }
+      }
+    }
+  },
+  "performance": {
+    "frameRate": {
+      "target": 60,
+      "minimum": 55
+    },
+    "renderTimeMs": {
+      "target": 16.67,
+      "max": 18,
+      "criticalPath": [
+        "particleUpdate",
+        "shaderExecution",
+        "drawCalls"
+      ]
+    },
+    "memory": {
+      "heapLimitMB": 250,
+      "leakToleranceMBPerMin": 0,
+      "gcPauseMaxMs": 3
+    },
+    "adaptiveQuality": {
+      "order": [
+        "tier3",
+        "tier2",
+        "tier1",
+        "tier0"
+      ],
+      "restoreAfterStableSec": 5
+    },
+    "lodThresholds": {
+      "ultra": 0.9,
+      "high": 0.75,
+      "medium": 0.55,
+      "low": 0.35
+    },
+    "particleCount": {
+      "genesis": 2000,
+      "discipline": 3000,
+      "neural": 5000,
+      "velocity": 12000,
+      "architecture": 8000,
+      "harmony": 12000,
+      "transcendence": 15000
+    }
+  },
+  "integrityRules": [
+    {
+      "id": "SINGLE_WRITER_GEOMETRY",
+      "detection": "renderer_not_last_writer",
+      "severity": "CRITICAL",
+      "response": "IMMEDIATE_ROLLBACK",
+      "message": "Geometry/uniforms written outside Renderer"
+    },
+    {
+      "id": "RENDERER_SYNTHESIS",
+      "detection": "renderer_fabricates_targets_or_reads_scroll",
+      "severity": "HIGH",
+      "response": "BLOCK_AND_LOG",
+      "message": "Renderer must not fabricate targets or read scroll"
+    },
+    {
+      "id": "PERFORMANCE_DEGRADATION",
+      "detection": "fps_below_55_for_60_frames",
+      "severity": "HIGH",
+      "response": "FEATURE_REDUCTION",
+      "message": "Quality reduced to maintain 60 FPS"
+    },
+    {
+      "id": "NARRATIVE_DESYNC",
+      "detection": "morph_vs_stage_mismatch",
+      "severity": "MEDIUM",
+      "response": "RESYNC_TIMELINE",
+      "message": "Realigning stage, morph, and tint"
+    }
+  ],
+  "successMetrics": {
+    "technical": {
+      "fps": ">=60",
+      "loadTimeSec": "<4",
+      "errorRate": "<0.001%",
+      "memoryStable": true
+    },
+    "experiential": {
+      "completionRate": ">80%",
+      "narrativeClarity": ">90%",
+      "emotionalImpact": "high"
+    },
+    "business": {
+      "shareRate": ">30%",
+      "contactConversion": ">15%",
+      "oneWeekRecall": ">90%"
+    }
+  },
+  "implementationPhases": [
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "duration": "1 day",
+      "deliverables": [
+        "v3.3 config loader",
+        "Engine text-first blueprints",
+        "Renderer binding + PARTICLES_EMERGED single-source"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Visual Polish",
+      "duration": "1 day",
+      "deliverables": [
+        "Gaussian falloff",
+        "Tier behavior → glyph mapping",
+        "Sprite atlas verification"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Narrative Integration",
+      "duration": "1 day",
+      "deliverables": [
+        "Opening beats timing",
+        "Memory fragments",
+        "Audio sync to emergence threshold"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Performance & Cross-Device",
+      "duration": "1 day",
+      "deliverables": [
+        "60 FPS optimization",
+        "Adaptive quality guardrails",
+        "Mobile DPR/point-size audit"
+      ]
+    }
+  ],
+  "debugSurface": {
+    "exposeGlobals": [
+      "BeatBus",
+      "EVENTS",
+      "__consciousnessMaterial",
+      "__particleGeometry",
+      "consciousnessEngine"
+    ],
+    "devHud": {
+      "stageSelector": true,
+      "morphSlider": true,
+      "pointSizeSlider": true,
+      "perfOverlay": true
+    }
+  },
+  "changeLog": [
+    "Swap: anatomy → stage words (text3DPositions)",
+    "Preserved: tiers, stage order, palettes, fragments, performance",
+    "Clarified: event single-source (Renderer emits PARTICLES_EMERGED)",
+    "Renderer: no synthesis, no scroll, no FOV scaling",
+    "Transcendence: word arrival → galaxy dissolve"
+  ],
+  "visualDemos": {
+    "landing_stage_slice": {
+      "word": "FORM",
+      "durationMs": 20000,
+      "scrollLock": false,
+      "beats": [
+        {
+          "atMs": 0,
+          "durationMs": 6000,
+          "verb": "coalesce",
+          "easing": "smoothstep",
+          "params": {
+            "text": "FORM",
+            "color": "#E8EEF6",
+            "intensity": 0.12,
+            "bloom": 0,
+            "camera": {
+              "position": { "x": 0, "y": 0, "z": 60 },
+              "fov": 92,
+              "durationMs": 900
+            }
+          }
+        },
+        {
+          "atMs": 6000,
+          "durationMs": 6000,
+          "verb": "settle",
+          "easing": "smoothstep",
+          "params": {
+            "text": "FORM",
+            "color": "#FFFFFF",
+            "intensity": 0.1,
+            "bloom": 0,
+            "camera": {
+              "position": { "x": 0, "y": 2, "z": 44 },
+              "fov": 88,
+              "durationMs": 1200
+            }
+          }
+        },
+        {
+          "atMs": 12000,
+          "durationMs": 8000,
+          "verb": "gentle_drift",
+          "easing": "smoothstep",
+          "params": {
+            "text": "FORM",
+            "color": "#E8EEF6",
+            "intensity": 0.08,
+            "bloom": 0
+          }
+        }
+      ]
+    },
+    "landing_preset_profiles": {
+      "agency_dark": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 5000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#93C5FD",
+              "intensity": 0.14,
+              "camera": {
+                "position": { "x": 0, "y": -1, "z": 64 },
+                "fov": 98,
+                "durationMs": 700
+              }
+            }
+          },
+          {
+            "atMs": 5000,
+            "durationMs": 7000,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#E5EDF5",
+              "intensity": 0.1,
+              "camera": {
+                "position": { "x": 0, "y": 1, "z": 50 },
+                "fov": 84,
+                "durationMs": 1100
+              }
+            }
+          },
+          {
+            "atMs": 12000,
+            "durationMs": 8000,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#C7D2FE",
+              "intensity": 0.07,
+              "camera": {
+                "position": { "x": 0, "y": 2, "z": 46 },
+                "fov": 80,
+                "durationMs": 1200
+              }
+            }
+          }
+        ]
+      },
+      "saas_clean": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 4000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#DDE3EA",
+              "intensity": 0.1,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 58 },
+                "fov": 90,
+                "durationMs": 700
+              }
+            }
+          },
+          {
+            "atMs": 4000,
+            "durationMs": 9000,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#A5B4C6",
+              "intensity": 0.08,
+              "camera": {
+                "position": { "x": 0, "y": 3, "z": 52 },
+                "fov": 86,
+                "durationMs": 1400
+              }
+            }
+          },
+          {
+            "atMs": 13000,
+            "durationMs": 7000,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#FFFFFF",
+              "intensity": 0.09,
+              "camera": {
+                "position": { "x": 0, "y": 2, "z": 44 },
+                "fov": 80,
+                "durationMs": 1000
+              }
+            }
+          }
+        ]
+      },
+      "luxury_gold": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 6000,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#FDE68A",
+              "intensity": 0.1,
+              "camera": {
+                "position": { "x": 0, "y": -2, "z": 66 },
+                "fov": 94,
+                "durationMs": 900
+              }
+            }
+          },
+          {
+            "atMs": 6000,
+            "durationMs": 7000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#F59E0B",
+              "intensity": 0.12,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 54 },
+                "fov": 88,
+                "durationMs": 1200
+              }
+            }
+          },
+          {
+            "atMs": 13000,
+            "durationMs": 7000,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#FCD34D",
+              "intensity": 0.07,
+              "camera": {
+                "position": { "x": 0, "y": 1, "z": 50 },
+                "fov": 82,
+                "durationMs": 1100
+              }
+            }
+          }
+        ]
+      },
+      "cyber_teal": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 4500,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#22D3EE",
+              "intensity": 0.16,
+              "camera": {
+                "position": { "x": 0, "y": 1, "z": 62 },
+                "fov": 92,
+                "durationMs": 650
+              }
+            }
+          },
+          {
+            "atMs": 4500,
+            "durationMs": 7500,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#14B8A6",
+              "intensity": 0.11,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 48 },
+                "fov": 84,
+                "durationMs": 1200
+              }
+            }
+          },
+          {
+            "atMs": 12000,
+            "durationMs": 8000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#2DD4BF",
+              "intensity": 0.09,
+              "camera": {
+                "position": { "x": 0, "y": -1, "z": 44 },
+                "fov": 80,
+                "durationMs": 1000
+              }
+            }
+          }
+        ]
+      },
+      "healthcare_calm": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 5000,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#BAE6FD",
+              "intensity": 0.08,
+              "camera": {
+                "position": { "x": 0, "y": 3, "z": 60 },
+                "fov": 92,
+                "durationMs": 900
+              }
+            }
+          },
+          {
+            "atMs": 5000,
+            "durationMs": 7000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#7DD3FC",
+              "intensity": 0.1,
+              "camera": {
+                "position": { "x": 0, "y": 2, "z": 52 },
+                "fov": 88,
+                "durationMs": 1200
+              }
+            }
+          },
+          {
+            "atMs": 12000,
+            "durationMs": 8000,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#E0F2FE",
+              "intensity": 0.07,
+              "camera": {
+                "position": { "x": 0, "y": 2, "z": 46 },
+                "fov": 84,
+                "durationMs": 1100
+              }
+            }
+          }
+        ]
+      },
+      "fintech_black": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 4500,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#38BDF8",
+              "intensity": 0.12,
+              "camera": {
+                "position": { "x": 0, "y": -1, "z": 64 },
+                "fov": 96,
+                "durationMs": 700
+              }
+            }
+          },
+          {
+            "atMs": 4500,
+            "durationMs": 6500,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#1E293B",
+              "intensity": 0.13,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 50 },
+                "fov": 86,
+                "durationMs": 1000
+              }
+            }
+          },
+          {
+            "atMs": 11000,
+            "durationMs": 9000,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#0EA5E9",
+              "intensity": 0.08,
+              "camera": {
+                "position": { "x": 0, "y": 1, "z": 45 },
+                "fov": 82,
+                "durationMs": 1200
+              }
+            }
+          }
+        ]
+      },
+      "startup_purple": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 4000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#C4B5FD",
+              "intensity": 0.15,
+              "camera": {
+                "position": { "x": 0, "y": -2, "z": 68 },
+                "fov": 100,
+                "durationMs": 650
+              }
+            }
+          },
+          {
+            "atMs": 4000,
+            "durationMs": 7000,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#7C3AED",
+              "intensity": 0.12,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 54 },
+                "fov": 88,
+                "durationMs": 900
+              }
+            }
+          },
+          {
+            "atMs": 11000,
+            "durationMs": 9000,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#A78BFA",
+              "intensity": 0.09,
+              "camera": {
+                "position": { "x": 0, "y": 2, "z": 47 },
+                "fov": 84,
+                "durationMs": 1200
+              }
+            }
+          }
+        ]
+      },
+      "velocity_stage": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 5000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#C4B5FD",
+              "intensity": 0.16,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 50 },
+                "fov": 100,
+                "durationMs": 700
+              }
+            }
+          },
+          {
+            "atMs": 5000,
+            "durationMs": 7000,
+            "verb": "sparkDrift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#9333EA",
+              "intensity": 0.2,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 50 },
+                "fov": 100,
+                "durationMs": 900
+              }
+            }
+          },
+          {
+            "atMs": 12000,
+            "durationMs": 8000,
+            "verb": "velocity_rest",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#7C3AED",
+              "intensity": 0.1,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 50 },
+                "fov": 100,
+                "durationMs": 1200
+              }
+            }
+          }
+        ]
+      },
+      "enterprise_blue": {
+        "durationMs": 20000,
+        "scrollLock": false,
+        "beats": [
+          {
+            "atMs": 0,
+            "durationMs": 5500,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#93C5FD",
+              "intensity": 0.1,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 60 },
+                "fov": 90,
+                "durationMs": 800
+              }
+            }
+          },
+          {
+            "atMs": 5500,
+            "durationMs": 6500,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#1D4ED8",
+              "intensity": 0.09,
+              "camera": {
+                "position": { "x": 0, "y": 1, "z": 52 },
+                "fov": 86,
+                "durationMs": 1200
+              }
+            }
+          },
+          {
+            "atMs": 12000,
+            "durationMs": 8000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#BFDBFE",
+              "intensity": 0.11,
+              "camera": {
+                "position": { "x": 0, "y": 1, "z": 46 },
+                "fov": 82,
+                "durationMs": 1000
+              }
+            }
+          }
+        ]
+      }
+    },
+    "brand_vision_demo": {
+      "durationMs": 28000,
+      "scrollLock": true,
+      "beats": [
+        {
+          "atMs": 0,
+          "durationMs": 6000,
+          "verb": "pullIn",
+          "easing": "smoothstep",
+          "params": {
+            "text": "VISION",
+            "color": "#00A4FF",
+            "intensity": 0.18,
+            "bloom": {
+              "base": 0.08
+            },
+            "camera": {
+              "mode": "static"
+            }
+          }
+        },
+        {
+          "atMs": 6000,
+          "durationMs": 6000,
+          "verb": "morph",
+          "easing": "expoInOut",
+          "params": {
+            "text": "CREATE",
+            "color": "#19F4C7",
+            "intensity": 0.22,
+            "bloom": {
+              "base": 0.1
+            },
+            "camera": {
+              "mode": "push",
+              "rate": 0.02
+            }
+          }
+        },
+        {
+          "atMs": 12000,
+          "durationMs": 8000,
+          "verb": "sparkDrift",
+          "easing": "linear",
+          "params": {
+            "text": "LAUNCH",
+            "color": "#A37CFF",
+            "intensity": 0.26,
+            "bloom": {
+              "base": 0.12
+            },
+            "camera": {
+              "mode": "orbit",
+              "yawDeg": 10,
+              "durationMs": 8000,
+              "dollyY": 0.1
+            }
+          }
+        },
+        {
+          "atMs": 20000,
+          "durationMs": 5000,
+          "verb": "bloomPulse",
+          "easing": "smoothstep",
+          "params": {
+            "text": "",
+            "color": "#A37CFF",
+            "intensity": 0.12,
+            "bloom": {
+              "base": 0.12,
+              "peak": 0.25,
+              "shape": "rampThenFade"
+            },
+            "camera": {
+              "mode": "hold",
+              "slowZoomOut": true
+            }
+          }
+        }
+      ],
+      "endCard": {
+        "atMs": 25000,
+        "durationMs": 3000,
+        "verb": "endCard",
+        "easing": "smoothstep",
+        "params": {
+          "title": "MetaCurtis",
+          "subtitle": "AI-native visual orchestration",
+          "fadeInMs": 400,
+          "holdMs": 2200,
+          "fadeOutMs": 400,
+          "color": "#FFFFFF"
+        }
+      }
+    }
+  },
+  "visual": {
+    "system": "3d_kinetic_typography",
+    "letterGeometry": {
+      "genesis": {
+        "word": "HELLO CURTIS",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      },
+      "discipline": {
+        "word": "STRUCTURE",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      },
+      "neural": {
+        "word": "AWAKENING",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      },
+      "velocity": {
+        "word": "VELOCITY",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      },
+      "architecture": {
+        "word": "SYSTEMS",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      },
+      "harmony": {
+        "word": "FLOW STATE",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      },
+      "transcendence": {
+        "word": "CONSCIOUSNESS",
+        "font": "Courier Prime",
+        "weight": 400,
+        "depth": 0.4,
+        "particlesPerLetter": 200,
+        "spacing": 1,
+        "scale": 1
+      }
+    }
+  },
+  "narrative": {
+    "orchestration": {
+      "mode": "scroll-driven",
+      "scrollLocked": false,
+      "skipKey": "SPACE"
+    }
+  },
+  "landingModes": {
+    "form": {
+      "word": "FORM",
+      "palette": [
+        "#DDE3EA",
+        "#7C93B8",
+        "#FFFFFF"
+      ],
+      "particlesBase": 9000,
+      "tierMix": [
+        0.6,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "openingVerbSequence": [
+        "coalesce",
+        "settle"
+      ],
+      "ui": {
+        "voidCopy": {
+          "name": "Curtis Whorton",
+          "title": "Creative Technologist",
+          "line": "I build real-time cinematic systems for the web.",
+          "cta": "If this resonates, let’s talk.",
+          "ctaHref": "mailto:curtis@curtiswhorton.com"
+        }
+      }
+    }
+  }
+}

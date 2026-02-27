@@ -1,0 +1,1163 @@
+{
+  "generatedAt": "2026-02-26T21:01:31.082Z",
+  "probe": {
+    "baseUrl": "http://127.0.0.1:5174",
+    "url": "http://127.0.0.1:5174/?slice=landing_stage&preset=velocity_stage&landingWord=VELOCITY&deterministic=1&seed=123&quality=HIGH",
+    "quality": "HIGH"
+  },
+  "summary": {
+    "totalWrites": 1,
+    "appliedWrites": 1,
+    "blockedWrites": 0,
+    "lastApplied": {
+      "tMs": 2973,
+      "source": "material:init-default",
+      "value": 1,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "phase": "material_init",
+      "stack": [
+        "at trackMorphWrite (http://127.0.0.1:5174/src/components/webgl/WebGLBackground.jsx?t=1772139640225:445:19)",
+        "at http://127.0.0.1:5174/src/components/webgl/WebGLBackground.jsx?t=1772139640225:3036:7",
+        "at react-stack-bottom-frame (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:10534:20)",
+        "at runWithFiberInDEV (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:915:18)",
+        "at commitHookEffectListMount (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:6955:123)"
+      ]
+    },
+    "lastAny": {
+      "tMs": 2973,
+      "source": "material:init-default",
+      "value": 1,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "phase": "material_init",
+      "stack": [
+        "at trackMorphWrite (http://127.0.0.1:5174/src/components/webgl/WebGLBackground.jsx?t=1772139640225:445:19)",
+        "at http://127.0.0.1:5174/src/components/webgl/WebGLBackground.jsx?t=1772139640225:3036:7",
+        "at react-stack-bottom-frame (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:10534:20)",
+        "at runWithFiberInDEV (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:915:18)",
+        "at commitHookEffectListMount (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:6955:123)"
+      ]
+    }
+  },
+  "samples": [
+    {
+      "tMs": 1000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 2000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 3000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 4000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 5000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 6000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 7000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 8000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 9000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 10000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 11000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 12000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 13000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 14000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 15000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 16000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 17000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 18000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 19000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    },
+    {
+      "tMs": 20000,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "renderer": {
+        "hasMaterial": true,
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "activeCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uTierCutoff": 15000,
+          "uFadeProgress": 1,
+          "uCenterWeighting": 1
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        }
+      },
+      "morphWritesCount": 1
+    }
+  ],
+  "rendererAtEnd": {
+    "hasMaterial": true,
+    "drawRange": {
+      "start": 0,
+      "count": 15000
+    },
+    "activeCount": 15000,
+    "uniforms": {
+      "uMorphProgress": 1,
+      "uPointSize": 3,
+      "uGaussianSigma": 2.5,
+      "uTierCutoff": 15000,
+      "uFadeProgress": 1,
+      "uCenterWeighting": 1
+    },
+    "camera": {
+      "pos": [
+        0,
+        0,
+        50
+      ],
+      "fov": 100,
+      "zoom": 1,
+      "near": 0.1,
+      "far": 1000
+    }
+  },
+  "landingResolved": {
+    "enabled": true,
+    "preset": "velocity_stage",
+    "stage": "velocity",
+    "word": "VELOCITY",
+    "palette": [
+      "#7C3AED",
+      "#9333EA",
+      "#6B21A8"
+    ],
+    "quality": "HIGH",
+    "tierMix": [
+      0.45,
+      0.2,
+      0.15,
+      0.2
+    ],
+    "particlesBase": 15000,
+    "sourceStage": "velocity",
+    "choreoKey": "velocity_stage",
+    "demoKey": "landing_stage_slice__velocity_stage"
+  },
+  "writes": [
+    {
+      "tMs": 2973,
+      "source": "material:init-default",
+      "value": 1,
+      "stage": "velocity",
+      "stageIndex": 3,
+      "phase": "material_init",
+      "stack": [
+        "at trackMorphWrite (http://127.0.0.1:5174/src/components/webgl/WebGLBackground.jsx?t=1772139640225:445:19)",
+        "at http://127.0.0.1:5174/src/components/webgl/WebGLBackground.jsx?t=1772139640225:3036:7",
+        "at react-stack-bottom-frame (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:10534:20)",
+        "at runWithFiberInDEV (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:915:18)",
+        "at commitHookEffectListMount (http://127.0.0.1:5174/node_modules/.vite/deps/@react-three_fiber.js?v=d7cbb42b:6955:123)"
+      ]
+    }
+  ],
+  "traceTail": [
+    {
+      "t": 1529.2999999970198,
+      "ev": "FENCEPOST_LISTENERS_READY",
+      "channel": "renderer",
+      "source": "webgl-renderer",
+      "reason": "sink-mounted",
+      "timestamp": 1529,
+      "_meta": {
+        "version": "1.0.0",
+        "sequence": 1
+      }
+    },
+    {
+      "t": 2962.699999988079,
+      "ev": "CE:EMIT",
+      "mode": "emergence",
+      "stage": "velocity",
+      "atmoAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      },
+      "textAABB": {
+        "w": 185.46297454833984,
+        "h": 28.657499313354492
+      },
+      "note": "Emergence endpoints separated: random atmospheric → 3D text target"
+    },
+    {
+      "t": 2971.199999988079,
+      "ev": "WBG:FAST_FORWARD",
+      "at": 2971.199999988079,
+      "source": "renderer-fastforward",
+      "stage": "genesis",
+      "morph": 1,
+      "fastForward": true
+    },
+    {
+      "t": 2974.699999988079,
+      "ev": "WBG:BIND",
+      "kind": "material-init",
+      "stage": "genesis",
+      "cached": false,
+      "atmoAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      },
+      "textAABB": {
+        "w": 185.46297454833984,
+        "h": 28.657499313354492
+      },
+      "uAtmoFit": [
+        1,
+        1
+      ],
+      "uTextFit": [
+        1,
+        1
+      ],
+      "uBandFade": 0
+    },
+    {
+      "t": 3116.199999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.199999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.2999999970198,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.5,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.5999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.5999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.5999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.5999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3116.699999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3119,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3135.0999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3151.199999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3167.3999999910593,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3183.2999999970198,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3199.3999999910593,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3215.699999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3231.2999999970198,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3247.5,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3263.5,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3279.199999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3295,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3311,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3327.0999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3343,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3359,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3375.0999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3391.199999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3407.0999999940395,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3423.199999988079,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    },
+    {
+      "t": 3439.2999999970198,
+      "ev": "WBG:RUNTIME",
+      "kind": "material-init",
+      "stage": "genesis",
+      "mode": null,
+      "posAABB": {
+        "w": 527.2821655273438,
+        "h": 340.8415222167969
+      }
+    }
+  ]
+}

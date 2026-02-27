@@ -1,0 +1,175 @@
+// MetaCurtis SST v3.5 NOTES (NOT runtime-loaded)
+// This file preserves spec text, scratch notes, and JS snippets.
+// Runtime canon is in: v3.5.runtime.json (strict JSON).
+// Do not import this file from runtime.
+window.__getUniform('uTextFit')      "memoryStable": true
+    },
+    "experiential": {
+      "completionRate": ">80%",
+      "narrativeClarity": ">90%",
+      "emotionalImpact": "high"
+    },
+    "business": {
+      "shareRate": ">30%",
+      "contactConversion": ">15%",
+      "oneWeekRecall": ">90%"
+    }
+  },
+  "implementationPhases": [
+    {
+      "phase": 1,
+      "name": "Foundation",
+      "duration": "1 day",
+      "deliverables": [
+        "v3.3 config loader",
+        "Engine text-first blueprints",
+        "Renderer binding + PARTICLES_EMERGED single-source",
+        "v3.4 config loader (fallback to 3.3)",
+        "Engine text-first blueprints (emergence mode:'emergence')",
+        "Renderer binding + PARTICLES_EMERGED single-source (emit-once)",
+        "ENGINE_VIEWPORT_HINT gate"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Visual Polish",
+      "duration": "1 day",
+      "deliverables": [
+        "Gaussian falloff",
+        "Tier behavior → glyph mapping",
+        "Sprite atlas verification",
+        "Chaos mesh rotation window"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Narrative Integration",
+      "duration": "1 day",
+      "deliverables": [
+        "Opening beats timing",
+        "Memory fragments",
+        "Audio sync to emergence threshold",
+        "Opening beats timing (chaos→coalesce→settle)",
+        "START_NARRATIVE + AUDIO_START_STAGE",
+        "BeatGlyph reveal timing"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Performance & Cross-Device",
+      "duration": "1 day",
+      "deliverables": [
+        "60 FPS optimization",
+        "Adaptive quality guardrails",
+        "Mobile DPR/point-size audit"
+      ]
+    }
+  ],
+  "visualDemos": {
+    "brand_vision_demo": {
+      "durationMs": 28000,
+      "scrollLock": true,
+      "beats": [
+        {
+          "atMs": 0,
+          "durationMs": 6000,
+          "verb": "pullIn",
+          "easing": "smoothstep",
+          "params": {
+            "text": "VISION",
+            "color": "#00A4FF",
+            "intensity": 0.18,
+            "bloom": 0.08,
+            "camera": { "mode": "static" }
+          }
+        },
+        {
+          "atMs": 6000,
+          "durationMs": 6000,
+          "verb": "morph",
+          "easing": "expoInOut",
+          "params": {
+            "text": "CREATE",
+            "color": "#19F4C7",
+            "intensity": 0.22,
+            "bloom": 0.10,
+            "camera": { "mode": "push", "rate": 0.02 }
+          }
+        },
+        {
+          "atMs": 12000,
+          "durationMs": 8000,
+          "verb": "sparkDrift",
+          "easing": "linear",
+          "params": {
+            "text": "LAUNCH",
+            "color": "#A37CFF",
+            "intensity": 0.26,
+            "bloom": 0.12,
+            "camera": {
+              "mode": "orbit",
+              "yawDeg": 10,
+              "durationMs": 8000,
+              "dollyY": 0.1
+            }
+          }
+        },
+        {
+          "atMs": 20000,
+          "durationMs": 5000,
+          "verb": "bloomPulse",
+          "easing": "smoothstep",
+          "params": {
+            "text": "",
+            "color": "#A37CFF",
+            "intensity": 0.12,
+            "bloom": { "peak": 0.25, "shape": "rampThenFade" },
+            "camera": { "mode": "hold", "slowZoomOut": true }
+          }
+        }
+      ],
+      "endCard": {
+        "atMs": 25000,
+        "durationMs": 3000,
+        "verb": "endCard",
+        "easing": "smoothstep",
+        "params": {
+          "title": "MetaCurtis",
+          "subtitle": "AI-native visual orchestration",
+          "fadeInMs": 400,
+          "holdMs": 2200,
+          "fadeOutMs": 400,
+          "color": "#FFFFFF"
+        }
+      }
+    }
+  },
+  "debugSurface": {
+    "exposeGlobals": [
+      "BeatBus",
+      "EVENTS",
+      "__consciousnessMaterial",
+      "__particleGeometry",
+      "consciousnessEngine"
+    ],
+    "devHud": {
+      "stageSelector": true,
+      "morphSlider": true,
+      "pointSizeSlider": true,
+      "perfOverlay": true
+    }
+  },
+  "changeLog": [
+    "Swap: anatomy → stage words (text3DPositions)",
+    "Preserved: tiers, stage order, palettes, fragments, performance",
+    "Clarified: event single-source (Renderer emits PARTICLES_EMERGED)",
+    "Renderer: no synthesis, no scroll, no FOV scaling",
+    "Transcendence: word arrival → galaxy dissolve",
+    "Added opening fencepost contract and viewport gate",
+    "BLUEPRINT_READY now carries optional mode:'emergence' for emergence blueprints",
+    "Renderer emits ENGINE_VIEWPORT_HINT and PARTICLES_EMERGED (emit-once) by contract",
+    "Stage-0 shot list embedded (chaos→coalesce→settle → narration → BeatGlyph)",
+    "Opening rules: settle-before-scroll + Stage-0 color lock",
+    "Optional polish uniforms (uChaosSpin/uTrailIntensity/uTrailPersistence/uBrightnessBoost) are non-breaking"
+  ]
+}

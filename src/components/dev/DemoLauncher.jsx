@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
+const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
+
 const panelStyle = {
   position: 'fixed',
   top: '1rem',
@@ -107,6 +109,7 @@ export default function DemoLauncher() {
   const demos = useMemo(() => {
     const entries = Canonical?.visualDemos || {};
     return Object.keys(entries)
+      .filter((key) => !(typeof key === 'string' && key.startsWith(LANDING_SLICE_DEMO_KEY)))
       .map((key) => ({
         key,
         durationMs: entries[key]?.durationMs ?? null,
@@ -125,10 +128,50 @@ export default function DemoLauncher() {
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('demo')
       : null;
+  const isLandingSliceUrl =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slice') === 'landing_stage';
+
+  const buildLandingSliceUrl = () => {
+    if (typeof window === 'undefined') return '';
+    const url = new URL(window.location.href);
+    url.searchParams.delete('demo');
+    url.searchParams.delete('autoplay');
+    url.searchParams.delete('delay');
+    url.searchParams.delete('record');
+    url.searchParams.delete('mode');
+    url.searchParams.set('slice', 'landing_stage');
+    const resolved = Canonical?.landingStageSliceResolved || {};
+    const preset = typeof resolved?.preset === 'string' && resolved.preset.trim()
+      ? resolved.preset.trim()
+      : '';
+    if (preset) {
+      url.searchParams.set('preset', preset);
+      url.searchParams.delete('landingStage');
+      url.searchParams.delete('landingWord');
+    } else {
+      url.searchParams.delete('preset');
+      const stage = resolved?.stage || Canonical?.landingModes?.form?.stage || 'genesis';
+      const word = resolved?.word || Canonical?.landingModes?.form?.word || 'FORM';
+      url.searchParams.set('landingStage', stage);
+      url.searchParams.set('landingWord', word);
+    }
+    if (resolved?.quality) {
+      url.searchParams.set('landingQuality', resolved.quality);
+    }
+    return url.toString();
+  };
 
   const buildUrl = (demoKey) => {
     if (typeof window === 'undefined') return '';
     const url = new URL(window.location.href);
+    url.searchParams.delete('mode');
+    url.searchParams.delete('slice');
+    url.searchParams.delete('landingStage');
+    url.searchParams.delete('landingWord');
+    url.searchParams.delete('landingPalette');
+    url.searchParams.delete('landingQuality');
+    url.searchParams.delete('preset');
     url.searchParams.set('demo', demoKey);
     if (autoplay) {
       url.searchParams.set('autoplay', '1');
@@ -225,6 +268,49 @@ export default function DemoLauncher() {
             </label>
           </div>
           <div style={listStyle}>
+            <div style={rowStyle}>
+              <div>
+                <div>Landing slice</div>
+                <div style={metaStyle}>slice=landing_stage</div>
+              </div>
+              <div style={actionsStyle}>
+                {isLandingSliceUrl ? <span style={activeBadgeStyle}>active</span> : null}
+                <button
+                  type="button"
+                  style={buttonStyle}
+                  onClick={() => {
+                    const url = buildLandingSliceUrl();
+                    if (!url) return;
+                    if (openNewTab) {
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    } else {
+                      window.location.assign(url);
+                    }
+                  }}
+                >
+                  Run
+                </button>
+                <button
+                  type="button"
+                  style={buttonStyle}
+                  onClick={async () => {
+                    const url = buildLandingSliceUrl();
+                    if (!url) return;
+                    if (navigator.clipboard?.writeText) {
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        return;
+                      } catch {
+                        // fall through to prompt
+                      }
+                    }
+                    window.prompt('Copy landing slice URL', url);
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
             {demos.length === 0 ? (
               <div style={metaStyle}>No demos found.</div>
             ) : (

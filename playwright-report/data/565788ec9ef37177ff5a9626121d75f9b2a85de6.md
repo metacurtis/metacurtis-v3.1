@@ -1,0 +1,184 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: Demo Launcher
+        - button "Collapse" [ref=e7] [cursor=pointer]
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - checkbox "autoplay" [checked] [ref=e10]
+          - text: autoplay
+        - generic [ref=e11]:
+          - text: delay
+          - spinbutton "delay" [ref=e12]: "300"
+        - generic [ref=e13]:
+          - text: record param
+          - checkbox "record param" [ref=e14]
+        - generic [ref=e15]:
+          - text: new tab
+          - checkbox "new tab" [ref=e16]
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: Landing slice
+            - generic [ref=e21]: slice=landing_stage
+          - generic [ref=e22]:
+            - generic [ref=e23]: active
+            - button "Run" [ref=e24] [cursor=pointer]
+            - button "Copy" [ref=e25] [cursor=pointer]
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: brand_vision_demo
+            - generic [ref=e29]: 28.0s
+          - generic [ref=e30]:
+            - button "Run" [ref=e31] [cursor=pointer]
+            - button "Copy" [ref=e32] [cursor=pointer]
+        - generic [ref=e33]:
+          - generic [ref=e35]: landing_preset_profiles
+          - generic [ref=e36]:
+            - button "Run" [ref=e37] [cursor=pointer]
+            - button "Copy" [ref=e38] [cursor=pointer]
+    - region "Landing overlay":
+      - generic [ref=e43]:
+        - generic [ref=e44]: Preset
+        - generic [ref=e45]: agency_dark
+        - generic [ref=e46]:
+          - generic [ref=e47]:
+            - strong [ref=e48]: "Stage:"
+            - text: architecture
+          - generic [ref=e49]:
+            - strong [ref=e50]: "Active:"
+            - text: architecture
+          - generic [ref=e51]:
+            - strong [ref=e52]: "Word:"
+            - text: FORM
+        - generic [ref=e57]:
+          - generic [ref=e58]: Preset Picker (Dev)
+          - combobox "Landing preset picker" [ref=e59]:
+            - option "manual"
+            - option "agency_dark" [selected]
+            - option "cyber_teal"
+            - option "enterprise_blue"
+            - option "fintech_black"
+            - option "healthcare_calm"
+            - option "luxury_gold"
+            - option "saas_clean"
+            - option "startup_purple"
+            - option "velocity_stage"
+      - generic [ref=e60]:
+        - generic [ref=e61]: Landing Slice Factory
+        - paragraph [ref=e62]: Deterministic real-time stage backgrounds for agencies, SaaS, and premium brands. Configurable via preset and locked to canonical authority.
+        - link "Book a call" [ref=e63] [cursor=pointer]:
+          - /url: https://example.com/book-call
+  - generic [ref=e65]:
+    - generic [ref=e66]:
+      - generic [ref=e67]: CANON HUD
+      - generic [ref=e68]:
+        - button "Pin✓" [ref=e69] [cursor=pointer]
+        - button "Collapse" [ref=e70] [cursor=pointer]
+        - button "Hide" [ref=e71] [cursor=pointer]
+    - generic [ref=e72]:
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - generic [ref=e75]: FPS
+          - generic [ref=e76]: "33"
+        - generic [ref=e77]:
+          - generic [ref=e78]: Mode
+          - generic [ref=e79]: TELEMETRY
+        - generic [ref=e80]:
+          - generic [ref=e81]: Bus
+          - generic [ref=e82]: 87/35/0
+      - generic [ref=e83]:
+        - button "STRICT" [ref=e84] [cursor=pointer]
+        - button "TELEMETRY" [ref=e85] [cursor=pointer]
+        - button "TOLERANT" [ref=e86] [cursor=pointer]
+      - generic [ref=e87]:
+        - button "Run Opening Macro" [ref=e88] [cursor=pointer]
+        - button "Verify FPS" [ref=e89] [cursor=pointer]
+        - button "Fencepost Report" [ref=e90] [cursor=pointer]
+    - generic [ref=e91]:
+      - heading "Bus emit 87 on 35 off 0 ▾" [level=4] [ref=e92] [cursor=pointer]:
+        - generic [ref=e93] [cursor=pointer]: Bus
+        - generic [ref=e94] [cursor=pointer]:
+          - generic [ref=e95] [cursor=pointer]: emit 87
+          - generic [ref=e96] [cursor=pointer]: on 35
+          - generic [ref=e97] [cursor=pointer]: off 0
+          - text: ▾
+      - generic [ref=e98]:
+        - generic [ref=e99]: BeatBus
+        - generic [ref=e100]: online
+    - generic [ref=e101]:
+      - heading "Incidents last 0 ▾" [level=4] [ref=e102] [cursor=pointer]:
+        - generic [ref=e103] [cursor=pointer]: Incidents
+        - generic [ref=e104] [cursor=pointer]:
+          - generic [ref=e105] [cursor=pointer]: last 0
+          - text: ▾
+      - generic [ref=e107]: None
+    - generic [ref=e108]:
+      - heading "Opening Fencepost FULL ▾" [level=4] [ref=e109] [cursor=pointer]:
+        - generic [ref=e110] [cursor=pointer]: Opening Fencepost
+        - generic [ref=e111] [cursor=pointer]:
+          - generic [ref=e112] [cursor=pointer]: FULL
+          - text: ▾
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]: t0→emerg
+          - generic [ref=e116]: —
+        - generic [ref=e117]:
+          - generic [ref=e118]: emerg→full
+          - generic [ref=e119]: 830ms
+        - generic [ref=e120]:
+          - generic [ref=e121]: full→emerged
+          - generic [ref=e122]: "-3530ms"
+    - generic [ref=e123]:
+      - heading "Theater cursor running ▾" [level=4] [ref=e124] [cursor=pointer]:
+        - generic [ref=e125] [cursor=pointer]: Theater
+        - generic [ref=e126] [cursor=pointer]:
+          - generic [ref=e127] [cursor=pointer]: cursor
+          - generic [ref=e128] [cursor=pointer]: running
+          - text: ▾
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - button "Start" [ref=e131] [cursor=pointer]
+          - button "Cancel" [ref=e132] [cursor=pointer]
+          - button "Emit Hint" [ref=e133] [cursor=pointer]
+        - generic [ref=e134]:
+          - generic [ref=e135]: Elapsed
+          - generic [ref=e136]: 3115ms
+    - generic [ref=e137]:
+      - heading "Renderer — count 2000 ▾" [level=4] [ref=e138] [cursor=pointer]:
+        - generic [ref=e139] [cursor=pointer]: Renderer
+        - generic [ref=e140] [cursor=pointer]:
+          - generic [ref=e141] [cursor=pointer]: —
+          - generic [ref=e142] [cursor=pointer]: count 2000
+          - text: ▾
+      - generic [ref=e143]:
+        - generic [ref=e144]:
+          - generic [ref=e145]: Atlas
+          - generic [ref=e146]: "no"
+        - generic [ref=e147]:
+          - generic [ref=e148]: drawRange
+          - generic [ref=e149]: —
+        - button "Fix drawRange" [ref=e150] [cursor=pointer]
+    - generic [ref=e151]:
+      - heading "Stage / Morph / Scroll genesis m 0 s 0 ▾" [level=4] [ref=e152] [cursor=pointer]:
+        - generic [ref=e153] [cursor=pointer]: Stage / Morph / Scroll
+        - generic [ref=e154] [cursor=pointer]:
+          - generic [ref=e155] [cursor=pointer]: genesis
+          - generic [ref=e156] [cursor=pointer]: m 0
+          - generic [ref=e157] [cursor=pointer]: s 0
+          - text: ▾
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - generic [ref=e160]: Stage
+          - generic [ref=e161]: genesis
+        - generic [ref=e162]:
+          - generic [ref=e163]: Morph
+          - generic [ref=e164]: "0"
+        - generic [ref=e165]:
+          - generic [ref=e166]: Scroll
+          - generic [ref=e167]: "0"
+```

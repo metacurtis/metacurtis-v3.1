@@ -35,6 +35,19 @@ body,
 /* Auto-added viewport/base styles */
 html, body, #root { height: 100%; margin: 0; background: #000; }
 canvas { display: block; }
+body.scene-mode #instant-loader,
+body.scene-mode #lcp-hero,
+body.scene-mode .lcp-hero,
+body.scene-mode .hero-poster,
+body.scene-mode img.hero,
+body.scene-mode video.hero {
+  display: none !important;
+}
+body.scene-mode canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
 
 .hero-shell {
   position: fixed;

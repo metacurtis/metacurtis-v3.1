@@ -16,17 +16,30 @@ export async function waitForFencepostAndStage(page: Page, timeout = 30_000) {
           if (typeof tag === 'string') {
             if (tag.includes('FENCEPOST') || tag.includes('EMERGED')) return true;
           }
-          return event.mode === 'emergence' || event.source === 'renderer-directive' || event.ev === 'WBG:FENCEPOST';
+          if (event.ev === 'WBG:FENCEPOST') return true;
+          if (event.ev === 'FENCEPOST_LISTENERS_READY') return true;
+          if (event.ev === 'WBG:BIND' && (event.kind === 'material-init' || typeof event.stage === 'string')) return true;
+          return event.mode === 'emergence' || event.source === 'renderer-directive';
         });
 
         const hasStageBind = trace.some((event: any) => {
           const tag = event.tag || event.type || event.ev;
           if (typeof tag === 'string' && tag.includes('STAGE')) return true;
           if (typeof tag === 'string' && tag.includes('BIND') && event.kind === 'stage') return true;
-          return event.kind === 'stage';
+          if (event.ev === 'WBG:BIND' && (event.kind === 'stage' || event.kind === 'material-init')) return true;
+          return event.kind === 'stage' || typeof event.stage === 'string';
         });
 
-        if (!hasFencepost || !hasStageBind) {
+        const rendererReady = Boolean((window as any).__rendererListenersReady);
+        const stageFromStore =
+          (window as any).stageAtom?.getState?.()?.currentStage
+          || (window as any).narrativeAtom?.getState?.()?.currentStage
+          || null;
+        const hasCanvas = Boolean(document.querySelector('canvas'));
+        const readyByTrace = hasFencepost && hasStageBind;
+        const readyByRuntime = rendererReady && hasCanvas && typeof stageFromStore === 'string';
+
+        if (!readyByTrace && !readyByRuntime) {
           const now = Date.now();
           const lastLog = (window as any).__fencepostLastLog ?? 0;
           if (now - lastLog > 1000) {
@@ -34,13 +47,16 @@ export async function waitForFencepostAndStage(page: Page, timeout = 30_000) {
             console.log('[FENCEPOST] Waiting...', {
               hasFencepost,
               hasStageBind,
+              rendererReady,
+              stageFromStore,
+              hasCanvas,
               traceLength: trace.length,
               latestTags: trace.slice(-5).map((entry: any) => entry.tag || entry.type || entry.ev || 'unknown'),
             });
           }
         }
 
-        return hasFencepost && hasStageBind;
+        return readyByTrace || readyByRuntime;
       } catch (error) {
         console.error('[FENCEPOST] Check error', error);
         return false;
@@ -138,13 +154,30 @@ export async function sampleTextAabb(page: Page) {
   return page.evaluate(() => {
     const probe = (window as any).probe;
     const result = probe?.aabb?.({ source: 'text3DPosition' });
-    if (!result) return null;
+    if (result) {
+      return {
+        width: Number(result.width ?? 0),
+        height: Number(result.height ?? 0),
+        depth: Number(result.depth ?? 0),
+        min: result.min ? { x: result.min.x, y: result.min.y, z: result.min.z } : null,
+        max: result.max ? { x: result.max.x, y: result.max.y, z: result.max.z } : null,
+      };
+    }
+
+    const dump = (window as any).dumpTrace;
+    const trace = typeof dump === 'function' ? dump() : (window as any).__trace;
+    if (!Array.isArray(trace)) return null;
+    const bind = [...trace]
+      .reverse()
+      .find((entry: any) => entry?.ev === 'WBG:BIND' && entry?.textAABB);
+    const textAABB = bind?.textAABB;
+    if (!textAABB) return null;
     return {
-      width: Number(result.width ?? 0),
-      height: Number(result.height ?? 0),
-      depth: Number(result.depth ?? 0),
-      min: result.min ? { x: result.min.x, y: result.min.y, z: result.min.z } : null,
-      max: result.max ? { x: result.max.x, y: result.max.y, z: result.max.z } : null,
+      width: Number(textAABB.w ?? 0),
+      height: Number(textAABB.h ?? 0),
+      depth: 0,
+      min: null,
+      max: null,
     };
   });
 }

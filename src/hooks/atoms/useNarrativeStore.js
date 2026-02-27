@@ -2,6 +2,7 @@
 // Compatibility layer for Zustand → Atomic migration
 import { useAtomValue } from '@/state/atoms/createAtom';
 import { narrativeAtom } from '@/state/atoms/narrativeAtom';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 export function useNarrativeStore(selector) {
   // Get the full state or selected portion
@@ -18,14 +19,12 @@ export function useNarrativeStore(selector) {
     ...state,
 
     // Actions (bound to atom)
-    jumpToStage: narrativeAtom.jumpToStage,
     nextStage: narrativeAtom.nextStage,
     prevStage: narrativeAtom.prevStage,
-    setStage: narrativeAtom.setStage,
-    setGlobalProgress: narrativeAtom.setGlobalProgress,
-    setScrollProgress: narrativeAtom.setScrollProgress,
+    // Canonical authority writers
+    setStage: (stageInput, options) => stateCommands.setStage(stageInput, options),
+    setScrollProgress: (progress, options) => stateCommands.setScrollProgress(progress, options),
     setMorphProgress: narrativeAtom.setMorphProgress,
-    setNarrativeProgress: narrativeAtom.setNarrativeProgress,
     activateMemoryFragment: narrativeAtom.activateMemoryFragment,
     dismissMemoryFragment: narrativeAtom.dismissMemoryFragment,
     isStageFeatureEnabled: narrativeAtom.isStageFeatureEnabled,

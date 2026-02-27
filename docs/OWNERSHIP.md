@@ -25,8 +25,6 @@ uGlowIntensity = src/components/webgl/WebGLBackground.jsx
 uGlyphPulseIntensity = src/components/webgl/WebGLBackground.jsx
 uGlyphTargetActive = src/components/webgl/WebGLBackground.jsx
 uGlyphTargetRadius = src/components/webgl/WebGLBackground.jsx
-uMorph = src/components/webgl/WebGLBackground.jsx
-uMorphProgress = src/components/webgl/WebGLBackground.jsx
 uMorphType = src/components/webgl/WebGLBackground.jsx
 uMotionMode = src/components/webgl/WebGLBackground.jsx
 uOpacityMax = src/components/webgl/WebGLBackground.jsx
@@ -92,7 +90,7 @@ DIRECTOR_CANCEL.emitter = src/theater/TheaterDirector.js
 DIRECTOR_ERROR.emitter = src/theater/TheaterDirector.js
 DIRECTOR_OPENING_MODE.emitter = src/theater/TheaterDirector.js
 DIRECTOR:MORPH_STATE.emitter = src/theater/TheaterDirector.js
-ENABLE_SCROLL.emitter = src/theater/TheaterDirector.js
+ENABLE_SCROLL.emitter = ⚠️ multiple: src/components/consciousness/ConsciousnessTheater.jsx, src/theater/TheaterDirector.js
 ENGINE_VIEWPORT_HINT.emitter = ⚠️ multiple: src/components/consciousness/ConsciousnessTheater.jsx, src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
 ENGINE:MORPH_STATE.emitter = src/engine/ConsciousnessEngine.js
 FENCEPOST_LISTENERS_READY.emitter = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/theater/TheaterDirector.js
@@ -139,4 +137,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2026-01-11 via `tools/generate-ownership.mjs`
+Last updated: 2026-02-27 via `tools/generate-ownership.mjs`

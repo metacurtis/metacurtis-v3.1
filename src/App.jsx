@@ -10,7 +10,10 @@ import NarrationController from '@/components/narrative/NarrationController.jsx'
 import NarrativeUIControls from '@/components/ui/NarrativeUIControls.jsx';
 import DemoOverlay from '@/components/demo/DemoOverlay.jsx';
 import DemoLauncher from '@/components/dev/DemoLauncher.jsx';
+import LandingOverlay from '@/components/landing/LandingOverlay.jsx';
 import { clockAtom } from '@/state/atoms';
+import { qualityAtom } from '@/state/atoms/qualityAtom.js';
+import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 import '@/orchestration/navigation/narrativeNavigation.js';
 
@@ -31,7 +34,46 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 }
 
 export default function App() {
+  const appParams =
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isLandingStageSlice =
+    typeof window !== 'undefined' && appParams?.get('slice') === 'landing_stage';
+  const isLandingSliceMode = isLandingStageSlice;
+  const forcedQualityTier =
+    typeof window !== 'undefined'
+      ? (() => {
+          const explicit = (
+            window.__FORCE_QUALITY_TIER__ ||
+            appParams?.get('quality') ||
+            appParams?.get('landingQuality') ||
+            Canonical?.landingStageSliceResolved?.quality ||
+            ''
+          ).toUpperCase();
+          return ['LOW', 'MEDIUM', 'HIGH', 'ULTRA'].includes(explicit)
+            ? explicit
+            : null;
+        })()
+      : null;
   useEffect(() => {
+    if (!isLandingSliceMode) return;
+    const loader = document.getElementById('instant-loader');
+    if (!loader) return;
+    loader.classList.add('hidden');
+    loader.style.display = 'none';
+  }, [isLandingSliceMode]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle('form-mode', isLandingSliceMode);
+    document.body.classList.toggle('scene-mode', isLandingSliceMode);
+    return () => {
+      document.body.classList.remove('form-mode');
+      document.body.classList.remove('scene-mode');
+    };
+  }, [isLandingSliceMode]);
+
+  useEffect(() => {
+    if (isLandingSliceMode) return;
     console.log('🚀 App initializing...');
     
     // Start the clock atom if not already running
@@ -63,7 +105,25 @@ export default function App() {
         console.log('⏰ Clock atom stopped');
       }
     };
-  }, []);
+  }, [isLandingSliceMode]);
+
+  useEffect(() => {
+    if (!forcedQualityTier) return;
+    const currentTier = qualityAtom.getState?.()?.currentQualityTier;
+    if (currentTier === forcedQualityTier) return;
+    qualityAtom.setCurrentQualityTier?.(forcedQualityTier);
+  }, [forcedQualityTier]);
+
+  if (isLandingSliceMode) {
+    return (
+      <div className="relative min-h-screen">
+        <DemoLauncher />
+        <ConsciousnessTheater mode="landing_stage" />
+        <LandingOverlay />
+        <div aria-hidden="true" style={{ height: '220vh' }} />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen">

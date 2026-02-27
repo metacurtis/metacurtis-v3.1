@@ -30,7 +30,10 @@ import {
   emitBlueprintReady,
   makeBandFrame,
 } from './utils/blueprintUtils.js';
-import { emitMorphProgress, emitTextPositionsReady } from '@/theater/bus/emitters.js';
+import { emitTextPositionsReady } from '@/theater/bus/emitters.js';
+import { morphController } from '@/theater/controllers/MorphAnimationController.js';
+import { buildHotspotLookup } from '@/utils/hotspotMapping.js';
+import { glyphSpace } from '@/engine/GlyphSpace.js';
 
 // Visual behavior constants (formerly VC knobs)
 const STARFIELD_FIT_FRAC = 0.92;
@@ -621,7 +624,10 @@ class ConsciousnessEngine {
           || 12000);
     const count = Math.max(1, Math.floor(countCandidate));
 
-    const letterGeom = Canonical?.visual?.letterGeometry?.[stage] || {};
+    const letterGeom =
+      Canonical?.getStageTypography?.(stage) ||
+      Canonical?.visual?.letterGeometry?.[stage] ||
+      {};
     const depth = Number(letterGeom.depth) || 0.3;
     const letterSpacing = Number(letterGeom.spacing ?? letterGeom.letterSpacing) || 1;
     const scale = Number(letterGeom.scale) || 1;
@@ -637,42 +643,32 @@ class ConsciousnessEngine {
 
     this._clearTextMorphTimers();
 
-    const morphSource = 'demo';
-    const nowMs = () =>
-      typeof performance !== 'undefined' && typeof performance.now === 'function'
-        ? performance.now()
-        : Date.now();
-    const schedule = (fn) =>
-      typeof requestAnimationFrame === 'function'
-        ? requestAnimationFrame(fn)
-        : setTimeout(() => fn(nowMs()), 16);
-    const ease = (t) => t * t * (3 - 2 * t);
-    const emitMorph = (value) => {
+    const morphSource = 'engine_text_morph_intent';
+    const setMorphImmediate = (value, source = morphSource) => {
       const clamped = clamp(value, 0, 1);
-      emitMorphProgress({ progress: clamped, source: morphSource });
+      morphController.setImmediate(clamped, { source });
       this._textMorphLastValue = clamped;
+      return clamped;
     };
-    const animateMorph = (from, to, duration, onComplete) => {
-      if (!Number.isFinite(duration) || duration <= 0) {
-        emitMorph(to);
-        if (typeof onComplete === 'function') onComplete();
-        return;
+    const setMorphTarget = ({ from, to, duration, source = morphSource }) => {
+      const clampedFrom = clamp(
+        Number.isFinite(from) ? from : (Number.isFinite(this._textMorphLastValue) ? this._textMorphLastValue : 1),
+        0,
+        1
+      );
+      const clampedTo = clamp(to, 0, 1);
+      const safeDuration = Math.max(0, Number(duration) || 0);
+      if (safeDuration <= 0) {
+        return setMorphImmediate(clampedTo, source);
       }
-      const start = nowMs();
-      const step = (timestamp) => {
-        const elapsed = (Number.isFinite(timestamp) ? timestamp : nowMs()) - start;
-        const t = clamp(elapsed / duration, 0, 1);
-        const eased = ease(t);
-        const value = from + (to - from) * eased;
-        emitMorph(value);
-        if (t < 1) {
-          this._textMorphRaf = schedule(step);
-        } else {
-          this._textMorphRaf = null;
-          if (typeof onComplete === 'function') onComplete();
-        }
-      };
-      this._textMorphRaf = schedule(step);
+      morphController.setTarget({
+        from: clampedFrom,
+        to: clampedTo,
+        duration: safeDuration,
+        source,
+      });
+      this._textMorphLastValue = clampedTo;
+      return clampedTo;
     };
 
     const emitPositions = () => {
@@ -695,27 +691,61 @@ class ConsciousnessEngine {
         stage,
         count,
       });
+      const shouldRegisterGlyphMap =
+        (typeof globalThis !== 'undefined' && globalThis.__DEMO_KEY__ === 'landing_stage_slice') ||
+        (typeof window !== 'undefined' &&
+          new URLSearchParams(window.location.search).get('slice') === 'landing_stage');
+      if (shouldRegisterGlyphMap) {
+        try {
+          const hotspotLookup = buildHotspotLookup({
+            stageName: stage,
+            text3DPositions: positions,
+            wordOverride: wordRaw,
+          });
+          glyphSpace.register(wordRaw, hotspotLookup);
+        } catch (error) {
+          console.warn('[Engine] GlyphSpace registration failed', error);
+        }
+      }
       console.log(`[Engine] TEXT_MORPH: Generated ${count} positions for "${wordRaw}"`);
     };
 
     if (!durationMs) {
       emitPositions();
+      setMorphImmediate(1, 'engine_text_morph_immediate');
       return;
     }
 
     const startValue = Number.isFinite(this._textMorphLastValue) ? this._textMorphLastValue : 1;
-    animateMorph(startValue, 0, dissolveDuration, () => {
+    setMorphTarget({
+      from: startValue,
+      to: 0,
+      duration: dissolveDuration,
+      source: 'engine_text_morph_dissolve_intent',
+    });
+    const scheduleReform = () => {
+      setMorphTarget({
+        from: 0,
+        to: 1,
+        duration: reformDuration,
+        source: 'engine_text_morph_reform_intent',
+      });
+    };
+    const afterDissolve = () => {
       emitPositions();
-      const scheduleReform = () => {
-        animateMorph(0, 1, reformDuration, null);
-      };
       if (reformDelay > 0) {
         const reformTimer = setTimeout(scheduleReform, reformDelay);
         this._textMorphTimers.push(reformTimer);
       } else {
         scheduleReform();
       }
-    });
+    };
+    if (dissolveDuration > 0) {
+      const dissolveTimer = setTimeout(afterDissolve, dissolveDuration);
+      this._textMorphTimers.push(dissolveTimer);
+    } else {
+      afterDissolve();
+    }
   }
 
   async _onBuildEmergence(payload = {}) {
@@ -839,22 +869,41 @@ class ConsciousnessEngine {
       const stageLabel = this.currentStage || 'genesis';
       const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : null;
       const stageIndex = stageOrder ? stageOrder.indexOf(stageLabel) : -1;
-        const emitMorphProgress = (value, target = value) => {
-          const clampedValue = clamp(value, 0, 1);
-          const clampedTarget = clamp(target, 0, 1);
-          const morphPayload = {
-            morphProgress: clampedValue,
-            value: clampedValue,
-            morphTarget: clampedTarget,
-            target: clampedTarget,
-            stage: stageLabel,
-            schemaVersion: '3.5',
-          };
-          if (stageIndex >= 0) {
-            morphPayload.stageIndex = stageIndex;
-          }
-          BeatBus.emit('ENGINE:MORPH_STATE', morphPayload);
+      const emitMorphState = (value, target = value) => {
+        const clampedValue = clamp(value, 0, 1);
+        const clampedTarget = clamp(target, 0, 1);
+        const morphPayload = {
+          morphProgress: clampedValue,
+          value: clampedValue,
+          morphTarget: clampedTarget,
+          target: clampedTarget,
+          stage: stageLabel,
+          schemaVersion: '3.5',
         };
+        if (stageIndex >= 0) {
+          morphPayload.stageIndex = stageIndex;
+        }
+        BeatBus.emit('ENGINE:MORPH_STATE', morphPayload);
+      };
+
+      // Engine sets morph intent only; MorphAnimationController is the canonical MORPH_PROGRESS publisher.
+      const driveMorphIntent = () => {
+        morphController.setTarget({
+          from: 0,
+          to: 1,
+          duration: Math.max(1, totalPhases),
+          source: 'engine_emergence_intent',
+        });
+      };
+      if (holdMs > 0) {
+        const holdTimer = setTimeout(() => {
+          if (!this._emergenceActive || this._rendererFencepostSeen) return;
+          driveMorphIntent();
+        }, holdMs);
+        this._textMorphTimers.push(holdTimer);
+      } else {
+        driveMorphIntent();
+      }
 
       const step = () => {
         if (!this._emergenceActive || this._rendererFencepostSeen) {
@@ -879,19 +928,8 @@ class ConsciousnessEngine {
           ? midValue * easeImpl
           : midValue + (1 - midValue) * easeSettle;
 
-        const draw = Math.max(1, Math.round(count * (inImplosion ? easeImpl : 1)));
-        const pointSize = inImplosion
-          ? pointSizeBase * (1 + (pointKick - 1) * easeImpl)
-          : pointSizeBase * (pointKick - (pointKick - 1) * easeSettle);
-        const gaussian = inImplosion
-          ? sigmaBase + (sigmaPeak - sigmaBase) * easeImpl
-          : sigmaPeak - (sigmaPeak - sigmaBase) * easeSettle;
-        const tierHi = inImplosion
-          ? tierPeak
-          : tierPeak - (tierPeak - tierSettle) * easeSettle;
-
         const morphRounded = +morph.toFixed(3);
-        emitMorphProgress(morphRounded, inImplosion ? midValue : 1);
+        emitMorphState(morphRounded, inImplosion ? midValue : 1);
 
         if (elapsed < total) {
           this._emergenceRaf = schedule(step);
@@ -900,7 +938,7 @@ class ConsciousnessEngine {
             this._emergenceRaf = null;
             return;
           }
-          emitMorphProgress(1, 1);
+          emitMorphState(1, 1);
           this._emergenceRaf = null;
           this._emergenceActive = false;
           this._emergenceDone = true;
@@ -908,7 +946,7 @@ class ConsciousnessEngine {
       };
 
       // Prime listeners with baseline state before the first frame
-      emitMorphProgress(0, midValue);
+      emitMorphState(0, midValue);
 
       step();
       return true;
@@ -1530,9 +1568,18 @@ class ConsciousnessEngine {
    *   3) fallback [0.5, 0.2, 0.15, 0.15]
    */
   _getGenesisTierRatiosFromSST() {
-    const a = SST?.stages?.genesis?.tiers?.ratios;
-    const b = SST?.visual?.tiers?.ratios;
-    return this._normalizeTierRatios(a || b || [0.5, 0.2, 0.15, 0.15]);
+    return this._getStageTierRatiosFromSST('genesis');
+  }
+
+  _getStageTierRatiosFromSST(stageName = 'genesis') {
+    const resolvedStage =
+      typeof stageName === 'string' && stageName.trim() ? stageName.trim() : 'genesis';
+    const stageTierMix = SST?.stages?.[resolvedStage]?.tierMix;
+    const stageTierRatios = SST?.stages?.[resolvedStage]?.tiers?.ratios;
+    const visualTierRatios = SST?.visual?.tiers?.ratios;
+    return this._normalizeTierRatios(
+      stageTierMix || stageTierRatios || visualTierRatios || [0.5, 0.2, 0.15, 0.15]
+    );
   }
 
   /**
@@ -1621,6 +1668,8 @@ class ConsciousnessEngine {
       mode = 'emergence',
       source = 'viewportSpread',
       target = 'constellation',
+      stageName: stageNameInput = 'genesis',
+      sourceText = undefined,
       count = SST?.performance?.particleCount?.genesis ?? 2000,
       tierRatios = undefined,
       viewportHint = this._viewportHint,
@@ -1630,8 +1679,10 @@ class ConsciousnessEngine {
       targetState = undefined,
     } = options || {};
 
+    const stageOrder = Array.isArray(Canonical?.stageOrder) ? Canonical.stageOrder : [];
+    const emergenceStage = stageOrder.includes(stageNameInput) ? stageNameInput : 'genesis';
     const sanitizedRatios = this._normalizeTierRatios(
-      tierRatios || this._getGenesisTierRatiosFromSST()
+      tierRatios || this._getStageTierRatiosFromSST(emergenceStage)
     );
 
     const blueprint = this._createEmptyBlueprint(count, { mode, quality });
@@ -1641,14 +1692,23 @@ class ConsciousnessEngine {
     const atmospheric = this._generateRandomAtmosphericScatter(blueprintCount, viewportHint, { band: false });
 
     // Target: prefer SST kinetic typography (“HELLO CURTIS”) with safe fallback
-    const lg = SST?.visual?.letterGeometry?.genesis || {};
-    const canonicalWord = Canonical?.visual?.letterGeometry?.genesis?.word;
+    const stageTypography =
+      Canonical?.getStageTypography?.(emergenceStage) ||
+      Canonical?.visual?.letterGeometry?.[emergenceStage] ||
+      Canonical?.visual?.letterGeometry?.genesis ||
+      {};
+    const lg = SST?.visual?.letterGeometry?.[emergenceStage] || SST?.visual?.letterGeometry?.genesis || {};
+    const canonicalWord =
+      Canonical?.getStageWord?.(emergenceStage) ||
+      stageTypography?.word ||
+      Canonical?.visual?.letterGeometry?.genesis?.word;
+    const payloadWord = typeof sourceText === 'string' ? sourceText.trim() : '';
     const stageWordFallback = typeof canonicalWord === 'string' && canonicalWord.trim()
       ? canonicalWord.trim()
       : 'GENESIS';
-    const wordRaw = typeof lg.word === 'string' && lg.word.trim()
+    const wordRaw = payloadWord || (typeof lg.word === 'string' && lg.word.trim()
       ? lg.word.trim()
-      : stageWordFallback;
+      : stageWordFallback);
     const depth = Number.isFinite(lg.depth) && lg.depth > 0 ? lg.depth : 0.3;
     const use3D = SST?.visual?.system === '3d_kinetic_typography';
 
@@ -1662,6 +1722,7 @@ class ConsciousnessEngine {
           depth,
           particles: blueprintCount,
           viewportHint,
+          stage: emergenceStage,
         });
         usedFallback = this._lastText3DFallbackUsed;
         if (usedFallback) {
@@ -1723,6 +1784,7 @@ class ConsciousnessEngine {
       mode,
       source,
       target: use3D ? `text3D:${wordRaw}${usedFallback ? ':FALLBACK' : ''}` : target,
+      stage: emergenceStage,
       tierRatios: sanitizedRatios,
       counts,
       sstVersion: SST?.version || '3.5',
@@ -1736,13 +1798,15 @@ class ConsciousnessEngine {
     };
 
     blueprint.mode = mode;
+    blueprint.stageName = emergenceStage;
+    blueprint.stage = emergenceStage;
     blueprint.fastForward = forwardFlag;
     if (skipMorphAnimation) blueprint.skipMorphAnimation = true;
     if (targetState) blueprint.targetState = targetState;
 
     trace('CE:EMIT', {
       mode,
-      stage: 'genesis',
+      stage: emergenceStage,
       atmoAABB: aabbOf(blueprint.atmosphericPositions),
       textAABB: aabbOf(blueprint.text3DPositions),
       note: blueprint.metadata?.note || null,

@@ -17,13 +17,18 @@ import director from '@/theater/TheaterDirector.js';
 import OpeningSequence from '@/components/theater/OpeningSequence.jsx';
 import BeatBus from '@/theater/bus';
 import { EVENTS } from '@/theater/events.js';
-import { emitMorphProgress, emitRenderDirective } from '@/theater/bus/emitters.js';
-import NavigationGate from '@/theater/NavigationGate.js';
+import { emitRenderDirective } from '@/theater/bus/emitters.js';
 import { NarrativeChoreography } from '@/components/narrative/NarrativeChoreography.jsx';
 
 console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe cancel)');
 
 const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
+const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
+const LANDING_SLICE_DEMO_KEY_PREFIX = `${LANDING_SLICE_DEMO_KEY}__`;
+
+const isLandingSliceDemoKey = (demoKey) =>
+  typeof demoKey === 'string' &&
+  (demoKey === LANDING_SLICE_DEMO_KEY || demoKey.startsWith(LANDING_SLICE_DEMO_KEY_PREFIX));
 
 // Debounce helper to prevent rapid-fire navigation (default 150ms)
 function createDebouncer(minInterval = 150) {
@@ -133,14 +138,91 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
   );
 };
 
-export default function ConsciousnessTheater() {
+const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+
+const FormVoidPlacard = ({ copy }) => {
+  if (!copy) return null;
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        zIndex: 6,
+      }}
+    >
+      <div
+        style={{
+          padding: '18px 22px',
+          borderRadius: '12px',
+          background: 'rgba(10, 12, 16, 0.72)',
+          border: '1px solid rgba(220, 230, 242, 0.35)',
+          color: '#e8eef6',
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          textAlign: 'center',
+          maxWidth: '360px',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+          pointerEvents: 'auto',
+        }}
+      >
+        <div style={{ fontSize: '1.05rem', fontWeight: 600, letterSpacing: '0.08em' }}>
+          {copy.name}
+        </div>
+        <div style={{ fontSize: '0.85rem', marginTop: '6px', opacity: 0.75 }}>
+          {copy.title}
+        </div>
+        <div style={{ fontSize: '0.95rem', marginTop: '14px', lineHeight: 1.4 }}>
+          {copy.line}
+        </div>
+        {copy.ctaHref ? (
+          <a
+            href={copy.ctaHref}
+            style={{
+              display: 'inline-block',
+              marginTop: '12px',
+              fontSize: '0.9rem',
+              color: '#e8eef6',
+              textDecoration: 'underline',
+              opacity: 0.9,
+              pointerEvents: 'auto',
+            }}
+          >
+            {copy.cta}
+          </a>
+        ) : (
+          <div style={{ fontSize: '0.9rem', marginTop: '12px', opacity: 0.85 }}>
+            {copy.cta}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default function ConsciousnessTheater({ mode } = {}) {
+  const isLandingSliceMode = mode === 'landing_stage';
+  const isDemoMode =
+    typeof window !== 'undefined' && window.__DEMO_MODE__ === true;
+  const demoKey =
+    typeof window !== 'undefined' && isDemoMode ? window.__DEMO_KEY__ : null;
+  const isLandingSliceDemo = isLandingSliceDemoKey(demoKey);
   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage);
-  const scrollProgress = useAtomValue(narrativeAtom, (state) => state.scrollProgress);
+  const scrollProgress = useAtomValue(stageAtom, (state) => state.globalProgress ?? 0);
   const morphProgress = useAtomValue(narrativeAtom, (state) => state.morphProgress);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [scrollEnabled, setScrollEnabled] = useState(false);
+  const [formCameraMode, setFormCameraMode] = useState('rest');
+  const [formCameraProgress, setFormCameraProgress] = useState(0);
+  const [formDemoScrollEnabled, setFormDemoScrollEnabled] = useState(false);
+  const [showVoidPlacard, setShowVoidPlacard] = useState(false);
   const showCanvas = true;
 
+  const formLandingConfig = Canonical?.landingModes?.form || null;
+  const formConfig = isLandingSliceMode ? formLandingConfig : null;
+  const formPlacardCopy = formLandingConfig?.ui?.voidCopy;
+  const showFormPlacard = isLandingSliceMode && showVoidPlacard;
   const currentStageRef = useRef(currentStage || 'genesis');
   const morphProgressRef = useRef(0);
   const directorStartedRef = useRef(false);
@@ -148,6 +230,23 @@ export default function ConsciousnessTheater() {
   const arrowKeyDebounce = useRef(createDebouncer(150)).current;
 
   const _stageConfig = Canonical.stages[currentStage];
+  const formStage = isLandingSliceMode ? formConfig?.stage || 'genesis' : currentStage;
+  const formMorphProgress = isLandingSliceMode ? 1 : morphProgress;
+  const formRenderScroll = isLandingSliceMode ? 0 : scrollProgress;
+  const allowFormScroll = isLandingSliceMode && formDemoScrollEnabled;
+  // Canonical form camera input: consume stageAtom globalProgress (driven by ScrollOrchestrator).
+  const formScrollInput = allowFormScroll ? clamp01(scrollProgress) : 0;
+  const allowFormPlacard = isLandingSliceMode;
+  const formCameraOverride = allowFormScroll
+    ? {
+        mode: formCameraMode,
+        targetGlyph: 'O',
+        progress: formCameraProgress,
+        useGlyphCamera: isLandingSliceMode || isLandingSliceDemo,
+        glyphMode: 'enter',
+        glyphOccurrence: 1,
+      }
+    : null;
   const {
     activeFragments,
     fragmentStates,
@@ -158,16 +257,50 @@ export default function ConsciousnessTheater() {
   triggerFragmentRef.current = triggerFragment;
 
   useEffect(() => {
+    if (isLandingSliceMode) return;
     morphProgressRef.current = morphProgress;
-  }, [morphProgress]);
+  }, [isLandingSliceMode, morphProgress]);
 
   useEffect(() => {
+    if (isLandingSliceMode) return;
     if (!currentStage) return;
     currentStageRef.current = currentStage;
     if (typeof qualityAtom.updateParticleBudget === 'function') {
       qualityAtom.updateParticleBudget(currentStage);
     }
-  }, [currentStage]);
+  }, [currentStage, isLandingSliceMode]);
+
+  useEffect(() => {
+    if (!allowFormScroll) return;
+    const p = clamp01(formScrollInput);
+    if (p < 0.15) {
+      setFormCameraMode('rest');
+      setFormCameraProgress(0);
+      return;
+    }
+    if (p < 0.4) {
+      setFormCameraMode('threshold');
+      setFormCameraProgress(clamp01((p - 0.15) / 0.25));
+      return;
+    }
+    setFormCameraMode('interior');
+    setFormCameraProgress(clamp01((p - 0.4) / 0.6));
+  }, [formScrollInput, allowFormScroll]);
+
+  useEffect(() => {
+    if (!allowFormPlacard) return;
+    let timeoutId = null;
+    const shouldShow =
+      formCameraMode === 'interior' && formCameraProgress > 0.95;
+    if (shouldShow) {
+      timeoutId = setTimeout(() => setShowVoidPlacard(true), 800);
+    } else {
+      setShowVoidPlacard(false);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [formCameraMode, formCameraProgress, allowFormPlacard]);
 
   // ───────────────── Director start AFTER viewport hint; scroll locked until ENABLE_SCROLL
   useEffect(() => {
@@ -181,13 +314,54 @@ export default function ConsciousnessTheater() {
     const tick = setInterval(() => {
       if (!directorStartedRef.current && viewportReadyRef.current) {
         // Demo mode: bypass opening, narration, scroll orchestration
-        if (globalThis.__DEMO_MODE__ && globalThis.__DEMO_KEY__) {
-          const demoKey = globalThis.__DEMO_KEY__;
-          console.log(`[ConsciousnessTheater] Demo mode detected, running: ${demoKey}`);
+        const forcedLandingDemoKey = isLandingSliceMode && !globalThis.__DEMO_MODE__
+          ? (Canonical?.landingStageSliceResolved?.demoKey || LANDING_SLICE_DEMO_KEY)
+          : null;
+        if ((globalThis.__DEMO_MODE__ && globalThis.__DEMO_KEY__) || forcedLandingDemoKey) {
+          const activeDemoKey = forcedLandingDemoKey || globalThis.__DEMO_KEY__;
+          const isLandingSliceFlow = isLandingSliceMode || isLandingSliceDemoKey(activeDemoKey);
+          const landingResolved = Canonical?.landingStageSliceResolved || null;
+          const landingPreset = landingResolved?.preset || null;
+          const useStageModeLanding = isLandingSliceFlow && landingPreset === 'velocity_stage';
+          const landingQuality =
+            (landingResolved?.quality || qualityAtom.getState?.()?.currentQualityTier || 'HIGH')
+              .toString()
+              .toUpperCase();
+          const formWord =
+            (Canonical?.landingModes?.form?.word || '').trim() || 'FORM';
+          const formStageName =
+            (Canonical?.landingModes?.form?.stage || 'genesis').toString().trim() || 'genesis';
+          const formStageConfig =
+            Canonical?.getResolvedStageByName?.(formStageName) ||
+            Canonical?.stages?.[formStageName] ||
+            null;
+          const formTierRatios =
+            Array.isArray(formStageConfig?.tierMix) &&
+            formStageConfig.tierMix.length === 4
+              ? formStageConfig.tierMix
+              : null;
+          const formCount = Number(Canonical?.landingModes?.form?.particlesBase) || 9000;
+          if (useStageModeLanding) {
+            console.log('[ConsciousnessTheater] Landing stage mode detected', {
+              preset: landingPreset,
+              stage: formStageName,
+              quality: landingQuality,
+            });
+          } else {
+            console.log(`[ConsciousnessTheater] Demo mode detected, running: ${activeDemoKey}`);
+          }
 
           // Stop ScrollOrchestrator for non-interactive demos only
-          if (director.scrollOrchestrator && demoKey !== 'demo_intent_v2') {
+          if (useStageModeLanding) {
+            director.scrollOrchestrator?.stop?.();
+          } else if (
+            director.scrollOrchestrator &&
+            activeDemoKey !== 'demo_intent_v2' &&
+            !isLandingSliceDemoKey(activeDemoKey)
+          ) {
             director.scrollOrchestrator.stop();
+          } else if (director.scrollOrchestrator && isLandingSliceDemoKey(activeDemoKey)) {
+            director.scrollOrchestrator.start();
           }
 
           const hideInstantLoader = () => {
@@ -197,30 +371,42 @@ export default function ConsciousnessTheater() {
             } catch {}
           };
 
-          // Trigger emergence so renderer binds geometry
-          BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
-            mode: 'emergence',
-            target: 'genesis',
-            targetState: 'genesis_initial',
-            source: 'demo',
-            count: 12000,
-            fastForward: true,
-            skipMorphAnimation: true,
-          });
-
           // Wait for blueprint bind, then start demo
           let demoBlueprintReady = false;
           let rendererReady = false;
+          let emergenceRequested = false;
           let pendingActiveCount = null;
+          let stageModeStarted = false;
+          const deterministicBoot =
+            typeof window !== 'undefined' && window.__DETERMINISTIC_MODE__ === true;
+
+          const requestEmergenceBlueprint = () => {
+            if (emergenceRequested) return;
+            emergenceRequested = true;
+            BeatBus.emit(EVENTS.BUILD_EMERGENCE_BLUEPRINT, {
+              mode: 'emergence',
+              target: isLandingSliceFlow ? formStageName : 'genesis',
+              stageName: isLandingSliceFlow ? formStageName : 'genesis',
+              targetState: isLandingSliceFlow ? `${formStageName}_initial` : 'genesis_initial',
+              source: 'demo',
+              count: isLandingSliceFlow ? formCount : 12000,
+              ...(isLandingSliceFlow ? { sourceText: formWord } : {}),
+              ...(isLandingSliceFlow && formTierRatios ? { tierRatios: formTierRatios } : {}),
+              fastForward: deterministicBoot,
+              skipMorphAnimation: deterministicBoot,
+            });
+          };
 
           const maybeStartDemo = () => {
             console.log('[DemoGate] maybeStartDemo', {
               demoBlueprintReady,
               rendererReady,
+              useStageModeLanding,
               pendingActiveCount,
               timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
             });
-            if (!demoBlueprintReady || !rendererReady) return;
+            if (!rendererReady) return;
+            if (!useStageModeLanding && !demoBlueprintReady) return;
             try {
               hideInstantLoader();
               const loader = document.getElementById('instant-loader');
@@ -228,36 +414,95 @@ export default function ConsciousnessTheater() {
                 loader.classList.add('hidden');
                 loader.style.display = 'none';
               }
-              const startMorph = demoKey === 'demo_intent_v2' ? 0 : 0.98;
-              emitMorphProgress({ progress: startMorph, source: 'demo' });
+              if (useStageModeLanding) {
+                if (stageModeStarted) return;
+                stageModeStarted = true;
+                setFormDemoScrollEnabled(false);
+                setShowVoidPlacard(false);
+                try {
+                  qualityAtom.setCurrentQualityTier?.(landingQuality);
+                } catch {}
+                BeatBus.emit(EVENTS.ENABLE_SCROLL, {
+                  source: 'landing_stage_mode_velocity',
+                });
+                try {
+                  window.stageControls?.setAutoAdvanceEnabled?.(false);
+                  window.stageControls?.pauseAutoAdvance?.();
+                } catch {}
+                stateCommands.setStage?.(formStageName, {
+                  origin: 'landing_stage_mode_velocity',
+                  forceEmit: true,
+                });
+                console.log('[ConsciousnessTheater] Landing stage mode started', {
+                  stage: formStageName,
+                  preset: landingPreset,
+                  quality: landingQuality,
+                });
+                return;
+              }
+              const startMorph =
+                activeDemoKey === 'demo_intent_v2'
+                  ? 0
+                  : (isLandingSliceFlow && !deterministicBoot ? 0 : 0.98);
+              director.setMorphImmediate?.(startMorph, {
+                source: 'theater_demo_boot_intent',
+              });
               emitRenderDirective({
                 source: 'visual_orchestrator',
                 phase: 'visual_demo',
-                stage: 'genesis',
+                stage: isLandingSliceFlow ? formStageName : 'genesis',
                 uMorphProgress: startMorph,
                 uStageProgress: 1,
                 uOpacityMin: 0.5,
                 uOpacityMax: 1.0,
                 drawCount: pendingActiveCount,
                 activeCount: pendingActiveCount,
-                pointSize: 48,
+                pointSize: isLandingSliceFlow ? 3 : 48,
               });
-              director.runVisualDemo(demoKey);
-              console.log(`[ConsciousnessTheater] Demo started: ${demoKey}`);
+              director.runVisualDemo(activeDemoKey);
+              if (isLandingSliceFlow) {
+                const beats =
+                  Canonical?.visualDemos?.[activeDemoKey]?.beats ||
+                  Canonical?.visualDemos?.[LANDING_SLICE_DEMO_KEY]?.beats ||
+                  [];
+                const settleBeat =
+                  beats.find((beat) => beat?.verb === 'settle') || beats?.[1] || null;
+                const settleAtMs = Number.isFinite(settleBeat?.atMs) ? settleBeat.atMs : 0;
+                const settleDurationMs = Number.isFinite(settleBeat?.durationMs)
+                  ? settleBeat.durationMs
+                  : 0;
+                const enableAtMs = Math.max(0, settleAtMs + settleDurationMs);
+                setFormDemoScrollEnabled(false);
+                setShowVoidPlacard(false);
+                const enableTimer = setTimeout(() => {
+                  setFormDemoScrollEnabled(true);
+                }, enableAtMs);
+                demoCleanups.push(() => clearTimeout(enableTimer));
+                demoCleanups.push(() => setFormDemoScrollEnabled(false));
+              }
+              console.log(`[ConsciousnessTheater] Demo started: ${activeDemoKey}`);
             } catch (err) {
               console.error('[ConsciousnessTheater] Demo failed to start:', err);
             }
           };
 
           const offBlueprint = BeatBus.on(EVENTS.BLUEPRINT_READY, (p = {}) => {
-            if (p.stage !== 'genesis') return;
+            const expectedStage = isLandingSliceFlow ? formStageName : 'genesis';
+            const payloadStage = p?.stage || null;
+            const blueprintStage = p?.blueprint?.stageName || p?.blueprint?.stage || null;
+            const stageMatches =
+              payloadStage === expectedStage || blueprintStage === expectedStage;
+            if (!stageMatches) return;
             pendingActiveCount =
               p?.activeCount ??
               p?.blueprint?.activeCount ??
               p?.blueprint?.particleCount ??
               null;
             demoBlueprintReady = true;
-            console.log('[DemoGate] BLUEPRINT_READY (genesis)', {
+            console.log('[DemoGate] BLUEPRINT_READY', {
+              expectedStage,
+              payloadStage,
+              blueprintStage,
               pendingActiveCount,
               timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
             });
@@ -269,6 +514,9 @@ export default function ConsciousnessTheater() {
               if (window.__rendererListenersReady === true) {
                 rendererReady = true;
                 console.log('[DemoGate] Renderer already ready on check (__rendererListenersReady)');
+                if (!useStageModeLanding) {
+                  requestEmergenceBlueprint();
+                }
                 maybeStartDemo();
                 return true;
               }
@@ -283,6 +531,9 @@ export default function ConsciousnessTheater() {
               payload,
               timestamp: (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(),
             });
+            if (!useStageModeLanding) {
+              requestEmergenceBlueprint();
+            }
             maybeStartDemo();
           });
           demoCleanups.push(offBlueprint, offRendererReady);
@@ -294,6 +545,9 @@ export default function ConsciousnessTheater() {
             if (!rendererReady) {
               console.log('[DemoGate] Forcing rendererReady via timeout fallback');
               rendererReady = true;
+              if (!useStageModeLanding) {
+                requestEmergenceBlueprint();
+              }
               maybeStartDemo();
             }
           }, 1000);
@@ -315,7 +569,6 @@ export default function ConsciousnessTheater() {
     const offs = [
       BeatBus.on(EVENTS.ENABLE_SCROLL, () => {
         console.log('   Theater: Scroll enabled by Director');
-        setScrollEnabled(true);
         try { document.body.style.overflow = ''; } catch {}
       }),
       BeatBus.on(EVENTS.START_NARRATIVE, ({ stage }) => {
@@ -337,7 +590,7 @@ export default function ConsciousnessTheater() {
       directorStartedRef.current = false;
       viewportReadyRef.current = false;
     };
-  }, []);
+  }, [isLandingSliceMode, isDemoMode]);
 
   // --- Viewport hint fallback — emit hint if renderer never provided one
   useEffect(() => {
@@ -365,6 +618,7 @@ export default function ConsciousnessTheater() {
 
   // ───────────────── Keyboard navigation (after handoff)
   useEffect(() => {
+    if (isLandingSliceMode) return;
     if (!isInitialized) return;
 
     const stageNames =
@@ -542,32 +796,12 @@ export default function ConsciousnessTheater() {
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isInitialized]);
-
-  // ───────────────── Scroll → morph/stage (after handoff)
-  useEffect(() => {
-    if (!isInitialized || !scrollEnabled) return;
-
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const scrollHeight = Math.max(
-        document.documentElement.scrollHeight - window.innerHeight,
-        1
-      );
-      const progress = Math.min(scrollTop / scrollHeight, 1);
-
-      stateCommands.setScrollProgress(progress, { origin: 'scroll' });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isInitialized, scrollEnabled]);
+  }, [isLandingSliceMode, isInitialized]);
 
   // ───────────────── Render
   return (
     <div className="consciousness-theater-v3">
-      <OpeningSequence />
+      {!isLandingSliceMode && <OpeningSequence />}
 
       {/* tall spacer to allow scrolling once enabled */}
       <div
@@ -582,26 +816,30 @@ export default function ConsciousnessTheater() {
 
       {showCanvas && (
         <WebGLCanvas
-          stage={currentStage}
-          morphProgress={morphProgress}
-          scrollProgress={scrollProgress}
+          stage={formStage}
+          morphProgress={formMorphProgress}
+          scrollProgress={formRenderScroll}
+          cameraOverride={formCameraOverride}
         />
       )}
 
+      {showFormPlacard && <FormVoidPlacard copy={formPlacardCopy} />}
+
       {/* Narrative choreography overlay */}
-      <NarrativeChoreography />
+      {!isLandingSliceMode && <NarrativeChoreography />}
 
       {/* Memory fragments */}
-      {activeFragments.map((fragment) => {
-        const state = fragmentStates[fragment.id];
-        return state?.state === 'active' ? (
-          <MemoryFragmentRenderer
-            key={fragment.id}
-            fragment={fragment}
-            onDismiss={() => dismissFragment(fragment.id)}
-          />
-        ) : null;
-      })}
+      {!isLandingSliceMode &&
+        activeFragments.map((fragment) => {
+          const state = fragmentStates[fragment.id];
+          return state?.state === 'active' ? (
+            <MemoryFragmentRenderer
+              key={fragment.id}
+              fragment={fragment}
+              onDismiss={() => dismissFragment(fragment.id)}
+            />
+          ) : null;
+        })}
     </div>
   );
 }

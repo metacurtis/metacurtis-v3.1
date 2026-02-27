@@ -22,6 +22,13 @@ const CANONICAL_STAGE_MAP = STAGE_NAMES.reduce((acc, name) => {
 
 const INITIAL_STAGE_NAME = STAGE_NAMES[0] || 'genesis';
 const INITIAL_STAGE_INDEX = Math.max(0, STAGE_NAMES.indexOf(INITIAL_STAGE_NAME));
+const LANDING_STAGE_LOCK = (() => {
+  if (Canonical?.landingStageSlice?.enabled !== true) return null;
+  const requested = Canonical?.landingStageSlice?.stage;
+  const stageIndex = STAGE_NAMES.includes(requested) ? STAGE_NAMES.indexOf(requested) : INITIAL_STAGE_INDEX;
+  const stageName = STAGE_NAMES[stageIndex] || INITIAL_STAGE_NAME;
+  return { stageName, stageIndex };
+})();
 
 const TRANSITION_CONFIG = {
   batchDelay: 16,
@@ -42,11 +49,14 @@ function createEmptyPerformanceMetrics() {
 }
 
 function createInitialState() {
+  const baseStageName = LANDING_STAGE_LOCK?.stageName || INITIAL_STAGE_NAME;
+  const baseStageIndex = LANDING_STAGE_LOCK?.stageIndex ?? INITIAL_STAGE_INDEX;
+  const baseProgress = STAGE_COUNT > 1 ? baseStageIndex / (STAGE_COUNT - 1) : 0;
   return {
-    currentStage: INITIAL_STAGE_NAME,
-    stageIndex: INITIAL_STAGE_INDEX,
+    currentStage: baseStageName,
+    stageIndex: baseStageIndex,
     stageProgress: 0,
-    globalProgress: STAGE_COUNT > 1 ? INITIAL_STAGE_INDEX / (STAGE_COUNT - 1) : 0,
+    globalProgress: baseProgress,
     isTransitioning: false,
     memoryFragmentsUnlocked: [],
     metacurtisActive: false,
@@ -381,6 +391,15 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
         console.warn('[stageAtom] Invalid stage input', stageInput);
         return;
       }
+      if (LANDING_STAGE_LOCK && stageName !== LANDING_STAGE_LOCK.stageName) {
+        if (import.meta.env.DEV) {
+          console.warn('[stageAtom] Landing stage lock blocked setStage', {
+            requested: stageName,
+            locked: LANDING_STAGE_LOCK.stageName,
+          });
+        }
+        return;
+      }
 
       const timestamp = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const progressBase = STAGE_COUNT > 1 ? stageIndex / (STAGE_COUNT - 1) : 0;
@@ -410,6 +429,15 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
 
       if (stageIndex === -1) {
         console.warn('[stageAtom] Invalid stage input', stageInput);
+        return;
+      }
+      if (LANDING_STAGE_LOCK && stageName !== LANDING_STAGE_LOCK.stageName) {
+        if (import.meta.env.DEV) {
+          console.warn('[stageAtom] Landing stage lock blocked jumpToStage', {
+            requested: stageName,
+            locked: LANDING_STAGE_LOCK.stageName,
+          });
+        }
         return;
       }
 
@@ -475,6 +503,15 @@ export const stageAtom = createAtom(initialState, (get, setState) => {
     setGlobalProgress: (progress) => {
       const state = get();
       const clampedProgress = Math.max(0, Math.min(1, progress));
+      if (LANDING_STAGE_LOCK) {
+        const updates = {
+          globalProgress: clampedProgress,
+          currentStage: LANDING_STAGE_LOCK.stageName,
+          stageIndex: LANDING_STAGE_LOCK.stageIndex,
+        };
+        batchedSetState(updates, 'setGlobalProgressLockedStage');
+        return;
+      }
       const canonicalStage = Canonical.getStageByScroll?.(clampedProgress);
       let stageName = resolveStageName(canonicalStage);
       let stageIndex = stageName != null ? STAGE_NAMES.indexOf(stageName) : -1;

@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Landing Slice Determinism Postfix Audit (Patches 1-5 + Option A)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.45; color: #111; }
+    h1, h2, h3 { margin: 0 0 10px; }
+    h2 { margin-top: 24px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+    th { background: #f5f5f5; text-align: left; }
+    code { background: #f3f3f3; padding: 1px 4px; }
+    pre { background: #0f172a; color: #e5e7eb; padding: 12px; overflow: auto; border-radius: 6px; }
+    .pass { color: #0a7a2f; font-weight: bold; }
+    .partial { color: #92400e; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Landing Slice Determinism Postfix Audit (Patches 1-5 + Option A)</h1>
+  <p><strong>Scope:</strong> Execute deterministic hardening patches in order and verify with grep gates, Playwright visual suite, and Vite build.</p>
+
+  <h2>1) Patch Execution Log</h2>
+
+  <h3>Patch 1: Director morph helper rename</h3>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Renamed diagnostic helper to <code>_emitMorphSnapshot</code> in <code>src/theater/TheaterDirector.js</code> at lines <code>633</code>, <code>1225</code>, <code>1690</code>.</p>
+
+  <h3>Patch 2: Navigation canonical authority path</h3>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p><code>src/state/commands/NavigationCommands.js:38-44</code> now calls imported <code>stateCommands.setStage</code>. Director fallback uses imported canonical state commands at <code>src/theater/TheaterDirector.js:2090-2095</code>. No <code>jumpToStage(</code> usage in <code>src/state/commands</code> or <code>src/theater</code>.</p>
+
+  <h3>Patch 3: Deprecated narrative writers blocked</h3>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p><code>src/state/atoms/narrativeAtom.js:79-93</code> adds <code>blockDeprecatedWriter</code>. Deprecated stage/progress methods are blocked at <code>:97-132</code>. Mirror sync methods remain at <code>:136-165</code>.</p>
+
+  <h3>Patch 4: Secondary scroll binder removed</h3>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Removed local form scroll listener in <code>ConsciousnessTheater</code>. Form camera now consumes canonical progress at <code>src/components/consciousness/ConsciousnessTheater.jsx:231</code>. Only production scroll binder remains at <code>src/theater/ScrollOrchestrator.js:78</code>.</p>
+
+  <h3>Patch 5A: Global dev bridge hardening</h3>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Removed <code>window.StateCommands</code> exposure. DEV bridge now uses <code>window.__MC_DEV__</code> in <code>src/state/commands/StateCommands.js:346-354</code>.</p>
+
+  <h3>Patch 5B: useNarrativeStore API surface cleanup</h3>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Removed deprecated narrative writer exports from <code>useNarrativeStore</code>. Canonical writers now route through <code>stateCommands</code> at <code>src/hooks/atoms/useNarrativeStore.js:25-26</code>.</p>
+
+  <h2>2) Mandatory and Phase-5 Gates (Raw Outputs)</h2>
+  <pre>rg -n "_emitMorphProgress|_emitMorphSnapshot" src/theater/TheaterDirector.js
+633:  _emitMorphSnapshot(value, { target, stage, phase, durationMs, source }) {
+1225:      this._emitMorphSnapshot(endValue, {
+1690:      this._emitMorphSnapshot(value, {
+---
+rg -n "\bemitMorphProgress\(" src
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+---
+rg -n "window\.StateCommands" src
+(no matches)
+---
+rg -n "__MC_DEV__|stateCommandContracts" src/state/commands/StateCommands.js
+347:      window.__MC_DEV__ && typeof window.__MC_DEV__ === 'object' ? window.__MC_DEV__ : {};
+348:    window.__MC_DEV__ = {
+353:      stateCommandContracts: () => stateCommands.getContractStatus(),
+---
+rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+---
+rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+---
+rg -n "EVENTS\.SCROLL_PROGRESS" src/components/consciousness src/theater src/state
+src/state/commands/StateCommands.js:138:    const scrollBusSub = BeatBus.on?.(EVENTS.SCROLL_PROGRESS, (payload = {}) => {
+src/theater/ScrollOrchestrator.js:310:      BeatBus.emit?.(EVENTS.SCROLL_PROGRESS, {
+src/theater/TheaterDirector.js:615:    this._demoScrollOff = BeatBus.on(EVENTS.SCROLL_PROGRESS, handleScroll);
+---
+rg -n "jumpToStage: narrativeAtom\.jumpToStage|setGlobalProgress: narrativeAtom\.setGlobalProgress|setNarrativeProgress: narrativeAtom\.setNarrativeProgress|setScrollProgress: narrativeAtom\.setScrollProgress|setStage: narrativeAtom\.setStage" src/hooks/atoms/useNarrativeStore.js
+(no matches)
+---
+rg -n "setStage:\s*\(stageInput, options\) => stateCommands\.setStage|setScrollProgress:\s*\(progress, options\) => stateCommands\.setScrollProgress" src/hooks/atoms/useNarrativeStore.js
+25:    setStage: (stageInput, options) => stateCommands.setStage(stageInput, options),
+26:    setScrollProgress: (progress, options) => stateCommands.setScrollProgress(progress, options),
+---
+rg -n "narrativeAtom\.(jumpToStage|setStage|setGlobalProgress|setScrollProgress|setNarrativeProgress)" src
+src/theater/UnifiedNavigationAPI.js:7: * RULE: Nothing should call narrativeAtom.jumpToStage directly.</pre>
+
+  <h2>3) Invariant Status (Post Patch 5)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Invariant</th>
+        <th>Status</th>
+        <th>Grounded Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>One production scroll binder drives narrative progress.</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/theater/ScrollOrchestrator.js:78</code> binds scroll and emits <code>SCROLL_PROGRESS</code> at <code>:310-319</code>; consumed by <code>src/state/commands/StateCommands.js:138-149</code>.</td>
+      </tr>
+      <tr>
+        <td><code>stageAtom</code> is canonical stage/progress authority.</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Canonical write path at <code>src/state/commands/StateCommands.js:199-215</code> with <code>stageAtom.setGlobalProgress</code> at <code>:208</code>; narrative deprecated writers blocked in <code>src/state/atoms/narrativeAtom.js:97-132</code>.</td>
+      </tr>
+      <tr>
+        <td>Renderer is sink-only for memory fragment activation.</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Renderer emits <code>PARTICLE_CLICK_HIT</code> intent at <code>src/components/webgl/WebGLBackground.jsx:1829-1837</code>; activation happens in <code>src/state/commands/StateCommands.js:152-156</code>.</td>
+      </tr>
+      <tr>
+        <td>Navigation uses canonical authority API with no bypass.</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>NavigationCommands</code> uses imported <code>stateCommands.setStage</code> at <code>src/state/commands/NavigationCommands.js:38-44</code>; <code>rg -n "jumpToStage\(" src/state/commands src/theater</code> returns no matches.</td>
+      </tr>
+      <tr>
+        <td><code>MORPH_PROGRESS</code> direct emission is single-authoritative.</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>rg -n "\bemitMorphProgress\(" src</code> returns controller callsites only at <code>src/theater/controllers/MorphAnimationController.js:27,68</code> plus emitter definition.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4) Files Touched (This Run)</h2>
+  <ul>
+    <li><code>src/state/commands/StateCommands.js</code></li>
+    <li><code>src/hooks/atoms/useNarrativeStore.js</code></li>
+    <li><code>audit_landing_slice_determinism_postfix.html</code></li>
+  </ul>
+
+  <h2>5) Verification</h2>
+  <pre>PLAYWRIGHT_HTML_OPEN=never npm run test:visual
+Result: 11 passed (2.6m)
+
+npx vite build
+Result: success
+
+Build warnings remain:
+- node:* externalized for browser compatibility in src/config/sst-loader.js
+- large chunk size warning
+- UnifiedNavigationAPI static+dynamic import warning</pre>
+
+  <h2>6) Remaining Drift Items</h2>
+  <ol>
+    <li><span class="partial">Low:</span> Deprecated writer methods still exist inside <code>narrativeAtom</code> as blocked stubs for compatibility (<code>src/state/atoms/narrativeAtom.js:97-132</code>); they no longer appear in <code>useNarrativeStore</code> public API.</li>
+  </ol>
+
+  <h2>7) Evidence Pack</h2>
+  <pre>src/state/commands/StateCommands.js
+346-354: DEV bridge moved to window.__MC_DEV__ (stateCommands, stageAtom, BeatBus, stateCommandContracts)
+
+src/hooks/atoms/useNarrativeStore.js
+25-26: setStage/setScrollProgress now route to canonical stateCommands
+21-29: deprecated writer exports removed from public hook surface
+
+src/theater/ScrollOrchestrator.js
+78: single production scroll listener
+310-319: SCROLL_PROGRESS publisher payload
+
+src/state/commands/StateCommands.js
+138-149: SCROLL_PROGRESS consumer
+208: stageAtom.setGlobalProgress(clamped)
+152-156: PARTICLE_CLICK_HIT intent -> fragment activation
+
+src/theater/controllers/MorphAnimationController.js
+27,68: only direct emitMorphProgress callsites</pre>
+
+  <h2>8) Option A Single-Stage Landing Slice</h2>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Implemented URL-driven single-stage landing mode that reuses an existing stage template and applies minimal overrides for word/palette while locking stage transitions.</p>
+  <ul>
+    <li><code>src/config/canonical/canonicalAuthority.js:66-100</code> parses <code>slice=landing_stage</code>, <code>landingStage</code>, <code>landingWord</code>, <code>landingPalette</code>, <code>landingQuality</code>.</li>
+    <li><code>src/config/canonical/canonicalAuthority.js:293-369</code> applies shallow stage template overrides and updates <code>landingModes.form</code> + <code>visualDemos.landing_stage_slice</code>.</li>
+    <li><code>src/state/atoms/stageAtom.js:25-31</code> defines landing stage lock; <code>:394-402</code>, <code>:434-442</code>, <code>:503-513</code> block stage drift in set/jump/global-progress paths.</li>
+    <li><code>src/App.jsx:35-58,120-127</code> routes <code>slice=landing_stage</code> into form theater path and accepts <code>landingQuality</code>.</li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx:199-231,315-356</code> uses landing stage config for form demo blueprint payload and canonical scroll progress input.</li>
+    <li><code>src/engine/ConsciousnessEngine.js:1663-1785</code> builds emergence blueprint from requested stage template via <code>stageName</code>/<code>sourceText</code>.</li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts:5-16,111-142</code> adds Option A visual smoke with stage-lock assertion and snapshots at 0/50/95 scroll.</li>
+  </ul>
+
+  <h3>8.1 Mandatory Pre-checks (Raw)</h3>
+  <pre>A) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+B) rg -n "\bemitMorphProgress\(" src
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+
+C) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+D) rg -n "word|palette|uniformOverrides|stageOrder|stages\W*:" src sst
+(high-volume output; key Option-A hits)
+src/config/canonical/canonicalAuthority.js:66:function resolveLandingStageSliceConfig(source, stageOrder = []) {
+src/config/canonical/canonicalAuthority.js:293:function buildCanonical(source) {
+src/config/canonical/canonicalAuthority.js:310:    const resolvedWord = landingStageSlice.word || 'FORM';
+src/config/canonical/canonicalAuthority.js:353:    if (sst.visualDemos?.landing_stage_slice) {
+src/components/consciousness/ConsciousnessTheater.jsx:317:            (Canonical?.landingModes?.form?.word || '').trim() || 'FORM';
+
+E) rg -n "slice=landing_stage|landing" src
+src/App.jsx:38:    typeof window !== 'undefined' && appParams?.get('slice') === 'landing_stage';
+src/config/canonical/canonicalAuthority.js:71:  if (params.get('slice') !== 'landing_stage') {
+src/components/consciousness/ConsciousnessTheater.jsx:199:  const isFormMode = mode === 'form' || mode === 'landing_stage';
+src/components/consciousness/ConsciousnessTheater.jsx:311:          ? 'landing_stage_slice'
+src/components/dev/DemoLauncher.jsx:155:    url.searchParams.set('slice', 'landing_stage');</pre>
+
+  <h3>8.2 Post-checks (Raw)</h3>
+  <pre>1) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+2) rg -n "\bemitMorphProgress\(" src
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+
+3) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+4) PLAYWRIGHT_HTML_OPEN=never npm run test:visual -- --update-snapshots
+Result: 11 passed (2.6m)
+
+5) PLAYWRIGHT_HTML_OPEN=never npm run test:visual
+Result: 11 passed (2.6m)
+
+6) npx vite build
+Result: success (warnings unchanged: node:* externalization + chunk size + mixed dynamic/static import)</pre>
+
+  <h3>8.3 Option A Invariant Check</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Invariant</th>
+        <th>Status</th>
+        <th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Single production scroll binder</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/theater/ScrollOrchestrator.js:78</code>; grep post-check #1 only returns this binder.</td>
+      </tr>
+      <tr>
+        <td>stageAtom canonical authority with landing stage lock</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/state/atoms/stageAtom.js:25-31</code>, <code>:394-402</code>, <code>:434-442</code>, <code>:503-513</code>.</td>
+      </tr>
+      <tr>
+        <td>Renderer sink-only boundary</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/components/webgl/WebGLBackground.jsx:1829-1837</code> emits <code>PARTICLE_CLICK_HIT</code>; state layer consumes in <code>src/state/commands/StateCommands.js:152-156</code>.</td>
+      </tr>
+      <tr>
+        <td>Navigation canonical path only</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/state/commands/NavigationCommands.js:37-44</code>; grep post-check #3 returns no bypasses.</td>
+      </tr>
+      <tr>
+        <td>Single direct MORPH_PROGRESS publisher</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Direct callsites only in <code>src/theater/controllers/MorphAnimationController.js:27,68</code> (+ emitter definition).</td>
+      </tr>
+      <tr>
+        <td>Option A stage lock holds under scroll</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>tests/visual/landing-determinism-smoke.spec.ts:122-137</code> asserts fixed <code>uStageIndex</code> at 0/50/95 scroll.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>8.4 Option A Files Touched</h3>
+  <ul>
+    <li><code>src/config/canonical/canonicalAuthority.js</code></li>
+    <li><code>src/state/atoms/stageAtom.js</code></li>
+    <li><code>src/App.jsx</code></li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx</code></li>
+    <li><code>src/engine/ConsciousnessEngine.js</code></li>
+    <li><code>src/state/commands/NavigationCommands.js</code></li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts</code></li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts-snapshots/*</code></li>
+    <li><code>audit_landing_slice_determinism_postfix.html</code></li>
+  </ul>
+
+  <h2>9) Landing Presets + Non-Destructive Overrides</h2>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Added preset-driven landing slice resolution and removed destructive canonical stage mutations. Landing overrides now resolve into a landing-specific layer and are consumed via canonical helper accessors.</p>
+
+  <h3>9.1 Resolution Priority (Grounded)</h3>
+  <ol>
+    <li><strong>Preset defaults:</strong> <code>preset=&lt;id&gt;</code> resolves from <code>src/slices/landingStagePresets.js</code>.</li>
+    <li><strong>Manual URL overrides:</strong> <code>landingStage</code>, <code>landingWord</code>, <code>landingPalette</code>, <code>landingQuality</code> override preset values.</li>
+    <li><strong>Fallback defaults:</strong> landing mode defaults then <code>genesis</code>/<code>FORM</code>.</li>
+  </ol>
+  <p>Evidence: <code>src/config/canonical/canonicalAuthority.js:84-165</code>.</p>
+
+  <h3>9.2 Mandatory Pre-checks (Raw, Before Edits)</h3>
+  <pre>A) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+B) rg -n "\bemitMorphProgress\(" src
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+
+C) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+D) rg -n "slice=landing_stage|landingStageSlice|landingModes\.form|landingWord|landingPalette|landingQuality" src sst
+src/components/dev/DemoLauncher.jsx:147:    url.searchParams.set('landingWord', word);
+src/components/dev/DemoLauncher.jsx:157:    url.searchParams.delete('landingWord');
+src/components/dev/DemoLauncher.jsx:158:    url.searchParams.delete('landingPalette');
+src/components/dev/DemoLauncher.jsx:159:    url.searchParams.delete('landingQuality');
+src/components/dev/DemoLauncher.jsx:259:                <div style={metaStyle}>slice=landing_stage</div>
+src/App.jsx:46:            appParams?.get('landingQuality') ||
+src/config/canonical/canonicalAuthority.js:84:  const requestedWord = (params.get('landingWord') || fallbackWord || 'FORM').trim();
+src/config/canonical/canonicalAuthority.js:87:  const palette = parseLandingPalette(params.get('landingPalette'), {
+src/config/canonical/canonicalAuthority.js:91:  const landingQualityRaw = (params.get('landingQuality') || '').toUpperCase();
+src/config/canonical/canonicalAuthority.js:92:  const landingQuality = QUALITY_TIERS.has(landingQualityRaw) ? landingQualityRaw : null;
+src/config/canonical/canonicalAuthority.js:99:    quality: landingQuality,
+src/config/canonical/canonicalAuthority.js:297:  const landingStageSlice = resolveLandingStageSliceConfig(sst, stageOrder);
+src/config/canonical/canonicalAuthority.js:299:  if (landingStageSlice.enabled) {
+src/config/canonical/canonicalAuthority.js:300:    const stageName = landingStageSlice.stage;
+src/config/canonical/canonicalAuthority.js:304:    const resolvedPalette = landingStageSlice.palette || stagePalette;
+src/config/canonical/canonicalAuthority.js:311:    const resolvedWord = landingStageSlice.word || 'FORM';
+src/config/canonical/canonicalAuthority.js:666:    landingStageSlice,
+src/state/atoms/stageAtom.js:26:  if (Canonical?.landingStageSlice?.enabled !== true) return null;
+src/state/atoms/stageAtom.js:27:  const requested = Canonical?.landingStageSlice?.stage;
+
+E) rg -n "sst\.stages\[[^\]]+\]\s*=\s*\{|\bstages\[[^\]]+\]\.word|\bstages\[[^\]]+\]\.palette|\bstages\[[^\]]+\]\.colors" src/config/canonical
+src/config/canonical/canonicalAuthority.js:331:      sst.stages[stageName] = {</pre>
+
+  <h3>9.3 Changes Implemented</h3>
+  <ul>
+    <li><code>src/slices/landingStagePresets.js</code>: new preset registry with <code>agency_dark</code>, <code>saas_clean</code>, <code>luxury_gold</code>.</li>
+    <li><code>src/config/canonical/canonicalAuthority.js</code>: preset-aware resolver, landing-specific resolved layer (<code>landingStageSliceResolved</code>), and helper accessors <code>getResolvedStageByName</code>, <code>getStageTypography</code>, <code>getStageWord</code>.</li>
+    <li><code>src/config/canonical/canonicalAuthority.js</code>: removed destructive writes to <code>sst.stages[stage]</code> and <code>sst.visual.letterGeometry[stage]</code>.</li>
+    <li><code>src/components/webgl/WebGLBackground.jsx</code>: stage palette resolution now reads canonical resolved stage helper.</li>
+    <li><code>src/engine/modules/BlueprintGenerator.js</code>: stage config + typography now use canonical resolved helper accessors.</li>
+    <li><code>src/engine/ConsciousnessEngine.js</code>: typography/word lookup paths updated to canonical helper accessors.</li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx</code>: landing tier mix sourced from canonical resolved stage.</li>
+    <li><code>src/components/dev/DemoLauncher.jsx</code>: short URL support via <code>preset=</code> when resolved preset exists.</li>
+    <li><code>src/App.jsx</code>: landing preset quality can enforce quality tier via <code>Canonical.landingStageSliceResolved.quality</code>.</li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts</code>: added preset smoke test with stage-lock + screenshots at 0/50/95.</li>
+  </ul>
+
+  <h3>9.4 Post-checks (Raw, After Edits)</h3>
+  <pre>1) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+2) rg -n "\bemitMorphProgress\(" src
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+
+3) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+4) rg -n "sst\.stages\[[^\]]+\]\s*=\s*\{|\bstages\[[^\]]+\]\.word|\bstages\[[^\]]+\]\.palette|\bstages\[[^\]]+\]\.colors" src/config/canonical
+(no matches)
+
+5) PLAYWRIGHT_HTML_OPEN=never npm run test:visual:landing -- --update-snapshots
+Result: 3 passed (32.2s). New preset snapshots written:
+- landing-preset-agency-dark-scroll-00-chromium-linux.png
+- landing-preset-agency-dark-scroll-50-chromium-linux.png
+- landing-preset-agency-dark-scroll-95-chromium-linux.png
+
+6) PLAYWRIGHT_HTML_OPEN=never npm run test:visual:landing
+Result: 3 passed (27.3s)
+
+7) npx vite build
+Result: success (existing warnings unchanged: node:* externalization, chunk size, mixed static/dynamic import)</pre>
+
+  <h3>9.5 Invariant Status (After Preset Upgrade)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Invariant</th>
+        <th>Status</th>
+        <th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>One production scroll binder</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/theater/ScrollOrchestrator.js:78</code>; post-check #1 only returns this binder.</td>
+      </tr>
+      <tr>
+        <td><code>stageAtom</code> is stage/progress authority</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Unchanged lock/authority path in <code>src/state/atoms/stageAtom.js</code>; no bypasses in post-check #3.</td>
+      </tr>
+      <tr>
+        <td>Renderer remains sink-only</td>
+        <td><span class="pass">PASS</span></td>
+        <td>No new renderer narrative writers introduced; landing overrides resolved in canonical layer + read-only helper access.</td>
+      </tr>
+      <tr>
+        <td>Navigation canonical only</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Post-check #3 <code>jumpToStage(</code> returns no matches in command/theater authority modules.</td>
+      </tr>
+      <tr>
+        <td>Single MORPH_PROGRESS direct publisher</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Post-check #2 returns MorphAnimationController callsites only (+ emitter definition).</td>
+      </tr>
+      <tr>
+        <td>Landing overrides non-destructive</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Pre-check E found prior mutation; post-check #4 now returns no matches.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>10) Landing Overlay Shell + Buyer Preset Catalog</h2>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Implemented a landing-only overlay shell and expanded the preset catalog for buyer segments without adding new authority writers.</p>
+
+  <h3>10.1 Mandatory Pre-checks (Raw)</h3>
+  <pre>A) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+B) rg -n "\bemitMorphProgress\(" src
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+
+C) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)</pre>
+
+  <h3>10.2 Files Changed</h3>
+  <ul>
+    <li><code>src/slices/landingStagePresets.js</code> — expanded catalog to 8 presets (agency_dark, saas_clean, luxury_gold, cyber_teal, healthcare_calm, fintech_black, startup_purple, enterprise_blue).</li>
+    <li><code>src/components/landing/LandingOverlay.jsx</code> — new landing-only overlay shell with CTA and resolved preset/stage/word/palette read model.</li>
+    <li><code>src/App.jsx</code> — renders overlay only in <code>slice=landing_stage</code> mode.</li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts</code> — asserts overlay CTA visibility and preset label visibility.</li>
+  </ul>
+
+  <h3>10.3 Overlay Contract</h3>
+  <ul>
+    <li>Read-only sources: <code>Canonical.landingStageSliceResolved</code>, <code>Canonical.landingModes.form</code>, <code>stageAtom.currentStage</code>.</li>
+    <li>No scroll listeners added.</li>
+    <li>No stage/progress/morph mutation paths introduced.</li>
+    <li>DEV-only preset picker updates URL <code>preset=...</code> and reloads.</li>
+  </ul>
+
+  <h3>10.4 Post-checks (Raw)</h3>
+  <pre>1) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+2) rg -n "\bemitMorphProgress\(" src
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+
+3) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+4) PLAYWRIGHT_HTML_OPEN=never npm run test:visual:landing -- --update-snapshots
+Result: 3 passed (30.1s)
+
+5) PLAYWRIGHT_HTML_OPEN=never npm run test:visual:landing
+Result: 3 passed (27.7s)
+
+6) npx vite build
+Result: success (warnings unchanged: node:* externalization, chunk-size warning, mixed dynamic/static import warning)</pre>
+
+  <h3>10.5 Invariant Check</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Invariant</th>
+        <th>Status</th>
+        <th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Single scroll binder</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Only <code>src/theater/ScrollOrchestrator.js:78</code>.</td>
+      </tr>
+      <tr>
+        <td>Single direct morph publisher</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Only <code>MorphAnimationController</code> callsites + emitter definition.</td>
+      </tr>
+      <tr>
+        <td>No navigation bypass</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>jumpToStage(</code> absent in <code>src/state/commands</code> and <code>src/theater</code>.</td>
+      </tr>
+      <tr>
+        <td>Overlay is deterministic-safe (read-only)</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/components/landing/LandingOverlay.jsx</code> reads canonical/state only; no narrative writers or listeners.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>11) Landing Choreography by Preset</h2>
+  <p><strong>Status:</strong> <span class="pass">PASS</span></p>
+  <p>Landing slice now resolves choreography per preset while keeping stage lock and single-writer invariants intact.</p>
+
+  <h3>11.1 Mandatory Pre-checks (Raw, Before Edits)</h3>
+  <pre>A) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+B) rg -n "\bemitMorphProgress\(" src
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+
+C) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+D) rg -n "landing_stage|landingStageSliceResolved|preset=|landingModes\.form|visualDemos|runVisualDemo" src sst
+src/theater/TheaterDirector.js:882:  runVisualDemo(demoKey = 'brand_vision_demo') {
+src/theater/TheaterDirector.js:893:    const demo = Canonical?.visualDemos?.[demoKey];
+src/config/canonical/canonicalAuthority.js:27:const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
+src/config/canonical/canonicalAuthority.js:85:  if (params.get('slice') !== 'landing_stage') {
+src/config/canonical/canonicalAuthority.js:355:  const landingStageSliceResolved = landingStageSlice.enabled
+src/config/canonical/canonicalAuthority.js:391:  if (landingStageSliceResolved.enabled) {
+src/config/canonical/canonicalAuthority.js:408:    if (sst.visualDemos?.[LANDING_SLICE_DEMO_KEY]) {
+src/components/consciousness/ConsciousnessTheater.jsx:401:              director.runVisualDemo(activeDemoKey);
+sst/canon/v3.5.runtime.json:896:  "visualDemos": {
+sst/canon/v3.5.runtime.json:897:    "landing_stage_slice": {
+
+E) rg -n "landing_stage_slice|form_landing_demo|visualDemos" sst/canon/v3\.5\.runtime\.json src/config -S
+sst/canon/v3.5.runtime.json:896:  "visualDemos": {
+sst/canon/v3.5.runtime.json:897:    "landing_stage_slice": {
+src/config/canonical/canonicalAuthority.js:27:const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';</pre>
+
+  <h3>11.2 Choreography Profiles + Resolution</h3>
+  <ul>
+    <li><code>sst/canon/v3.5.runtime.json:950-1378</code> adds <code>visualDemos.landing_preset_profiles</code> for <code>agency_dark</code>, <code>saas_clean</code>, <code>luxury_gold</code>, <code>cyber_teal</code>, <code>healthcare_calm</code>, <code>fintech_black</code>, <code>startup_purple</code>, <code>enterprise_blue</code>.</li>
+    <li><code>src/config/canonical/canonicalAuthority.js:82-108</code> adds non-destructive demo materializer + resolved demo key helper.</li>
+    <li><code>src/config/canonical/canonicalAuthority.js:421-474</code> resolves choreography by priority:
+      <code>visualDemos.landing_preset_profiles[preset]</code> → fallback <code>visualDemos.landing_stage_slice</code> → word/palette materialization into derived key <code>landing_stage_slice__{preset|default}</code>.
+    </li>
+    <li><code>src/config/canonical/canonicalAuthority.js:463-465</code> writes resolved <code>choreoKey</code> and <code>demoKey</code> into <code>landingModes.form</code>.</li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx:316-346,406-414</code> now boots landing demos using resolved <code>demoKey</code> and derives settle timing from the active demo beats.</li>
+  </ul>
+
+  <h3>11.3 Files Touched</h3>
+  <ul>
+    <li><code>sst/canon/v3.5.runtime.json</code></li>
+    <li><code>src/config/canonical/canonicalAuthority.js</code></li>
+    <li><code>src/components/consciousness/ConsciousnessTheater.jsx</code></li>
+    <li><code>src/components/dev/DemoLauncher.jsx</code></li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts</code></li>
+    <li><code>tests/visual/landing-determinism-smoke.spec.ts-snapshots/*</code></li>
+  </ul>
+
+  <h3>11.4 Post-checks (Raw, After Edits)</h3>
+  <pre>1) rg -n "addEventListener\('scroll'" src
+src/theater/ScrollOrchestrator.js:78:      window.addEventListener('scroll', this._onScroll, { passive: true });
+
+2) rg -n "\bemitMorphProgress\(" src
+src/theater/controllers/MorphAnimationController.js:27:    emitMorphProgress({
+src/theater/controllers/MorphAnimationController.js:68:      emitMorphProgress({
+src/theater/bus/emitters.js:58:export function emitMorphProgress(payload) {
+
+3) rg -n "jumpToStage\(" src/state/commands src/theater
+(no matches)
+
+4) PLAYWRIGHT_HTML_OPEN=never npm run test:visual:landing -- --update-snapshots
+Result: 4 passed (40.2s)
+New snapshots:
+- landing-preset-agency-dark-signature-50-chromium-linux.png
+- landing-preset-saas-clean-signature-50-chromium-linux.png
+
+5) PLAYWRIGHT_HTML_OPEN=never npm run test:visual:landing
+Result: 4 passed (47.0s)
+
+6) npx vite build
+Result: success (warnings unchanged: node:* externalization + chunk-size warning + mixed static/dynamic import warning)</pre>
+
+  <h3>11.5 Invariant Check</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Invariant</th>
+        <th>Status</th>
+        <th>Evidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>One production scroll binder</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>src/theater/ScrollOrchestrator.js:78</code> only.</td>
+      </tr>
+      <tr>
+        <td>Single direct MORPH_PROGRESS publisher</td>
+        <td><span class="pass">PASS</span></td>
+        <td>Only <code>MorphAnimationController</code> callsites + emitter definition in grep post-check #2.</td>
+      </tr>
+      <tr>
+        <td>No navigation bypass</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>jumpToStage(</code> absent in <code>src/state/commands</code>/<code>src/theater</code> (post-check #3).</td>
+      </tr>
+      <tr>
+        <td>Landing stage lock preserved</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>tests/visual/landing-determinism-smoke.spec.ts:156-171</code> and <code>:191-206</code> assert constant <code>uStageIndex</code> across 0/50/95 scroll.</td>
+      </tr>
+      <tr>
+        <td>Preset choreography differentiation proven</td>
+        <td><span class="pass">PASS</span></td>
+        <td><code>tests/visual/landing-determinism-smoke.spec.ts:213-248</code> asserts different <code>choreoKey</code>/<code>demoKey</code> and non-zero camera signature distance between <code>agency_dark</code> and <code>saas_clean</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

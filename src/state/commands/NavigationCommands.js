@@ -2,7 +2,7 @@
 // Canonical navigation entry point. Validates target stage and delegates to orchestrator.
 
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
-import { stageAtom } from '../atoms';
+import stateCommands from './StateCommands.js';
 
 const getStageOrder = () => {
   if (Array.isArray(Canonical?.stageOrder) && Canonical.stageOrder.length) {
@@ -34,10 +34,10 @@ export function navigateToStageCanonical(targetStage, options = {}) {
     }
   }
 
-  // Fallback path: attempt StateCommands, then dev-only atom jump.
-  if (typeof window !== 'undefined' && window.StateCommands?.setStage) {
+  // Canonical fallback path: imported StateCommands authority only (no global dependency).
+  if (stateCommands?.setStage) {
     try {
-      window.StateCommands.setStage(targetStage, { origin });
+      stateCommands.setStage(targetStage, { origin });
       return true;
     } catch (err) {
       console.warn('[NAV_CANON] StateCommands.setStage failed; checking dev fallback', { err, targetStage, origin });
@@ -45,12 +45,37 @@ export function navigateToStageCanonical(targetStage, options = {}) {
   }
 
   const isDev = !!import.meta?.env?.DEV;
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isLandingSlice = searchParams?.get('slice') === 'landing_stage';
+  if (isDev && typeof stateCommands?.setStage !== 'function') {
+    const wiringError = new Error('[NAV_CANON] Missing canonical StateCommands.setStage wiring');
+    console.error('[NAV_CANON] startup wiring assertion failed', {
+      targetStage,
+      origin,
+      stack: wiringError.stack,
+    });
+    throw wiringError;
+  }
   if (!isDev) {
     console.warn('[NAV_CANON] Atom fallback in prod; consider wiring Director/StateCommands', { targetStage, origin });
     return false;
   }
-  stageAtom.jumpToStage(targetStage);
-  return true;
+  if (isLandingSlice) {
+    console.error('[NAV_CANON] Dev atom fallback blocked in landing slice mode', {
+      targetStage,
+      origin,
+    });
+    return false;
+  }
+  const stack = new Error().stack;
+  console.error('[NAV_CANON] Navigation blocked: no canonical authority path available', {
+    targetStage,
+    origin,
+    isDev,
+    isLandingSlice,
+    stack,
+  });
+  return false;
 }
 
 const NavigationCommands = { navigateToStageCanonical };

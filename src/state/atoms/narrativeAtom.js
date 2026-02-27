@@ -1,6 +1,7 @@
 // src/state/atoms/narrativeAtom.js
 // SST v3.0 - Complete narrative state management
 import { createAtom } from './createAtom';
+import stageAtom from './stageAtom.js';
 
 const initialState = {
   // Core narrative state
@@ -64,101 +65,60 @@ const STAGE_ORDER = [
   'transcendence',
 ];
 
+const warnedDeprecations = new Set();
+const warnDeprecated = (method, replacement) => {
+  if (!import.meta?.env?.DEV) return;
+  const key = `${method}:${replacement}`;
+  if (warnedDeprecations.has(key)) return;
+  warnedDeprecations.add(key);
+  console.warn(
+    `[narrativeAtom] Deprecated ${method}() call. Use ${replacement}() as canonical stage/progress authority.`
+  );
+};
+
+const blockDeprecatedWriter = (method, replacement) => {
+  const message =
+    `[narrativeAtom] Forbidden ${method}() call. Use ${replacement}() as canonical authority.`;
+  if (import.meta?.env?.DEV) {
+    const error = new Error(message);
+    console.error(message, { replacement, stack: error.stack });
+    throw error;
+  }
+  const key = `blocked:${method}:${replacement}`;
+  if (!warnedDeprecations.has(key)) {
+    warnedDeprecations.add(key);
+    console.warn(`${message} No-op in production.`);
+  }
+  return undefined;
+};
+
 export const narrativeAtom = createAtom(initialState, (get, set) => ({
   // ===== STAGE NAVIGATION =====
-  jumpToStage: stage => {
-    console.log('🚨 [NARRATIVEATOM BYPASS]', {
-      function: 'jumpToStage',
-      targetStage: stage,
-      caller: new Error().stack.split('\n')[2].trim(),
-      bypassesOrchestration: true,
-      timestamp: performance.now(),
-    });
-
-    if (!STAGE_ORDER.includes(stage)) {
-      console.warn(`Invalid stage: ${stage}`);
-      return;
-    }
-
-    const currentState = get();
-    if (stage === currentState.currentStage) return;
-
-    set(state => ({
-      ...state,
-      currentStage: stage,
-      isTransitioning: true,
-      stageStartTime: Date.now(),
-      timeInStage: 0,
-      stagesVisited: [...new Set([...state.stagesVisited, stage])],
-      userEngagement: {
-        ...state.userEngagement,
-        stagesVisited: [...new Set([...state.userEngagement.stagesVisited, stage])],
-      },
-    }));
-
-    // Clear transition flag after animation
-    setTimeout(() => {
-      set(state => ({ ...state, isTransitioning: false }));
-    }, 500);
-
-    // Dispatch stage change event
-    window.dispatchEvent(
-      new CustomEvent('sst:stageChange', {
-        detail: { stage, previousStage: currentState.currentStage },
-      })
-    );
+  jumpToStage: _stage => {
+    return blockDeprecatedWriter('jumpToStage', 'stateCommands.setStage');
   },
 
   nextStage: () => {
-    console.log('🚨 [NARRATIVEATOM BYPASS]', {
-      function: 'nextStage',
-      currentStage: get().currentStage,
-      caller: new Error().stack.split('\n')[2].trim(),
-      bypassesOrchestration: true,
-      timestamp: performance.now(),
-    });
-
-    const current = get().currentStage;
-    const currentIndex = STAGE_ORDER.indexOf(current);
-    if (currentIndex < STAGE_ORDER.length - 1) {
-      narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex + 1]);
-    }
+    warnDeprecated('nextStage', 'stageAtom.nextStage');
+    stageAtom.nextStage?.();
   },
 
   prevStage: () => {
-    console.log('🚨 [NARRATIVEATOM BYPASS]', {
-      function: 'prevStage',
-      currentStage: get().currentStage,
-      caller: new Error().stack.split('\n')[2].trim(),
-      bypassesOrchestration: true,
-      timestamp: performance.now(),
-    });
-
-    const current = get().currentStage;
-    const currentIndex = STAGE_ORDER.indexOf(current);
-    if (currentIndex > 0) {
-      narrativeAtom.jumpToStage(STAGE_ORDER[currentIndex - 1]);
-    }
+    warnDeprecated('prevStage', 'stageAtom.prevStage');
+    stageAtom.prevStage?.();
   },
 
-  setStage: stageIndex => {
-    const stage = STAGE_ORDER[stageIndex] || STAGE_ORDER[0];
-    narrativeAtom.jumpToStage(stage);
+  setStage: _stageIndex => {
+    return blockDeprecatedWriter('setStage', 'stateCommands.setStage');
   },
 
   // ===== PROGRESS MANAGEMENT =====
-  setGlobalProgress: progress => {
-    set(state => ({
-      ...state,
-      globalProgress: Math.max(0, Math.min(1, progress)),
-    }));
+  setGlobalProgress: _progress => {
+    return blockDeprecatedWriter('setGlobalProgress', 'stateCommands.setScrollProgress');
   },
 
-  setScrollProgress: progress => {
-    set(state => ({
-      ...state,
-      scrollProgress: Math.max(0, Math.min(1, progress)),
-    }));
+  setScrollProgress: _progress => {
+    return blockDeprecatedWriter('setScrollProgress', 'stateCommands.setScrollProgress');
   },
 
   setMorphProgress: progress => {
@@ -168,10 +128,40 @@ export const narrativeAtom = createAtom(initialState, (get, set) => ({
     }));
   },
 
-  setNarrativeProgress: progress => {
-    // Convenience method that sets all progress values
-    narrativeAtom.setGlobalProgress(progress);
-    narrativeAtom.setScrollProgress(progress);
+  setNarrativeProgress: _progress => {
+    return blockDeprecatedWriter('setNarrativeProgress', 'stateCommands.setScrollProgress');
+  },
+
+  // Mirror-only sync methods from canonical stage authority.
+  syncStageFromAuthority: stage => {
+    if (!STAGE_ORDER.includes(stage)) return;
+    set(state => ({
+      ...state,
+      currentStage: stage,
+      isTransitioning: false,
+      stageStartTime: Date.now(),
+      timeInStage: 0,
+      stagesVisited: [...new Set([...state.stagesVisited, stage])],
+      userEngagement: {
+        ...state.userEngagement,
+        stagesVisited: [...new Set([...state.userEngagement.stagesVisited, stage])],
+      },
+    }));
+  },
+
+  syncProgressFromAuthority: ({ globalProgress, scrollProgress, morphProgress } = {}) => {
+    set(state => ({
+      ...state,
+      ...(Number.isFinite(globalProgress)
+        ? { globalProgress: Math.max(0, Math.min(1, globalProgress)) }
+        : {}),
+      ...(Number.isFinite(scrollProgress)
+        ? { scrollProgress: Math.max(0, Math.min(1, scrollProgress)) }
+        : {}),
+      ...(Number.isFinite(morphProgress)
+        ? { morphProgress: Math.max(0, Math.min(1, morphProgress)) }
+        : {}),
+    }));
   },
 
   // ===== MEMORY FRAGMENTS =====

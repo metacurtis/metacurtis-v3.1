@@ -17,6 +17,7 @@ import BeatBus from './index.js';
 import { EVENTS } from '../events-safe.js';
 
 const DEV = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
+const CANONICAL_MORPH_SOURCE = 'morph_animation_controller';
 
 function logDev(eventName, payload) {
   if (!DEV) return;
@@ -61,8 +62,17 @@ export function emitMorphProgress(payload) {
   if (!payload.source) {
     throw new Error('MORPH_PROGRESS requires payload.source');
   }
-  logDev(EVENTS.MORPH_PROGRESS, payload);
-  BeatBus.emit(EVENTS.MORPH_PROGRESS, payload);
+  const originalSource = payload.source;
+  const normalizedPayload = {
+    ...payload,
+    source: CANONICAL_MORPH_SOURCE,
+    _meta: {
+      ...(payload._meta || {}),
+      originalSource,
+    },
+  };
+  logDev(EVENTS.MORPH_PROGRESS, normalizedPayload);
+  BeatBus.emit(EVENTS.MORPH_PROGRESS, normalizedPayload);
 }
 
 export function emitTextPositionsReady(payload) {

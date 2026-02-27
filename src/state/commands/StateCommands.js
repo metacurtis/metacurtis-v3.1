@@ -6,7 +6,6 @@ import { stageAtom, narrativeAtom, qualityAtom, performanceAtom, interactionAtom
 import BeatBus from '@/theater/bus';
 import { emitStageChange } from '@/theater/bus/emitters.js';
 import { EVENTS } from '@/theater/events';
-import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import NavigationGate from '@/theater/NavigationGate.js';
 
 const clamp01 = (value) => {
@@ -100,6 +99,7 @@ class StateCommands {
     const stageSub = stageAtom.subscribe?.(s => {
       const next = s.currentStage;
       if (next !== prevStage) {
+        narrativeAtom.syncStageFromAuthority?.(next);
         if (next === lastStageFromBus) {
           prevStage = next;
           return;
@@ -132,6 +132,29 @@ class StateCommands {
       narrativeAtom.setMorphProgress?.(value);
     });
     if (morphBusSub) this.subscriptions.push(morphBusSub);
+
+    // Single production scroll binder path:
+    // ScrollOrchestrator publishes SCROLL_PROGRESS and StateCommands applies canonical state.
+    const scrollBusSub = BeatBus.on?.(EVENTS.SCROLL_PROGRESS, (payload = {}) => {
+      const scrollPercent = Number.isFinite(payload.scrollPercent)
+        ? payload.scrollPercent / 100
+        : Number.isFinite(payload.rawScrollPercent)
+          ? payload.rawScrollPercent / 100
+          : null;
+      if (!Number.isFinite(scrollPercent)) return;
+      this.setScrollProgress(scrollPercent, {
+        origin: payload.source || 'scroll_orchestrator',
+      });
+    });
+    if (scrollBusSub) this.subscriptions.push(scrollBusSub);
+
+    // Renderer emits click-hit intent only; state layer owns fragment activation.
+    const fragmentIntentSub = BeatBus.on?.(EVENTS.PARTICLE_CLICK_HIT, (payload = {}) => {
+      const fragmentId = payload?.hotspot?.fragmentId ?? null;
+      if (!fragmentId) return;
+      narrativeAtom.activateMemoryFragment?.(fragmentId);
+    });
+    if (fragmentIntentSub) this.subscriptions.push(fragmentIntentSub);
 
     // Quality changes → BeatBus
     let lastQuality = qualityAtom.getState?.()?.currentQualityTier;
@@ -175,28 +198,37 @@ class StateCommands {
 
   setScrollProgress(progress, options = {}) {
     const clamped = clamp01(progress);
-    const prev = narrativeAtom.getState?.()?.scrollProgress ?? 0;
-    if (Math.abs(prev - clamped) > 1e-6) {
-      narrativeAtom.setScrollProgress?.(clamped);
+
+    const gateActive = typeof NavigationGate?.isInFlight === 'function' && NavigationGate.isInFlight();
+    if (gateActive) {
+      return clamped;
     }
 
-    const stageInfo =
-      typeof Canonical?.getStageByScroll === 'function'
-        ? Canonical.getStageByScroll(clamped * 100)
-        : null;
-    const targetStage = stageInfo?.name || stageInfo?.stage || null;
-    if (targetStage) {
-      const currentStage = stageAtom.getState?.()?.currentStage;
-      const gateActive = typeof NavigationGate?.isInFlight === 'function' && NavigationGate.isInFlight();
-      const gateTarget = typeof NavigationGate?.target === 'function' ? NavigationGate.target() : null;
-      if (!gateActive || gateTarget === targetStage) {
-        if (currentStage !== targetStage) {
-          stageAtom.jumpToStage(targetStage);
-        }
-      }
-    }
+    // Canonical stage/progress authority: stageAtom owns stage derivation from progress.
+    stageAtom.setGlobalProgress?.(clamped);
+    narrativeAtom.syncProgressFromAuthority?.({
+      globalProgress: clamped,
+      scrollProgress: clamped,
+    });
 
     return clamped;
+  }
+
+  setStage(stageInput, options = {}) {
+    const previousStage = stageAtom.getState?.()?.currentStage ?? null;
+    stageAtom.setStage?.(stageInput);
+    const resolvedStage = stageAtom.getState?.()?.currentStage ?? null;
+    if (resolvedStage) {
+      narrativeAtom.syncStageFromAuthority?.(resolvedStage);
+      if (options.forceEmit === true && resolvedStage === previousStage) {
+        emitStageChange({
+          from: null,
+          to: resolvedStage,
+          source: 'StateCommands',
+        });
+      }
+    }
+    return resolvedStage;
   }
 
   // Programmatic emergence trigger (only for opening sequence)
@@ -319,8 +351,15 @@ if (typeof window !== 'undefined') {
   
   // Dev tools
   if (import.meta.env.DEV) {
-    window.StateCommands = stateCommands;
-    window.stateCommandContracts = () => stateCommands.getContractStatus();
+    const devBridge =
+      window.__MC_DEV__ && typeof window.__MC_DEV__ === 'object' ? window.__MC_DEV__ : {};
+    window.__MC_DEV__ = {
+      ...devBridge,
+      stateCommands,
+      stageAtom,
+      BeatBus,
+      stateCommandContracts: () => stateCommands.getContractStatus(),
+    };
   }
 }
 

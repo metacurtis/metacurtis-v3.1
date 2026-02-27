@@ -1,4 +1,5 @@
 import React from 'react';
+import './bootstrap/deterministicRuntime.js';
 // Import Canon Dev-OS (dev only)
 if (import.meta.env.DEV) {
   console.log('🔧 [DEV MODE] Loading Canon Dev-OS...');

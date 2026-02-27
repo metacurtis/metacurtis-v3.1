@@ -133,6 +133,7 @@ export default function WebGLCanvas({
   stage = 'genesis',
   morphProgress = 0,
   scrollProgress = 0,
+  cameraOverride = null,
   quality = 'HIGH',
   particleCount = 5000,
   webglEnabled = true,
@@ -496,6 +497,14 @@ export default function WebGLCanvas({
               strategy: canvasStrategy,
             });
 
+            const instantLoader = typeof document !== 'undefined'
+              ? document.getElementById('instant-loader')
+              : null;
+            if (instantLoader) {
+              instantLoader.classList.add('hidden');
+              instantLoader.style.display = 'none';
+            }
+
             addEventLog('webgl_canvas_created', {
               webgl_version: gl.capabilities.isWebGL2 ? 2 : 1,
               point_size_range: pointSizeRange,
@@ -528,6 +537,7 @@ export default function WebGLCanvas({
                 stage={stage}
                 morphProgress={morphProgress}
                 scrollProgress={scrollProgress}
+                cameraOverride={cameraOverride}
               />
             )}
           </Suspense>

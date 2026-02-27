@@ -8,9 +8,9 @@ import SST from '@/config/sst-loader.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { EVENTS } from '@/theater/events.js';
 import ScrollOrchestrator from './ScrollOrchestrator.js';
-import MorphAnimationController from '@/theater/controllers/MorphAnimationController.js';
+import { morphController } from '@/theater/controllers/MorphAnimationController.js';
 import VisualOrchestrator from '@/theater/VisualOrchestrator.js';
-import { emitMorphProgress } from '@/theater/bus/emitters.js';
+import stateCommands from '@/state/commands/StateCommands.js';
 
 // 🔬 DIAGNOSTIC: Auto-advance initialization tracking
 if (typeof window !== 'undefined') {
@@ -218,7 +218,7 @@ class TheaterDirector {
     this._latestRendererParticles = null;
     this._latestRendererBlueprint = null;
     this._openingModeAnnounced = false;
-    this._morphAnimationController = new MorphAnimationController();
+    this._morphAnimationController = morphController;
     this._isOpeningSequence = false;
     this._openingMorphListener = null;
     this._stageBlueprintUnsubscribe = null;
@@ -539,41 +539,31 @@ class TheaterDirector {
 
   _animateDemoMorphTo(target, durationMs) {
     const nextTarget = clamp01(target);
-    const from = Number.isFinite(this._demoMorphValue) ? this._demoMorphValue : 0;
+    const from = Number.isFinite(this._demoMorphValue)
+      ? this._demoMorphValue
+      : this._morphAnimationController?.getCurrentValue?.() ?? 0;
     const duration = Math.max(0, Number(durationMs) || 0);
 
     this._stopDemoMorphDriver();
 
     if (duration === 0 || Math.abs(nextTarget - from) < 1e-4) {
       this._demoMorphValue = nextTarget;
-      emitMorphProgress({ progress: nextTarget, source: 'demo' });
+      this._morphAnimationController?.setImmediate?.(nextTarget, {
+        source: 'director_demo_intent',
+      });
       return;
     }
 
-    const start = (typeof performance !== 'undefined' && performance.now)
-      ? performance.now()
-      : Date.now();
-    const ease = (t) => t * t * (3 - 2 * t);
     this._demoMorphActive = true;
-
-    const step = (now) => {
-      if (!this._demoMorphActive) return;
-      const current = Number.isFinite(now) ? now : ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now());
-      const elapsed = current - start;
-      const t = clamp01(elapsed / duration);
-      const eased = ease(t);
-      const value = from + (nextTarget - from) * eased;
-      this._demoMorphValue = value;
-      emitMorphProgress({ progress: value, source: 'demo' });
-      if (t < 1) {
-        this._demoMorphRaf = requestAnimationFrame(step);
-      } else {
-        this._demoMorphActive = false;
-        this._demoMorphRaf = 0;
-      }
-    };
-
-    this._demoMorphRaf = requestAnimationFrame(step);
+    this._morphAnimationController?.setTarget?.({
+      from,
+      to: nextTarget,
+      duration,
+      source: 'director_demo_intent',
+    });
+    this._demoMorphValue = nextTarget;
+    this._demoMorphActive = false;
+    this._demoMorphRaf = 0;
   }
 
   _clearDemoInteractive() {
@@ -617,7 +607,9 @@ class TheaterDirector {
       if (!Number.isFinite(next)) return;
       const clamped = clamp01(next);
       this._demoMorphValue = clamped;
-      emitMorphProgress({ progress: clamped, source: 'demo' });
+      this._morphAnimationController?.setImmediate?.(clamped, {
+        source: 'director_demo_scroll_intent',
+      });
     };
 
     this._demoScrollOff = BeatBus.on(EVENTS.SCROLL_PROGRESS, handleScroll);
@@ -638,7 +630,7 @@ class TheaterDirector {
     }
   }
 
-  _emitMorphProgress(value, { target, stage, phase, durationMs, source }) {
+  _emitMorphSnapshot(value, { target, stage, phase, durationMs, source }) {
     const stageName = stage || this.currentStage || 'genesis';
     const clampedValue = clamp01(value);
     const clampedTarget = clamp01(Number.isFinite(target) ? target : clampedValue);
@@ -903,6 +895,7 @@ class TheaterDirector {
       throw new Error(`[TheaterDirector] visual demo not found: ${demoKey}`);
     }
     const isIntentDemo = demoKey === 'demo_intent_v2';
+    const useDefaultDemoCameras = demoKey === 'brand_vision_demo';
 
     if (isIntentDemo) {
       this._clearDemoInteractive();
@@ -969,7 +962,7 @@ class TheaterDirector {
           this._animateDemoMorphTo(beat.morphTarget, durationMs);
         }
 
-        if (!isIntentDemo) {
+        if (!isIntentDemo && useDefaultDemoCameras) {
           const cue = cameraCueForBeat(idx);
           applyCameraCue(cue, { stage: stageForCamera, cueId: `demo_camera:${idx}` });
         }
@@ -987,8 +980,10 @@ class TheaterDirector {
               atMs: demo.endCard.atMs,
             },
           });
-          const endCardCamera = cameraCueForBeat('endcard');
-          applyCameraCue(endCardCamera, { cueId: 'demo_camera:endcard' });
+          if (useDefaultDemoCameras) {
+            const endCardCamera = cameraCueForBeat('endcard');
+            applyCameraCue(endCardCamera, { cueId: 'demo_camera:endcard' });
+          }
         }
         if (isIntentDemo && demo?.interactive?.enabled) {
           const delayMs = Number.isFinite(demo?.interactive?.startAfterMs)
@@ -1192,6 +1187,21 @@ class TheaterDirector {
     });
   }
 
+  setMorphTargetIntent({ from, to, durationMs = 0, source = 'director_intent' } = {}) {
+    if (!this._morphAnimationController) return null;
+    return this._morphAnimationController.setTarget({
+      from,
+      to,
+      duration: durationMs,
+      source,
+    });
+  }
+
+  setMorphImmediate(value, { source = 'director_intent_immediate' } = {}) {
+    if (!this._morphAnimationController) return null;
+    return this._morphAnimationController.setImmediate(value, { source });
+  }
+
   _animateMorphPhase({ from, to, durationMs, stage, phase, skipSignal }) {
     if (this._isOpeningSequence) {
       console.log(`🚫 [_animateMorphPhase] Disabled during opening (phase=${phase || 'unknown'})`);
@@ -1212,7 +1222,7 @@ class TheaterDirector {
     });
 
     if (duration === 0 || Math.abs(endValue - startValue) < 1e-4) {
-      this._emitMorphProgress(endValue, {
+      this._emitMorphSnapshot(endValue, {
         target: endValue,
         stage,
         phase,
@@ -1677,7 +1687,7 @@ class TheaterDirector {
     const morphStage = 'genesis';
     let currentMorphValue = 0;
     const emitMorphSnapshot = (value, phase, target = value, durationMs = 0) => {
-      this._emitMorphProgress(value, {
+      this._emitMorphSnapshot(value, {
         target,
         stage: morphStage,
         phase,
@@ -2077,14 +2087,20 @@ class TheaterDirector {
         } catch (err) {
           console.warn('[Director] unifiedNav navigation failed; falling back', err);
         }
-      } else if (typeof window !== 'undefined' && window.stageControls?.jumpToStage) {
-        console.warn(
-          '[Director] unifiedNav missing; using stageControls.jumpToStage fallback for genesis handoff',
-        );
-        window.stageControls.jumpToStage(toStage);
+      } else if (stateCommands?.setStage) {
+        try {
+          stateCommands.setStage(toStage, {
+            origin: 'director_opening_handoff_fallback',
+          });
+        } catch (err) {
+          console.error('[Director] StateCommands.setStage fallback failed', {
+            toStage,
+            err,
+          });
+        }
       } else {
         console.warn(
-          '[Director] No unifiedNav or stageControls; cannot complete genesis handoff via navigation',
+          '[Director] No unifiedNav or StateCommands; cannot complete genesis handoff via navigation',
         );
       }
 

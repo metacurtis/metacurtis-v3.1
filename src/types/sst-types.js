@@ -82,8 +82,7 @@
  * @returns {SSTConfig}
  */
 function loadSST() {
-   
-  const config = require('../canon/v3.5.json');
+  const config = require('../../sst/canon/v3.5.runtime.json');
   return /** @type {SSTConfig} */ (config);
 }
 

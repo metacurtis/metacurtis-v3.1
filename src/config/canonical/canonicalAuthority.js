@@ -5,6 +5,7 @@ import {
   CAMERA_EFFECTS as OVERRIDE_CAMERA_EFFECTS,
   VERB_UNIFORM_MAP,
 } from './visualEffects.js';
+import { LANDING_STAGE_PRESETS } from '../../slices/landingStagePresets.js';
 
 /** Deep-freeze utility (keeps Canonical read-only) */
 function deepFreeze(obj) {
@@ -19,6 +20,170 @@ function deepFreeze(obj) {
 function clone(obj) {
   try { return typeof structuredClone === 'function' ? structuredClone(obj) : JSON.parse(JSON.stringify(obj)); }
   catch { return JSON.parse(JSON.stringify(obj)); }
+}
+
+const HEX_COLOR_RE = /^#?[0-9a-fA-F]{6}$/;
+const QUALITY_TIERS = new Set(['LOW', 'MEDIUM', 'HIGH', 'ULTRA']);
+const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
+const LANDING_PRESET_PROFILES_KEY = 'landing_preset_profiles';
+const LANDING_SLICE_DEMO_RESOLVED_PREFIX = `${LANDING_SLICE_DEMO_KEY}__`;
+
+function normalizeHexColor(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!HEX_COLOR_RE.test(trimmed)) return null;
+  const withHash = trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+  return withHash.toUpperCase();
+}
+
+function normalizePaletteArray(raw, { stages = {}, fallbackStage = 'genesis' } = {}) {
+  if (!Array.isArray(raw) || raw.length < 3) return null;
+  const normalized = raw
+    .map((entry) => normalizeHexColor(entry))
+    .filter(Boolean)
+    .slice(0, 3);
+  if (normalized.length === 3) return normalized;
+  const fallbackPalette = stages?.[fallbackStage]?.palette;
+  if (!Array.isArray(fallbackPalette) || fallbackPalette.length < 3) return null;
+  const fallbackNormalized = fallbackPalette
+    .map((entry) => normalizeHexColor(entry))
+    .filter(Boolean)
+    .slice(0, 3);
+  return fallbackNormalized.length === 3 ? fallbackNormalized : null;
+}
+
+function normalizeTierMix(rawTierMix, fallback = [0.6, 0.2, 0.1, 0.1]) {
+  if (!Array.isArray(rawTierMix) || rawTierMix.length !== 4) return fallback.slice(0, 4);
+  const values = rawTierMix.map((value) => Number(value));
+  if (!values.every((value) => Number.isFinite(value) && value >= 0)) return fallback.slice(0, 4);
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  if (sum <= 0) return fallback.slice(0, 4);
+  return values.map((value) => Number((value / sum).toFixed(4)));
+}
+
+function parseLandingPalette(rawPalette, { stages = {}, fallbackStage = 'genesis' } = {}) {
+  if (typeof rawPalette !== 'string' || !rawPalette.trim()) return null;
+  const trimmed = rawPalette.trim();
+  if (!trimmed.includes(',')) {
+    const stagePalette = stages?.[trimmed]?.palette;
+    const normalizedFromStage = normalizePaletteArray(stagePalette, { stages, fallbackStage });
+    if (normalizedFromStage) return normalizedFromStage;
+  }
+
+  const parsed = trimmed
+    .split(',')
+    .map((entry) => normalizeHexColor(entry))
+    .filter(Boolean);
+  if (parsed.length >= 3) return parsed.slice(0, 3);
+
+  return normalizePaletteArray(stages?.[fallbackStage]?.palette, { stages, fallbackStage });
+}
+
+function getResolvedLandingDemoKey(choreoKey = null) {
+  if (typeof choreoKey === 'string' && choreoKey.trim()) {
+    return `${LANDING_SLICE_DEMO_RESOLVED_PREFIX}${choreoKey.trim()}`;
+  }
+  return `${LANDING_SLICE_DEMO_RESOLVED_PREFIX}default`;
+}
+
+function materializeLandingDemo(templateDemo, landingResolved) {
+  if (!templateDemo || typeof templateDemo !== 'object') return null;
+
+  const demo = { ...templateDemo, word: landingResolved.word };
+  if (Array.isArray(demo.beats)) {
+    demo.beats = demo.beats.map((beat, idx) => {
+      const next = { ...(beat || {}) };
+      const params = { ...(next.params || {}) };
+      params.text = landingResolved.word;
+      if (landingResolved.palette && landingResolved.palette.length) {
+        params.color = landingResolved.palette[
+          Math.min(idx, landingResolved.palette.length - 1)
+        ];
+      }
+      next.params = params;
+      return next;
+    });
+  }
+  return demo;
+}
+
+function resolveLandingStageSliceConfig(source, stageOrder = []) {
+  if (typeof window === 'undefined') {
+    return { enabled: false };
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('slice') !== 'landing_stage') {
+    return { enabled: false };
+  }
+
+  const availableStages = Array.isArray(stageOrder) && stageOrder.length
+    ? stageOrder
+    : Object.keys(source?.stages || {});
+  const hasGenesis = availableStages.includes('genesis');
+  const fallbackStage = hasGenesis ? 'genesis' : (availableStages[0] || 'genesis');
+
+  const presetIdRaw = (params.get('preset') || '').trim();
+  const preset = presetIdRaw ? LANDING_STAGE_PRESETS[presetIdRaw] || null : null;
+  const presetStage = preset?.baseStage;
+  const presetIsValid = !!preset && availableStages.includes(presetStage);
+
+  const landingModeDefaults = source?.landingModes?.form || {};
+  const landingModeStage = (landingModeDefaults.stage || '').trim();
+  const defaultStage =
+    (presetIsValid && presetStage) ||
+    (availableStages.includes(landingModeStage) ? landingModeStage : fallbackStage);
+
+  const requestedStage = (params.get('landingStage') || '').trim();
+  const stage = availableStages.includes(requestedStage) ? requestedStage : defaultStage;
+
+  const fallbackWord = landingModeDefaults.word || 'FORM';
+  const presetWord = typeof preset?.word === 'string' ? preset.word : '';
+  const requestedWord = (params.get('landingWord') || presetWord || fallbackWord || 'FORM').trim();
+  const word = (requestedWord || 'FORM').slice(0, 64);
+
+  const presetPalette = normalizePaletteArray(preset?.palette, {
+    stages: source?.stages || {},
+    fallbackStage: stage,
+  });
+  const palette = parseLandingPalette(params.get('landingPalette'), {
+    stages: source?.stages || {},
+    fallbackStage: stage,
+  }) || presetPalette;
+
+  const landingQualityRaw = (params.get('landingQuality') || '').toUpperCase();
+  const presetQuality = QUALITY_TIERS.has(String(preset?.quality || '').toUpperCase())
+    ? String(preset.quality).toUpperCase()
+    : null;
+  const landingQuality = QUALITY_TIERS.has(landingQualityRaw) ? landingQualityRaw : presetQuality;
+
+  const stageConfig = source?.stages?.[stage] || {};
+  const stageTierMix =
+    Array.isArray(stageConfig?.tierMix) && stageConfig.tierMix.length === 4
+      ? stageConfig.tierMix
+      : [0.6, 0.2, 0.1, 0.1];
+  const fallbackTierMix =
+    Array.isArray(landingModeDefaults.tierMix) && landingModeDefaults.tierMix.length === 4
+      ? landingModeDefaults.tierMix
+      : stageTierMix;
+  const tierMix = normalizeTierMix(preset?.tierMix, normalizeTierMix(fallbackTierMix));
+
+  const stageParticles = Number.isFinite(stageConfig?.particlesBase) ? stageConfig.particlesBase : 9000;
+  const modeParticles = Number.isFinite(landingModeDefaults?.particlesBase)
+    ? landingModeDefaults.particlesBase
+    : stageParticles;
+  const presetParticles = Number.isFinite(preset?.particlesBase) ? preset.particlesBase : modeParticles;
+  const particlesBase = Math.max(1000, Math.floor(presetParticles));
+
+  return {
+    enabled: true,
+    preset: presetIsValid ? presetIdRaw : null,
+    stage,
+    word,
+    palette,
+    quality: landingQuality,
+    tierMix,
+    particlesBase,
+  };
 }
 
 const RENDER_UNIFORM_KEYS = [
@@ -215,6 +380,100 @@ function translateToRendererDirective(verb, effect = {}) {
 function buildCanonical(source) {
   const sst = clone(source);
   const stageOrder = Array.isArray(sst.stageOrder) ? sst.stageOrder.slice() : Object.keys(sst.stages || {});
+  const landingStageSlice = resolveLandingStageSliceConfig(sst, stageOrder);
+  const existingLandingForm = clone(sst?.landingModes?.form || {});
+  const landingStageSliceResolved = landingStageSlice.enabled
+    ? (() => {
+        const stageName = landingStageSlice.stage;
+        const stageConfig = sst.stages?.[stageName] || {};
+        const stagePalette = normalizePaletteArray(stageConfig.palette, {
+          stages: sst?.stages || {},
+          fallbackStage: stageName,
+        });
+        const resolvedPalette = landingStageSlice.palette || stagePalette;
+        const resolvedWord = (landingStageSlice.word || 'FORM').trim() || 'FORM';
+        const fallbackTierMix =
+          Array.isArray(existingLandingForm.tierMix) && existingLandingForm.tierMix.length === 4
+            ? existingLandingForm.tierMix.slice(0, 4)
+            : (Array.isArray(stageConfig.tierMix) && stageConfig.tierMix.length === 4
+                ? stageConfig.tierMix.slice(0, 4)
+                : [0.6, 0.2, 0.1, 0.1]);
+        const resolvedTierMix = normalizeTierMix(landingStageSlice.tierMix, normalizeTierMix(fallbackTierMix));
+        const stageParticles = Number.isFinite(stageConfig.particlesBase) ? stageConfig.particlesBase : 9000;
+        const fallbackParticles = Number.isFinite(existingLandingForm.particlesBase)
+          ? existingLandingForm.particlesBase
+          : stageParticles;
+        const resolvedParticles = Number.isFinite(landingStageSlice.particlesBase)
+          ? landingStageSlice.particlesBase
+          : fallbackParticles;
+        return {
+          ...landingStageSlice,
+          stage: stageName,
+          sourceStage: stageName,
+          word: resolvedWord,
+          palette: resolvedPalette ? resolvedPalette.slice(0, 3) : null,
+          tierMix: resolvedTierMix,
+          particlesBase: Math.max(1000, Math.floor(resolvedParticles)),
+        };
+      })()
+    : { enabled: false };
+
+  if (landingStageSliceResolved.enabled) {
+    const landingPresetProfiles =
+      sst.visualDemos &&
+      typeof sst.visualDemos[LANDING_PRESET_PROFILES_KEY] === 'object' &&
+      !Array.isArray(sst.visualDemos[LANDING_PRESET_PROFILES_KEY])
+        ? sst.visualDemos[LANDING_PRESET_PROFILES_KEY]
+        : null;
+
+    const presetChoreoKey =
+      landingStageSliceResolved.preset &&
+      landingPresetProfiles &&
+      landingPresetProfiles[landingStageSliceResolved.preset]
+        ? landingStageSliceResolved.preset
+        : null;
+
+    const demoTemplate =
+      (presetChoreoKey && landingPresetProfiles
+        ? landingPresetProfiles[presetChoreoKey]
+        : null) ||
+      sst.visualDemos?.[LANDING_SLICE_DEMO_KEY] ||
+      null;
+
+    const resolvedDemo = materializeLandingDemo(demoTemplate, landingStageSliceResolved);
+    const resolvedDemoKey = resolvedDemo
+      ? getResolvedLandingDemoKey(presetChoreoKey)
+      : LANDING_SLICE_DEMO_KEY;
+
+    landingStageSliceResolved.choreoKey = presetChoreoKey;
+    landingStageSliceResolved.demoKey = resolvedDemoKey;
+
+    sst.landingModes = {
+      ...(sst.landingModes || {}),
+      form: {
+        ...existingLandingForm,
+        preset: landingStageSliceResolved.preset || null,
+        stage: landingStageSliceResolved.stage,
+        sourceStage: landingStageSliceResolved.sourceStage,
+        word: landingStageSliceResolved.word,
+        ...(landingStageSliceResolved.palette ? { palette: landingStageSliceResolved.palette.slice(0, 3) } : {}),
+        particlesBase: landingStageSliceResolved.particlesBase,
+        tierMix: landingStageSliceResolved.tierMix.slice(0, 4),
+        ...(landingStageSliceResolved.quality ? { quality: landingStageSliceResolved.quality } : {}),
+        choreoKey: presetChoreoKey,
+        demoKey: resolvedDemoKey,
+        lockStage: true,
+      },
+    };
+
+    if (resolvedDemo) {
+      sst.visualDemos = {
+        ...(sst.visualDemos || {}),
+        [resolvedDemoKey]: resolvedDemo,
+      };
+    }
+  }
+
   const letterGeometry = sst.visual?.letterGeometry || {};
 
   // Back-compat aliases for existing code paths
@@ -426,11 +685,69 @@ function buildCanonical(source) {
     return { total, translatable, cameraOnly, untranslatable, coverage: `${coverage}%` };
   };
 
-  const getStageByName = (name) => sst.stages?.[name] ?? null;
+  const getLandingStageOverride = (stageName) => {
+    if (landingStageSliceResolved?.enabled !== true) return null;
+    if (stageName !== landingStageSliceResolved.stage) return null;
+    return {
+      word: landingStageSliceResolved.word,
+      palette: landingStageSliceResolved.palette ? landingStageSliceResolved.palette.slice(0, 3) : null,
+      tierMix: landingStageSliceResolved.tierMix ? landingStageSliceResolved.tierMix.slice(0, 4) : null,
+      particlesBase: landingStageSliceResolved.particlesBase,
+      quality: landingStageSliceResolved.quality || null,
+      preset: landingStageSliceResolved.preset || null,
+    };
+  };
+  const getResolvedStageByName = (name) => {
+    const base = sst.stages?.[name];
+    if (!base) return null;
+    const override = getLandingStageOverride(name);
+    if (!override) return base;
+    const palette = override.palette || base.palette || base.colors || null;
+    return {
+      ...base,
+      word: override.word || base.word,
+      ...(Array.isArray(palette) && palette.length >= 3
+        ? {
+            palette: palette.slice(0, 3),
+            colors: palette.slice(0, 3),
+          }
+        : {}),
+      ...(Array.isArray(override.tierMix) && override.tierMix.length === 4
+        ? { tierMix: override.tierMix.slice(0, 4) }
+        : {}),
+      ...(Number.isFinite(override.particlesBase)
+        ? {
+            particlesBase: override.particlesBase,
+            particleCount: override.particlesBase,
+          }
+        : {}),
+      ...(override.quality ? { quality: override.quality } : {}),
+      ...(override.preset ? { preset: override.preset } : {}),
+    };
+  };
+  const getStageTypography = (name) => {
+    const baseTypography = sst.visual?.letterGeometry?.[name] || {};
+    const override = getLandingStageOverride(name);
+    if (!override?.word) return baseTypography;
+    return {
+      ...baseTypography,
+      word: override.word,
+    };
+  };
+  const getStageWord = (name) => {
+    const typography = getStageTypography(name);
+    const typedWord = typeof typography?.word === 'string' ? typography.word.trim() : '';
+    if (typedWord) return typedWord;
+    const stage = getResolvedStageByName(name);
+    const stageWord = typeof stage?.word === 'string' ? stage.word.trim() : '';
+    if (stageWord) return stageWord;
+    return String(name || '').toUpperCase() || 'GENESIS';
+  };
+  const getStageByName = (name) => getResolvedStageByName(name);
   const getStageByIndex = (index) => {
     const safe = Math.max(0, Math.min(stageOrder.length - 1, Number(index) | 0));
     const name = stageOrder[safe];
-    return sst.stages?.[name] ?? null;
+    return getResolvedStageByName(name);
   };
   const getStageByScroll = (progress = 0) => {
     const raw = Number(progress);
@@ -508,10 +825,14 @@ function buildCanonical(source) {
     implementationPhases: sst.implementationPhases || [],
     debugSurface: sst.debugSurface || {},
     changeLog: sst.changeLog || [],
+    landingModes: sst.landingModes || {},
+    landingStageSlice,
+    landingStageSliceResolved,
     dialogue: narrative.stages || {},
     visualDemos: sst.visualDemos || {},
     visualEffects,
     getStageByName, getStageByIndex, getStageByScroll,
+    getResolvedStageByName, getStageTypography, getStageWord,
     isFeatureEnabled, getFragmentsForStage, getActiveFragments,
     getVisualEffect, getBeatSheet, resolveVisualVerb,
     getCoverageStats, getAllVisualVerbs,

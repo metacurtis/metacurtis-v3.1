@@ -22,6 +22,7 @@ import { getPointSpriteAtlasSingleton } from './consciousness/PointSpriteAtlas.j
 import { Canonical } from '../../config/canonical/canonicalAuthority.js';
 import { particleRaycaster } from '@/utils/particleRaycast.js';
 import { useParticleChoreography } from './ParticleChoreography.jsx';
+import { glyphSpace } from '@/engine/GlyphSpace.js';
 
 import vertexShaderSource from '../../shaders/templates/consciousness-vertex.glsl?raw';
 import fragmentShaderSource from '../../shaders/templates/consciousness-fragment.glsl?raw';
@@ -32,6 +33,7 @@ const ATMO_FIT_Y = 0.85;
 const TEXT_FIT_WIDTH = 0.9;
 const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
+const MORPH_WRITE_LOG_LIMIT = 400;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
@@ -64,6 +66,25 @@ const formatArray = (value, count = 4, precision = 2) => {
   const arr = toArray(value);
   if (!arr || arr.length === 0) return 'null';
   return `[${arr.slice(0, count).map((v) => formatNumber(v, precision)).join(', ')}]`;
+};
+const toVec3 = (value, fallback = null) => {
+  if (Array.isArray(value) && value.length >= 3) {
+    return new THREE.Vector3(
+      Number(value[0]) || 0,
+      Number(value[1]) || 0,
+      Number(value[2]) || 0
+    );
+  }
+  if (value && typeof value === 'object') {
+    if (Number.isFinite(value.x) || Number.isFinite(value.y) || Number.isFinite(value.z)) {
+      return new THREE.Vector3(
+        Number(value.x) || 0,
+        Number(value.y) || 0,
+        Number(value.z) || 0
+      );
+    }
+  }
+  return fallback;
 };
 const MORPH_TYPE_ENUM = Object.freeze({
   steady: 0,
@@ -117,7 +138,7 @@ const getMorphEnvelope = (progress) => {
   return { implode, chaos, coalesce, settle };
 };
 
-const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer') => {
+const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer', onUniformWrite = null) => {
   if (!uniforms) return;
   const verb = directive?.verb || directive?.effect?.verb;
   const setUniform = (name, value) => {
@@ -127,6 +148,9 @@ const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer')
     if (!guardUniformWrite(origin, name)) return;
     target.value = value;
     target.needsUpdate = true;
+    if (typeof onUniformWrite === 'function') {
+      onUniformWrite(name, value, { verb });
+    }
   };
   const applyArrayUniform = (name, value) => {
     const uniform = uniforms[name];
@@ -273,12 +297,19 @@ function isOpeningInProgress() {
 }
 
 function pickStageColors(stageName) {
-  const s = Canonical?.stages?.[stageName] || {};
+  const s =
+    Canonical?.getResolvedStageByName?.(stageName) ||
+    Canonical?.stages?.[stageName] ||
+    {};
   const colors = s.colors || ['#00ffcc', '#f59e0b', '#ffffff'];
   const order = Canonical?.stageOrder || [];
   const idx = Math.max(0, order.indexOf(stageName));
   const nextStage = order[Math.min(idx + 1, Math.max(0, order.length - 1))] || stageName;
-  const nextColors = Canonical?.stages?.[nextStage]?.colors || colors;
+  const nextStageConfig =
+    Canonical?.getResolvedStageByName?.(nextStage) ||
+    Canonical?.stages?.[nextStage] ||
+    {};
+  const nextColors = nextStageConfig?.colors || colors;
   return {
     current: new THREE.Color(colors[0]),
     next: new THREE.Color(nextColors[0]),
@@ -410,7 +441,7 @@ const vec2Close = (a = [], b = [], eps = 1e-3) => {
     && Math.abs((a[1] ?? 0) - (b[1] ?? 0)) < eps;
 };
 
-function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
+function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride = null }) {
   const emergencePendingRef = useRef(false);
   const emittedEmergedRef   = useRef(false);
 
@@ -428,6 +459,163 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const restoreTransparentRef = useRef(null);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
+  const morphWriteLogRef = useRef([]);
+
+  const shouldTrackMorphWrites = () =>
+    DEV &&
+    typeof window !== 'undefined';
+
+  const trackMorphWrite = (source, value, meta = {}) => {
+    if (!shouldTrackMorphWrites()) return;
+    const now =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const stage = window.stageControls?.getCurrentStage?.() ?? window.stageAtom?.getState?.()?.currentStage ?? null;
+    const stageIndex =
+      window.stageControls?.getCurrentStageIndex?.() ??
+      window.stageAtom?.getState?.()?.stageIndex ??
+      null;
+    const entry = {
+      tMs: Math.round(now),
+      source,
+      value: Number(value),
+      stage,
+      stageIndex,
+      ...meta,
+    };
+    const stack = new Error().stack;
+    if (typeof stack === 'string') {
+      entry.stack = stack
+        .split('\n')
+        .slice(1, 6)
+        .map((line) => line.trim());
+    }
+    morphWriteLogRef.current.push(entry);
+    if (morphWriteLogRef.current.length > MORPH_WRITE_LOG_LIMIT) {
+      morphWriteLogRef.current.splice(0, morphWriteLogRef.current.length - MORPH_WRITE_LOG_LIMIT);
+    }
+  };
+
+  const applyMorphUniformWrite = (uniforms, nextValue, source, meta = {}) => {
+    if (!uniforms || !Number.isFinite(Number(nextValue))) return false;
+    const value = Number(nextValue);
+    let uniformName = null;
+    if (uniforms.uMorphProgress) uniformName = 'uMorphProgress';
+    else if (uniforms.morphProgress) uniformName = 'morphProgress';
+    else if (uniforms.uMorph) uniformName = 'uMorph';
+    else if (uniforms.morph) uniformName = 'morph';
+    if (!uniformName) return false;
+
+    const uniform = uniforms[uniformName];
+    uniform.value = value;
+    uniform.needsUpdate = true;
+    trackMorphWrite(source, value, { uniformName, ...meta });
+    return true;
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.__dumpFormState = () => {
+      const u = uniformsRef.current;
+      const cam = cameraRef.current;
+      const geo = geometryRef.current;
+      const safe = (val) => (val && typeof val === 'object' && 'value' in val ? val.value : val);
+      return {
+        camera: cam
+          ? {
+              pos: cam.position.toArray(),
+              fov: cam.fov,
+              zoom: cam.zoom,
+              near: cam.near,
+              far: cam.far,
+            }
+          : null,
+        drawRange: geo?.drawRange
+          ? { start: geo.drawRange.start, count: geo.drawRange.count }
+          : null,
+        uniforms: u
+          ? {
+              uPointSize: safe(u.uPointSize),
+              uOpacityMin: safe(u.uOpacityMin),
+              uOpacityMax: safe(u.uOpacityMax),
+              uFadeProgress: safe(u.uFadeProgress),
+              uMorphProgress: safe(u.uMorphProgress),
+              uStageIndex: safe(u.uStageIndex),
+              uActiveCount: safe(u.uActiveCount),
+              uGaussianSigma: safe(u.uGaussianSigma),
+              uDevicePixelRatio: safe(u.uDevicePixelRatio),
+            }
+          : null,
+      };
+    };
+    if (DEV) {
+      window.__dumpRendererState = () => {
+        const mat = materialRef.current;
+        const u = mat?.uniforms || null;
+        const cam = cameraRef.current;
+        const geo = geometryRef.current;
+
+        const readUniform = (name) => {
+          const uniform = u?.[name];
+          if (!uniform) return null;
+          const value = uniform.value;
+          if (value == null) return value;
+          if (Array.isArray(value)) return value.slice();
+          if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
+            return Array.from(value);
+          }
+          if (typeof value === 'object' && typeof value.toArray === 'function') {
+            const out = [];
+            value.toArray(out);
+            return out;
+          }
+          return value;
+        };
+
+        const drawRange = geo?.drawRange
+          ? { start: geo.drawRange.start, count: geo.drawRange.count }
+          : null;
+        const activeCountUniform = readUniform('uActiveCount');
+        const activeCount = Number.isFinite(activeCountUniform)
+          ? activeCountUniform
+          : Number(drawRange?.count ?? 0);
+
+        return {
+          hasMaterial: !!mat,
+          drawRange,
+          activeCount,
+          uniforms: {
+            uMorphProgress: readUniform('uMorphProgress'),
+            uPointSize: readUniform('uPointSize'),
+            uGaussianSigma: readUniform('uGaussianSigma'),
+            uTierCutoff: readUniform('uTierCutoff'),
+            uFadeProgress: readUniform('uFadeProgress'),
+            uCenterWeighting: readUniform('uCenterWeighting'),
+          },
+          camera: cam
+            ? {
+                pos: cam.position.toArray(),
+                fov: cam.fov,
+                zoom: cam.zoom,
+                near: cam.near,
+                far: cam.far,
+              }
+            : null,
+        };
+      };
+      window.__dumpMorphWrites = () => morphWriteLogRef.current.slice();
+      window.__clearMorphWrites = () => {
+        morphWriteLogRef.current.length = 0;
+      };
+    }
+    return () => {
+      if (window.__dumpFormState) delete window.__dumpFormState;
+      if (window.__dumpRendererState) delete window.__dumpRendererState;
+      if (window.__dumpMorphWrites) delete window.__dumpMorphWrites;
+      if (window.__clearMorphWrites) delete window.__clearMorphWrites;
+    };
+  }, []);
 
   // Target max |x|/|y| in NDC for QR; tuned for readable, photo-like size
   const QR_AUTO_SCALE_TARGET = 0.25;
@@ -494,6 +682,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const [stageName, setStageName] = useState('genesis');
   const [atlasTexture, setAtlasTexture] = useState(null);
   const [activeCount, setActiveCount] = useState(0);
+  const [materialReady, setMaterialReady] = useState(false);
 
   const lastFitStampRef = useRef({ geoId: null, width: 0, height: 0 });
   const lastUniformsRef = useRef({ atmo: [1, 1], text: [1, 1] });
@@ -903,7 +1092,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const uniforms = mat?.uniforms;
 
       if (uniforms?.uMorphProgress) {
-        uniforms.uMorphProgress.value = 1.0;
+        applyMorphUniformWrite(uniforms, 1.0, 'emergence:finalize');
         if (uniforms.uStageProgress) {
           uniforms.uStageProgress.value = 1.0;
         }
@@ -1065,6 +1254,116 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       cameraRef.current = camera;
     }
   }, [camera]);
+
+  // FORM camera override (rest -> threshold -> interior)
+  useEffect(() => {
+    if (!cameraOverride) return;
+    const cam = cameraRef.current;
+    const target = cameraTargetRef.current;
+    if (!target) return;
+
+    const mode = cameraOverride.mode || 'rest';
+    const progress = Number.isFinite(cameraOverride.progress)
+      ? Math.max(0, Math.min(1, cameraOverride.progress))
+      : 0;
+
+    const rest = new THREE.Vector3(0, 0, 60);
+    const threshold = new THREE.Vector3(0, 6, 36);
+    const interior = new THREE.Vector3(0, 0, 18);
+    const isLandingStageSlice =
+      (typeof globalThis !== 'undefined' && globalThis.__DEMO_KEY__ === 'landing_stage_slice') ||
+      (typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('slice') === 'landing_stage');
+    const useGlyphCamera =
+      isLandingStageSlice === true ||
+      (cameraOverride?.useGlyphCamera === true && cameraOverride?.targetGlyph);
+    const glyphMode = typeof cameraOverride?.glyphMode === 'string' ? cameraOverride.glyphMode : 'enter';
+    const glyphOccurrence = Number.isFinite(cameraOverride?.glyphOccurrence)
+      ? cameraOverride.glyphOccurrence
+      : 1;
+    const glyphTarget = isLandingStageSlice === true ? 'O' : cameraOverride?.targetGlyph;
+    const glyphCamera = useGlyphCamera && glyphTarget && typeof glyphSpace?.getCameraTarget === 'function'
+      ? glyphSpace.getCameraTarget(glyphTarget, isLandingStageSlice === true ? 'enter' : glyphMode, glyphOccurrence)
+      : null;
+    let glyphPos = glyphCamera?.position ? toVec3(glyphCamera.position, null) : null;
+    let glyphLookAt = glyphCamera?.lookAt ? toVec3(glyphCamera.lookAt, null) : null;
+    if ((!glyphPos || !glyphLookAt) && glyphCamera?.center) {
+      const center = toVec3(glyphCamera.center, null);
+      if (center) {
+        const depth = Number.isFinite(glyphCamera.depth) ? glyphCamera.depth : Math.abs(interior.z);
+        const forward = new THREE.Vector3(0, 0, 1);
+        if (!glyphPos) glyphPos = center.clone().add(forward.multiplyScalar(depth));
+        if (!glyphLookAt) glyphLookAt = center;
+      }
+    }
+
+    const resolvePosition = () => {
+      if (mode === 'threshold') {
+        return rest.clone().lerp(threshold, progress);
+      }
+      if (mode === 'interior') {
+        const targetPos = glyphPos || interior;
+        return threshold.clone().lerp(targetPos, progress);
+      }
+      return rest;
+    };
+
+    const nextPos = resolvePosition();
+    const resolveLookAt = () => {
+      if (mode === 'interior' && (glyphLookAt || glyphPos)) {
+        const targetLook = glyphLookAt || glyphPos;
+        return new THREE.Vector3(0, 0, 0).lerp(targetLook, progress);
+      }
+      return new THREE.Vector3(0, 0, 0);
+    };
+    const lookAt = resolveLookAt();
+
+    cameraOwnerRef.current = 'directive';
+    if (typeof window !== 'undefined') window.__cameraOwner = cameraOwnerRef.current;
+
+    if (cam) {
+      target.startPosition.copy(cam.position);
+      target.startFov = cam.fov;
+    } else {
+      target.startPosition.copy(target.position);
+      target.startFov = target.fov;
+    }
+
+    if (target.currentLookAt) {
+      target.startLookAt.copy(target.currentLookAt);
+    } else {
+      target.startLookAt.copy(target.lookAt);
+    }
+
+    target.position.copy(nextPos);
+    target.lookAt.copy(lookAt);
+    target.duration = 900;
+    target.easingMode = 'ease-in-out';
+    target.active = true;
+    target.startTime = typeof performance !== 'undefined' && performance.now
+      ? performance.now()
+      : Date.now();
+
+    if (cameraOverride.targetGlyph && uniformsRef.current) {
+      const uniforms = uniformsRef.current;
+      const center = { x: 0, y: 0, z: 0 };
+      const radius = 4;
+      const intensity = 0.6;
+      glyphTargetRef.current = {
+        letter: cameraOverride.targetGlyph,
+        occurrence: 1,
+        center,
+        radius,
+        intensity,
+      };
+      if (uniforms.uGlyphTargetActive) uniforms.uGlyphTargetActive.value = 1.0;
+      if (uniforms.uGlyphTargetCenter?.value?.set) {
+        uniforms.uGlyphTargetCenter.value.set(center.x, center.y, center.z);
+      }
+      if (uniforms.uGlyphTargetRadius) uniforms.uGlyphTargetRadius.value = radius;
+      if (uniforms.uGlyphPulseIntensity) uniforms.uGlyphPulseIntensity.value = intensity;
+    }
+  }, [cameraOverride]);
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.__cameraOwner = cameraOwnerRef.current;
@@ -1382,11 +1681,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
   const __applyMorph = (v) => {
     const mat = materialRef.current;
     if (!mat?.uniforms) return;
-    const u = mat.uniforms;
-    if (u.uMorphProgress) u.uMorphProgress.value = v;
-    else if (u.morphProgress) u.morphProgress.value = v;
-    else if (u.uMorph) u.uMorph.value = v;
-    else if (u.morph) u.morph.value = v;
+    applyMorphUniformWrite(mat.uniforms, v, 'morph:__applyMorph');
     mat.uniformsNeedUpdate = true;
   };
 
@@ -1638,12 +1933,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         console.log('🎯 HOTSPOT HIT!', matchedHotspot);
         if (matchedHotspot.fragmentId) {
           console.log(`   Fragment: ${matchedHotspot.fragmentId}`);
-          if (window.narrativeAtom?.activateMemoryFragment) {
-            window.narrativeAtom.activateMemoryFragment(matchedHotspot.fragmentId);
-            console.log(`✨ Fragment modal activated: ${matchedHotspot.fragmentId}`);
-          } else {
-            console.warn('[WBG] narrativeAtom.activateMemoryFragment not available');
-          }
+          console.log(`[WBG] Emitting fragment intent via ${EVENTS.PARTICLE_CLICK_HIT}`);
         }
       } else {
         console.log(`   Not a hotspot (particle ${particleIndex})`);
@@ -1965,11 +2255,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         }
         if (mat?.uniforms?.uMorphProgress) {
           if (isQrBlueprint) {
-            mat.uniforms.uMorphProgress.value = 1;
+            applyMorphUniformWrite(mat.uniforms, 1, 'blueprint:bind:qr');
             if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 1;
             if (mat.uniforms.uPostMorphFreeze) mat.uniforms.uPostMorphFreeze.value = 1;
           } else {
-            mat.uniforms.uMorphProgress.value = 0;
+            applyMorphUniformWrite(mat.uniforms, 0, 'blueprint:bind:full');
             if (mat.uniforms.uStageProgress) mat.uniforms.uStageProgress.value = 0;
           }
           mat.uniformsNeedUpdate = true;
@@ -2391,6 +2681,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const setUniformNumber = (uniformName, value) => {
         if (typeof value !== 'number') return;
         if (isScrollPhase && (uniformName === 'uMorphProgress' || uniformName === 'uStageProgress')) {
+          if (uniformName === 'uMorphProgress') {
+            trackMorphWrite('directive:setUniformNumber:blocked', value, {
+              phase,
+              blocked: true,
+              reason: 'scroll_phase_block',
+            });
+          }
           if (DEV) console.warn('[WBG] Scroll-phase directive blocked morph write', { uniformName, value });
           return;
         }
@@ -2399,6 +2696,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         if (!guardUniformWrite(origin, uniformName)) return;
         uniform.value = value;
         uniform.needsUpdate = true;
+        if (uniformName === 'uMorphProgress') {
+          trackMorphWrite('directive:setUniformNumber:applied', value, {
+            phase,
+            blocked: false,
+            reason: null,
+            directiveSource,
+            verb: payload?.verb || payload?.effect?.verb || null,
+          });
+        }
       };
       const applyUniformArray = (uniformName, uniform, value) => {
         if (!guardUniformWrite(origin, uniformName)) return;
@@ -2545,7 +2851,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       }
 
       if (payload?.verb || payload?.effect?.verb) {
-        applyVisualVerbDirective(payload, uniforms, origin);
+        applyVisualVerbDirective(payload, uniforms, origin, (uniformName, value, info = {}) => {
+          if (uniformName !== 'uMorphProgress') return;
+          trackMorphWrite('directive:applyVisualVerbDirective', value, {
+            phase,
+            directiveSource,
+            verb: payload?.verb || payload?.effect?.verb || info?.verb || null,
+          });
+        });
       }
 
       if (payload?.clearGlyphTarget && uniforms) {
@@ -2747,6 +3060,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       const uniforms = mat?.uniforms;
       if (!uniforms) {
         if (DEV) console.warn('⚠️ [MORPH] Material uniforms missing');
+        return;
+      }
+
+      const landingPreset =
+        typeof window !== 'undefined'
+          ? window.Canonical?.landingStageSliceResolved?.preset
+          : null;
+      const lockVelocityLandingMorph =
+        landingPreset === 'velocity_stage' &&
+        Number(uniforms.uPostMorphFreeze?.value ?? 0) >= 1;
+      if (lockVelocityLandingMorph) {
+        fallbackMorphRef.current = 1;
+        __applyMorph(1);
+        if (uniforms.uStageProgress) {
+          uniforms.uStageProgress.value = 1;
+          uniforms.uStageProgress.needsUpdate = true;
+        }
+        mat.uniformsNeedUpdate = true;
         return;
       }
 
@@ -2995,6 +3326,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
     const stageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(stageName));
     const palette = pickStageColors(stageName);
+    const landingPreset =
+      typeof window !== 'undefined'
+        ? window.Canonical?.landingStageSliceResolved?.preset
+        : null;
+    const isLandingVelocityPreset = landingPreset === 'velocity_stage';
+    if (isLandingVelocityPreset) {
+      fallbackMorphRef.current = 1;
+    }
+    const initialMorph = isLandingVelocityPreset ? 1 : clamp01(fallbackMorphRef.current);
     const blueprintCount = blueprint?.activeCount || blueprint?.particleCount || blueprint?.maxParticles || 0;
     const resolveDpr = () => {
       try { return Math.min(gl?.getPixelRatio?.() ?? window?.devicePixelRatio ?? 1, 1.5); }
@@ -3011,9 +3351,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
         onBeforeCompile: () => { try { console.log('🧪 Shader compiled'); } catch {} },
         uniforms: {
           uTime:            { value: 0 },
-          uMorphProgress:   { value: clamp01(fallbackMorphRef.current) },
+          uMorphProgress:   { value: initialMorph },
           uScrollProgress:  { value: 0 },
-          uStageProgress:   { value: clamp01(fallbackMorphRef.current) },
+          uStageProgress:   { value: initialMorph },
           uStageBlend:      { value: 0 },
           uAtlasTexture:    { value: atlasTexture },
           uTotalSprites:    { value: 16 },
@@ -3092,10 +3432,16 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
       });
       materialRef.current = mat;
       uniformsRef.current = mat.uniforms || null;
+      setMaterialReady(true);
     }
 
     const uniforms = mat.uniforms || {};
     uniformsRef.current = mat.uniforms || uniformsRef.current;
+    if (created && uniforms.uMorphProgress) {
+      trackMorphWrite('material:init-default', uniforms.uMorphProgress.value, {
+        phase: 'material_init',
+      });
+    }
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
@@ -3308,6 +3654,18 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
     const mat = materialRef.current;
     if (!meshRef.current || !mat || !geometryRef.current) return;
     const sp = clamp01(Number(scrollProgress) || 0);
+    const deterministicMode =
+      typeof window !== 'undefined' && window.__DETERMINISTIC_MODE__ === true;
+    if (deterministicMode) {
+      timeTickEnabledRef.current = false;
+      if (mat.uniforms.uPostMorphFreeze) {
+        mat.uniforms.uPostMorphFreeze.value = 1.0;
+        mat.uniforms.uPostMorphFreeze.needsUpdate = true;
+      }
+      if (mat.uniforms.uTime) {
+        mat.uniforms.uTime.value = 0.0;
+      }
+    }
     if (timeTickEnabledRef.current && mat.uniforms.uTime) {
       mat.uniforms.uTime.value = state.clock.elapsedTime;
     }
@@ -3454,7 +3812,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0 }) {
 
 
   // early-out fallback if not ready
-  if (!atlasTexture || !blueprint || !materialRef.current || !geometryRef.current) {
+  if (!atlasTexture || !blueprint || !materialReady || !materialRef.current || !geometryRef.current) {
     return (
       <points>
         <bufferGeometry>

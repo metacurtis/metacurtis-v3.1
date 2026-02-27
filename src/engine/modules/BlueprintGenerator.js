@@ -55,7 +55,10 @@ export default class BlueprintGenerator {
 
   async buildStage(stageName, requestedQuality, options = {}) {
     const engine = this.engine;
-    const stageConfig = Canonical?.stages?.[stageName] || {};
+    const stageConfig =
+      Canonical?.getResolvedStageByName?.(stageName) ||
+      Canonical?.stages?.[stageName] ||
+      {};
     if (!stageConfig) {
       console.error(`Stage ${stageName} not found`);
       return null;
@@ -76,7 +79,10 @@ export default class BlueprintGenerator {
     console.log(`🧠 Building ${stageName}: ${particleCount} particles`);
 
     const fallbackWord = SST?.visual?.stageWords?.[stageName];
-    const typographyDef = Canonical?.visual?.letterGeometry?.[stageName] || {};
+    const typographyDef =
+      Canonical?.getStageTypography?.(stageName) ||
+      Canonical?.visual?.letterGeometry?.[stageName] ||
+      {};
     const typography = {
       word:
         (typeof typographyDef.word === 'string' && typographyDef.word) ||
