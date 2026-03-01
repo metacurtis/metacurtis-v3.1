@@ -25,6 +25,8 @@ console.log('🧬 LOADED: ConsciousnessTheater — race-free opening (DEV-safe c
 const GENESIS_STAGE_WORD = Canonical?.visual?.letterGeometry?.genesis?.word || 'GENESIS';
 const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
 const LANDING_SLICE_DEMO_KEY_PREFIX = `${LANDING_SLICE_DEMO_KEY}__`;
+const LANDING_VELOCITY_PRESET_KEY = 'velocity_stage';
+const LANDING_VELOCITY_DEMO_KEY = `${LANDING_SLICE_DEMO_KEY_PREFIX}${LANDING_VELOCITY_PRESET_KEY}`;
 
 const isLandingSliceDemoKey = (demoKey) =>
   typeof demoKey === 'string' &&
@@ -321,8 +323,27 @@ export default function ConsciousnessTheater({ mode } = {}) {
           const activeDemoKey = forcedLandingDemoKey || globalThis.__DEMO_KEY__;
           const isLandingSliceFlow = isLandingSliceMode || isLandingSliceDemoKey(activeDemoKey);
           const landingResolved = Canonical?.landingStageSliceResolved || null;
-          const landingPreset = landingResolved?.preset || null;
-          const useStageModeLanding = isLandingSliceFlow && landingPreset === 'velocity_stage';
+          const landingParams =
+            typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const requestedPreset = (landingParams?.get('preset') || '').trim();
+          const landingPreset = landingResolved?.preset || requestedPreset || null;
+          const isVelocityLandingStageRoute =
+            isLandingSliceMode && landingPreset === LANDING_VELOCITY_PRESET_KEY;
+          const blockedVelocityLandingDemoPath =
+            activeDemoKey === LANDING_VELOCITY_DEMO_KEY && !isVelocityLandingStageRoute;
+          if (blockedVelocityLandingDemoPath) {
+            if (import.meta.env.DEV) {
+              console.error(
+                '[ConsciousnessTheater] Blocked velocity landing demo path. Use ?slice=landing_stage&preset=velocity_stage.',
+                {
+                  activeDemoKey,
+                  landingPreset,
+                  isLandingSliceMode,
+                }
+              );
+            }
+          } else {
+            const useStageModeLanding = isLandingSliceFlow && isVelocityLandingStageRoute;
           const landingQuality =
             (landingResolved?.quality || qualityAtom.getState?.()?.currentQualityTier || 'HIGH')
               .toString()
@@ -397,6 +418,112 @@ export default function ConsciousnessTheater({ mode } = {}) {
             });
           };
 
+          const scheduleVelocityLandingBeats = () => {
+            const beats = Canonical?.visualDemos?.[activeDemoKey]?.beats || [];
+            if (!Array.isArray(beats) || beats.length === 0) return;
+            const buildVelocityDirective = (beat = {}) => {
+              const atMsRaw = Number(beat?.atMs);
+              if (!Number.isFinite(atMsRaw)) return null;
+              const atMs = Math.max(0, Math.floor(atMsRaw));
+              const params = beat?.params && typeof beat.params === 'object' ? beat.params : {};
+              const hasCameraParams = params.camera && typeof params.camera === 'object';
+              const isRevealWindow = atMs >= 2400;
+              const pointSizeRaw = Number(params.pointSize);
+              const pointSize = Number.isFinite(pointSizeRaw)
+                ? Math.max(0.5, Math.min(pointSizeRaw, 12.0))
+                : (isRevealWindow ? 9 : null);
+              const camera = hasCameraParams
+                ? { ...params.camera }
+                : (isRevealWindow
+                    ? {
+                        position: { x: 0, y: 0, z: 44 },
+                        fov: 84,
+                        durationMs: Number.isFinite(Number(beat?.durationMs)) ? Number(beat.durationMs) : 4200,
+                      }
+                    : null);
+              if (!camera && pointSize == null) return null;
+              const mediumImmersiveBoost = isRevealWindow
+                ? {
+                    uFlowTurbulence: 0.25,
+                    uSpreadFactor: 1.2,
+                    uniforms: {
+                      uCenterWeighting: 1.2,
+                      uDepthFalloffPower: 1.6,
+                      uStreakIntensity: 0.05,
+                    },
+                  }
+                : null;
+              return {
+                atMs,
+                idx: Number(beat?.idx) || 0,
+                verb: typeof beat?.verb === 'string' ? beat.verb : null,
+                camera,
+                pointSize,
+                mediumImmersiveBoost,
+                isRevealWindow,
+              };
+            };
+
+            const resolvedBeats = beats
+              .map((beat, idx) => buildVelocityDirective({ ...beat, idx }))
+              .filter(Boolean);
+            if (resolvedBeats.length === 0) return;
+
+            if (deterministicBoot) {
+              const finalBeat =
+                resolvedBeats.find((beat) => beat.isRevealWindow && beat.atMs >= 2400)
+                || resolvedBeats[resolvedBeats.length - 1];
+              if (!finalBeat) return;
+              const camera = finalBeat.camera
+                ? { ...finalBeat.camera, durationMs: 0 }
+                : null;
+              emitRenderDirective({
+                source: 'visual_orchestrator',
+                phase: 'landing_stage_mode_velocity_deterministic',
+                stage: formStageName,
+                ...(finalBeat.verb ? { verb: finalBeat.verb } : {}),
+                ...(camera ? { camera } : {}),
+                ...(finalBeat.pointSize != null ? { pointSize: finalBeat.pointSize } : {}),
+                ...(finalBeat.mediumImmersiveBoost || {}),
+                uniforms: {
+                  ...(finalBeat.mediumImmersiveBoost?.uniforms || {}),
+                  uMorphProgress: 1,
+                  uPostMorphFreeze: 1,
+                },
+              });
+              if (import.meta.env.DEV) {
+                console.log('[ConsciousnessTheater] Applied deterministic velocity landing pose', {
+                  idx: finalBeat.idx,
+                  stage: formStageName,
+                });
+              }
+              return;
+            }
+
+            resolvedBeats.forEach((beat) => {
+              const timerId = setTimeout(() => {
+                emitRenderDirective({
+                  source: 'visual_orchestrator',
+                  phase: 'landing_stage_mode_velocity',
+                  stage: formStageName,
+                  ...(beat.verb ? { verb: beat.verb } : {}),
+                  ...(beat.camera ? { camera: beat.camera } : {}),
+                  ...(beat.pointSize != null ? { pointSize: beat.pointSize } : {}),
+                  ...(beat.mediumImmersiveBoost || {}),
+                });
+              }, beat.atMs);
+              demoCleanups.push(() => clearTimeout(timerId));
+              if (import.meta.env.DEV) {
+                console.log('[ConsciousnessTheater] Scheduled landing velocity beat', {
+                  idx: beat.idx,
+                  atMs: beat.atMs,
+                  hasCamera: !!beat.camera,
+                  pointSize: beat.pointSize,
+                });
+              }
+            });
+          };
+
           const maybeStartDemo = () => {
             console.log('[DemoGate] maybeStartDemo', {
               demoBlueprintReady,
@@ -433,6 +560,7 @@ export default function ConsciousnessTheater({ mode } = {}) {
                   origin: 'landing_stage_mode_velocity',
                   forceEmit: true,
                 });
+                scheduleVelocityLandingBeats();
                 console.log('[ConsciousnessTheater] Landing stage mode started', {
                   stage: formStageName,
                   preset: landingPreset,
@@ -459,6 +587,15 @@ export default function ConsciousnessTheater({ mode } = {}) {
                 activeCount: pendingActiveCount,
                 pointSize: isLandingSliceFlow ? 3 : 48,
               });
+              if (activeDemoKey === LANDING_VELOCITY_DEMO_KEY) {
+                if (import.meta.env.DEV) {
+                  console.error(
+                    '[ConsciousnessTheater] Blocked runVisualDemo for velocity landing key. Stage-mode landing is required.',
+                    { activeDemoKey }
+                  );
+                }
+                return;
+              }
               director.runVisualDemo(activeDemoKey);
               if (isLandingSliceFlow) {
                 const beats =
@@ -556,6 +693,7 @@ export default function ConsciousnessTheater({ mode } = {}) {
           directorStartedRef.current = true;
           clearInterval(tick);
           return;
+          }
         }
 
         try { document.body.style.overflow = 'hidden'; } catch {}

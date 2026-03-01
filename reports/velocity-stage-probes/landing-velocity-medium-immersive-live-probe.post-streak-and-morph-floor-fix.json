@@ -1,0 +1,132 @@
+{
+  "generatedAt": "2026-03-01T16:25:58.965Z",
+  "url": "http://127.0.0.1:5175/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+  "checkpointsMs": [
+    1000,
+    3000,
+    6000,
+    8000
+  ],
+  "samples": [
+    {
+      "targetMs": 1000,
+      "renderer": {
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "camera": {
+          "pos": [
+            0,
+            -0.18707865574701904,
+            52.24494386896423
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "uniforms": {
+          "uMorphProgress": 0,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uDepthFalloffPower": 1,
+          "uCenterWeighting": 1,
+          "uFlowTurbulence": 0,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 1
+        }
+      }
+    },
+    {
+      "targetMs": 3000,
+      "renderer": {
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "camera": {
+          "pos": [
+            0,
+            -0.005061366952759938,
+            54.04008055910442
+          ],
+          "fov": 94.03098376649305,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.5,
+          "uDepthFalloffPower": 1,
+          "uCenterWeighting": 1,
+          "uFlowTurbulence": 0,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 1
+        }
+      }
+    },
+    {
+      "targetMs": 6000,
+      "renderer": {
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "camera": {
+          "pos": [
+            0,
+            -0.00004644769757516392,
+            46.19918044017321
+          ],
+          "fov": 86.19909695974667,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 9,
+          "uGaussianSigma": 2.5,
+          "uDepthFalloffPower": 1.6,
+          "uCenterWeighting": 1.2,
+          "uFlowTurbulence": 0.25,
+          "uStreakIntensity": 0.05,
+          "uSpreadFactor": 1.2
+        }
+      }
+    },
+    {
+      "targetMs": 8000,
+      "renderer": {
+        "drawRange": {
+          "start": 0,
+          "count": 15000
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            44
+          ],
+          "fov": 84,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 9,
+          "uGaussianSigma": 2.5,
+          "uDepthFalloffPower": 1.6,
+          "uCenterWeighting": 1.2,
+          "uFlowTurbulence": 0.25,
+          "uStreakIntensity": 0.05,
+          "uSpreadFactor": 1.2
+        }
+      }
+    }
+  ]
+}

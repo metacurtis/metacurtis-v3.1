@@ -544,6 +544,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
               uStageIndex: safe(u.uStageIndex),
               uActiveCount: safe(u.uActiveCount),
               uGaussianSigma: safe(u.uGaussianSigma),
+              uCenterWeighting: safe(u.uCenterWeighting),
+              uFlowTurbulence: safe(u.uFlowTurbulence),
+              uStreakIntensity: safe(u.uStreakIntensity),
+              uSpreadFactor: safe(u.uSpreadFactor),
+              uDepthFalloffPower: safe(u.uDepthFalloffPower),
               uDevicePixelRatio: safe(u.uDevicePixelRatio),
             }
           : null,
@@ -589,9 +594,13 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
             uMorphProgress: readUniform('uMorphProgress'),
             uPointSize: readUniform('uPointSize'),
             uGaussianSigma: readUniform('uGaussianSigma'),
+            uDepthFalloffPower: readUniform('uDepthFalloffPower'),
             uTierCutoff: readUniform('uTierCutoff'),
             uFadeProgress: readUniform('uFadeProgress'),
             uCenterWeighting: readUniform('uCenterWeighting'),
+            uFlowTurbulence: readUniform('uFlowTurbulence'),
+            uStreakIntensity: readUniform('uStreakIntensity'),
+            uSpreadFactor: readUniform('uSpreadFactor'),
           },
           camera: cam
             ? {
@@ -3054,8 +3063,6 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     }
     geometryBoundOnceRef.current = true;
 
-      fallbackMorphRef.current = value;
-
       const mat = materialRef.current;
       const uniforms = mat?.uniforms;
       if (!uniforms) {
@@ -3067,8 +3074,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         typeof window !== 'undefined'
           ? window.Canonical?.landingStageSliceResolved?.preset
           : null;
+      const landingParams =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search)
+          : null;
+      const isLandingVelocityPreset =
+        landingParams?.get('slice') === 'landing_stage' &&
+        landingPreset === 'velocity_stage';
       const lockVelocityLandingMorph =
-        landingPreset === 'velocity_stage' &&
+        isLandingVelocityPreset &&
         Number(uniforms.uPostMorphFreeze?.value ?? 0) >= 1;
       if (lockVelocityLandingMorph) {
         fallbackMorphRef.current = 1;
@@ -3088,27 +3102,52 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         uniforms[name].needsUpdate = true;
       };
 
-      const env = getMorphEnvelope(value);
+    const lastValue = lastMorphProgressRef.current;
+    const landingMorphState =
+      isLandingVelocityPreset && typeof window !== 'undefined'
+        ? {
+            floor: Number(window.__landingVelocityMorphFloor__ || 0),
+            riseStarted: window.__landingVelocityMorphRiseStarted__ === true,
+          }
+        : null;
+    const localMorphFloor =
+      isLandingVelocityPreset && Number.isFinite(lastValue)
+        ? lastValue
+        : 0;
+    const riseStartedNow = landingMorphState
+      ? (landingMorphState.riseStarted || value >= 0.1)
+      : false;
+    const stagedValue = riseStartedNow ? value : 0;
+    const postRiseFloor = riseStartedNow ? 0.1 : 0;
+    const resolvedValue = isLandingVelocityPreset
+      ? Math.max(stagedValue, localMorphFloor, landingMorphState?.floor || 0, postRiseFloor)
+      : value;
+    if (landingMorphState && typeof window !== 'undefined') {
+      window.__landingVelocityMorphRiseStarted__ = riseStartedNow;
+      window.__landingVelocityMorphFloor__ = Math.max(landingMorphState.floor, resolvedValue, postRiseFloor);
+    }
+      fallbackMorphRef.current = resolvedValue;
+
+      const env = getMorphEnvelope(resolvedValue);
       setEnvUniform('uImplodeStrength', env.implode);
       setEnvUniform('uChaosStrength', env.chaos);
       setEnvUniform('uCoalesceStrength', env.coalesce);
       setEnvUniform('uSettleStrength', env.settle);
 
-    __applyMorph(value);
+    __applyMorph(resolvedValue);
 
-    const lastValue = lastMorphProgressRef.current;
-    const isAscending = Number.isFinite(lastValue) ? value >= lastValue : false;
-    const isAscendingStrict = Number.isFinite(lastValue) ? value > lastValue : false;
-    const isDescending = Number.isFinite(lastValue) ? value < lastValue : false;
-    lastMorphProgressRef.current = value;
+    const isAscending = Number.isFinite(lastValue) ? resolvedValue >= lastValue : false;
+    const isAscendingStrict = Number.isFinite(lastValue) ? resolvedValue > lastValue : false;
+    const isDescending = Number.isFinite(lastValue) ? resolvedValue < lastValue : false;
+    lastMorphProgressRef.current = resolvedValue;
 
     const driftState = morphDriftRef.current;
-    const forceDrift = textMorphRef.current.active;
-    if (uniforms.uTierMode && uniforms.uTierMode.value) {
+    const forceDrift = !isLandingVelocityPreset && textMorphRef.current.active;
+    if (!isLandingVelocityPreset && uniforms.uTierMode && uniforms.uTierMode.value) {
       const tierArr = uniforms.uTierMode.value;
       const dissolveThreshold = 0.5;
       const reformThreshold = 0.95;
-      const shouldForce = forceDrift || value <= dissolveThreshold;
+      const shouldForce = forceDrift || resolvedValue <= dissolveThreshold;
 
       if (shouldForce) {
         if (!driftState.active) {
@@ -3116,7 +3155,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           const prevTierMode = Array.from(tierArr);
           driftState.tierModes = prevTierMode;
           console.log('[WBG] Morph dissolve - forcing drift mode', {
-            morphProgress: value,
+            morphProgress: resolvedValue,
             prevTierMode,
             newTierMode: [0, 0, 0, 0],
           });
@@ -3149,7 +3188,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           && uniforms.uMorphType.value !== MORPH_TYPE_ENUM.dissolve) {
           uniforms.uMorphType.value = MORPH_TYPE_ENUM.dissolve;
           uniforms.uMorphType.needsUpdate = true;
-        } else if (forceDrift && isAscendingStrict && value < reformThreshold && uniforms.uMorphType
+        } else if (forceDrift && isAscendingStrict && resolvedValue < reformThreshold && uniforms.uMorphType
           && uniforms.uMorphType.value !== MORPH_TYPE_ENUM.reform) {
           uniforms.uMorphType.value = MORPH_TYPE_ENUM.reform;
           uniforms.uMorphType.needsUpdate = true;
@@ -3172,7 +3211,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         }
       }
 
-      if (driftState.active && isAscending && value >= reformThreshold) {
+      if (driftState.active && isAscending && resolvedValue >= reformThreshold) {
         if (textMorphRef.current.active) {
           textMorphRef.current.active = false;
           if (textMorphRef.current.timeoutId) {
@@ -3212,29 +3251,29 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       }
     }
 
-    if (isAscendingStrict && value > 0.5) {
+    if (isAscendingStrict && resolvedValue > 0.5) {
       const lastLogged = reformDiagRef.current.lastMorphLogged ?? -1;
-      if (value - lastLogged >= 0.1) {
-        runReformDiagnostics(value);
-        reformDiagRef.current.lastMorphLogged = value;
+      if (resolvedValue - lastLogged >= 0.1) {
+        runReformDiagnostics(resolvedValue);
+        reformDiagRef.current.lastMorphLogged = resolvedValue;
       }
     } else if (isDescending) {
       reformDiagRef.current.lastMorphLogged = -1;
     }
 
-    if (value < 0.1) {
+    if (!isLandingVelocityPreset && resolvedValue < 0.1) {
       if (!dissolveLogRef.current) {
         dissolveLogRef.current = true;
         console.log('[WBG] DISSOLVE UNIFORM STATE:', {
           uAtmoFit: mat.uniforms.uAtmoFit?.value,
           uTierMode: mat.uniforms.uTierMode?.value,
           uGridSpacing: mat.uniforms.uGridSpacing?.value,
-          uMorphProgress: value,
+          uMorphProgress: resolvedValue,
           uMorphType: mat.uniforms.uMorphType?.value,
           uSpreadFactor: mat.uniforms.uSpreadFactor?.value,
         });
       }
-    } else if (value > 0.8) {
+    } else if (resolvedValue > 0.8) {
       dissolveLogRef.current = false;
     }
 
@@ -3267,7 +3306,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       }
     }
       if (uniforms.uStageProgress) {
-        uniforms.uStageProgress.value = value;
+        uniforms.uStageProgress.value = resolvedValue;
       }
       mat.uniformsNeedUpdate = true;
       mat.needsUpdate = true;
@@ -3280,7 +3319,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       const allowAutoFreeze =
         !isGenesis && !skipFreezeForOpening;
 
-      if (emergencePendingRef.current && !emittedEmergedRef.current && value >= 0.995) {
+      if (emergencePendingRef.current && !emittedEmergedRef.current && resolvedValue >= 0.995) {
         const now =
           typeof performance !== 'undefined' && typeof performance.now === 'function'
             ? performance.now()
@@ -3297,7 +3336,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       }
 
       if (DEV) {
-        console.log('🔬 [MORPH] Updated:', value.toFixed(3));
+        console.log('🔬 [MORPH] Updated:', resolvedValue.toFixed(3));
       }
     };
 
@@ -3358,6 +3397,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           uAtlasTexture:    { value: atlasTexture },
           uTotalSprites:    { value: 16 },
           uPointSize:       { value: basePointSize },
+          uDepthFalloffPower: { value: 1.0 },
           uMotionMode:      { value: 0.0 },
           uDevicePixelRatio:{ value: resolveDpr() },
           uResolution:      { value: new THREE.Vector2(1, 1) },
@@ -3443,6 +3483,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       });
     }
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
+    if (!uniforms.uDepthFalloffPower) uniforms.uDepthFalloffPower = { value: 1.0 };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
