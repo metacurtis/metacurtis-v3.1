@@ -472,8 +472,8 @@ export default function ConsciousnessTheater({ mode } = {}) {
               const mediumImmersiveBoost = isRevealWindow
                 ? {
                     uFlowTurbulence: 0.25,
-                    uSpreadFactor: 1.2,
                     uniforms: {
+                      uSpreadFactor: 1.2,
                       uCenterWeighting: 1.2,
                       uDepthFalloffPower: 1.6,
                       uStreakIntensity: 0.05,
