@@ -1327,54 +1327,71 @@
         ]
       },
       "velocity_stage": {
-        "durationMs": 20000,
+        "durationMs": 7800,
         "scrollLock": false,
         "beats": [
           {
             "atMs": 0,
-            "durationMs": 5000,
+            "durationMs": 1200,
             "verb": "coalesce",
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-              "color": "#C4B5FD",
-              "intensity": 0.16,
+              "color": "#FFFFFF",
+              "intensity": 0.15,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
-                "fov": 100,
-                "durationMs": 700
-              }
-            }
-          },
-          {
-            "atMs": 5000,
-            "durationMs": 7000,
-            "verb": "sparkDrift",
-            "easing": "smoothstep",
-            "params": {
-              "text": "FORM",
-              "color": "#9333EA",
-              "intensity": 0.2,
-              "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
-                "fov": 100,
-                "durationMs": 900
-              }
-            }
-          },
-          {
-            "atMs": 12000,
-            "durationMs": 8000,
-            "verb": "velocity_rest",
-            "easing": "smoothstep",
-            "params": {
-              "text": "FORM",
-              "color": "#7C3AED",
-              "intensity": 0.1,
-              "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
+                "position": { "x": 0, "y": -1, "z": 62 },
                 "fov": 100,
                 "durationMs": 1200
+              }
+            }
+          },
+          {
+            "atMs": 1200,
+            "durationMs": 1200,
+            "verb": "settle",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#FFFFFF",
+              "intensity": 0.12,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 54 },
+                "fov": 94,
+                "durationMs": 1200
+              }
+            }
+          },
+          {
+            "atMs": 2400,
+            "durationMs": 4200,
+            "verb": "gentle_drift",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#FFFFFF",
+              "intensity": 0.09,
+              "pointSize": 9,
+              "camera": {
+                "position": { "x": 0, "y": 0, "z": 44 },
+                "fov": 84,
+                "durationMs": 4200
+              }
+            }
+          },
+          {
+            "atMs": 6600,
+            "durationMs": 1200,
+            "verb": "reveal_3d_text",
+            "easing": "smoothstep",
+            "params": {
+              "text3D": {
+                "enabled": true,
+                "scaleTo": 2.0,
+                "fadeTo": 1.0
+              },
+              "particles": {
+                "fadeTo": 0.35
               }
             }
           }

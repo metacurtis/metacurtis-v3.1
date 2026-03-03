@@ -5,6 +5,8 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 // Provide global THREE for Canon HUD/watchdog hooks
 if (typeof window !== 'undefined' && !window.THREE) window.THREE = THREE;
 if (typeof window !== 'undefined' && !window.RAYCAST_DIAGNOSTIC) {
@@ -34,6 +36,7 @@ const TEXT_FIT_WIDTH = 0.9;
 const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
 const MORPH_WRITE_LOG_LIMIT = 400;
+const TEXT3D_REVEAL_LERP_SPEED = 6;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
@@ -448,6 +451,21 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   const meshRef = useRef();
   const geometryRef = useRef(null);
   const materialRef = useRef(null);
+  const text3DMeshRef = useRef(null);
+  const text3DGeometryRef = useRef(null);
+  const text3DMaterialRef = useRef(null);
+  const text3DFontRef = useRef(null);
+  const text3DFontPromiseRef = useRef(null);
+  const text3DBaseScaleRef = useRef(1);
+  const text3DWordRef = useRef('');
+  const text3DRevealStateRef = useRef({
+    targetAlpha: 0,
+    currentAlpha: 0,
+    targetScale: 1,
+    currentScale: 1,
+    targetParticleAlpha: 1,
+    currentParticleAlpha: 1,
+  });
   const uniformsRef = useRef(null);
   const geometryBoundOnceRef = useRef(false);
   // QR state / restore slots
@@ -552,6 +570,20 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
               uDevicePixelRatio: safe(u.uDevicePixelRatio),
             }
           : null,
+        text3D: {
+          visible: !!text3DMeshRef.current?.visible,
+          hasGeometry: !!text3DGeometryRef.current,
+          scale: text3DMeshRef.current?.scale ? text3DMeshRef.current.scale.toArray() : null,
+          alpha: text3DMaterialRef.current?.opacity ?? null,
+          reveal: {
+            targetAlpha: text3DRevealStateRef.current.targetAlpha,
+            currentAlpha: text3DRevealStateRef.current.currentAlpha,
+            targetScale: text3DRevealStateRef.current.targetScale,
+            currentScale: text3DRevealStateRef.current.currentScale,
+            targetParticleAlpha: text3DRevealStateRef.current.targetParticleAlpha,
+            currentParticleAlpha: text3DRevealStateRef.current.currentParticleAlpha,
+          },
+        },
       };
     };
     if (DEV) {
@@ -601,6 +633,20 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
             uFlowTurbulence: readUniform('uFlowTurbulence'),
             uStreakIntensity: readUniform('uStreakIntensity'),
             uSpreadFactor: readUniform('uSpreadFactor'),
+          },
+          text3D: {
+            visible: !!text3DMeshRef.current?.visible,
+            hasGeometry: !!text3DGeometryRef.current,
+            scale: text3DMeshRef.current?.scale ? text3DMeshRef.current.scale.toArray() : null,
+            alpha: text3DMaterialRef.current?.opacity ?? null,
+            reveal: {
+              targetAlpha: text3DRevealStateRef.current.targetAlpha,
+              currentAlpha: text3DRevealStateRef.current.currentAlpha,
+              targetScale: text3DRevealStateRef.current.targetScale,
+              currentScale: text3DRevealStateRef.current.currentScale,
+              targetParticleAlpha: text3DRevealStateRef.current.targetParticleAlpha,
+              currentParticleAlpha: text3DRevealStateRef.current.currentParticleAlpha,
+            },
           },
           camera: cam
             ? {
@@ -743,6 +789,61 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     spreadFactor: null,
     morphType: null,
   });
+  const isLandingVelocityStageMode = () => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return (
+        params.get('slice') === 'landing_stage'
+        && window.Canonical?.landingStageSliceResolved?.preset === 'velocity_stage'
+      );
+    } catch {
+      return false;
+    }
+  };
+  const resolveLandingWord = () => {
+    if (typeof window === 'undefined') return 'FORM';
+    const resolved = window.Canonical?.landingStageSliceResolved?.word;
+    const fallback = window.Canonical?.landingModes?.form?.word;
+    const word = (resolved || fallback || 'FORM').toString().trim();
+    return (word || 'FORM').slice(0, 64);
+  };
+  const ensureText3DFont = useCallback(async () => {
+    if (text3DFontRef.current) return text3DFontRef.current;
+    const engineFont =
+      typeof window !== 'undefined'
+        ? window.__consciousnessEngine?.font
+        : null;
+    if (engineFont) {
+      text3DFontRef.current = engineFont;
+      return engineFont;
+    }
+    if (text3DFontPromiseRef.current) return text3DFontPromiseRef.current;
+    text3DFontPromiseRef.current = new Promise((resolve, reject) => {
+      const loader = new FontLoader();
+      loader.load(
+        '/fonts/CourierPrime_Regular.typeface.json',
+        (font) => {
+          text3DFontRef.current = font;
+          resolve(font);
+        },
+        undefined,
+        (error) => {
+          reject(error || new Error('Failed to load text3D font'));
+        }
+      );
+    })
+      .catch((error) => {
+        if (DEV) {
+          console.warn('[WBG] 3D text font load failed', error);
+        }
+        return null;
+      })
+      .finally(() => {
+        text3DFontPromiseRef.current = null;
+      });
+    return text3DFontPromiseRef.current;
+  }, []);
 
   const logBind = useCallback((kind, meta = {}) => {
     const geo = geometryRef.current;
@@ -780,6 +881,115 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
 
     lastBindMetaRef.current = payload;
     trace('WBG:BIND', payload);
+  }, []);
+
+  useEffect(() => {
+    if (!isLandingVelocityStageMode()) {
+      const revealState = text3DRevealStateRef.current;
+      revealState.targetAlpha = 0;
+      revealState.targetScale = 1;
+      revealState.targetParticleAlpha = 1;
+      return undefined;
+    }
+    if (!blueprint || !geometryRef.current) return undefined;
+
+    const landingPalette = window?.Canonical?.landingStageSliceResolved?.palette;
+    const textColorHex = Array.isArray(landingPalette) && landingPalette[0]
+      ? landingPalette[0]
+      : '#FFFFFF';
+    if (!text3DMaterialRef.current) {
+      const textColor = new THREE.Color(textColorHex);
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: textColor,
+        emissive: textColor.clone().multiplyScalar(0.12),
+        emissiveIntensity: 0.9,
+        transmission: 0.75,
+        thickness: 1.1,
+        roughness: 0.12,
+        metalness: 0.05,
+        ior: 1.45,
+        iridescence: 0.85,
+        iridescenceIOR: 1.6,
+        iridescenceThicknessRange: [100, 400],
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.08,
+        envMapIntensity: 1.25,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      });
+      text3DMaterialRef.current = mat;
+    } else {
+      try {
+        text3DMaterialRef.current.color.set(textColorHex);
+      } catch {}
+    }
+
+    let canceled = false;
+    const rebuildGeometry = async () => {
+      const font = await ensureText3DFont();
+      if (!font || canceled) return;
+      const word = resolveLandingWord();
+      const textAabb = computeAABB(geometryRef.current, 'text3DPosition') || computeAABB(geometryRef.current, 'position');
+      if (!textAabb) return;
+      const geometryKey = `${word}|${textAabb.extX.toFixed(3)}|${textAabb.extY.toFixed(3)}`;
+      if (text3DWordRef.current === geometryKey && text3DGeometryRef.current) return;
+
+      const textGeometry = new TextGeometry(word, {
+        font,
+        size: 1,
+        height: 0.3,
+        curveSegments: 10,
+        bevelEnabled: true,
+        bevelThickness: 0.05,
+        bevelSize: 0.03,
+        bevelSegments: 4,
+      });
+      textGeometry.computeBoundingBox();
+      const box = textGeometry.boundingBox;
+      const width = Math.max(0.001, (box?.max.x ?? 0.5) - (box?.min.x ?? -0.5));
+      const height = Math.max(0.001, (box?.max.y ?? 0.5) - (box?.min.y ?? -0.5));
+      textGeometry.center();
+
+      const targetWidth = Math.max(0.001, (textAabb.extX || 1) * 2);
+      const targetHeight = Math.max(0.001, (textAabb.extY || 1) * 2);
+      const fitScale = Math.max(0.1, Math.min(targetWidth / width, targetHeight / height)) * 1.05;
+      text3DBaseScaleRef.current = fitScale;
+
+      if (text3DGeometryRef.current) {
+        text3DGeometryRef.current.dispose();
+      }
+      text3DGeometryRef.current = textGeometry;
+      text3DWordRef.current = geometryKey;
+
+      if (text3DMeshRef.current) {
+        text3DMeshRef.current.geometry = textGeometry;
+        text3DMeshRef.current.position.set(0, 0, 0.16);
+      }
+      if (DEV) {
+        console.log('[WBG] Rebuilt landing 3D text geometry', {
+          word,
+          fitScale,
+          targetWidth,
+          targetHeight,
+        });
+      }
+    };
+    rebuildGeometry();
+    return () => {
+      canceled = true;
+    };
+  }, [blueprint, stageName, ensureText3DFont]);
+
+  useEffect(() => () => {
+    if (text3DGeometryRef.current) {
+      text3DGeometryRef.current.dispose();
+      text3DGeometryRef.current = null;
+    }
+    if (text3DMaterialRef.current) {
+      text3DMaterialRef.current.dispose();
+      text3DMaterialRef.current = null;
+    }
   }, []);
 
   const sampleRuntimeAABBOnce = useCallback((label = 'WBG:RUNTIME') => {
@@ -2845,6 +3055,25 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       }
 
       if (payload.uniforms && typeof payload.uniforms === 'object') {
+        const revealUniforms = payload.uniforms;
+        if (isLandingVelocityStageMode()) {
+          const nextAlpha = Number(revealUniforms.uText3DAlphaTarget);
+          if (Number.isFinite(nextAlpha)) {
+            text3DRevealStateRef.current.targetAlpha = Math.max(0, Math.min(1, nextAlpha));
+          }
+          const nextScale = Number(revealUniforms.uText3DScaleTarget);
+          if (Number.isFinite(nextScale)) {
+            text3DRevealStateRef.current.targetScale = Math.max(0.1, Math.min(4.0, nextScale));
+          }
+          const nextParticleAlpha = Number(revealUniforms.uParticlesAlphaTarget);
+          if (Number.isFinite(nextParticleAlpha)) {
+            const clampedParticleAlpha = Math.max(0, Math.min(1, nextParticleAlpha));
+            text3DRevealStateRef.current.targetParticleAlpha = clampedParticleAlpha;
+            // Keep particle fade writes inside directive handling path for single-writer gates.
+            setUniformNumber('uOpacityMax', clampedParticleAlpha);
+            setUniformNumber('uOpacityMin', Math.max(0, Math.min(1, clampedParticleAlpha * 0.55)));
+          }
+        }
         Object.entries(payload.uniforms).forEach(([key, value]) => {
           if (!uniforms[key]) return;
           if (key === 'uTierHighlight' && Array.isArray(value)) {
@@ -3282,11 +3511,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       uniforms.uPostMorphFreeze.value = 0.0;
       mat.uniformsNeedUpdate = true;
     }
-    if (uniforms.uOpacityMin && uniforms.uOpacityMin.value < 0.4) {
+    if (!isLandingVelocityPreset && uniforms.uOpacityMin && uniforms.uOpacityMin.value < 0.4) {
       uniforms.uOpacityMin.value = 0.5;
       uniforms.uOpacityMin.needsUpdate = true;
     }
-    if (uniforms.uOpacityMax && uniforms.uOpacityMax.value < 0.8) {
+    if (!isLandingVelocityPreset && uniforms.uOpacityMax && uniforms.uOpacityMax.value < 0.8) {
       uniforms.uOpacityMax.value = 1.0;
       uniforms.uOpacityMax.needsUpdate = true;
     }
@@ -3729,6 +3958,63 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     }
 
     const deltaSeconds = Number.isFinite(delta) ? delta : state.clock.getDelta();
+    const isLandingVelocityPreset = isLandingVelocityStageMode();
+    const revealState = text3DRevealStateRef.current;
+    if (!isLandingVelocityPreset) {
+      revealState.targetAlpha = 0;
+      revealState.targetScale = 1;
+      revealState.targetParticleAlpha = 1;
+    }
+    if (deterministicMode && isLandingVelocityPreset) {
+      const lockStageName =
+        (typeof window !== 'undefined' && window.Canonical?.landingStageSliceResolved?.stage)
+          || 'velocity';
+      const lockStageIndex = Math.max(0, (Canonical?.stageOrder || []).indexOf(lockStageName));
+      if (mat.uniforms.uStageIndex && mat.uniforms.uStageIndex.value !== lockStageIndex) {
+        mat.uniforms.uStageIndex.value = lockStageIndex;
+        mat.uniforms.uStageIndex.needsUpdate = true;
+      }
+      if (mat.uniforms.uBrainRegion && mat.uniforms.uBrainRegion.value !== lockStageIndex) {
+        mat.uniforms.uBrainRegion.value = lockStageIndex;
+        mat.uniforms.uBrainRegion.needsUpdate = true;
+      }
+    }
+    const lerpT = deterministicMode
+      ? 1
+      : 1 - Math.exp(-TEXT3D_REVEAL_LERP_SPEED * Math.max(deltaSeconds, 0));
+    revealState.currentAlpha = THREE.MathUtils.lerp(
+      revealState.currentAlpha,
+      revealState.targetAlpha,
+      lerpT
+    );
+    revealState.currentScale = THREE.MathUtils.lerp(
+      revealState.currentScale,
+      revealState.targetScale,
+      lerpT
+    );
+    revealState.currentParticleAlpha = THREE.MathUtils.lerp(
+      revealState.currentParticleAlpha,
+      revealState.targetParticleAlpha,
+      lerpT
+    );
+    if (text3DMaterialRef.current) {
+      const textMat = text3DMaterialRef.current;
+      textMat.opacity = Math.max(0, Math.min(1, revealState.currentAlpha));
+      textMat.transparent = textMat.opacity < 0.999;
+      textMat.needsUpdate = true;
+    }
+    if (text3DMeshRef.current) {
+      const mesh = text3DMeshRef.current;
+      const baseScale = Math.max(0.05, Number(text3DBaseScaleRef.current) || 1);
+      const finalScale = baseScale * Math.max(0.1, Number(revealState.currentScale) || 1);
+      mesh.scale.set(finalScale, finalScale, Math.max(0.08, finalScale * 0.72));
+      mesh.visible = revealState.currentAlpha > 0.001;
+      mesh.position.set(0, 0, 0.16);
+    }
+    if (!isLandingVelocityPreset) {
+      revealState.currentParticleAlpha = 1;
+      revealState.targetParticleAlpha = 1;
+    }
     const target = cameraTargetRef.current;
     if (target?.active && (cameraRef.current || state?.camera)) {
       const cam = cameraRef.current || state.camera;
@@ -3801,7 +4087,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       Boolean(spinRef.current?.active) ||
       emergencePendingRef.current ||
       !emittedEmergedRef.current ||
-      cameraTargetRef.current?.active;
+      cameraTargetRef.current?.active ||
+      Math.abs(revealState.currentAlpha - revealState.targetAlpha) > 1e-3 ||
+      Math.abs(revealState.currentScale - revealState.targetScale) > 1e-3 ||
+      Math.abs(revealState.currentParticleAlpha - revealState.targetParticleAlpha) > 1e-3;
 
     if (needsFrame && typeof state.invalidate === 'function') {
       state.invalidate();
@@ -3865,13 +4154,24 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   }
 
   return (
-    <points
-      ref={meshRef}
-      geometry={geometryRef.current}
-      material={materialRef.current}
-      frustumCulled={false}
-      scale={[1, 1, 1]}
-    />
+    <group>
+      <points
+        ref={meshRef}
+        geometry={geometryRef.current}
+        material={materialRef.current}
+        frustumCulled={false}
+        scale={[1, 1, 1]}
+      />
+      {text3DGeometryRef.current && text3DMaterialRef.current ? (
+        <mesh
+          ref={text3DMeshRef}
+          geometry={text3DGeometryRef.current}
+          material={text3DMaterialRef.current}
+          frustumCulled={false}
+          renderOrder={2}
+        />
+      ) : null}
+    </group>
   );
 }
 

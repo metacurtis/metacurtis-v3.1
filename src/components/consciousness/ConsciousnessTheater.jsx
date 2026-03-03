@@ -426,6 +426,8 @@ export default function ConsciousnessTheater({ mode } = {}) {
               if (!Number.isFinite(atMsRaw)) return null;
               const atMs = Math.max(0, Math.floor(atMsRaw));
               const params = beat?.params && typeof beat.params === 'object' ? beat.params : {};
+              const text3DParams = params.text3D && typeof params.text3D === 'object' ? params.text3D : null;
+              const particlesParams = params.particles && typeof params.particles === 'object' ? params.particles : null;
               const hasCameraParams = params.camera && typeof params.camera === 'object';
               const isRevealWindow = atMs >= 2400;
               const pointSizeRaw = Number(params.pointSize);
@@ -441,6 +443,31 @@ export default function ConsciousnessTheater({ mode } = {}) {
                         durationMs: Number.isFinite(Number(beat?.durationMs)) ? Number(beat.durationMs) : 4200,
                       }
                     : null);
+              const hasText3DReveal =
+                text3DParams?.enabled === true || beat?.verb === 'reveal_3d_text';
+              const text3DScaleTargetRaw = Number(text3DParams?.scaleTo);
+              const text3DScaleTarget = Number.isFinite(text3DScaleTargetRaw)
+                ? Math.max(0.1, Math.min(4.0, text3DScaleTargetRaw))
+                : null;
+              const text3DAlphaTargetRaw = Number(text3DParams?.fadeTo);
+              const text3DAlphaTarget = Number.isFinite(text3DAlphaTargetRaw)
+                ? Math.max(0, Math.min(1, text3DAlphaTargetRaw))
+                : null;
+              const particleAlphaTargetRaw = Number(particlesParams?.fadeTo);
+              const particleAlphaTarget = Number.isFinite(particleAlphaTargetRaw)
+                ? Math.max(0, Math.min(1, particleAlphaTargetRaw))
+                : null;
+              const revealUniforms = (hasText3DReveal || particleAlphaTarget != null)
+                ? {
+                    ...(hasText3DReveal ? {
+                      uText3DAlphaTarget: text3DAlphaTarget ?? 1,
+                      uText3DScaleTarget: text3DScaleTarget ?? 2,
+                    } : {}),
+                    ...(particleAlphaTarget != null ? {
+                      uParticlesAlphaTarget: particleAlphaTarget,
+                    } : {}),
+                  }
+                : null;
               if (!camera && pointSize == null) return null;
               const mediumImmersiveBoost = isRevealWindow
                 ? {
@@ -460,6 +487,7 @@ export default function ConsciousnessTheater({ mode } = {}) {
                 camera,
                 pointSize,
                 mediumImmersiveBoost,
+                revealUniforms,
                 isRevealWindow,
               };
             };
@@ -470,27 +498,43 @@ export default function ConsciousnessTheater({ mode } = {}) {
             if (resolvedBeats.length === 0) return;
 
             if (deterministicBoot) {
-              const finalBeat =
-                resolvedBeats.find((beat) => beat.isRevealWindow && beat.atMs >= 2400)
-                || resolvedBeats[resolvedBeats.length - 1];
+              const finalBeat = resolvedBeats[resolvedBeats.length - 1];
               if (!finalBeat) return;
               const camera = finalBeat.camera
                 ? { ...finalBeat.camera, durationMs: 0 }
                 : null;
-              emitRenderDirective({
-                source: 'visual_orchestrator',
-                phase: 'landing_stage_mode_velocity_deterministic',
-                stage: formStageName,
-                ...(finalBeat.verb ? { verb: finalBeat.verb } : {}),
-                ...(camera ? { camera } : {}),
-                ...(finalBeat.pointSize != null ? { pointSize: finalBeat.pointSize } : {}),
-                ...(finalBeat.mediumImmersiveBoost || {}),
-                uniforms: {
-                  ...(finalBeat.mediumImmersiveBoost?.uniforms || {}),
-                  uMorphProgress: 1,
-                  uPostMorphFreeze: 1,
-                },
-              });
+              const emitDeterministicPose = () => {
+                emitRenderDirective({
+                  source: 'visual_orchestrator',
+                  phase: 'landing_stage_mode_velocity_deterministic',
+                  stage: formStageName,
+                  ...(finalBeat.verb ? { verb: finalBeat.verb } : {}),
+                  ...(camera ? { camera } : {}),
+                  ...(finalBeat.pointSize != null ? { pointSize: finalBeat.pointSize } : {}),
+                  ...(finalBeat.mediumImmersiveBoost || {}),
+                  uniforms: {
+                    ...(finalBeat.mediumImmersiveBoost?.uniforms || {}),
+                    ...(finalBeat.revealUniforms || {}),
+                    uMorphProgress: 1,
+                    uPostMorphFreeze: 1,
+                  },
+                });
+              };
+              emitDeterministicPose();
+              // Deterministic one-shot can fire before material bind; replay until renderer is ready.
+              const maxAttempts = 12;
+              for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                const retryId = setTimeout(() => {
+                  const hasMaterial =
+                    typeof window !== 'undefined' &&
+                    typeof window.__dumpRendererState === 'function' &&
+                    window.__dumpRendererState()?.hasMaterial === true;
+                  if (hasMaterial || attempt === maxAttempts) {
+                    emitDeterministicPose();
+                  }
+                }, attempt * 120);
+                demoCleanups.push(() => clearTimeout(retryId));
+              }
               if (import.meta.env.DEV) {
                 console.log('[ConsciousnessTheater] Applied deterministic velocity landing pose', {
                   idx: finalBeat.idx,
@@ -502,7 +546,7 @@ export default function ConsciousnessTheater({ mode } = {}) {
 
             resolvedBeats.forEach((beat) => {
               const timerId = setTimeout(() => {
-                emitRenderDirective({
+                const directivePayload = {
                   source: 'visual_orchestrator',
                   phase: 'landing_stage_mode_velocity',
                   stage: formStageName,
@@ -510,7 +554,14 @@ export default function ConsciousnessTheater({ mode } = {}) {
                   ...(beat.camera ? { camera: beat.camera } : {}),
                   ...(beat.pointSize != null ? { pointSize: beat.pointSize } : {}),
                   ...(beat.mediumImmersiveBoost || {}),
-                });
+                };
+                if (beat.mediumImmersiveBoost?.uniforms || beat.revealUniforms) {
+                  directivePayload.uniforms = {
+                    ...(beat.mediumImmersiveBoost?.uniforms || {}),
+                    ...(beat.revealUniforms || {}),
+                  };
+                }
+                emitRenderDirective(directivePayload);
               }, beat.atMs);
               demoCleanups.push(() => clearTimeout(timerId));
               if (import.meta.env.DEV) {
