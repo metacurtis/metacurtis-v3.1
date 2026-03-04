@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "name": "Landing Velocity Diagnostic Scenarios",
+    "version": "1.0.0",
+    "phase": "2",
+    "generatedFor": "MetaCurtis Consciousness Theater"
+  },
+  "shared": {
+    "animatedUrl": "/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+    "deterministicUrl": "/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA&deterministic=1&seed=123",
+    "checkpointsMs": [5400, 7800, 9800, 12200],
+    "requiredArtifacts": [
+      "probeFile",
+      "manifestFile",
+      "contactSheet",
+      "scenarioResultFile"
+    ],
+    "requiredViolationsPolicy": {
+      "schemaViolationCount": 0,
+      "singleWriterViolationCount": 0
+    },
+    "resultDirectory": "reports/landing-diagnostic-scenarios"
+  },
+  "scenarios": [
+    {
+      "id": "control_current",
+      "label": "Control — current point-size pass",
+      "baseScenarioId": null,
+      "suggestedWorktree": "landing-diagnostic-control",
+      "changeScope": "none",
+      "hypothesis": "Current control is the baseline against which all Phase 2 scenarios are measured.",
+      "changeInstructions": [],
+      "expectedEffect": "No code changes. Produces baseline scorecard.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "sigma_only_minus_0_1",
+      "label": "Sigma-only reduction",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-sigma-only",
+      "changeScope": "single-variable",
+      "hypothesis": "Kernel softness is still the main reason FORM edges are smearing at lock/drift.",
+      "changeInstructions": [
+        "Reduce lock beat uGaussianSigma by 0.1 from the current control value.",
+        "Reduce drift beat uGaussianSigma by 0.1 from the current control value.",
+        "Do not change point size, camera, opacity, depth, or verb structure."
+      ],
+      "expectedEffect": "Sharper letter edges and clearer counters, especially at 7800ms and 9800ms.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "transition_verb_replace",
+      "label": "Replace the transition verb",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-transition-verb",
+      "changeScope": "single-variable",
+      "hypothesis": "The 5000ms transition verb is the main source of silhouette collapse.",
+      "changeInstructions": [
+        "Replace the current 5000ms transition verb (velocity_rest in control) with coalesce.",
+        "Keep camera, point size, and uniform intent as close as possible to control.",
+        "Do not modify later lock/drift beats."
+      ],
+      "expectedEffect": "Less collapse from readable FORM into blurred FRM during transition.",
+      "successFocusCheckpoints": [5400, 7800]
+    },
+    {
+      "id": "word_authority_form",
+      "label": "Word authority diagnostic — force FORM",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-word-authority",
+      "changeScope": "single-variable",
+      "hypothesis": "Multiple word authorities are degrading the glyph target geometry.",
+      "changeInstructions": [
+        "Temporarily change stages.velocity.word to FORM.",
+        "Temporarily change visual.letterGeometry.velocity.word to FORM.",
+        "Do not change beats, uniforms, or camera.",
+        "If both values are already FORM in control, record the run as a no-op and discard it."
+      ],
+      "expectedEffect": "If readability materially improves after an actual value change, word authority mismatch is a real root cause.",
+      "successFocusCheckpoints": [5400, 7800, 9800]
+    },
+    {
+      "id": "depth_falloff_minus_0_2",
+      "label": "Depth falloff reduction",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-depth-falloff",
+      "changeScope": "single-variable",
+      "hypothesis": "Foreground exaggeration is painting over the glyph and collapsing edge clarity.",
+      "changeInstructions": [
+        "Reduce lock beat uDepthFalloffPower by 0.2 from the current control value.",
+        "Reduce drift beat uDepthFalloffPower by 0.2 from the current control value.",
+        "Do not change point size, sigma, opacity, camera, or verbs."
+      ],
+      "expectedEffect": "Less foreground overfill and improved edge/counter clarity.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "camera_pullback_plus_2",
+      "label": "Camera pullback +2",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-camera-pullback",
+      "changeScope": "single-variable",
+      "hypothesis": "The current camera is too close and overfills the glyph.",
+      "changeInstructions": [
+        "Move lock beat camera z back by +2 from the current control value.",
+        "Move drift beat camera z back by +2 from the current control value.",
+        "Do not change point size, sigma, opacity, depth, or verbs."
+      ],
+      "expectedEffect": "Slightly smaller but cleaner FORM at lock/drift.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "lock_point_minus_1",
+      "label": "Lock point size -1",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-lock-point-minus-1",
+      "changeScope": "single-variable",
+      "hypothesis": "Lock readability may improve if only the lock kernel thickness is reduced while drift remains unchanged.",
+      "changeInstructions": [
+        "Reduce 7600ms lock beat pointSize by 1 from control.",
+        "Do not change 9400ms drift pointSize.",
+        "Do not change sigma, opacity, depth, camera, verbs, or architecture."
+      ],
+      "expectedEffect": "Cleaner lock edges/counters at 7800ms without harming 9800ms drift readability.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "lock_sigma_minus_0_15",
+      "label": "Lock sigma -0.15",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-lock-sigma-minus-0-15",
+      "changeScope": "single-variable",
+      "hypothesis": "Lock-only kernel sharpening may improve lock readability/dominance where global sigma reduction was insufficient.",
+      "changeInstructions": [
+        "Reduce 7600ms lock beat uGaussianSigma by 0.15 from control.",
+        "Do not change 9400ms drift sigma.",
+        "Do not change point size, opacity, depth, camera, verbs, or architecture."
+      ],
+      "expectedEffect": "Sharper lock silhouette at 7800ms while preserving existing drift behavior at 9800ms.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "lock_opacity_tighten",
+      "label": "Lock opacity tighten",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-lock-opacity-tighten",
+      "changeScope": "single-variable",
+      "hypothesis": "Lock remains visually embedded because lock-level particle opacity is still too filled/overpainted.",
+      "changeInstructions": [
+        "Reduce 7600ms lock beat uOpacityMax from control.",
+        "Reduce 7600ms lock beat uOpacityMin from control.",
+        "Do not change 9400ms drift opacity.",
+        "Do not change point size, sigma, depth, camera, verbs, or architecture."
+      ],
+      "expectedEffect": "Cleaner lock separation and stronger word dominance at 7800ms without drift regressions at 9800ms.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "lock_spread_tighten",
+      "label": "Lock spread tighten",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-lock-spread-tighten",
+      "changeScope": "single-variable",
+      "hypothesis": "Lock readability remains weak because lock spread is still too broad, smearing the lock silhouette.",
+      "changeInstructions": [
+        "Reduce 7600ms lock beat uSpreadFactor from control to 0.82.",
+        "Do not change 9400ms drift spread.",
+        "Do not change point size, sigma, opacity, depth, camera, verbs, or architecture."
+      ],
+      "expectedEffect": "Tighter lock silhouette and improved 7800ms readability/dominance without 9800ms regressions.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "lock_isolate_pulse",
+      "label": "Lock isolate pulse",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-lock-isolate-pulse",
+      "changeScope": "structural-lock-local",
+      "hypothesis": "Scalar lock tuning is exhausted; lock requires a short structural isolate composition to establish clear subject dominance.",
+      "changeInstructions": [
+        "Recompose the lock moment into a short isolate pulse around 7800ms.",
+        "Keep 9400ms drift behavior unchanged unless strictly required for continuity.",
+        "Do not alter unrelated architecture or blueprint logic."
+      ],
+      "expectedEffect": "Improved lock subject clarity/dominance at 7800ms beyond scalar-only scenarios.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "sigma_plus_lock_isolate_refined",
+      "label": "Sigma + refined lock isolate",
+      "baseScenarioId": "sigma_only_minus_0_1",
+      "suggestedWorktree": "landing-diagnostic-sigma-plus-lock-isolate",
+      "changeScope": "compound-keeper",
+      "hypothesis": "A sigma keeper baseline plus a refined lock-local isolate window can outperform scalar lock tuning and lift 7800 lock dominance.",
+      "changeInstructions": [
+        "Start from sigma_only_minus_0_1 values.",
+        "Apply a refined lock isolate composition window around the lock checkpoint.",
+        "Keep drift behavior aligned to the sigma baseline.",
+        "Use hardened lock checkpoints (for example: 7700/7800/7900/8300) in addition to standard checkpoints."
+      ],
+      "expectedEffect": "Higher lock readability/dominance at 7800ms while retaining sigma-based drift quality.",
+      "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "target_density_particles_per_letter_800",
+      "label": "Target density remediation (ppl 800)",
+      "baseScenarioId": "control_current",
+      "suggestedWorktree": "landing-diagnostic-target-density-800",
+      "changeScope": "single-variable-upstream",
+      "hypothesis": "Lock readability is constrained upstream because too few particles are assigned to FORM target geometry.",
+      "changeInstructions": [
+        "Change visual.letterGeometry.velocity.particlesPerLetter from 200 to 800.",
+        "Do not change beat sheet, camera, point size, sigma, opacity, depth, spread, or architecture."
+      ],
+      "expectedEffect": "Material increase in text-assigned particle ratio and improved lock readability/dominance.",
+      "successFocusCheckpoints": [7800, 9800]
+    }
+  ]
+}

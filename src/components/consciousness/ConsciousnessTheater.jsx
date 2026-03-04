@@ -426,6 +426,10 @@ export default function ConsciousnessTheater({ mode } = {}) {
               if (!Number.isFinite(atMsRaw)) return null;
               const atMs = Math.max(0, Math.floor(atMsRaw));
               const params = beat?.params && typeof beat.params === 'object' ? beat.params : {};
+              const paramUniforms =
+                params.uniforms && typeof params.uniforms === 'object'
+                  ? { ...params.uniforms }
+                  : null;
               const hasCameraParams = params.camera && typeof params.camera === 'object';
               const isRevealWindow = atMs >= 2400;
               const pointSizeRaw = Number(params.pointSize);
@@ -442,17 +446,34 @@ export default function ConsciousnessTheater({ mode } = {}) {
                       }
                     : null);
               if (!camera && pointSize == null) return null;
-              const mediumImmersiveBoost = isRevealWindow
-                ? {
-                    uFlowTurbulence: 0.25,
-                    uSpreadFactor: 1.2,
-                    uniforms: {
-                      uCenterWeighting: 1.2,
-                      uDepthFalloffPower: 1.6,
-                      uStreakIntensity: 0.05,
-                    },
-                  }
+              const paramFlowTurbulenceRaw = Number(paramUniforms?.uFlowTurbulence);
+              const paramFlowTurbulence = Number.isFinite(paramFlowTurbulenceRaw)
+                ? Math.max(0, Math.min(2, paramFlowTurbulenceRaw))
                 : null;
+              if (paramUniforms && 'uFlowTurbulence' in paramUniforms) {
+                delete paramUniforms.uFlowTurbulence;
+              }
+              const directiveUniforms = {
+                ...(isRevealWindow ? {
+                  uSpreadFactor: 1.2,
+                  uCenterWeighting: 1.2,
+                  uDepthFalloffPower: 1.6,
+                  uStreakIntensity: 0.05,
+                } : {}),
+                ...(paramUniforms || {}),
+              };
+              const hasDirectiveUniforms = Object.keys(directiveUniforms).length > 0;
+              const resolvedFlowTurbulence =
+                paramFlowTurbulence != null
+                  ? paramFlowTurbulence
+                  : (isRevealWindow ? 0.25 : null);
+              const mediumImmersiveBoost =
+                (resolvedFlowTurbulence != null || hasDirectiveUniforms)
+                  ? {
+                      ...(resolvedFlowTurbulence != null ? { uFlowTurbulence: resolvedFlowTurbulence } : {}),
+                      ...(hasDirectiveUniforms ? { uniforms: directiveUniforms } : {}),
+                    }
+                  : null;
               return {
                 atMs,
                 idx: Number(beat?.idx) || 0,

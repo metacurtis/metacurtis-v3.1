@@ -241,9 +241,21 @@ const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer',
     }
     case 'sparkDrift': {
       // Gentle flow vibe (but keep it readable) - drift-only + low turbulence/streak.
+      const uniformFlowTurbulence = Number(directive?.uniforms?.uFlowTurbulence);
+      const uniformStreakIntensity = Number(directive?.uniforms?.uStreakIntensity);
       setUniform('uMorphProgress', typeof directive?.uMorphProgress === 'number' ? directive.uMorphProgress : 0.96);
-      setUniform('uFlowTurbulence', typeof directive?.uFlowTurbulence === 'number' ? directive.uFlowTurbulence : 0.3);
-      setUniform('uStreakIntensity', typeof directive?.uStreakIntensity === 'number' ? directive.uStreakIntensity : 0.2);
+      setUniform(
+        'uFlowTurbulence',
+        typeof directive?.uFlowTurbulence === 'number'
+          ? directive.uFlowTurbulence
+          : (Number.isFinite(uniformFlowTurbulence) ? uniformFlowTurbulence : 0.3)
+      );
+      setUniform(
+        'uStreakIntensity',
+        typeof directive?.uStreakIntensity === 'number'
+          ? directive.uStreakIntensity
+          : (Number.isFinite(uniformStreakIntensity) ? uniformStreakIntensity : 0.2)
+      );
       applyArrayUniform('uTierMode', [0, 0, 0, 0]);
       applyArrayUniform('uTierParams0', [0.5, 0.025, 0.35, 0]);
       applyArrayUniform('uTierParams1', [0.4, 0.02, 0.25, 0]);
@@ -593,6 +605,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           uniforms: {
             uMorphProgress: readUniform('uMorphProgress'),
             uPointSize: readUniform('uPointSize'),
+            uOpacityMin: readUniform('uOpacityMin'),
+            uOpacityMax: readUniform('uOpacityMax'),
             uGaussianSigma: readUniform('uGaussianSigma'),
             uDepthFalloffPower: readUniform('uDepthFalloffPower'),
             uTierCutoff: readUniform('uTierCutoff'),
@@ -3282,13 +3296,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       uniforms.uPostMorphFreeze.value = 0.0;
       mat.uniformsNeedUpdate = true;
     }
-    if (uniforms.uOpacityMin && uniforms.uOpacityMin.value < 0.4) {
-      uniforms.uOpacityMin.value = 0.5;
-      uniforms.uOpacityMin.needsUpdate = true;
-    }
-    if (uniforms.uOpacityMax && uniforms.uOpacityMax.value < 0.8) {
-      uniforms.uOpacityMax.value = 1.0;
-      uniforms.uOpacityMax.needsUpdate = true;
+    if (!isLandingVelocityPreset) {
+      if (uniforms.uOpacityMin && uniforms.uOpacityMin.value < 0.4) {
+        uniforms.uOpacityMin.value = 0.5;
+        uniforms.uOpacityMin.needsUpdate = true;
+      }
+      if (uniforms.uOpacityMax && uniforms.uOpacityMax.value < 0.8) {
+        uniforms.uOpacityMax.value = 1.0;
+        uniforms.uOpacityMax.needsUpdate = true;
+      }
     }
     if (uniforms.uFadeProgress && uniforms.uFadeProgress.value !== 1.0) {
       uniforms.uFadeProgress.value = 1.0;
@@ -3409,6 +3425,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           uActiveCount:     { value: blueprintCount },
           uTierCutoff:      { value: blueprintCount || 15000 },
           uFadeProgress:    { value: 1.0 },
+          uOpacityMin:      { value: 0.5 },
+          uOpacityMax:      { value: 1.0 },
           uGaussianSigma:   { value: 2.5 },
           uBandHeight:      { value: bandHeightRef.current || 0 },
           uBandFade:        { value: 0 },
@@ -3485,6 +3503,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
     if (!uniforms.uDepthFalloffPower) uniforms.uDepthFalloffPower = { value: 1.0 };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
+    if (!uniforms.uOpacityMin) uniforms.uOpacityMin = { value: 0.5 };
+    if (!uniforms.uOpacityMax) uniforms.uOpacityMax = { value: 1.0 };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;

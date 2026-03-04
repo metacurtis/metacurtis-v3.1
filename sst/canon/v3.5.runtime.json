@@ -554,7 +554,7 @@
         56
       ],
       "particlesBase": 12000,
-      "word": "VELOCITY",
+      "word": "FORM",
       "palette": [
         "#7c3aed",
         "#9333ea",
@@ -910,7 +910,11 @@
             "intensity": 0.12,
             "bloom": 0,
             "camera": {
-              "position": { "x": 0, "y": 0, "z": 60 },
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 60
+              },
               "fov": 92,
               "durationMs": 900
             }
@@ -927,7 +931,11 @@
             "intensity": 0.1,
             "bloom": 0,
             "camera": {
-              "position": { "x": 0, "y": 2, "z": 44 },
+              "position": {
+                "x": 0,
+                "y": 2,
+                "z": 44
+              },
               "fov": 88,
               "durationMs": 1200
             }
@@ -962,7 +970,11 @@
               "color": "#93C5FD",
               "intensity": 0.14,
               "camera": {
-                "position": { "x": 0, "y": -1, "z": 64 },
+                "position": {
+                  "x": 0,
+                  "y": -1,
+                  "z": 64
+                },
                 "fov": 98,
                 "durationMs": 700
               }
@@ -978,7 +990,11 @@
               "color": "#E5EDF5",
               "intensity": 0.1,
               "camera": {
-                "position": { "x": 0, "y": 1, "z": 50 },
+                "position": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 50
+                },
                 "fov": 84,
                 "durationMs": 1100
               }
@@ -994,7 +1010,11 @@
               "color": "#C7D2FE",
               "intensity": 0.07,
               "camera": {
-                "position": { "x": 0, "y": 2, "z": 46 },
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": 46
+                },
                 "fov": 80,
                 "durationMs": 1200
               }
@@ -1016,7 +1036,11 @@
               "color": "#DDE3EA",
               "intensity": 0.1,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 58 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 58
+                },
                 "fov": 90,
                 "durationMs": 700
               }
@@ -1032,7 +1056,11 @@
               "color": "#A5B4C6",
               "intensity": 0.08,
               "camera": {
-                "position": { "x": 0, "y": 3, "z": 52 },
+                "position": {
+                  "x": 0,
+                  "y": 3,
+                  "z": 52
+                },
                 "fov": 86,
                 "durationMs": 1400
               }
@@ -1048,7 +1076,11 @@
               "color": "#FFFFFF",
               "intensity": 0.09,
               "camera": {
-                "position": { "x": 0, "y": 2, "z": 44 },
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": 44
+                },
                 "fov": 80,
                 "durationMs": 1000
               }
@@ -1070,7 +1102,11 @@
               "color": "#FDE68A",
               "intensity": 0.1,
               "camera": {
-                "position": { "x": 0, "y": -2, "z": 66 },
+                "position": {
+                  "x": 0,
+                  "y": -2,
+                  "z": 66
+                },
                 "fov": 94,
                 "durationMs": 900
               }
@@ -1086,7 +1122,11 @@
               "color": "#F59E0B",
               "intensity": 0.12,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 54 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 54
+                },
                 "fov": 88,
                 "durationMs": 1200
               }
@@ -1102,7 +1142,11 @@
               "color": "#FCD34D",
               "intensity": 0.07,
               "camera": {
-                "position": { "x": 0, "y": 1, "z": 50 },
+                "position": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 50
+                },
                 "fov": 82,
                 "durationMs": 1100
               }
@@ -1124,7 +1168,11 @@
               "color": "#22D3EE",
               "intensity": 0.16,
               "camera": {
-                "position": { "x": 0, "y": 1, "z": 62 },
+                "position": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 62
+                },
                 "fov": 92,
                 "durationMs": 650
               }
@@ -1140,7 +1188,11 @@
               "color": "#14B8A6",
               "intensity": 0.11,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 48 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 48
+                },
                 "fov": 84,
                 "durationMs": 1200
               }
@@ -1156,7 +1208,11 @@
               "color": "#2DD4BF",
               "intensity": 0.09,
               "camera": {
-                "position": { "x": 0, "y": -1, "z": 44 },
+                "position": {
+                  "x": 0,
+                  "y": -1,
+                  "z": 44
+                },
                 "fov": 80,
                 "durationMs": 1000
               }
@@ -1178,7 +1234,11 @@
               "color": "#BAE6FD",
               "intensity": 0.08,
               "camera": {
-                "position": { "x": 0, "y": 3, "z": 60 },
+                "position": {
+                  "x": 0,
+                  "y": 3,
+                  "z": 60
+                },
                 "fov": 92,
                 "durationMs": 900
               }
@@ -1194,7 +1254,11 @@
               "color": "#7DD3FC",
               "intensity": 0.1,
               "camera": {
-                "position": { "x": 0, "y": 2, "z": 52 },
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": 52
+                },
                 "fov": 88,
                 "durationMs": 1200
               }
@@ -1210,7 +1274,11 @@
               "color": "#E0F2FE",
               "intensity": 0.07,
               "camera": {
-                "position": { "x": 0, "y": 2, "z": 46 },
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": 46
+                },
                 "fov": 84,
                 "durationMs": 1100
               }
@@ -1232,7 +1300,11 @@
               "color": "#38BDF8",
               "intensity": 0.12,
               "camera": {
-                "position": { "x": 0, "y": -1, "z": 64 },
+                "position": {
+                  "x": 0,
+                  "y": -1,
+                  "z": 64
+                },
                 "fov": 96,
                 "durationMs": 700
               }
@@ -1248,7 +1320,11 @@
               "color": "#1E293B",
               "intensity": 0.13,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 50
+                },
                 "fov": 86,
                 "durationMs": 1000
               }
@@ -1264,7 +1340,11 @@
               "color": "#0EA5E9",
               "intensity": 0.08,
               "camera": {
-                "position": { "x": 0, "y": 1, "z": 45 },
+                "position": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 45
+                },
                 "fov": 82,
                 "durationMs": 1200
               }
@@ -1286,7 +1366,11 @@
               "color": "#C4B5FD",
               "intensity": 0.15,
               "camera": {
-                "position": { "x": 0, "y": -2, "z": 68 },
+                "position": {
+                  "x": 0,
+                  "y": -2,
+                  "z": 68
+                },
                 "fov": 100,
                 "durationMs": 650
               }
@@ -1302,7 +1386,11 @@
               "color": "#7C3AED",
               "intensity": 0.12,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 54 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 54
+                },
                 "fov": 88,
                 "durationMs": 900
               }
@@ -1318,7 +1406,11 @@
               "color": "#A78BFA",
               "intensity": 0.09,
               "camera": {
-                "position": { "x": 0, "y": 2, "z": 47 },
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": 47
+                },
                 "fov": 84,
                 "durationMs": 1200
               }
@@ -1340,7 +1432,11 @@
               "color": "#C4B5FD",
               "intensity": 0.16,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 50
+                },
                 "fov": 100,
                 "durationMs": 700
               }
@@ -1348,33 +1444,121 @@
           },
           {
             "atMs": 5000,
-            "durationMs": 7000,
-            "verb": "sparkDrift",
-            "easing": "smoothstep",
-            "params": {
-              "text": "FORM",
-              "color": "#9333EA",
-              "intensity": 0.2,
-              "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
-                "fov": 100,
-                "durationMs": 900
-              }
-            }
-          },
-          {
-            "atMs": 12000,
-            "durationMs": 8000,
+            "durationMs": 2600,
             "verb": "velocity_rest",
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-              "color": "#7C3AED",
-              "intensity": 0.1,
+              "color": "#9333EA",
+              "intensity": 0.14,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 50 },
-                "fov": 100,
-                "durationMs": 1200
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 40
+                },
+                "fov": 84,
+                "durationMs": 700
+              },
+              "pointSize": 7,
+              "uniforms": {
+                "uMorphProgress": 1,
+                "uFlowTurbulence": 0.08,
+                "uStreakIntensity": 0,
+                "uSpreadFactor": 1.04,
+                "uGaussianSigma": 0.95,
+                "uDepthFalloffPower": 1.4,
+                "uOpacityMax": 0.22,
+                "uOpacityMin": 0.06
+              }
+            }
+          },
+          {
+            "atMs": 7600,
+            "durationMs": 700,
+            "verb": "velocity_rest",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 34
+                },
+                "fov": 84,
+                "durationMs": 200
+              },
+              "pointSize": 6,
+              "uniforms": {
+                "uMorphProgress": 1,
+                "uFlowTurbulence": 0,
+                "uStreakIntensity": 0,
+                "uSpreadFactor": 0.88,
+                "uGaussianSigma": 0.75,
+                "uDepthFalloffPower": 1.4,
+                "uOpacityMax": 0.06,
+                "uOpacityMin": 0.01
+              }
+            }
+          },
+          {
+            "atMs": 8300,
+            "durationMs": 1100,
+            "verb": "velocity_rest",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 34
+                },
+                "fov": 84,
+                "durationMs": 200
+              },
+              "pointSize": 7,
+              "uniforms": {
+                "uMorphProgress": 1,
+                "uFlowTurbulence": 0,
+                "uStreakIntensity": 0,
+                "uSpreadFactor": 0.95,
+                "uGaussianSigma": 0.78,
+                "uDepthFalloffPower": 1.4,
+                "uOpacityMax": 0.085,
+                "uOpacityMin": 0.015
+              }
+            }
+          },
+          {
+            "atMs": 9400,
+            "durationMs": 6000,
+            "verb": "velocity_rest",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#A78BFA",
+              "intensity": 0.09,
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 34
+                },
+                "fov": 84,
+                "durationMs": 500
+              },
+              "pointSize": 6,
+              "uniforms": {
+                "uMorphProgress": 1,
+                "uFlowTurbulence": 0.04,
+                "uStreakIntensity": 0.01,
+                "uSpreadFactor": 1.02,
+                "uGaussianSigma": 0.8,
+                "uDepthFalloffPower": 1.5,
+                "uOpacityMax": 0.12,
+                "uOpacityMin": 0.03
               }
             }
           }
@@ -1394,7 +1578,11 @@
               "color": "#93C5FD",
               "intensity": 0.1,
               "camera": {
-                "position": { "x": 0, "y": 0, "z": 60 },
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 60
+                },
                 "fov": 90,
                 "durationMs": 800
               }
@@ -1410,7 +1598,11 @@
               "color": "#1D4ED8",
               "intensity": 0.09,
               "camera": {
-                "position": { "x": 0, "y": 1, "z": 52 },
+                "position": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 52
+                },
                 "fov": 86,
                 "durationMs": 1200
               }
@@ -1426,7 +1618,11 @@
               "color": "#BFDBFE",
               "intensity": 0.11,
               "camera": {
-                "position": { "x": 0, "y": 1, "z": 46 },
+                "position": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 46
+                },
                 "fov": 82,
                 "durationMs": 1000
               }
@@ -1562,11 +1758,11 @@
         "scale": 1
       },
       "velocity": {
-        "word": "VELOCITY",
+        "word": "FORM",
         "font": "Courier Prime",
         "weight": 400,
         "depth": 0.4,
-        "particlesPerLetter": 200,
+        "particlesPerLetter": 800,
         "spacing": 1,
         "scale": 1
       },

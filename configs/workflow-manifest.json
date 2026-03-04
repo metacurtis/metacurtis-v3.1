@@ -1,0 +1,109 @@
+{
+  "name": "MetaCurtis Landing Slice Workflow Manifest",
+  "version": "1.0.0",
+  "currentState": {
+    "baseline": "Velocity Landing RC1",
+    "gateStatus": "PASS",
+    "keeper": "target_density_particles_per_letter_800"
+  },
+  "primaryFormat": "markdown",
+  "companionFormat": "json",
+  "roles": [
+    "architect",
+    "implementer",
+    "verifier",
+    "diagnostic_agent",
+    "release_manager"
+  ],
+  "phases": [
+    {
+      "id": "phase_1",
+      "name": "observability_foundation",
+      "goal": "create probes, screenshots, and baseline docs",
+      "exitCriteria": "runtime and visuals are inspectable"
+    },
+    {
+      "id": "phase_1_5",
+      "name": "readability_review_layer",
+      "goal": "score readability and compare runs",
+      "exitCriteria": "visual quality is reviewable checkpoint by checkpoint"
+    },
+    {
+      "id": "phase_2",
+      "name": "diagnostic_scenarios",
+      "goal": "replace random tweaking with one-variable scenarios",
+      "exitCriteria": "keeper/discard/follow-up decisions are evidence-based"
+    },
+    {
+      "id": "phase_3",
+      "name": "release_gate",
+      "goal": "define pass/fail thresholds",
+      "exitCriteria": "workflow can reject or approve a slice"
+    },
+    {
+      "id": "phase_4",
+      "name": "formation_target_integrity",
+      "goal": "find upstream geometry bottlenecks when beat tuning plateaus",
+      "exitCriteria": "root cause is classified and remediated"
+    }
+  ],
+  "winningRemediation": {
+    "type": "single-variable-upstream",
+    "field": "visual.letterGeometry.velocity.particlesPerLetter",
+    "from": 200,
+    "to": 800,
+    "effects": {
+      "assignedTextParticles": {
+        "from": 800,
+        "to": 3200
+      },
+      "textAssignmentRatio": {
+        "from": 0.053,
+        "to": 0.213
+      },
+      "gate": "PASS"
+    }
+  },
+  "standardCommands": [
+    "npm run audit:landing:formation",
+    "LANDING_CHECKPOINTS=0,5400,7800,9800,12200 npm run probe:landing:velocity",
+    "LANDING_SCREEN_CHECKPOINTS=5400,7800,9800,12200 npm run screens:landing:velocity",
+    "npm run contact:landing:velocity",
+    "npm run compare:landing:velocity",
+    "npm run diagnose:landing:velocity",
+    "npm run gate:landing:velocity"
+  ],
+  "branchingPolicy": {
+    "useBranchWhen": [
+      "single scenario",
+      "serial experimentation",
+      "no parallel agent work"
+    ],
+    "useWorktreeWhen": [
+      "parallel agents",
+      "need clean control directory",
+      "multiple scenarios at once",
+      "high branch switching risk"
+    ]
+  },
+  "aiExpectations": {
+    "mustDo": [
+      "read governing docs first",
+      "state exact variable changes",
+      "run required commands",
+      "report artifacts and violations",
+      "recommend keep/discard/follow-up"
+    ],
+    "mustNotDo": [
+      "make unbounded tweaks",
+      "bypass architecture",
+      "claim visual success without artifacts",
+      "mix unrelated variables in one scenario"
+    ]
+  },
+  "nextPhase": {
+    "id": "phase_5",
+    "name": "ui_anchor_integration_and_productization",
+    "goal": "turn RC1 into a reusable and commercially packageable slice"
+  }
+}
