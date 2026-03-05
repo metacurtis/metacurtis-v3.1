@@ -263,6 +263,81 @@ Observed outcome:
 - release gate passed on scenario artifacts
 - recommended decision: `keep`
 
+### Scenario 13 — rc1_1_control
+
+Change only:
+
+- none
+
+Purpose:
+
+- establish RC1.1 baseline against promoted RC1 state before Hero Surface scenarios
+
+### Scenario 14 — target_scale_up_1_75
+
+Change only:
+
+- `visual.letterGeometry.velocity.scale: 1.0 -> 1.75`
+
+Purpose:
+
+- test whether larger upstream target footprint improves hero presence and lock dominance without changing beat choreography
+
+### Scenario 14B — target_scale_up_1_6
+
+Change only:
+
+- `visual.letterGeometry.velocity.scale: 1.0 -> 1.6`
+
+Purpose:
+
+- test whether a moderate scale increase preserves hero presence while improving field balance versus `1.75`
+
+### Scenario 15 — spacing_only_1_12
+
+Change only:
+
+- `visual.letterGeometry.velocity.spacing: 1.0 -> 1.12`
+
+Purpose:
+
+- test whether additional letter breathing room improves counter/edge clarity independent of scale
+
+### Scenario 16 — front_surface_bias_lock
+
+Change only:
+
+- lock-local subject-separation variable that biases text-assigned particles over field particles
+
+Guardrails:
+
+- this is **not** `uDepthFalloffPower` amplification
+- do not use depth exaggeration as the primary separation mechanism
+
+Purpose:
+
+- test whether FORM can read as a foreground subject (above field) through text-vs-field separation at lock
+
+### Scenario 17 — transition_smoothing_post_density
+
+Change only:
+
+- transition continuity controls (camera timing/easing handoff around `5000/7600/8300`) with no target or density changes
+
+Purpose:
+
+- test whether clunk between formation and lock is primarily continuity choreography now that density is remediated
+
+### Scenario 18 — hero_compound_keeper
+
+Change only:
+
+- combine only independently validated RC1.1 keepers
+
+Purpose:
+
+- produce the first justified compound promotion candidate for Hero Surface direction
+
 ## Reporting rule
 
 Every scenario conclusion must answer:
