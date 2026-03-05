@@ -124,6 +124,7 @@
     "review:landing:velocity": "npm run compare:landing:velocity && npm run contact:landing:velocity",
     "audit:landing:formation": "node scripts/audit-landing-formation.js",
     "audit:landing:ui-anchor": "node scripts/audit-landing-ui-anchor.js",
+    "audit:landing:ui-runtime": "node scripts/audit-landing-ui-runtime.js",
     "diagnose:landing:velocity": "node scripts/summarize-landing-scenarios.js",
     "gate:landing:velocity": "node scripts/check-landing-release.js",
     "morph:audit": "node scripts/morph-audit.cjs",

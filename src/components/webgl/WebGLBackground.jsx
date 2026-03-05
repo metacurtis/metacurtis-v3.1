@@ -34,6 +34,12 @@ const TEXT_FIT_WIDTH = 0.9;
 const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
 const MORPH_WRITE_LOG_LIMIT = 400;
+const LANDING_UI_ANCHOR_VERSION = '1.0';
+const LANDING_UI_ANCHOR_SOURCE_SCENARIO = 'target_scale_up_1_6';
+const LANDING_UI_ANCHOR_RECOMMENDED_MODEL = 'per-letter';
+const LANDING_UI_ANCHOR_WORD = 'FORM';
+const LANDING_UI_ANCHOR_UPDATE_MS = 120;
+const LANDING_UI_ANCHOR_MAX_SAMPLE_POINTS = 3500;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
@@ -442,6 +448,165 @@ function arrayAabb(arr) {
   return { w: maxX - minX, h: maxY - minY };
 }
 
+const toFiniteOrNull = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+function emptyAabbObject() {
+  return {
+    min: null,
+    max: null,
+    size: null,
+    center: null,
+  };
+}
+
+function aabbFromPoints(points) {
+  if (!Array.isArray(points) || points.length === 0) return null;
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+
+  for (const point of points) {
+    const x = toFiniteOrNull(point?.x);
+    const y = toFiniteOrNull(point?.y);
+    const z = toFiniteOrNull(point?.z);
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z;
+    if (z > maxZ) maxZ = z;
+  }
+
+  if (minX === Infinity || minY === Infinity || minZ === Infinity) return null;
+
+  const sizeX = maxX - minX;
+  const sizeY = maxY - minY;
+  const sizeZ = maxZ - minZ;
+  return {
+    min: { x: minX, y: minY, z: minZ },
+    max: { x: maxX, y: maxY, z: maxZ },
+    size: { x: sizeX, y: sizeY, z: sizeZ },
+    center: {
+      x: minX + sizeX * 0.5,
+      y: minY + sizeY * 0.5,
+      z: minZ + sizeZ * 0.5,
+    },
+  };
+}
+
+function samplePointsFromTriples(array, drawCount = 0, maxSamplePoints = LANDING_UI_ANCHOR_MAX_SAMPLE_POINTS) {
+  if (!(array instanceof Float32Array)) return [];
+  const maxByArray = Math.floor(array.length / 3);
+  const count = Math.min(maxByArray, Number.isFinite(drawCount) && drawCount > 0 ? drawCount : maxByArray);
+  if (count <= 0) return [];
+  const step = Math.max(1, Math.floor(count / Math.max(1, maxSamplePoints)));
+  const points = [];
+  for (let idx = 0; idx < count; idx += step) {
+    const base = idx * 3;
+    points.push({
+      idx,
+      x: array[base],
+      y: array[base + 1],
+      z: array[base + 2],
+    });
+  }
+  return points;
+}
+
+function quantile(values, q) {
+  if (!Array.isArray(values) || values.length === 0) return null;
+  const sorted = values
+    .map((v) => Number(v))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const pos = (sorted.length - 1) * Math.max(0, Math.min(1, q));
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  if (sorted[base + 1] !== undefined) {
+    return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+  }
+  return sorted[base];
+}
+
+function classifyLandingCheckpoint({ morph, opacityMax, spread }) {
+  if (!Number.isFinite(morph) || morph < 0.99) return 'unknown';
+  if (Number.isFinite(opacityMax) && Number.isFinite(spread)) {
+    if (opacityMax <= 0.08 && spread <= 0.9) return 'lock';
+    if (opacityMax >= 0.085 && spread >= 0.9) return 'drift';
+  }
+  return 'unknown';
+}
+
+function normalizeAabb(aabb) {
+  if (!aabb || !aabb.min || !aabb.max || !aabb.size || !aabb.center) {
+    return emptyAabbObject();
+  }
+  return {
+    min: {
+      x: toFiniteOrNull(aabb.min.x),
+      y: toFiniteOrNull(aabb.min.y),
+      z: toFiniteOrNull(aabb.min.z),
+    },
+    max: {
+      x: toFiniteOrNull(aabb.max.x),
+      y: toFiniteOrNull(aabb.max.y),
+      z: toFiniteOrNull(aabb.max.z),
+    },
+    size: {
+      x: toFiniteOrNull(aabb.size.x),
+      y: toFiniteOrNull(aabb.size.y),
+      z: toFiniteOrNull(aabb.size.z),
+    },
+    center: {
+      x: toFiniteOrNull(aabb.center.x),
+      y: toFiniteOrNull(aabb.center.y),
+      z: toFiniteOrNull(aabb.center.z),
+    },
+  };
+}
+
+function createLandingUiAnchorBase(overrides = {}) {
+  return {
+    version: LANDING_UI_ANCHOR_VERSION,
+    sourceScenarioId: LANDING_UI_ANCHOR_SOURCE_SCENARIO,
+    updatedAtMs: 0,
+    ready: false,
+    stage: 'velocity',
+    word: LANDING_UI_ANCHOR_WORD,
+    checkpoint: 'unknown',
+    recommendedModel: LANDING_UI_ANCHOR_RECOMMENDED_MODEL,
+    whole: emptyAabbObject(),
+    letters: [],
+    zones: [],
+    stability: {
+      wholeReady: false,
+      perLetterReady: false,
+      zoneReady: false,
+    },
+    ...overrides,
+  };
+}
+
+function cloneLandingUiAnchorPayload(payload) {
+  if (!payload || typeof payload !== 'object') return createLandingUiAnchorBase();
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(payload);
+    } catch {
+      // fall through to JSON clone
+    }
+  }
+  return JSON.parse(JSON.stringify(payload));
+}
+
 function attributeAabb(geo, key) {
   const attr = geo?.attributes?.[key];
   return attr?.array ? arrayAabb(attr.array) : null;
@@ -472,6 +637,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
   const morphWriteLogRef = useRef([]);
+  const landingUiAnchorPayloadRef = useRef(createLandingUiAnchorBase());
+  const landingUiAnchorLastUpdateRef = useRef(0);
+  const landingUiAnchorGetterInstalledRef = useRef(false);
 
   const shouldTrackMorphWrites = () =>
     DEV &&
@@ -1463,6 +1631,162 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   useEffect(() => {
     blueprintRef.current = blueprint;
   }, [blueprint]);
+
+  const updateLandingUiAnchor = useCallback((nowMs = 0) => {
+    const stage = String(stageNameRef.current || '').toLowerCase();
+    const mat = materialRef.current;
+    const uniforms = mat?.uniforms;
+    const geo = geometryRef.current;
+    const textAttr = geo?.getAttribute?.('text3DPosition') || geo?.attributes?.text3DPosition;
+    const textArray = textAttr?.array instanceof Float32Array ? textAttr.array : null;
+    const drawCount = Number(geo?.drawRange?.count ?? 0);
+    const sampledPoints = samplePointsFromTriples(textArray, drawCount, LANDING_UI_ANCHOR_MAX_SAMPLE_POINTS);
+    const wholeAabbRaw = aabbFromPoints(sampledPoints);
+    const wholeAabb = normalizeAabb(wholeAabbRaw);
+
+    const morph = Number(uniforms?.uMorphProgress?.value);
+    const opacityMax = Number(uniforms?.uOpacityMax?.value);
+    const spread = Number(uniforms?.uSpreadFactor?.value);
+    const checkpoint =
+      stage === 'velocity'
+        ? classifyLandingCheckpoint({ morph, opacityMax, spread })
+        : 'unknown';
+
+    const ready =
+      stage === 'velocity' &&
+      Number.isFinite(morph) &&
+      morph >= 0.99 &&
+      sampledPoints.length >= 32 &&
+      wholeAabbRaw != null;
+
+    if (!ready) {
+      const payload = createLandingUiAnchorBase({
+        updatedAtMs: nowMs,
+        checkpoint,
+      });
+      landingUiAnchorPayloadRef.current = payload;
+      if (typeof window !== 'undefined' && !landingUiAnchorGetterInstalledRef.current) {
+        window.__landingUiAnchor = cloneLandingUiAnchorPayload(payload);
+      }
+      return payload;
+    }
+
+    const xValues = sampledPoints
+      .map((p) => Number(p.x))
+      .filter(Number.isFinite);
+    const q33 = quantile(xValues, 1 / 3);
+    const q66 = quantile(xValues, 2 / 3);
+    const q25 = quantile(xValues, 0.25);
+    const q50 = quantile(xValues, 0.5);
+    const q75 = quantile(xValues, 0.75);
+
+    const zoneBuckets = {
+      left: [],
+      center: [],
+      right: [],
+    };
+    const letterBuckets = {
+      F: [],
+      O: [],
+      R: [],
+      M: [],
+    };
+
+    for (const point of sampledPoints) {
+      const x = Number(point.x);
+      if (!Number.isFinite(x)) continue;
+
+      if (Number.isFinite(q33) && x <= q33) zoneBuckets.left.push(point);
+      else if (Number.isFinite(q66) && x >= q66) zoneBuckets.right.push(point);
+      else zoneBuckets.center.push(point);
+
+      if (Number.isFinite(q25) && x <= q25) letterBuckets.F.push(point);
+      else if (Number.isFinite(q50) && x <= q50) letterBuckets.O.push(point);
+      else if (Number.isFinite(q75) && x <= q75) letterBuckets.R.push(point);
+      else letterBuckets.M.push(point);
+    }
+
+    const zones = ['left', 'center', 'right'].map((id) => {
+      const bucket = zoneBuckets[id] || [];
+      const aabbRaw = aabbFromPoints(bucket);
+      const aabb = normalizeAabb(aabbRaw);
+      return {
+        id,
+        aabb,
+        center: aabb.center,
+      };
+    });
+
+    const letters = ['F', 'O', 'R', 'M'].map((id) => {
+      const bucket = letterBuckets[id] || [];
+      const aabbRaw = aabbFromPoints(bucket);
+      const aabb = normalizeAabb(aabbRaw);
+      return {
+        id,
+        aabb,
+        center: aabb.center,
+      };
+    });
+
+    const wholeReady =
+      wholeAabb.min?.x != null &&
+      wholeAabb.max?.x != null &&
+      wholeAabb.size?.x != null &&
+      wholeAabb.center?.x != null;
+    const zoneReady =
+      zones.every((zone) => zone.aabb?.min?.x != null) &&
+      Object.values(zoneBuckets).every((bucket) => bucket.length >= 8);
+    const perLetterReady =
+      letters.every((letter) => letter.aabb?.min?.x != null) &&
+      Object.values(letterBuckets).every((bucket) => bucket.length >= 6);
+
+    const payload = createLandingUiAnchorBase({
+      updatedAtMs: nowMs,
+      ready: true,
+      checkpoint,
+      whole: wholeAabb,
+      letters,
+      zones,
+      stability: {
+        wholeReady,
+        perLetterReady,
+        zoneReady,
+      },
+    });
+
+    landingUiAnchorPayloadRef.current = payload;
+    if (typeof window !== 'undefined' && !landingUiAnchorGetterInstalledRef.current) {
+      window.__landingUiAnchor = cloneLandingUiAnchorPayload(payload);
+    }
+    return payload;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const getPayload = () => cloneLandingUiAnchorPayload(landingUiAnchorPayloadRef.current);
+    try {
+      Object.defineProperty(window, '__landingUiAnchor', {
+        configurable: true,
+        enumerable: false,
+        get: getPayload,
+      });
+      landingUiAnchorGetterInstalledRef.current = true;
+    } catch {
+      landingUiAnchorGetterInstalledRef.current = false;
+      window.__landingUiAnchor = getPayload();
+    }
+    return () => {
+      if (landingUiAnchorGetterInstalledRef.current) {
+        try {
+          delete window.__landingUiAnchor;
+        } catch {
+          // no-op
+        }
+      } else if (window.__landingUiAnchor) {
+        delete window.__landingUiAnchor;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -3734,6 +4058,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value    = activeCount;
     mat.uniforms.uTierCutoff.value     = activeCount;
+    const nowMs =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    if (
+      landingUiAnchorLastUpdateRef.current <= 0 ||
+      (nowMs - landingUiAnchorLastUpdateRef.current) >= LANDING_UI_ANCHOR_UPDATE_MS
+    ) {
+      landingUiAnchorLastUpdateRef.current = nowMs;
+      updateLandingUiAnchor(nowMs);
+    }
     if (uniformOverlayEnabledRef.current && uniformOverlayRef.current) {
       const u = mat.uniforms;
       const atmoFit = u.uAtmoFit?.value ?? u.uAtmoFit;
