@@ -1451,15 +1451,15 @@
               "text": "FORM",
               "color": "#9333EA",
               "intensity": 0.14,
-              "camera": {
-                "position": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 40
-                },
-                "fov": 84,
-                "durationMs": 700
+            "camera": {
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 40
               },
+              "fov": 84,
+              "durationMs": 700
+            },
               "pointSize": 7,
               "uniforms": {
                 "uMorphProgress": 1,
@@ -1475,20 +1475,20 @@
           },
           {
             "atMs": 7600,
-            "durationMs": 700,
+          "durationMs": 700,
             "verb": "velocity_rest",
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-              "camera": {
-                "position": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 34
-                },
-                "fov": 84,
-                "durationMs": 200
+            "camera": {
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 34
               },
+              "fov": 84,
+              "durationMs": 200
+            },
               "pointSize": 6,
               "uniforms": {
                 "uMorphProgress": 1,
@@ -1509,15 +1509,15 @@
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-              "camera": {
-                "position": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 34
-                },
-                "fov": 84,
-                "durationMs": 200
+            "camera": {
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 34
               },
+              "fov": 84,
+              "durationMs": 200
+            },
               "pointSize": 7,
               "uniforms": {
                 "uMorphProgress": 1,
@@ -1764,7 +1764,7 @@
         "depth": 0.4,
         "particlesPerLetter": 800,
         "spacing": 1,
-        "scale": 1
+        "scale": 1.6
       },
       "architecture": {
         "word": "SYSTEMS",

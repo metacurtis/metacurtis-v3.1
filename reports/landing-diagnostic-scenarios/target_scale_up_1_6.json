@@ -1,0 +1,87 @@
+{
+  "scenarioId": "target_scale_up_1_6",
+  "label": "Target scale up (1.6x)",
+  "baseScenarioId": "rc1_1_control",
+  "branch": "landing-diagnostics-control",
+  "probeFile": "reports/velocity-stage-probes/landing-velocity-probe-2026-03-05T04-02-31-909Z.json",
+  "manifestFile": "reports/velocity-stage-screens/run-2026-03-05T04-02-52-183Z/manifest.json",
+  "contactSheet": "reports/velocity-stage-screens/run-2026-03-05T04-02-52-183Z/contact-sheet.html",
+  "uiAnchorAuditFile": "reports/landing-ui-anchor-audit/run-2026-03-05T04-03-27-526Z/landing-ui-anchor-audit-2026-03-05T04-03-27-526Z.json",
+  "schemaViolationCount": 0,
+  "singleWriterViolationCount": 0,
+  "scores": {
+    "5400": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Pre-lock frame remains readable with strong subject scale and controlled field density.",
+      "pass": true
+    },
+    "7700": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Lock-window pre-frame is clean and dominant without clipping.",
+      "pass": true
+    },
+    "7800": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Lock frame is materially larger than RC1 and remains balanced against the field.",
+      "pass": true
+    },
+    "7900": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Early lock continuation stays stable and readable.",
+      "pass": true
+    },
+    "8300": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Late lock maintains clear subject separation with no dominance regression.",
+      "pass": true
+    },
+    "9800": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Drift remains clear and stable at hero scale.",
+      "pass": true
+    },
+    "12200": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Late drift remains suitable for UI attachment and interaction surfaces.",
+      "pass": true
+    }
+  },
+  "visualConclusion": "Scale 1.6 preserves hero-size gains while keeping composition balance and gate-pass behavior.",
+  "rootCauseSignal": "Post-fit text-only scale lever is active; moderate scale gives cleaner product baseline than heavier variants.",
+  "recommendedDecision": "keep"
+}

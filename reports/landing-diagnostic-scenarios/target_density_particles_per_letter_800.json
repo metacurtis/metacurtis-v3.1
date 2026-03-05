@@ -1,0 +1,56 @@
+{
+  "scenarioId": "target_density_particles_per_letter_800",
+  "label": "Target density remediation — velocity particlesPerLetter 800",
+  "baseScenarioId": "control_current",
+  "branch": "landing-diagnostic-target-density-800",
+  "probeFile": "reports/velocity-stage-probes/landing-velocity-probe-2026-03-04T14-14-49-900Z.json",
+  "manifestFile": "reports/velocity-stage-screens/run-2026-03-04T14-14-55-413Z/manifest.json",
+  "contactSheet": "reports/velocity-stage-screens/run-2026-03-04T14-14-55-413Z/contact-sheet.html",
+  "schemaViolationCount": 0,
+  "singleWriterViolationCount": 0,
+  "scores": {
+    "5400": {
+      "WordRecognition": 4,
+      "CounterClarity": 3,
+      "EdgeClarity": 3,
+      "ForegroundDominance": 3,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "FORM is clearly legible during transition with stronger stroke mass and improved silhouette continuity.",
+      "pass": true
+    },
+    "7800": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Lock checkpoint now resolves as a dominant readable FORM with stable edges and stronger subject separation.",
+      "pass": true
+    },
+    "9800": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Post-lock drift maintains clear legibility and foreground identity without collapsing into a slab.",
+      "pass": true
+    },
+    "12200": {
+      "WordRecognition": 4,
+      "CounterClarity": 4,
+      "EdgeClarity": 4,
+      "ForegroundDominance": 4,
+      "TransitionStability": 4,
+      "UIAnchorSuitability": 4,
+      "visualSummary": "Late drift remains stable and readable with FORM still acting as a viable UI anchor.",
+      "pass": true
+    }
+  },
+  "visualConclusion": "Raising velocity particlesPerLetter to 800 materially increases text target mass and unlocks clear lock/drift readability gains.",
+  "rootCauseSignal": "Upstream target density was the primary bottleneck: assigned text particles increased from 800 to 3200 (5.3% to 21.3%).",
+  "recommendedDecision": "keep"
+}
