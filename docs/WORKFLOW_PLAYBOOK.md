@@ -615,3 +615,85 @@ This escalation order is one of the most valuable parts of the workflow.
 
 It prevents wasted weeks.
 
+---
+
+# 15. Phase 5B Runtime Integration Rules
+
+Phase 5B is where the visual system becomes a product surface for UI consumers.
+
+The goal is to expose stable, read-only anchor data without introducing render ownership drift.
+
+## 15.1 Non-negotiable invariants
+
+1. UI only reads `window.__landingUiAnchor`.
+2. UI never writes renderer geometry or uniforms.
+3. Renderer remains single writer for geometry/uniform state.
+4. Every payload-shape change bumps `version`.
+5. Every UI integration change must pass `npm run gate:landing:velocity`.
+6. No visual tuning inside Phase 5B.
+
+## 15.2 Runtime payload contract (v1.0)
+
+```js
+window.__landingUiAnchor = {
+  version: "1.0",
+  sourceScenarioId: "target_scale_up_1_6",
+  updatedAtMs: 0,
+  ready: false,
+  stage: "velocity",
+  word: "FORM",
+  checkpoint: "unknown", // "lock" | "drift" | "unknown"
+  recommendedModel: "per-letter",
+  whole: { min: null, max: null, size: null, center: null },
+  letters: [],
+  zones: [],
+  stability: {
+    wholeReady: false,
+    perLetterReady: false,
+    zoneReady: false
+  }
+}
+```
+
+## 15.3 Null-safe behavior
+
+When landing stage is unavailable, not formed, or geometry cannot be resolved:
+
+- keep `window.__landingUiAnchor` present
+- set `ready: false`
+- set `checkpoint: "unknown"`
+- keep geometric fields null/empty
+
+This prevents consumer-side crashes and avoids fake readiness.
+
+## 15.4 Validation commands
+
+```bash
+npm run audit:landing:ui-anchor
+npm run gate:landing:velocity
+```
+
+For runtime export work, also run:
+
+```bash
+npm run audit:landing:ui-runtime
+```
+
+## 15.5 Commit boundaries
+
+Use three commits maximum:
+
+1. contract + audit tooling
+2. runtime export wiring
+3. first UI consumer
+
+This keeps rollbacks clean and isolates regressions.
+
+## 15.6 Done criteria
+
+Phase 5B is complete when:
+
+- runtime payload is available and versioned
+- payload is read-only from the UI layer
+- anchor readiness remains true for RC1.1 baseline
+- release gate remains PASS
