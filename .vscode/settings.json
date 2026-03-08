@@ -1,5 +1,46 @@
 {
-  "js/ts.implicitProjectConfig.checkJs": true,
-  "javascript.suggest.autoImports": true,
-  "javascript.validate.enable": true
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/doctor_artifacts/**": true,
+    "**/doctor_backups/**": true,
+    "**/migration-logs/**": true,
+    "**/out/**": true,
+    "**/playwright-report/**": true,
+    "**/snapshots/**": true,
+    "**/test-results/**": true,
+    "**/reports/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.next/**": true,
+    "**/tmp/**": true
+  },
+  "search.exclude": {
+    "**/doctor_artifacts/**": true,
+    "**/doctor_backups/**": true,
+    "**/migration-logs/**": true,
+    "**/out/**": true,
+    "**/playwright-report/**": true,
+    "**/snapshots/**": true,
+    "**/test-results/**": true,
+    "**/reports/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.next/**": true,
+    "**/tmp/**": true
+  },
+  "files.exclude": {
+    "**/doctor_artifacts/**": true,
+    "**/doctor_backups/**": true,
+    "**/migration-logs/**": true,
+    "**/out/**": true,
+    "**/playwright-report/**": true,
+    "**/snapshots/**": true,
+    "**/test-results/**": true,
+    "**/reports/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.next/**": true,
+    "**/tmp/**": true
+  }
 }
