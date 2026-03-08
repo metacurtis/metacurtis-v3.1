@@ -33,11 +33,25 @@ function isVec3(value) {
 }
 
 function isNullVec3(value) {
-  if (!isPlainObject(value)) return false;
-  return value.x === null && value.y === null && value.z === null;
+  return isPlainObject(value)
+    && value.x === null
+    && value.y === null
+    && value.z === null;
 }
 
-function isAabbObject(value) {
+function isVec2(value) {
+  return isPlainObject(value)
+    && Number.isFinite(Number(value.x))
+    && Number.isFinite(Number(value.y));
+}
+
+function isNullVec2(value) {
+  return isPlainObject(value)
+    && value.x === null
+    && value.y === null;
+}
+
+function isScreenRectObject(value) {
   return isPlainObject(value)
     && isPlainObject(value.min)
     && isPlainObject(value.max)
@@ -45,12 +59,40 @@ function isAabbObject(value) {
     && isPlainObject(value.center);
 }
 
+function isNullScreenRectObject(value) {
+  return isScreenRectObject(value)
+    && isNullVec2(value.min)
+    && isNullVec2(value.max)
+    && value.size?.w === null
+    && value.size?.h === null
+    && isNullVec2(value.center);
+}
+
+function isReadyScreenRectObject(value) {
+  return isScreenRectObject(value)
+    && isVec2(value.min)
+    && isVec2(value.max)
+    && Number.isFinite(Number(value.size?.w))
+    && Number.isFinite(Number(value.size?.h))
+    && isVec2(value.center);
+}
+
+function isAabbObject(value) {
+  return isPlainObject(value)
+    && isPlainObject(value.min)
+    && isPlainObject(value.max)
+    && isPlainObject(value.size)
+    && isPlainObject(value.center)
+    && isScreenRectObject(value.screenRect);
+}
+
 function isNullAabbObject(value) {
   return isAabbObject(value)
     && isNullVec3(value.min)
     && isNullVec3(value.max)
     && isNullVec3(value.size)
-    && isNullVec3(value.center);
+    && isNullVec3(value.center)
+    && isNullScreenRectObject(value.screenRect);
 }
 
 function validEntry(entry, expectedId) {
@@ -58,6 +100,7 @@ function validEntry(entry, expectedId) {
   if (entry.id !== expectedId) return false;
   if (!isAabbObject(entry.aabb)) return false;
   if (!isVec3(entry.center)) return false;
+  if (!isReadyScreenRectObject(entry.screenRect)) return false;
   return true;
 }
 
@@ -70,7 +113,7 @@ function evaluateChecks({ payload, descriptor, observedReady }) {
   add('descriptor setter absent', descriptor?.hasSetter === false, descriptor);
   add('descriptor writable false-or-accessor', descriptor?.writable === null || descriptor?.writable === false, descriptor);
 
-  add('version = 1.0', payload?.version === '1.0', { actual: payload?.version ?? null });
+  add('version = 1.1', payload?.version === '1.1', { actual: payload?.version ?? null });
   add('sourceScenarioId = target_scale_up_1_6', payload?.sourceScenarioId === 'target_scale_up_1_6', {
     actual: payload?.sourceScenarioId ?? null,
   });
@@ -97,7 +140,7 @@ function evaluateChecks({ payload, descriptor, observedReady }) {
   );
 
   if (payload?.ready === true) {
-    add('ready payload has whole geometry', isAabbObject(payload.whole) && isVec3(payload.whole.min) && isVec3(payload.whole.max), {
+    add('ready payload has whole geometry + screenRect', isAabbObject(payload.whole) && isVec3(payload.whole.min) && isVec3(payload.whole.max) && isReadyScreenRectObject(payload.whole.screenRect), {
       whole: payload.whole,
     });
     add('ready payload has four letters', Array.isArray(payload.letters) && payload.letters.length === 4, {
@@ -109,7 +152,7 @@ function evaluateChecks({ payload, descriptor, observedReady }) {
 
     if (Array.isArray(payload?.letters)) {
       add(
-        'letter entries shaped',
+        'letter entries shaped + screenRect ready',
         validEntry(payload.letters[0], 'F')
           && validEntry(payload.letters[1], 'O')
           && validEntry(payload.letters[2], 'R')
@@ -120,7 +163,7 @@ function evaluateChecks({ payload, descriptor, observedReady }) {
 
     if (Array.isArray(payload?.zones)) {
       add(
-        'zone entries shaped',
+        'zone entries shaped + screenRect ready',
         validEntry(payload.zones[0], 'left')
           && validEntry(payload.zones[1], 'center')
           && validEntry(payload.zones[2], 'right'),
@@ -128,7 +171,7 @@ function evaluateChecks({ payload, descriptor, observedReady }) {
       );
     }
   } else {
-    add('not-ready payload has null whole', isNullAabbObject(payload?.whole), { whole: payload?.whole ?? null });
+    add('not-ready payload has null whole with null screenRect', isNullAabbObject(payload?.whole), { whole: payload?.whole ?? null });
     add('not-ready payload has empty letters', Array.isArray(payload?.letters) && payload.letters.length === 0, {
       length: payload?.letters?.length ?? null,
     });
@@ -238,6 +281,7 @@ async function main() {
       firstReadyAtMs: snapshots.find((entry) => entry?.payload?.ready === true)?.payload?.updatedAtMs ?? null,
       latestPayloadReady: latestPayload?.ready ?? null,
       latestCheckpoint: latestPayload?.checkpoint ?? null,
+      latestVersion: latestPayload?.version ?? null,
     },
     latestPayload,
     checks: validation.checks,

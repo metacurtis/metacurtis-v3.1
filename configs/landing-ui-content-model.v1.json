@@ -1,0 +1,115 @@
+{
+  "modelVersion": "5C-1",
+  "tone": "glass-luxury",
+  "word": "FORM",
+  "rail": {
+    "lock": {
+      "headline": "Word-native controls with deterministic anchors.",
+      "subhead": "LOCKED",
+      "chip": "LOCKED"
+    },
+    "drift": {
+      "headline": "Controlled motion, stable business surface.",
+      "subhead": "LIVE",
+      "chip": "LIVE"
+    },
+    "primaryCta": {
+      "id": "request-build",
+      "label": "Request a build",
+      "action": { "type": "scroll", "target": "contact" }
+    },
+    "secondaryCta": {
+      "id": "view-spec",
+      "label": "View offer",
+      "action": { "type": "scroll", "target": "offer" }
+    },
+    "tertiaryLink": {
+      "id": "watch-demo",
+      "label": "Watch 30s demo",
+      "action": { "type": "scroll", "target": "results" },
+      "optional": false
+    },
+    "trustLine": "Gate-pass baseline • Read-only UI anchors"
+  },
+  "dock": {
+    "placement": "bottom-center",
+    "defaultExpandedAt": "drift",
+    "items": [
+      {
+        "id": "F",
+        "label": "Foundation",
+        "panel": {
+          "title": "A visual operating system.",
+          "bullets": [
+            "Deterministic formation (audited).",
+            "Single-writer renderer discipline.",
+            "UI anchors exported read-only."
+          ],
+          "cta": { "label": "Read foundation", "action": { "type": "scroll", "target": "foundation" } }
+        }
+      },
+      {
+        "id": "O",
+        "label": "Offer",
+        "panel": {
+          "title": "What we ship.",
+          "bullets": [
+            "Hero Slice (visual + gate).",
+            "Hero + UI (dock + CTA rail).",
+            "Full Landing OS (slices + workflow)."
+          ],
+          "cta": { "label": "See offer", "action": { "type": "scroll", "target": "offer" } }
+        }
+      },
+      {
+        "id": "R",
+        "label": "Results",
+        "panel": {
+          "title": "Outcomes you can feel.",
+          "bullets": [
+            "Instant differentiation.",
+            "Conversion-ready UI on motion.",
+            "Fast iteration without regressions."
+          ],
+          "cta": { "label": "See results", "action": { "type": "scroll", "target": "results" } }
+        }
+      },
+      {
+        "id": "M",
+        "label": "Motion",
+        "panel": {
+          "title": "Workflow that stays stable.",
+          "bullets": [
+            "Scenario isolation.",
+            "Keepers → promotion → gate.",
+            "Ship variants safely."
+          ],
+          "cta": { "label": "View motion", "action": { "type": "scroll", "target": "motion" } }
+        }
+      }
+    ],
+    "anchorFallbackMap": {
+      "perLetter": { "F": "F", "O": "O", "R": "R", "M": "M" },
+      "zone": { "F": "left", "O": "center", "R": "center", "M": "right" },
+      "whole": { "F": "whole", "O": "whole", "R": "whole", "M": "whole" }
+    }
+  },
+  "panels": {
+    "spec": {
+      "title": "Spec",
+      "body": "Contracts define payload ownership, fallback behavior, and gate-safe integration boundaries."
+    },
+    "packages": {
+      "title": "Packages",
+      "body": "Hero Slice, Hero + UI, and full Landing OS engagements are shipped with deterministic audits."
+    },
+    "proof": {
+      "title": "Proof",
+      "body": "Every promoted baseline is backed by probe artifacts, screenshots, compare reports, and release gate status."
+    },
+    "workflow": {
+      "title": "Workflow",
+      "body": "Scenario isolation, keeper promotion, and gate validation keep iteration reversible and accountable."
+    }
+  }
+}

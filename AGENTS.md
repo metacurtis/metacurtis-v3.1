@@ -58,6 +58,28 @@ Allowed for landing slice work:
 - `docs/landing-visual-contract.md`
 - `prompts/*`
 
+## Landing UI consumer track (Phase 5+)
+Allowed for landing UI consumer work:
+- `src/App.jsx` (landing slice shell wiring / ui variant gating only)
+- `src/components/landing/LandingUiOverlay.jsx`
+- `src/components/landing/LandingPillNav.jsx`
+- `src/components/landing/LandingSectionStack.jsx`
+- `src/components/landing/LetterDockInterface.jsx`
+- `src/components/landing/GlassRailCTA.jsx`
+- `src/components/landing/landingUiTokens.js`
+- `src/hooks/useLandingUiAnchor.js`
+- `scripts/audit-landing-ui-anchor.js`
+- `scripts/audit-landing-ui-runtime.js`
+- `scripts/audit-landing-ui-consumer.js`
+- `docs/landing-ui-*-contract.md`
+- `configs/landing-ui-*.json`
+
+Landing UI consumer non-negotiables:
+- UI is read-only consumer of runtime payload.
+- UI never writes renderer geometry/uniform state.
+- UI deterministic mode must be static or derived from deterministic inputs only.
+- UI timing must anchor to landing stage mode start (or be disabled in deterministic mode).
+
 ## Forbidden edit zones unless explicitly requested
 - blueprint generation internals
 - unrelated stage system architecture
@@ -71,6 +93,12 @@ Allowed for landing slice work:
 3. Check for schema violations.
 4. Check for single-writer violations.
 5. Record what improved, what regressed, and what remains unclear.
+
+### Required validation after landing UI consumer changes
+1. `npm run audit:landing:ui-anchor`
+2. `npm run audit:landing:ui-runtime`
+3. `npm run audit:landing:ui-consumer`
+4. `npm run gate:landing:velocity`
 
 ## Required reporting format
 Every implementation/verifier report must include:

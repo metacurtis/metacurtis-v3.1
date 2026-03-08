@@ -9,7 +9,7 @@ const shellStyle = {
   zIndex: 20,
   pointerEvents: 'none',
   display: 'flex',
-  justifyContent: 'space-between',
+  justifyContent: 'flex-start',
   alignItems: 'flex-start',
   padding: '24px',
   gap: '16px',
@@ -43,6 +43,10 @@ const swatchStyle = (hex) => ({
 });
 
 export default function LandingOverlay() {
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage || 'genesis');
   const landingResolved = Canonical?.landingStageSliceResolved || {};
   const landingModeForm = Canonical?.landingModes?.form || {};
@@ -117,29 +121,6 @@ export default function LandingOverlay() {
         ) : null}
       </div>
 
-      <div style={{ ...cardStyle, maxWidth: '360px', padding: '16px 18px' }}>
-        <div style={mutedStyle}>Landing Slice Factory</div>
-        <p style={{ margin: '10px 0 14px', fontSize: '0.93rem', lineHeight: 1.4 }}>
-          Deterministic real-time stage backgrounds for agencies, SaaS, and premium brands.
-          Configurable via preset and locked to canonical authority.
-        </p>
-        <a
-          data-testid="landing-overlay-cta"
-          href="https://example.com/book-call"
-          style={{
-            display: 'inline-block',
-            borderRadius: '10px',
-            background: '#E5EDF5',
-            color: '#0B1220',
-            padding: '10px 14px',
-            textDecoration: 'none',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
-          }}
-        >
-          Book a call
-        </a>
-      </div>
     </section>
   );
 }

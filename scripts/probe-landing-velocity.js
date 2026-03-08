@@ -19,6 +19,10 @@ function nowStamp() {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
+function isFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 async function wait(ms) {
   if (ms <= 0) return;
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,6 +37,8 @@ async function main() {
   });
 
   let stageStartTs = null;
+  let stageStartLogTs = null;
+  let stageStartMarker = null;
   const consoleLogs = [];
   const schemaViolations = [];
   const singleWriterViolations = [];
@@ -43,7 +49,12 @@ async function main() {
     consoleLogs.push(text);
 
     if (text.includes('[ConsciousnessTheater] Landing stage mode started')) {
-      stageStartTs = Date.now();
+      if (stageStartLogTs === null) {
+        stageStartLogTs = Date.now();
+      }
+      if (stageStartTs === null) {
+        stageStartTs = stageStartLogTs;
+      }
     }
 
     if (/Schema violation for RENDER_DIRECTIVE|BeatBus schema fail: RENDER_DIRECTIVE/.test(text)) {
@@ -73,19 +84,36 @@ async function main() {
   });
 
   const deadline = Date.now() + STAGE_START_TIMEOUT_MS;
-  while (!stageStartTs && Date.now() < deadline) {
+  while (stageStartTs === null && Date.now() < deadline) {
     await wait(50);
   }
 
-  if (!stageStartTs) {
+  if (stageStartTs === null) {
     throw new Error('Landing stage mode start was not observed in console logs.');
+  }
+
+  stageStartMarker = await page.evaluate(() => window.__landingStageModeStart || null);
+  if (isFiniteNumber(stageStartMarker?.wallClockMs)) {
+    stageStartTs = stageStartMarker.wallClockMs;
   }
 
   const samples = [];
 
   for (const offsetMs of CHECKPOINTS) {
-    const targetTs = stageStartTs + offsetMs;
-    await wait(targetTs - Date.now());
+    const targetTs = isFiniteNumber(stageStartTs) ? (stageStartTs + offsetMs) : null;
+    if (isFiniteNumber(stageStartMarker?.performanceNow)) {
+      const targetPerfNow = stageStartMarker.performanceNow + offsetMs;
+      await page.waitForFunction(
+        ({ target }) =>
+          (typeof performance !== 'undefined' && typeof performance.now === 'function')
+            ? performance.now() >= target
+            : false,
+        { target: targetPerfNow },
+        { timeout: Math.max(30000, offsetMs + 10000) }
+      );
+    } else if (isFiniteNumber(targetTs)) {
+      await wait(targetTs - Date.now());
+    }
 
     const state = await page.evaluate(() => {
       const r = window.__dumpRendererState?.() || null;
@@ -115,11 +143,45 @@ async function main() {
         },
         landingStageSliceResolved: window.Canonical?.landingStageSliceResolved || null,
         landingModesForm: window.Canonical?.landingModes?.form || null,
+        pageTiming: {
+          performanceNow:
+            (typeof performance !== 'undefined' && typeof performance.now === 'function')
+              ? performance.now()
+              : null,
+          stageStartMarker: window.__landingStageModeStart || null,
+        },
       };
     });
 
+    const capturedWallClockMs = Date.now();
+    const capturedOffsetFromLogMs =
+      isFiniteNumber(stageStartLogTs) ? (capturedWallClockMs - stageStartLogTs) : null;
+    const capturedOffsetFromWallClockStageMs =
+      isFiniteNumber(stageStartTs) ? (capturedWallClockMs - stageStartTs) : null;
+    const capturedOffsetFromMarkerMs =
+      isFiniteNumber(state?.pageTiming?.performanceNow)
+        && isFiniteNumber(stageStartMarker?.performanceNow)
+        ? state.pageTiming.performanceNow - stageStartMarker.performanceNow
+        : null;
+    const capturedOffsetFromStageStartMs =
+      isFiniteNumber(capturedOffsetFromMarkerMs)
+        ? capturedOffsetFromMarkerMs
+        : (isFiniteNumber(capturedOffsetFromWallClockStageMs)
+          ? capturedOffsetFromWallClockStageMs
+          : null);
+
     samples.push({
       offsetMs,
+      targetWallClockMs: targetTs,
+      capturedWallClockMs,
+      capturedOffsetFromLogMs,
+      capturedOffsetFromWallClockStageMs,
+      capturedOffsetFromMarkerMs,
+      capturedOffsetFromStageStartMs,
+      captureDriftFromRequestedMs:
+        isFiniteNumber(capturedOffsetFromStageStartMs)
+          ? capturedOffsetFromStageStartMs - offsetMs
+          : null,
       capturedAt: new Date().toISOString(),
       state,
     });
@@ -129,7 +191,10 @@ async function main() {
     meta: {
       url: URL,
       checkpoints: CHECKPOINTS,
-      stageStartDetected: !!stageStartTs,
+      stageStartDetected: stageStartTs !== null,
+      stageStartLogWallClockMs: stageStartLogTs,
+      stageStartWallClockMs: stageStartTs,
+      stageStartMarker,
       generatedAt: new Date().toISOString(),
     },
     schemaViolationCount: schemaViolations.length,

@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "system": "metacurtis-visual-operating-system",
+  "baseline": {
+    "branch": "landing-diagnostics-control",
+    "tag": "velocity-landing-rc1_1",
+    "scenarioId": "target_scale_up_1_6",
+    "requiredAudits": [
+      "audit:landing:formation",
+      "audit:landing:ui-anchor",
+      "audit:landing:ui-runtime",
+      "audit:landing:ui-consumer"
+    ],
+    "gateScript": "gate:landing:velocity"
+  },
+  "clientSafeKnobs": {
+    "word": true,
+    "palette": true,
+    "scale": true,
+    "uiModel": true,
+    "ctaCopy": true,
+    "ctaLink": true,
+    "beatSheetEdits": false,
+    "rendererOwnershipEdits": false
+  },
+  "packages": [
+    {
+      "id": "hero-slice-sprint",
+      "label": "Hero Slice Sprint",
+      "targetBuyer": ["startup", "founder-brand"],
+      "deliverables": [
+        "deterministic hero slice",
+        "gate-pass report",
+        "artifact bundle"
+      ]
+    },
+    {
+      "id": "landing-system",
+      "label": "Landing System",
+      "targetBuyer": ["startup", "ai-product", "enterprise-innovation"],
+      "deliverables": [
+        "hero slice",
+        "ui consumer",
+        "runtime contract",
+        "handoff bundle"
+      ]
+    },
+    {
+      "id": "slice-factory-retainer",
+      "label": "Slice Factory Retainer",
+      "targetBuyer": ["agency", "studio"],
+      "deliverables": [
+        "monthly scenario cycle",
+        "governed promotions",
+        "variant packages"
+      ]
+    }
+  ],
+  "delivery": {
+    "requiredArtifacts": [
+      "probe",
+      "manifest",
+      "contactSheet",
+      "formationAudit",
+      "uiAnchorAudit",
+      "uiRuntimeAudit",
+      "uiConsumerAudit",
+      "gateOutput"
+    ],
+    "requiredDocs": [
+      "docs/slice-productization-roadmap.md",
+      "docs/slice-delivery-contract.md",
+      "docs/offer-packages.md",
+      "docs/buyer-profile-map.md",
+      "docs/case-study-template.md"
+    ]
+  }
+}

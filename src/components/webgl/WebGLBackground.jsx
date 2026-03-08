@@ -34,7 +34,7 @@ const TEXT_FIT_WIDTH = 0.9;
 const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
 const MORPH_WRITE_LOG_LIMIT = 400;
-const LANDING_UI_ANCHOR_VERSION = '1.0';
+const LANDING_UI_ANCHOR_VERSION = '1.1';
 const LANDING_UI_ANCHOR_SOURCE_SCENARIO = 'target_scale_up_1_6';
 const LANDING_UI_ANCHOR_RECOMMENDED_MODEL = 'per-letter';
 const LANDING_UI_ANCHOR_WORD = 'FORM';
@@ -459,8 +459,132 @@ function emptyAabbObject() {
     max: null,
     size: null,
     center: null,
+    screenRect: {
+      min: { x: null, y: null },
+      max: { x: null, y: null },
+      size: { w: null, h: null },
+      center: { x: null, y: null },
+    },
   };
 }
+
+function normalizeScreenRect(screenRect) {
+  if (!screenRect || !screenRect.min || !screenRect.max || !screenRect.size || !screenRect.center) {
+    return {
+      min: { x: null, y: null },
+      max: { x: null, y: null },
+      size: { w: null, h: null },
+      center: { x: null, y: null },
+    };
+  }
+  return {
+    min: {
+      x: toFiniteOrNull(screenRect.min.x),
+      y: toFiniteOrNull(screenRect.min.y),
+    },
+    max: {
+      x: toFiniteOrNull(screenRect.max.x),
+      y: toFiniteOrNull(screenRect.max.y),
+    },
+    size: {
+      w: toFiniteOrNull(screenRect.size.w),
+      h: toFiniteOrNull(screenRect.size.h),
+    },
+    center: {
+      x: toFiniteOrNull(screenRect.center.x),
+      y: toFiniteOrNull(screenRect.center.y),
+    },
+  };
+}
+
+const aabbToCorners = (aabb) => {
+  const min = aabb?.min;
+  const max = aabb?.max;
+  const minX = toFiniteOrNull(min?.x);
+  const minY = toFiniteOrNull(min?.y);
+  const minZ = toFiniteOrNull(min?.z);
+  const maxX = toFiniteOrNull(max?.x);
+  const maxY = toFiniteOrNull(max?.y);
+  const maxZ = toFiniteOrNull(max?.z);
+  if (
+    !Number.isFinite(minX) ||
+    !Number.isFinite(minY) ||
+    !Number.isFinite(minZ) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(maxY) ||
+    !Number.isFinite(maxZ)
+  ) {
+    return [];
+  }
+  return [
+    new THREE.Vector3(minX, minY, minZ),
+    new THREE.Vector3(minX, minY, maxZ),
+    new THREE.Vector3(minX, maxY, minZ),
+    new THREE.Vector3(minX, maxY, maxZ),
+    new THREE.Vector3(maxX, minY, minZ),
+    new THREE.Vector3(maxX, minY, maxZ),
+    new THREE.Vector3(maxX, maxY, minZ),
+    new THREE.Vector3(maxX, maxY, maxZ),
+  ];
+};
+
+const projectPointToScreen = (point, camera, canvasRect, worldMatrix = null) => {
+  if (!point || !camera || !canvasRect) return null;
+  const w = Number(canvasRect.width);
+  const h = Number(canvasRect.height);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+
+  const projected = point.clone();
+  if (worldMatrix?.isMatrix4) {
+    projected.applyMatrix4(worldMatrix);
+  }
+  projected.project(camera);
+
+  const ndcX = projected.x;
+  const ndcY = projected.y;
+  if (!Number.isFinite(ndcX) || !Number.isFinite(ndcY)) return null;
+
+  return {
+    x: Number(canvasRect.left || 0) + ((ndcX * 0.5 + 0.5) * w),
+    y: Number(canvasRect.top || 0) + (((-ndcY * 0.5) + 0.5) * h),
+  };
+};
+
+const screenRectFromAabb = (aabb, camera, canvasRect, worldMatrix = null) => {
+  const corners = aabbToCorners(aabb);
+  if (!corners.length) return null;
+  const projected = corners
+    .map((corner) => projectPointToScreen(corner, camera, canvasRect, worldMatrix))
+    .filter(Boolean);
+  if (projected.length < 2) return null;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of projected) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return null;
+  }
+
+  return {
+    min: { x: minX, y: minY },
+    max: { x: maxX, y: maxY },
+    size: { w: maxX - minX, h: maxY - minY },
+    center: { x: minX + ((maxX - minX) * 0.5), y: minY + ((maxY - minY) * 0.5) },
+  };
+};
+
+const hasFiniteScreenRect = (screenRect) =>
+  Number.isFinite(Number(screenRect?.center?.x)) &&
+  Number.isFinite(Number(screenRect?.center?.y)) &&
+  Number.isFinite(Number(screenRect?.size?.w)) &&
+  Number.isFinite(Number(screenRect?.size?.h));
 
 function aabbFromPoints(points) {
   if (!Array.isArray(points) || points.length === 0) return null;
@@ -570,6 +694,7 @@ function normalizeAabb(aabb) {
       y: toFiniteOrNull(aabb.center.y),
       z: toFiniteOrNull(aabb.center.z),
     },
+    screenRect: normalizeScreenRect(aabb.screenRect),
   };
 }
 
@@ -1440,11 +1565,17 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     fitsLockedRef.current = true;
   }, [size.width, size.height]);
   const cameraRef = useRef(null);
+  const glRef = useRef(null);
   useEffect(() => {
     if (camera) {
       cameraRef.current = camera;
     }
   }, [camera]);
+  useEffect(() => {
+    if (gl) {
+      glRef.current = gl;
+    }
+  }, [gl]);
 
   // FORM camera override (rest -> threshold -> interior)
   useEffect(() => {
@@ -1637,12 +1768,27 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     const mat = materialRef.current;
     const uniforms = mat?.uniforms;
     const geo = geometryRef.current;
+    const mesh = meshRef.current;
+    const camera = cameraRef.current;
+    const canvasRectRaw = glRef.current?.domElement?.getBoundingClientRect?.();
+    const canvasRect =
+      canvasRectRaw && Number.isFinite(canvasRectRaw.width) && Number.isFinite(canvasRectRaw.height)
+        ? canvasRectRaw
+        : (typeof window !== 'undefined'
+          ? { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight }
+          : null);
+    const worldMatrix = mesh?.matrixWorld?.isMatrix4 ? mesh.matrixWorld : null;
     const textAttr = geo?.getAttribute?.('text3DPosition') || geo?.attributes?.text3DPosition;
     const textArray = textAttr?.array instanceof Float32Array ? textAttr.array : null;
     const drawCount = Number(geo?.drawRange?.count ?? 0);
     const sampledPoints = samplePointsFromTriples(textArray, drawCount, LANDING_UI_ANCHOR_MAX_SAMPLE_POINTS);
     const wholeAabbRaw = aabbFromPoints(sampledPoints);
-    const wholeAabb = normalizeAabb(wholeAabbRaw);
+    const wholeScreenRect = screenRectFromAabb(wholeAabbRaw, camera, canvasRect, worldMatrix);
+    const wholeAabb = normalizeAabb(
+      wholeAabbRaw
+        ? { ...wholeAabbRaw, screenRect: wholeScreenRect }
+        : null
+    );
 
     const morph = Number(uniforms?.uMorphProgress?.value);
     const opacityMax = Number(uniforms?.uOpacityMax?.value);
@@ -1709,22 +1855,34 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     const zones = ['left', 'center', 'right'].map((id) => {
       const bucket = zoneBuckets[id] || [];
       const aabbRaw = aabbFromPoints(bucket);
-      const aabb = normalizeAabb(aabbRaw);
+      const screenRect = screenRectFromAabb(aabbRaw, camera, canvasRect, worldMatrix);
+      const aabb = normalizeAabb(
+        aabbRaw
+          ? { ...aabbRaw, screenRect }
+          : null
+      );
       return {
         id,
         aabb,
         center: aabb.center,
+        screenRect: aabb.screenRect,
       };
     });
 
     const letters = ['F', 'O', 'R', 'M'].map((id) => {
       const bucket = letterBuckets[id] || [];
       const aabbRaw = aabbFromPoints(bucket);
-      const aabb = normalizeAabb(aabbRaw);
+      const screenRect = screenRectFromAabb(aabbRaw, camera, canvasRect, worldMatrix);
+      const aabb = normalizeAabb(
+        aabbRaw
+          ? { ...aabbRaw, screenRect }
+          : null
+      );
       return {
         id,
         aabb,
         center: aabb.center,
+        screenRect: aabb.screenRect,
       };
     });
 
@@ -1732,12 +1890,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       wholeAabb.min?.x != null &&
       wholeAabb.max?.x != null &&
       wholeAabb.size?.x != null &&
-      wholeAabb.center?.x != null;
+      wholeAabb.center?.x != null &&
+      hasFiniteScreenRect(wholeAabb.screenRect);
     const zoneReady =
       zones.every((zone) => zone.aabb?.min?.x != null) &&
+      zones.every((zone) => hasFiniteScreenRect(zone.screenRect)) &&
       Object.values(zoneBuckets).every((bucket) => bucket.length >= 8);
     const perLetterReady =
       letters.every((letter) => letter.aabb?.min?.x != null) &&
+      letters.every((letter) => hasFiniteScreenRect(letter.screenRect)) &&
       Object.values(letterBuckets).every((bucket) => bucket.length >= 6);
 
     const payload = createLandingUiAnchorBase({

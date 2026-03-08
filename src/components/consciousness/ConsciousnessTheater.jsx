@@ -582,11 +582,21 @@ export default function ConsciousnessTheater({ mode } = {}) {
                   forceEmit: true,
                 });
                 scheduleVelocityLandingBeats();
-                console.log('[ConsciousnessTheater] Landing stage mode started', {
+                const stageStartMarker = {
+                  event: 'landing_stage_mode_started',
                   stage: formStageName,
                   preset: landingPreset,
                   quality: landingQuality,
-                });
+                  wallClockMs: Date.now(),
+                  performanceNow:
+                    (typeof performance !== 'undefined' && typeof performance.now === 'function')
+                      ? performance.now()
+                      : null,
+                };
+                if (typeof window !== 'undefined') {
+                  window.__landingStageModeStart = stageStartMarker;
+                }
+                console.log('[ConsciousnessTheater] Landing stage mode started', stageStartMarker);
                 return;
               }
               const startMorph =

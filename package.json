@@ -125,8 +125,10 @@
     "audit:landing:formation": "node scripts/audit-landing-formation.js",
     "audit:landing:ui-anchor": "node scripts/audit-landing-ui-anchor.js",
     "audit:landing:ui-runtime": "node scripts/audit-landing-ui-runtime.js",
+    "audit:landing:ui-consumer": "node scripts/audit-landing-ui-consumer.js",
     "diagnose:landing:velocity": "node scripts/summarize-landing-scenarios.js",
     "gate:landing:velocity": "node scripts/check-landing-release.js",
+    "audit:slice:package": "node scripts/audit-slice-package.js",
     "morph:audit": "node scripts/morph-audit.cjs",
     "pattern:fromE": "node tools/mc-pattern-from-E.mjs"
   },
