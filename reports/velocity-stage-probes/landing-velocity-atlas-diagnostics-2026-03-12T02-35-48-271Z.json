@@ -1,0 +1,60 @@
+{
+  "url": "http://127.0.0.1:4174/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+  "offsetMs": 9300,
+  "generatedAt": "2026-03-12T02:36:01.240Z",
+  "activeCount": 15000,
+  "drawCount": 15000,
+  "atlasIndexHistogram": {
+    "0": 1712,
+    "1": 1644,
+    "2": 1657,
+    "3": 1737,
+    "4": 760,
+    "5": 745,
+    "6": 741,
+    "7": 754,
+    "8": 581,
+    "9": 587,
+    "10": 540,
+    "11": 542,
+    "12": 780,
+    "13": 718,
+    "14": 739,
+    "15": 763
+  },
+  "tierHistogram": {
+    "0": 6750,
+    "1": 3000,
+    "2": 2250,
+    "3": 3000
+  },
+  "sizeMultiplierSummary": {
+    "count": 15000,
+    "min": 0.4675334692001343,
+    "p25": 0.5585947036743164,
+    "median": 0.6936044692993164,
+    "p75": 1.105035662651062,
+    "max": 1.5524557828903198,
+    "mean": 0.8250005545258522
+  },
+  "opacityDataSummary": {
+    "count": 15000,
+    "min": 0.32008829712867737,
+    "p25": 0.4695585370063782,
+    "median": 0.5818337202072144,
+    "p75": 0.7556830048561096,
+    "max": 0.9999255537986755,
+    "mean": 0.6126187659223874
+  },
+  "bucketChecks": {
+    "tier0SlotsOnly0to3": true,
+    "tier1SlotsOnly4to7": true,
+    "tier2SlotsOnly8to11": true,
+    "tier3SlotsOnly12to15": true
+  },
+  "targetedVsBackgroundSlotUsage": "not directly derivable from the current diagnostics surface without adding a dedicated target-membership signal",
+  "diagnosticsSurface": {
+    "text3DPositionExposed": true,
+    "atmosphericPositionExposed": true
+  }
+}

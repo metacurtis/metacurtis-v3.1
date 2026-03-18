@@ -114,6 +114,7 @@ export function createBlueprintStructure(count, {
     animationSeeds: allocateVec3(),
     sizeMultipliers: new Float32Array(safeCount),
     opacityData: new Float32Array(safeCount),
+    formWeight: new Float32Array(safeCount),
     atlasIndices: new Float32Array(safeCount),
     tierOf: new Uint8Array(safeCount),
     tierData: new Float32Array(safeCount),

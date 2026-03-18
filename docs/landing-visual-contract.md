@@ -18,6 +18,9 @@ The landing slice should:
 - create a prominent lock moment where FORM is clearly readable
 - reintroduce subtle motion without burying the word again
 
+## Mist motion structure
+Mist motion should read as structured atmosphere, not random particle drift. Tier 0 and Tier 1 should feel like slow layered currents with low-frequency wave motion and calm directional flow, so the field reads as deep atmosphere instead of independent particles. FORM remains comparatively stable, and motion contrast should reinforce hierarchy: moving atmosphere as environment, stable FORM as meaning.
+
 ## Current narrative intent
 ### Early
 Particles gather and resolve into FORM.
@@ -91,9 +94,13 @@ Every verifier output must answer:
 ## Current baseline checkpoints to sample
 These are the default checkpoints for probe/screenshot automation:
 - `0`
-- `5000`
+- `5200`
 - `7600`
-- `9400`
+- `9300`
+- `9500`
 - `12000`
+
+`9300` is the last lock-side confirmation sample.
+`9500` is the first drift-side confirmation sample.
 
 These may change when the beat sheet changes, but probe scripts should stay beat-relative.

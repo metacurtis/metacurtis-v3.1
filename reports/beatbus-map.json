@@ -3,7 +3,7 @@
     "BUILD_EMERGENCE_BLUEPRINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 386
+        "line": 407
       },
       {
         "file": "src/state/commands/StateCommands.js",
@@ -21,7 +21,7 @@
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 425
+        "line": 591
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -35,11 +35,11 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 604
+        "line": 781
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1634
+        "line": 2045
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -91,7 +91,7 @@
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1018
+        "line": 1200
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -101,7 +101,7 @@
     "PARTICLE_CLICK_HIT": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1956
+        "line": 2367
       }
     ],
     "PARTICLE_CLICK_REQUEST": [
@@ -343,11 +343,11 @@
     "ENGINE_VIEWPORT_HINT": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 309
+        "line": 311
       },
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 598
+        "line": 775
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -361,11 +361,11 @@
     "BLUEPRINT_READY": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 489
+        "line": 665
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2575
+        "line": 2988
       },
       {
         "file": "src/components/webgl/WebGLCanvas.jsx",
@@ -395,11 +395,11 @@
     "FENCEPOST_LISTENERS_READY": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 527
+        "line": 703
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1152
+        "line": 1415
       },
       {
         "file": "src/theater/TheaterDirector.js",
@@ -409,11 +409,11 @@
     "ENABLE_SCROLL": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 570
+        "line": 747
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1143
+        "line": 1406
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -431,7 +431,7 @@
     "START_NARRATIVE": [
       {
         "file": "src/components/consciousness/ConsciousnessTheater.jsx",
-        "line": 574
+        "line": 751
       },
       {
         "file": "src/components/narrative/NarrationController.jsx",
@@ -497,11 +497,11 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1735
+        "line": 2146
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1761
+        "line": 2172
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -591,7 +591,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1752
+        "line": 2163
       }
     ],
     "PARTICLE_PHASE": [
@@ -601,7 +601,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 3797
+        "line": 4302
       }
     ],
     "PARTICLES_EMERGED": [
@@ -615,7 +615,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1141
+        "line": 1404
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -641,7 +641,7 @@
       },
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1142
+        "line": 1405
       }
     ],
     "DIRECTOR_CANCEL": [
@@ -653,7 +653,7 @@
     "TEXT_MORPH": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1494
+        "line": 1905
       },
       {
         "file": "src/engine/ConsciousnessEngine.js",
@@ -663,25 +663,25 @@
     "PARTICLE_CLICK_REQUEST": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 1967
+        "line": 2378
       }
     ],
     "TEXT_POSITIONS_READY": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 2590
+        "line": 3004
       }
     ],
     "RENDER_DIRECTIVE": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 3009
+        "line": 3444
       }
     ],
     "MORPH_PROGRESS": [
       {
         "file": "src/components/webgl/WebGLBackground.jsx",
-        "line": 3304
+        "line": 3771
       },
       {
         "file": "src/state/commands/StateCommands.js",

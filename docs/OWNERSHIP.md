@@ -33,6 +33,8 @@ uPalette0 = src/components/webgl/WebGLBackground.jsx
 uPalette1 = src/components/webgl/WebGLBackground.jsx
 uPalette2 = src/components/webgl/WebGLBackground.jsx
 uPalette3 = src/components/webgl/WebGLBackground.jsx
+uPointerActive = src/components/webgl/WebGLBackground.jsx
+uPointerIntensity = src/components/webgl/WebGLBackground.jsx
 uPointSize = ⚠️ multiple: src/components/webgl/WebGLBackground.jsx, src/runtime/materialFactory.js
 uPostMorphFreeze = src/components/webgl/WebGLBackground.jsx
 uPulseAmplitude = src/components/webgl/WebGLBackground.jsx
@@ -137,4 +139,4 @@ None. (Auto-generated)
 
 ---
 
-Last updated: 2026-02-27 via `tools/generate-ownership.mjs`
+Last updated: 2026-03-18 via `tools/generate-ownership.mjs`

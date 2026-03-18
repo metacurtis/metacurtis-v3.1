@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-03-11T14:44:58.420Z",
+  "runDir": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T14-44-41-592Z-pointer-field-compare",
+  "pointer": {
+    "uPointerActive": 1,
+    "uPointerIntensity": 1,
+    "uPointerNdc": [
+      0.3999999999999999,
+      0.33333333333333337
+    ]
+  },
+  "offsetMs": 9400,
+  "pointerClient": {
+    "x": 1120,
+    "y": 300
+  }
+}

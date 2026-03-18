@@ -142,6 +142,7 @@ export default class BlueprintGenerator {
       animationSeeds,
       sizeMultipliers,
       opacityData,
+      formWeight,
       atlasIndices,
       tierData,
       tierOf,
@@ -201,7 +202,9 @@ export default class BlueprintGenerator {
       const [opacityMin, opacityMax] = opacityRanges[tier] || opacityRanges[0];
       opacityData[i] = opacityMin + rng() * (opacityMax - opacityMin);
 
-      atlasIndices[i] = Math.min(15, Math.floor(rng() * 4) + tier * 4);
+      // Keep live stage builds on the atmospheric mist primitives only.
+      const atlasBaseSlot = tier === 0 ? 0 : 4;
+      atlasIndices[i] = atlasBaseSlot + Math.floor(rng() * 4);
       tierData[i] = tier;
     }
 
@@ -223,16 +226,33 @@ export default class BlueprintGenerator {
       const textSelectRandom = createSeededRandom(`${stageName}|textSelect`);
       const assignableCount = Math.min(desiredTextParticles, Math.floor(textFormation.length / 3));
       const selectedIndices = pickTextParticleIndices(tierAssignments, assignableCount, textSelectRandom);
+      const selectedMask = new Uint8Array(particleCount);
 
       assignedTextParticles = selectedIndices.length;
       for (let idx = 0; idx < selectedIndices.length; idx += 1) {
         const particleIndex = selectedIndices[idx];
         const src = idx * 3;
         if (src + 2 >= textFormation.length) break;
+        if (particleIndex < 0 || particleIndex >= particleCount) continue;
         const baseIndex = particleIndex * 3;
+        selectedMask[particleIndex] = 1;
+        formWeight[particleIndex] = 1.0;
         text3DPositions[baseIndex] = textFormation[src];
         text3DPositions[baseIndex + 1] = textFormation[src + 1];
         text3DPositions[baseIndex + 2] = textFormation[src + 2];
+      }
+
+      // Carriers retain authored authority; nearby higher tiers stay field-like unless selected.
+      for (let i = 0; i < particleCount; i += 1) {
+        if (selectedMask[i] === 1) continue;
+        const tier = tierAssignments[i];
+        if (tier === 2) {
+          sizeMultipliers[i] *= 0.77;
+          opacityData[i] *= 0.72;
+        } else if (tier === 3) {
+          sizeMultipliers[i] *= 0.72;
+          opacityData[i] *= 0.58;
+        }
       }
     }
 

@@ -1,3 +1,11 @@
+import SST from '../config/sst-loader.js';
+
+const VELOCITY_STAGE_WORD =
+  typeof SST?.visual?.letterGeometry?.velocity?.word === 'string' &&
+  SST.visual.letterGeometry.velocity.word.trim()
+    ? SST.visual.letterGeometry.velocity.word.trim()
+    : 'FORM';
+
 export const LANDING_STAGE_PRESETS = Object.freeze({
   agency_dark: Object.freeze({
     baseStage: 'architecture',
@@ -55,7 +63,7 @@ export const LANDING_STAGE_PRESETS = Object.freeze({
   }),
   velocity_stage: Object.freeze({
     baseStage: 'velocity',
-    word: 'VELOCITY',
+    word: VELOCITY_STAGE_WORD,
     palette: Object.freeze(['#7C3AED', '#9333EA', '#6B21A8']),
     quality: 'HIGH',
     tierMix: Object.freeze([0.45, 0.2, 0.15, 0.2]),

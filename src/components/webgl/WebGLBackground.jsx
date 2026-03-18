@@ -37,6 +37,32 @@ const MORPH_WRITE_LOG_LIMIT = 400;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
+const LANDING_FORM_SEPARATION_PRESET = 'velocity_stage';
+const LANDING_FORM_SEPARATION_MIN_MORPH = 0.82;
+const LANDING_FORM_SEPARATION_RADIUS_SCALE = 0.58;
+const LANDING_FORM_SEPARATION_INTENSITY = 0.22;
+const DIRECTIVE_TRANSITIONABLE_UNIFORMS = new Set([
+  'uPointSize',
+  'uFlowTurbulence',
+  'uOpacityMin',
+  'uOpacityMax',
+  'uSpreadFactor',
+  'uGaussianSigma',
+  'uStreakIntensity',
+  'uDepthFalloffPower',
+  'uCenterWeighting',
+]);
+const clampDirectiveTransitionMs = (value) => {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(Math.round(value), 1600));
+};
+const easeDirectiveProgress = (t, easingMode = 'smoothstep') => {
+  const clamped = Math.min(Math.max(Number(t) || 0, 0), 1);
+  if (easingMode === 'linear') return clamped;
+  if (easingMode === 'ease-in') return clamped * clamped;
+  if (easingMode === 'ease-out') return 1 - (1 - clamped) * (1 - clamped);
+  return clamped * clamped * (3 - 2 * clamped);
+};
 const formatNumber = (value, precision = 3) => {
   if (!Number.isFinite(value)) return 'null';
   return Number(value).toFixed(precision);
@@ -442,6 +468,131 @@ function arrayAabb(arr) {
   return { w: maxX - minX, h: maxY - minY };
 }
 
+function computeBounds3D(arr) {
+  if (!(arr instanceof Float32Array) || arr.length < 3) return null;
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+
+  for (let i = 0; i < arr.length; i += 3) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    const z = arr[i + 2];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z;
+    if (z > maxZ) maxZ = z;
+  }
+
+  if (
+    minX === Infinity ||
+    minY === Infinity ||
+    minZ === Infinity ||
+    maxX === -Infinity ||
+    maxY === -Infinity ||
+    maxZ === -Infinity
+  ) {
+    return null;
+  }
+
+  const sizeX = maxX - minX;
+  const sizeY = maxY - minY;
+  const sizeZ = maxZ - minZ;
+  return {
+    min: { x: minX, y: minY, z: minZ },
+    max: { x: maxX, y: maxY, z: maxZ },
+    size: { x: sizeX, y: sizeY, z: sizeZ },
+    center: {
+      x: minX + sizeX * 0.5,
+      y: minY + sizeY * 0.5,
+      z: minZ + sizeZ * 0.5,
+    },
+    maxExtent: Math.max(sizeX, sizeY, sizeZ, 1),
+  };
+}
+
+function createLandingPointerState() {
+  return {
+    active: 0,
+    intensity: 0,
+    inside: false,
+    ndcX: 0,
+    ndcY: 0,
+    clientX: 0,
+    clientY: 0,
+  };
+}
+
+function isLandingVelocitySlice() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  const slice = params.get('slice');
+  const resolvedPreset = window.Canonical?.landingStageSliceResolved?.preset;
+  const requestedPreset = params.get('preset');
+  return slice === 'landing_stage' &&
+    (resolvedPreset === LANDING_FORM_SEPARATION_PRESET || requestedPreset === LANDING_FORM_SEPARATION_PRESET);
+}
+
+function deriveLandingFormZone(geo) {
+  const positionAttr = geo?.attributes?.text3DPosition;
+  const formWeightAttr = geo?.attributes?.formWeight;
+  const positions = positionAttr?.array;
+  const weights = formWeightAttr?.array;
+  if (!(positions instanceof Float32Array) || !weights?.length) return null;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+  let carrierCount = 0;
+
+  for (let i = 0, j = 0; i < weights.length && j + 2 < positions.length; i += 1, j += 3) {
+    if ((Number(weights[i]) || 0) <= 0.5) continue;
+    const x = positions[j];
+    const y = positions[j + 1];
+    const z = positions[j + 2];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z;
+    if (z > maxZ) maxZ = z;
+    carrierCount += 1;
+  }
+
+  if (carrierCount === 0) return null;
+
+  const sizeX = maxX - minX;
+  const sizeY = maxY - minY;
+  const sizeZ = maxZ - minZ;
+  const bounds = {
+    min: { x: minX, y: minY, z: minZ },
+    max: { x: maxX, y: maxY, z: maxZ },
+    size: { x: sizeX, y: sizeY, z: sizeZ },
+    center: {
+      x: minX + sizeX * 0.5,
+      y: minY + sizeY * 0.5,
+      z: minZ + sizeZ * 0.5,
+    },
+    maxExtent: Math.max(sizeX, sizeY, sizeZ, 1),
+    carrierCount,
+  };
+
+  return {
+    center: bounds.center,
+    radius: Math.max(4, bounds.maxExtent * LANDING_FORM_SEPARATION_RADIUS_SCALE),
+    intensity: LANDING_FORM_SEPARATION_INTENSITY,
+    bounds,
+  };
+}
+
 function attributeAabb(geo, key) {
   const attr = geo?.attributes?.[key];
   return attr?.array ? arrayAabb(attr.array) : null;
@@ -615,7 +766,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
             uFlowTurbulence: readUniform('uFlowTurbulence'),
             uStreakIntensity: readUniform('uStreakIntensity'),
             uSpreadFactor: readUniform('uSpreadFactor'),
+            uPointerActive: readUniform('uPointerActive'),
+            uPointerIntensity: readUniform('uPointerIntensity'),
+            uPointerNdc: readUniform('uPointerNdc'),
           },
+          pointer: { ...landingPointerStateRef.current },
           camera: cam
             ? {
                 pos: cam.position.toArray(),
@@ -714,6 +869,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   const lastBlueprintMetaRef = useRef({});
   const hotspotMapRef = useRef({});
   const glyphTargetRef = useRef(null);
+  const landingFormZoneRef = useRef(null);
+  const landingVelocitySliceRef = useRef(false);
+  const landingPointerStateRef = useRef(createLandingPointerState());
+  const directiveUniformTransitionRef = useRef({});
   const fitsLockedRef = useRef(false);
   const cameraOwnerRef = useRef('default'); // 'default' | 'directive' | 'demo'
   const cameraTargetRef = useRef({
@@ -1153,6 +1312,87 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
 
   const { size, gl, camera } = useThree();
 
+  const resetLandingPointerState = useCallback(() => {
+    const pointer = landingPointerStateRef.current;
+    pointer.active = 0;
+    pointer.intensity = 0;
+    pointer.inside = false;
+    pointer.ndcX = 0;
+    pointer.ndcY = 0;
+    pointer.clientX = 0;
+    pointer.clientY = 0;
+  }, []);
+
+  const applyLandingPointerUniforms = useCallback((uniforms, deterministicMode = false) => {
+    if (!uniforms) return;
+
+    const pointerEnabled = landingVelocitySliceRef.current && !deterministicMode;
+    if (!pointerEnabled) {
+      resetLandingPointerState();
+    }
+
+    const pointer = landingPointerStateRef.current;
+    const active = pointerEnabled ? Number(pointer.active) : 0;
+    const intensity = pointerEnabled ? Number(pointer.intensity) : 0;
+    const ndcX = pointerEnabled ? Number(pointer.ndcX) || 0 : 0;
+    const ndcY = pointerEnabled ? Number(pointer.ndcY) || 0 : 0;
+
+    if (uniforms.uPointerActive) {
+      uniforms.uPointerActive.value = active;
+      uniforms.uPointerActive.needsUpdate = true;
+    }
+    if (uniforms.uPointerIntensity) {
+      uniforms.uPointerIntensity.value = intensity;
+      uniforms.uPointerIntensity.needsUpdate = true;
+    }
+    if (uniforms.uPointerNdc?.value?.set) {
+      uniforms.uPointerNdc.value.set(ndcX, ndcY);
+      uniforms.uPointerNdc.needsUpdate = true;
+    }
+  }, [resetLandingPointerState]);
+
+  const clearDirectiveUniformTransition = useCallback((uniformName) => {
+    if (!uniformName) return;
+    const transitions = directiveUniformTransitionRef.current;
+    if (transitions && Object.prototype.hasOwnProperty.call(transitions, uniformName)) {
+      delete transitions[uniformName];
+    }
+  }, []);
+
+  const queueDirectiveUniformTransition = useCallback((uniformName, uniform, targetValue, transition = {}) => {
+    if (!uniformName || !uniform || !DIRECTIVE_TRANSITIONABLE_UNIFORMS.has(uniformName)) {
+      return false;
+    }
+    const numericTarget = Number(targetValue);
+    if (!Number.isFinite(numericTarget)) {
+      clearDirectiveUniformTransition(uniformName);
+      return false;
+    }
+    const durationMs = clampDirectiveTransitionMs(Number(transition.durationMs));
+    if (!(durationMs > 0)) {
+      clearDirectiveUniformTransition(uniformName);
+      return false;
+    }
+    const currentValue = Number(uniform.value);
+    if (!Number.isFinite(currentValue) || Math.abs(currentValue - numericTarget) < 1e-5) {
+      clearDirectiveUniformTransition(uniformName);
+      uniform.value = numericTarget;
+      uniform.needsUpdate = true;
+      return true;
+    }
+    directiveUniformTransitionRef.current[uniformName] = {
+      startValue: currentValue,
+      targetValue: numericTarget,
+      startTime: typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now(),
+      durationMs,
+      easingMode:
+        typeof transition.easingMode === 'string' && transition.easingMode.length
+          ? transition.easingMode
+          : 'smoothstep',
+    };
+    return true;
+  }, [clearDirectiveUniformTransition]);
+
   useEffect(() => {
     if (!BeatBus?.on) return () => {};
     const enableDirectives = (reason) => {
@@ -1398,6 +1638,153 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const syncLandingVelocitySlice = () => {
+      landingVelocitySliceRef.current = isLandingVelocitySlice();
+      if (!landingVelocitySliceRef.current) {
+        resetLandingPointerState();
+      }
+    };
+    syncLandingVelocitySlice();
+    window.addEventListener('popstate', syncLandingVelocitySlice);
+    window.addEventListener('hashchange', syncLandingVelocitySlice);
+    return () => {
+      window.removeEventListener('popstate', syncLandingVelocitySlice);
+      window.removeEventListener('hashchange', syncLandingVelocitySlice);
+    };
+  }, [resetLandingPointerState]);
+
+  useEffect(() => {
+    const canvas = gl?.domElement;
+    if (!canvas) return undefined;
+
+    const handlePointerMove = (event) => {
+      if (!landingVelocitySliceRef.current) {
+        resetLandingPointerState();
+        return;
+      }
+      if (typeof window !== 'undefined' && window.__DETERMINISTIC_MODE__ === true) {
+        resetLandingPointerState();
+        return;
+      }
+
+      const rect = canvas.getBoundingClientRect?.();
+      const width = rect?.width || canvas.clientWidth || 0;
+      const height = rect?.height || canvas.clientHeight || 0;
+      if (!(width > 0) || !(height > 0)) {
+        resetLandingPointerState();
+        return;
+      }
+
+      const nextX = ((event.clientX - rect.left) / width) * 2 - 1;
+      const nextY = -((((event.clientY - rect.top) / height) * 2) - 1);
+      const pointer = landingPointerStateRef.current;
+      pointer.active = 1;
+      pointer.intensity = 1;
+      pointer.inside = true;
+      pointer.ndcX = Math.max(-1, Math.min(1, nextX));
+      pointer.ndcY = Math.max(-1, Math.min(1, nextY));
+      pointer.clientX = event.clientX;
+      pointer.clientY = event.clientY;
+    };
+
+    const handlePointerLeave = () => {
+      resetLandingPointerState();
+    };
+
+    canvas.addEventListener('pointermove', handlePointerMove, { passive: true });
+    canvas.addEventListener('pointerleave', handlePointerLeave, { passive: true });
+    return () => {
+      canvas.removeEventListener('pointermove', handlePointerMove);
+      canvas.removeEventListener('pointerleave', handlePointerLeave);
+    };
+  }, [gl, resetLandingPointerState]);
+
+  const refreshLandingFormZone = useCallback((geo = geometryRef.current) => {
+    if (!landingVelocitySliceRef.current) {
+      landingFormZoneRef.current = null;
+      return null;
+    }
+    const nextZone = deriveLandingFormZone(geo);
+    landingFormZoneRef.current = nextZone;
+    return nextZone;
+  }, []);
+
+  const applyLandingFormSeparation = useCallback((uniforms) => {
+    if (!uniforms) return;
+
+    const isLandingScene = landingVelocitySliceRef.current;
+    const currentTarget = glyphTargetRef.current;
+    const currentSource = currentTarget?.source || null;
+
+    if (!isLandingScene) {
+      landingFormZoneRef.current = null;
+      if (currentSource === 'landing_form_zone') {
+        glyphTargetRef.current = null;
+        if (uniforms.uGlyphTargetActive) {
+          uniforms.uGlyphTargetActive.value = 0.0;
+          uniforms.uGlyphTargetActive.needsUpdate = true;
+        }
+        if (uniforms.uGlyphPulseIntensity) {
+          uniforms.uGlyphPulseIntensity.value = 0.0;
+          uniforms.uGlyphPulseIntensity.needsUpdate = true;
+        }
+      }
+      return;
+    }
+
+    if (currentSource && currentSource !== 'landing_form_zone') {
+      return;
+    }
+
+    const zone = landingFormZoneRef.current || refreshLandingFormZone();
+    const morph = Number(uniforms.uMorphProgress?.value ?? 0);
+    const strength = clamp01((morph - LANDING_FORM_SEPARATION_MIN_MORPH) / (1 - LANDING_FORM_SEPARATION_MIN_MORPH));
+    const active = !!zone && strength > 0;
+
+    if (!active) {
+      if (currentSource === 'landing_form_zone') {
+        glyphTargetRef.current = null;
+      }
+      if (uniforms.uGlyphTargetActive) {
+        uniforms.uGlyphTargetActive.value = 0.0;
+        uniforms.uGlyphTargetActive.needsUpdate = true;
+      }
+      if (uniforms.uGlyphPulseIntensity) {
+        uniforms.uGlyphPulseIntensity.value = 0.0;
+        uniforms.uGlyphPulseIntensity.needsUpdate = true;
+      }
+      return;
+    }
+
+    const intensity = zone.intensity * strength;
+    glyphTargetRef.current = {
+      source: 'landing_form_zone',
+      center: zone.center,
+      radius: zone.radius,
+      intensity,
+    };
+
+    if (uniforms.uGlyphTargetActive) {
+      uniforms.uGlyphTargetActive.value = 1.0;
+      uniforms.uGlyphTargetActive.needsUpdate = true;
+    }
+    if (uniforms.uGlyphTargetCenter?.value?.set) {
+      uniforms.uGlyphTargetCenter.value.set(zone.center.x, zone.center.y, zone.center.z);
+      uniforms.uGlyphTargetCenter.needsUpdate = true;
+    }
+    if (uniforms.uGlyphTargetRadius) {
+      uniforms.uGlyphTargetRadius.value = zone.radius;
+      uniforms.uGlyphTargetRadius.needsUpdate = true;
+    }
+    if (uniforms.uGlyphPulseIntensity) {
+      // Deterministic mode already freezes uTime; keep the same steady strength rather than introducing special cases.
+      uniforms.uGlyphPulseIntensity.value = intensity;
+      uniforms.uGlyphPulseIntensity.needsUpdate = true;
+    }
+  }, [refreshLandingFormZone]);
+
   const handleTextPositions = useCallback((payload = {}) => {
     const geo = geometryRef.current;
     if (!geo) return;
@@ -1439,9 +1826,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     fitsLockedRef.current = false;
     lastFitStampRef.current = { geoId: null, width: 0, height: 0 };
     applyRendererFits(geo, viewportHintRef.current || window?.__viewportHint);
+    refreshLandingFormZone(geo);
     const count = payload?.count || Math.floor(target.length / 3);
     console.log(`[WBG] Text positions updated for "${payload?.word || 'unknown'}" (${count} particles)`);
-  }, [applyRendererFits]);
+  }, [applyRendererFits, refreshLandingFormZone]);
 
   const lastBlueprintIdRef = useRef(null);
   const fallbackMorphRef = useRef(0);
@@ -2181,6 +2569,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       if (raw.animationSeeds)  geo.setAttribute('animationSeed',  new THREE.BufferAttribute(raw.animationSeeds, 3));
       if (raw.sizeMultipliers) geo.setAttribute('sizeMultiplier', new THREE.BufferAttribute(raw.sizeMultipliers, 1));
       if (raw.opacityData)     geo.setAttribute('opacityData',    new THREE.BufferAttribute(raw.opacityData, 1));
+      if (raw.formWeight)      geo.setAttribute('formWeight',     new THREE.BufferAttribute(raw.formWeight, 1));
       if (raw.atlasIndices)    geo.setAttribute('atlasIndex',     new THREE.BufferAttribute(raw.atlasIndices, 1));
       if (raw.tierData)        geo.setAttribute('tierData',       new THREE.BufferAttribute(raw.tierData, 1));
       if (DEV) {
@@ -2195,6 +2584,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       geometryRef.current = geo;
       geometryBoundOnceRef.current = true;
       fitsLockedRef.current = false;
+      refreshLandingFormZone(geo);
       if (DEV) {
         const atmoAttr = geo.attributes?.atmosphericPosition;
         if (atmoAttr?.array && atmoAttr.array.length >= 30) {
@@ -2600,6 +2990,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   }, [
     updateBandHeight,
     logBind,
+    refreshLandingFormZone,
     scheduleRuntimeSampling,
     clearPendingFencepost,
     queueFencepost,
@@ -2700,6 +3091,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       }
 
       const clamp01Local = (x) => Math.max(0, Math.min(1, Number(x)));
+      const directiveTransitionDuration = clampDirectiveTransitionMs(Number(payload?.durationMs));
+      const directiveTransitionEasing =
+        typeof payload?.easing === 'string' && payload.easing.length
+          ? payload.easing
+          : 'smoothstep';
+      const shouldTransitionDirectiveUniform = (uniformName) =>
+        directiveTransitionDuration > 0 &&
+        DIRECTIVE_TRANSITIONABLE_UNIFORMS.has(uniformName) &&
+        !(typeof window !== 'undefined' && window.__DETERMINISTIC_MODE__ === true);
 
       const setUniformNumber = (uniformName, value) => {
         if (typeof value !== 'number') return;
@@ -2717,6 +3117,14 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         const uniform = uniforms[uniformName];
         if (!uniform) return;
         if (!guardUniformWrite(origin, uniformName)) return;
+        if (shouldTransitionDirectiveUniform(uniformName)) {
+          const queued = queueDirectiveUniformTransition(uniformName, uniform, value, {
+            durationMs: directiveTransitionDuration,
+            easingMode: directiveTransitionEasing,
+          });
+          if (queued) return;
+        }
+        clearDirectiveUniformTransition(uniformName);
         uniform.value = value;
         uniform.needsUpdate = true;
         if (uniformName === 'uMorphProgress') {
@@ -2861,6 +3269,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       if (payload.uniforms && typeof payload.uniforms === 'object') {
         Object.entries(payload.uniforms).forEach(([key, value]) => {
           if (!uniforms[key]) return;
+          if (typeof value === 'number') {
+            setUniformNumber(key, value);
+            return;
+          }
           if (key === 'uTierHighlight' && Array.isArray(value)) {
             applyUniformArray(key, uniforms[key], value.map((v) => clamp01Local(v)));
             return;
@@ -3413,6 +3825,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           uAtlasTexture:    { value: atlasTexture },
           uTotalSprites:    { value: 16 },
           uPointSize:       { value: basePointSize },
+          uPointerActive:   { value: 0.0 },
+          uPointerIntensity:{ value: 0.0 },
+          uPointerNdc:      { value: new THREE.Vector2(0, 0) },
           uDepthFalloffPower: { value: 1.0 },
           uMotionMode:      { value: 0.0 },
           uDevicePixelRatio:{ value: resolveDpr() },
@@ -3505,6 +3920,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (!uniforms.uOpacityMin) uniforms.uOpacityMin = { value: 0.5 };
     if (!uniforms.uOpacityMax) uniforms.uOpacityMax = { value: 1.0 };
+    if (!uniforms.uPointerActive) uniforms.uPointerActive = { value: 0.0 };
+    if (!uniforms.uPointerIntensity) uniforms.uPointerIntensity = { value: 0.0 };
+    if (!uniforms.uPointerNdc) uniforms.uPointerNdc = { value: new THREE.Vector2(0, 0) };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
@@ -3717,6 +4135,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     const sp = clamp01(Number(scrollProgress) || 0);
     const deterministicMode =
       typeof window !== 'undefined' && window.__DETERMINISTIC_MODE__ === true;
+    const nowMs = typeof performance !== 'undefined' && performance.now
+      ? performance.now()
+      : Date.now();
     if (deterministicMode) {
       timeTickEnabledRef.current = false;
       if (mat.uniforms.uPostMorphFreeze) {
@@ -3730,10 +4151,43 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     if (timeTickEnabledRef.current && mat.uniforms.uTime) {
       mat.uniforms.uTime.value = state.clock.elapsedTime;
     }
+    applyLandingFormSeparation(mat.uniforms);
+    applyLandingPointerUniforms(mat.uniforms, deterministicMode);
     mat.uniforms.uScrollProgress.value = sp;
     mat.uniforms.uStageBlend.value     = (stageName === 'genesis') ? 0 : sp;
     mat.uniforms.uActiveCount.value    = activeCount;
     mat.uniforms.uTierCutoff.value     = activeCount;
+    const directiveTransitions = directiveUniformTransitionRef.current;
+    const transitionEntries = Object.entries(directiveTransitions);
+    if (transitionEntries.length > 0) {
+      transitionEntries.forEach(([uniformName, transition]) => {
+        const uniform = mat.uniforms?.[uniformName];
+        if (!uniform) {
+          delete directiveTransitions[uniformName];
+          return;
+        }
+        const durationMs =
+          Number.isFinite(transition?.durationMs) && transition.durationMs > 0
+            ? transition.durationMs
+            : 1;
+        const elapsed = nowMs - (transition?.startTime || nowMs);
+        const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
+        const eased = easeDirectiveProgress(t, transition?.easingMode);
+        const nextValue = THREE.MathUtils.lerp(
+          Number(transition?.startValue) || 0,
+          Number(transition?.targetValue) || 0,
+          eased
+        );
+        uniform.value = nextValue;
+        uniform.needsUpdate = true;
+        if (t >= 1) {
+          uniform.value = Number(transition?.targetValue) || 0;
+          uniform.needsUpdate = true;
+          delete directiveTransitions[uniformName];
+        }
+      });
+      mat.uniformsNeedUpdate = true;
+    }
     if (uniformOverlayEnabledRef.current && uniformOverlayRef.current) {
       const u = mat.uniforms;
       const atmoFit = u.uAtmoFit?.value ?? u.uAtmoFit;
@@ -3752,21 +4206,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     const target = cameraTargetRef.current;
     if (target?.active && (cameraRef.current || state?.camera)) {
       const cam = cameraRef.current || state.camera;
-      const nowMs = typeof performance !== 'undefined' && performance.now
-        ? performance.now()
-        : Date.now();
       const durationMs = Number.isFinite(target.duration) && target.duration > 0 ? target.duration : 1;
       const elapsed = nowMs - (target.startTime || nowMs);
       const t = Math.min(Math.max(elapsed / durationMs, 0), 1);
       const easingMode = target.easingMode || 'ease-in-out';
-      let eased = t * t * (3 - 2 * t);
-      if (easingMode === 'linear') {
-        eased = t;
-      } else if (easingMode === 'ease-in') {
-        eased = t * t;
-      } else if (easingMode === 'ease-out') {
-        eased = 1 - (1 - t) * (1 - t);
-      }
+      const eased = easeDirectiveProgress(t, easingMode);
 
       cam.position.lerpVectors(target.startPosition, target.position, eased);
 

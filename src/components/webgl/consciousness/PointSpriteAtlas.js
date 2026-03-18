@@ -59,36 +59,84 @@ export class PointSpriteAtlas {
     ctx.save();
     
     switch (index) {
-      case 0: // Solid circle - basic consciousness particle
-        this.drawSolidCircle(centerX, centerY, radius, 'rgba(255,255,255,0.8)');
+      case 0: // Tier 0 haze core
+        this.drawSoftDensity(centerX, centerY, radius * 1.15, {
+          innerAlpha: 0.34,
+          midAlpha: 0.14,
+        });
         break;
         
-      case 1: // Gradient circle - consciousness core
-        this.drawGradientCircle(centerX, centerY, radius);
+      case 1: // Tier 0 diffuse bloom
+        this.drawClusteredDensity(centerX, centerY, radius * 1.05);
         break;
         
-      case 2: // Ring - neural connection
-        this.drawRing(centerX, centerY, radius * 0.8, radius * 0.4);
+      case 2: // Tier 0 broad mist ellipse
+        this.drawSoftDensity(centerX, centerY, radius * 1.18, {
+          innerAlpha: 0.24,
+          midAlpha: 0.1,
+          squishX: 1.28,
+          squishY: 0.82,
+        });
+        this.drawSoftDensity(centerX, centerY, radius * 0.62, {
+          innerAlpha: 0.16,
+          midAlpha: 0.06,
+          offsetX: -radius * 0.14,
+          offsetY: radius * 0.08,
+          squishX: 0.92,
+          squishY: 1.08,
+        });
         break;
         
-      case 3: // Cross - synaptic junction
-        this.drawCross(centerX, centerY, radius);
+      case 3: // Tier 0 vertical haze
+        this.drawSoftDensity(centerX, centerY, radius * 1.12, {
+          innerAlpha: 0.22,
+          midAlpha: 0.09,
+          squishX: 0.8,
+          squishY: 1.32,
+        });
         break;
         
-      case 4: // Diamond - memory node (perfect for genesis/discipline)
-        this.drawDiamond(centerX, centerY, radius);
+      case 4: // Tier 1 denser cloud
+        this.drawClusteredDensity(centerX, centerY, radius * 0.96, true);
         break;
         
-      case 5: // Hexagon - brain cell structure
-        this.drawHexagon(centerX, centerY, radius);
+      case 5: // Tier 1 directional glow
+        this.drawSoftDensity(centerX, centerY, radius, {
+          innerAlpha: 0.42,
+          midAlpha: 0.18,
+          squishX: 1.12,
+          squishY: 0.94,
+        });
+        this.drawSoftDensity(centerX, centerY, radius * 0.52, {
+          innerAlpha: 0.24,
+          midAlpha: 0.08,
+          offsetX: radius * 0.18,
+          offsetY: -radius * 0.12,
+          squishX: 0.88,
+          squishY: 1.12,
+        });
         break;
         
-      case 6: // Star - consciousness spark (velocity stage)
-        this.drawStar(centerX, centerY, radius, 5);
+      case 6: // Tier 1 mist streak
+        this.drawSoftDensity(centerX, centerY, radius * 1.05, {
+          innerAlpha: 0.28,
+          midAlpha: 0.11,
+          squishX: 1.42,
+          squishY: 0.68,
+        });
+        this.drawSoftDensity(centerX, centerY, radius * 0.46, {
+          innerAlpha: 0.18,
+          midAlpha: 0.06,
+          offsetX: -radius * 0.16,
+          offsetY: radius * 0.04,
+        });
         break;
         
-      case 7: // Soft glow - atmospheric dust
-        this.drawSoftGlow(centerX, centerY, radius * 1.2);
+      case 7: // Tier 1 broad glow
+        this.drawSoftDensity(centerX, centerY, radius * 1.28, {
+          innerAlpha: 0.26,
+          midAlpha: 0.1,
+        });
         break;
         
       case 8: // Pulse ring - neural activity
@@ -217,6 +265,56 @@ export class PointSpriteAtlas {
     this.ctx.fill();
   }
 
+  drawSoftDensity(x, y, radius, options = {}) {
+    const {
+      innerAlpha = 0.4,
+      midAlpha = 0.16,
+      outerAlpha = 0.0,
+      squishX = 1.0,
+      squishY = 1.0,
+      offsetX = 0,
+      offsetY = 0,
+    } = options;
+
+    this.ctx.save();
+    this.ctx.translate(x + offsetX, y + offsetY);
+    this.ctx.scale(squishX, squishY);
+
+    const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    gradient.addColorStop(0, `rgba(255,255,255,${innerAlpha})`);
+    gradient.addColorStop(0.42, `rgba(255,255,255,${midAlpha})`);
+    gradient.addColorStop(1, `rgba(255,255,255,${outerAlpha})`);
+
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    this.ctx.fillStyle = gradient;
+    this.ctx.fill();
+    this.ctx.restore();
+  }
+
+  drawClusteredDensity(x, y, radius, denseCore = false) {
+    this.drawSoftDensity(x, y, radius, {
+      innerAlpha: denseCore ? 0.46 : 0.32,
+      midAlpha: denseCore ? 0.2 : 0.12,
+    });
+    this.drawSoftDensity(x, y, radius * 0.54, {
+      innerAlpha: denseCore ? 0.28 : 0.18,
+      midAlpha: 0.08,
+      offsetX: -radius * 0.18,
+      offsetY: radius * 0.1,
+      squishX: 1.12,
+      squishY: 0.9,
+    });
+    this.drawSoftDensity(x, y, radius * 0.48, {
+      innerAlpha: denseCore ? 0.24 : 0.16,
+      midAlpha: 0.06,
+      offsetX: radius * 0.16,
+      offsetY: -radius * 0.12,
+      squishX: 0.9,
+      squishY: 1.08,
+    });
+  }
+
   drawPulseRing(x, y, radius) {
     // Inner bright ring
     this.ctx.beginPath();
@@ -311,7 +409,8 @@ export class PointSpriteAtlas {
     
     for (let i = 0; i < 12; i++) {
       const angle = (i * Math.PI) / 6;
-      const length = radius * (0.6 + 0.4 * Math.random());
+      const jitter = 0.5 + 0.5 * Math.sin((i + 1) * 12.9898);
+      const length = radius * (0.6 + 0.4 * jitter);
       this.ctx.beginPath();
       this.ctx.moveTo(x, y);
       this.ctx.lineTo(

@@ -1,0 +1,1 @@
+/home/curtis/projects/metacurtis-v3.1/scripts/new-worktree.sh

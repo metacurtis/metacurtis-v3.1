@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-03-11T16:34:36.865Z",
+  "runDir": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T16-34-19-797Z-pointer-field-compare",
+  "url": "http://127.0.0.1:4174/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+  "offsetMs": 9400,
+  "pointerClient": {
+    "x": 1120,
+    "y": 300
+  },
+  "beforePath": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T16-34-19-797Z-pointer-field-compare/before.png",
+  "afterPath": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T16-34-19-797Z-pointer-field-compare/after.png",
+  "note": "Pointer state runtime truth is captured in the 2026-03-11T14-44-41-592Z pointer compare manifest."
+}

@@ -7,7 +7,7 @@ const URL =
   process.env.LANDING_URL ||
   'http://127.0.0.1:5173/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA';
 
-const CHECKPOINTS = (process.env.LANDING_SCREEN_CHECKPOINTS || '5000,7600,9400,12000')
+const CHECKPOINTS = (process.env.LANDING_SCREEN_CHECKPOINTS || '5200,7600,9300,9500,12000')
   .split(',')
   .map((v) => Number(v.trim()))
   .filter(Number.isFinite);

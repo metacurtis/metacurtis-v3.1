@@ -52,11 +52,20 @@ Allowed for landing slice work:
 - `sst/canon/v3.5.runtime.json`
 - `src/components/consciousness/ConsciousnessTheater.jsx`
 - `src/components/webgl/WebGLBackground.jsx`
+- `src/shaders/templates/consciousness-vertex.glsl`
+- `src/shaders/templates/consciousness-fragment.glsl`
 - `tests/visual/*`
 - `scripts/probe-landing-velocity.js`
 - `scripts/capture-landing-velocity-screens.js`
 - `docs/landing-visual-contract.md`
 - `prompts/*`
+
+Landing live render contract roles:
+- `src/components/consciousness/ConsciousnessTheater.jsx` may control stage-mode timing, beat-relative sequencing, and render directives only.
+- `src/components/webgl/WebGLBackground.jsx` remains the single writer for geometry, attributes, and uniforms.
+- `src/shaders/templates/consciousness-vertex.glsl` is the motion-law surface.
+- `src/shaders/templates/consciousness-fragment.glsl` is the appearance-law surface.
+- No upstream component may write GPU state directly.
 
 ## Forbidden edit zones unless explicitly requested
 - blueprint generation internals

@@ -9,6 +9,7 @@ attribute float atlasIndex;
 attribute float sizeMultiplier;
 attribute float tierData;
 attribute float opacityData;
+attribute float formWeight;
 
 // Uniforms
 uniform float uTime;
@@ -50,6 +51,8 @@ varying float vTierID;
 varying float vTier;
 varying float vSizeMultiplier;
 varying float vParticleIndex;
+varying float vGlyphInfluence;
+varying float vFormWeight;
 
 const float PI = 3.14159265359;
 const float TWO_PI = 6.28318530718;
@@ -112,10 +115,48 @@ vec3 applyTierMovement(vec3 basePos, int tierIndex) {
   return basePos + offset * taper;
 }
 
+vec3 computeAtmosphericCurrent(vec3 samplePos, vec3 atmoPos, int tierIndex, float morph, float glyphLock, float carrierWeight) {
+  if (tierIndex > 1) return vec3(0.0);
+
+  float nonCarrier = 1.0 - carrierWeight;
+  float driftWindow = smoothstep(0.68, 1.0, morph);
+  float calmMask = (1.0 - glyphLock) * nonCarrier * driftWindow;
+  if (calmMask <= 0.0) return vec3(0.0);
+
+  float layerBlend = tierIndex == 0 ? 0.0 : 1.0;
+  float layerScale = mix(0.055, 0.085, layerBlend);
+  float layerSpeed = mix(0.12, 0.18, layerBlend);
+  float layerAmplitude = mix(0.46, 0.28, layerBlend);
+  float layerDepth = mix(0.12, 0.22, layerBlend);
+
+  vec2 flowSeed = mix(atmoPos.xy, samplePos.xy, 0.35) * layerScale;
+  float timePhase = uTime * layerSpeed;
+  float bandA = sin(flowSeed.x + flowSeed.y * 0.65 + timePhase);
+  float bandB = cos(flowSeed.y * 1.18 - flowSeed.x * 0.42 + timePhase * 0.83);
+  float bandC = sin((flowSeed.x - flowSeed.y) * 0.74 + timePhase * 0.57);
+  vec2 flow = vec2(
+    bandA + bandB * 0.6,
+    bandB * 0.72 + bandC * 0.48
+  );
+  flow *= layerAmplitude;
+
+  float depthWave = sin(atmoPos.z * 0.085 + timePhase * 0.32) * layerDepth;
+  return vec3(flow.x, flow.y, depthWave) * calmMask;
+}
+
+float computeGlyphInfluence(vec3 samplePos) {
+  if (uGlyphTargetActive <= 0.5) return 0.0;
+  float glyphRadius = max(uGlyphTargetRadius, 0.001);
+  float glyphDist = distance(samplePos, uGlyphTargetCenter);
+  return 1.0 - smoothstep(glyphRadius, glyphRadius * 1.6, glyphDist);
+}
+
 void main() {
   vParticleIndex = particleIndex;
   vTierID = tierData;
   vSizeMultiplier = sizeMultiplier;
+  float carrierWeight = clamp(formWeight, 0.0, 1.0);
+  vFormWeight = carrierWeight;
   
   // Atlas UV setup (4x4 grid)
   float spritesPerRow = 4.0;
@@ -151,6 +192,9 @@ void main() {
 
   vec3 basePos = mix(atmoPos, textPos, morph);
   int tierIndex = int(clamp(floor(tierData + 0.5), 0.0, 3.0));
+  float glyphZoneInfluence = computeGlyphInfluence(textPos);
+  float glyphPresence = glyphZoneInfluence * smoothstep(0.82, 1.0, morph);
+  float glyphLock = glyphPresence * mix(0.4, 1.0, carrierWeight);
   vec3 tierAdjusted = applyTierMovement(basePos, tierIndex);
   
   // Add movement
@@ -177,6 +221,12 @@ void main() {
   movement.y *= moveGainY * freeze;
   movement.z *= moveGain  * freeze;
 
+  float formMotionDamp = mix(1.0, 0.82, glyphLock);
+  float atmosphereDriftLift =
+    driftMask * (1.0 - glyphLock) * smoothstep(0.82, 1.0, morph) * mix(0.04, 0.02, carrierWeight);
+  movement *= formMotionDamp + atmosphereDriftLift;
+  movement += computeAtmosphericCurrent(basePos, atmoPos, tierIndex, morph, glyphLock, carrierWeight);
+
   // Only the freeze flag should fully kill motion;
   // drift can continue at a low baseline even when morph ~ 1.0.
   if (uPostMorphFreeze > 0.5) {
@@ -201,6 +251,7 @@ void main() {
     finalPos += reformNoise;
   }
   vPosition = finalPos;
+  vGlyphInfluence = max(computeGlyphInfluence(finalPos), glyphZoneInfluence * 0.92);
   
   // Transform to screen space
   vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
@@ -210,7 +261,7 @@ void main() {
   float dist = length(mvPosition.xyz);
   // gentler near-camera size; avoid "magnified pixels"
   float attenuation = 180.0 / dist;
-  float tierSizeBoost = tierData < 0.5 ? 1.25 : (tierData > 2.5 ? 1.1 : 1.0);
+  float tierSizeBoost = tierIndex == 0 ? 0.84 : (tierIndex == 1 ? 0.94 : (tierIndex == 2 ? 1.02 : 1.1));
   float pointSize = uPointSize * sizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
   pointSize = clamp(pointSize, 2.0, 36.0);
 
@@ -230,14 +281,14 @@ void main() {
   float edgeFade = 1.0 - smoothstep(0.7, 1.0, edgeDist);
   float morphFade = smoothstep(0.15, 0.55, uMorphProgress);
   float atmosphericFade = mix(edgeFade, 1.0, morphFade);
-  float glyphInfluence = 0.0;
-  if (uGlyphTargetActive > 0.5) {
-    float glyphRadius = max(uGlyphTargetRadius, 0.001);
-    float glyphDist = distance(finalPos, uGlyphTargetCenter);
-    glyphInfluence = 1.0 - smoothstep(glyphRadius, glyphRadius * 1.6, glyphDist);
-  }
+  float glyphInfluence = computeGlyphInfluence(finalPos);
   float glyphPulse = 0.5 + 0.5 * sin(uTime * 5.0);
-  float glyphBoost = glyphInfluence * glyphPulse * uGlyphPulseIntensity * uGlyphTargetActive;
+  float glyphBoost =
+    glyphInfluence
+    * glyphPulse
+    * uGlyphPulseIntensity
+    * uGlyphTargetActive
+    * mix(0.18, 1.0, carrierWeight);
   vAlpha = opacityData * (0.5 + 0.5 * uMorphProgress) * atmosphericFade * (1.0 + glyphBoost);
   vTier = tierData;
 }

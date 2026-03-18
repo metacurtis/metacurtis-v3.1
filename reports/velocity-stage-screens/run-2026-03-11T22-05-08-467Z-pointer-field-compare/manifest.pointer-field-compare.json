@@ -1,0 +1,235 @@
+{
+  "generatedAt": "2026-03-11T22:05:43.294Z",
+  "url": "http://127.0.0.1:4174/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+  "runDir": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T22-05-08-467Z-pointer-field-compare",
+  "results": [
+    {
+      "offsetMs": 9300,
+      "pointerClient": {
+        "x": 820,
+        "y": 420
+      },
+      "beforePath": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T22-05-08-467Z-pointer-field-compare/before-9300ms.png",
+      "afterPath": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T22-05-08-467Z-pointer-field-compare/after-9300ms.png",
+      "beforePointer": {
+        "active": 0,
+        "intensity": 0,
+        "inside": false,
+        "ndcX": 0,
+        "ndcY": 0,
+        "clientX": 0,
+        "clientY": 0
+      },
+      "afterPointer": {
+        "active": 1,
+        "intensity": 1,
+        "inside": true,
+        "ndcX": 0.02499999999999991,
+        "ndcY": 0.06666666666666665,
+        "clientX": 820,
+        "clientY": 420
+      },
+      "beforeUniforms": {
+        "uPointerActive": 0,
+        "uPointerIntensity": 0,
+        "uPointerNdc": [
+          0,
+          0
+        ]
+      },
+      "afterUniforms": {
+        "uPointerActive": 1,
+        "uPointerIntensity": 1,
+        "uPointerNdc": [
+          0.02499999999999991,
+          0.06666666666666665
+        ]
+      },
+      "metrics": {
+        "full": {
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 1600,
+            "h": 900
+          },
+          "meanDelta": 2.0755898148156713,
+          "changedPixels": 146476,
+          "changedRatio": 0.10171944444444445
+        },
+        "local": {
+          "box": {
+            "x": 660,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 9.793050130208526,
+          "changedPixels": 47990,
+          "changedRatio": 0.46865234375
+        },
+        "control": {
+          "box": {
+            "x": 620,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 9.677031250000196,
+          "changedPixels": 47040,
+          "changedRatio": 0.459375
+        },
+        "localOverControlMean": 1.011989098434329,
+        "localOverControlChanged": 1.0201955782312926
+      },
+      "metricsRefined": {
+        "local": {
+          "box": {
+            "x": 660,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 9.793050130208526,
+          "changedRatio": 0.46865234375
+        },
+        "controlLeft": {
+          "box": {
+            "x": 60,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 1.3767024739583211,
+          "changedRatio": 0.067294921875
+        },
+        "controlRight": {
+          "box": {
+            "x": 1220,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 1.5193196614583437,
+          "changedRatio": 0.073876953125
+        },
+        "localOverMeanControl": 6.763104473854135,
+        "localOverChangedControl": 6.63945766463752
+      }
+    },
+    {
+      "offsetMs": 9500,
+      "pointerClient": {
+        "x": 820,
+        "y": 420
+      },
+      "beforePath": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T22-05-08-467Z-pointer-field-compare/before-9500ms.png",
+      "afterPath": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-11T22-05-08-467Z-pointer-field-compare/after-9500ms.png",
+      "beforePointer": {
+        "active": 0,
+        "intensity": 0,
+        "inside": false,
+        "ndcX": 0,
+        "ndcY": 0,
+        "clientX": 0,
+        "clientY": 0
+      },
+      "afterPointer": {
+        "active": 1,
+        "intensity": 1,
+        "inside": true,
+        "ndcX": 0.02499999999999991,
+        "ndcY": 0.06666666666666665,
+        "clientX": 820,
+        "clientY": 420
+      },
+      "beforeUniforms": {
+        "uPointerActive": 0,
+        "uPointerIntensity": 0,
+        "uPointerNdc": [
+          0,
+          0
+        ]
+      },
+      "afterUniforms": {
+        "uPointerActive": 1,
+        "uPointerIntensity": 1,
+        "uPointerNdc": [
+          0.02499999999999991,
+          0.06666666666666665
+        ]
+      },
+      "metrics": {
+        "full": {
+          "box": {
+            "x": 0,
+            "y": 0,
+            "w": 1600,
+            "h": 900
+          },
+          "meanDelta": 2.5232680555566,
+          "changedPixels": 184976,
+          "changedRatio": 0.12845555555555555
+        },
+        "local": {
+          "box": {
+            "x": 660,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 12.695882161458117,
+          "changedPixels": 60189,
+          "changedRatio": 0.587783203125
+        },
+        "control": {
+          "box": {
+            "x": 620,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 12.53160807291651,
+          "changedPixels": 59092,
+          "changedRatio": 0.5770703125
+        },
+        "localOverControlMean": 1.0131087796223566,
+        "localOverControlChanged": 1.0185642726595818
+      },
+      "metricsRefined": {
+        "local": {
+          "box": {
+            "x": 660,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 12.695882161458117,
+          "changedRatio": 0.587783203125
+        },
+        "controlLeft": {
+          "box": {
+            "x": 60,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 1.6364713541666842,
+          "changedRatio": 0.088544921875
+        },
+        "controlRight": {
+          "box": {
+            "x": 1220,
+            "y": 260,
+            "w": 320,
+            "h": 320
+          },
+          "meanDelta": 1.8030175781250248,
+          "changedRatio": 0.090859375
+        },
+        "localOverMeanControl": 7.382423616638262,
+        "localOverChangedControl": 6.552610091992815
+      }
+    }
+  ]
+}

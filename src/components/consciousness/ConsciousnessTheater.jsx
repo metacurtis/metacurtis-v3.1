@@ -432,6 +432,10 @@ export default function ConsciousnessTheater({ mode } = {}) {
                   : null;
               const hasCameraParams = params.camera && typeof params.camera === 'object';
               const isRevealWindow = atMs >= 2400;
+              const beatDurationRaw = Number(beat?.durationMs);
+              const beatDurationMs = Number.isFinite(beatDurationRaw)
+                ? Math.max(0, beatDurationRaw)
+                : null;
               const pointSizeRaw = Number(params.pointSize);
               const pointSize = Number.isFinite(pointSizeRaw)
                 ? Math.max(0.5, Math.min(pointSizeRaw, 12.0))
@@ -442,9 +446,17 @@ export default function ConsciousnessTheater({ mode } = {}) {
                     ? {
                         position: { x: 0, y: 0, z: 44 },
                         fov: 84,
-                        durationMs: Number.isFinite(Number(beat?.durationMs)) ? Number(beat.durationMs) : 4200,
+                        durationMs: beatDurationMs != null ? beatDurationMs : 4200,
                       }
                     : null);
+              const durationMs =
+                beatDurationMs != null
+                  ? Math.min(1600, Math.max(220, Math.round(beatDurationMs * (isRevealWindow ? 0.55 : 0.45))))
+                  : null;
+              const easing =
+                typeof beat?.easing === 'string' && beat.easing.length
+                  ? beat.easing
+                  : 'smoothstep';
               if (!camera && pointSize == null) return null;
               const paramFlowTurbulenceRaw = Number(paramUniforms?.uFlowTurbulence);
               const paramFlowTurbulence = Number.isFinite(paramFlowTurbulenceRaw)
@@ -482,6 +494,8 @@ export default function ConsciousnessTheater({ mode } = {}) {
                 pointSize,
                 mediumImmersiveBoost,
                 isRevealWindow,
+                durationMs,
+                easing,
               };
             };
 
@@ -505,6 +519,8 @@ export default function ConsciousnessTheater({ mode } = {}) {
                 ...(finalBeat.verb ? { verb: finalBeat.verb } : {}),
                 ...(camera ? { camera } : {}),
                 ...(finalBeat.pointSize != null ? { pointSize: finalBeat.pointSize } : {}),
+                durationMs: 0,
+                ...(finalBeat.easing ? { easing: finalBeat.easing } : {}),
                 ...(finalBeat.mediumImmersiveBoost || {}),
                 uniforms: {
                   ...(finalBeat.mediumImmersiveBoost?.uniforms || {}),
@@ -530,6 +546,8 @@ export default function ConsciousnessTheater({ mode } = {}) {
                   ...(beat.verb ? { verb: beat.verb } : {}),
                   ...(beat.camera ? { camera: beat.camera } : {}),
                   ...(beat.pointSize != null ? { pointSize: beat.pointSize } : {}),
+                  ...(beat.durationMs != null ? { durationMs: beat.durationMs } : {}),
+                  ...(beat.easing ? { easing: beat.easing } : {}),
                   ...(beat.mediumImmersiveBoost || {}),
                 });
               }, beat.atMs);
