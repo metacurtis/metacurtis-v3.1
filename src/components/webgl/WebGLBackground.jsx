@@ -538,6 +538,34 @@ function isLandingVelocitySlice() {
     (resolvedPreset === LANDING_FORM_SEPARATION_PRESET || requestedPreset === LANDING_FORM_SEPARATION_PRESET);
 }
 
+function getLandingVelocityOpeningSeed() {
+  if (typeof window === 'undefined') return null;
+  const canonical = window.Canonical;
+  const resolved = canonical?.landingStageSliceResolved;
+  if (!resolved || resolved.preset !== LANDING_FORM_SEPARATION_PRESET) return null;
+
+  const beats =
+    (resolved.demoKey && Array.isArray(canonical?.visualDemos?.[resolved.demoKey]?.beats)
+      ? canonical.visualDemos[resolved.demoKey].beats
+      : null) ||
+    (Array.isArray(canonical?.visualDemos?.landing_preset_profiles?.[LANDING_FORM_SEPARATION_PRESET]?.beats)
+      ? canonical.visualDemos.landing_preset_profiles[LANDING_FORM_SEPARATION_PRESET].beats
+      : null);
+
+  if (!Array.isArray(beats) || beats.length === 0) return null;
+
+  const beat = beats.find((entry) => Number(entry?.atMs) === 0) || beats[0];
+  const params = beat?.params && typeof beat.params === 'object' ? beat.params : null;
+  if (!params) return null;
+
+  const pointSizeRaw = Number(params.pointSize);
+  return {
+    camera: params.camera && typeof params.camera === 'object' ? params.camera : null,
+    pointSize: Number.isFinite(pointSizeRaw) ? Math.max(0.5, Math.min(pointSizeRaw, 12.0)) : null,
+    uniforms: params.uniforms && typeof params.uniforms === 'object' ? params.uniforms : {},
+  };
+}
+
 function deriveLandingFormZone(geo) {
   const positionAttr = geo?.attributes?.text3DPosition;
   const formWeightAttr = geo?.attributes?.formWeight;
@@ -1392,6 +1420,97 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     };
     return true;
   }, [clearDirectiveUniformTransition]);
+
+  const applyLandingVelocityOpeningSeed = useCallback((uniforms, options = {}) => {
+    if (!uniforms) return false;
+    const seed = getLandingVelocityOpeningSeed();
+    if (!seed) return false;
+
+    let changed = false;
+
+    const applyNumber = (uniformName, value) => {
+      const uniform = uniforms[uniformName];
+      const numericValue = Number(value);
+      if (!uniform || !Number.isFinite(numericValue)) return;
+      uniform.value = numericValue;
+      uniform.needsUpdate = true;
+      changed = true;
+    };
+
+    const applyVectorish = (uniformName, value) => {
+      const uniform = uniforms[uniformName];
+      if (!uniform || !Array.isArray(value)) return;
+      const current = uniform.value;
+      const isTypedArray =
+        current &&
+        typeof ArrayBuffer !== 'undefined' &&
+        typeof ArrayBuffer.isView === 'function' &&
+        ArrayBuffer.isView(current) &&
+        (typeof DataView !== 'function' || !(current instanceof DataView)) &&
+        typeof current.set === 'function';
+
+      if (isTypedArray) {
+        current.set(value);
+      } else if (Array.isArray(current)) {
+        for (let i = 0; i < Math.min(current.length, value.length); i += 1) {
+          current[i] = value[i];
+        }
+      } else if (current?.set) {
+        current.set(...value);
+      } else {
+        uniform.value = value.slice();
+      }
+      uniform.needsUpdate = true;
+      changed = true;
+    };
+
+    if (seed.pointSize != null) {
+      applyNumber('uPointSize', seed.pointSize);
+    }
+
+    Object.entries(seed.uniforms).forEach(([key, value]) => {
+      if (typeof value === 'number') {
+        applyNumber(key, value);
+        return;
+      }
+      if (Array.isArray(value)) {
+        applyVectorish(key, value);
+      }
+    });
+
+    if (options.applyCamera !== false && seed.camera) {
+      const camPayload = seed.camera;
+      const target = cameraTargetRef.current;
+      const cam = cameraRef.current;
+      const lookAt = toVec3(camPayload.lookAt, new THREE.Vector3(0, 0, 0)) || new THREE.Vector3(0, 0, 0);
+      const position = toVec3(camPayload.position, new THREE.Vector3(0, 0, 50)) || new THREE.Vector3(0, 0, 50);
+      target.position.copy(position);
+      target.startPosition.copy(position);
+      target.lookAt.copy(lookAt);
+      target.startLookAt.copy(lookAt);
+      if (target.currentLookAt) target.currentLookAt.copy(lookAt);
+      if (Number.isFinite(camPayload.fov)) {
+        target.fov = Number(camPayload.fov);
+        target.startFov = Number(camPayload.fov);
+      }
+      target.duration = 0;
+      target.active = false;
+      target.startTime = typeof performance !== 'undefined' && performance.now
+        ? performance.now()
+        : Date.now();
+      if (cam) {
+        cam.position.copy(position);
+        if (Number.isFinite(camPayload.fov)) {
+          cam.fov = Number(camPayload.fov);
+          cam.updateProjectionMatrix();
+        }
+        cam.lookAt(lookAt);
+      }
+      changed = true;
+    }
+
+    return changed;
+  }, []);
 
   useEffect(() => {
     if (!BeatBus?.on) return () => {};
@@ -2774,6 +2893,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       if (mat?.uniforms?.uBandFade) {
         mat.uniforms.uBandFade.value = disableBand ? 0 : 1;
         mat.uniformsNeedUpdate = true;
+      }
+      if (!isEmergence && isLandingVelocitySlice() && mat?.uniforms) {
+        const seededLandingOpening = applyLandingVelocityOpeningSeed(mat.uniforms, { applyCamera: true });
+        if (seededLandingOpening) {
+          mat.uniformsNeedUpdate = true;
+          if (import.meta?.env?.DEV) {
+            console.log('[WBG] Seeded landing velocity opening state on bind');
+          }
+        }
       }
 
       if (isEmergence) {
