@@ -34,6 +34,7 @@ const TEXT_FIT_WIDTH = 0.9;
 const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
 const MORPH_WRITE_LOG_LIMIT = 400;
+const LANDING_OPENING_PRESET = 'velocity_stage';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
@@ -445,6 +446,44 @@ function arrayAabb(arr) {
 function attributeAabb(geo, key) {
   const attr = geo?.attributes?.[key];
   return attr?.array ? arrayAabb(attr.array) : null;
+}
+
+function isLandingVelocitySlice() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  const slice = params.get('slice');
+  const requestedPreset = params.get('preset');
+  const resolvedPreset = window.Canonical?.landingStageSliceResolved?.preset;
+  return slice === 'landing_stage' &&
+    (resolvedPreset === LANDING_OPENING_PRESET || requestedPreset === LANDING_OPENING_PRESET);
+}
+
+function getLandingVelocityOpeningSeed() {
+  if (typeof window === 'undefined') return null;
+  const canonical = window.Canonical || Canonical;
+  const resolved = canonical?.landingStageSliceResolved;
+  if (!resolved || resolved.preset !== LANDING_OPENING_PRESET) return null;
+
+  const beats =
+    (resolved.demoKey && Array.isArray(canonical?.visualDemos?.[resolved.demoKey]?.beats)
+      ? canonical.visualDemos[resolved.demoKey].beats
+      : null) ||
+    (Array.isArray(canonical?.visualDemos?.landing_preset_profiles?.[LANDING_OPENING_PRESET]?.beats)
+      ? canonical.visualDemos.landing_preset_profiles[LANDING_OPENING_PRESET].beats
+      : null);
+
+  if (!Array.isArray(beats) || beats.length === 0) return null;
+
+  const beat = beats.find((entry) => Number(entry?.atMs) === 0) || beats[0];
+  const params = beat?.params && typeof beat.params === 'object' ? beat.params : null;
+  if (!params) return null;
+
+  const pointSizeRaw = Number(params.pointSize);
+  return {
+    camera: params.camera && typeof params.camera === 'object' ? params.camera : null,
+    pointSize: Number.isFinite(pointSizeRaw) ? Math.max(0.5, Math.min(pointSizeRaw, 12.0)) : null,
+    uniforms: params.uniforms && typeof params.uniforms === 'object' ? params.uniforms : {},
+  };
 }
 
 const vec2Close = (a = [], b = [], eps = 1e-3) => {
@@ -1443,6 +1482,97 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     console.log(`[WBG] Text positions updated for "${payload?.word || 'unknown'}" (${count} particles)`);
   }, [applyRendererFits]);
 
+  const applyLandingVelocityOpeningSeed = useCallback((uniforms, options = {}) => {
+    if (!uniforms) return false;
+    const seed = getLandingVelocityOpeningSeed();
+    if (!seed) return false;
+
+    let changed = false;
+
+    const applyNumber = (uniformName, value) => {
+      const uniform = uniforms[uniformName];
+      const numericValue = Number(value);
+      if (!uniform || !Number.isFinite(numericValue)) return;
+      uniform.value = numericValue;
+      uniform.needsUpdate = true;
+      changed = true;
+    };
+
+    const applyVectorish = (uniformName, value) => {
+      const uniform = uniforms[uniformName];
+      if (!uniform || !Array.isArray(value)) return;
+      const current = uniform.value;
+      const isTypedArray =
+        current &&
+        typeof ArrayBuffer !== 'undefined' &&
+        typeof ArrayBuffer.isView === 'function' &&
+        ArrayBuffer.isView(current) &&
+        (typeof DataView !== 'function' || !(current instanceof DataView)) &&
+        typeof current.set === 'function';
+
+      if (isTypedArray) {
+        current.set(value);
+      } else if (Array.isArray(current)) {
+        for (let i = 0; i < Math.min(current.length, value.length); i += 1) {
+          current[i] = value[i];
+        }
+      } else if (current?.set) {
+        current.set(...value);
+      } else {
+        uniform.value = value.slice();
+      }
+      uniform.needsUpdate = true;
+      changed = true;
+    };
+
+    if (seed.pointSize != null) {
+      applyNumber('uPointSize', seed.pointSize);
+    }
+
+    Object.entries(seed.uniforms).forEach(([key, value]) => {
+      if (typeof value === 'number') {
+        applyNumber(key, value);
+        return;
+      }
+      if (Array.isArray(value)) {
+        applyVectorish(key, value);
+      }
+    });
+
+    if (options.applyCamera !== false && seed.camera) {
+      const target = cameraTargetRef.current;
+      const cam = cameraRef.current;
+      const lookAt = toVec3(seed.camera.lookAt, new THREE.Vector3(0, 0, 0)) || new THREE.Vector3(0, 0, 0);
+      const position = toVec3(seed.camera.position, new THREE.Vector3(0, 0, 50)) || new THREE.Vector3(0, 0, 50);
+      target.position.copy(position);
+      target.startPosition.copy(position);
+      target.lookAt.copy(lookAt);
+      target.startLookAt.copy(lookAt);
+      if (target.currentLookAt) target.currentLookAt.copy(lookAt);
+      if (Number.isFinite(seed.camera.fov)) {
+        target.fov = Number(seed.camera.fov);
+        target.startFov = Number(seed.camera.fov);
+      }
+      target.duration = 0;
+      target.active = false;
+      target.startTime =
+        typeof performance !== 'undefined' && performance.now
+          ? performance.now()
+          : Date.now();
+      if (cam) {
+        cam.position.copy(position);
+        if (Number.isFinite(seed.camera.fov)) {
+          cam.fov = Number(seed.camera.fov);
+          cam.updateProjectionMatrix();
+        }
+        cam.lookAt(lookAt);
+      }
+      changed = true;
+    }
+
+    return changed;
+  }, []);
+
   const lastBlueprintIdRef = useRef(null);
   const fallbackMorphRef = useRef(0);
   const lastMorphProgressRef = useRef(null);
@@ -2385,6 +2515,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         mat.uniforms.uBandFade.value = disableBand ? 0 : 1;
         mat.uniformsNeedUpdate = true;
       }
+      if (!isEmergence && isLandingVelocitySlice() && mat?.uniforms) {
+        const seededLandingOpening = applyLandingVelocityOpeningSeed(mat.uniforms, { applyCamera: true });
+        if (seededLandingOpening) {
+          mat.uniformsNeedUpdate = true;
+          if (import.meta?.env?.DEV) {
+            console.log('[WBG] Seeded landing velocity opening state on bind');
+          }
+        }
+      }
 
       if (isEmergence) {
         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
@@ -2606,6 +2745,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     finalizeEmergence,
     flushPendingFencepost,
     emitRendererFencepostReady,
+    applyLandingVelocityOpeningSeed,
   ]);
 
   useEffect(() => {
