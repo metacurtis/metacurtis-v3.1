@@ -37,6 +37,11 @@ const MORPH_WRITE_LOG_LIMIT = 400;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
+const isTypedArrayValue = (value) =>
+  typeof ArrayBuffer !== 'undefined' &&
+  typeof ArrayBuffer.isView === 'function' &&
+  ArrayBuffer.isView(value) &&
+  (typeof DataView !== 'function' || !(value instanceof DataView));
 const LANDING_FORM_SEPARATION_PRESET = 'velocity_stage';
 const LANDING_FORM_SEPARATION_MIN_MORPH = 0.82;
 const LANDING_FORM_SEPARATION_RADIUS_SCALE = 0.58;
@@ -51,6 +56,9 @@ const DIRECTIVE_TRANSITIONABLE_UNIFORMS = new Set([
   'uStreakIntensity',
   'uDepthFalloffPower',
   'uCenterWeighting',
+  'uHrvPresence',
+  'uHrvFresnelPower',
+  'uHrvAttenuationDistance',
 ]);
 const clampDirectiveTransitionMs = (value) => {
   if (!Number.isFinite(value)) return 0;
@@ -75,7 +83,7 @@ const toArray = (value) => {
     return tmp;
   }
   if (Array.isArray(value)) return value;
-  if (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView?.(value)) {
+  if (isTypedArrayValue(value)) {
     return Array.from(value);
   }
   if (typeof value.x === 'number' || typeof value.y === 'number') {
@@ -186,8 +194,7 @@ const applyVisualVerbDirective = (directive = {}, uniforms, origin = 'renderer',
       const current = uniform.value;
       const isTypedArray =
         current &&
-        ArrayBuffer.isView(current) &&
-        !(current instanceof DataView) &&
+        isTypedArrayValue(current) &&
         typeof current.set === 'function';
 
       if (isTypedArray) {
@@ -538,6 +545,35 @@ function isLandingVelocitySlice() {
     (resolvedPreset === LANDING_FORM_SEPARATION_PRESET || requestedPreset === LANDING_FORM_SEPARATION_PRESET);
 }
 
+function getLandingVelocityOpeningSeed() {
+  if (typeof window === 'undefined') return null;
+  const canonical = window.Canonical;
+  const resolved = canonical?.landingStageSliceResolved;
+  if (!resolved || resolved.preset !== LANDING_FORM_SEPARATION_PRESET) return null;
+
+  const beats =
+    (resolved.demoKey && Array.isArray(canonical?.visualDemos?.[resolved.demoKey]?.beats)
+      ? canonical.visualDemos[resolved.demoKey].beats
+      : null) ||
+    (Array.isArray(canonical?.visualDemos?.landing_preset_profiles?.[LANDING_FORM_SEPARATION_PRESET]?.beats)
+      ? canonical.visualDemos.landing_preset_profiles[LANDING_FORM_SEPARATION_PRESET].beats
+      : null);
+
+  if (!Array.isArray(beats) || beats.length === 0) return null;
+
+  const beat = beats.find((entry) => Number(entry?.atMs) === 0) || beats[0];
+  const params = beat?.params && typeof beat.params === 'object' ? beat.params : null;
+  if (!params) return null;
+
+  const pointSizeRaw = Number(params.pointSize);
+  return {
+    beat,
+    camera: params.camera && typeof params.camera === 'object' ? params.camera : null,
+    pointSize: Number.isFinite(pointSizeRaw) ? Math.max(0.5, Math.min(pointSizeRaw, 12.0)) : null,
+    uniforms: params.uniforms && typeof params.uniforms === 'object' ? params.uniforms : {},
+  };
+}
+
 function deriveLandingFormZone(geo) {
   const positionAttr = geo?.attributes?.text3DPosition;
   const formWeightAttr = geo?.attributes?.formWeight;
@@ -730,7 +766,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           const value = uniform.value;
           if (value == null) return value;
           if (Array.isArray(value)) return value.slice();
-          if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
+          if (isTypedArrayValue(value)) {
             return Array.from(value);
           }
           if (typeof value === 'object' && typeof value.toArray === 'function') {
@@ -1392,6 +1428,89 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     };
     return true;
   }, [clearDirectiveUniformTransition]);
+
+  const applyLandingVelocityOpeningSeed = useCallback((uniforms, options = {}) => {
+    if (!uniforms) return false;
+    const seed = getLandingVelocityOpeningSeed();
+    if (!seed) return false;
+
+    let changed = false;
+
+    const applyNumber = (uniformName, value) => {
+      const uniform = uniforms[uniformName];
+      const numericValue = Number(value);
+      if (!uniform || !Number.isFinite(numericValue)) return;
+      uniform.value = numericValue;
+      uniform.needsUpdate = true;
+      changed = true;
+    };
+
+    const applyVectorish = (uniformName, value) => {
+      const uniform = uniforms[uniformName];
+      if (!uniform || !Array.isArray(value)) return;
+      const current = uniform.value;
+      if (isTypedArrayValue(current) && typeof current.set === 'function') {
+        current.set(value);
+      } else if (Array.isArray(current)) {
+        for (let i = 0; i < Math.min(current.length, value.length); i += 1) {
+          current[i] = value[i];
+        }
+      } else if (current?.set) {
+        current.set(...value);
+      } else {
+        uniform.value = value.slice();
+      }
+      uniform.needsUpdate = true;
+      changed = true;
+    };
+
+    if (seed.pointSize != null) {
+      applyNumber('uPointSize', seed.pointSize);
+    }
+
+    Object.entries(seed.uniforms).forEach(([key, value]) => {
+      if (typeof value === 'number') {
+        applyNumber(key, value);
+        return;
+      }
+      if (Array.isArray(value)) {
+        applyVectorish(key, value);
+      }
+    });
+
+    if (options.applyCamera !== false && seed.camera) {
+      const camPayload = seed.camera;
+      const target = cameraTargetRef.current;
+      const cam = cameraRef.current;
+      const lookAt = toVec3(camPayload.lookAt, new THREE.Vector3(0, 0, 0)) || new THREE.Vector3(0, 0, 0);
+      const position = toVec3(camPayload.position, new THREE.Vector3(0, 0, 50)) || new THREE.Vector3(0, 0, 50);
+      target.position.copy(position);
+      target.startPosition.copy(position);
+      target.lookAt.copy(lookAt);
+      target.startLookAt.copy(lookAt);
+      if (target.currentLookAt) target.currentLookAt.copy(lookAt);
+      if (Number.isFinite(camPayload.fov)) {
+        target.fov = Number(camPayload.fov);
+        target.startFov = Number(camPayload.fov);
+      }
+      target.duration = 0;
+      target.active = false;
+      target.startTime = typeof performance !== 'undefined' && performance.now
+        ? performance.now()
+        : Date.now();
+      if (cam) {
+        cam.position.copy(position);
+        if (Number.isFinite(camPayload.fov)) {
+          cam.fov = Number(camPayload.fov);
+          cam.updateProjectionMatrix();
+        }
+        cam.lookAt(lookAt);
+      }
+      changed = true;
+    }
+
+    return changed;
+  }, []);
 
   useEffect(() => {
     if (!BeatBus?.on) return () => {};
@@ -2775,6 +2894,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         mat.uniforms.uBandFade.value = disableBand ? 0 : 1;
         mat.uniformsNeedUpdate = true;
       }
+      if (!isEmergence && isLandingVelocitySlice() && mat?.uniforms) {
+        const seededLandingOpening = applyLandingVelocityOpeningSeed(mat.uniforms, { applyCamera: true });
+        if (seededLandingOpening) {
+          mat.uniformsNeedUpdate = true;
+          if (import.meta?.env?.DEV) {
+            console.log('[WBG] Seeded landing velocity opening state on bind');
+          }
+        }
+      }
 
       if (isEmergence) {
         console.log('✅ Renderer: BR(emergence) bound', `count=${raw.particleCount || raw.activeCount}`, `quality=${quality}`);
@@ -3068,7 +3196,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
             const target = uniform.value ?? uniform;
             if (target?.setRGB) {
               target.setRGB(color.r, color.g, color.b);
-            } else if (ArrayBuffer.isView(target) && !(target instanceof DataView)) {
+            } else if (isTypedArrayValue(target)) {
               target[0] = color.r;
               target[1] = color.g;
               target[2] = color.b;
@@ -3144,8 +3272,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           const current = uniform.value;
           const isTypedArray =
             current &&
-            ArrayBuffer.isView(current) &&
-            !(current instanceof DataView) &&
+            isTypedArrayValue(current) &&
             typeof current.set === 'function';
 
           if (isTypedArray) {
@@ -3829,6 +3956,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           uPointerIntensity:{ value: 0.0 },
           uPointerNdc:      { value: new THREE.Vector2(0, 0) },
           uDepthFalloffPower: { value: 1.0 },
+          uHrvPresence:     { value: 0.0 },
+          uHrvFresnelPower: { value: 3.5 },
+          uHrvAttenuationDistance: { value: 2.2 },
+          uHrvTint:         { value: new Float32Array([0.76, 0.82, 0.9]) },
           uMotionMode:      { value: 0.0 },
           uDevicePixelRatio:{ value: resolveDpr() },
           uResolution:      { value: new THREE.Vector2(1, 1) },
@@ -3917,6 +4048,10 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     }
     if (!uniforms.uSpreadFactor) uniforms.uSpreadFactor = { value: 1.0 };
     if (!uniforms.uDepthFalloffPower) uniforms.uDepthFalloffPower = { value: 1.0 };
+    if (!uniforms.uHrvPresence) uniforms.uHrvPresence = { value: 0.0 };
+    if (!uniforms.uHrvFresnelPower) uniforms.uHrvFresnelPower = { value: 3.5 };
+    if (!uniforms.uHrvAttenuationDistance) uniforms.uHrvAttenuationDistance = { value: 2.2 };
+    if (!uniforms.uHrvTint) uniforms.uHrvTint = { value: new Float32Array([0.76, 0.82, 0.9]) };
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (!uniforms.uOpacityMin) uniforms.uOpacityMin = { value: 0.5 };
     if (!uniforms.uOpacityMax) uniforms.uOpacityMax = { value: 1.0 };

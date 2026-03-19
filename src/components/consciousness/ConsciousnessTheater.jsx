@@ -504,6 +504,21 @@ export default function ConsciousnessTheater({ mode } = {}) {
               .filter(Boolean);
             if (resolvedBeats.length === 0) return;
 
+            const emitVelocityBeatDirective = (beat, override = {}) => {
+              emitRenderDirective({
+                source: 'visual_orchestrator',
+                phase: 'landing_stage_mode_velocity',
+                stage: formStageName,
+                ...(beat.verb ? { verb: beat.verb } : {}),
+                ...(beat.camera ? { camera: beat.camera } : {}),
+                ...(beat.pointSize != null ? { pointSize: beat.pointSize } : {}),
+                ...(beat.durationMs != null ? { durationMs: beat.durationMs } : {}),
+                ...(beat.easing ? { easing: beat.easing } : {}),
+                ...(beat.mediumImmersiveBoost || {}),
+                ...override,
+              });
+            };
+
             if (deterministicBoot) {
               const finalBeat =
                 resolvedBeats.find((beat) => beat.isRevealWindow && beat.atMs >= 2400)
@@ -538,18 +553,24 @@ export default function ConsciousnessTheater({ mode } = {}) {
             }
 
             resolvedBeats.forEach((beat) => {
+              if (beat.atMs === 0) {
+                emitVelocityBeatDirective(beat, { durationMs: 0 });
+                const reinforceTimerId = setTimeout(() => {
+                  emitVelocityBeatDirective(beat, { durationMs: 0 });
+                }, 64);
+                demoCleanups.push(() => clearTimeout(reinforceTimerId));
+                if (import.meta.env.DEV) {
+                  console.log('[ConsciousnessTheater] Applied landing velocity beat immediately', {
+                    idx: beat.idx,
+                    atMs: beat.atMs,
+                    hasCamera: !!beat.camera,
+                    pointSize: beat.pointSize,
+                  });
+                }
+                return;
+              }
               const timerId = setTimeout(() => {
-                emitRenderDirective({
-                  source: 'visual_orchestrator',
-                  phase: 'landing_stage_mode_velocity',
-                  stage: formStageName,
-                  ...(beat.verb ? { verb: beat.verb } : {}),
-                  ...(beat.camera ? { camera: beat.camera } : {}),
-                  ...(beat.pointSize != null ? { pointSize: beat.pointSize } : {}),
-                  ...(beat.durationMs != null ? { durationMs: beat.durationMs } : {}),
-                  ...(beat.easing ? { easing: beat.easing } : {}),
-                  ...(beat.mediumImmersiveBoost || {}),
-                });
+                emitVelocityBeatDirective(beat);
               }, beat.atMs);
               demoCleanups.push(() => clearTimeout(timerId));
               if (import.meta.env.DEV) {

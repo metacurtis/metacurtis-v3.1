@@ -23,6 +23,10 @@ uniform float uBandFade;
 uniform float uQrPhotoMode;
 uniform float uOpacityMin;
 uniform float uOpacityMax;
+uniform float uHrvPresence;
+uniform float uHrvFresnelPower;
+uniform float uHrvAttenuationDistance;
+uniform vec3 uHrvTint;
 uniform vec2 uResolution;
 uniform float uMorphProgress;
 uniform float uPointerActive;
@@ -125,6 +129,22 @@ void main() {
   float coherence = smoothstep(0.78, 1.0, uMorphProgress);
   float preResolveAtmosphere = 1.0 - smoothstep(0.58, 0.96, uMorphProgress);
   float resolveCoolLift = smoothstep(0.72, 1.0, uMorphProgress);
+  float hrvPresence = clamp(uHrvPresence, 0.0, 1.0);
+  float hrvLens = 1.0 - smoothstep(0.16, 0.72, length(vec2(vPosition.x * 0.06, vPosition.y * 0.16)));
+  float hrvGlyphEnvelope = smoothstep(0.08, 0.46, glyphPresence) * 0.32;
+  float hrvGlyphCore = smoothstep(0.68, 0.98, glyphPresence) * 0.08;
+  float hrvBodyDensity = 1.0 - smoothstep(0.22, 0.94, uHrvAttenuationDistance);
+  float hrvBodyHold = clamp(hrvPresence * mix(0.18, 1.0, hrvBodyDensity), 0.0, 1.0);
+  float hrvRelease = smoothstep(0.88, 1.12, uHrvAttenuationDistance) * smoothstep(0.94, 1.0, coherence);
+  float hrvShapeResolve = smoothstep(0.985, 1.0, coherence) * hrvRelease;
+  float hrvEnvelope = mix(hrvLens, max(hrvGlyphEnvelope * 0.38, hrvLens), hrvShapeResolve);
+  float hrvCore = mix(
+    smoothstep(0.68, 0.96, hrvLens) * 0.08,
+    max(hrvGlyphCore, smoothstep(0.68, 0.96, hrvLens) * 0.12),
+    hrvShapeResolve
+  );
+  float hrvBoundary = clamp((hrvEnvelope - hrvCore) * mix(0.9, 1.45, hrvRelease), 0.0, 1.0);
+  float hrvEarlyWindow = hrvBodyHold * (1.0 - 0.9 * hrvRelease);
   float formPresence = glyphPresence * carrierWeight * coherence;
   float mistCoherence = glyphPresence * (1.0 - carrierWeight) * coherence;
   float tierAuthority = smoothstep(1.0, 3.0, float(tierIndex)) * mix(1.0, 0.28, mistCoherence);
@@ -154,6 +174,9 @@ void main() {
   // Keep low tiers reading as field density while resolved structure retains more detail.
   float shimmer = 1.0 + sin(uTime * 2.0 + vParticleIndex * 0.1) * mix(0.014, 0.05, resolvedWeight);
   float twinkle = 1.0 + sin(uTime * 5.0 + vParticleIndex * 0.03) * mix(0.008, 0.03, resolvedWeight);
+  float hrvPointSuppression = hrvEarlyWindow * hrvBoundary * 0.28;
+  shimmer = 1.0 + (shimmer - 1.0) * (1.0 - hrvPointSuppression * 0.44);
+  twinkle = 1.0 + (twinkle - 1.0) * (1.0 - hrvPointSuppression * 0.5);
   vec3 finalColor = color * spritePresence * shimmer * twinkle;
   float tierGlowBoost = tierGlowBoostBase * mix(1.0, 0.55, mistCoherence);
   vec3 haloTint = vec3(0.08, 0.24, 0.31);
@@ -170,6 +193,22 @@ void main() {
   vec3 coherenceTint = mix(stageColor, vec3(0.86, 0.9, 0.94), mix(0.1, 0.15, resolveCoolLift));
   vec3 mistFamilyTint = mix(color, coherenceTint, 0.4);
   vec3 formAuthorityTint = mix(mistFamilyTint, vec3(0.86, 0.89, 0.94), 0.2 + 0.08 * resolveCoolLift);
+  float hrvEdgeAuthority =
+    pow(hrvBoundary, max(0.8, uHrvFresnelPower * 0.55))
+    * mix(0.22, 1.0, hrvRelease);
+  float hrvGovernance = hrvPresence * hrvEnvelope * mix(1.0, 0.74, carrierWeight);
+  float hrvTransmission = exp(-hrvGovernance / max(uHrvAttenuationDistance, 0.001));
+  vec3 hrvTint = clamp(uHrvTint, vec3(0.0), vec3(1.0));
+  vec3 hrvTransmissionTint = mix(mistFamilyTint, hrvTint, 0.18 + 0.18 * hrvCore);
+  vec3 hrvBodyTint = mix(mistFamilyTint, hrvTransmissionTint, 0.52);
+  vec3 hrvEdgeTint = mix(hrvBodyTint, hrvTint, 0.28);
+  float hrvOuterField = max(1.0 - hrvEnvelope, 0.0);
+  float hrvMistSubordination = hrvEarlyWindow * hrvOuterField * (0.5 + 0.38 * mistWeight);
+  float hrvBodyVeil = hrvEarlyWindow * hrvEnvelope * (0.28 + 0.12 * (1.0 - hrvBoundary));
+  float hrvLetterSuppression =
+    hrvEarlyWindow
+    * smoothstep(0.06, 0.76, glyphPresence)
+    * (1.0 - 0.9 * hrvRelease);
   float carrierGlowTrim = mix(1.0, 0.5, formPresence);
   float carrierAmbientTrim = mix(1.0, 0.74, formPresence);
   float fieldMistLift =
@@ -189,7 +228,38 @@ void main() {
     * mix(0.84, 1.02, bandCurve)
     * mistTemporalContrast
   );
-  finalColor = mix(finalColor, max(finalColor, formAuthorityTint * (0.76 + 0.16 * spritePresence)), formPresence * 0.32);
+  finalColor *= 1.0 - hrvMistSubordination;
+  finalColor *= mix(1.0, mix(0.96, 0.78, 1.0 - hrvTransmission), hrvGovernance * 0.42);
+  finalColor = mix(
+    finalColor,
+    mix(finalColor, hrvBodyTint * (0.46 + 0.08 * spritePresence), 0.38),
+    hrvBodyVeil * 0.38
+  );
+  finalColor = mix(
+    finalColor,
+    finalColor * (1.0 - 0.22 * hrvLetterSuppression),
+    hrvLetterSuppression
+  );
+  finalColor = mix(
+    finalColor,
+    mix(finalColor, hrvBodyTint * (0.58 + 0.1 * spritePresence), 0.24),
+    hrvGovernance * mix(0.58, 0.16, hrvRelease)
+  );
+  finalColor = mix(
+    finalColor,
+    max(finalColor, hrvEdgeTint * (0.18 + 0.06 * spritePresence)),
+    hrvEdgeAuthority * hrvPresence * mix(0.28, 0.12, coherence)
+  );
+  float earlyFormSuppression =
+    max(
+      hrvEarlyWindow * max(hrvCore * 0.42, hrvEnvelope * 0.78),
+      hrvBodyHold * smoothstep(0.06, 0.76, glyphPresence) * (1.0 - 0.08 * hrvRelease)
+    ) * 0.9995;
+  finalColor = mix(
+    finalColor,
+    max(finalColor, formAuthorityTint * (0.76 + 0.16 * spritePresence)),
+    formPresence * 0.32 * (1.0 - earlyFormSuppression)
+  );
 
   float pointerPresence = clamp(uPointerActive * uPointerIntensity, 0.0, 1.0);
   float pointerAlphaLift = 0.0;
@@ -236,11 +306,13 @@ void main() {
   resolvedOpacity = mix(resolvedOpacity, formOpacity, formPresence * opacityControlActive);
   float alphaShape = mix(sprite.a * edgeFade, mistShape, mistWeight * 0.88);
   float formEdgeShape = sprite.a * mix(edgeFade, edgeFade * edgeFade, 0.34);
-  alphaShape = mix(alphaShape, formEdgeShape, formPresence * 0.72);
+  float hrvAlphaFormTrim = 1.0 - hrvEarlyWindow * smoothstep(0.08, 0.78, glyphPresence) * 0.72;
+  alphaShape = mix(alphaShape, formEdgeShape, formPresence * 0.72 * hrvAlphaFormTrim);
   float alpha = resolvedOpacity * alphaShape * uFadeProgress;
   alpha *= 1.0 + pointerAlphaLift;
-  alpha *= 1.0 + formPresence * 0.06;
+  alpha *= 1.0 + formPresence * 0.06 * (1.0 - hrvEarlyWindow * 0.92);
   alpha *= 1.0 + mistCoherence * 0.03 * mistWeight;
+  alpha *= 1.0 + hrvEnvelope * hrvEarlyWindow * 0.08 * (1.0 - smoothstep(0.06, 0.74, glyphPresence));
 
   if (abs(uTierHighlight - float(tierIndex)) < 0.5) {
     finalColor *= 1.2;

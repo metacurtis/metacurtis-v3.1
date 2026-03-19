@@ -1424,21 +1424,124 @@
         "beats": [
           {
             "atMs": 0,
-            "durationMs": 5000,
-            "verb": "coalesce",
+            "durationMs": 2200,
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-              "color": "#C4B5FD",
-              "intensity": 0.16,
+              "color": "#8EA5D4",
+              "intensity": 0.045,
               "camera": {
                 "position": {
                   "x": 0,
                   "y": 0,
-                  "z": 50
+                  "z": 49
                 },
-                "fov": 100,
-                "durationMs": 700
+                "fov": 98,
+                "durationMs": 500
+              },
+              "pointSize": 4.7,
+              "uniforms": {
+                "uMotionMode": 0,
+                "uHrvPresence": 1,
+                "uHrvFresnelPower": 0.9,
+                "uHrvAttenuationDistance": 0.12,
+                "uHrvTint": [
+                  0.66,
+                  0.73,
+                  0.83
+                ],
+                "uFlowTurbulence": 0.006,
+                "uStreakIntensity": 0,
+                "uSpreadFactor": 0.34,
+                "uGaussianSigma": 1.1,
+                "uDepthFalloffPower": 2.3,
+                "uCenterWeighting": 2.85,
+                "uOpacityMax": 0.09,
+                "uOpacityMin": 0.018,
+                "uBandFade": 0.0,
+                "uBandHeight": 0.18
+              }
+            }
+          },
+          {
+            "atMs": 2200,
+            "durationMs": 800,
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#A4B8E0",
+              "intensity": 0.055,
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 47.5
+                },
+                "fov": 92,
+                "durationMs": 650
+              },
+              "pointSize": 4.9,
+              "uniforms": {
+                "uMotionMode": 0,
+                "uHrvPresence": 1,
+                "uHrvFresnelPower": 1.15,
+                "uHrvAttenuationDistance": 0.18,
+                "uHrvTint": [
+                  0.69,
+                  0.76,
+                  0.86
+                ],
+                "uFlowTurbulence": 0.007,
+                "uStreakIntensity": 0,
+                "uSpreadFactor": 0.42,
+                "uGaussianSigma": 1.02,
+                "uDepthFalloffPower": 2.16,
+                "uCenterWeighting": 2.52,
+                "uOpacityMax": 0.095,
+                "uOpacityMin": 0.02,
+                "uBandFade": 0.01,
+                "uBandHeight": 0.2
+              }
+            }
+          },
+          {
+            "atMs": 3000,
+            "durationMs": 2000,
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#D0D9F3",
+              "intensity": 0.08,
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 45.5
+                },
+                "fov": 88,
+                "durationMs": 900
+              },
+              "pointSize": 5.3,
+              "uniforms": {
+                "uMotionMode": 0,
+                "uHrvPresence": 0.96,
+                "uHrvFresnelPower": 2.2,
+                "uHrvAttenuationDistance": 0.7,
+                "uHrvTint": [
+                  0.74,
+                  0.81,
+                  0.91
+                ],
+                "uFlowTurbulence": 0.012,
+                "uStreakIntensity": 0,
+                "uSpreadFactor": 0.58,
+                "uGaussianSigma": 0.96,
+                "uDepthFalloffPower": 1.9,
+                "uCenterWeighting": 2.08,
+                "uOpacityMax": 0.11,
+                "uOpacityMin": 0.024,
+                "uBandFade": 0.05,
+                "uBandHeight": 0.28
               }
             }
           },
@@ -1451,17 +1554,25 @@
               "text": "FORM",
               "color": "#9333EA",
               "intensity": 0.14,
-            "camera": {
-              "position": {
-                "x": 0,
-                "y": 0,
-                "z": 40
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 40
+                },
+                "fov": 84,
+                "durationMs": 700
               },
-              "fov": 84,
-              "durationMs": 700
-            },
               "pointSize": 7,
               "uniforms": {
+                "uHrvPresence": 0.62,
+                "uHrvFresnelPower": 4.2,
+                "uHrvAttenuationDistance": 1.6,
+                "uHrvTint": [
+                  0.81,
+                  0.87,
+                  0.95
+                ],
                 "uMorphProgress": 1,
                 "uFlowTurbulence": 0.08,
                 "uStreakIntensity": 0,
@@ -1475,22 +1586,30 @@
           },
           {
             "atMs": 7600,
-          "durationMs": 700,
+            "durationMs": 700,
             "verb": "velocity_rest",
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-            "camera": {
-              "position": {
-                "x": 0,
-                "y": 0,
-                "z": 34
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 34
+                },
+                "fov": 84,
+                "durationMs": 200
               },
-              "fov": 84,
-              "durationMs": 200
-            },
               "pointSize": 6,
               "uniforms": {
+                "uHrvPresence": 0.44,
+                "uHrvFresnelPower": 4,
+                "uHrvAttenuationDistance": 1.9,
+                "uHrvTint": [
+                  0.81,
+                  0.87,
+                  0.95
+                ],
                 "uMorphProgress": 1,
                 "uFlowTurbulence": 0,
                 "uStreakIntensity": 0,
@@ -1509,17 +1628,25 @@
             "easing": "smoothstep",
             "params": {
               "text": "FORM",
-            "camera": {
-              "position": {
-                "x": 0,
-                "y": 0,
-                "z": 34
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 34
+                },
+                "fov": 84,
+                "durationMs": 200
               },
-              "fov": 84,
-              "durationMs": 200
-            },
               "pointSize": 7,
               "uniforms": {
+                "uHrvPresence": 0.5,
+                "uHrvFresnelPower": 4.2,
+                "uHrvAttenuationDistance": 1.75,
+                "uHrvTint": [
+                  0.81,
+                  0.87,
+                  0.95
+                ],
                 "uMorphProgress": 1,
                 "uFlowTurbulence": 0,
                 "uStreakIntensity": 0,
@@ -1551,6 +1678,14 @@
               },
               "pointSize": 6,
               "uniforms": {
+                "uHrvPresence": 0.38,
+                "uHrvFresnelPower": 3.8,
+                "uHrvAttenuationDistance": 2.1,
+                "uHrvTint": [
+                  0.8,
+                  0.86,
+                  0.94
+                ],
                 "uMorphProgress": 1,
                 "uFlowTurbulence": 0.04,
                 "uStreakIntensity": 0.01,

@@ -1,0 +1,940 @@
+{
+  "meta": {
+    "url": "http://127.0.0.1:5176/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+    "checkpoints": [
+      0,
+      800,
+      1800,
+      3000
+    ],
+    "stageStartDetected": true,
+    "generatedAt": "2026-03-19T13:36:01.210Z"
+  },
+  "schemaViolationCount": 0,
+  "singleWriterViolationCount": 0,
+  "schemaViolations": [],
+  "singleWriterViolations": [],
+  "samples": [
+    {
+      "offsetMs": 0,
+      "capturedAt": "2026-03-19T13:35:58.282Z",
+      "state": {
+        "renderer": {
+          "hasMaterial": false,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": null,
+            "uPointSize": null,
+            "uOpacityMin": null,
+            "uOpacityMax": null,
+            "uGaussianSigma": null,
+            "uDepthFalloffPower": null,
+            "uTierCutoff": null,
+            "uFadeProgress": null,
+            "uCenterWeighting": null,
+            "uFlowTurbulence": null,
+            "uStreakIntensity": null,
+            "uSpreadFactor": null,
+            "uPointerActive": null,
+            "uPointerIntensity": null,
+            "uPointerNdc": null
+          },
+          "pointer": {
+            "active": 0,
+            "intensity": 0,
+            "inside": false,
+            "ndcX": 0,
+            "ndcY": 0,
+            "clientX": 0,
+            "clientY": 0
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              50
+            ],
+            "fov": 100,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              50
+            ],
+            "fov": 100,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": null,
+            "uPointSize": null,
+            "uGaussianSigma": null,
+            "uDepthFalloffPower": null,
+            "uCenterWeighting": null,
+            "uFlowTurbulence": null,
+            "uStreakIntensity": null,
+            "uSpreadFactor": null,
+            "uOpacityMin": null,
+            "uOpacityMax": null
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "If this resonates, let’s talk.",
+              "ctaHref": "mailto:curtis@curtiswhorton.com"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 800,
+      "capturedAt": "2026-03-19T13:35:58.946Z",
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0,
+            "uPointSize": 5.8,
+            "uOpacityMin": 0.025,
+            "uOpacityMax": 0.1,
+            "uGaussianSigma": 1.28,
+            "uDepthFalloffPower": 1.95,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 2.35,
+            "uFlowTurbulence": 0.01,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.58,
+            "uPointerActive": 0,
+            "uPointerIntensity": 0,
+            "uPointerNdc": [
+              0,
+              0
+            ]
+          },
+          "pointer": {
+            "active": 0,
+            "intensity": 0,
+            "inside": false,
+            "ndcX": 0,
+            "ndcY": 0,
+            "clientX": 0,
+            "clientY": 0
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              49.99949270005185
+            ],
+            "fov": 99.99869551441905,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              49.99949270005185
+            ],
+            "fov": 99.99869551441905,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0,
+            "uPointSize": 5.8,
+            "uGaussianSigma": 1.28,
+            "uDepthFalloffPower": 1.95,
+            "uCenterWeighting": 2.35,
+            "uFlowTurbulence": 0.01,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.58,
+            "uOpacityMin": 0.025,
+            "uOpacityMax": 0.1
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "If this resonates, let’s talk.",
+              "ctaHref": "mailto:curtis@curtiswhorton.com"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 1800,
+      "capturedAt": "2026-03-19T13:36:00.073Z",
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0.5972456643861971,
+            "uPointSize": 5.799895132971888,
+            "uOpacityMin": 0.02500072003064986,
+            "uOpacityMax": 0.10000144006129973,
+            "uGaussianSigma": 1.2799827192644033,
+            "uDepthFalloffPower": 1.9499870394483023,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 2.349975518957905,
+            "uFlowTurbulence": 0.010000311456102829,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.5800086403677983,
+            "uPointerActive": 0,
+            "uPointerIntensity": 0,
+            "uPointerNdc": [
+              0,
+              0
+            ]
+          },
+          "pointer": {
+            "active": 0,
+            "intensity": 0,
+            "inside": false,
+            "ndcX": 0,
+            "ndcY": 0,
+            "clientX": 0,
+            "clientY": 0
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              43.00008830223032
+            ],
+            "fov": 82.00008830223031,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              43.00008830223032
+            ],
+            "fov": 82.00008830223031,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0.5972456643861971,
+            "uPointSize": 5.799895132971888,
+            "uGaussianSigma": 1.2799827192644033,
+            "uDepthFalloffPower": 1.9499870394483023,
+            "uCenterWeighting": 2.349975518957905,
+            "uFlowTurbulence": 0.010000311456102829,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.5800086403677983,
+            "uOpacityMin": 0.02500072003064986,
+            "uOpacityMax": 0.10000144006129973
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "If this resonates, let’s talk.",
+              "ctaHref": "mailto:curtis@curtiswhorton.com"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 3000,
+      "capturedAt": "2026-03-19T13:36:01.210Z",
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 1,
+            "uPointSize": 5.1,
+            "uOpacityMin": 0.03,
+            "uOpacityMax": 0.11,
+            "uGaussianSigma": 1.16,
+            "uDepthFalloffPower": 1.86,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 2.18,
+            "uFlowTurbulence": 0.012,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.64,
+            "uPointerActive": 0,
+            "uPointerIntensity": 0,
+            "uPointerNdc": [
+              0,
+              0
+            ]
+          },
+          "pointer": {
+            "active": 0,
+            "intensity": 0,
+            "inside": false,
+            "ndcX": 0,
+            "ndcY": 0,
+            "clientX": 0,
+            "clientY": 0
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              43.5
+            ],
+            "fov": 82.5,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              43.5
+            ],
+            "fov": 82.5,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 1,
+            "uPointSize": 5.1,
+            "uGaussianSigma": 1.16,
+            "uDepthFalloffPower": 1.86,
+            "uCenterWeighting": 2.18,
+            "uFlowTurbulence": 0.012,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.64,
+            "uOpacityMin": 0.03,
+            "uOpacityMax": 0.11
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "If this resonates, let’s talk.",
+              "ctaHref": "mailto:curtis@curtiswhorton.com"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    }
+  ],
+  "interestingLogs": [
+    {
+      "wallClockMs": 1773927356960,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 2336.5}"
+    },
+    {
+      "wallClockMs": 1773927356960,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1773927358019,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 1400, hasCamera: true, pointSize: 5.1}"
+    },
+    {
+      "wallClockMs": 1773927358019,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 3000, hasCamera: true, pointSize: 5.7}"
+    },
+    {
+      "wallClockMs": 1773927358019,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 5000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1773927358020,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 7600, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1773927358020,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 8300, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1773927358021,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 6, atMs: 9400, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1773927358021,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1773927358275,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(11)}"
+    },
+    {
+      "wallClockMs": 1773927358275,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: null, keys: Array(11)}"
+    },
+    {
+      "wallClockMs": 1773927358277,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.0593661505923828, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927358277,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.0593661505923828}"
+    },
+    {
+      "wallClockMs": 1773927358428,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3805.0999999940395}"
+    },
+    {
+      "wallClockMs": 1773927358429,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(11)}"
+    },
+    {
+      "wallClockMs": 1773927358429,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: null, keys: Array(11)}"
+    },
+    {
+      "wallClockMs": 1773927358432,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.000006313597237016795, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927358432,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.000006313597237016795}"
+    },
+    {
+      "wallClockMs": 1773927358950,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0, timestamp: 4319.399999991059}"
+    },
+    {
+      "wallClockMs": 1773927358951,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.24631240122420656, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927358951,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.24631240122420656}"
+    },
+    {
+      "wallClockMs": 1773927359226,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0, timestamp: 4603.899999991059}"
+    },
+    {
+      "wallClockMs": 1773927359231,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.3740196003861708, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927359231,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.3740196003861708}"
+    },
+    {
+      "wallClockMs": 1773927359415,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.24631240122420656, timestamp: 4792.20000000298}"
+    },
+    {
+      "wallClockMs": 1773927359417,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.5972456643861971, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927359417,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.5972456643861971}"
+    },
+    {
+      "wallClockMs": 1773927359621,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.3740196003861708, timestamp: 4997.20000000298}"
+    },
+    {
+      "wallClockMs": 1773927359623,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(11)}"
+    },
+    {
+      "wallClockMs": 1773927359623,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: null, keys: Array(11)}"
+    },
+    {
+      "wallClockMs": 1773927359626,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7387830403859911, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927359626,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7387830403859911}"
+    },
+    {
+      "wallClockMs": 1773927360076,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.5972456643861971, timestamp: 5448.5999999940395}"
+    },
+    {
+      "wallClockMs": 1773927360077,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9711846067508155, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927360077,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9711846067508155}"
+    },
+    {
+      "wallClockMs": 1773927360353,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7387830403859911, timestamp: 5729}"
+    },
+    {
+      "wallClockMs": 1773927360356,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 1, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1773927360357,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 1}"
+    },
+    {
+      "wallClockMs": 1773927360767,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9711846067508155, timestamp: 6144.20000000298}"
+    }
+  ],
+  "tailLogs": [
+    "[emitBlueprintReady] Resolved word: HELLO CURTIS",
+    "[emitBlueprintReady] Registering GlyphSpace: {word: HELLO CURTIS, source: genesis, glyphCount: 12, builtOnFly: false}",
+    "[PatternS] emit BLUEPRINT_READY from at emitBlueprintReady (http://127.0.0.1:5176/src/engine/utils/blueprintUtils.js:224:3) {channel: renderer, blueprint: Object, stage: genesis, quality: ULTRA, cached: false}",
+    "[Pattern S] Unauthorized core event emitter {event: BLUEPRINT_READY, callerFile: src/engine/utils/blueprintUtils.js, allowed: Array(1)}",
+    "🧠 Engine: buildAndEmitBlueprint failed Error: Pattern S violation: BLUEPRINT_READY emitted from src/engine/utils/blueprintUtils.js\n    at BeatBus.emit (http://127.0.0.1:5176/src/theater/bus/index.js:381:15)\n    at emitBlueprintReady (http://127.0.0.1:5176/src/theater/bus/emitters.js:44:11)\n    at emitBlueprintReady (http://127.0.0.1:5176/src/engine/utils/blueprintUtils.js:224:3)\n    at ConsciousnessEngine.buildAndEmitBlueprint (http://127.0.0.1:5176/src/engine/ConsciousnessEngine.js:1984:9)",
+    "🔬 [BLUEPRINT] Final blueprint check: {stage: genesis, hasPositions: true, positionsLength: 9000, metadata: Object}",
+    "[emitBlueprintReady] CALLED {hasBlueprint: true, word: undefined, hasHotspotLookup: true, hasText3D: true, metadata: Object}",
+    "[emitBlueprintReady] Resolved word: HELLO CURTIS",
+    "[emitBlueprintReady] Registering GlyphSpace: {word: HELLO CURTIS, source: genesis, glyphCount: 12, builtOnFly: false}",
+    "[PatternS] emit BLUEPRINT_READY from at emitBlueprintReady (http://127.0.0.1:5176/src/engine/utils/blueprintUtils.js:224:3) {channel: renderer, blueprint: Object, stage: genesis, quality: ULTRA, cached: false}",
+    "[Pattern S] Unauthorized core event emitter {event: BLUEPRINT_READY, callerFile: src/engine/utils/blueprintUtils.js, allowed: Array(1)}",
+    "🧠 Engine: buildAndEmitBlueprint failed Error: Pattern S violation: BLUEPRINT_READY emitted from src/engine/utils/blueprintUtils.js\n    at BeatBus.emit (http://127.0.0.1:5176/src/theater/bus/index.js:381:15)\n    at emitBlueprintReady (http://127.0.0.1:5176/src/theater/bus/emitters.js:44:11)\n    at emitBlueprintReady (http://127.0.0.1:5176/src/engine/utils/blueprintUtils.js:224:3)\n    at ConsciousnessEngine.buildAndEmitBlueprint (http://127.0.0.1:5176/src/engine/ConsciousnessEngine.js:1984:9)",
+    "[GroupMarkerNotSet(crbug.com/242999)!:A0B02000FC140000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+    "🛑 GPU Watchdog disabled via __DISABLE_GPU_WATCHDOG__ flag",
+    "[Canon] Bus Limiter installed: {enabled: false, rules: Object}",
+    "\n╔════════════════════════════════════════╗\n║  Canon Dev-OS v3.6 - HUD Controls     ║\n╠════════════════════════════════════════╣\n║  F2         = Toggle HUD (easiest)     ║\n║  Ctrl+H     = Toggle HUD (laptop)      ║\n║  ?hud=1     = Force on via URL         ║\n║                                        ║\n║  Console Commands:                     ║\n║  CANON_CONSOLE.showHud()              ║\n║  CANON_CONSOLE.hideHud()              ║\n║  CANON_CONSOLE.stats()                ║\n╚════════════════════════════════════════╝\n",
+    "🧠 Learning System connected to 9 incident types",
+    "✅ [DEV MODE] Canon Dev-OS loaded",
+    "🔎 Font HEAD 200 @ http://127.0.0.1:5176/fonts/CourierPrime_Regular.typeface.json",
+    "🔎 Font HEAD 200 @ http://127.0.0.1:5176/fonts/CourierPrime_Regular.typeface.json",
+    "[GroupMarkerNotSet(crbug.com/242999)!:A0B02000FC140000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+    "🎨 [Canvas] WebGL context created with optimized settings",
+    "[WebGLCanvas] Canvas created with constellation optimization {renderer: WebGL2, maxTextures: 32, maxVertexAttributes: undefined, pointSizeRange: Float32Array(2), canvasSize: Object}",
+    "🎯 Canvas Event: webgl_canvas_created {webgl_version: 2, point_size_range: Float32Array(2), setup_time: 2.2000000029802322}",
+    "[.WebGL-0x14740067c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x14740067c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "✅ 3D font loaded from /fonts/CourierPrime_Regular.typeface.json; cleared text3D cache (was 0 entries)",
+    "🎨 PointSpriteAtlas: Development tools ready",
+    "🔧 Test atlas: window.testAtlasGeneration()",
+    "🧪 Test selection: window.testContextualSelection()",
+    "🧪 Testing with threshold 1.0",
+    "🎯 ParticleRaycaster initialized (threshold: 1)",
+    "🧪 Diagnostic analysis ready",
+    "   1. Click particles once",
+    "   2. Run: window.analyzeDiagnostic()",
+    "📐 Theater: synthetic ENGINE_VIEWPORT_HINT emitted",
+    "📐 Renderer: Sent viewport hint (proj-matrix) {width: 211.9, height: 119.2, aspect: 1.78, cameraDist: 50.00, orientation: landscape}",
+    "🎨 Creating new PointSpriteAtlas singleton",
+    "🎨 PointSpriteAtlas: Initializing 256×256 atlas with 16 contextual sprites",
+    "✅ PointSpriteAtlas: Generated 256×256 atlas with 16 consciousness-themed sprites",
+    "✅ PointSpriteAtlas: WebGL texture created with mipmaps and proper settings",
+    "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 2336.5}",
+    "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}",
+    "[ConsciousnessTheater] Landing stage mode detected {preset: velocity_stage, stage: velocity, quality: ULTRA}",
+    "[.WebGL-0x14740067c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "[.WebGL-0x14740067c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+    "[CAM STATE] {pos: Array(3), fov: 100, zoom: 1}",
+    "[DemoGate] Forcing rendererReady via timeout fallback",
+    "[DemoGate] maybeStartDemo {demoBlueprintReady: false, rendererReady: true, useStageModeLanding: true, pendingActiveCount: null, timestamp: 3379.2999999970198}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🎨 qualityAtom: Quality tier set to ULTRA (DPR: 1.20, Particles: 3000)",
+    "[StateCommands] Opening phase complete",
+    "🧠 Engine: Opening phase complete",
+    "   Theater: Scroll enabled by Director",
+    "[WBG] Directives enabled {reason: enable-scroll}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🎭 stageAtom: Auto advance disabled",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🎭 stageAtom: Stage set to velocity (3)",
+    "⚛️ createAtom: Advanced cache cleared",
+    "[PatternS] emit STAGE_CHANGE from at StateCommands.setStage (http://127.0.0.1:5176/src/state/commands/StateCommands.js:224:9) {from: null, to: velocity, source: StateCommands}",
+    "[TAP][STAGE_CHANGE] {from: null, to: velocity, source: StateCommands}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5176/src/components/consciousness/ConsciousnessTheater.jsx?t=1773922255822:527:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, camera: Object, pointSize: 5.8}",
+    "[ConsciousnessTheater] Applied landing velocity beat immediately {idx: 0, atMs: 0, hasCamera: true, pointSize: 5.8}",
+    "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 1400, hasCamera: true, pointSize: 5.1}",
+    "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 3000, hasCamera: true, pointSize: 5.7}",
+    "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 5000, hasCamera: true, pointSize: 7}",
+    "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 7600, hasCamera: true, pointSize: 6}",
+    "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 8300, hasCamera: true, pointSize: 7}",
+    "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 6, atMs: 9400, hasCamera: true, pointSize: 6}",
+    "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}",
+    "🧠 Engine: Quality -> ULTRA",
+    "🧠 Using cached blueprint for genesis|ULTRA",
+    "🔬 [BLUEPRINT] Final blueprint check: {stage: genesis, hasPositions: true, positionsLength: 9000, metadata: Object}",
+    "[emitBlueprintReady] CALLED {hasBlueprint: true, word: undefined, hasHotspotLookup: true, hasText3D: true, metadata: Object}",
+    "[emitBlueprintReady] Resolved word: HELLO CURTIS",
+    "[emitBlueprintReady] Registering GlyphSpace: {word: HELLO CURTIS, source: genesis, glyphCount: 12, builtOnFly: false}",
+    "[PatternS] emit BLUEPRINT_READY from at emitBlueprintReady (http://127.0.0.1:5176/src/engine/utils/blueprintUtils.js:224:3) {channel: renderer, blueprint: Object, stage: genesis, quality: ULTRA, cached: true}",
+    "🎬 [STAGE CHANGE] {from: null, to: velocity, hasBeatSheet: false, narrationControllerExists: false}",
+    "🎨 [Canonical] No beat sheets found",
+    "[BeatScheduler] No beat sheet for stage velocity",
+    "⚠️ [NO BEAT SHEET] velocity",
+    "🧠 Engine: Stage -> velocity",
+    "🧠 Building new blueprint for velocity|ULTRA",
+    "🔬 [BLUEPRINT] Starting position generation for stage: velocity",
+    "🔬 [BLUEPRINT] Input SST data: {particlesBase: 12000, hasLetterGeometry: true}",
+    "🧠 Building velocity: 15000 particles",
+    "🔬 [BLUEPRINT] Position array result: {type: Float32Array, length: 45000, sample: Array(6), isFloat32Array: true}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🎨 qualityAtom: Particle budget updated - velocity: 18000 particles (ULTRA)",
+    "🎯 [_animateMorphPhase] Starting stage_entry {config: Object, stage: genesis, phase: stage_entry, timestamp: 1773927358258}",
+    "🗺️ Renderer: Hotspot map empty for stage genesis",
+    "[WBG] atmosphericPositions check: {exists: true, type: object, isFloat32Array: true, length: 9000}",
+    "[WBG] Geometry attributes: [position, atmosphericPosition, text3DPosition, animationSeed, sizeMultiplier, opacityData, formWeight, atlasIndex, tierData]",
+    "[WBG] atmosphericPosition samples: {p0: Array(3), p1: Array(3), p2: Array(3), xValues: Array(10)}",
+    "✅ Renderer: cached BR(full) stage=genesis count=3000 quality=ULTRA ",
+    "[PatternS] emit PARTICLES_EMERGED from at http://127.0.0.1:5176/src/components/webgl/WebGLBackground.jsx?t=1773922255822:1060:5 {channel: renderer, at: 3643, source: renderer-full-genesis-bind, stage: genesis, morph: 1}",
+    "[WBG] Directives enabled {reason: particles-emerged}",
+    "✅ [RENDERER] PARTICLES_EMERGED emitted {channel: renderer, at: 3643, source: renderer-full-genesis-bind, stage: genesis, morph: 1}",
+    "🔬 [BLUEPRINT] Final blueprint check: {stage: velocity, hasPositions: true, positionsLength: 45000, metadata: Object}",
+    "[emitBlueprintReady] CALLED {hasBlueprint: true, word: undefined, hasHotspotLookup: true, hasText3D: true, metadata: Object}",
+    "[emitBlueprintReady] Resolved word: FORM",
+    "[emitBlueprintReady] Registering GlyphSpace: {word: FORM, source: velocity, glyphCount: 4, builtOnFly: false}",
+    "[PatternS] emit BLUEPRINT_READY from at emitBlueprintReady (http://127.0.0.1:5176/src/engine/utils/blueprintUtils.js:224:3) {channel: renderer, blueprint: Object, stage: velocity, quality: ULTRA, cached: false}",
+    "🎯 [_animateMorphPhase] Starting stage_entry {config: Object, stage: velocity, phase: stage_entry, timestamp: 1773927358267}",
+    "🗺️ Renderer: Hotspot map empty for stage velocity",
+    "[WBG] atmosphericPositions check: {exists: true, type: object, isFloat32Array: true, length: 45000}",
+    "[WBG] Geometry attributes: [position, atmosphericPosition, text3DPosition, animationSeed, sizeMultiplier, opacityData, formWeight, atlasIndex, tierData]",
+    "[WBG] atmosphericPosition samples: {p0: Array(3), p1: Array(3), p2: Array(3), xValues: Array(10)}",
+    "✅ Renderer: new BR(full) stage=velocity count=15000 quality=ULTRA ",
+    "[DemoGate] BLUEPRINT_READY {expectedStage: velocity, payloadStage: velocity, blueprintStage: velocity, pendingActiveCount: 15000, timestamp: 3648.2000000029802}",
+    "[DemoGate] maybeStartDemo {demoBlueprintReady: true, rendererReady: true, useStageModeLanding: true, pendingActiveCount: 15000, timestamp: 3648.5}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(11), listenerCount: 1}",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(11)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: null, keys: Array(11)}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.0593661505923828, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.0593661505923828}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.0593661505923828, source: raf-timed, timestamp: 3651.2999999970198}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5176/src/components/consciousness/ConsciousnessTheater.jsx?t=1773922255822:527:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, camera: Object, pointSize: 5.8}",
+    "🔮 Preloading next stage: discipline",
+    "🔬 [BLUEPRINT] Starting position generation for stage: discipline",
+    "🔬 [BLUEPRINT] Input SST data: {particlesBase: 3000, hasLetterGeometry: true}",
+    "🧠 Building discipline: 4500 particles",
+    "🔬 [BLUEPRINT] Position array result: {type: Float32Array, length: 13500, sample: Array(6), isFloat32Array: true}",
+    "✅ Preload complete: {stage: discipline, quality: ULTRA, particles: 4500, cacheSize: 3}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(11), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3805.0999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(11)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: null, keys: Array(11)}",
+    "[WBG] Camera directive received: {position: Object, fov: 82, durationMs: 650}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.000006313597237016795, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.000006313597237016795}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.000006313597237016795, source: raf-timed, timestamp: 3810.0999999940395}",
+    "🧪 Shader compiled",
+    "⚛️ createAtom: Advanced cache cleared",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0, timestamp: 4319.399999991059}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.24631240122420656, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.24631240122420656}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.24631240122420656, source: raf-timed, timestamp: 4324.70000000298}",
+    "🔮 Preloading next stage: architecture",
+    "🔬 [BLUEPRINT] Starting position generation for stage: architecture",
+    "🔬 [BLUEPRINT] Input SST data: {particlesBase: 8000, hasLetterGeometry: true}",
+    "🧠 Building architecture: 12000 particles",
+    "🔬 [BLUEPRINT] Position array result: {type: Float32Array, length: 36000, sample: Array(6), isFloat32Array: true}",
+    "✅ Preload complete: {stage: architecture, quality: ULTRA, particles: 12000, cacheSize: 4}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0, timestamp: 4603.899999991059}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.246",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.3740196003861708, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.3740196003861708}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.3740196003861708, source: raf-timed, timestamp: 4607.5}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.24631240122420656, timestamp: 4792.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.374",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.5972456643861971, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.5972456643861971}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.5972456643861971, source: raf-timed, timestamp: 4794.5}",
+    "[CAM STATE] {pos: Array(3), fov: 82, zoom: 1}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5176/src/components/consciousness/ConsciousnessTheater.jsx?t=1773922255822:527:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, camera: Object, pointSize: 5.1}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(11), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.3740196003861708, timestamp: 4997.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.597",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(11)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: null, keys: Array(11)}",
+    "[WBG] Camera directive received: {position: Object, fov: 82.5, durationMs: 650}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7387830403859911, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7387830403859911}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.7387830403859911, source: raf-timed, timestamp: 5002.899999991059}",
+    "The resource http://127.0.0.1:5176/poster/hero.avif was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.",
+    "[CAM STATE] {pos: Array(3), fov: 82, zoom: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.5972456643861971, timestamp: 5448.5999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.739",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9711846067508155, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9711846067508155}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9711846067508155, source: raf-timed, timestamp: 5453.29999999702}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7387830403859911, timestamp: 5729}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.971",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5176/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 1, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 1}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 1, source: raf-timed, timestamp: 5734.29999999702}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9711846067508155, timestamp: 6144.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000"
+  ]
+}
