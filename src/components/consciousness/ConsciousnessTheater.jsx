@@ -27,6 +27,9 @@ const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
 const LANDING_SLICE_DEMO_KEY_PREFIX = `${LANDING_SLICE_DEMO_KEY}__`;
 const LANDING_VELOCITY_PRESET_KEY = 'velocity_stage';
 const LANDING_VELOCITY_DEMO_KEY = `${LANDING_SLICE_DEMO_KEY_PREFIX}${LANDING_VELOCITY_PRESET_KEY}`;
+const LANDING_HERO_STATE_KEY = '__LANDING_HERO_STATE__';
+const LANDING_HERO_STATE_EVENT = 'landing-hero-state-change';
+const LANDING_HERO_TOTAL_DURATION_MS = 10000;
 
 const isLandingSliceDemoKey = (demoKey) =>
   typeof demoKey === 'string' &&
@@ -141,6 +144,106 @@ const MemoryFragmentRenderer = ({ fragment, onDismiss }) => {
 };
 
 const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+
+const publishLandingHeroState = (nextState) => {
+  if (typeof window === 'undefined') return;
+  window[LANDING_HERO_STATE_KEY] = nextState;
+  try {
+    window.dispatchEvent(new CustomEvent(LANDING_HERO_STATE_EVENT, {
+      detail: nextState,
+    }));
+  } catch {}
+};
+
+const clearLandingHeroState = (stageName = null) => {
+  if (typeof window === 'undefined') return;
+  const currentState = window[LANDING_HERO_STATE_KEY] || null;
+  if (
+    stageName &&
+    currentState &&
+    typeof currentState.stage === 'string' &&
+    currentState.stage !== stageName
+  ) {
+    return;
+  }
+  window[LANDING_HERO_STATE_KEY] = null;
+  try {
+    window.dispatchEvent(new CustomEvent(LANDING_HERO_STATE_EVENT, {
+      detail: null,
+    }));
+  } catch {}
+};
+
+const resolveLandingHeroState = ({
+  elapsedMs = 0,
+  convergenceStartMs = 2000,
+  authorityLockStartMs = 6000,
+  totalDurationMs = LANDING_HERO_TOTAL_DURATION_MS,
+  deterministic = false,
+}) => {
+  const clampedElapsedMs = Math.max(0, Number(elapsedMs) || 0);
+  const safeConvergenceStartMs = Math.max(1, Number(convergenceStartMs) || 2000);
+  const safeAuthorityLockStartMs = Math.max(
+    safeConvergenceStartMs + 1,
+    Number(authorityLockStartMs) || 6000
+  );
+  const safeTotalDurationMs = Math.max(
+    safeAuthorityLockStartMs + 1,
+    Number(totalDurationMs) || LANDING_HERO_TOTAL_DURATION_MS
+  );
+
+  if (deterministic) {
+    return {
+      elapsedMs: safeTotalDurationMs,
+      progress: 1,
+      phase: 'authority_lock',
+      phaseProgress: 1,
+      phaseStartMs: safeAuthorityLockStartMs,
+      phaseEndMs: safeTotalDurationMs,
+      parallaxStrength: 0,
+    };
+  }
+
+  if (clampedElapsedMs < safeConvergenceStartMs) {
+    return {
+      elapsedMs: clampedElapsedMs,
+      progress: clamp01(clampedElapsedMs / safeTotalDurationMs),
+      phase: 'ambient',
+      phaseProgress: clamp01(clampedElapsedMs / safeConvergenceStartMs),
+      phaseStartMs: 0,
+      phaseEndMs: safeConvergenceStartMs,
+      parallaxStrength: 0.05,
+    };
+  }
+
+  if (clampedElapsedMs < safeAuthorityLockStartMs) {
+    return {
+      elapsedMs: clampedElapsedMs,
+      progress: clamp01(clampedElapsedMs / safeTotalDurationMs),
+      phase: 'convergence',
+      phaseProgress: clamp01(
+        (clampedElapsedMs - safeConvergenceStartMs) /
+          Math.max(1, safeAuthorityLockStartMs - safeConvergenceStartMs)
+      ),
+      phaseStartMs: safeConvergenceStartMs,
+      phaseEndMs: safeAuthorityLockStartMs,
+      parallaxStrength: 0.12,
+    };
+  }
+
+  return {
+    elapsedMs: Math.min(clampedElapsedMs, safeTotalDurationMs),
+    progress: clamp01(clampedElapsedMs / safeTotalDurationMs),
+    phase: 'authority_lock',
+    phaseProgress: clamp01(
+      (clampedElapsedMs - safeAuthorityLockStartMs) /
+        Math.max(1, safeTotalDurationMs - safeAuthorityLockStartMs)
+    ),
+    phaseStartMs: safeAuthorityLockStartMs,
+    phaseEndMs: safeTotalDurationMs,
+    parallaxStrength: 0.08,
+  };
+};
 
 const FormVoidPlacard = ({ copy }) => {
   if (!copy) return null;
@@ -490,6 +593,126 @@ export default function ConsciousnessTheater({ mode } = {}) {
               .filter(Boolean);
             if (resolvedBeats.length === 0) return;
 
+            const convergenceStartMs =
+              resolvedBeats.find((beat) => beat.atMs > 0)?.atMs || 2000;
+            const authorityLockStartMs =
+              resolvedBeats.find((beat) => beat.atMs >= 6000)?.atMs || Math.max(6000, convergenceStartMs);
+            const totalDurationMs = Math.max(
+              LANDING_HERO_TOTAL_DURATION_MS,
+              resolvedBeats[resolvedBeats.length - 1]?.atMs || LANDING_HERO_TOTAL_DURATION_MS
+            );
+            const heroMorphSource = 'landing_stage_mode_hero_clock';
+            const ambientMorphTarget = 0.92;
+            const convergenceMorphTarget = 0.9995;
+            const ambientMorphStart = 0.64;
+            const ambientMorphDurationMs = Math.max(1, Math.min(1600, convergenceStartMs));
+            const convergenceMorphDurationMs = Math.max(
+              1,
+              Math.min(2200, authorityLockStartMs - convergenceStartMs)
+            );
+
+            const beginLandingHeroClock = () => {
+              const releaseDirectorOpeningGuard = () => {
+                director._openingInProgress = false;
+              };
+              const startPerfMs =
+                typeof performance !== 'undefined' && typeof performance.now === 'function'
+                  ? performance.now()
+                  : Date.now();
+              const publishHeroState = (elapsedMs) => {
+                const resolvedHeroState = resolveLandingHeroState({
+                  elapsedMs,
+                  convergenceStartMs,
+                  authorityLockStartMs,
+                  totalDurationMs,
+                  deterministic: deterministicBoot,
+                });
+                publishLandingHeroState({
+                  active: true,
+                  deterministic: deterministicBoot,
+                  stage: formStageName,
+                  preset: landingPreset,
+                  startedAtPerfMs: startPerfMs,
+                  convergenceStartMs,
+                  authorityLockStartMs,
+                  totalDurationMs,
+                  ...resolvedHeroState,
+                });
+              };
+
+              if (deterministicBoot) {
+                director.setMorphImmediate?.(1, {
+                  source: heroMorphSource,
+                });
+                publishHeroState(totalDurationMs);
+                const releaseTimerId = setTimeout(releaseDirectorOpeningGuard, totalDurationMs + 80);
+                demoCleanups.push(() => clearTimeout(releaseTimerId));
+                return;
+              }
+
+              director.setMorphImmediate?.(ambientMorphStart, {
+                source: heroMorphSource,
+              });
+              director.setMorphTargetIntent?.({
+                to: ambientMorphTarget,
+                durationMs: ambientMorphDurationMs,
+                source: heroMorphSource,
+              });
+              publishHeroState(0);
+
+              let rafId = 0;
+              const tickHeroClock = () => {
+                const nowPerfMs =
+                  typeof performance !== 'undefined' && typeof performance.now === 'function'
+                    ? performance.now()
+                    : Date.now();
+                const elapsedMs = nowPerfMs - startPerfMs;
+                publishHeroState(elapsedMs);
+                if (elapsedMs < totalDurationMs) {
+                  rafId = window.requestAnimationFrame(tickHeroClock);
+                }
+              };
+              rafId = window.requestAnimationFrame(tickHeroClock);
+
+              const reinforceMorphTimerId = setTimeout(() => {
+                director.setMorphImmediate?.(ambientMorphStart, {
+                  source: heroMorphSource,
+                });
+                director.setMorphTargetIntent?.({
+                  to: ambientMorphTarget,
+                  durationMs: ambientMorphDurationMs,
+                  source: heroMorphSource,
+                });
+              }, 64);
+              const convergenceMorphTimerId = setTimeout(() => {
+                director.setMorphTargetIntent?.({
+                  to: convergenceMorphTarget,
+                  durationMs: convergenceMorphDurationMs,
+                  source: heroMorphSource,
+                });
+              }, convergenceStartMs);
+              const authorityLockMorphTimerId = setTimeout(() => {
+                director.setMorphTargetIntent?.({
+                  to: 1,
+                  durationMs: Math.max(1, totalDurationMs - authorityLockStartMs),
+                  source: heroMorphSource,
+                });
+              }, authorityLockStartMs);
+              const releaseTimerId = setTimeout(releaseDirectorOpeningGuard, totalDurationMs + 80);
+
+              demoCleanups.push(
+                () => window.cancelAnimationFrame(rafId),
+                () => clearTimeout(reinforceMorphTimerId),
+                () => clearTimeout(convergenceMorphTimerId),
+                () => clearTimeout(authorityLockMorphTimerId),
+                () => clearTimeout(releaseTimerId),
+                () => {
+                  releaseDirectorOpeningGuard();
+                  clearLandingHeroState(formStageName);
+                }
+              );
+            };
+
             const emitVelocityBeatDirective = (beat, override = {}) => {
               emitRenderDirective({
                 source: 'visual_orchestrator',
@@ -502,6 +725,8 @@ export default function ConsciousnessTheater({ mode } = {}) {
                 ...override,
               });
             };
+
+            beginLandingHeroClock();
 
             if (deterministicBoot) {
               const finalBeat =
@@ -598,6 +823,7 @@ export default function ConsciousnessTheater({ mode } = {}) {
                   window.stageControls?.setAutoAdvanceEnabled?.(false);
                   window.stageControls?.pauseAutoAdvance?.();
                 } catch {}
+                director._openingInProgress = true;
                 stateCommands.setStage?.(formStageName, {
                   origin: 'landing_stage_mode_velocity',
                   forceEmit: true,

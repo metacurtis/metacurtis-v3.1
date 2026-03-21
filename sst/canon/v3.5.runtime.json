@@ -1424,7 +1424,7 @@
         "beats": [
           {
             "atMs": 0,
-            "durationMs": 5000,
+            "durationMs": 2000,
             "verb": "coalesce",
             "easing": "smoothstep",
             "params": {
@@ -1439,12 +1439,50 @@
                 },
                 "fov": 100,
                 "durationMs": 700
+              },
+              "uniforms": {
+                "uFlowTurbulence": 0.1,
+                "uSpreadFactor": 1.0,
+                "uGaussianSigma": 2.35,
+                "uDepthFalloffPower": 1.12,
+                "uCenterWeighting": 1.18,
+                "uOpacityMax": 0.56,
+                "uOpacityMin": 0.18
               }
             }
           },
           {
-            "atMs": 5000,
-            "durationMs": 2600,
+            "atMs": 2000,
+            "durationMs": 4000,
+            "verb": "coalesce",
+            "easing": "smoothstep",
+            "params": {
+              "text": "FORM",
+              "color": "#C4B5FD",
+              "intensity": 0.15,
+              "camera": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 46
+                },
+                "fov": 92,
+                "durationMs": 1400
+              },
+              "uniforms": {
+                "uFlowTurbulence": 0.085,
+                "uSpreadFactor": 0.98,
+                "uGaussianSigma": 2.28,
+                "uDepthFalloffPower": 1.15,
+                "uCenterWeighting": 1.22,
+                "uOpacityMax": 0.54,
+                "uOpacityMin": 0.17
+              }
+            }
+          },
+          {
+            "atMs": 6000,
+            "durationMs": 2200,
             "verb": "velocity_rest",
             "easing": "smoothstep",
             "params": {
@@ -1463,19 +1501,20 @@
               "pointSize": 7,
               "uniforms": {
                 "uMorphProgress": 1,
-                "uFlowTurbulence": 0.08,
+                "uFlowTurbulence": 0.025,
                 "uStreakIntensity": 0,
-                "uSpreadFactor": 1.04,
-                "uGaussianSigma": 0.95,
-                "uDepthFalloffPower": 1.4,
-                "uOpacityMax": 0.22,
-                "uOpacityMin": 0.06
+                "uSpreadFactor": 1.0,
+                "uGaussianSigma": 1.56,
+                "uDepthFalloffPower": 1.14,
+                "uCenterWeighting": 1.22,
+                "uOpacityMax": 0.34,
+                "uOpacityMin": 0.1
               }
             }
           },
           {
-            "atMs": 7600,
-          "durationMs": 700,
+            "atMs": 8200,
+          "durationMs": 800,
             "verb": "velocity_rest",
             "easing": "smoothstep",
             "params": {
@@ -1494,17 +1533,18 @@
                 "uMorphProgress": 1,
                 "uFlowTurbulence": 0,
                 "uStreakIntensity": 0,
-                "uSpreadFactor": 0.88,
-                "uGaussianSigma": 0.75,
-                "uDepthFalloffPower": 1.4,
-                "uOpacityMax": 0.06,
-                "uOpacityMin": 0.01
+                "uSpreadFactor": 0.92,
+                "uGaussianSigma": 1.6,
+                "uDepthFalloffPower": 1.22,
+                "uCenterWeighting": 1.3,
+                "uOpacityMax": 0.22,
+                "uOpacityMin": 0.07
               }
             }
           },
           {
-            "atMs": 8300,
-            "durationMs": 1100,
+            "atMs": 9000,
+            "durationMs": 1000,
             "verb": "velocity_rest",
             "easing": "smoothstep",
             "params": {
@@ -1524,15 +1564,16 @@
                 "uFlowTurbulence": 0,
                 "uStreakIntensity": 0,
                 "uSpreadFactor": 0.95,
-                "uGaussianSigma": 0.78,
-                "uDepthFalloffPower": 1.4,
-                "uOpacityMax": 0.085,
-                "uOpacityMin": 0.015
+                "uGaussianSigma": 1.54,
+                "uDepthFalloffPower": 1.2,
+                "uCenterWeighting": 1.24,
+                "uOpacityMax": 0.24,
+                "uOpacityMin": 0.08
               }
             }
           },
           {
-            "atMs": 9400,
+            "atMs": 10000,
             "durationMs": 6000,
             "verb": "velocity_rest",
             "easing": "smoothstep",
@@ -1552,13 +1593,14 @@
               "pointSize": 6,
               "uniforms": {
                 "uMorphProgress": 1,
-                "uFlowTurbulence": 0.04,
-                "uStreakIntensity": 0.01,
-                "uSpreadFactor": 1.02,
-                "uGaussianSigma": 0.8,
-                "uDepthFalloffPower": 1.5,
-                "uOpacityMax": 0.12,
-                "uOpacityMin": 0.03
+                "uFlowTurbulence": 0.02,
+                "uStreakIntensity": 0.005,
+                "uSpreadFactor": 0.98,
+                "uGaussianSigma": 1.42,
+                "uDepthFalloffPower": 1.26,
+                "uCenterWeighting": 1.18,
+                "uOpacityMax": 0.28,
+                "uOpacityMin": 0.1
               }
             }
           }

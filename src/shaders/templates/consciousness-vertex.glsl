@@ -177,6 +177,9 @@ void main() {
   movement.y *= moveGainY * freeze;
   movement.z *= moveGain  * freeze;
 
+  float authorityStability = smoothstep(0.52, 0.96, morph) * (tierIndex >= 2 ? 0.38 : 0.16);
+  movement *= 1.0 - authorityStability;
+
   // Only the freeze flag should fully kill motion;
   // drift can continue at a low baseline even when morph ~ 1.0.
   if (uPostMorphFreeze > 0.5) {
@@ -210,8 +213,9 @@ void main() {
   float dist = length(mvPosition.xyz);
   // gentler near-camera size; avoid "magnified pixels"
   float attenuation = 180.0 / dist;
-  float tierSizeBoost = tierData < 0.5 ? 1.25 : (tierData > 2.5 ? 1.1 : 1.0);
-  float pointSize = uPointSize * sizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
+  float normalizedSizeMultiplier = clamp(sizeMultiplier, tierIndex < 2 ? 0.92 : 0.92, tierIndex < 2 ? 1.2 : 1.2);
+  float tierSizeBoost = tierIndex == 0 ? 1.08 : (tierIndex == 1 ? 1.0 : (tierIndex == 2 ? 1.04 : 1.12));
+  float pointSize = uPointSize * normalizedSizeMultiplier * tierSizeBoost * attenuation * uDevicePixelRatio;
   pointSize = clamp(pointSize, 2.0, 36.0);
 
   // In QR photo mode, lock size so modules stay stable and photo-like.

@@ -11,6 +11,7 @@ import NarrativeUIControls from '@/components/ui/NarrativeUIControls.jsx';
 import DemoOverlay from '@/components/demo/DemoOverlay.jsx';
 import DemoLauncher from '@/components/dev/DemoLauncher.jsx';
 import LandingOverlay from '@/components/landing/LandingOverlay.jsx';
+import LandingContinuation from '@/components/landing/LandingContinuation.jsx';
 import { clockAtom } from '@/state/atoms';
 import { qualityAtom } from '@/state/atoms/qualityAtom.js';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
@@ -120,7 +121,7 @@ export default function App() {
         <DemoLauncher />
         <ConsciousnessTheater mode="landing_stage" />
         <LandingOverlay />
-        <div aria-hidden="true" style={{ height: '220vh' }} />
+        <LandingContinuation />
       </div>
     );
   }

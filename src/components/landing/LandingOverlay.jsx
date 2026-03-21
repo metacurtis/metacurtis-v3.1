@@ -1,144 +1,265 @@
+import { useEffect, useState } from 'react';
+
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 import { stageAtom } from '@/state/atoms/stageAtom.js';
 import { useAtomValue } from '@/state/atoms/createAtom.js';
-import { LANDING_STAGE_PRESETS } from '@/slices/landingStagePresets.js';
+
+const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+const LANDING_HERO_STATE_KEY = '__LANDING_HERO_STATE__';
+const LANDING_HERO_STATE_EVENT = 'landing-hero-state-change';
+
+const readLandingHeroState = (stageName = null) => {
+  if (typeof window === 'undefined') return null;
+  const nextState = window[LANDING_HERO_STATE_KEY] || null;
+  if (!nextState || typeof nextState !== 'object') return null;
+  if (stageName && nextState.stage && nextState.stage !== stageName) return null;
+  return nextState;
+};
 
 const shellStyle = {
   position: 'fixed',
-  inset: '0 0 auto 0',
+  inset: 0,
   zIndex: 20,
   pointerEvents: 'none',
   display: 'flex',
+  flexDirection: 'column',
   justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  padding: '24px',
-  gap: '16px',
+  padding: '24px clamp(20px, 3vw, 40px) 28px',
 };
 
-const cardStyle = {
-  pointerEvents: 'auto',
-  background: 'rgba(8, 12, 18, 0.72)',
-  border: '1px solid rgba(255, 255, 255, 0.24)',
-  borderRadius: '14px',
-  color: '#E5EDF5',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  boxShadow: '0 18px 40px rgba(0, 0, 0, 0.28)',
-  transition: 'none',
+const rowStyle = {
+  display: 'flex',
+  alignItems: 'flex-end',
+  justifyContent: 'space-between',
+  gap: '18px',
 };
-
-const mutedStyle = {
-  opacity: 0.75,
-  fontSize: '0.8rem',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-};
-
-const swatchStyle = (hex) => ({
-  width: '16px',
-  height: '16px',
-  borderRadius: '4px',
-  border: '1px solid rgba(255,255,255,0.35)',
-  background: hex,
-});
 
 export default function LandingOverlay() {
   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage || 'genesis');
   const landingResolved = Canonical?.landingStageSliceResolved || {};
   const landingModeForm = Canonical?.landingModes?.form || {};
-
-  const preset = landingResolved?.preset || null;
-  const stageName = (landingResolved?.stage || currentStage || 'genesis').toString();
-  const stageLocked = (landingResolved?.stage || landingModeForm?.stage || stageName).toString();
-  const stageWord = (landingResolved?.word || landingModeForm?.word || 'FORM').toString();
+  const stageLocked = (landingResolved?.stage || landingModeForm?.stage || currentStage).toString();
   const stagePalette = Array.isArray(landingResolved?.palette)
     ? landingResolved.palette
     : (Array.isArray(landingModeForm?.palette) ? landingModeForm.palette : []);
+  const copy = landingModeForm?.ui?.voidCopy || {};
+  const [heroState, setHeroState] = useState(() => readLandingHeroState(stageLocked));
+  const [continuationTakeover, setContinuationTakeover] = useState(0);
 
-  const applyPreset = (nextPreset) => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    if (nextPreset) {
-      url.searchParams.set('preset', nextPreset);
-      url.searchParams.delete('landingStage');
-      url.searchParams.delete('landingWord');
-      url.searchParams.delete('landingPalette');
-      url.searchParams.delete('landingQuality');
-    } else {
-      url.searchParams.delete('preset');
+  useEffect(() => {
+    if (currentStage !== stageLocked) {
+      setHeroState(null);
+      return undefined;
     }
-    window.location.assign(url.toString());
-  };
+
+    const syncHeroState = () => {
+      setHeroState(readLandingHeroState(stageLocked));
+    };
+
+    syncHeroState();
+    window.addEventListener(LANDING_HERO_STATE_EVENT, syncHeroState);
+    return () => window.removeEventListener(LANDING_HERO_STATE_EVENT, syncHeroState);
+  }, [currentStage, stageLocked]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (currentStage !== stageLocked) {
+      setContinuationTakeover(0);
+      return undefined;
+    }
+
+    let rafId = 0;
+    const updateTakeover = () => {
+      rafId = 0;
+      const surface = document.getElementById('landing-continuation-surface');
+      if (!surface) {
+        setContinuationTakeover(0);
+        return;
+      }
+      const rect = surface.getBoundingClientRect();
+      const viewportHeight = Math.max(window.innerHeight || 0, 1);
+      const fadeStart = viewportHeight * 0.88;
+      const fadeEnd = viewportHeight * 0.54;
+      const next = clamp01((fadeStart - rect.top) / Math.max(1, fadeStart - fadeEnd));
+      setContinuationTakeover((prev) => (Math.abs(prev - next) < 0.01 ? prev : next));
+    };
+
+    const requestUpdate = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(updateTakeover);
+    };
+
+    requestUpdate();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', requestUpdate);
+      window.removeEventListener('resize', requestUpdate);
+    };
+  }, [currentStage, stageLocked]);
+
+  const ink = '#F3EEFF';
+  const accent = stagePalette[1] || '#A78BFA';
+  const accentSoft = stagePalette[0] || '#DDD6FE';
+  const cueInk = 'rgba(243, 238, 255, 0.78)';
+  const elapsedMs = Math.max(0, Number(heroState?.elapsedMs) || 0);
+  const brandProgress = clamp01((elapsedMs - 120) / 850);
+  const lineProgress = clamp01((elapsedMs - 520) / 1050);
+  const ctaProgress = clamp01((elapsedMs - 3600) / 1100);
+  const cueProgress = clamp01((elapsedMs - 6800) / 900);
+  const panelOpacity = 0.28 + brandProgress * 0.72;
+  const brandLift = (1 - brandProgress) * 10;
+  const lineLift = (1 - lineProgress) * 16;
+  const ctaLift = (1 - ctaProgress) * 12;
+  const cueLift = (1 - cueProgress) * 10;
+  const bottomRowOpacity = continuationTakeover <= 0.1
+    ? 1
+    : clamp01(1 - ((continuationTakeover - 0.1) / 0.24));
+  const bottomRowLift = continuationTakeover * 30;
+  const bottomRowInteractive = continuationTakeover < 0.16;
+  const surfaceBackground = 'linear-gradient(145deg, rgba(8, 10, 18, 0.74), rgba(12, 15, 28, 0.44))';
+  const surfaceBorder = `1px solid ${accent}2D`;
+  const surfaceShadow = `0 18px 44px ${accent}14`;
+  const surfaceBlur = 'blur(12px)';
+  const ctaInk = '#1A1430';
 
   return (
-    <section style={shellStyle} aria-label="Landing overlay">
-      <div style={{ ...cardStyle, minWidth: '280px', padding: '14px 16px' }}>
-        <div style={mutedStyle}>Preset</div>
+    <section style={shellStyle} aria-label="Landing experience overlay">
+      <div
+        style={{
+          alignSelf: 'flex-start',
+          opacity: panelOpacity,
+          transform: `translate3d(0, ${brandLift}px, 0)`,
+          transition: 'opacity 240ms ease, transform 320ms ease',
+        }}
+      >
         <div
-          data-testid="landing-overlay-preset-value"
-          style={{ fontWeight: 700, marginTop: '4px', fontSize: '1.1rem' }}
-        >
-          {preset || 'manual'}
-        </div>
-        <div style={{ marginTop: '10px', fontSize: '0.9rem', lineHeight: 1.35 }}>
-          <div><strong>Stage:</strong> {stageLocked}</div>
-          <div><strong>Active:</strong> {currentStage}</div>
-          <div><strong>Word:</strong> {stageWord}</div>
-        </div>
-        {stagePalette.length ? (
-          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-            {stagePalette.slice(0, 3).map((hex) => (
-              <span key={hex} title={hex} style={swatchStyle(hex)} />
-            ))}
-          </div>
-        ) : null}
-        {import.meta.env.DEV ? (
-          <label style={{ display: 'block', marginTop: '12px', fontSize: '0.8rem' }}>
-            <div style={{ ...mutedStyle, marginBottom: '4px' }}>Preset Picker (Dev)</div>
-            <select
-              aria-label="Landing preset picker"
-              value={preset || ''}
-              onChange={(event) => applyPreset(event.target.value)}
-              style={{
-                width: '100%',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.24)',
-                background: 'rgba(3, 7, 14, 0.9)',
-                color: '#E5EDF5',
-                padding: '8px',
-              }}
-            >
-              <option value="">manual</option>
-              {Object.keys(LANDING_STAGE_PRESETS).sort().map((id) => (
-                <option key={id} value={id}>{id}</option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-      </div>
-
-      <div style={{ ...cardStyle, maxWidth: '360px', padding: '16px 18px' }}>
-        <div style={mutedStyle}>Landing Slice Factory</div>
-        <p style={{ margin: '10px 0 14px', fontSize: '0.93rem', lineHeight: 1.4 }}>
-          Deterministic real-time stage backgrounds for agencies, SaaS, and premium brands.
-          Configurable via preset and locked to canonical authority.
-        </p>
-        <a
-          data-testid="landing-overlay-cta"
-          href="https://example.com/book-call"
           style={{
-            display: 'inline-block',
-            borderRadius: '10px',
-            background: '#E5EDF5',
-            color: '#0B1220',
-            padding: '10px 14px',
-            textDecoration: 'none',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
+            display: 'inline-flex',
+            flexDirection: 'column',
+            gap: '4px',
+            padding: '12px 14px',
+            borderRadius: '16px',
+            border: surfaceBorder,
+            background: surfaceBackground,
+            backdropFilter: surfaceBlur,
+            WebkitBackdropFilter: surfaceBlur,
+            boxShadow: surfaceShadow,
           }}
         >
-          Book a call
-        </a>
+          <div
+            style={{
+              color: ink,
+              fontSize: '0.78rem',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              opacity: 0.74,
+            }}
+          >
+            {copy.name || 'Curtis Whorton'}
+          </div>
+          <div
+            style={{
+              color: accentSoft,
+              fontSize: '0.9rem',
+              letterSpacing: '0.06em',
+            }}
+          >
+            {copy.title || 'Creative Technologist'}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          ...rowStyle,
+          opacity: bottomRowOpacity,
+          transform: `translate3d(0, ${bottomRowLift}px, 0)`,
+          transition: 'opacity 320ms ease, transform 420ms ease',
+          visibility: bottomRowOpacity <= 0.001 ? 'hidden' : 'visible',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 'min(460px, calc(100vw - 48px))',
+            opacity: lineProgress,
+            transform: `translate3d(0, ${lineLift}px, 0)`,
+            transition: 'opacity 320ms ease, transform 420ms ease',
+            marginBottom: 'clamp(34px, 6vh, 64px)',
+            pointerEvents: bottomRowInteractive ? 'auto' : 'none',
+          }}
+        >
+          <div
+            style={{
+              color: ink,
+              fontSize: 'clamp(1rem, 1.2vw, 1.14rem)',
+              lineHeight: 1.45,
+              letterSpacing: '0.02em',
+              textWrap: 'balance',
+              textShadow: `0 0 24px ${accent}14`,
+            }}
+          >
+            {copy.line || 'I build real-time cinematic systems for the web.'}
+          </div>
+
+          <div
+            style={{
+              marginTop: '16px',
+              opacity: ctaProgress,
+              transform: `translate3d(0, ${ctaLift}px, 0)`,
+              transition: 'opacity 320ms ease, transform 420ms ease',
+            }}
+          >
+            {copy.ctaHref ? (
+              <a
+                href={copy.ctaHref}
+                style={{
+                  pointerEvents: bottomRowInteractive ? 'auto' : 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '11px 16px',
+                  borderRadius: '999px',
+                  border: `1px solid ${accent}2A`,
+                  background: 'linear-gradient(135deg, rgba(236, 226, 255, 0.98), rgba(223, 205, 255, 0.96))',
+                  color: ctaInk,
+                  textDecoration: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  boxShadow: `0 12px 24px ${accent}22`,
+                }}
+              >
+                <span>{copy.cta || 'Let’s talk'}</span>
+                <span aria-hidden="true" style={{ opacity: 0.55 }}>↗</span>
+              </a>
+            ) : null}
+          </div>
+        </div>
+
+        <div
+          style={{
+            alignSelf: 'flex-end',
+            marginBottom: '18px',
+            opacity: cueProgress,
+            transform: `translate3d(0, ${cueLift}px, 0)`,
+            transition: 'opacity 360ms ease, transform 420ms ease',
+          }}
+        >
+          <div
+            style={{
+              color: cueInk,
+              fontSize: '0.74rem',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              textShadow: `0 0 18px ${accent}18`,
+            }}
+          >
+            Scroll to continue
+          </div>
+        </div>
       </div>
     </section>
   );

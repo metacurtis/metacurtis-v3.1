@@ -35,6 +35,8 @@ const TEXT_FIT_MAX_H = 0.8;
 const BAND_FADE_WIDTH = 0.35;
 const MORPH_WRITE_LOG_LIMIT = 400;
 const LANDING_OPENING_PRESET = 'velocity_stage';
+const LANDING_HERO_STATE_KEY = '__LANDING_HERO_STATE__';
+const LANDING_HERO_STATE_EVENT = 'landing-hero-state-change';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
@@ -57,6 +59,11 @@ const toArray = (value) => {
     return [value.x ?? 0, value.y ?? 0];
   }
   return null;
+};
+const readLandingHeroState = () => {
+  if (typeof window === 'undefined') return null;
+  const nextState = window[LANDING_HERO_STATE_KEY] || null;
+  return nextState && typeof nextState === 'object' ? nextState : null;
 };
 const formatVec2 = (value, precision = 3) => {
   const arr = toArray(value);
@@ -769,6 +776,15 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     startTime: 0,
   });
   const cameraLookAtTempRef = useRef(new THREE.Vector3(0, 0, 0));
+  const landingParallaxRef = useRef({
+    enabled: false,
+    target: new THREE.Vector2(0, 0),
+    current: new THREE.Vector2(0, 0),
+  });
+  const landingParallaxZeroRef = useRef(new THREE.Vector2(0, 0));
+  const landingHeroStateRef = useRef(readLandingHeroState());
+  const cameraBasePositionRef = useRef(new THREE.Vector3(0, 0, 50));
+  const cameraBaseLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
 
   useParticleChoreography(uniformsRef);
   const ignoreDirectivesRef = useRef(false);
@@ -1316,6 +1332,58 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
       cameraRef.current = camera;
     }
   }, [camera]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const params = new URLSearchParams(window.location.search);
+    const isLandingStageRoute = params.get('slice') === 'landing_stage';
+    if (!isLandingStageRoute) return undefined;
+
+    const parallax = landingParallaxRef.current;
+    parallax.enabled = true;
+
+    const updatePointer = (clientX, clientY) => {
+      const width = Math.max(window.innerWidth || 1, 1);
+      const height = Math.max(window.innerHeight || 1, 1);
+      const nx = ((clientX / width) * 2 - 1) * 0.35;
+      const ny = ((clientY / height) * 2 - 1) * 0.28;
+      parallax.target.set(
+        THREE.MathUtils.clamp(nx, -0.35, 0.35),
+        THREE.MathUtils.clamp(-ny, -0.28, 0.28)
+      );
+    };
+
+    const handlePointerMove = (event) => {
+      updatePointer(event.clientX, event.clientY);
+    };
+
+    const resetPointer = () => {
+      parallax.target.set(0, 0);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('blur', resetPointer);
+    document.addEventListener('mouseleave', resetPointer);
+
+    return () => {
+      parallax.enabled = false;
+      parallax.target.set(0, 0);
+      parallax.current.set(0, 0);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('blur', resetPointer);
+      document.removeEventListener('mouseleave', resetPointer);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const syncLandingHeroState = () => {
+      landingHeroStateRef.current = readLandingHeroState();
+    };
+    syncLandingHeroState();
+    window.addEventListener(LANDING_HERO_STATE_EVENT, syncLandingHeroState);
+    return () => window.removeEventListener(LANDING_HERO_STATE_EVENT, syncLandingHeroState);
+  }, []);
 
   // FORM camera override (rest -> threshold -> interior)
   useEffect(() => {
@@ -3939,6 +4007,50 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         console.log('[WBG] Camera reached target');
       }
     }
+
+    const parallax = landingParallaxRef.current;
+    if (parallax?.enabled && (cameraRef.current || state?.camera)) {
+      const heroState = landingHeroStateRef.current;
+      const parallaxStrength = clamp01(heroState?.parallaxStrength ?? 1);
+      const cam = cameraRef.current || state.camera;
+      const parallaxEase = 1 - Math.exp(-Math.max(deltaSeconds, 0) * 4.5);
+      const parallaxTarget =
+        parallaxStrength > 0.001
+          ? parallax.target
+          : landingParallaxZeroRef.current;
+      parallax.current.lerp(parallaxTarget, parallaxEase);
+
+      const basePosition = cameraBasePositionRef.current;
+      if (target?.active) {
+        basePosition.copy(cam.position);
+      } else if (target?.position) {
+        basePosition.copy(target.position);
+        cam.position.copy(target.position);
+      } else {
+        basePosition.copy(cam.position);
+      }
+
+      const baseLookAt = cameraBaseLookAtRef.current;
+      if (target?.currentLookAt) {
+        baseLookAt.copy(target.currentLookAt);
+      } else if (target?.lookAt) {
+        baseLookAt.copy(target.lookAt);
+      } else {
+        baseLookAt.set(0, 0, 0);
+      }
+
+      cam.position.x = basePosition.x + parallax.current.x * 0.55 * parallaxStrength;
+      cam.position.y = basePosition.y + parallax.current.y * 0.32 * parallaxStrength;
+
+      const lookAtTarget = cameraLookAtTempRef.current;
+      lookAtTarget.set(
+        baseLookAt.x + parallax.current.x * 0.18 * parallaxStrength,
+        baseLookAt.y + parallax.current.y * 0.12 * parallaxStrength,
+        baseLookAt.z
+      );
+      cam.lookAt(lookAtTarget);
+    }
+
     if (meshRef.current && spinRef.current) {
       if (spinRef.current.active) {
         const { velocity, endTime } = spinRef.current;
