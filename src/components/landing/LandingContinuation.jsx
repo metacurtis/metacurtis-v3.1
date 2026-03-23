@@ -56,15 +56,15 @@ export default function LandingContinuation() {
   const demoEntries = [
     {
       title: 'Stage-mode landing',
-      detail: 'Hero timing, visual authority, and continuation handoff stay inspectable in one runtime path.',
+      detail: 'Cinematic hero systems with inspectable timing, authority, and handoff.',
     },
     {
       title: 'Renderer discipline',
-      detail: 'WebGL ownership remains isolated while the DOM layer carries meaning and conversion.',
+      detail: 'Single-writer rendering architecture that stays stable under iteration.',
     },
     {
       title: 'Review-ready captures',
-      detail: 'Live and deterministic artifacts make creative review repeatable instead of interpretive.',
+      detail: 'Live and deterministic proof packs for creative and technical review.',
     },
   ];
   const [sectionProgress, setSectionProgress] = useState(0);
@@ -171,7 +171,7 @@ export default function LandingContinuation() {
                 opacity: 0.84,
               }}
             >
-              Stage-mode landing system
+              Perception Labs
             </div>
 
             <h2
@@ -205,9 +205,8 @@ export default function LandingContinuation() {
                 transition: 'opacity 320ms ease, filter 420ms ease, transform 420ms ease',
               }}
             >
-              The same world that opens with FORM settles into a calmer product surface for agency
-              review, real-time brand systems, and disciplined deployment across interactive web
-              experiences.
+              We build premium interactive systems where visual direction, runtime behavior, and
+              production discipline stay aligned from concept to ship.
             </p>
           </div>
 
@@ -359,7 +358,7 @@ export default function LandingContinuation() {
                 maxWidth: '24ch',
               }}
             >
-              Start a conversation when the system feels right.
+              If the system feels right, let’s make the next one.
             </div>
             <div
               style={{

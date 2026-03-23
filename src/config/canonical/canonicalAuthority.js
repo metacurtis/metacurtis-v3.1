@@ -27,6 +27,12 @@ const QUALITY_TIERS = new Set(['LOW', 'MEDIUM', 'HIGH', 'ULTRA']);
 const LANDING_SLICE_DEMO_KEY = 'landing_stage_slice';
 const LANDING_PRESET_PROFILES_KEY = 'landing_preset_profiles';
 const LANDING_SLICE_DEMO_RESOLVED_PREFIX = `${LANDING_SLICE_DEMO_KEY}__`;
+const ROOT_LANDING_PRESET = 'velocity_stage';
+
+function normalizePathname(pathname = '/') {
+  const trimmed = pathname.replace(/\/+$/, '');
+  return trimmed || '/';
+}
 
 function normalizeHexColor(value) {
   if (typeof value !== 'string') return null;
@@ -111,8 +117,13 @@ function resolveLandingStageSliceConfig(source, stageOrder = []) {
   if (typeof window === 'undefined') {
     return { enabled: false };
   }
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('slice') !== 'landing_stage') {
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+  const normalizedPath = normalizePathname(url.pathname);
+  const isAppShellPath = normalizedPath === '/app';
+  const explicitLandingSlice = params.get('slice') === 'landing_stage';
+  const isRootLandingPath = normalizedPath === '/' && !params.get('demo');
+  if (isAppShellPath || (!explicitLandingSlice && !isRootLandingPath)) {
     return { enabled: false };
   }
 
@@ -122,7 +133,7 @@ function resolveLandingStageSliceConfig(source, stageOrder = []) {
   const hasGenesis = availableStages.includes('genesis');
   const fallbackStage = hasGenesis ? 'genesis' : (availableStages[0] || 'genesis');
 
-  const presetIdRaw = (params.get('preset') || '').trim();
+  const presetIdRaw = (params.get('preset') || (isRootLandingPath ? ROOT_LANDING_PRESET : '')).trim();
   const preset = presetIdRaw ? LANDING_STAGE_PRESETS[presetIdRaw] || null : null;
   const presetStage = preset?.baseStage;
   const presetIsValid = !!preset && availableStages.includes(presetStage);

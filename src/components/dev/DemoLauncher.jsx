@@ -135,6 +135,7 @@ export default function DemoLauncher() {
   const buildLandingSliceUrl = () => {
     if (typeof window === 'undefined') return '';
     const url = new URL(window.location.href);
+    url.pathname = '/';
     url.searchParams.delete('demo');
     url.searchParams.delete('autoplay');
     url.searchParams.delete('delay');
@@ -165,6 +166,7 @@ export default function DemoLauncher() {
   const buildUrl = (demoKey) => {
     if (typeof window === 'undefined') return '';
     const url = new URL(window.location.href);
+    url.pathname = '/app';
     url.searchParams.delete('mode');
     url.searchParams.delete('slice');
     url.searchParams.delete('landingStage');

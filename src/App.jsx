@@ -21,6 +21,23 @@ import '@/orchestration/navigation/narrativeNavigation.js';
 // Import engine as side-effect to ensure initialization
 import './engine/ConsciousnessEngine';
 
+const normalizePathname = (pathname = '/') => {
+  const trimmed = pathname.replace(/\/+$/, '');
+  return trimmed || '/';
+};
+
+const buildAppShellUrl = (currentUrl) => {
+  const url = new URL(currentUrl.toString());
+  url.pathname = '/app';
+  url.searchParams.delete('slice');
+  url.searchParams.delete('landingStage');
+  url.searchParams.delete('landingWord');
+  url.searchParams.delete('landingPalette');
+  url.searchParams.delete('landingQuality');
+  url.searchParams.delete('preset');
+  return url.toString();
+};
+
 // 🔬 DIAGNOSTIC: App initialization
 if (typeof window !== 'undefined') {
   console.log('🔬 [APP] Initializing MetaCurtis App');
@@ -35,11 +52,23 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 }
 
 export default function App() {
-  const appParams =
-    typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const currentUrl = typeof window !== 'undefined' ? new URL(window.location.href) : null;
+  const appParams = currentUrl?.searchParams || null;
+  const normalizedPath = currentUrl ? normalizePathname(currentUrl.pathname) : '/';
+  const isAppShellRoute = normalizedPath === '/app';
+  const hasDemoParam = !!appParams?.get('demo');
+  const isRootLandingRoute = normalizedPath === '/' && !hasDemoParam;
   const isLandingStageSlice =
-    typeof window !== 'undefined' && appParams?.get('slice') === 'landing_stage';
+    typeof window !== 'undefined' &&
+    !isAppShellRoute &&
+    (appParams?.get('slice') === 'landing_stage' || isRootLandingRoute);
   const isLandingSliceMode = isLandingStageSlice;
+  const redirectTarget =
+    typeof window === 'undefined'
+      ? null
+      : (!isAppShellRoute && hasDemoParam)
+        ? buildAppShellUrl(currentUrl)
+        : null;
   const forcedQualityTier =
     typeof window !== 'undefined'
       ? (() => {
@@ -56,14 +85,20 @@ export default function App() {
         })()
       : null;
   useEffect(() => {
-    if (!isLandingSliceMode) return;
+    if (!redirectTarget) return;
+    window.location.replace(redirectTarget);
+  }, [redirectTarget]);
+
+  useEffect(() => {
+    if (redirectTarget || !isLandingSliceMode) return;
     const loader = document.getElementById('instant-loader');
     if (!loader) return;
     loader.classList.add('hidden');
     loader.style.display = 'none';
-  }, [isLandingSliceMode]);
+  }, [redirectTarget, isLandingSliceMode]);
 
   useEffect(() => {
+    if (redirectTarget) return undefined;
     if (typeof document === 'undefined') return;
     document.body.classList.toggle('form-mode', isLandingSliceMode);
     document.body.classList.toggle('scene-mode', isLandingSliceMode);
@@ -71,10 +106,10 @@ export default function App() {
       document.body.classList.remove('form-mode');
       document.body.classList.remove('scene-mode');
     };
-  }, [isLandingSliceMode]);
+  }, [redirectTarget, isLandingSliceMode]);
 
   useEffect(() => {
-    if (isLandingSliceMode) return;
+    if (redirectTarget || isLandingSliceMode) return;
     console.log('🚀 App initializing...');
     
     // Start the clock atom if not already running
@@ -106,14 +141,19 @@ export default function App() {
         console.log('⏰ Clock atom stopped');
       }
     };
-  }, [isLandingSliceMode]);
+  }, [redirectTarget, isLandingSliceMode]);
 
   useEffect(() => {
+    if (redirectTarget) return;
     if (!forcedQualityTier) return;
     const currentTier = qualityAtom.getState?.()?.currentQualityTier;
     if (currentTier === forcedQualityTier) return;
     qualityAtom.setCurrentQualityTier?.(forcedQualityTier);
-  }, [forcedQualityTier]);
+  }, [redirectTarget, forcedQualityTier]);
+
+  if (redirectTarget) {
+    return null;
+  }
 
   if (isLandingSliceMode) {
     return (

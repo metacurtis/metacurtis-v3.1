@@ -455,14 +455,27 @@ function attributeAabb(geo, key) {
   return attr?.array ? arrayAabb(attr.array) : null;
 }
 
-function isLandingVelocitySlice() {
+function normalizePathname(pathname = '/') {
+  const trimmed = pathname.replace(/\/+$/, '');
+  return trimmed || '/';
+}
+
+function isLandingStageRuntimeRoute() {
   if (typeof window === 'undefined') return false;
   const params = new URLSearchParams(window.location.search);
-  const slice = params.get('slice');
+  const normalizedPath = normalizePathname(window.location.pathname);
+  if (normalizedPath === '/app') return false;
+  if (params.get('slice') === 'landing_stage') return true;
+  return normalizedPath === '/' && window.Canonical?.landingStageSliceResolved?.enabled === true;
+}
+
+function isLandingVelocitySlice() {
+  if (typeof window === 'undefined') return false;
+  if (!isLandingStageRuntimeRoute()) return false;
+  const params = new URLSearchParams(window.location.search);
   const requestedPreset = params.get('preset');
   const resolvedPreset = window.Canonical?.landingStageSliceResolved?.preset;
-  return slice === 'landing_stage' &&
-    (resolvedPreset === LANDING_OPENING_PRESET || requestedPreset === LANDING_OPENING_PRESET);
+  return resolvedPreset === LANDING_OPENING_PRESET || requestedPreset === LANDING_OPENING_PRESET;
 }
 
 function getLandingVelocityOpeningSeed() {
@@ -1335,8 +1348,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    const params = new URLSearchParams(window.location.search);
-    const isLandingStageRoute = params.get('slice') === 'landing_stage';
+    const isLandingStageRoute = isLandingStageRuntimeRoute();
     if (!isLandingStageRoute) return undefined;
 
     const parallax = landingParallaxRef.current;
@@ -1402,8 +1414,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     const interior = new THREE.Vector3(0, 0, 18);
     const isLandingStageSlice =
       (typeof globalThis !== 'undefined' && globalThis.__DEMO_KEY__ === 'landing_stage_slice') ||
-      (typeof window !== 'undefined' &&
-        new URLSearchParams(window.location.search).get('slice') === 'landing_stage');
+      isLandingStageRuntimeRoute();
     const useGlyphCamera =
       isLandingStageSlice === true ||
       (cameraOverride?.useGlyphCamera === true && cameraOverride?.targetGlyph);
@@ -3296,12 +3307,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         typeof window !== 'undefined'
           ? window.Canonical?.landingStageSliceResolved?.preset
           : null;
-      const landingParams =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search)
-          : null;
       const isLandingVelocityPreset =
-        landingParams?.get('slice') === 'landing_stage' &&
+        isLandingStageRuntimeRoute() &&
         landingPreset === 'velocity_stage';
       const lockVelocityLandingMorph =
         isLandingVelocityPreset &&
