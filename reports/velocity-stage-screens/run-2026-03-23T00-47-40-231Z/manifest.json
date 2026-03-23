@@ -1,0 +1,502 @@
+{
+  "url": "http://127.0.0.1:5193/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+  "runId": "2026-03-23T00-47-40-231Z",
+  "generatedAt": "2026-03-23T00:47:40.316Z",
+  "checkpoints": [
+    {
+      "offsetMs": 0,
+      "file": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-23T00-47-40-231Z/landing-00000ms.png",
+      "stageStart": {
+        "perfMs": 2535.3000000044703,
+        "wallIso": "2026-03-23T00:47:42.979Z"
+      },
+      "captureReady": {
+        "perfMs": 3458.60000000149,
+        "wallIso": "2026-03-23T00:47:43.902Z",
+        "delayFromStageStartMs": 923.2999999970198
+      },
+      "state": {
+        "timing": {
+          "requestedOffsetMs": 0,
+          "stageStartPerfMs": 2535.3000000044703,
+          "captureReadyPerfMs": 3458.60000000149,
+          "observedPerfMs": 4062.7000000029802,
+          "elapsedSinceStageStartMs": 1527.3999999985099,
+          "elapsedSinceCaptureReadyMs": 604.1000000014901,
+          "driftMs": 604.1000000014901
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "drawCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 0.8079457936254493,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.35,
+          "uDepthFalloffPower": 1.12,
+          "uCenterWeighting": 1.18,
+          "uFlowTurbulence": 0.1,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 1,
+          "uOpacityMin": 0.18,
+          "uOpacityMax": 0.56
+        }
+      }
+    },
+    {
+      "offsetMs": 800,
+      "file": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-23T00-47-40-231Z/landing-00800ms.png",
+      "stageStart": {
+        "perfMs": 3233,
+        "wallIso": "2026-03-23T00:47:49.074Z"
+      },
+      "captureReady": {
+        "perfMs": 3815.2999999970198,
+        "wallIso": "2026-03-23T00:47:49.657Z",
+        "delayFromStageStartMs": 582.2999999970198
+      },
+      "state": {
+        "timing": {
+          "requestedOffsetMs": 800,
+          "stageStartPerfMs": 3233,
+          "captureReadyPerfMs": 3815.2999999970198,
+          "observedPerfMs": 4950.79999999702,
+          "elapsedSinceStageStartMs": 1717.7999999970198,
+          "elapsedSinceCaptureReadyMs": 1135.5,
+          "driftMs": 335.5
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            50
+          ],
+          "fov": 100,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "drawCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 0.8838171240334355,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.35,
+          "uDepthFalloffPower": 1.12,
+          "uCenterWeighting": 1.18,
+          "uFlowTurbulence": 0.1,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 1,
+          "uOpacityMin": 0.18,
+          "uOpacityMax": 0.56
+        }
+      }
+    },
+    {
+      "offsetMs": 1800,
+      "file": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-23T00-47-40-231Z/landing-01800ms.png",
+      "stageStart": {
+        "perfMs": 3356.8000000044703,
+        "wallIso": "2026-03-23T00:47:56.749Z"
+      },
+      "captureReady": {
+        "perfMs": 4262.9000000059605,
+        "wallIso": "2026-03-23T00:47:57.655Z",
+        "delayFromStageStartMs": 906.1000000014901
+      },
+      "state": {
+        "timing": {
+          "requestedOffsetMs": 1800,
+          "stageStartPerfMs": 3356.8000000044703,
+          "captureReadyPerfMs": 4262.9000000059605,
+          "observedPerfMs": 6664.10000000149,
+          "elapsedSinceStageStartMs": 3307.2999999970198,
+          "elapsedSinceCaptureReadyMs": 2401.1999999955297,
+          "driftMs": 601.1999999955297
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            46.88351095316078
+          ],
+          "fov": 93.76702190632155,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "drawCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 0.9439520373578943,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.28,
+          "uDepthFalloffPower": 1.15,
+          "uCenterWeighting": 1.22,
+          "uFlowTurbulence": 0.085,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 0.98,
+          "uOpacityMin": 0.17,
+          "uOpacityMax": 0.54
+        }
+      }
+    },
+    {
+      "offsetMs": 3000,
+      "file": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-23T00-47-40-231Z/landing-03000ms.png",
+      "stageStart": {
+        "perfMs": 3061.39999999851,
+        "wallIso": "2026-03-23T00:48:04.606Z"
+      },
+      "captureReady": {
+        "perfMs": 4483.69999999553,
+        "wallIso": "2026-03-23T00:48:06.028Z",
+        "delayFromStageStartMs": 1422.2999999970198
+      },
+      "state": {
+        "timing": {
+          "requestedOffsetMs": 3000,
+          "stageStartPerfMs": 3061.39999999851,
+          "captureReadyPerfMs": 4483.69999999553,
+          "observedPerfMs": 8169.5,
+          "elapsedSinceStageStartMs": 5108.10000000149,
+          "elapsedSinceCaptureReadyMs": 3685.8000000044703,
+          "driftMs": 685.8000000044703
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            46
+          ],
+          "fov": 92,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "drawCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 0.9995,
+          "uPointSize": 3,
+          "uGaussianSigma": 2.28,
+          "uDepthFalloffPower": 1.15,
+          "uCenterWeighting": 1.22,
+          "uFlowTurbulence": 0.085,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 0.98,
+          "uOpacityMin": 0.17,
+          "uOpacityMax": 0.54
+        }
+      }
+    },
+    {
+      "offsetMs": 6000,
+      "file": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-23T00-47-40-231Z/landing-06000ms.png",
+      "stageStart": {
+        "perfMs": 2522.89999999851,
+        "wallIso": "2026-03-23T00:48:14.745Z"
+      },
+      "captureReady": {
+        "perfMs": 4313.29999999702,
+        "wallIso": "2026-03-23T00:48:16.535Z",
+        "delayFromStageStartMs": 1790.3999999985099
+      },
+      "state": {
+        "timing": {
+          "requestedOffsetMs": 6000,
+          "stageStartPerfMs": 2522.89999999851,
+          "captureReadyPerfMs": 4313.29999999702,
+          "observedPerfMs": 12308.39999999851,
+          "elapsedSinceStageStartMs": 9785.5,
+          "elapsedSinceCaptureReadyMs": 7995.10000000149,
+          "driftMs": 1995.1000000014901
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            34
+          ],
+          "fov": 84,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "drawCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 0.9998778929940652,
+          "uPointSize": 6,
+          "uGaussianSigma": 1.6,
+          "uDepthFalloffPower": 1.22,
+          "uCenterWeighting": 1.3,
+          "uFlowTurbulence": 0,
+          "uStreakIntensity": 0,
+          "uSpreadFactor": 0.92,
+          "uOpacityMin": 0.07,
+          "uOpacityMax": 0.22
+        }
+      }
+    },
+    {
+      "offsetMs": 10000,
+      "file": "/home/curtis/projects/metacurtis-worktrees/landing-premium-v2/reports/velocity-stage-screens/run-2026-03-23T00-47-40-231Z/landing-10000ms.png",
+      "stageStart": {
+        "perfMs": 2246,
+        "wallIso": "2026-03-23T00:48:31.571Z"
+      },
+      "captureReady": {
+        "perfMs": 4488,
+        "wallIso": "2026-03-23T00:48:33.813Z",
+        "delayFromStageStartMs": 2242
+      },
+      "state": {
+        "timing": {
+          "requestedOffsetMs": 10000,
+          "stageStartPerfMs": 2246,
+          "captureReadyPerfMs": 4488,
+          "observedPerfMs": 15389.09999999404,
+          "elapsedSinceStageStartMs": 13143.09999999404,
+          "elapsedSinceCaptureReadyMs": 10901.09999999404,
+          "driftMs": 901.0999999940395
+        },
+        "camera": {
+          "pos": [
+            0,
+            0,
+            34
+          ],
+          "fov": 84,
+          "zoom": 1,
+          "near": 0.1,
+          "far": 1000
+        },
+        "drawCount": 15000,
+        "uniforms": {
+          "uMorphProgress": 1,
+          "uPointSize": 6,
+          "uGaussianSigma": 1.42,
+          "uDepthFalloffPower": 1.26,
+          "uCenterWeighting": 1.18,
+          "uFlowTurbulence": 0.02,
+          "uStreakIntensity": 0.005,
+          "uSpreadFactor": 0.98,
+          "uOpacityMin": 0.1,
+          "uOpacityMax": 0.28
+        }
+      }
+    }
+  ],
+  "checkpointIsolation": "fresh-page-per-checkpoint",
+  "anchor": "window.__LANDING_CAPTURE_READY_PERF_MS__",
+  "stageStartReference": "window.__LANDING_STAGE_START_PERF_MS__",
+  "schemaViolationCount": 0,
+  "singleWriterViolationCount": 0,
+  "tailLogs": [
+    "🔬 [MORPH] Updated: 0.640",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.67422589655377, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.67422589655377}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.67422589655377, source: landing_stage_mode_hero_clock, timestamp: 3455.2999999970198}",
+    "🧪 Shader compiled",
+    "🔮 Preloading next stage: architecture",
+    "🔬 [BLUEPRINT] Starting position generation for stage: architecture",
+    "🔬 [BLUEPRINT] Input SST data: {particlesBase: 8000, hasLetterGeometry: true}",
+    "🧠 Building architecture: 12000 particles",
+    "🔬 [BLUEPRINT] Position array result: {type: Float32Array, length: 36000, sample: Array(6), isFloat32Array: true}",
+    "✅ Preload complete: {stage: architecture, quality: ULTRA, particles: 12000, cacheSize: 4}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6403846860936482, timestamp: 4251.0999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.674",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8102365962511489, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8102365962511489}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8102365962511489, source: landing_stage_mode_hero_clock, timestamp: 4265.39999999851}",
+    "[WBG] Camera reached target",
+    "[CAM STATE] {pos: Array(3), fov: 100, zoom: 1}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: coalesce, camera: Object}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(9), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.67422589655377, timestamp: 4499.69999999553}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.810",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(9)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(9)}",
+    "[WBG] Camera directive received: {position: Object, fov: 92, durationMs: 1400}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8104491920915964, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8104491920915964}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8104491920915964, source: landing_stage_mode_hero_clock, timestamp: 4506.19999999553}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8102365962511489, timestamp: 4708.5999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.810",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8142685547757103, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8142685547757103}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8142685547757103, source: landing_stage_mode_hero_clock, timestamp: 4716.5999999940395}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8104491920915964, timestamp: 4909.69999999553}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.814",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8260463765761645, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8260463765761645}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8260463765761645, source: landing_stage_mode_hero_clock, timestamp: 4924.5999999940395}",
+    "The resource http://127.0.0.1:5193/poster/hero.avif was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8142685547757103, timestamp: 5168.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.826",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8490751452012967, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8490751452012967}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8490751452012967, source: landing_stage_mode_hero_clock, timestamp: 5193.69999999553}",
+    "[CAM STATE] {pos: Array(3), fov: 96.3, zoom: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8260463765761645, timestamp: 5381.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.849",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8740945408049988, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8740945408049988}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8740945408049988, source: landing_stage_mode_hero_clock, timestamp: 5392.89999999851}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8490751452012967, timestamp: 5598.5}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.874",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9037069349729856, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9037069349729856}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9037069349729856, source: landing_stage_mode_hero_clock, timestamp: 5605.0999999940395}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8740945408049988, timestamp: 5822.39999999851}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.904",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9313396114723869, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9313396114723869}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9313396114723869, source: landing_stage_mode_hero_clock, timestamp: 5831}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9037069349729856, timestamp: 6041.5999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.931",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9569058537503418, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9569058537503418}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9569058537503418, source: landing_stage_mode_hero_clock, timestamp: 6050.79999999702}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9313396114723869, timestamp: 6307}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.957",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9823003096781635, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9823003096781635}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9823003096781635, source: landing_stage_mode_hero_clock, timestamp: 6317.19999999553}",
+    "[CAM STATE] {pos: Array(3), fov: 92, zoom: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9569058537503418, timestamp: 6531.39999999851}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.982",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9954105599342373, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9954105599342373}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9954105599342373, source: landing_stage_mode_hero_clock, timestamp: 6554.5999999940395}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9823003096781635, timestamp: 6706.5999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.995",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9994900983916913, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9994900983916913}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9994900983916913, source: landing_stage_mode_hero_clock, timestamp: 6721.5999999940395}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9954105599342373, timestamp: 6920.0999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.999",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995, source: landing_stage_mode_hero_clock, timestamp: 6941.0999999940395}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9994900983916913, timestamp: 7193.0999999940395}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[CAM STATE] {pos: Array(3), fov: 92, zoom: 1}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "[CAM STATE] {pos: Array(3), fov: 92, zoom: 1}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995000733152757, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995000733152757}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995000733152757, source: landing_stage_mode_hero_clock, timestamp: 8456.79999999702}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 700}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 8470.19999999553}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995032366059522, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995032366059522}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995032366059522, source: landing_stage_mode_hero_clock, timestamp: 8671.59999999404}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995000733152757, timestamp: 9332.59999999404}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.999558817983509, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.999558817983509}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.999558817983509, source: landing_stage_mode_hero_clock, timestamp: 9338.09999999404}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995032366059522, timestamp: 10044.59999999404}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9996680106829468, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9996680106829468}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9996680106829468, source: landing_stage_mode_hero_clock, timestamp: 10066.5}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.999558817983509, timestamp: 11094.29999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.999865685159335, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.999865685159335}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.999865685159335, source: landing_stage_mode_hero_clock, timestamp: 11157.69999999553}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9996680106829468, timestamp: 12017.89999999851}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 200}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9999815763698057, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9999815763698057}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9999815763698057, source: landing_stage_mode_hero_clock, timestamp: 12036.59999999404}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "[WBG] Camera reached target",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 12899.39999999851}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 200}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 1, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 1}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 1, source: landing_stage_mode_hero_clock, timestamp: 12933.59999999404}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[WBG] Camera reached target",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 13656.5}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 500}",
+    "[WBG] Camera reached target",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}"
+  ]
+}

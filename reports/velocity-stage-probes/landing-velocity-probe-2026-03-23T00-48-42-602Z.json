@@ -1,0 +1,3136 @@
+{
+  "meta": {
+    "url": "http://127.0.0.1:5193/?slice=landing_stage&preset=velocity_stage&landingWord=FORM&landingQuality=ULTRA&quality=ULTRA",
+    "checkpoints": [
+      0,
+      800,
+      1800,
+      3000,
+      6000,
+      10000
+    ],
+    "stageStartDetected": true,
+    "generatedAt": "2026-03-23T00:48:42.562Z",
+    "checkpointIsolation": "fresh-page-per-checkpoint",
+    "anchor": "window.__LANDING_CAPTURE_READY_PERF_MS__",
+    "stageStartReference": "window.__LANDING_STAGE_START_PERF_MS__"
+  },
+  "schemaViolationCount": 0,
+  "singleWriterViolationCount": 0,
+  "schemaViolations": [],
+  "singleWriterViolations": [],
+  "samples": [
+    {
+      "offsetMs": 0,
+      "capturedAt": "2026-03-23T00:47:47.650Z",
+      "stageStart": {
+        "perfMs": 2882.0999999940395,
+        "wallIso": "2026-03-23T00:47:45.562Z"
+      },
+      "captureReady": {
+        "perfMs": 4359.5999999940395,
+        "wallIso": "2026-03-23T00:47:47.040Z",
+        "delayFromStageStartMs": 1477.5
+      },
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0.8903742318174147,
+            "uPointSize": 3,
+            "uOpacityMin": 0.18,
+            "uOpacityMax": 0.56,
+            "uGaussianSigma": 2.35,
+            "uDepthFalloffPower": 1.12,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 1.18,
+            "uFlowTurbulence": 0.1,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 1
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              50
+            ],
+            "fov": 100,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "timing": {
+          "requestedOffsetMs": 0,
+          "stageStartPerfMs": 2882.0999999940395,
+          "captureReadyPerfMs": 4359.5999999940395,
+          "observedPerfMs": 4957.89999999851,
+          "elapsedSinceStageStartMs": 2075.8000000044703,
+          "elapsedSinceCaptureReadyMs": 598.3000000044703,
+          "driftMs": 598.3000000044703
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              50
+            ],
+            "fov": 100,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0.8903742318174147,
+            "uPointSize": 3,
+            "uGaussianSigma": 2.35,
+            "uDepthFalloffPower": 1.12,
+            "uCenterWeighting": 1.18,
+            "uFlowTurbulence": 0.1,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 1,
+            "uOpacityMin": 0.18,
+            "uOpacityMax": 0.56
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "Book a Call",
+              "ctaHref": "https://calendly.com/bricalmya/30min"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 800,
+      "capturedAt": "2026-03-23T00:47:54.796Z",
+      "stageStart": {
+        "perfMs": 2509.60000000149,
+        "wallIso": "2026-03-23T00:47:51.514Z"
+      },
+      "captureReady": {
+        "perfMs": 4411.60000000149,
+        "wallIso": "2026-03-23T00:47:53.416Z",
+        "delayFromStageStartMs": 1902
+      },
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0.9398717236674072,
+            "uPointSize": 3,
+            "uOpacityMin": 0.17,
+            "uOpacityMax": 0.54,
+            "uGaussianSigma": 2.28,
+            "uDepthFalloffPower": 1.15,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.085,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.98
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              46.78287928102268
+            ],
+            "fov": 93.56575856204536,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "timing": {
+          "requestedOffsetMs": 800,
+          "stageStartPerfMs": 2509.60000000149,
+          "captureReadyPerfMs": 4411.60000000149,
+          "observedPerfMs": 5788.5,
+          "elapsedSinceStageStartMs": 3278.89999999851,
+          "elapsedSinceCaptureReadyMs": 1376.8999999985099,
+          "driftMs": 576.8999999985099
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              46.78287928102268
+            ],
+            "fov": 93.56575856204536,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0.9398717236674072,
+            "uPointSize": 3,
+            "uGaussianSigma": 2.28,
+            "uDepthFalloffPower": 1.15,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.085,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.98,
+            "uOpacityMin": 0.17,
+            "uOpacityMax": 0.54
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "Book a Call",
+              "ctaHref": "https://calendly.com/bricalmya/30min"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 1800,
+      "capturedAt": "2026-03-23T00:48:01.323Z",
+      "stageStart": {
+        "perfMs": 2733,
+        "wallIso": "2026-03-23T00:47:57.578Z"
+      },
+      "captureReady": {
+        "perfMs": 4298.60000000149,
+        "wallIso": "2026-03-23T00:47:59.144Z",
+        "delayFromStageStartMs": 1565.6000000014901
+      },
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0.9612715242259867,
+            "uPointSize": 3,
+            "uOpacityMin": 0.17,
+            "uOpacityMax": 0.54,
+            "uGaussianSigma": 2.28,
+            "uDepthFalloffPower": 1.15,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.085,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.98
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              46
+            ],
+            "fov": 92,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "timing": {
+          "requestedOffsetMs": 1800,
+          "stageStartPerfMs": 2733,
+          "captureReadyPerfMs": 4298.60000000149,
+          "observedPerfMs": 6469.89999999851,
+          "elapsedSinceStageStartMs": 3736.89999999851,
+          "elapsedSinceCaptureReadyMs": 2171.2999999970198,
+          "driftMs": 371.29999999701977
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              46
+            ],
+            "fov": 92,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0.9612715242259867,
+            "uPointSize": 3,
+            "uGaussianSigma": 2.28,
+            "uDepthFalloffPower": 1.15,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.085,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.98,
+            "uOpacityMin": 0.17,
+            "uOpacityMax": 0.54
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "Book a Call",
+              "ctaHref": "https://calendly.com/bricalmya/30min"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 3000,
+      "capturedAt": "2026-03-23T00:48:10.246Z",
+      "stageStart": {
+        "perfMs": 3165.5,
+        "wallIso": "2026-03-23T00:48:04.697Z"
+      },
+      "captureReady": {
+        "perfMs": 4854.60000000149,
+        "wallIso": "2026-03-23T00:48:06.387Z",
+        "delayFromStageStartMs": 1689.1000000014901
+      },
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0.9995,
+            "uPointSize": 3,
+            "uOpacityMin": 0.17,
+            "uOpacityMax": 0.54,
+            "uGaussianSigma": 2.28,
+            "uDepthFalloffPower": 1.15,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.085,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.98
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              46
+            ],
+            "fov": 92,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "timing": {
+          "requestedOffsetMs": 3000,
+          "stageStartPerfMs": 3165.5,
+          "captureReadyPerfMs": 4854.60000000149,
+          "observedPerfMs": 8707.10000000149,
+          "elapsedSinceStageStartMs": 5541.60000000149,
+          "elapsedSinceCaptureReadyMs": 3852.5,
+          "driftMs": 852.5
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              46
+            ],
+            "fov": 92,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0.9995,
+            "uPointSize": 3,
+            "uGaussianSigma": 2.28,
+            "uDepthFalloffPower": 1.15,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.085,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 0.98,
+            "uOpacityMin": 0.17,
+            "uOpacityMax": 0.54
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "Book a Call",
+              "ctaHref": "https://calendly.com/bricalmya/30min"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 6000,
+      "capturedAt": "2026-03-23T00:48:22.703Z",
+      "stageStart": {
+        "perfMs": 3470.10000000149,
+        "wallIso": "2026-03-23T00:48:13.916Z"
+      },
+      "captureReady": {
+        "perfMs": 4494.20000000298,
+        "wallIso": "2026-03-23T00:48:14.940Z",
+        "delayFromStageStartMs": 1024.1000000014901
+      },
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 0.9996044598338624,
+            "uPointSize": 7,
+            "uOpacityMin": 0.1,
+            "uOpacityMax": 0.34,
+            "uGaussianSigma": 1.56,
+            "uDepthFalloffPower": 1.14,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.025,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 1
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              40
+            ],
+            "fov": 84,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "timing": {
+          "requestedOffsetMs": 6000,
+          "stageStartPerfMs": 3470.10000000149,
+          "captureReadyPerfMs": 4494.20000000298,
+          "observedPerfMs": 12226.79999999702,
+          "elapsedSinceStageStartMs": 8756.69999999553,
+          "elapsedSinceCaptureReadyMs": 7732.5999999940395,
+          "driftMs": 1732.5999999940395
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              40
+            ],
+            "fov": 84,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 0.9996044598338624,
+            "uPointSize": 7,
+            "uGaussianSigma": 1.56,
+            "uDepthFalloffPower": 1.14,
+            "uCenterWeighting": 1.22,
+            "uFlowTurbulence": 0.025,
+            "uStreakIntensity": 0,
+            "uSpreadFactor": 1,
+            "uOpacityMin": 0.1,
+            "uOpacityMax": 0.34
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "Book a Call",
+              "ctaHref": "https://calendly.com/bricalmya/30min"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    },
+    {
+      "offsetMs": 10000,
+      "capturedAt": "2026-03-23T00:48:42.506Z",
+      "stageStart": {
+        "perfMs": 2293.39999999851,
+        "wallIso": "2026-03-23T00:48:26.899Z"
+      },
+      "captureReady": {
+        "perfMs": 4120,
+        "wallIso": "2026-03-23T00:48:28.726Z",
+        "delayFromStageStartMs": 1826.6000000014901
+      },
+      "state": {
+        "renderer": {
+          "hasMaterial": true,
+          "drawRange": {
+            "start": 0,
+            "count": 15000
+          },
+          "activeCount": 15000,
+          "uniforms": {
+            "uMorphProgress": 1,
+            "uPointSize": 6,
+            "uOpacityMin": 0.1,
+            "uOpacityMax": 0.28,
+            "uGaussianSigma": 1.42,
+            "uDepthFalloffPower": 1.26,
+            "uTierCutoff": 15000,
+            "uFadeProgress": 1,
+            "uCenterWeighting": 1.18,
+            "uFlowTurbulence": 0.02,
+            "uStreakIntensity": 0.005,
+            "uSpreadFactor": 0.98
+          },
+          "camera": {
+            "pos": [
+              0,
+              0,
+              34
+            ],
+            "fov": 84,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          }
+        },
+        "timing": {
+          "requestedOffsetMs": 10000,
+          "stageStartPerfMs": 2293.39999999851,
+          "captureReadyPerfMs": 4120,
+          "observedPerfMs": 17875.29999999702,
+          "elapsedSinceStageStartMs": 15581.89999999851,
+          "elapsedSinceCaptureReadyMs": 13755.29999999702,
+          "driftMs": 3755.2999999970198
+        },
+        "summary": {
+          "stage": "velocity",
+          "stageIndex": 3,
+          "stageProgress": 0,
+          "morphProgressState": null,
+          "drawCount": 15000,
+          "camera": {
+            "pos": [
+              0,
+              0,
+              34
+            ],
+            "fov": 84,
+            "zoom": 1,
+            "near": 0.1,
+            "far": 1000
+          },
+          "uniforms": {
+            "uMorphProgress": 1,
+            "uPointSize": 6,
+            "uGaussianSigma": 1.42,
+            "uDepthFalloffPower": 1.26,
+            "uCenterWeighting": 1.18,
+            "uFlowTurbulence": 0.02,
+            "uStreakIntensity": 0.005,
+            "uSpreadFactor": 0.98,
+            "uOpacityMin": 0.1,
+            "uOpacityMax": 0.28
+          }
+        },
+        "landingStageSliceResolved": {
+          "enabled": true,
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "quality": "ULTRA",
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "particlesBase": 15000,
+          "sourceStage": "velocity",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage"
+        },
+        "landingModesForm": {
+          "word": "FORM",
+          "palette": [
+            "#7C3AED",
+            "#9333EA",
+            "#6B21A8"
+          ],
+          "particlesBase": 15000,
+          "tierMix": [
+            0.45,
+            0.2,
+            0.15,
+            0.2
+          ],
+          "openingVerbSequence": [
+            "coalesce",
+            "settle"
+          ],
+          "ui": {
+            "voidCopy": {
+              "name": "Curtis Whorton",
+              "title": "Creative Technologist",
+              "line": "I build real-time cinematic systems for the web.",
+              "cta": "Book a Call",
+              "ctaHref": "https://calendly.com/bricalmya/30min"
+            }
+          },
+          "preset": "velocity_stage",
+          "stage": "velocity",
+          "sourceStage": "velocity",
+          "quality": "ULTRA",
+          "choreoKey": "velocity_stage",
+          "demoKey": "landing_stage_slice__velocity_stage",
+          "lockStage": true
+        }
+      }
+    }
+  ],
+  "interestingLogs": [
+    {
+      "wallClockMs": 1774226864497,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 1814.3999999985099}"
+    },
+    {
+      "wallClockMs": 1774226864497,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1774226865560,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226865560,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226865561,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 2000, hasCamera: true, pointSize: null}"
+    },
+    {
+      "wallClockMs": 1774226865561,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 6000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226865561,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 8200, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226865565,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 9000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226865566,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 10000, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226865566,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1774226866131,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: null, timestamp: 3449.0999999940395}"
+    },
+    {
+      "wallClockMs": 1774226866135,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226866135,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226866148,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6400027561968165, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226866148,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6400027561968165}"
+    },
+    {
+      "wallClockMs": 1774226866158,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226866158,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226866375,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3692.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226866375,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226866375,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226866376,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6401752415819401, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226866376,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6401752415819401}"
+    },
+    {
+      "wallClockMs": 1774226866576,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64, timestamp: 3893.5999999940395}"
+    },
+    {
+      "wallClockMs": 1774226866580,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6598211707120049, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226866581,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6598211707120049}"
+    },
+    {
+      "wallClockMs": 1774226867047,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6401752415819401, timestamp: 4363.0999999940395}"
+    },
+    {
+      "wallClockMs": 1774226867056,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7914336684978099, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867058,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7914336684978099}"
+    },
+    {
+      "wallClockMs": 1774226867149,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6598211707120049, timestamp: 4467.5999999940395}"
+    },
+    {
+      "wallClockMs": 1774226867152,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8257043626772694, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867153,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8257043626772694}"
+    },
+    {
+      "wallClockMs": 1774226867232,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7914336684978099, timestamp: 4550.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226867243,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8459174536813012, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867244,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8459174536813012}"
+    },
+    {
+      "wallClockMs": 1774226867302,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8257043626772694, timestamp: 4620.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226867307,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8610570218567721, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867307,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8610570218567721}"
+    },
+    {
+      "wallClockMs": 1774226867377,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8459174536813012, timestamp: 4695.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226867382,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8782602577142585, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867382,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8782602577142585}"
+    },
+    {
+      "wallClockMs": 1774226867456,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8610570218567721, timestamp: 4771.69999999553}"
+    },
+    {
+      "wallClockMs": 1774226867461,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8903742318174147, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867461,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8903742318174147}"
+    },
+    {
+      "wallClockMs": 1774226867538,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8782602577142585, timestamp: 4855.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226867545,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9030301418252307, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867545,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9030301418252307}"
+    },
+    {
+      "wallClockMs": 1774226867658,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8903742318174147, timestamp: 4960.69999999553}"
+    },
+    {
+      "wallClockMs": 1774226867659,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9152902122856005, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226867659,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9152902122856005}"
+    },
+    {
+      "wallClockMs": 1774226869257,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 1474}"
+    },
+    {
+      "wallClockMs": 1774226869258,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1774226871515,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226871515,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226871517,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 2000, hasCamera: true, pointSize: null}"
+    },
+    {
+      "wallClockMs": 1774226871517,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 6000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226871517,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 8200, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226871517,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 9000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226871517,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 10000, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226871517,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1774226872085,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: null, timestamp: 3078.3000000044703}"
+    },
+    {
+      "wallClockMs": 1774226872087,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226872087,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226872109,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6400078943660886, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226872109,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6400078943660886}"
+    },
+    {
+      "wallClockMs": 1774226872130,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226872131,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226872436,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3430.8000000044703}"
+    },
+    {
+      "wallClockMs": 1774226872445,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226872446,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226872450,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6401544678100857, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226872451,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6401544678100857}"
+    },
+    {
+      "wallClockMs": 1774226872499,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64, timestamp: 3491.3000000044703}"
+    },
+    {
+      "wallClockMs": 1774226872511,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6734409106434728, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226872512,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6734409106434728}"
+    },
+    {
+      "wallClockMs": 1774226873284,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6401544678100857, timestamp: 4276.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226873287,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8048202807601762, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226873287,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8048202807601762}"
+    },
+    {
+      "wallClockMs": 1774226873427,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6734409106434728, timestamp: 4421.4000000059605}"
+    },
+    {
+      "wallClockMs": 1774226873432,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.890593831701944, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226873443,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.890593831701944}"
+    },
+    {
+      "wallClockMs": 1774226873582,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8048202807601762, timestamp: 4575.5}"
+    },
+    {
+      "wallClockMs": 1774226873587,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9092785151303854, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226873587,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9092785151303854}"
+    },
+    {
+      "wallClockMs": 1774226873690,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.890593831701944, timestamp: 4683.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226873691,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226873691,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226873697,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9092808101545599, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226873697,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9092808101545599}"
+    },
+    {
+      "wallClockMs": 1774226873811,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9092785151303854, timestamp: 4804.9000000059605}"
+    },
+    {
+      "wallClockMs": 1774226873822,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9099361317598753, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226873823,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9099361317598753}"
+    },
+    {
+      "wallClockMs": 1774226873957,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9092808101545599, timestamp: 4949.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226873960,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9127687205081282, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226873960,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9127687205081282}"
+    },
+    {
+      "wallClockMs": 1774226874106,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9099361317598753, timestamp: 5097.4000000059605}"
+    },
+    {
+      "wallClockMs": 1774226874116,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9175223202282313, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226874117,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9175223202282313}"
+    },
+    {
+      "wallClockMs": 1774226874279,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9127687205081282, timestamp: 5272.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226874282,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.924636583327575, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226874283,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.924636583327575}"
+    },
+    {
+      "wallClockMs": 1774226874420,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9175223202282313, timestamp: 5413.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226874436,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9314145324593958, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226874440,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9314145324593958}"
+    },
+    {
+      "wallClockMs": 1774226874553,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.924636583327575, timestamp: 5547.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226874562,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9398717236674072, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226874563,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9398717236674072}"
+    },
+    {
+      "wallClockMs": 1774226874696,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9314145324593958, timestamp: 5689.5}"
+    },
+    {
+      "wallClockMs": 1774226874705,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9478645114639493, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226874705,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9478645114639493}"
+    },
+    {
+      "wallClockMs": 1774226874799,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9398717236674072, timestamp: 5792.80000000447}"
+    },
+    {
+      "wallClockMs": 1774226876533,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 1684.7000000029802}"
+    },
+    {
+      "wallClockMs": 1774226876533,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1774226877578,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226877578,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226877580,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 2000, hasCamera: true, pointSize: null}"
+    },
+    {
+      "wallClockMs": 1774226877580,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 6000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226877580,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 8200, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226877580,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 9000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226877580,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 10000, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226877580,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1774226878145,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: null, timestamp: 3294}"
+    },
+    {
+      "wallClockMs": 1774226878147,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226878147,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226878168,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6400040253930699, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226878169,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6400040253930699}"
+    },
+    {
+      "wallClockMs": 1774226878187,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226878187,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226878408,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3559.3000000044703}"
+    },
+    {
+      "wallClockMs": 1774226878413,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226878413,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226878413,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6402831763987791, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226878413,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6402831763987791}"
+    },
+    {
+      "wallClockMs": 1774226878650,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64, timestamp: 3803.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226878654,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6566767501829077, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226878655,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6566767501829077}"
+    },
+    {
+      "wallClockMs": 1774226879152,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6402831763987791, timestamp: 4302.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226879159,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8157383346553823, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226879160,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8157383346553823}"
+    },
+    {
+      "wallClockMs": 1774226879292,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6566767501829077, timestamp: 4442.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226879294,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8521969495041906, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226879294,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8521969495041906}"
+    },
+    {
+      "wallClockMs": 1774226879427,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8157383346553823, timestamp: 4580.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226879434,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8770544201862907, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226879436,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8770544201862907}"
+    },
+    {
+      "wallClockMs": 1774226879593,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8521969495041906, timestamp: 4736.5}"
+    },
+    {
+      "wallClockMs": 1774226879593,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.906495018005191, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226879593,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.906495018005191}"
+    },
+    {
+      "wallClockMs": 1774226879739,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8770544201862907, timestamp: 4891.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226879745,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226879746,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226879763,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9065155090897878, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226879763,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9065155090897878}"
+    },
+    {
+      "wallClockMs": 1774226879923,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.906495018005191, timestamp: 5075}"
+    },
+    {
+      "wallClockMs": 1774226879960,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9079772178923946, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226879960,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9079772178923946}"
+    },
+    {
+      "wallClockMs": 1774226880078,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9065155090897878, timestamp: 5231}"
+    },
+    {
+      "wallClockMs": 1774226880087,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9121839371824773, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226880089,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9121839371824773}"
+    },
+    {
+      "wallClockMs": 1774226880278,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9079772178923946, timestamp: 5416.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226880278,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9201432339450357, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226880278,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9201432339450357}"
+    },
+    {
+      "wallClockMs": 1774226880429,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9121839371824773, timestamp: 5582.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226880446,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9277235409261896, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226880447,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9277235409261896}"
+    },
+    {
+      "wallClockMs": 1774226880611,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9201432339450357, timestamp: 5761.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226880621,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.938285978400281, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226880621,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.938285978400281}"
+    },
+    {
+      "wallClockMs": 1774226880779,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9277235409261896, timestamp: 5921.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226880779,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9486404188148836, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226880779,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9486404188148836}"
+    },
+    {
+      "wallClockMs": 1774226880980,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.938285978400281, timestamp: 6121.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226880981,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9612715242259867, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226880981,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9612715242259867}"
+    },
+    {
+      "wallClockMs": 1774226881162,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9486404188148836, timestamp: 6310.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226881178,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9723915002222147, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226881179,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9723915002222147}"
+    },
+    {
+      "wallClockMs": 1774226881330,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9612715242259867, timestamp: 6472.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226881365,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9815600121633199, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226881366,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9815600121633199}"
+    },
+    {
+      "wallClockMs": 1774226883650,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 2116.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226883650,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1774226884688,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226884691,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226884698,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 2000, hasCamera: true, pointSize: null}"
+    },
+    {
+      "wallClockMs": 1774226884698,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 6000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226884699,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 8200, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226884699,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 9000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226884699,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 10000, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226884700,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1774226885159,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: null, timestamp: 3621.8000000044703}"
+    },
+    {
+      "wallClockMs": 1774226885160,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226885160,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226885168,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6400866943885938, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226885169,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6400866943885938}"
+    },
+    {
+      "wallClockMs": 1774226885184,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226885184,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226885403,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3866}"
+    },
+    {
+      "wallClockMs": 1774226885405,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226885406,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226885406,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6402276969746094, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226885406,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6402276969746094}"
+    },
+    {
+      "wallClockMs": 1774226885449,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64, timestamp: 3914.2000000029802}"
+    },
+    {
+      "wallClockMs": 1774226885458,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6570769949041857, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226885458,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6570769949041857}"
+    },
+    {
+      "wallClockMs": 1774226886138,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6402276969746094, timestamp: 4603.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226886144,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7471216970521566, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226886145,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7471216970521566}"
+    },
+    {
+      "wallClockMs": 1774226886413,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6570769949041857, timestamp: 4872.30000000447}"
+    },
+    {
+      "wallClockMs": 1774226886428,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.874345000959106, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226886429,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.874345000959106}"
+    },
+    {
+      "wallClockMs": 1774226886682,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7471216970521566, timestamp: 5143.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226886688,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9150412987717096, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226886690,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9150412987717096}"
+    },
+    {
+      "wallClockMs": 1774226886938,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.874345000959106, timestamp: 5400.30000000447}"
+    },
+    {
+      "wallClockMs": 1774226886947,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.92, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226886947,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.92}"
+    },
+    {
+      "wallClockMs": 1774226887160,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9150412987717096, timestamp: 5626.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226887166,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226887168,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226887185,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9200014392645374, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226887185,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9200014392645374}"
+    },
+    {
+      "wallClockMs": 1774226887394,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.92, timestamp: 5858.5}"
+    },
+    {
+      "wallClockMs": 1774226887436,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9223846244206763, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226887437,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9223846244206763}"
+    },
+    {
+      "wallClockMs": 1774226887650,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9200014392645374, timestamp: 6116.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226887664,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9296281286467721, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226887665,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9296281286467721}"
+    },
+    {
+      "wallClockMs": 1774226887883,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9223846244206763, timestamp: 6348.30000000447}"
+    },
+    {
+      "wallClockMs": 1774226887897,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9395576388833464, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226887898,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9395576388833464}"
+    },
+    {
+      "wallClockMs": 1774226888123,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9296281286467721, timestamp: 6588.80000000447}"
+    },
+    {
+      "wallClockMs": 1774226888130,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9513826515714774, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226888130,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9513826515714774}"
+    },
+    {
+      "wallClockMs": 1774226888330,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9395576388833464, timestamp: 6794.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226888334,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9639654751188194, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226888334,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9639654751188194}"
+    },
+    {
+      "wallClockMs": 1774226888508,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9513826515714774, timestamp: 6973.80000000447}"
+    },
+    {
+      "wallClockMs": 1774226888521,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9727899081710313, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226888522,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9727899081710313}"
+    },
+    {
+      "wallClockMs": 1774226888709,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9639654751188194, timestamp: 7174.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226888745,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9825370278307042, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226888746,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9825370278307042}"
+    },
+    {
+      "wallClockMs": 1774226888894,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9727899081710313, timestamp: 7360.5}"
+    },
+    {
+      "wallClockMs": 1774226888902,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9900884505026522, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226888902,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9900884505026522}"
+    },
+    {
+      "wallClockMs": 1774226889076,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9825370278307042, timestamp: 7542.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226889091,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9957521976967123, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226889101,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9957521976967123}"
+    },
+    {
+      "wallClockMs": 1774226889273,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9900884505026522, timestamp: 7738.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226889279,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9989700598907272, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226889280,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9989700598907272}"
+    },
+    {
+      "wallClockMs": 1774226889489,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9957521976967123, timestamp: 7953.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226889503,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226889504,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995}"
+    },
+    {
+      "wallClockMs": 1774226889677,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9989700598907272, timestamp: 8137.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226892864,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 2415.2000000029802}"
+    },
+    {
+      "wallClockMs": 1774226892864,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1774226893911,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226893911,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226893916,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 2000, hasCamera: true, pointSize: null}"
+    },
+    {
+      "wallClockMs": 1774226893916,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 6000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226893917,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 8200, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226893918,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 9000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226893918,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 10000, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226893918,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1774226894302,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: null, timestamp: 3853.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226894304,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226894304,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226894308,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6400066569897549, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226894309,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6400066569897549}"
+    },
+    {
+      "wallClockMs": 1774226894326,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226894326,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226894466,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 4018.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226894466,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226894466,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226894468,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.64009325827, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226894468,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64009325827}"
+    },
+    {
+      "wallClockMs": 1774226894490,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64, timestamp: 4042.2999999970198}"
+    },
+    {
+      "wallClockMs": 1774226894495,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6469035555870313, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226894495,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6469035555870313}"
+    },
+    {
+      "wallClockMs": 1774226894841,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64009325827, timestamp: 4392.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226894846,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.68048945327, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226894846,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.68048945327}"
+    },
+    {
+      "wallClockMs": 1774226894946,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6469035555870313, timestamp: 4498.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226894949,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7285445345323438, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226894949,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7285445345323438}"
+    },
+    {
+      "wallClockMs": 1774226895040,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.68048945327, timestamp: 4592.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226895046,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7538350407042188, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895047,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7538350407042188}"
+    },
+    {
+      "wallClockMs": 1774226895142,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7285445345323438, timestamp: 4694}"
+    },
+    {
+      "wallClockMs": 1774226895144,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.7799737500001367, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895145,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.7799737500001367}"
+    },
+    {
+      "wallClockMs": 1774226895234,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7538350407042188, timestamp: 4787.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226895239,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8060615999229688, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895239,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8060615999229688}"
+    },
+    {
+      "wallClockMs": 1774226895336,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.7799737500001367, timestamp: 4888.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226895339,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8313570279698438, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895339,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8313570279698438}"
+    },
+    {
+      "wallClockMs": 1774226895421,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8060615999229688, timestamp: 4974.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226895425,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8512117079035744, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895425,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8512117079035744}"
+    },
+    {
+      "wallClockMs": 1774226895505,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8313570279698438, timestamp: 5058}"
+    },
+    {
+      "wallClockMs": 1774226895509,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8694757083520508, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895509,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8694757083520508}"
+    },
+    {
+      "wallClockMs": 1774226895645,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8512117079035744, timestamp: 5198.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226895651,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.89672775475375, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895652,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.89672775475375}"
+    },
+    {
+      "wallClockMs": 1774226895784,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8694757083520508, timestamp: 5336.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226895787,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9130607608214063, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895787,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9130607608214063}"
+    },
+    {
+      "wallClockMs": 1774226895905,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.89672775475375, timestamp: 5458.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226895911,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9196369017114259, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226895911,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9196369017114259}"
+    },
+    {
+      "wallClockMs": 1774226896041,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9130607608214063, timestamp: 5592.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226896049,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.92, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896049,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.92}"
+    },
+    {
+      "wallClockMs": 1774226896170,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9196369017114259, timestamp: 5721.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226896171,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226896171,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226896175,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9200019595323501, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896175,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9200019595323501}"
+    },
+    {
+      "wallClockMs": 1774226896351,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.92, timestamp: 5900.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226896356,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9212047148938899, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896356,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9212047148938899}"
+    },
+    {
+      "wallClockMs": 1774226896528,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9200019595323501, timestamp: 6079.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226896538,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9252147879043414, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896538,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9252147879043414}"
+    },
+    {
+      "wallClockMs": 1774226896708,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9212047148938899, timestamp: 6261.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226896718,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9315040118936305, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896718,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9315040118936305}"
+    },
+    {
+      "wallClockMs": 1774226896859,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9252147879043414, timestamp: 6407.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226896859,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9379516639513273, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896859,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9379516639513273}"
+    },
+    {
+      "wallClockMs": 1774226896987,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9315040118936305, timestamp: 6540}"
+    },
+    {
+      "wallClockMs": 1774226896993,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9444099999752261, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226896993,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9444099999752261}"
+    },
+    {
+      "wallClockMs": 1774226897114,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9379516639513273, timestamp: 6666.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226897124,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9513295358160913, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226897125,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9513295358160913}"
+    },
+    {
+      "wallClockMs": 1774226897259,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9444099999752261, timestamp: 6811.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226897269,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.958503477136914, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226897271,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.958503477136914}"
+    },
+    {
+      "wallClockMs": 1774226897400,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9513295358160913, timestamp: 6953.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226897407,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9666033900360489, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226897409,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9666033900360489}"
+    },
+    {
+      "wallClockMs": 1774226897530,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.958503477136914, timestamp: 7082.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226897532,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9727435273737596, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226897533,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9727435273737596}"
+    },
+    {
+      "wallClockMs": 1774226897702,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9666033900360489, timestamp: 7254.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226897706,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9817327880544451, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226897706,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9817327880544451}"
+    },
+    {
+      "wallClockMs": 1774226897887,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9727435273737596, timestamp: 7440}"
+    },
+    {
+      "wallClockMs": 1774226897894,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9888025393434923, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226897894,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9888025393434923}"
+    },
+    {
+      "wallClockMs": 1774226898089,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9817327880544451, timestamp: 7642}"
+    },
+    {
+      "wallClockMs": 1774226898094,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9957274426477085, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226898095,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9957274426477085}"
+    },
+    {
+      "wallClockMs": 1774226898293,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9888025393434923, timestamp: 7844.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226898310,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9991142911651524, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226898311,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9991142911651524}"
+    },
+    {
+      "wallClockMs": 1774226898486,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9957274426477085, timestamp: 8026.5}"
+    },
+    {
+      "wallClockMs": 1774226898489,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226898490,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995}"
+    },
+    {
+      "wallClockMs": 1774226898679,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9991142911651524, timestamp: 8231.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226900124,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995000032666466, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226900126,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995000032666466}"
+    },
+    {
+      "wallClockMs": 1774226900129,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226900129,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226900129,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 9677.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226900281,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.99950189994767, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226900282,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.99950189994767}"
+    },
+    {
+      "wallClockMs": 1774226900794,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995000032666466, timestamp: 10346.5}"
+    },
+    {
+      "wallClockMs": 1774226900802,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.999536417737648, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226900805,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.999536417737648}"
+    },
+    {
+      "wallClockMs": 1774226901314,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.99950189994767, timestamp: 10866}"
+    },
+    {
+      "wallClockMs": 1774226901322,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9996044598338624, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226901322,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9996044598338624}"
+    },
+    {
+      "wallClockMs": 1774226901831,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.999536417737648, timestamp: 11384}"
+    },
+    {
+      "wallClockMs": 1774226901848,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9996930726971253, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226901849,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9996930726971253}"
+    },
+    {
+      "wallClockMs": 1774226902729,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9996044598338624, timestamp: 12245.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226902731,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226902731,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226902802,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9998407237408125, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226902802,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9998407237408125}"
+    },
+    {
+      "wallClockMs": 1774226906874,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226906874,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226906896,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 1, atMs: 2000, hasCamera: true, pointSize: null}"
+    },
+    {
+      "wallClockMs": 1774226906899,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 2, atMs: 6000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226906899,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 3, atMs: 8200, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226906899,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 4, atMs: 9000, hasCamera: true, pointSize: 7}"
+    },
+    {
+      "wallClockMs": 1774226906899,
+      "text": "[ConsciousnessTheater] Scheduled landing velocity beat {idx: 5, atMs: 10000, hasCamera: true, pointSize: 6}"
+    },
+    {
+      "wallClockMs": 1774226906900,
+      "text": "[ConsciousnessTheater] Landing stage mode started {stage: velocity, preset: velocity_stage, quality: ULTRA}"
+    },
+    {
+      "wallClockMs": 1774226906907,
+      "text": "🔬 MORPH_PROGRESS_SUBSCRIBED {timestamp: 2294.5}"
+    },
+    {
+      "wallClockMs": 1774226906907,
+      "text": "✅ Renderer subscribed: {MORPH_PROGRESS: active, BLUEPRINT_READY: active (separate hook)}"
+    },
+    {
+      "wallClockMs": 1774226907691,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: null, timestamp: 3083.2999999970198}"
+    },
+    {
+      "wallClockMs": 1774226907694,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226907696,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226907708,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6421865699880664, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226907709,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6421865699880664}"
+    },
+    {
+      "wallClockMs": 1774226907753,
+      "text": "[PatternS] emit MORPH_PROGRESS from at MorphAnimationController.setImmediate (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:27:5) {progress: 0.64, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226907754,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.64}"
+    },
+    {
+      "wallClockMs": 1774226908010,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 3403.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226908013,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226908014,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226908018,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.6401861245384961, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226908019,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.6401861245384961}"
+    },
+    {
+      "wallClockMs": 1774226908261,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.64, timestamp: 3654}"
+    },
+    {
+      "wallClockMs": 1774226908273,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.66218078300375, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226908274,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.66218078300375}"
+    },
+    {
+      "wallClockMs": 1774226908739,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.6401861245384961, timestamp: 4132.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226908757,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8213643940974413, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226908757,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8213643940974413}"
+    },
+    {
+      "wallClockMs": 1774226908934,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.66218078300375, timestamp: 4323.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226908953,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8645204052929688, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226908955,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8645204052929688}"
+    },
+    {
+      "wallClockMs": 1774226909174,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8213643940974413, timestamp: 4565.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226909175,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226909175,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: coalesce, keys: Array(9)}"
+    },
+    {
+      "wallClockMs": 1774226909190,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8645524069133299, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909190,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8645524069133299}"
+    },
+    {
+      "wallClockMs": 1774226909297,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8645204052929688, timestamp: 4690}"
+    },
+    {
+      "wallClockMs": 1774226909300,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.866250084700217, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909300,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.866250084700217}"
+    },
+    {
+      "wallClockMs": 1774226909389,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8645524069133299, timestamp: 4781.89999999851}"
+    },
+    {
+      "wallClockMs": 1774226909393,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8692463446301796, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909393,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8692463446301796}"
+    },
+    {
+      "wallClockMs": 1774226909466,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.866250084700217, timestamp: 4858.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226909472,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8719755287985334, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909472,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8719755287985334}"
+    },
+    {
+      "wallClockMs": 1774226909545,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8692463446301796, timestamp: 4937.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226909548,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.876125853626664, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909548,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.876125853626664}"
+    },
+    {
+      "wallClockMs": 1774226909655,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8719755287985334, timestamp: 5047.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226909657,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8831617432214091, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909657,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8831617432214091}"
+    },
+    {
+      "wallClockMs": 1774226909770,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.876125853626664, timestamp: 5162.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226909776,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8901709641477453, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909777,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8901709641477453}"
+    },
+    {
+      "wallClockMs": 1774226909932,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8831617432214091, timestamp: 5324.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226909939,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9034245788578819, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226909939,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9034245788578819}"
+    },
+    {
+      "wallClockMs": 1774226910053,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8901709641477453, timestamp: 5433.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226910053,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9135487785487141, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910053,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9135487785487141}"
+    },
+    {
+      "wallClockMs": 1774226910204,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9034245788578819, timestamp: 5595.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226910213,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9286706703676352, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910213,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9286706703676352}"
+    },
+    {
+      "wallClockMs": 1774226910343,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9135487785487141, timestamp: 5735.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226910351,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9409232546848494, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910357,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9409232546848494}"
+    },
+    {
+      "wallClockMs": 1774226910462,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9286706703676352, timestamp: 5854.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226910467,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9514299181041583, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910468,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9514299181041583}"
+    },
+    {
+      "wallClockMs": 1774226910601,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9409232546848494, timestamp: 5993.39999999851}"
+    },
+    {
+      "wallClockMs": 1774226910611,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9628941358950173, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910612,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9628941358950173}"
+    },
+    {
+      "wallClockMs": 1774226910748,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9514299181041583, timestamp: 6140.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226910755,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9746374514773207, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910756,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9746374514773207}"
+    },
+    {
+      "wallClockMs": 1774226910877,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9628941358950173, timestamp: 6268.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226910885,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9836753517600269, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226910885,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9836753517600269}"
+    },
+    {
+      "wallClockMs": 1774226911010,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9746374514773207, timestamp: 6402.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226911015,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9910019741511558, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226911016,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9910019741511558}"
+    },
+    {
+      "wallClockMs": 1774226911148,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9836753517600269, timestamp: 6540}"
+    },
+    {
+      "wallClockMs": 1774226911156,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9962643364679173, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226911158,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9962643364679173}"
+    },
+    {
+      "wallClockMs": 1774226911289,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9910019741511558, timestamp: 6681.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226911301,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9992696240809548, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226911303,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9992696240809548}"
+    },
+    {
+      "wallClockMs": 1774226911418,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9962643364679173, timestamp: 6809.60000000149}"
+    },
+    {
+      "wallClockMs": 1774226911428,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226911429,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995}"
+    },
+    {
+      "wallClockMs": 1774226911541,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9992696240809548, timestamp: 6932.5}"
+    },
+    {
+      "wallClockMs": 1774226912923,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995000032666466, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226912923,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995000032666466}"
+    },
+    {
+      "wallClockMs": 1774226912924,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226912924,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226912924,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 8317.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226913049,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995011296810671, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226913050,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995011296810671}"
+    },
+    {
+      "wallClockMs": 1774226913529,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995000032666466, timestamp: 8919.20000000298}"
+    },
+    {
+      "wallClockMs": 1774226913538,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995298131001155, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226913538,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995298131001155}"
+    },
+    {
+      "wallClockMs": 1774226914083,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995011296810671, timestamp: 9475.79999999702}"
+    },
+    {
+      "wallClockMs": 1774226914091,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995967691325186, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226914095,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995967691325186}"
+    },
+    {
+      "wallClockMs": 1774226914736,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995298131001155, timestamp: 10121.29999999702}"
+    },
+    {
+      "wallClockMs": 1774226914736,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9997115115908753, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226914736,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9997115115908753}"
+    },
+    {
+      "wallClockMs": 1774226915368,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995967691325186, timestamp: 10759.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226915371,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9998289176018311, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226915372,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9998289176018311}"
+    },
+    {
+      "wallClockMs": 1774226916018,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9997115115908753, timestamp: 11410.70000000298}"
+    },
+    {
+      "wallClockMs": 1774226916019,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226916019,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226916023,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9999302212558593, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226916023,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9999302212558593}"
+    },
+    {
+      "wallClockMs": 1774226916698,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 12090.10000000149}"
+    },
+    {
+      "wallClockMs": 1774226916699,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226916699,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226916709,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9999941181440001, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226916713,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9999941181440001}"
+    },
+    {
+      "wallClockMs": 1774226917262,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 12654}"
+    },
+    {
+      "wallClockMs": 1774226917264,
+      "text": "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226917264,
+      "text": "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}"
+    },
+    {
+      "wallClockMs": 1774226917270,
+      "text": "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 1, source: morph_animation_controller, _meta: Object}"
+    },
+    {
+      "wallClockMs": 1774226917270,
+      "text": "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 1}"
+    },
+    {
+      "wallClockMs": 1774226917877,
+      "text": "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 13269.89999999851}"
+    }
+  ],
+  "tailLogs": [
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8719755287985334, timestamp: 5047.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.876",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8831617432214091, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8831617432214091}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8831617432214091, source: landing_stage_mode_hero_clock, timestamp: 5050.29999999702}",
+    "The resource http://127.0.0.1:5193/poster/hero.avif was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.876125853626664, timestamp: 5162.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.883",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.8901709641477453, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.8901709641477453}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.8901709641477453, source: landing_stage_mode_hero_clock, timestamp: 5171.60000000149}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8831617432214091, timestamp: 5324.10000000149}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.890",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9034245788578819, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9034245788578819}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9034245788578819, source: landing_stage_mode_hero_clock, timestamp: 5332.5}",
+    "[CAM STATE] {pos: Array(3), fov: 95.5, zoom: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.8901709641477453, timestamp: 5433.70000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.903",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9135487785487141, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9135487785487141}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9135487785487141, source: landing_stage_mode_hero_clock, timestamp: 5439.70000000298}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9034245788578819, timestamp: 5595.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.914",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9286706703676352, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9286706703676352}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9286706703676352, source: landing_stage_mode_hero_clock, timestamp: 5603.70000000298}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9135487785487141, timestamp: 5735.10000000149}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.929",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9409232546848494, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9409232546848494}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9409232546848494, source: landing_stage_mode_hero_clock, timestamp: 5751}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9286706703676352, timestamp: 5854.70000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.941",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9514299181041583, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9514299181041583}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9514299181041583, source: landing_stage_mode_hero_clock, timestamp: 5861.89999999851}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9409232546848494, timestamp: 5993.39999999851}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.951",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9628941358950173, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9628941358950173}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9628941358950173, source: landing_stage_mode_hero_clock, timestamp: 6004.70000000298}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9514299181041583, timestamp: 6140.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.963",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9746374514773207, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9746374514773207}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9746374514773207, source: landing_stage_mode_hero_clock, timestamp: 6149.89999999851}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9628941358950173, timestamp: 6268.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.975",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9836753517600269, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9836753517600269}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9836753517600269, source: landing_stage_mode_hero_clock, timestamp: 6277.5}",
+    "[CAM STATE] {pos: Array(3), fov: 92, zoom: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9746374514773207, timestamp: 6402.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.984",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9910019741511558, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9910019741511558}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9910019741511558, source: landing_stage_mode_hero_clock, timestamp: 6407.20000000298}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9836753517600269, timestamp: 6540}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.991",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9962643364679173, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9962643364679173}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9962643364679173, source: landing_stage_mode_hero_clock, timestamp: 6552}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9910019741511558, timestamp: 6681.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.996",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9992696240809548, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9992696240809548}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9992696240809548, source: landing_stage_mode_hero_clock, timestamp: 6696.89999999851}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9962643364679173, timestamp: 6809.60000000149}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 0.999",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995, source: landing_stage_mode_hero_clock, timestamp: 6822.70000000298}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9992696240809548, timestamp: 6932.5}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[CAM STATE] {pos: Array(3), fov: 92, zoom: 1}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "[CAM STATE] {pos: Array(3), fov: 92, zoom: 1}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995000032666466, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995000032666466}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995000032666466, source: landing_stage_mode_hero_clock, timestamp: 8315.79999999702}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 700}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 8317.70000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995011296810671, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995011296810671}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995011296810671, source: landing_stage_mode_hero_clock, timestamp: 8442.10000000149}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995000032666466, timestamp: 8919.20000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995298131001155, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995298131001155}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995298131001155, source: landing_stage_mode_hero_clock, timestamp: 8931.89999999851}",
+    "[CAM STATE] {pos: Array(3), fov: 84.4, zoom: 1}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995011296810671, timestamp: 9475.79999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9995967691325186, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9995967691325186}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9995967691325186, source: landing_stage_mode_hero_clock, timestamp: 9484.60000000149}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995298131001155, timestamp: 10121.29999999702}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9997115115908753, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9997115115908753}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9997115115908753, source: landing_stage_mode_hero_clock, timestamp: 10130.60000000149}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9995967691325186, timestamp: 10759.10000000149}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9998289176018311, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9998289176018311}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9998289176018311, source: landing_stage_mode_hero_clock, timestamp: 10763.89999999851}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 0.9997115115908753, timestamp: 11410.70000000298}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 200}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9999302212558593, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9999302212558593}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9999302212558593, source: landing_stage_mode_hero_clock, timestamp: 11415.70000000298}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "[WBG] Camera reached target",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 12090.10000000149}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 200}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 0.9999941181440001, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 0.9999941181440001}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 0.9999941181440001, source: landing_stage_mode_hero_clock, timestamp: 12105.79999999702}",
+    "[PatternS] emit RENDER_DIRECTIVE from at emitVelocityBeatDirective (http://127.0.0.1:5193/src/components/consciousness/ConsciousnessTheater.jsx?t=1774226288630:717:17) {source: visual_orchestrator, phase: landing_stage_mode_velocity, stage: velocity, verb: velocity_rest, camera: Object}",
+    "[WBG] Camera reached target",
+    "🚌 BeatBus.emit called: {eventName: RENDER_DIRECTIVE, hasPayload: true, payloadKeys: Array(10), listenerCount: 1}",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 12654}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "🔬 DIRECTIVE_CONTENTS {hasMorph: false, morphValue: MISSING, phase: landing_stage_mode_velocity, stage: velocity, allKeys: Array(10)}",
+    "[WBG] handleDirective {source: visual_orchestrator, phase: landing_stage_mode_velocity, verb: velocity_rest, keys: Array(10)}",
+    "[WBG] Camera directive received: {position: Object, fov: 84, durationMs: 500}",
+    "[PatternS] emit MORPH_PROGRESS from at step (http://127.0.0.1:5193/src/theater/controllers/MorphAnimationController.js:68:7) {progress: 1, source: morph_animation_controller, _meta: Object}",
+    "🎚 MORPH_PROGRESS {owner: morph_animation_controller, source: morph_animation_controller, value: 1}",
+    "🔬 MORPH_CONTROLLER_EMIT {progress: 1, source: landing_stage_mode_hero_clock, timestamp: 12663.29999999702}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[WBG] Camera reached target",
+    "⚛️ createAtom: Advanced cache cleared",
+    "🔬 MORPH_PROGRESS_HANDLER_CALLED {payload: Object, currentUniform: 1, timestamp: 13269.89999999851}",
+    "[WBG] handleMorphProgress {payload: Object, frozen: false, ignoreDirectives: false}",
+    "🔬 [MORPH] Updated: 1.000",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}",
+    "[CAM STATE] {pos: Array(3), fov: 84, zoom: 1}"
+  ]
+}

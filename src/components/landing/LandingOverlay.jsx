@@ -34,6 +34,22 @@ const rowStyle = {
   gap: '18px',
 };
 
+const resolveOverlayPhase = (elapsedMs) => {
+  if (elapsedMs < 800) return 'immersion';
+  if (elapsedMs < 1800) return 'awareness';
+  if (elapsedMs < 3000) return 'identity';
+  if (elapsedMs < 6000) return 'meaning';
+  return 'action';
+};
+
+const mapBrandVisibility = (phase, phaseProgress) => {
+  if (phase === 'immersion') return 0.12;
+  if (phase === 'awareness') return 0.2 + (phaseProgress * 0.16);
+  if (phase === 'identity') return 0.42 + (phaseProgress * 0.4);
+  if (phase === 'meaning') return 0.86;
+  return 1;
+};
+
 export default function LandingOverlay() {
   const currentStage = useAtomValue(stageAtom, (state) => state.currentStage || 'genesis');
   const landingResolved = Canonical?.landingStageSliceResolved || {};
@@ -104,15 +120,20 @@ export default function LandingOverlay() {
   const accentSoft = stagePalette[0] || '#DDD6FE';
   const cueInk = 'rgba(243, 238, 255, 0.78)';
   const elapsedMs = Math.max(0, Number(heroState?.elapsedMs) || 0);
-  const brandProgress = clamp01((elapsedMs - 120) / 850);
-  const lineProgress = clamp01((elapsedMs - 520) / 1050);
-  const ctaProgress = clamp01((elapsedMs - 3600) / 1100);
-  const cueProgress = clamp01((elapsedMs - 6800) / 900);
-  const panelOpacity = 0.28 + brandProgress * 0.72;
-  const brandLift = (1 - brandProgress) * 10;
-  const lineLift = (1 - lineProgress) * 16;
-  const ctaLift = (1 - ctaProgress) * 12;
-  const cueLift = (1 - cueProgress) * 10;
+  const heroPhase = resolveOverlayPhase(elapsedMs);
+  const heroPhaseProgress = heroPhase === 'immersion'
+    ? clamp01(elapsedMs / 800)
+    : heroPhase === 'awareness'
+      ? clamp01((elapsedMs - 800) / 1000)
+      : heroPhase === 'identity'
+        ? clamp01((elapsedMs - 1800) / 1200)
+        : heroPhase === 'meaning'
+          ? clamp01((elapsedMs - 3000) / 3000)
+          : clamp01((elapsedMs - 6000) / 4000);
+  const brandVisibility = heroState ? mapBrandVisibility(heroPhase, heroPhaseProgress) : 0;
+  const lineVisibility = heroState ? clamp01((elapsedMs - 3000) / 900) : 0;
+  const ctaVisibility = heroState ? clamp01((elapsedMs - 6000) / 1000) : 0;
+  const cueVisibility = heroState ? clamp01((elapsedMs - 3000) / 1000) : 0;
   const bottomRowOpacity = continuationTakeover <= 0.1
     ? 1
     : clamp01(1 - ((continuationTakeover - 0.1) / 0.24));
@@ -129,9 +150,9 @@ export default function LandingOverlay() {
       <div
         style={{
           alignSelf: 'flex-start',
-          opacity: panelOpacity,
-          transform: `translate3d(0, ${brandLift}px, 0)`,
-          transition: 'opacity 240ms ease, transform 320ms ease',
+          opacity: brandVisibility,
+          filter: `blur(${(1 - brandVisibility) * 14}px)`,
+          transition: 'opacity 260ms ease, filter 360ms ease',
         }}
       >
         <div
@@ -183,9 +204,9 @@ export default function LandingOverlay() {
         <div
           style={{
             maxWidth: 'min(460px, calc(100vw - 48px))',
-            opacity: lineProgress,
-            transform: `translate3d(0, ${lineLift}px, 0)`,
-            transition: 'opacity 320ms ease, transform 420ms ease',
+            opacity: lineVisibility,
+            filter: `blur(${(1 - lineVisibility) * 10}px)`,
+            transition: 'opacity 320ms ease, filter 420ms ease',
             marginBottom: 'clamp(34px, 6vh, 64px)',
             pointerEvents: bottomRowInteractive ? 'auto' : 'none',
           }}
@@ -206,9 +227,9 @@ export default function LandingOverlay() {
           <div
             style={{
               marginTop: '16px',
-              opacity: ctaProgress,
-              transform: `translate3d(0, ${ctaLift}px, 0)`,
-              transition: 'opacity 320ms ease, transform 420ms ease',
+              opacity: ctaVisibility,
+              filter: `blur(${(1 - ctaVisibility) * 8}px)`,
+              transition: 'opacity 320ms ease, filter 420ms ease',
             }}
           >
             {copy.ctaHref ? (
@@ -242,9 +263,9 @@ export default function LandingOverlay() {
           style={{
             alignSelf: 'flex-end',
             marginBottom: '18px',
-            opacity: cueProgress,
-            transform: `translate3d(0, ${cueLift}px, 0)`,
-            transition: 'opacity 360ms ease, transform 420ms ease',
+            opacity: cueVisibility,
+            filter: `blur(${(1 - cueVisibility) * 8}px)`,
+            transition: 'opacity 360ms ease, filter 420ms ease',
           }}
         >
           <div
