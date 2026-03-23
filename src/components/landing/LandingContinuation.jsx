@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react';
 import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+const MOBILE_BREAKPOINT_PX = 767;
+
+const readIsMobileViewport = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= MOBILE_BREAKPOINT_PX;
+};
 
 const sectionStyle = {
   position: 'relative',
@@ -36,6 +42,7 @@ export default function LandingContinuation() {
     ? landingModeForm.ui.voidCopy.ctaHref
     : 'mailto:curtis@curtiswhorton.com';
   const primaryContactLabel = landingModeForm?.ui?.voidCopy?.cta || 'Book a Call';
+  const brandName = landingModeForm?.ui?.voidCopy?.name || 'Meta Curtis Labs';
   const formAction = 'https://formspree.io/f/meovodzy';
   const emailHref = 'mailto:curtis@curtiswhorton.com';
   const emailLabel = 'curtis@curtiswhorton.com';
@@ -68,6 +75,23 @@ export default function LandingContinuation() {
     },
   ];
   const [sectionProgress, setSectionProgress] = useState(0);
+  const [isMobileViewport, setIsMobileViewport] = useState(readIsMobileViewport);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
+    const syncViewportMode = () => {
+      setIsMobileViewport(mediaQuery.matches || readIsMobileViewport());
+    };
+
+    syncViewportMode();
+    mediaQuery.addEventListener?.('change', syncViewportMode);
+    window.addEventListener('resize', syncViewportMode);
+    return () => {
+      mediaQuery.removeEventListener?.('change', syncViewportMode);
+      window.removeEventListener('resize', syncViewportMode);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -108,18 +132,49 @@ export default function LandingContinuation() {
   const arrivalLift = (1 - arrivalProgress) * 16;
   const trustLift = (1 - trustProgress) * 14;
   const conversionLift = (1 - conversionProgress) * 12;
+  const responsiveSectionStyle = isMobileViewport
+    ? {
+        ...sectionStyle,
+        minHeight: '235vh',
+        paddingTop: '118vh',
+        paddingBottom: '22vh',
+      }
+    : sectionStyle;
+  const responsiveInnerStyle = isMobileViewport
+    ? {
+        ...innerStyle,
+        width: 'calc(100vw - 24px)',
+        top: 'calc(14px + env(safe-area-inset-top, 0px))',
+      }
+    : innerStyle;
+  const stackedGridStyle = isMobileViewport
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        alignItems: 'flex-start',
+      }
+    : null;
+  const mobileActionStyle = isMobileViewport
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        alignItems: 'stretch',
+      }
+    : null;
 
   return (
-    <section id="landing-continuation" style={sectionStyle} aria-label="Landing continuation">
-      <div style={innerStyle}>
+    <section id="landing-continuation" style={responsiveSectionStyle} aria-label="Landing continuation">
+      <div style={responsiveInnerStyle}>
         <div
           id="landing-continuation-surface"
           style={{
             maxWidth: 'min(1080px, 100%)',
             margin: '0 auto',
             position: 'relative',
-            padding: 'clamp(30px, 4vw, 52px)',
-            borderRadius: '38px',
+            padding: isMobileViewport ? '24px 18px 26px' : 'clamp(30px, 4vw, 52px)',
+            borderRadius: isMobileViewport ? '28px' : '38px',
             border: `1px solid ${accent}1E`,
             background:
               'linear-gradient(180deg, rgba(6, 8, 14, 0.62) 0%, rgba(7, 9, 16, 0.84) 24%, rgba(8, 10, 18, 0.92) 100%)',
@@ -158,8 +213,8 @@ export default function LandingContinuation() {
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              gap: '22px',
-              maxWidth: '760px',
+              gap: isMobileViewport ? '18px' : '22px',
+              maxWidth: isMobileViewport ? '100%' : '760px',
             }}
           >
             <div
@@ -171,15 +226,15 @@ export default function LandingContinuation() {
                 opacity: 0.84,
               }}
             >
-              Perception Labs
+              {brandName}
             </div>
 
             <h2
               style={{
                 margin: 0,
                 color: ink,
-                fontSize: 'clamp(2rem, 4vw, 3.4rem)',
-                lineHeight: 1.06,
+                fontSize: isMobileViewport ? 'clamp(1.72rem, 8vw, 2.2rem)' : 'clamp(2rem, 4vw, 3.4rem)',
+                lineHeight: isMobileViewport ? 1.1 : 1.06,
                 letterSpacing: '-0.03em',
                 textWrap: 'balance',
                 opacity: arrivalProgress,
@@ -196,8 +251,8 @@ export default function LandingContinuation() {
                 margin: 0,
                 maxWidth: '62ch',
                 color: bodyInk,
-                fontSize: 'clamp(1rem, 1.35vw, 1.18rem)',
-                lineHeight: 1.65,
+                fontSize: isMobileViewport ? '1rem' : 'clamp(1rem, 1.35vw, 1.18rem)',
+                lineHeight: isMobileViewport ? 1.72 : 1.65,
                 textWrap: 'pretty',
                 opacity: arrivalProgress,
                 filter: `blur(${(1 - arrivalProgress) * 10}px)`,
@@ -216,9 +271,9 @@ export default function LandingContinuation() {
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              gap: '18px',
-              marginTop: 'clamp(32px, 4vw, 46px)',
-              paddingTop: '22px',
+              gap: isMobileViewport ? '20px' : '18px',
+              marginTop: isMobileViewport ? '40px' : 'clamp(32px, 4vw, 46px)',
+              paddingTop: isMobileViewport ? '24px' : '22px',
               borderTop: `1px solid ${accent}1F`,
               opacity: trustProgress,
               filter: `blur(${(1 - trustProgress) * 10}px)`,
@@ -230,10 +285,12 @@ export default function LandingContinuation() {
               <div
                 key={signal.label}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 260px) minmax(0, 1fr)',
-                  gap: '14px',
-                  alignItems: 'start',
+                  ...(stackedGridStyle || {
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 260px) minmax(0, 1fr)',
+                    gap: '14px',
+                    alignItems: 'start',
+                  }),
                 }}
               >
                 <div
@@ -243,6 +300,7 @@ export default function LandingContinuation() {
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     opacity: 0.92,
+                    maxWidth: isMobileViewport ? '28ch' : 'none',
                   }}
                 >
                   {signal.label}
@@ -251,8 +309,8 @@ export default function LandingContinuation() {
                   style={{
                     color: mutedInk,
                     fontSize: '0.98rem',
-                    lineHeight: 1.6,
-                    maxWidth: '48ch',
+                    lineHeight: isMobileViewport ? 1.7 : 1.6,
+                    maxWidth: isMobileViewport ? 'none' : '48ch',
                   }}
                 >
                   {signal.detail}
@@ -267,8 +325,8 @@ export default function LandingContinuation() {
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              marginTop: 'clamp(28px, 4vw, 42px)',
-              paddingTop: '22px',
+              marginTop: isMobileViewport ? '40px' : 'clamp(28px, 4vw, 42px)',
+              paddingTop: isMobileViewport ? '24px' : '22px',
               borderTop: `1px solid ${accent}1F`,
               opacity: trustProgress,
               filter: `blur(${(1 - trustProgress) * 10}px)`,
@@ -291,10 +349,12 @@ export default function LandingContinuation() {
               <div
                 key={entry.title}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 220px) minmax(0, 1fr)',
-                  gap: '14px',
-                  paddingTop: '10px',
+                  ...(stackedGridStyle || {
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 220px) minmax(0, 1fr)',
+                    gap: '14px',
+                  }),
+                  paddingTop: isMobileViewport ? '14px' : '10px',
                   borderTop: `1px solid ${accent}14`,
                 }}
               >
@@ -305,6 +365,7 @@ export default function LandingContinuation() {
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                     opacity: 0.94,
+                    maxWidth: isMobileViewport ? '28ch' : 'none',
                   }}
                 >
                   {entry.title}
@@ -313,8 +374,8 @@ export default function LandingContinuation() {
                   style={{
                     color: mutedInk,
                     fontSize: '0.98rem',
-                    lineHeight: 1.6,
-                    maxWidth: '52ch',
+                    lineHeight: isMobileViewport ? 1.7 : 1.6,
+                    maxWidth: isMobileViewport ? 'none' : '52ch',
                   }}
                 >
                   {entry.detail}
@@ -329,8 +390,8 @@ export default function LandingContinuation() {
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              marginTop: 'clamp(28px, 4vw, 42px)',
-              paddingTop: '22px',
+              marginTop: isMobileViewport ? '42px' : 'clamp(28px, 4vw, 42px)',
+              paddingTop: isMobileViewport ? '24px' : '22px',
               borderTop: `1px solid ${accent}1F`,
               opacity: conversionProgress,
               filter: `blur(${(1 - conversionProgress) * 10}px)`,
@@ -352,8 +413,8 @@ export default function LandingContinuation() {
             <div
               style={{
                 color: ink,
-                fontSize: 'clamp(1.24rem, 2vw, 1.72rem)',
-                lineHeight: 1.25,
+                fontSize: isMobileViewport ? 'clamp(1.18rem, 5.5vw, 1.5rem)' : 'clamp(1.24rem, 2vw, 1.72rem)',
+                lineHeight: isMobileViewport ? 1.35 : 1.25,
                 letterSpacing: '-0.02em',
                 maxWidth: '24ch',
               }}
@@ -364,8 +425,8 @@ export default function LandingContinuation() {
               style={{
                 color: bodyInk,
                 fontSize: '1rem',
-                lineHeight: 1.65,
-                maxWidth: '48ch',
+                lineHeight: isMobileViewport ? 1.72 : 1.65,
+                maxWidth: isMobileViewport ? 'none' : '48ch',
               }}
             >
               Scheduling is live through Calendly. Direct email remains available, and the message
@@ -373,10 +434,12 @@ export default function LandingContinuation() {
             </div>
             <div
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '14px 20px',
-                alignItems: 'center',
+                ...(mobileActionStyle || {
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '14px 20px',
+                  alignItems: 'center',
+                }),
               }}
             >
               <a
@@ -387,6 +450,8 @@ export default function LandingContinuation() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '10px',
+                  width: isMobileViewport ? '100%' : 'auto',
+                  justifyContent: isMobileViewport ? 'space-between' : 'center',
                   padding: '11px 16px',
                   borderRadius: '999px',
                   border: `1px solid ${accent}2A`,
@@ -408,10 +473,11 @@ export default function LandingContinuation() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '10px',
+                  width: isMobileViewport ? '100%' : 'auto',
                   color: ink,
                   textDecoration: 'none',
                   fontSize: '0.92rem',
-                  letterSpacing: '0.08em',
+                  letterSpacing: isMobileViewport ? '0.06em' : '0.08em',
                   textTransform: 'uppercase',
                   borderBottom: `1px solid ${accent}30`,
                   paddingBottom: '6px',
@@ -428,7 +494,7 @@ export default function LandingContinuation() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px',
-                maxWidth: '560px',
+                maxWidth: isMobileViewport ? '100%' : '560px',
                 marginTop: '6px',
               }}
             >
@@ -479,9 +545,10 @@ export default function LandingContinuation() {
               <button
                 type="submit"
                 style={{
-                  alignSelf: 'flex-start',
                   display: 'inline-flex',
+                  width: isMobileViewport ? '100%' : 'auto',
                   alignItems: 'center',
+                  justifyContent: isMobileViewport ? 'space-between' : 'center',
                   gap: '10px',
                   padding: '11px 16px',
                   borderRadius: '999px',

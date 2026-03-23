@@ -149,7 +149,12 @@ function resolveLandingStageSliceConfig(source, stageOrder = []) {
 
   const fallbackWord = landingModeDefaults.word || 'FORM';
   const presetWord = typeof preset?.word === 'string' ? preset.word : '';
-  const requestedWord = (params.get('landingWord') || presetWord || fallbackWord || 'FORM').trim();
+  const requestedWord = (
+    params.get('landingWord') ||
+    (isRootLandingPath ? fallbackWord : presetWord) ||
+    fallbackWord ||
+    'FORM'
+  ).trim();
   const word = (requestedWord || 'FORM').slice(0, 64);
 
   const presetPalette = normalizePaletteArray(preset?.palette, {

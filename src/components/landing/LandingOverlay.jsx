@@ -5,8 +5,14 @@ import { stageAtom } from '@/state/atoms/stageAtom.js';
 import { useAtomValue } from '@/state/atoms/createAtom.js';
 
 const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
+const MOBILE_BREAKPOINT_PX = 767;
 const LANDING_HERO_STATE_KEY = '__LANDING_HERO_STATE__';
 const LANDING_HERO_STATE_EVENT = 'landing-hero-state-change';
+
+const readIsMobileViewport = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth <= MOBILE_BREAKPOINT_PX;
+};
 
 const readLandingHeroState = (stageName = null) => {
   if (typeof window === 'undefined') return null;
@@ -61,6 +67,7 @@ export default function LandingOverlay() {
   const copy = landingModeForm?.ui?.voidCopy || {};
   const [heroState, setHeroState] = useState(() => readLandingHeroState(stageLocked));
   const [continuationTakeover, setContinuationTakeover] = useState(0);
+  const [isMobileViewport, setIsMobileViewport] = useState(readIsMobileViewport);
 
   useEffect(() => {
     if (currentStage !== stageLocked) {
@@ -76,6 +83,22 @@ export default function LandingOverlay() {
     window.addEventListener(LANDING_HERO_STATE_EVENT, syncHeroState);
     return () => window.removeEventListener(LANDING_HERO_STATE_EVENT, syncHeroState);
   }, [currentStage, stageLocked]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
+    const syncViewportMode = () => {
+      setIsMobileViewport(mediaQuery.matches || readIsMobileViewport());
+    };
+
+    syncViewportMode();
+    mediaQuery.addEventListener?.('change', syncViewportMode);
+    window.addEventListener('resize', syncViewportMode);
+    return () => {
+      mediaQuery.removeEventListener?.('change', syncViewportMode);
+      window.removeEventListener('resize', syncViewportMode);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -144,6 +167,182 @@ export default function LandingOverlay() {
   const surfaceShadow = `0 18px 44px ${accent}14`;
   const surfaceBlur = 'blur(12px)';
   const ctaInk = '#1A1430';
+
+  if (isMobileViewport) {
+    const mobileShellStyle = {
+      ...shellStyle,
+      justifyContent: 'flex-end',
+      alignItems: 'flex-start',
+      paddingTop: 'calc(20px + env(safe-area-inset-top, 0px))',
+      paddingRight: '20px',
+      paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))',
+      paddingLeft: '20px',
+    };
+    const mobileStackOpacity = bottomRowOpacity;
+    const mobileStackWidth = 'min(100%, 360px)';
+
+    return (
+      <section style={mobileShellStyle} aria-label="Landing experience overlay">
+        <div
+          style={{
+            width: mobileStackWidth,
+            opacity: mobileStackOpacity,
+            transform: `translate3d(0, ${bottomRowLift}px, 0)`,
+            transition: 'opacity 320ms ease, transform 420ms ease',
+            visibility: mobileStackOpacity <= 0.001 ? 'hidden' : 'visible',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              gap: '14px',
+            }}
+          >
+            <div
+              style={{
+                alignSelf: 'flex-start',
+                opacity: brandVisibility,
+                filter: `blur(${(1 - brandVisibility) * 14}px)`,
+                transition: 'opacity 260ms ease, filter 360ms ease',
+              }}
+            >
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 12px',
+                  borderRadius: '999px',
+                  border: surfaceBorder,
+                  background: surfaceBackground,
+                  backdropFilter: surfaceBlur,
+                  WebkitBackdropFilter: surfaceBlur,
+                  boxShadow: surfaceShadow,
+                  color: ink,
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  opacity: 0.86,
+                }}
+              >
+                {copy.name || 'MetaCurtis Labs'}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                maxWidth: mobileStackWidth,
+              }}
+            >
+              <div
+                style={{
+                  opacity: brandVisibility,
+                  filter: `blur(${(1 - brandVisibility) * 12}px)`,
+                  transition: 'opacity 300ms ease, filter 380ms ease',
+                }}
+              >
+                <div
+                  style={{
+                    color: accentSoft,
+                    fontSize: 'clamp(1.32rem, 6vw, 1.72rem)',
+                    lineHeight: 1.12,
+                    letterSpacing: '-0.02em',
+                    textWrap: 'balance',
+                    textShadow: `0 0 24px ${accent}14`,
+                  }}
+                >
+                  {copy.title || 'AI-native interactive systems'}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  opacity: lineVisibility,
+                  filter: `blur(${(1 - lineVisibility) * 10}px)`,
+                  transition: 'opacity 320ms ease, filter 420ms ease',
+                  pointerEvents: bottomRowInteractive ? 'auto' : 'none',
+                }}
+              >
+                <div
+                  style={{
+                    color: ink,
+                    fontSize: '0.98rem',
+                    lineHeight: 1.62,
+                    letterSpacing: '0.01em',
+                    textWrap: 'balance',
+                    textShadow: `0 0 20px ${accent}12`,
+                  }}
+                >
+                  {copy.line || 'Premium interactive systems built through AI-native orchestration.'}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                opacity: ctaVisibility,
+                filter: `blur(${(1 - ctaVisibility) * 8}px)`,
+                transition: 'opacity 320ms ease, filter 420ms ease',
+              }}
+            >
+              {copy.ctaHref ? (
+                <a
+                  href={copy.ctaHref}
+                  style={{
+                    pointerEvents: bottomRowInteractive ? 'auto' : 'none',
+                    display: 'inline-flex',
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    padding: '14px 16px',
+                    minHeight: '52px',
+                    borderRadius: '999px',
+                    border: `1px solid ${accent}2A`,
+                    background: 'linear-gradient(135deg, rgba(236, 226, 255, 0.98), rgba(223, 205, 255, 0.96))',
+                    color: ctaInk,
+                    textDecoration: 'none',
+                    fontSize: '0.92rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    boxShadow: `0 12px 24px ${accent}22`,
+                  }}
+                >
+                  <span>{copy.cta || 'Book a Call'}</span>
+                  <span aria-hidden="true" style={{ opacity: 0.55 }}>↗</span>
+                </a>
+              ) : null}
+            </div>
+
+            <div
+              style={{
+                opacity: cueVisibility * 0.7,
+                filter: `blur(${(1 - cueVisibility) * 8}px)`,
+                transition: 'opacity 360ms ease, filter 420ms ease',
+              }}
+            >
+              <div
+                style={{
+                  color: cueInk,
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  textShadow: `0 0 14px ${accent}14`,
+                }}
+              >
+                Scroll to continue
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section style={shellStyle} aria-label="Landing experience overlay">
