@@ -530,6 +530,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   const restoreTransparentRef = useRef(null);
   // Optional: if your render loop advances uTime, guard it here
   const timeTickEnabledRef = useRef(true);
+  const resumeRecoveryRafRef = useRef(0);
+  const resumeRecoveryRaf2Ref = useRef(0);
   const morphWriteLogRef = useRef([]);
 
   const shouldTrackMorphWrites = () =>
@@ -1933,6 +1935,149 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     if (u.uPalette3?.value?.set) u.uPalette3.value.set([next.r, next.g, next.b]);
     mat.uniformsNeedUpdate = true;
   };
+
+  const recoverAtlasSpriteBaseline = useCallback((reason = 'resume') => {
+    if (typeof window === 'undefined') return false;
+    if (!isLandingStageRuntimeRoute()) return false;
+
+    const mat = materialRef.current;
+    const uniforms = mat?.uniforms;
+    if (!mat || !uniforms) return false;
+
+    const intendedQrMode = lastBlueprintMetaRef.current?.qrMode === true;
+    if (intendedQrMode) return false;
+
+    const currentPointSize = Number(uniforms.uPointSize?.value);
+    if (Number.isFinite(currentPointSize) && currentPointSize > 0) {
+      lastPointSizeRef.current = currentPointSize;
+    }
+
+    const atlas = getPointSpriteAtlasSingleton();
+    const nextTexture = atlas.createWebGLTexture();
+    if (nextTexture) {
+      nextTexture.needsUpdate = true;
+      if (uniforms.uAtlasTexture) {
+        uniforms.uAtlasTexture.value = nextTexture;
+        uniforms.uAtlasTexture.needsUpdate = true;
+      }
+      setAtlasTexture((previousTexture) => {
+        if (
+          previousTexture &&
+          previousTexture !== nextTexture &&
+          typeof previousTexture.dispose === 'function'
+        ) {
+          try {
+            previousTexture.dispose();
+          } catch {}
+        }
+        return nextTexture;
+      });
+    }
+
+    if (uniforms.uQrPhotoMode) {
+      uniforms.uQrPhotoMode.value = 0.0;
+      uniforms.uQrPhotoMode.needsUpdate = true;
+    }
+    if (uniforms.uPostMorphFreeze) {
+      uniforms.uPostMorphFreeze.value = 0.0;
+      uniforms.uPostMorphFreeze.needsUpdate = true;
+    }
+    if (uniforms.uPointSize) {
+      const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+      uniforms.uPointSize.value = lastPointSizeRef.current ?? computeBasePointSize(dpr);
+      uniforms.uPointSize.needsUpdate = true;
+    }
+
+    qrModeRef.current = false;
+    timeTickEnabledRef.current = true;
+    restoreBlendRef.current = THREE.AdditiveBlending;
+    restoreTransparentRef.current = true;
+
+    mat.blending = THREE.AdditiveBlending;
+    mat.transparent = true;
+    mat.depthWrite = false;
+    mat.depthTest = true;
+    mat.needsUpdate = true;
+    mat.uniformsNeedUpdate = true;
+
+    if (gl && restoreClearRef.current) {
+      const [r, g, b, a] = restoreClearRef.current;
+      gl.setClearColor(new THREE.Color(r, g, b), a);
+    }
+
+    scheduleRuntimeSampling();
+
+    if (import.meta?.env?.DEV) {
+      console.log('[WBG] Recovered atlas sprite baseline', {
+        reason,
+        atlasRebound: !!nextTexture,
+        pointSize: uniforms.uPointSize?.value ?? null,
+      });
+    }
+
+    return true;
+  }, [gl, scheduleRuntimeSampling]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+
+    let hiddenSinceLastVisible = false;
+    const canvas = gl?.domElement || null;
+
+    const cancelPendingRecovery = () => {
+      if (resumeRecoveryRafRef.current) {
+        window.cancelAnimationFrame(resumeRecoveryRafRef.current);
+        resumeRecoveryRafRef.current = 0;
+      }
+      if (resumeRecoveryRaf2Ref.current) {
+        window.cancelAnimationFrame(resumeRecoveryRaf2Ref.current);
+        resumeRecoveryRaf2Ref.current = 0;
+      }
+    };
+
+    const scheduleResumeRecovery = (reason) => {
+      cancelPendingRecovery();
+      recoverAtlasSpriteBaseline(`${reason}:immediate`);
+      resumeRecoveryRafRef.current = window.requestAnimationFrame(() => {
+        recoverAtlasSpriteBaseline(`${reason}:raf1`);
+        resumeRecoveryRafRef.current = 0;
+        resumeRecoveryRaf2Ref.current = window.requestAnimationFrame(() => {
+          recoverAtlasSpriteBaseline(`${reason}:raf2`);
+          resumeRecoveryRaf2Ref.current = 0;
+        });
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenSinceLastVisible = true;
+        return;
+      }
+      if (!hiddenSinceLastVisible) return;
+      hiddenSinceLastVisible = false;
+      scheduleResumeRecovery('visibility');
+    };
+
+    const handlePageShow = () => {
+      hiddenSinceLastVisible = false;
+      scheduleResumeRecovery('pageshow');
+    };
+
+    const handleContextRestored = () => {
+      scheduleResumeRecovery('contextrestored');
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
+    canvas?.addEventListener?.('webglcontextrestored', handleContextRestored);
+
+    return () => {
+      cancelPendingRecovery();
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      canvas?.removeEventListener?.('webglcontextrestored', handleContextRestored);
+    };
+  }, [gl, recoverAtlasSpriteBaseline]);
 
   const applyMetadataColors = (colors) => {
     const palette = (Array.isArray(colors) && colors.length >= 3) ? colors : null;

@@ -98,6 +98,70 @@ export default function App() {
   }, [redirectTarget, isLandingSliceMode]);
 
   useEffect(() => {
+    if (redirectTarget || !isLandingSliceMode) return undefined;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+
+    const previousScrollRestoration = typeof window.history?.scrollRestoration === 'string'
+      ? window.history.scrollRestoration
+      : null;
+    if (previousScrollRestoration !== null) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    let hiddenSinceLastVisible = false;
+    let rafId = 0;
+    let rafId2 = 0;
+
+    const resetLandingViewport = () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      if (rafId2) window.cancelAnimationFrame(rafId2);
+
+      const scrollTop = () => {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'instant',
+        });
+      };
+
+      scrollTop();
+      rafId = window.requestAnimationFrame(() => {
+        scrollTop();
+        rafId2 = window.requestAnimationFrame(scrollTop);
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenSinceLastVisible = true;
+        return;
+      }
+      if (!hiddenSinceLastVisible) return;
+      hiddenSinceLastVisible = false;
+      resetLandingViewport();
+    };
+
+    const handlePageShow = () => {
+      hiddenSinceLastVisible = false;
+      resetLandingViewport();
+    };
+
+    resetLandingViewport();
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange, { passive: true });
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      if (rafId2) window.cancelAnimationFrame(rafId2);
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (previousScrollRestoration !== null) {
+        window.history.scrollRestoration = previousScrollRestoration;
+      }
+    };
+  }, [redirectTarget, isLandingSliceMode]);
+
+  useEffect(() => {
     if (redirectTarget) return undefined;
     if (typeof document === 'undefined') return;
     document.body.classList.toggle('form-mode', isLandingSliceMode);
