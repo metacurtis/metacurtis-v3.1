@@ -6,12 +6,28 @@ import { useAtomValue } from '@/state/atoms/createAtom.js';
 
 const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 const MOBILE_BREAKPOINT_PX = 767;
+const COMPACT_LANDSCAPE_MAX_WIDTH_PX = 960;
+const COMPACT_LANDSCAPE_MAX_HEIGHT_PX = 420;
 const LANDING_HERO_STATE_KEY = '__LANDING_HERO_STATE__';
 const LANDING_HERO_STATE_EVENT = 'landing-hero-state-change';
 
-const readIsMobileViewport = () => {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth <= MOBILE_BREAKPOINT_PX;
+const readViewportLayout = () => {
+  if (typeof window === 'undefined') {
+    return {
+      isMobileViewport: false,
+      isCompactLandscape: false,
+    };
+  }
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const isCompactLandscape =
+    width > height &&
+    height <= COMPACT_LANDSCAPE_MAX_HEIGHT_PX &&
+    width <= COMPACT_LANDSCAPE_MAX_WIDTH_PX;
+  return {
+    isMobileViewport: width <= MOBILE_BREAKPOINT_PX || isCompactLandscape,
+    isCompactLandscape,
+  };
 };
 
 const readLandingHeroState = (stageName = null) => {
@@ -67,7 +83,8 @@ export default function LandingOverlay() {
   const copy = landingModeForm?.ui?.voidCopy || {};
   const [heroState, setHeroState] = useState(() => readLandingHeroState(stageLocked));
   const [continuationTakeover, setContinuationTakeover] = useState(0);
-  const [isMobileViewport, setIsMobileViewport] = useState(readIsMobileViewport);
+  const [viewportLayout, setViewportLayout] = useState(readViewportLayout);
+  const { isMobileViewport, isCompactLandscape } = viewportLayout;
 
   useEffect(() => {
     if (currentStage !== stageLocked) {
@@ -86,17 +103,22 @@ export default function LandingOverlay() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
     const syncViewportMode = () => {
-      setIsMobileViewport(mediaQuery.matches || readIsMobileViewport());
+      setViewportLayout((prev) => {
+        const next = readViewportLayout();
+        return prev.isMobileViewport === next.isMobileViewport &&
+          prev.isCompactLandscape === next.isCompactLandscape
+          ? prev
+          : next;
+      });
     };
 
     syncViewportMode();
-    mediaQuery.addEventListener?.('change', syncViewportMode);
     window.addEventListener('resize', syncViewportMode);
+    window.addEventListener('orientationchange', syncViewportMode);
     return () => {
-      mediaQuery.removeEventListener?.('change', syncViewportMode);
       window.removeEventListener('resize', syncViewportMode);
+      window.removeEventListener('orientationchange', syncViewportMode);
     };
   }, []);
 
@@ -169,22 +191,71 @@ export default function LandingOverlay() {
   const ctaInk = '#1A1430';
 
   if (isMobileViewport) {
+    const horizontalPadding = isCompactLandscape ? 16 : 20;
     const mobileShellStyle = {
       ...shellStyle,
-      justifyContent: 'flex-end',
+      justifyContent: isCompactLandscape ? 'center' : 'flex-end',
       alignItems: 'flex-start',
-      paddingTop: 'calc(20px + env(safe-area-inset-top, 0px))',
-      paddingRight: '20px',
-      paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))',
-      paddingLeft: '20px',
+      paddingTop: isCompactLandscape
+        ? 'calc(12px + env(safe-area-inset-top, 0px))'
+        : 'calc(20px + env(safe-area-inset-top, 0px))',
+      paddingRight: `${horizontalPadding}px`,
+      paddingBottom: isCompactLandscape
+        ? 'calc(16px + env(safe-area-inset-bottom, 0px))'
+        : 'calc(28px + env(safe-area-inset-bottom, 0px))',
+      paddingLeft: `${horizontalPadding}px`,
     };
     const mobileStackOpacity = bottomRowOpacity;
-    const mobileStackWidth = 'min(100%, 360px)';
+    const mobileStackWidth = isCompactLandscape ? 'min(100%, 412px)' : 'min(100%, 360px)';
+    const stackGap = isCompactLandscape ? '10px' : '14px';
+    const copyGap = isCompactLandscape ? '8px' : '12px';
+    const titleFontSize = isCompactLandscape
+      ? 'clamp(1.08rem, 3.6vw, 1.36rem)'
+      : 'clamp(1.32rem, 6vw, 1.72rem)';
+    const titleLineHeight = isCompactLandscape ? 1.08 : 1.12;
+    const supportingFontSize = isCompactLandscape ? '0.88rem' : '0.98rem';
+    const supportingLineHeight = isCompactLandscape ? 1.46 : 1.62;
+    const ctaMinHeight = isCompactLandscape ? '46px' : '52px';
+    const ctaPadding = isCompactLandscape ? '11px 14px' : '14px 16px';
+    const ctaFontSize = isCompactLandscape ? '0.86rem' : '0.92rem';
+    const brandPadding = isCompactLandscape ? '8px 10px' : '10px 12px';
+    const brandFontSize = isCompactLandscape ? '0.66rem' : '0.72rem';
+    const cueOpacity = cueVisibility * (isCompactLandscape ? 0.42 : 0.7);
+    const cueNode = (
+      <div
+        style={{
+          opacity: cueOpacity,
+          filter: `blur(${(1 - cueVisibility) * 8}px)`,
+          transition: 'opacity 360ms ease, filter 420ms ease',
+          ...(isCompactLandscape
+            ? {
+                position: 'absolute',
+                left: `${horizontalPadding}px`,
+                bottom: 'calc(10px + env(safe-area-inset-bottom, 0px))',
+                pointerEvents: 'none',
+              }
+            : null),
+        }}
+      >
+        <div
+          style={{
+            color: cueInk,
+            fontSize: isCompactLandscape ? '0.6rem' : '0.68rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            textShadow: `0 0 14px ${accent}14`,
+          }}
+        >
+          Scroll to continue
+        </div>
+      </div>
+    );
 
     return (
       <section style={mobileShellStyle} aria-label="Landing experience overlay">
         <div
           style={{
+            position: 'relative',
             width: mobileStackWidth,
             opacity: mobileStackOpacity,
             transform: `translate3d(0, ${bottomRowLift}px, 0)`,
@@ -197,7 +268,7 @@ export default function LandingOverlay() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'stretch',
-              gap: '14px',
+              gap: stackGap,
             }}
           >
             <div
@@ -213,7 +284,7 @@ export default function LandingOverlay() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '10px 12px',
+                  padding: brandPadding,
                   borderRadius: '999px',
                   border: surfaceBorder,
                   background: surfaceBackground,
@@ -221,7 +292,7 @@ export default function LandingOverlay() {
                   WebkitBackdropFilter: surfaceBlur,
                   boxShadow: surfaceShadow,
                   color: ink,
-                  fontSize: '0.72rem',
+                  fontSize: brandFontSize,
                   letterSpacing: '0.16em',
                   textTransform: 'uppercase',
                   opacity: 0.86,
@@ -235,7 +306,7 @@ export default function LandingOverlay() {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px',
+                gap: copyGap,
                 maxWidth: mobileStackWidth,
               }}
             >
@@ -249,8 +320,8 @@ export default function LandingOverlay() {
                 <div
                   style={{
                     color: accentSoft,
-                    fontSize: 'clamp(1.32rem, 6vw, 1.72rem)',
-                    lineHeight: 1.12,
+                    fontSize: titleFontSize,
+                    lineHeight: titleLineHeight,
                     letterSpacing: '-0.02em',
                     textWrap: 'balance',
                     textShadow: `0 0 24px ${accent}14`,
@@ -271,8 +342,8 @@ export default function LandingOverlay() {
                 <div
                   style={{
                     color: ink,
-                    fontSize: '0.98rem',
-                    lineHeight: 1.62,
+                    fontSize: supportingFontSize,
+                    lineHeight: supportingLineHeight,
                     letterSpacing: '0.01em',
                     textWrap: 'balance',
                     textShadow: `0 0 20px ${accent}12`,
@@ -300,14 +371,14 @@ export default function LandingOverlay() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '12px',
-                    padding: '14px 16px',
-                    minHeight: '52px',
+                    padding: ctaPadding,
+                    minHeight: ctaMinHeight,
                     borderRadius: '999px',
                     border: `1px solid ${accent}2A`,
                     background: 'linear-gradient(135deg, rgba(236, 226, 255, 0.98), rgba(223, 205, 255, 0.96))',
                     color: ctaInk,
                     textDecoration: 'none',
-                    fontSize: '0.92rem',
+                    fontSize: ctaFontSize,
                     fontWeight: 700,
                     letterSpacing: '0.02em',
                     boxShadow: `0 12px 24px ${accent}22`,
@@ -319,27 +390,10 @@ export default function LandingOverlay() {
               ) : null}
             </div>
 
-            <div
-              style={{
-                opacity: cueVisibility * 0.7,
-                filter: `blur(${(1 - cueVisibility) * 8}px)`,
-                transition: 'opacity 360ms ease, filter 420ms ease',
-              }}
-            >
-              <div
-                style={{
-                  color: cueInk,
-                  fontSize: '0.68rem',
-                  letterSpacing: '0.18em',
-                  textTransform: 'uppercase',
-                  textShadow: `0 0 14px ${accent}14`,
-                }}
-              >
-                Scroll to continue
-              </div>
-            </div>
+            {isCompactLandscape ? null : cueNode}
           </div>
         </div>
+        {isCompactLandscape ? cueNode : null}
       </section>
     );
   }

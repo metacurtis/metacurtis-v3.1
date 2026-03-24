@@ -4,10 +4,26 @@ import { Canonical } from '@/config/canonical/canonicalAuthority.js';
 
 const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 const MOBILE_BREAKPOINT_PX = 767;
+const COMPACT_LANDSCAPE_MAX_WIDTH_PX = 960;
+const COMPACT_LANDSCAPE_MAX_HEIGHT_PX = 420;
 
-const readIsMobileViewport = () => {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth <= MOBILE_BREAKPOINT_PX;
+const readViewportLayout = () => {
+  if (typeof window === 'undefined') {
+    return {
+      isMobileViewport: false,
+      isCompactLandscape: false,
+    };
+  }
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const isCompactLandscape =
+    width > height &&
+    height <= COMPACT_LANDSCAPE_MAX_HEIGHT_PX &&
+    width <= COMPACT_LANDSCAPE_MAX_WIDTH_PX;
+  return {
+    isMobileViewport: width <= MOBILE_BREAKPOINT_PX || isCompactLandscape,
+    isCompactLandscape,
+  };
 };
 
 const sectionStyle = {
@@ -75,21 +91,27 @@ export default function LandingContinuation() {
     },
   ];
   const [sectionProgress, setSectionProgress] = useState(0);
-  const [isMobileViewport, setIsMobileViewport] = useState(readIsMobileViewport);
+  const [viewportLayout, setViewportLayout] = useState(readViewportLayout);
+  const { isMobileViewport, isCompactLandscape } = viewportLayout;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
-    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
     const syncViewportMode = () => {
-      setIsMobileViewport(mediaQuery.matches || readIsMobileViewport());
+      setViewportLayout((prev) => {
+        const next = readViewportLayout();
+        return prev.isMobileViewport === next.isMobileViewport &&
+          prev.isCompactLandscape === next.isCompactLandscape
+          ? prev
+          : next;
+      });
     };
 
     syncViewportMode();
-    mediaQuery.addEventListener?.('change', syncViewportMode);
     window.addEventListener('resize', syncViewportMode);
+    window.addEventListener('orientationchange', syncViewportMode);
     return () => {
-      mediaQuery.removeEventListener?.('change', syncViewportMode);
       window.removeEventListener('resize', syncViewportMode);
+      window.removeEventListener('orientationchange', syncViewportMode);
     };
   }, []);
 
@@ -132,7 +154,14 @@ export default function LandingContinuation() {
   const arrivalLift = (1 - arrivalProgress) * 16;
   const trustLift = (1 - trustProgress) * 14;
   const conversionLift = (1 - conversionProgress) * 12;
-  const responsiveSectionStyle = isMobileViewport
+  const responsiveSectionStyle = isCompactLandscape
+    ? {
+        ...sectionStyle,
+        minHeight: '205vh',
+        paddingTop: '104vh',
+        paddingBottom: '16vh',
+      }
+    : isMobileViewport
     ? {
         ...sectionStyle,
         minHeight: '235vh',
@@ -140,7 +169,13 @@ export default function LandingContinuation() {
         paddingBottom: '22vh',
       }
     : sectionStyle;
-  const responsiveInnerStyle = isMobileViewport
+  const responsiveInnerStyle = isCompactLandscape
+    ? {
+        ...innerStyle,
+        width: 'calc(100vw - 18px)',
+        top: 'calc(8px + env(safe-area-inset-top, 0px))',
+      }
+    : isMobileViewport
     ? {
         ...innerStyle,
         width: 'calc(100vw - 24px)',
@@ -163,6 +198,12 @@ export default function LandingContinuation() {
         alignItems: 'stretch',
       }
     : null;
+  const panelPadding = isCompactLandscape ? '18px 16px 18px' : (isMobileViewport ? '24px 18px 26px' : 'clamp(30px, 4vw, 52px)');
+  const panelRadius = isCompactLandscape ? '24px' : (isMobileViewport ? '28px' : '38px');
+  const sectionGap = isCompactLandscape ? '14px' : (isMobileViewport ? '18px' : '22px');
+  const chapterGap = isCompactLandscape ? '14px' : (isMobileViewport ? '20px' : '18px');
+  const chapterMarginTop = isCompactLandscape ? '26px' : (isMobileViewport ? '40px' : 'clamp(32px, 4vw, 46px)');
+  const chapterPaddingTop = isCompactLandscape ? '18px' : (isMobileViewport ? '24px' : '22px');
 
   return (
     <section id="landing-continuation" style={responsiveSectionStyle} aria-label="Landing continuation">
@@ -173,8 +214,8 @@ export default function LandingContinuation() {
             maxWidth: 'min(1080px, 100%)',
             margin: '0 auto',
             position: 'relative',
-            padding: isMobileViewport ? '24px 18px 26px' : 'clamp(30px, 4vw, 52px)',
-            borderRadius: isMobileViewport ? '28px' : '38px',
+            padding: panelPadding,
+            borderRadius: panelRadius,
             border: `1px solid ${accent}1E`,
             background:
               'linear-gradient(180deg, rgba(6, 8, 14, 0.62) 0%, rgba(7, 9, 16, 0.84) 24%, rgba(8, 10, 18, 0.92) 100%)',
@@ -213,7 +254,7 @@ export default function LandingContinuation() {
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              gap: isMobileViewport ? '18px' : '22px',
+              gap: sectionGap,
               maxWidth: isMobileViewport ? '100%' : '760px',
             }}
           >
@@ -233,8 +274,10 @@ export default function LandingContinuation() {
               style={{
                 margin: 0,
                 color: ink,
-                fontSize: isMobileViewport ? 'clamp(1.72rem, 8vw, 2.2rem)' : 'clamp(2rem, 4vw, 3.4rem)',
-                lineHeight: isMobileViewport ? 1.1 : 1.06,
+                fontSize: isCompactLandscape
+                  ? 'clamp(1.28rem, 3.9vw, 1.64rem)'
+                  : (isMobileViewport ? 'clamp(1.72rem, 8vw, 2.2rem)' : 'clamp(2rem, 4vw, 3.4rem)'),
+                lineHeight: isCompactLandscape ? 1.06 : (isMobileViewport ? 1.1 : 1.06),
                 letterSpacing: '-0.03em',
                 textWrap: 'balance',
                 opacity: arrivalProgress,
@@ -251,8 +294,8 @@ export default function LandingContinuation() {
                 margin: 0,
                 maxWidth: '62ch',
                 color: bodyInk,
-                fontSize: isMobileViewport ? '1rem' : 'clamp(1rem, 1.35vw, 1.18rem)',
-                lineHeight: isMobileViewport ? 1.72 : 1.65,
+                fontSize: isCompactLandscape ? '0.92rem' : (isMobileViewport ? '1rem' : 'clamp(1rem, 1.35vw, 1.18rem)'),
+                lineHeight: isCompactLandscape ? 1.58 : (isMobileViewport ? 1.72 : 1.65),
                 textWrap: 'pretty',
                 opacity: arrivalProgress,
                 filter: `blur(${(1 - arrivalProgress) * 10}px)`,
@@ -271,9 +314,9 @@ export default function LandingContinuation() {
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              gap: isMobileViewport ? '20px' : '18px',
-              marginTop: isMobileViewport ? '40px' : 'clamp(32px, 4vw, 46px)',
-              paddingTop: isMobileViewport ? '24px' : '22px',
+              gap: chapterGap,
+              marginTop: chapterMarginTop,
+              paddingTop: chapterPaddingTop,
               borderTop: `1px solid ${accent}1F`,
               opacity: trustProgress,
               filter: `blur(${(1 - trustProgress) * 10}px)`,
@@ -309,7 +352,7 @@ export default function LandingContinuation() {
                   style={{
                     color: mutedInk,
                     fontSize: '0.98rem',
-                    lineHeight: isMobileViewport ? 1.7 : 1.6,
+                    lineHeight: isCompactLandscape ? 1.58 : (isMobileViewport ? 1.7 : 1.6),
                     maxWidth: isMobileViewport ? 'none' : '48ch',
                   }}
                 >
@@ -325,8 +368,8 @@ export default function LandingContinuation() {
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              marginTop: isMobileViewport ? '40px' : 'clamp(28px, 4vw, 42px)',
-              paddingTop: isMobileViewport ? '24px' : '22px',
+              marginTop: isCompactLandscape ? '26px' : (isMobileViewport ? '40px' : 'clamp(28px, 4vw, 42px)'),
+              paddingTop: isCompactLandscape ? '18px' : (isMobileViewport ? '24px' : '22px'),
               borderTop: `1px solid ${accent}1F`,
               opacity: trustProgress,
               filter: `blur(${(1 - trustProgress) * 10}px)`,
@@ -354,7 +397,7 @@ export default function LandingContinuation() {
                     gridTemplateColumns: 'minmax(0, 220px) minmax(0, 1fr)',
                     gap: '14px',
                   }),
-                  paddingTop: isMobileViewport ? '14px' : '10px',
+                  paddingTop: isCompactLandscape ? '12px' : (isMobileViewport ? '14px' : '10px'),
                   borderTop: `1px solid ${accent}14`,
                 }}
               >
@@ -374,7 +417,7 @@ export default function LandingContinuation() {
                   style={{
                     color: mutedInk,
                     fontSize: '0.98rem',
-                    lineHeight: isMobileViewport ? 1.7 : 1.6,
+                    lineHeight: isCompactLandscape ? 1.58 : (isMobileViewport ? 1.7 : 1.6),
                     maxWidth: isMobileViewport ? 'none' : '52ch',
                   }}
                 >
@@ -390,8 +433,8 @@ export default function LandingContinuation() {
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              marginTop: isMobileViewport ? '42px' : 'clamp(28px, 4vw, 42px)',
-              paddingTop: isMobileViewport ? '24px' : '22px',
+              marginTop: isCompactLandscape ? '28px' : (isMobileViewport ? '42px' : 'clamp(28px, 4vw, 42px)'),
+              paddingTop: isCompactLandscape ? '18px' : (isMobileViewport ? '24px' : '22px'),
               borderTop: `1px solid ${accent}1F`,
               opacity: conversionProgress,
               filter: `blur(${(1 - conversionProgress) * 10}px)`,
@@ -413,8 +456,10 @@ export default function LandingContinuation() {
             <div
               style={{
                 color: ink,
-                fontSize: isMobileViewport ? 'clamp(1.18rem, 5.5vw, 1.5rem)' : 'clamp(1.24rem, 2vw, 1.72rem)',
-                lineHeight: isMobileViewport ? 1.35 : 1.25,
+                fontSize: isCompactLandscape
+                  ? 'clamp(1.04rem, 3.5vw, 1.28rem)'
+                  : (isMobileViewport ? 'clamp(1.18rem, 5.5vw, 1.5rem)' : 'clamp(1.24rem, 2vw, 1.72rem)'),
+                lineHeight: isCompactLandscape ? 1.28 : (isMobileViewport ? 1.35 : 1.25),
                 letterSpacing: '-0.02em',
                 maxWidth: '24ch',
               }}
@@ -424,8 +469,8 @@ export default function LandingContinuation() {
             <div
               style={{
                 color: bodyInk,
-                fontSize: '1rem',
-                lineHeight: isMobileViewport ? 1.72 : 1.65,
+                fontSize: isCompactLandscape ? '0.92rem' : '1rem',
+                lineHeight: isCompactLandscape ? 1.58 : (isMobileViewport ? 1.72 : 1.65),
                 maxWidth: isMobileViewport ? 'none' : '48ch',
               }}
             >
@@ -452,13 +497,13 @@ export default function LandingContinuation() {
                   gap: '10px',
                   width: isMobileViewport ? '100%' : 'auto',
                   justifyContent: isMobileViewport ? 'space-between' : 'center',
-                  padding: '11px 16px',
+                  padding: isCompactLandscape ? '10px 14px' : '11px 16px',
                   borderRadius: '999px',
                   border: `1px solid ${accent}2A`,
                   background: 'linear-gradient(135deg, rgba(236, 226, 255, 0.98), rgba(223, 205, 255, 0.96))',
                   color: '#1A1430',
                   textDecoration: 'none',
-                  fontSize: '0.88rem',
+                  fontSize: isCompactLandscape ? '0.84rem' : '0.88rem',
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                   boxShadow: `0 12px 24px ${accent}22`,
@@ -495,7 +540,7 @@ export default function LandingContinuation() {
                 flexDirection: 'column',
                 gap: '12px',
                 maxWidth: isMobileViewport ? '100%' : '560px',
-                marginTop: '6px',
+                marginTop: isCompactLandscape ? '4px' : '6px',
               }}
             >
               <input
@@ -510,7 +555,7 @@ export default function LandingContinuation() {
                 required
                 style={{
                   width: '100%',
-                  padding: '14px 16px',
+                  padding: isCompactLandscape ? '12px 14px' : '14px 16px',
                   borderRadius: '16px',
                   border: `1px solid ${accent}24`,
                   background: 'rgba(12, 16, 28, 0.48)',
@@ -529,8 +574,8 @@ export default function LandingContinuation() {
                 style={{
                   width: '100%',
                   resize: 'vertical',
-                  minHeight: '132px',
-                  padding: '14px 16px',
+                  minHeight: isCompactLandscape ? '110px' : '132px',
+                  padding: isCompactLandscape ? '12px 14px' : '14px 16px',
                   borderRadius: '18px',
                   border: `1px solid ${accent}24`,
                   background: 'rgba(12, 16, 28, 0.48)',
@@ -550,14 +595,14 @@ export default function LandingContinuation() {
                   alignItems: 'center',
                   justifyContent: isMobileViewport ? 'space-between' : 'center',
                   gap: '10px',
-                  padding: '11px 16px',
+                  padding: isCompactLandscape ? '10px 14px' : '11px 16px',
                   borderRadius: '999px',
                   border: `1px solid ${accent}24`,
                   background: 'rgba(243, 238, 255, 0.08)',
                   color: ink,
                   cursor: 'pointer',
                   textDecoration: 'none',
-                  fontSize: '0.88rem',
+                  fontSize: isCompactLandscape ? '0.84rem' : '0.88rem',
                   fontWeight: 700,
                   letterSpacing: '0.02em',
                   boxShadow: `0 12px 24px ${accent}14`,
