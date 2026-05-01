@@ -40,6 +40,7 @@ const LANDING_UI_ANCHOR_RECOMMENDED_MODEL = 'per-letter';
 const LANDING_UI_ANCHOR_WORD = 'FORM';
 const LANDING_UI_ANCHOR_UPDATE_MS = 120;
 const LANDING_UI_ANCHOR_MAX_SAMPLE_POINTS = 3500;
+const LANDING_POINTER_PRESET = 'velocity_stage';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
 const computeBasePointSize = (dpr = 1) => Math.max(0.1, 3 * dpr); // final screen size = uPointSize * tier multipliers
@@ -448,6 +449,28 @@ function arrayAabb(arr) {
   return { w: maxX - minX, h: maxY - minY };
 }
 
+function createLandingPointerState() {
+  return {
+    active: 0,
+    intensity: 0,
+    inside: false,
+    ndcX: 0,
+    ndcY: 0,
+    clientX: 0,
+    clientY: 0,
+  };
+}
+
+function isLandingVelocitySlice() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  const slice = params.get('slice');
+  const resolvedPreset = window.Canonical?.landingStageSliceResolved?.preset;
+  const requestedPreset = params.get('preset');
+  return slice === 'landing_stage' &&
+    (resolvedPreset === LANDING_POINTER_PRESET || requestedPreset === LANDING_POINTER_PRESET);
+}
+
 const toFiniteOrNull = (value) => {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
@@ -640,6 +663,8 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   const landingUiAnchorPayloadRef = useRef(createLandingUiAnchorBase());
   const landingUiAnchorLastUpdateRef = useRef(0);
   const landingUiAnchorGetterInstalledRef = useRef(false);
+  const landingPointerSliceRef = useRef(false);
+  const landingPointerStateRef = useRef(createLandingPointerState());
 
   const shouldTrackMorphWrites = () =>
     DEV &&
@@ -783,7 +808,11 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
             uFlowTurbulence: readUniform('uFlowTurbulence'),
             uStreakIntensity: readUniform('uStreakIntensity'),
             uSpreadFactor: readUniform('uSpreadFactor'),
+            uPointerActive: readUniform('uPointerActive'),
+            uPointerIntensity: readUniform('uPointerIntensity'),
+            uPointerNdc: readUniform('uPointerNdc'),
           },
+          pointer: { ...landingPointerStateRef.current },
           camera: cam
             ? {
                 pos: cam.position.toArray(),
@@ -1320,6 +1349,108 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
   );
 
   const { size, gl, camera } = useThree();
+
+  const resetLandingPointerState = useCallback(() => {
+    const pointer = landingPointerStateRef.current;
+    pointer.active = 0;
+    pointer.intensity = 0;
+    pointer.inside = false;
+    pointer.ndcX = 0;
+    pointer.ndcY = 0;
+    pointer.clientX = 0;
+    pointer.clientY = 0;
+  }, []);
+
+  const applyLandingPointerUniforms = useCallback((uniforms, deterministicMode = false) => {
+    if (!uniforms) return;
+
+    const pointerEnabled = landingPointerSliceRef.current && !deterministicMode;
+    if (!pointerEnabled) {
+      resetLandingPointerState();
+    }
+
+    const pointer = landingPointerStateRef.current;
+    const active = pointerEnabled ? Number(pointer.active) : 0;
+    const intensity = pointerEnabled ? Number(pointer.intensity) : 0;
+    const ndcX = pointerEnabled ? Number(pointer.ndcX) || 0 : 0;
+    const ndcY = pointerEnabled ? Number(pointer.ndcY) || 0 : 0;
+
+    if (uniforms.uPointerActive) {
+      uniforms.uPointerActive.value = active;
+      uniforms.uPointerActive.needsUpdate = true;
+    }
+    if (uniforms.uPointerIntensity) {
+      uniforms.uPointerIntensity.value = intensity;
+      uniforms.uPointerIntensity.needsUpdate = true;
+    }
+    if (uniforms.uPointerNdc?.value?.set) {
+      uniforms.uPointerNdc.value.set(ndcX, ndcY);
+      uniforms.uPointerNdc.needsUpdate = true;
+    }
+  }, [resetLandingPointerState]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const syncLandingPointerSlice = () => {
+      landingPointerSliceRef.current = isLandingVelocitySlice();
+      if (!landingPointerSliceRef.current) {
+        resetLandingPointerState();
+      }
+    };
+    syncLandingPointerSlice();
+    window.addEventListener('popstate', syncLandingPointerSlice);
+    window.addEventListener('hashchange', syncLandingPointerSlice);
+    return () => {
+      window.removeEventListener('popstate', syncLandingPointerSlice);
+      window.removeEventListener('hashchange', syncLandingPointerSlice);
+    };
+  }, [resetLandingPointerState]);
+
+  useEffect(() => {
+    const canvas = gl?.domElement;
+    if (!canvas) return undefined;
+
+    const handlePointerMove = (event) => {
+      if (!landingPointerSliceRef.current) {
+        resetLandingPointerState();
+        return;
+      }
+      if (typeof window !== 'undefined' && window.__DETERMINISTIC_MODE__ === true) {
+        resetLandingPointerState();
+        return;
+      }
+
+      const rect = canvas.getBoundingClientRect?.();
+      const width = rect?.width || canvas.clientWidth || 0;
+      const height = rect?.height || canvas.clientHeight || 0;
+      if (!(width > 0) || !(height > 0)) {
+        resetLandingPointerState();
+        return;
+      }
+
+      const nextX = ((event.clientX - rect.left) / width) * 2 - 1;
+      const nextY = -((((event.clientY - rect.top) / height) * 2) - 1);
+      const pointer = landingPointerStateRef.current;
+      pointer.active = 1;
+      pointer.intensity = 1;
+      pointer.inside = true;
+      pointer.ndcX = Math.max(-1, Math.min(1, nextX));
+      pointer.ndcY = Math.max(-1, Math.min(1, nextY));
+      pointer.clientX = event.clientX;
+      pointer.clientY = event.clientY;
+    };
+
+    const handlePointerLeave = () => {
+      resetLandingPointerState();
+    };
+
+    canvas.addEventListener('pointermove', handlePointerMove, { passive: true });
+    canvas.addEventListener('pointerleave', handlePointerLeave, { passive: true });
+    return () => {
+      canvas.removeEventListener('pointermove', handlePointerMove);
+      canvas.removeEventListener('pointerleave', handlePointerLeave);
+    };
+  }, [gl, resetLandingPointerState]);
 
   useEffect(() => {
     if (!BeatBus?.on) return () => {};
@@ -3737,6 +3868,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
           uAtlasTexture:    { value: atlasTexture },
           uTotalSprites:    { value: 16 },
           uPointSize:       { value: basePointSize },
+          uPointerActive:   { value: 0.0 },
+          uPointerIntensity:{ value: 0.0 },
+          uPointerNdc:      { value: new THREE.Vector2(0, 0) },
           uDepthFalloffPower: { value: 1.0 },
           uMotionMode:      { value: 0.0 },
           uDevicePixelRatio:{ value: resolveDpr() },
@@ -3829,6 +3963,9 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
     if (!uniforms.uMorphType) uniforms.uMorphType = { value: MORPH_TYPE_ENUM.steady };
     if (!uniforms.uOpacityMin) uniforms.uOpacityMin = { value: 0.5 };
     if (!uniforms.uOpacityMax) uniforms.uOpacityMax = { value: 1.0 };
+    if (!uniforms.uPointerActive) uniforms.uPointerActive = { value: 0.0 };
+    if (!uniforms.uPointerIntensity) uniforms.uPointerIntensity = { value: 0.0 };
+    if (!uniforms.uPointerNdc) uniforms.uPointerNdc = { value: new THREE.Vector2(0, 0) };
     if (uniforms.uAtlasTexture) uniforms.uAtlasTexture.value = atlasTexture;
     if (uniforms.uStageIndex) uniforms.uStageIndex.value = stageIndex;
     if (uniforms.uBrainRegion) uniforms.uBrainRegion.value = stageIndex;
@@ -4051,6 +4188,7 @@ function WebGLBackground({ morphProgress = 0, scrollProgress = 0, cameraOverride
         mat.uniforms.uTime.value = 0.0;
       }
     }
+    applyLandingPointerUniforms(mat.uniforms, deterministicMode);
     if (timeTickEnabledRef.current && mat.uniforms.uTime) {
       mat.uniforms.uTime.value = state.clock.elapsedTime;
     }
