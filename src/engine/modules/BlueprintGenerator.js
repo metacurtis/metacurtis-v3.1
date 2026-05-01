@@ -270,6 +270,15 @@ export default class BlueprintGenerator {
       default: fitDefault * 2.2,
     };
     fitToViewXY(text3DPositions, vw, vh, fitTarget);
+    // Post-fit text-scale lever: preserve responsive fit behavior while allowing
+    // typography.scale to control final world-space text size for landing scenarios.
+    if (typography?.scale && typography.scale !== 1) {
+      const s = typography.scale;
+      for (let i = 0; i < text3DPositions.length; i += 3) {
+        text3DPositions[i] *= s;
+        text3DPositions[i + 1] *= s;
+      }
+    }
     fitToViewXY(atmosphericPositions, vw, vh, fitTargetAtmo);
     fitToViewXY(positions, vw, vh, fitTargetAtmo);
 

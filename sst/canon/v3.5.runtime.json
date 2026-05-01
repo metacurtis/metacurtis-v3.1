@@ -1764,7 +1764,7 @@
         "depth": 0.4,
         "particlesPerLetter": 800,
         "spacing": 1,
-        "scale": 1
+        "scale": 1.6
       },
       "architecture": {
         "word": "SYSTEMS",

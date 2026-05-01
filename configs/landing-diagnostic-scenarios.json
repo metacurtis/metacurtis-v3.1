@@ -214,6 +214,102 @@
       ],
       "expectedEffect": "Material increase in text-assigned particle ratio and improved lock readability/dominance.",
       "successFocusCheckpoints": [7800, 9800]
+    },
+    {
+      "id": "rc1_1_control",
+      "label": "RC1.1 control baseline",
+      "baseScenarioId": "target_density_particles_per_letter_800",
+      "suggestedWorktree": "landing-diagnostic-rc1-1-control",
+      "changeScope": "none",
+      "hypothesis": "RC1.1 requires a clean baseline anchored to the promoted RC1 keeper.",
+      "changeInstructions": [],
+      "expectedEffect": "No code changes. Produces Hero Surface baseline scorecard.",
+      "successFocusCheckpoints": [7800, 8300, 9800]
+    },
+    {
+      "id": "target_scale_up_1_75",
+      "label": "Target scale up (1.75x)",
+      "baseScenarioId": "rc1_1_control",
+      "suggestedWorktree": "landing-diagnostic-target-scale-1_75",
+      "changeScope": "single-variable-upstream",
+      "hypothesis": "FORM needs larger upstream target scale to achieve hero presence and stronger lock dominance.",
+      "changeInstructions": [
+        "Change visual.letterGeometry.velocity.scale from 1.0 to 1.75.",
+        "Do not change spacing, beat sheet, camera, uniforms, or architecture."
+      ],
+      "expectedEffect": "Larger FORM silhouette and stronger lock subject presence with no orchestration changes.",
+      "successFocusCheckpoints": [7700, 7800, 7900, 8300, 9800]
+    },
+    {
+      "id": "target_scale_up_1_6",
+      "label": "Target scale up (1.6x)",
+      "baseScenarioId": "rc1_1_control",
+      "suggestedWorktree": "landing-diagnostic-target-scale-1_6",
+      "changeScope": "single-variable-upstream",
+      "hypothesis": "A moderate upstream scale increase may retain hero presence while avoiding the visual heaviness of 1.75x.",
+      "changeInstructions": [
+        "Change visual.letterGeometry.velocity.scale from 1.0 to 1.6.",
+        "Do not change spacing, beat sheet, camera, uniforms, or architecture."
+      ],
+      "expectedEffect": "Larger FORM with cleaner field balance and lock readability.",
+      "successFocusCheckpoints": [7700, 7800, 7900, 8300, 9800]
+    },
+    {
+      "id": "spacing_only_1_12",
+      "label": "Spacing only (1.12x)",
+      "baseScenarioId": "rc1_1_control",
+      "suggestedWorktree": "landing-diagnostic-spacing-1_12",
+      "changeScope": "single-variable-upstream",
+      "hypothesis": "Additional letter spacing may improve counter and edge readability independently of global scale.",
+      "changeInstructions": [
+        "Change visual.letterGeometry.velocity.spacing from 1.0 to 1.12.",
+        "Do not change scale, beat sheet, camera, uniforms, or architecture."
+      ],
+      "expectedEffect": "Cleaner counters and improved inter-letter breathing room at lock.",
+      "successFocusCheckpoints": [7700, 7800, 7900, 8300, 9800]
+    },
+    {
+      "id": "front_surface_bias_lock",
+      "label": "Front-surface bias (lock)",
+      "baseScenarioId": "rc1_1_control",
+      "suggestedWorktree": "landing-diagnostic-front-surface-bias",
+      "changeScope": "single-variable-structural-lock",
+      "hypothesis": "FORM should read as subject-above-field through text-vs-field separation, not depth exaggeration.",
+      "changeInstructions": [
+        "Apply one lock-local separation variable that prioritizes text-assigned particles over atmospheric field particles.",
+        "Do not use uDepthFalloffPower amplification as the primary mechanism.",
+        "Do not change scale, spacing, camera, or broad beat structure."
+      ],
+      "expectedEffect": "FORM appears more elevated from field at lock without overpainting counters.",
+      "successFocusCheckpoints": [7700, 7800, 7900, 8300, 9800]
+    },
+    {
+      "id": "transition_smoothing_post_density",
+      "label": "Transition smoothing after density fix",
+      "baseScenarioId": "rc1_1_control",
+      "suggestedWorktree": "landing-diagnostic-transition-smoothing",
+      "changeScope": "single-variable-choreography",
+      "hypothesis": "Post-density clunk is primarily continuity/timing handoff between transition and lock.",
+      "changeInstructions": [
+        "Adjust camera timing/easing continuity across 5000/7600/8300.",
+        "Do not change target scale/spacing/density or lock field-separation variables."
+      ],
+      "expectedEffect": "Smoother cinematic transition into lock with maintained lock readability.",
+      "successFocusCheckpoints": [5400, 7700, 7800, 7900, 8300]
+    },
+    {
+      "id": "hero_compound_keeper",
+      "label": "Hero compound keeper",
+      "baseScenarioId": "rc1_1_control",
+      "suggestedWorktree": "landing-diagnostic-hero-compound",
+      "changeScope": "compound-keeper",
+      "hypothesis": "Combining independently validated RC1.1 keepers should deliver hero presence + separation + smooth transition while preserving gate PASS.",
+      "changeInstructions": [
+        "Combine only variables that were independently marked keep.",
+        "Do not introduce new unvalidated variables in this scenario."
+      ],
+      "expectedEffect": "First RC1.1 promotion candidate with improved hero reveal and stable lock/drift quality.",
+      "successFocusCheckpoints": [7700, 7800, 7900, 8300, 9800]
     }
   ]
 }
