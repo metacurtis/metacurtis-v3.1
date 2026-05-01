@@ -24,7 +24,7 @@ Total events: 43
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:894`
-- `src/components/webgl/WebGLBackground.jsx:2805`
+- `src/components/webgl/WebGLBackground.jsx:2816`
 - `src/components/webgl/WebGLCanvas.jsx:266`
 - `src/theater/TheaterDirector.js:348`
 - `src/theater/TheaterDirector.js:352`
@@ -136,7 +136,7 @@ Total events: 43
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:976`
-- `src/components/webgl/WebGLBackground.jsx:1221`
+- `src/components/webgl/WebGLBackground.jsx:1234`
 - `src/engine/ConsciousnessEngine.js:429`
 - `src/state/commands/StateCommands.js:40`
 - `src/theater/ScrollOrchestrator.js:54`
@@ -154,7 +154,7 @@ Total events: 43
 
 **Emitters**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:1010`
-- `src/components/webgl/WebGLBackground.jsx:1855`
+- `src/components/webgl/WebGLBackground.jsx:1866`
 - `src/theater/TheaterDirector.js:2482`
 
 **Listeners**:
@@ -166,12 +166,12 @@ Total events: 43
 ## FENCEPOST_LISTENERS_READY
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:1096`
+- `src/components/webgl/WebGLBackground.jsx:1109`
 - `src/theater/TheaterDirector.js:1996`
 
 **Listeners**:
 - `src/components/consciousness/ConsciousnessTheater.jsx:932`
-- `src/components/webgl/WebGLBackground.jsx:1230`
+- `src/components/webgl/WebGLBackground.jsx:1243`
 - `src/theater/TheaterDirector.js:340`
 
 ## FENCEPOST_REPORT
@@ -196,7 +196,7 @@ Total events: 43
 - `src/theater/bus/emitters.js:75`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:3567`
+- `src/components/webgl/WebGLBackground.jsx:3574`
 - `src/state/commands/StateCommands.js:125`
 - `src/theater/TheaterDirector.js:689`
 - `src/theater/VisualOrchestrator.js:56`
@@ -234,7 +234,7 @@ Total events: 43
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:282`
-- `src/components/webgl/WebGLBackground.jsx:1220`
+- `src/components/webgl/WebGLBackground.jsx:1233`
 
 ## PARTICLES_EMERGED
 
@@ -244,7 +244,7 @@ Total events: 43
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:271`
 - `src/components/ui/LCPHero.jsx:32`
-- `src/components/webgl/WebGLBackground.jsx:1219`
+- `src/components/webgl/WebGLBackground.jsx:1232`
 - `src/engine/ConsciousnessEngine.js:436`
 - `src/theater/TheaterDirector.js:344`
 - `src/theater/TheaterDirector.js:2016`
@@ -257,12 +257,12 @@ Total events: 43
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:260`
-- `src/components/webgl/WebGLBackground.jsx:1973`
+- `src/components/webgl/WebGLBackground.jsx:1984`
 
 ## PARTICLE_CLICK_HIT
 
 **Emitters**:
-- `src/components/webgl/WebGLBackground.jsx:2177`
+- `src/components/webgl/WebGLBackground.jsx:2188`
 
 **Listeners**:
 - `src/dev/patternSMonitors.js:53`
@@ -274,7 +274,7 @@ Total events: 43
 - `src/components/webgl/WebGLCanvas.jsx:342`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:2188`
+- `src/components/webgl/WebGLBackground.jsx:2199`
 
 ## PARTICLE_PHASE
 
@@ -285,7 +285,7 @@ Total events: 43
 
 **Listeners**:
 - `src/components/theater/OpeningSequence.jsx:265`
-- `src/components/webgl/WebGLBackground.jsx:4110`
+- `src/components/webgl/WebGLBackground.jsx:4117`
 
 ## PREWARM_COMPLETE
 
@@ -329,7 +329,7 @@ Total events: 43
 - `canon-console/runtime/hud.js:408`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:3240`
+- `src/components/webgl/WebGLBackground.jsx:3251`
 
 ## SCREEN_FILL
 
@@ -359,8 +359,8 @@ Total events: 43
 **Listeners**:
 - `src/components/narrative/NarrationController.jsx:1085`
 - `src/components/narrative/NarrativeChoreography.jsx:382`
-- `src/components/webgl/WebGLBackground.jsx:1956`
-- `src/components/webgl/WebGLBackground.jsx:1982`
+- `src/components/webgl/WebGLBackground.jsx:1967`
+- `src/components/webgl/WebGLBackground.jsx:1993`
 - `src/engine/ConsciousnessEngine.js:430`
 - `src/state/atoms/qualityAtom.js:155`
 - `src/state/commands/StateCommands.js:81`
@@ -403,7 +403,7 @@ Total events: 43
 - `src/theater/VisualOrchestrator.js:150`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:1715`
+- `src/components/webgl/WebGLBackground.jsx:1726`
 - `src/engine/ConsciousnessEngine.js:434`
 
 ## TEXT_POSITIONS_READY
@@ -412,5 +412,5 @@ Total events: 43
 - `src/theater/bus/emitters.js:83`
 
 **Listeners**:
-- `src/components/webgl/WebGLBackground.jsx:2821`
+- `src/components/webgl/WebGLBackground.jsx:2832`
 
