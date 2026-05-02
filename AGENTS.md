@@ -1,5 +1,93 @@
 # AGENTS.md
 
+## MetaCurtis Labs — Behavior Constitution
+Version: 2026-05-v3 | Operator: Curtis Whorton
+
+---
+
+## Transition Status
+This constitution is additive.
+The landing-specific operating rules already in this file remain active and authoritative for landing work until the override split is complete.
+
+If a rule in this constitution conflicts with the landing-specific section below, stop and ask the operator before proceeding.
+
+## Scope
+This constitution defines repo-wide agent behavior for infrastructure, documentation, workflow, and future context splits.
+It does not retire the active landing workflow.
+
+## Authority Order
+1. Operator prompt for the current task
+2. This constitution header
+3. Nearest `AGENTS.override.md` to the current working directory, if present
+4. Active skill protocol, if invoked
+5. Context-specific operating rules already present in this file
+
+The operator prompt may narrow scope, define the active task, or provide exact implementation instructions.
+
+The operator prompt may not bypass:
+- single-writer rules
+- schema / contract gates
+- quality gates
+- generated artifact policy
+- explicit operator-only decisions
+
+## Core Session Rules
+- Do not execute silently. Report what you will do before doing it.
+- Do not fix adjacent issues unless explicitly instructed.
+- Do not introduce new subsystems, dependencies, or architecture without operator approval.
+- Do not modify `AGENTS.md`, `AGENTS.override.md`, or any `SKILL.md` unless the operator explicitly asks for it.
+- Scope creep is a violation. Keep to one logical unit unless the operator explicitly expands scope.
+- Every change must be committable or discardable cleanly.
+
+## Commit / Push Policy
+- Codex may propose a commit message.
+- Codex may stage or commit only when the operator explicitly instructs it.
+- Codex must not push unless the operator explicitly instructs it in the current session.
+- Commit message format, when requested: `[scope] description`
+
+## Single-Writer Rules
+- Renderer is the single writer for geometry and uniforms.
+- Engine is the single writer for blueprint generation.
+- Director never writes geometry or uniforms directly.
+- Do not bypass single-writer rules to "make it work."
+
+## Dirty State Protocol
+Before editing:
+1. Run `git status --short --branch`.
+2. Classify dirty files as Source / Evidence / Noise / Unknown.
+3. Proceed only if target files are unambiguous.
+4. Stop and report if target files are already modified unexpectedly.
+
+## Generated Artifact Policy
+Generated artifacts are not committed by default unless the operator explicitly promotes them as source-controlled evidence.
+
+Never commit by default:
+- `dist/`
+- `build/`
+- `coverage/`
+- `exports/`
+- screenshot manifests, probe outputs, logs, contact sheets
+- temporary manifests, cache files, machine-local files
+
+Classify untracked files as:
+1. Source
+2. Evidence
+3. Noise
+4. Unknown
+
+Unknown files require operator review before staging.
+
+## Worktree Policy
+- Default to one worktree per session.
+- Multi-worktree work is allowed only for explicit sync, audit, or triage tasks.
+- Confirm the active worktree before editing.
+- Follow the repo's current external-worktree workflow for artifact-producing landing work.
+
+## Existing Landing Governance
+The landing-specific operating rules below remain the active domain authority until the override split is complete.
+
+# AGENTS.md
+
 ## Project
 MetaCurtis Consciousness Theater  
 Landing Slice Factory / velocity landing slice
